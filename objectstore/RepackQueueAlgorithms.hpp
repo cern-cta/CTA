@@ -35,8 +35,8 @@ struct ContainerTraits<RepackQueue,C>
     void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
   };
   
-  typedef cta::objectstore::RepackQueueType QueueType;
-
+  struct QueueType;
+  
   struct InsertedElement {
     std::unique_ptr<RepackRequest> repackRequest;
     cta::optional<serializers::RepackRequestStatus> newStatus;
@@ -112,9 +112,9 @@ struct ContainerTraits<RepackQueue,C>
   static bool trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
-    const ContainerIdentifier &cId, RepackQueueType queueType, log::LogContext &lc);
+    const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, RepackQueueType queueType, log::LogContext &lc);
+    const ContainerIdentifier &cId, log::LogContext &lc);
   static void addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
     AgentReference &agentRef, log::LogContext &lc);
   static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
@@ -142,9 +142,6 @@ struct ContainerTraits<RepackQueue,C>
   static const std::string c_containerTypeName;
   static const std::string c_identifierType;
 
-private:
-  static bool trimContainerIfNeeded(Container &cont, JobQueueType queueType, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, log::LogContext &lc);
 };
 
 
@@ -216,7 +213,7 @@ addToLog(log::ScopedParamContainer &params) {
 
 template<typename C>
 bool ContainerTraits<RepackQueue,C>::
-trimContainerIfNeeded(Container& cont, JobQueueType queueType, ScopedExclusiveLock & contLock,
+trimContainerIfNeeded(Container& cont,  ScopedExclusiveLock & contLock,
   const ContainerIdentifier & cId, log::LogContext& lc)
 {
   // Repack queues are one per status, so we do not need to trim them.
@@ -226,15 +223,15 @@ trimContainerIfNeeded(Container& cont, JobQueueType queueType, ScopedExclusiveLo
 template<typename C>
 void ContainerTraits<RepackQueue,C>::
 getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
-  const ContainerIdentifier& contId, RepackQueueType queueType, log::LogContext& lc)
+  const ContainerIdentifier& contId, log::LogContext& lc)
 {
-  Helpers::getLockedAndFetchedRepackQueue(cont, aqL, agRef, queueType, lc);
+    ContainerTraits<RepackQueue,C>::QueueType queueType;
+  Helpers::getLockedAndFetchedRepackQueue(cont, aqL, agRef, queueType.value, lc);
 }
 
 template<typename C>
 void ContainerTraits<RepackQueue,C>::
-getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, const ContainerIdentifier& cId,
-  RepackQueueType queueType, log::LogContext& lc)
+getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, const ContainerIdentifier& cId, log::LogContext& lc)
 {
   // Try and get access to a queue.
   size_t attemptCount = 0;
@@ -242,8 +239,9 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   objectstore::RootEntry re(cont.m_objectStore);
   re.fetchNoLock();
   std::string rpkQAddress;
+  ContainerTraits<RepackQueue,C>::QueueType queueType;
   try {
-    rpkQAddress = re.getRepackQueueAddress(queueType);
+    rpkQAddress = re.getRepackQueueAddress(queueType.value);
   } catch (RootEntry::NotAllocated &) {
     throw NoSuchContainer("In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): no such repack queue");
   }
@@ -262,7 +260,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
     ScopedExclusiveLock rexl(re);
     re.fetch();
     try {
-      re.removeRepackQueueAndCommit(queueType, lc);
+      re.removeRepackQueueAndCommit(queueType.value, lc);
       log::ScopedParamContainer params(lc);
       params.add("queueObject", cont.getAddressIfSet());
       lc.log(log::INFO, 
@@ -392,6 +390,13 @@ getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
   return ret;
 }
 
+template<>
+struct ContainerTraits<RepackQueue,RepackQueuePending>::QueueType{
+    objectstore::RepackQueueType value = objectstore::RepackQueueType::Pending;
+};
 
-
+template<>
+struct ContainerTraits<RepackQueue,RepackQueueToExpand>::QueueType{
+    objectstore::RepackQueueType value = objectstore::RepackQueueType::ToExpand;
+};
 }} // namespace cta::objectstore

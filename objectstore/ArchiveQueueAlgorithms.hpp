@@ -33,7 +33,7 @@ struct ContainerTraits<ArchiveQueue,C>
     void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
   };
   
-  typedef cta::objectstore::JobQueueType QueueType;
+  struct QueueType;
 
   struct InsertedElement {
     ArchiveRequest* archiveRequest;
@@ -84,7 +84,7 @@ struct ContainerTraits<ArchiveQueue,C>
     PoppedElementsSummary summary;
     void addToLog(log::ScopedParamContainer&);
   };
-
+  
   typedef ArchiveQueue                                Container;
   typedef std::string                                 ContainerAddress;
   typedef std::string                                 ElementAddress;
@@ -120,9 +120,9 @@ struct ContainerTraits<ArchiveQueue,C>
   static bool trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
-    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
+    const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
+    const ContainerIdentifier &cId, log::LogContext &lc);
   static void addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
     AgentReference &agentRef, log::LogContext &lc);
   static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
@@ -145,9 +145,6 @@ struct ContainerTraits<ArchiveQueue,C>
   static const std::string c_containerTypeName;
   static const std::string c_identifierType;
 
-private:
-  static bool trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, log::LogContext &lc);
 };
 
 
@@ -202,7 +199,7 @@ addToLog(log::ScopedParamContainer &params) {
 
 template<typename C>
 bool ContainerTraits<ArchiveQueue,C>::
-trimContainerIfNeeded(Container& cont, QueueType queueType, ScopedExclusiveLock & contLock,
+trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock,
   const ContainerIdentifier & cId, log::LogContext& lc)
 {
   if (!cont.isEmpty())  return false;
@@ -210,10 +207,12 @@ trimContainerIfNeeded(Container& cont, QueueType queueType, ScopedExclusiveLock 
   contLock.release();
   try {
     // The queue should be removed as it is empty.
+    ContainerTraits<ArchiveQueue,C>::QueueType queueType;
+    //TODO : Voir si le queue type correspondra au bon type
     RootEntry re(cont.m_objectStore);
     ScopedExclusiveLock rexl(re);
     re.fetch();
-    re.removeArchiveQueueAndCommit(cId, queueType, lc);
+    re.removeArchiveQueueAndCommit(cId, queueType.value, lc);
     log::ScopedParamContainer params(lc);
     params.add("tapepool", cId)
           .add("queueObject", cont.getAddressIfSet());
@@ -232,15 +231,15 @@ trimContainerIfNeeded(Container& cont, QueueType queueType, ScopedExclusiveLock 
 template<typename C>
 void ContainerTraits<ArchiveQueue,C>::
 getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
-  const ContainerIdentifier& contId, QueueType queueType, log::LogContext& lc)
+  const ContainerIdentifier& contId, log::LogContext& lc)
 {
-  Helpers::getLockedAndFetchedJobQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
+  ContainerTraits<ArchiveQueue,C>::QueueType queueType;
+  Helpers::getLockedAndFetchedJobQueue<Container>(cont, aqL, agRef, contId, queueType.value, lc);
 }
 
 template<typename C>
 void ContainerTraits<ArchiveQueue,C>::
-getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, const ContainerIdentifier& cId,
-  QueueType queueType, log::LogContext& lc)
+getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, const ContainerIdentifier& cId, log::LogContext& lc)
 {
   // Try and get access to a queue.
   size_t attemptCount = 0;
@@ -248,7 +247,8 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   objectstore::RootEntry re(cont.m_objectStore);
   re.fetchNoLock();
   std::string aqAddress;
-  auto aql = re.dumpArchiveQueues(queueType);
+  ContainerTraits<ArchiveQueue,C>::QueueType queueType;
+  auto aql = re.dumpArchiveQueues(queueType.value);
   for (auto & aqp : aql) {
     if (aqp.tapePool == cId)
       aqAddress = aqp.address;
@@ -269,7 +269,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
     ScopedExclusiveLock rexl(re);
     re.fetch();
     try {
-      re.removeArchiveQueueAndCommit(cId, queueType, lc);
+      re.removeArchiveQueueAndCommit(cId, queueType.value, lc);
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());
@@ -474,6 +474,21 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PoppedElementsSumma
           .add("filesAfter", files)
           .add("bytesAfter", bytes);
   }
+};
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::QueueType {
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransfer;
+};
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::QueueType {
+    objectstore::JobQueueType value = objectstore::JobQueueType::FailedJobs;
+};
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::QueueType {
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReport;
 };
 
 }} // namespace cta::objectstore

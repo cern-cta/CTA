@@ -17,6 +17,7 @@
  */
 
 #include "RepackRequestManager.hpp"
+#include "Scheduler.hpp"
 
 namespace cta {
 
@@ -26,7 +27,7 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
   // First expand any request to expand
   // TODO: implement expansion
   // Next promote requests to ToExpand if needed
-  m_scheduler.promoteRepackRequestsToToExpand();
+  m_scheduler.promoteRepackRequestsToToExpand(lc);
   
 }
 

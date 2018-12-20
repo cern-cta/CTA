@@ -30,12 +30,4 @@ const std::string ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::c_containerT
 template<>
 const std::string ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::c_identifierType = "tapepool";
 
-template<>
-bool ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::
-trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
-  log::LogContext &lc)
-{
-  return trimContainerIfNeeded(cont, JobQueueType::FailedJobs, contLock, cId, lc);
-}
-
 }} // namespace cta::objectstore

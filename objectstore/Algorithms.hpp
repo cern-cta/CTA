@@ -41,19 +41,20 @@ public:
   typedef typename ContainerTraits<Q,C>::PopCriteria PopCriteria;
   typedef typename ContainerTraits<Q,C>::OwnershipSwitchFailure OwnershipSwitchFailure;
   typedef typename ContainerTraits<Q,C>::PoppedElementsBatch PoppedElementsBatch;
+  typedef typename ContainerTraits<Q,C>::QueueType JobQueueType;
     
   /** 
    * Reference objects in the container and then switch their ownership. Objects 
    * are provided existing and owned by algorithm's agent.
    */
   void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId,
-      const typename ContainerTraits<Q,C>::QueueType queueType, const typename ContainerTraits<Q,C>::ContainerAddress & prevContAddress,
+      const typename ContainerTraits<Q,C>::ContainerAddress & prevContAddress,
       typename ContainerTraits<Q,C>::InsertedElement::list & elements, log::LogContext & lc) {
     C cont(m_backend);
     ScopedExclusiveLock contLock;
     log::TimingList timingList;
     utils::Timer t;
-    ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, queueType, lc);
+    ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
     ContainerTraits<Q,C>::addReferencesAndCommit(cont, elements, m_agentReference, lc);
     auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
         prevContAddress, timingList, t, lc);
@@ -94,9 +95,9 @@ public:
    * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
    * (most cases except garbage collection).
    */
-  void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier &contId, JobQueueType queueType,
+  void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier &contId,
       typename ContainerTraits<Q,C>::InsertedElement::list &elements, log::LogContext &lc) {
-    referenceAndSwitchOwnership(contId, queueType, m_agentReference.getAgentAddress(), elements, lc);
+    referenceAndSwitchOwnership(contId, m_agentReference.getAgentAddress(), elements, lc);
   }
 
   /**
@@ -106,7 +107,7 @@ public:
    * might vary. This function is typically used by the garbage collector. We do not take care of
    * dereferencing the object from the caller.
    */
-  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId, JobQueueType queueType,
+  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId, 
       typename ContainerTraits<Q,C>::ContainerAddress & previousOwnerAddress,
       typename ContainerTraits<Q,C>::ContainerAddress & contAddress,
       typename ContainerTraits<Q,C>::InsertedElement::list & elements, log::LogContext & lc) {
@@ -114,7 +115,8 @@ public:
     ScopedExclusiveLock contLock;
     log::TimingList timingList;
     utils::Timer t;
-    ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, queueType, lc);
+    typename ContainerTraits<Q,C>::QueueType queueType;
+    ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId,  lc);
     contAddress = cont.getAddressIfSet();
     auto contSummaryBefore = ContainerTraits<Q,C>::getContainerSummary(cont);
     timingList.insertAndReset("queueLockFetchTime", t);
@@ -296,7 +298,6 @@ public:
    */
   PoppedElementsBatch popNextBatch(
     const typename ContainerTraits<Q,C>::ContainerIdentifier &contId,
-    JobQueueType queueType,
     typename ContainerTraits<Q,C>::PopCriteria &popCriteria,
     log::LogContext &lc)
   {
@@ -317,7 +318,7 @@ public:
       iterationCount++;
       ScopedExclusiveLock contLock;
       try {
-        ContainerTraits<Q,C>::getLockedAndFetchedNoCreate(cont, contLock, contId, queueType, lc);
+        ContainerTraits<Q,C>::getLockedAndFetchedNoCreate(cont, contLock, contId, lc);
       } catch (typename ContainerTraits<Q,C>::NoSuchContainer &) {
         localTimingList.insertAndReset("findLockFetchQueueTime", t);
         timingList+=localTimingList;

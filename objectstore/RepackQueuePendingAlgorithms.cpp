@@ -27,14 +27,6 @@ template<>
 const std::string ContainerTraits<RepackQueue,RepackQueuePending>::c_identifierType = "uniqueQueue";
 
 template<>
-bool ContainerTraits<RepackQueue,RepackQueuePending>::
-trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
-  log::LogContext &lc)
-{
-  return trimContainerIfNeeded(cont, JobQueueType::FailedJobs, contLock, cId, lc);
-}
-
-template<>
 auto ContainerTraits<RepackQueue,RepackQueuePending>::getContainerSummary(Container &cont) -> ContainerSummary
 {
   ContainerSummary ret;

@@ -314,6 +314,7 @@ int MaintenanceHandler::runChild() {
           "In MaintenanceHandler::runChild(): About to run a GC pass.");
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
+      repackRequestManager.runOnePass(m_processManager.logContext());
       try {
         server::SocketPair::poll(pollList, s_pollInterval - t.secs(), server::SocketPair::Side::parent);
         receivedMessage=true;

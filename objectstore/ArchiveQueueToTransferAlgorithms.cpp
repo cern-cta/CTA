@@ -69,12 +69,4 @@ addToLog(log::ScopedParamContainer &params) {
         .add("files", summary.files);
 }
 
-template<>
-bool ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
-trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
-  log::LogContext &lc)
-{
-  return trimContainerIfNeeded(cont, JobQueueType::JobsToTransfer, contLock, cId, lc);
-}
-
 }} // namespace cta::objectstore

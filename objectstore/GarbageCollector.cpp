@@ -413,7 +413,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
       std::set<std::string> jobsNotRequeued;
       std::string queueAddress;
       try {
-        aqcl.referenceAndSwitchOwnershipIfNecessary(tapepool, queueType, agent.getAddressIfSet(), queueAddress, jobsToAdd, lc);
+        aqcl.referenceAndSwitchOwnershipIfNecessary(tapepool, agent.getAddressIfSet(), queueAddress, jobsToAdd, lc);
       } catch (AqAlgos::OwnershipSwitchFailure & failure) {
         for (auto &failedAR: failure.failedElements) {
           try {

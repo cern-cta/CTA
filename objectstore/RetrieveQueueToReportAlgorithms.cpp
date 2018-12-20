@@ -47,12 +47,4 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
   return ret;
 }
 
-template<>
-bool ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::
-trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
-  log::LogContext &lc)
-{
-  return trimContainerIfNeeded(cont, QueueType::JobsToReport, contLock, cId, lc);
-}
-
 }} // namespace cta::objectstore

@@ -337,7 +337,7 @@ public:
   // Promotion of requests
   void promoteRepackRequestsToToExpand(log::LogContext & lc);
   // Expansion support
-  std::unique_ptr<RepackRequest> getNextRepackJobToExpand();
+  std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
   void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
 
   /* ============================== Retrieve reporting support ============================== */

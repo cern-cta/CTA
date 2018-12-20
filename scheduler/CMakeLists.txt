@@ -21,7 +21,8 @@ set (CTA_SCHEDULER_SRC_FILES
   OStoreDB/OStoreDB.cpp
   OStoreDB/OStoreDBWithAgent.cpp
   LabelMount.cpp
-  DiskReportRunner.cpp)
+  DiskReportRunner.cpp
+  RepackRequestManager.cpp)
 
 find_package(Protobuf3 REQUIRED)
 include_directories (${PROTOBUF3_INCLUDE_DIRS})

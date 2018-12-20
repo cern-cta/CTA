@@ -28,6 +28,7 @@
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
+#include "objectstore/RepackRequest.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -355,21 +356,26 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
             .add("toEnpandBefore", stats.toEnpandBefore)
             .add("pendingAfter", stats.pendingAfter)
             .add("toExpandAfter", stats.toExpandAfter);
+      lc.log(log::INFO,"In Scheduler::promoteRepackRequestsToToExpand(): Promoted repack request to \"to expand\"");
     }
   }
 }
 
 //------------------------------------------------------------------------------
-// getNextRepackJobToExpand
+// getNextRepackRequestToExpand
 //------------------------------------------------------------------------------
-std::unique_ptr<RepackRequest> Scheduler::getNextRepackJobToExpand() {
-  throw exception::Exception("In Scheduler::getNextRepackJobToExpand(): not implemented.");
+std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
+    auto repackRequest = m_db.getNextRequestToExpand();
+    //CONTINUER
+    std::unique_ptr<RepackRequest> repReqRet(new RepackRequest());
+    
+    throw exception::Exception("In Scheduler::getNextRepackRequestToExpand(): not implemented.");
 }
 
 //------------------------------------------------------------------------------
 // expandRepackRequest
 //------------------------------------------------------------------------------
-void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repqckRequest, log::TimingList&, utils::Timer&, log::LogContext&) {
+void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext&) {
   throw exception::Exception("In Scheduler::expandRepackRequest(): not implemented");
 }
 
