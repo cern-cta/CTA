@@ -30,6 +30,6 @@ public:
   void expand();
 private:
   std::unique_ptr<cta::SchedulerDatabase::RepackRequest> m_dbReq;
-}; // class RetrieveJob
+}; // class RepackRequest
 
 } // namespace cta

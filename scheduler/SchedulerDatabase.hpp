@@ -404,6 +404,7 @@ public:
    */
   class RepackRequest {
   public:
+    cta::common::dataStructures::RepackInfo repackInfo;
     uint64_t getLastExpandedFseq();
     void addFileRequestsBatch();
   };

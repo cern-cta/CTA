@@ -30,6 +30,7 @@
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/RepackQueue.hpp"
+#include "objectstore/RepackRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
@@ -308,6 +309,22 @@ public:
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;
   void cancelRepack(const std::string& vid, log::LogContext & lc) override;
   
+  class RepackRequest: public SchedulerDatabase::RepackRequest
+  {
+    friend class OStoreDB;
+    public:
+      RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB) :
+      m_jobOwned(false), m_oStoreDB(oStoreDB),
+      m_repackRequest(jobAddress, m_oStoreDB.m_objectStore){}
+    void setJobOwned(bool b = true) { m_jobOwned = b; }
+
+  private:
+    bool m_jobOwned;
+    uint64_t m_mountId;
+    OStoreDB & m_oStoreDB;
+    objectstore::RepackRequest m_repackRequest;
+  };
+  
   /**
    * A class holding a lock on the pending repack request queue. This is the first
    * container we will have to lock if we decide to pop a/some request(s)
@@ -342,7 +359,7 @@ public:
   std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override;
   std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override;
   
-  std::unique_ptr<RepackRequest> getNextRequestToExpand() override;
+  std::unique_ptr<SchedulerDatabase::RepackRequest> getNextRequestToExpand() override;
   
   /* === Drive state handling  ============================================== */
   /**

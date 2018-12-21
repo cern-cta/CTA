@@ -351,6 +351,16 @@ switchElementsOwnership(typename InsertedElement::list& elemMemCont, const Conta
 }
 
 template<typename C>
+auto ContainerTraits<RepackQueue,C>::switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const ContainerAddress& contAddress,
+  const ContainerAddress& previousOwnerAddress, log::TimingList& timingList, utils::Timer &t, log::LogContext& lc)
+  -> typename OpFailure<PoppedElement>::list
+{
+    typename OpFailure<PoppedElement>::list ret;
+    //TODO : Implement this method
+    return ret;
+}
+
+template<typename C>
 auto ContainerTraits<RepackQueue,C>::
 switchElementsOwnershipAndStatus(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
   const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc,

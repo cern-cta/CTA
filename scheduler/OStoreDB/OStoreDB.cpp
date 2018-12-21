@@ -40,6 +40,7 @@
 #include <stdexcept>
 #include <set>
 #include <iostream>
+#include <bits/unique_ptr.h>
 
 namespace cta {  
 using namespace objectstore;
@@ -1246,24 +1247,25 @@ auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase:
 // OStoreDB::getNextRequestToExpand()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRequestToExpand() {
-    typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueueToExpand> RQTEAlgo;
-    RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);
-    RootEntry re(m_objectStore);
-    re.fetchNoLock();
-    log::LogContext lc(m_logger);
-    while(true){
-      RQTEAlgo::PopCriteria criteria;
-      //A faire : faire en sorte que popNextBatch fonctionne
-      //rqteAlgo.popNextBatch(cta::nullopt,criteria,lc);
+  typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueueToExpand> RQTEAlgo;
+  RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  log::LogContext lc(m_logger);
+  while(true){
+    RQTEAlgo::PopCriteria criteria;
+    auto jobs = rqteAlgo.popNextBatch(cta::nullopt,criteria,lc);
+    if(jobs.elements.empty()){
+      continue;
     }
-    /*popNextBatch(queueList.front().vid, objectstore::JobQueueType::JobsToReport, criteria, logContext);
-    */
-            
-    /*objectstore::RepackRequest repackRequest(rrAddresses.front());
-    RepackIndex::Repack
-    std::unique_ptr<SchedulerDatabase::RepackRequest> ret;*/
-    //return ret;
-    throw exception::Exception("In OStoreDB::getNextRequestToExpand(): not implemented.");
+    std::unique_ptr<cta::objectstore::RepackRequest> elt;
+    elt.reset(jobs.elements.front().repackRequest.release());
+    std::unique_ptr<OStoreDB::RepackRequest> ret(new OStoreDB::RepackRequest(elt->getAddressIfSet(),*this));
+    ret->repackInfo.vid = elt->getInfo().vid;
+    ret->repackInfo.status = elt->getInfo().status;
+    ret->repackInfo.type = elt->getInfo().type;
+    return std::move(ret);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1337,7 +1339,6 @@ getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logCo
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     RQTRAlgo::PopCriteria criteria;
-    RQTRAlgo::JobQueueType jobQueueType;
     criteria.files = filesRequested;
     auto jobs = rqtrAlgo.popNextBatch(queueList.front().vid, criteria, logContext);
     if(jobs.elements.empty()) continue;
