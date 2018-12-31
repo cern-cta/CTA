@@ -26,7 +26,7 @@ find_path(MYSQL_INCLUDE_DIRS
 
 find_library(MYSQL_LIBRARIES
   NAME mysqlclient
-  PATHS /usr/lib64/mysql/
+  PATHS /usr/lib64/mysql /usr/lib64
   NO_DEFAULT_PATH)
 
 message (STATUS "MYSQL_INCLUDE_DIRS = ${MYSQL_INCLUDE_DIRS}")
