@@ -75,11 +75,41 @@ void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
   checkPayloadWritable();
   // Check that we are not empty
   if (!isEmpty()) {
+    // Log all owned objects by batches of 25.
     std::list<std::string> ownershipList = getOwnershipList();
+    {
+      auto ownedObj = ownershipList.begin();
+      size_t currentCount=0;
+      size_t startIndex=0;
+      size_t endIndex=0;
+      std::string currentObjs;
+      while (ownedObj != ownershipList.end()) {
+        if (currentObjs.size()) currentObjs+= " ";
+        currentObjs += *(ownedObj++);
+        endIndex++;
+        if (++currentCount >= 25 || ownedObj == ownershipList.end()) {
+          log::ScopedParamContainer params(lc);
+          params.add("objects", currentObjs)
+                .add("startIndex", startIndex)
+                .add("endIndex", endIndex - 1)
+                .add("totalObjects", ownershipList.size());
+          lc.log(log::ERR, "In Agent::deleteAndUnregisterSelf: agent still owns objects. Here is a part of the list.");
+          startIndex = endIndex;
+          currentCount = 0;
+          currentObjs = "";
+        }
+      }
+    }
+    // Prepare exception to be thrown.
     std::stringstream exSs;
-    exSs << "In Agent::deleteAndUnregisterSelf: agent still owns objects. Here's the list:";
+    exSs << "In Agent::deleteAndUnregisterSelf: agent still owns objects. Here's the first few:";
+    size_t count=0;
     for(auto i=ownershipList.begin(); i!=ownershipList.end(); i++) {
       exSs << " " << *i;
+      if (++count > 3) {
+        exSs << " [... trimmed at 3 of " << ownershipList.size() << "]";
+        break;
+      }
     }
     throw AgentStillOwnsObjects(exSs.str());
   }
