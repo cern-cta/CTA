@@ -337,7 +337,7 @@ common::dataStructures::RepackInfo Scheduler::getRepack(const std::string &vid) 
 void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
   // We target 2 fresh requests available for processing (ToExpand or Starting).
   const size_t targetAvailbleRequests = 2;
-  // Dry-run test to check if promotion
+  // Dry-run test to check if promotion is needed.
   auto repackStatsNL = m_db.getRepackStatisticsNoLock();
   // Statistics are supposed to be initialized for each status value.
   typedef common::dataStructures::RepackInfo::Status Status;

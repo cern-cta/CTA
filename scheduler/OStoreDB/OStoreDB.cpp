@@ -747,6 +747,7 @@ void OStoreDB::setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*
     }
   }
   if (completeJobsToDelete.size()) {
+    std::list<std::string> jobsToUnown;
     // Launch deletion.
     for (auto &j: completeJobsToDelete) {
       j->asyncDeleteRequest();
@@ -759,15 +760,21 @@ void OStoreDB::setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*
         params.add("fileId", j->archiveFile.archiveFileID)
               .add("objectAddress", j->m_archiveRequest.getAddressIfSet());
         lc.log(log::INFO, "In OStoreDB::setJobBatchReported(): deleted ArchiveRequest after completion and reporting.");
+        // We remove the job from ownership.
+        jobsToUnown.push_back(j->m_archiveRequest.getAddressIfSet());
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", j->archiveFile.archiveFileID)
               .add("objectAddress", j->m_archiveRequest.getAddressIfSet())
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::setJobBatchReported(): failed to delete ArchiveRequest after completion and reporting.");
+        // We have to remove the job from ownership.
+        jobsToUnown.push_back(j->m_archiveRequest.getAddressIfSet());
       }
     } 
     timingList.insertAndReset("deletionCompletionTime", t);
+    m_agentReference->removeBatchFromOwnership(jobsToUnown, m_objectStore);
+    timingList.insertAndReset("unownDeletedJobsTime", t);
   }
   for (auto & queue: failedQueues) {
     // Put the jobs in the failed queue
@@ -1188,7 +1195,12 @@ auto OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpans
 // OStoreDB::populateRepackRequestsStatistics()
 //------------------------------------------------------------------------------
 void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabase::RepackRequestStatistics& stats) {
-  objectstore::RepackIndex ri(re.getRepackIndexAddress(), m_objectStore);
+  objectstore::RepackIndex ri(m_objectStore);
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (RootEntry::NotAllocated &) {
+    return;
+  }
   ri.fetchNoLock();
   std::list<objectstore::RepackRequest> requests;
   std::list<std::unique_ptr<objectstore::RepackRequest::AsyncLockfreeFetcher>> fetchers;
@@ -1211,7 +1223,7 @@ void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabas
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getDRepackStatistics()
+// OStoreDB::getRepackStatistics()
 //------------------------------------------------------------------------------
 auto OStoreDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
   RootEntry re(m_objectStore);
@@ -2682,7 +2694,6 @@ void OStoreDB::ArchiveJob::waitAsyncDelete() {
   // We no more own the job (which could be gone)
   m_jobOwned = false;
 }
-
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::~ArchiveJob()
