@@ -1,0 +1,120 @@
+.\" Manpage for cta-admin
+.TH cta-admin 1 "07 January 2019" "0.1" "The CERN Tape Archive (CTA)"
+.SH NAME
+cta-admin \- administrative command interface for tape system operators
+.SH SYNOPSIS
+cta-admin \fIcommand\fR [\fIsubcommand\fR] [\fIoptions\fR]
+
+cta-admin sends the specified command to the CTA Frontend (see CONFIGURATION below) and displays the response.
+.SH DESCRIPTION
+Invoking cta-admin with no command line parameters gives a list of valid commands.
+
+To show the subcommands and options for a specific command, type:
+    cta-admin \fIcommand\fR help
+.SH COMMANDS
+Commands have a long version and an abbreviated version (shown in brackets).
+
+admin (ad)
+    Add, change, remove or list the administrators of the system. In order to use cta-admin, users must exist in the administrator list and must authenticate themselves with a valid Kerberos KRB5 credential.
+
+archivefile (af)
+    List files which have been archived to tape.
+
+archiveroute (ar)
+    Add, change, remove or list the archive routes, which are the policies linking namespace entries to tapepools.
+
+drive (dr)
+    Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
+
+groupmountrule (gmr)
+    Add, change, remove or list the group mount rules.
+
+listpendingarchives (lpa)
+    List pending archive requests.
+
+listpendingretrieves (lpr)
+    List pending retrieve requests.
+
+logicallibrary (ll)
+    Add, change, remove or list the logical libraries, which are logical groupings of tapes and drives based on physical location and tape drive capabilities. A tape can be accessed by a drive if it is in the same physical library and if the drive is capable of reading or writing the tape. In this case, that tape and that drive should normally also be in the same logical library.
+
+mountpolicy (mp)
+    Add, change, remove or list the mount policies.
+
+repack (re)
+    Manage tape repacking.
+
+requestermountrule (rmr)
+    Add, change, remove or list the requester mount rules.
+
+showqueues (sq)
+    Show the status of all active queues.
+
+shrink (sh)
+    Shrink a tapepool.
+
+storageclass (sc)
+    Add, change, remove or list the storage classes. Storage classes are associated with directories, to specify the number of tape copies the files in the directory should have. Storage classes should be changed only rarely.
+
+tape (ta)
+     Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical tape cartridges in each library.
+
+tapepool (tp)
+     Add, change, remove or list the tapepools, which are logical sets of tapes. Tapepools are used to manage the life cycle of tapes (label → supply → user pool → erase → label). Listing the tapepools shows statistics such as the total number of tapes in the pool, number of free tapes, etc.
+
+test (te)
+     Test tape read/writes. This is a synchronous command that returns performance stats and errors. It should be run on an empty self-dedicated drive.
+
+verify (ve)
+     Manage tape verification.
+
+.SH CONFIGURATION FILE
+The cta-admin configuration is specified in \fI/etc/cta/cta-cli.conf\fR. The following configuration options can be specified:
+
+cta.endpoint (mandatory)
+    Specifies the CTA Frontend hostname (FQDN) and TCP port.
+
+cta.resource.options (default: \fInone\fR)
+    Currently the only supported option is \fIReusable\fR. For an explanation of XRootD SSI reusable resources, see \fIhttp://xrootd.org/doc/dev49/ssi_reference-V2.htm#_Toc506323429\fR
+
+cta.log (default: \fInone\fR)
+    Sets the client log level (see \fIXrdSsiPbLogLevel\fR below).
+
+cta.log.hiRes (default: \fIfalse\fR)
+    Specify whether log timestamps should have second (\fIfalse\fR) or microsecond (\fItrue\fR) resolution.
+
+Example configuration file:
+
+    cta.endpoint cta-frontend.cern.ch:10955
+    cta.resource.options Reusable
+.SH ENVIRONMENT VARIABLES
+XrdSsiPbLogLevel
+    Set the desired log level (default: \fInone\fR). Logging is sent to stderr. Available log levels are:
+        \fInone\fR \fIerror\fR \fIwarning\fR \fIinfo\fR \fIdebug\fR
+    There are two additional logging flags:
+        \fIprotobuf\fR shows the contents of Protocol buffers in JSON format
+        \fIprotoraw\fR shows the serialized Protocol buffer, i.e. the binary format sent on the wire
+    Log level \fIall\fR is a synonym for "\fIdebug\fR \fIprotobuf\fR \fIprotoraw\fR".
+
+XRDDEBUG
+    If the XRootD environment variable XRDDEBUG=1, the log level is set to \fIall\fR (see above).
+.\" .SH EXAMPLES
+.\" Some examples of common usage.
+.SH SEE ALSO
+CTA Administrators' Guide \fIhttps://gitlab.cern.ch/cta/CTA/blob/master/doc/CTA_Admin.pdf\fR
+.\" cta-objectstore-list(1), cta-objectstore-dump-object(1)
+.SH KNOWN BUGS
+See \fIhttps://gitlab.cern.ch/cta/CTA/issues?label_name%5B%5D=Front+end+%28Admin+interface%29\fR
+.SH AUTHOR
+Michael Davis (\fImichael.davis@cern.ch\fR)
+.SH COPYRIGHT
+This program is part of the CERN Tape Archive (CTA). Copyright 2019 CERN.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version. This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details. You should have received a copy of the GNU General Public License
+along with this program. If not, see \fIhttp://www.gnu.org/licenses/\fR.
