@@ -69,6 +69,35 @@ std::string cta::ArchiveMount::getPoolName() const {
 }
 
 //------------------------------------------------------------------------------
+// getVo
+//------------------------------------------------------------------------------
+std::string cta::ArchiveMount::getVo() const {
+    return m_dbMount->mountInfo.vo;
+}
+
+//------------------------------------------------------------------------------
+// getMediaType
+//------------------------------------------------------------------------------
+std::string cta::ArchiveMount::getMediaType() const{
+    return m_dbMount->mountInfo.mediaType;
+}
+
+//------------------------------------------------------------------------------
+// getVendor
+//------------------------------------------------------------------------------
+std::string cta::ArchiveMount::getVendor() const{
+    return m_dbMount->mountInfo.vendor;
+}
+
+//------------------------------------------------------------------------------
+// getCapacityInBytes
+//------------------------------------------------------------------------------
+uint64_t cta::ArchiveMount::getCapacityInBytes() const
+{
+    return m_dbMount->mountInfo.capacityInBytes;
+}
+
+//------------------------------------------------------------------------------
 // getNbFiles
 //------------------------------------------------------------------------------
 uint32_t cta::ArchiveMount::getNbFiles() const {

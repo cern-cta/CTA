@@ -380,7 +380,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, QueueType q
     commit();
     {
       log::ScopedParamContainer params(lc);
-      params.add("vid", vid);
+      params.add("tapeVid", vid);
       lc.log(log::INFO, "In RootEntry::removeRetrieveQueueAndCommit(): removed retrieve queue reference.");
     }
   } catch (serializers::NotFound &) {

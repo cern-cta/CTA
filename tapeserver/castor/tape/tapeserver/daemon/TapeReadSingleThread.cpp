@@ -37,14 +37,16 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   RecallReportPacker &rrp,
   const bool useLbp,
   const bool useRAO,
-  const std::string & externalEncryptionKeyScript) :
+  const std::string & externalEncryptionKeyScript,
+  const cta::RetrieveMount& retrieveMount) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
     capUtils, lc, externalEncryptionKeyScript),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),
   m_rrp(rrp),
   m_useLbp(useLbp),
-  m_useRAO(useRAO) {}
+  m_useRAO(useRAO),
+  m_retrieveMount(retrieveMount){}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -175,7 +177,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
   try{
     std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(
     new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo, m_useLbp));
-    m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
+    //m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
     
     return rs;
   }catch(cta::exception::Exception & ex){
@@ -209,10 +211,17 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
   try{
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
-    m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
+    m_watchdog.addParameter(Param("tapeVid", m_volInfo.vid));
     m_watchdog.addParameter(Param("mountType", mountTypeToString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("mountId", m_volInfo.mountId));
+    m_watchdog.addParameter(Param("tapeDrive",m_drive.config.unitName));
+    m_watchdog.addParameter(Param("vendor",m_retrieveMount.getVendor()));
     m_watchdog.addParameter(Param("volReqId", m_volInfo.mountId));
+    m_watchdog.addParameter(Param("vo",m_retrieveMount.getVo()));
+    m_watchdog.addParameter(Param("mediaType",m_retrieveMount.getMediaType()));
+    m_watchdog.addParameter(Param("tapePool",m_retrieveMount.getPoolName()));
+    m_watchdog.addParameter(Param("logicalLibrary",m_drive.config.logicalLibrary));
+    m_watchdog.addParameter(Param("capacityInBytes",m_retrieveMount.getCapacityInBytes()));
     
     // Set the tape thread time in the watchdog for total time estimation in case
     // of crash
@@ -226,6 +235,15 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
       m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting);
+      cta::log::ScopedParamContainer params(m_logContext);
+      params.add("vo",m_retrieveMount.getVo());
+      params.add("mediaType",m_retrieveMount.getMediaType());
+      params.add("tapePool",m_retrieveMount.getPoolName());
+      params.add("logicalLibrary",m_drive.config.logicalLibrary);
+      params.add("mountType",mountTypeToString(m_volInfo.mountType));
+      params.add("vendor",m_retrieveMount.getVendor());
+      params.add("capacityInBytes",m_retrieveMount.getCapacityInBytes());
+      m_logContext.log(cta::log::INFO, "Tape session started");
       mountTapeReadOnly();
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
@@ -372,7 +390,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
   int level, const std::string& msg, cta::log::ScopedParamContainer& params) {
     params.add("type", "read")
-          .add("TPVID", m_volInfo.vid)
+          .add("tapeVid", m_volInfo.vid)
           .add("mountTime", m_stats.mountTime)
           .add("positionTime", m_stats.positionTime)
           .add("waitInstructionsTime", m_stats.waitInstructionsTime)

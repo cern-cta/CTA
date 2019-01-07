@@ -68,7 +68,8 @@ public:
           RecallReportPacker &rrp,
           const bool useLbp,
           const bool useRAO,
-          const std::string & externalEncryptionKeyScript);
+          const std::string & externalEncryptionKeyScript,
+          const cta::RetrieveMount &retrieveMount);
    
   /**
    * Set the task injector. Has to be done that way (and not in the constructor)
@@ -152,11 +153,18 @@ private:
    * Access Order
    */
   bool m_useRAO;
+  
+  /**
+   * The retrieve mount object to get the VO, the tape pool and the density of the tape
+   * on which we are reading
+   */
+  const cta::RetrieveMount& m_retrieveMount;
+  
   /// Helper virtual function to access the watchdog from parent class
   virtual void countTapeLogError(const std::string & error) { 
     m_watchdog.addToErrorCount(error);
   }
-
+  
 protected:
   /**
    * Logs SCSI metrics for read session.

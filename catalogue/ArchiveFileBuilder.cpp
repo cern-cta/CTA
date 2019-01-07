@@ -111,7 +111,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> ArchiveFileBuilder::append(
         params.push_back(cta::log::Param("archiveFileID", tapeFile.archiveFileID));
         params.push_back(cta::log::Param("duplicateCopyNb", copyNbOfTapeFileToAppend));
         params.push_back(cta::log::Param("workaroundCopyNb", workaroundCopyNb));
-        params.push_back(cta::log::Param("vid", vid));
+        params.push_back(cta::log::Param("tapeVid", vid));
         params.push_back(cta::log::Param("fSeq", fSeq));
         params.push_back(cta::log::Param("blockId", blockId));
         m_log(cta::log::WARNING, "Found a duplicate tape copy number when listing archive files", params);

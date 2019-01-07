@@ -158,7 +158,7 @@ jobFound:;
     params.add("jobObject", getAddressIfSet())
           .add("queueObject", rq.getAddressIfSet())
           .add("copynb", bestTapeFile->copynb())
-          .add("vid", bestTapeFile->vid())
+          .add("tapeVid", bestTapeFile->vid())
           .add("tapeSelectionTime", tapeSelectionTime)
           .add("queueUpdateTime", queueUpdateTime)
           .add("commitUnlockQueueTime", commitUnlockQueueTime);
@@ -181,7 +181,7 @@ jobFound:;
     params.add("jobObject", getAddressIfSet())
           .add("queueObject", rq.getAddressIfSet())
           .add("copynb", bestTapeFile->copynb())
-          .add("vid", bestTapeFile->vid())
+          .add("tapeVid", bestTapeFile->vid())
           .add("tapeSelectionTime", tapeSelectionTime)
           .add("queueUpdateTime", queueUpdateTime)
           .add("commitUnlockQueueTime", commitUnlockQueueTime)

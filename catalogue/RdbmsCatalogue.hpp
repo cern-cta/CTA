@@ -284,6 +284,8 @@ public:
   void createTape(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
+    const std::string &mediaType,
+    const std::string &vendor,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
@@ -334,6 +336,8 @@ public:
    */
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override;
 
+  void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) override;
+  void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) override;
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override;
   void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) override;
   void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const uint64_t capacityInBytes) override;
@@ -490,6 +494,20 @@ public:
    * @return The archive files.
    */
   ArchiveFileItor getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const override;
+
+  /**
+   * Returns the specified files in tape file sequence order.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param startFSeq The file sequence number of the first file.  Please note
+   * that there might not be a file with this exact file sequence number.
+   * @param maxNbFiles The maximum number of files to be returned.
+   * @return The specified files in tape file sequence order.
+   */
+  std::list<common::dataStructures::ArchiveFile> getFilesForRepack(
+    const std::string &vid,
+    const uint64_t startFSeq,
+    const uint64_t maxNbFiles) const override;
 
   /**
    * Returns a summary of the tape files that meet the specified search

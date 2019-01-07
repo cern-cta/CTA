@@ -42,6 +42,16 @@ struct TapeSearchCriteria {
   optional<std::string> vid;
 
   /**
+   * The media type of a tape.
+   */
+  optional<std::string> mediaType;
+
+  /**
+   * The vendor of a tape.
+   */
+  optional<std::string> vendor;
+
+  /**
    * The name of a logical library.
    */
   optional<std::string> logicalLibrary;
@@ -50,6 +60,11 @@ struct TapeSearchCriteria {
    * The name of a tape pool.
    */
   optional<std::string> tapePool;
+
+  /**
+   * The virtual organisation that owns a tape.
+   */
+  optional<std::string> vo;
 
   /**
    * The capacity of a tape in bytes

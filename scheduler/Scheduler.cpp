@@ -531,6 +531,10 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       if (m.type==common::dataStructures::MountType::Retrieve) {
         m.logicalLibrary=tapesInfo[m.vid].logicalLibraryName;
         m.tapePool=tapesInfo[m.vid].tapePoolName;
+        m.vendor = tapesInfo[m.vid].vendor;
+        m.mediaType = tapesInfo[m.vid].mediaType;
+        m.vo = tapesInfo[m.vid].vo;
+        m.capacityInBytes = tapesInfo[m.vid].capacityInBytes;
       }
     }
   }
@@ -560,7 +564,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       if (em.vid.size()) {
         tapesInUse.insert(em.vid);
         log::ScopedParamContainer params(lc);
-        params.add("vid", em.vid)
+        params.add("tapeVid", em.vid)
               .add("mountType", common::dataStructures::toString(em.type))
               .add("drive", em.driveName);
         lc.log(log::DEBUG,"In Scheduler::sortAndGetTapesForMountInfo(): tapeAlreadyInUse found.");
@@ -592,9 +596,9 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       mountPassesACriteria = true;
     if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed) {
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", m->tapePool);
+      params.add("tapePool", m->tapePool);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
-        params.add("VID", m->vid);
+        params.add("tapeVid", m->vid);
       }
       params.add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
@@ -612,9 +616,9 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       // populate the mount with a weight 
       m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->maxDrivesAllowed;
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", m->tapePool);
+      params.add("tapePool", m->tapePool);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
-        params.add("VID", m->vid);
+        params.add("tapeVid", m->vid);
       }
       params.add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
@@ -704,8 +708,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
             existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
           } catch (...) {}
           log::ScopedParamContainer params(lc);
-          params.add("tapepool", m->tapePool)
-                .add("vid", t.vid)
+          params.add("tapePool", m->tapePool)
+                .add("tapeVid", t.vid)
                 .add("mountType", common::dataStructures::toString(m->type))
                 .add("existingMounts", existingMounts)
                 .add("bytesQueued", m->bytesQueued)
@@ -738,8 +742,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
       } catch (...) {}
       schedulerDbTime = getMountInfoTime;
       catalogueTime = getTapeInfoTime + getTapeForWriteTime;
-      params.add("tapepool", m->tapePool)
-            .add("vid", m->vid)
+      params.add("tapePool", m->tapePool)
+            .add("tapeVid", m->vid)
             .add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
             .add("bytesQueued", m->bytesQueued)
@@ -838,7 +842,11 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t,
                 driveName, 
                 logicalLibraryName, 
-                utils::getShortHostname(), 
+                utils::getShortHostname(),
+                t.vo,
+                t.mediaType,
+                t.vendor,
+                t.capacityInBytes,
                 time(NULL)).release());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_sessionRunning = true;
@@ -851,8 +859,12 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             } catch (...) {}
             schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
             catalogueTime = getTapeInfoTime + getTapeForWriteTime;
-            params.add("tapepool", m->tapePool)
-                  .add("vid", t.vid)
+            
+            params.add("tapePool", m->tapePool)
+                  .add("tapeVid", t.vid)
+                  .add("vo",t.vo)
+                  .add("mediaType",t.mediaType)
+                  .add("vendor",t.vendor)
                   .add("mountType", common::dataStructures::toString(m->type))
                   .add("existingMounts", existingMounts)
                   .add("bytesQueued", m->bytesQueued)
@@ -895,6 +907,10 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             driveName,
             logicalLibraryName, 
             utils::getShortHostname(), 
+            m->vo,
+            m->mediaType,
+            m->vendor,
+            m->capacityInBytes,
             time(NULL))));
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
@@ -909,8 +925,11 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         } catch (...) {}
         schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
         catalogueTime = getTapeInfoTime + getTapeForWriteTime;
-        params.add("tapepool", m->tapePool)
-              .add("vid", m->vid)
+        params.add("tapePool", m->tapePool)
+              .add("tapeVid", m->vid)
+              .add("vo",m->vo)
+              .add("mediaType",m->mediaType)
+              .add("vendor",m->vendor)
               .add("mountType", common::dataStructures::toString(m->type))
               .add("existingMounts", existingMounts)
               .add("bytesQueued", m->bytesQueued)

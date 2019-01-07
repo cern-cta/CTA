@@ -74,6 +74,17 @@ protected:
     cta::catalogue::ArchiveFileItor &itor);
 
   /**
+   * Creates a map from archive file ID to archive file from the specified
+   * list of archive files.
+   *
+   * @param listOfArchiveFiles The list of archive files from which the map
+   * shall be created.
+   * @return Map from archive file ID to archive file.
+   */
+  std::map<uint64_t, cta::common::dataStructures::ArchiveFile> archiveFileListToMap(
+    const std::list<cta::common::dataStructures::ArchiveFile> &listOfArchiveFiles);
+
+  /**
    * Creates a map from admin username to admin user from the specified list of
    * admin users.
    *

@@ -37,7 +37,8 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         MigrationReportPacker & repPacker,
         cta::server::ProcessCap &capUtils,
         uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush,
-        const bool useLbp, const std::string & externalEncryptionKeyScript):
+        const bool useLbp, const std::string & externalEncryptionKeyScript,
+        const cta::ArchiveMount & archiveMount):
         TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo, 
           capUtils, lc, externalEncryptionKeyScript),
         m_filesBeforeFlush(filesBeforeFlush),
@@ -47,7 +48,8 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         m_lastFseq(-1),
         m_compress(true),
         m_useLbp(useLbp),
-        m_watchdog(mwd){}
+        m_watchdog(mwd),
+        m_archiveMount(archiveMount){}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -163,7 +165,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
   ScopedParam sp[]={
     ScopedParam(m_logContext, Param("lastFseq", m_lastFseq)),
     ScopedParam(m_logContext, Param("compression", m_compress)),
-    ScopedParam(m_logContext, Param("useLbp", m_useLbp))
+    ScopedParam(m_logContext, Param("useLbp", m_useLbp)),
   };
   tape::utils::suppresUnusedVariable(sp);
   try {
@@ -171,7 +173,6 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
     new castor::tape::tapeFile::WriteSession(m_drive, m_volInfo, m_lastFseq,
       m_compress, m_useLbp)
     );
-    m_logContext.log(cta::log::INFO, "Tape Write session session successfully started");
   }
   catch (cta::exception::Exception & e) {
     ScopedParam sp0(m_logContext, Param("ErrorMessage", e.getMessageValue()));
@@ -277,11 +278,19 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   {
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
-    m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
+    m_watchdog.addParameter(Param("tapeVid", m_volInfo.vid));
     m_watchdog.addParameter(Param("mountType", mountTypeToString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("mountId", m_volInfo.mountId));
     m_watchdog.addParameter(Param("volReqId", m_volInfo.mountId));
     
+    m_watchdog.addParameter(Param("tapeDrive",m_drive.config.unitName));
+    m_watchdog.addParameter(Param("vendor",m_archiveMount.getVendor()));
+    m_watchdog.addParameter(Param("vo",m_archiveMount.getVo()));
+    m_watchdog.addParameter(Param("mediaType",m_archiveMount.getMediaType()));
+    m_watchdog.addParameter(Param("tapePool",m_archiveMount.getPoolName()));
+    m_watchdog.addParameter(Param("logicalLibrary",m_drive.config.logicalLibrary));
+    m_watchdog.addParameter(Param("capacityInBytes",m_archiveMount.getCapacityInBytes()));
+      
     // Set the tape thread time in the watchdog for total time estimation in case
     // of crash
     m_watchdog.updateThreadTimer(totalTimer);
@@ -299,6 +308,15 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, m_logContext);
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
+      cta::log::ScopedParamContainer params(m_logContext);
+      params.add("vo",m_archiveMount.getVo());
+      params.add("mediaType",m_archiveMount.getMediaType());
+      params.add("tapePool",m_archiveMount.getPoolName());
+      params.add("logicalLibrary",m_drive.config.logicalLibrary);
+      params.add("mountType",mountTypeToString(m_volInfo.mountType));
+      params.add("vendor",m_archiveMount.getVendor());
+      params.add("capacityInBytes",m_archiveMount.getCapacityInBytes());
+      m_logContext.log(cta::log::INFO, "Tape session started");
       mountTapeReadWrite();
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
@@ -505,7 +523,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(
 int level,const std::string& msg, cta::log::ScopedParamContainer& params){
   params.add("type", "write")
-        .add("TPVID", m_volInfo.vid)
+        .add("tapeVid", m_volInfo.vid)
         .add("mountTime", m_stats.mountTime)
         .add("positionTime", m_stats.positionTime)
         .add("waitInstructionsTime", m_stats.waitInstructionsTime)
