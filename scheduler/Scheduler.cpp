@@ -353,7 +353,7 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
       // Nothing to promote after all.
       return;
     }
-    if (repackStatsNL->at(Status::Pending) &&
+    if (repackStats->at(Status::Pending) &&
             (targetAvailbleRequests > repackStats->at(Status::ToExpand) + repackStats->at(Status::Starting))) {
       auto requestsToPromote = targetAvailbleRequests;
       requestsToPromote -= repackStats->at(Status::ToExpand);
