@@ -393,6 +393,10 @@ public:
     virtual PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount,
             log::LogContext &lc) = 0;
     virtual ~RepackRequestStatistics() {}
+    // The pending request queue could be absent. This is not a big problem as 
+    // there will be nothing to schedule anyway. This exception is thrown by the 
+    // locking version only.
+    CTA_GENERATE_EXCEPTION_CLASS(NoPendingRequestQueue);
   };
   CTA_GENERATE_EXCEPTION_CLASS(SchedulingLockNotHeld);
   virtual std::unique_ptr<RepackRequestStatistics> getRepackStatistics() = 0;

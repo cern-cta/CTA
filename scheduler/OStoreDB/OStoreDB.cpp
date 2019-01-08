@@ -33,6 +33,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/make_unique.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "Scheduler.hpp"
 #include <algorithm>
 #include <cmath>
 #include <stdlib.h>     /* srand, rand */
@@ -1208,6 +1209,11 @@ void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabas
     requests.emplace_back(objectstore::RepackRequest(rra.repackRequestAddress, m_objectStore));
     fetchers.emplace_back(requests.back().asyncLockfreeFetch());
   }
+  // Ensure existence of stats for important statuses
+  typedef common::dataStructures::RepackInfo::Status Status; 
+  for (auto s: {Status::Pending, Status::ToExpand, Status::Starting}) {
+    stats[s] = 0;
+  }
   auto fet = fetchers.begin();
   for (auto &req: requests) {
     try {
@@ -1236,7 +1242,9 @@ auto OStoreDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::Repac
   try {
     typedRet->m_pendingRepackRequestQueue.setAddress(re.getRepackQueueAddress(RepackQueueType::Pending));
     typedRet->m_lockOnPendingRepackRequestsQueue.lock(typedRet->m_pendingRepackRequestQueue);
-  } catch (...) {}
+  } catch (...) {
+    throw SchedulerDatabase::RepackRequestStatistics::NoPendingRequestQueue("In OStoreDB::getRepackStatistics(): could not lock the pending requests queue.");
+  }
   // In all cases, we get the information from the index and individual requests.
   populateRepackRequestsStatistics(re, *typedRet);
   std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
