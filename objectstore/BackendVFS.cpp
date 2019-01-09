@@ -126,9 +126,9 @@ void BackendVFS::create(std::string name, std::string content) {
     int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
     lockCreated = true;
     cta::exception::Errnum::throwOnMinusOne(fdLock,
-        "In ObjectStoreVFS::create, failed to creat the lock file");
+        std::string("In ObjectStoreVFS::create, failed to create the lock file: ") + name);
     cta::exception::Errnum::throwOnMinusOne(::close(fdLock),
-        "In ObjectStoreVFS::create, failed to close the lock file");
+        std::string("In ObjectStoreVFS::create, failed to close the lock file: ") + name);
   } catch (...) {
     if (fileCreated) unlink(path.c_str());
     if (lockCreated) unlink(lockPath.c_str());

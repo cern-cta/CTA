@@ -33,6 +33,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/make_unique.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "Scheduler.hpp"
 #include <algorithm>
 #include <cmath>
 #include <stdlib.h>     /* srand, rand */
@@ -747,6 +748,7 @@ void OStoreDB::setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*
     }
   }
   if (completeJobsToDelete.size()) {
+    std::list<std::string> jobsToUnown;
     // Launch deletion.
     for (auto &j: completeJobsToDelete) {
       j->asyncDeleteRequest();
@@ -759,15 +761,21 @@ void OStoreDB::setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*
         params.add("fileId", j->archiveFile.archiveFileID)
               .add("objectAddress", j->m_archiveRequest.getAddressIfSet());
         lc.log(log::INFO, "In OStoreDB::setJobBatchReported(): deleted ArchiveRequest after completion and reporting.");
+        // We remove the job from ownership.
+        jobsToUnown.push_back(j->m_archiveRequest.getAddressIfSet());
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", j->archiveFile.archiveFileID)
               .add("objectAddress", j->m_archiveRequest.getAddressIfSet())
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::setJobBatchReported(): failed to delete ArchiveRequest after completion and reporting.");
+        // We have to remove the job from ownership.
+        jobsToUnown.push_back(j->m_archiveRequest.getAddressIfSet());
       }
     } 
     timingList.insertAndReset("deletionCompletionTime", t);
+    m_agentReference->removeBatchFromOwnership(jobsToUnown, m_objectStore);
+    timingList.insertAndReset("unownDeletedJobsTime", t);
   }
   for (auto & queue: failedQueues) {
     // Put the jobs in the failed queue
@@ -1188,13 +1196,23 @@ auto OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpans
 // OStoreDB::populateRepackRequestsStatistics()
 //------------------------------------------------------------------------------
 void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabase::RepackRequestStatistics& stats) {
-  objectstore::RepackIndex ri(re.getRepackIndexAddress(), m_objectStore);
+  objectstore::RepackIndex ri(m_objectStore);
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (RootEntry::NotAllocated &) {
+    return;
+  }
   ri.fetchNoLock();
   std::list<objectstore::RepackRequest> requests;
   std::list<std::unique_ptr<objectstore::RepackRequest::AsyncLockfreeFetcher>> fetchers;
   for (auto &rra: ri.getRepackRequestsAddresses()) {
     requests.emplace_back(objectstore::RepackRequest(rra.repackRequestAddress, m_objectStore));
     fetchers.emplace_back(requests.back().asyncLockfreeFetch());
+  }
+  // Ensure existence of stats for important statuses
+  typedef common::dataStructures::RepackInfo::Status Status; 
+  for (auto s: {Status::Pending, Status::ToExpand, Status::Starting}) {
+    stats[s] = 0;
   }
   auto fet = fetchers.begin();
   for (auto &req: requests) {
@@ -1211,7 +1229,7 @@ void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabas
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getDRepackStatistics()
+// OStoreDB::getRepackStatistics()
 //------------------------------------------------------------------------------
 auto OStoreDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
   RootEntry re(m_objectStore);
@@ -1224,7 +1242,9 @@ auto OStoreDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::Repac
   try {
     typedRet->m_pendingRepackRequestQueue.setAddress(re.getRepackQueueAddress(RepackQueueType::Pending));
     typedRet->m_lockOnPendingRepackRequestsQueue.lock(typedRet->m_pendingRepackRequestQueue);
-  } catch (...) {}
+  } catch (...) {
+    throw SchedulerDatabase::RepackRequestStatistics::NoPendingRequestQueue("In OStoreDB::getRepackStatistics(): could not lock the pending requests queue.");
+  }
   // In all cases, we get the information from the index and individual requests.
   populateRepackRequestsStatistics(re, *typedRet);
   std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
@@ -2694,7 +2714,6 @@ void OStoreDB::ArchiveJob::waitAsyncDelete() {
   // We no more own the job (which could be gone)
   m_jobOwned = false;
 }
-
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::~ArchiveJob()
