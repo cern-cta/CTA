@@ -227,6 +227,37 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
   ASSERT_EQ(filesToDo, osdbi.getArchiveJobs("tapepool").size());
 }
 
+TEST_P(OStoreDBTest, getNextRequestToExpand) {
+  using namespace cta::objectstore;
+  cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
+  cta::log::LogContext lc(logger);
+  // Get the OStoreBDinterface
+  OStoreDBWrapperInterface & osdbi = getDb();
+  osdbi.queueRepack("testvid","bufferUrl",cta::common::dataStructures::RepackInfo::Type::ExpandOnly,lc);
+  osdbi.waitSubthreadsComplete();  
+  
+  auto expandRequest = osdbi.getNextRequestToExpand();
+  
+  /*RootEntry re(osdbi.getBackend());
+  ScopedSharedLock rel(re);
+  re.fetch();
+  std::string rqAddr = re.getRepackQueueAddress(RepackQueueType::ToExpand);
+  rel.release();
+  RepackQueue rq(rqAddr, osdbi.getBackend());
+  ScopedSharedLock aql(rq);
+  rq.fetch();
+  aql.release();*/
+  
+  //std::cout<<expandRequest.get()->repackInfo.vid<<std::endl;
+  
+  /*RepackQueue rq(rqa, osdbi.getBackend());
+  ScopedSharedLock aql(rq);
+  rq.fetch();*/
+  /*auto expandRequest = osdbi.getNextRequestToExpand();
+  std::cout<<expandRequest.get()->repackInfo.vid<<std::endl;
+  ASSERT_EQ(expandRequest.get()->repackInfo.vid,"testvid");*/
+}
+
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
 #ifdef TEST_RADOS
 static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");

@@ -1247,7 +1247,7 @@ auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase:
 // OStoreDB::getNextRequestToExpand()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRequestToExpand() {
-  typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueueToExpand> RQTEAlgo;
+  typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueuePending> RQTEAlgo;
   RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);
   RootEntry re(m_objectStore);
   re.fetchNoLock();
@@ -1258,12 +1258,24 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRequestToExpa
     if(jobs.elements.empty()){
       continue;
     }
-    std::unique_ptr<cta::objectstore::RepackRequest> elt;
-    elt.reset(jobs.elements.front().repackRequest.release());
-    std::unique_ptr<OStoreDB::RepackRequest> ret(new OStoreDB::RepackRequest(elt->getAddressIfSet(),*this));
+    std::unique_ptr<OStoreDB::RepackRequest> ret;
+    for(auto &elt : jobs.elements){
+      ret.reset(new OStoreDB::RepackRequest(elt.repackRequest->getAddressIfSet(),*this));
+      std::cout<<elt.repackInfo.vid<<std::endl;
+      ret->m_repackRequest.initialize();
+      ret->m_repackRequest.getInfo().vid;
+    }
+    auto elt = jobs.elements.front().repackRequest.get();
+    
+    ret.reset(new OStoreDB::RepackRequest(elt->getAddressIfSet(),*this));
     ret->repackInfo.vid = elt->getInfo().vid;
-    ret->repackInfo.status = elt->getInfo().status;
-    ret->repackInfo.type = elt->getInfo().type;
+    std::cout<<jobs.elements.front().repackRequest->dump()<<std::endl;
+    /*for(auto elt : jobs.elements){
+      ret.reset(new OStoreDB::RepackRequest(elt.getAddressIfSet(),*this));
+      ret->repackInfo.vid = elt.repackRequest->getInfo().vid;
+      ret->repackInfo.status = elt.repackRequest->getInfo().status;
+      ret->repackInfo.type = elt.repackRequest->getInfo().status;
+    }*/
     return std::move(ret);
   }
 }
