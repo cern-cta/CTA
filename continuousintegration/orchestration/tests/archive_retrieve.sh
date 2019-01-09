@@ -34,7 +34,7 @@ echo
 echo "Launching simple_client_ar.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp simple_client_ar.sh client:/root/client_ar.sh
+kubectl -n ${NAMESPACE} cp simple_client_ar.sh client:/root/simple_client_ar.sh
 kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/simple_client_ar.sh || exit 1
 
