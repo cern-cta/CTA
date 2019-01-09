@@ -183,6 +183,9 @@ echo "###"
 
 LASTCOUNT=${RETRIEVED}
 
+# Updating all files statuses
+eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\+\)$/\2 \1/;s/d[^0]::t[^0]/retrieved/;s/d[^0]::t0/copied/;s/d0::t0/error/;s/d0::t[^0]/tapeonly/' > ${STATUS_FILE}
+
 DELETED=0
 if [[ $REMOVE == 1 ]]; then
   echo "Waiting for files to be removed from EOS and tapes"
