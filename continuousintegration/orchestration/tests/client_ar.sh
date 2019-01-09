@@ -188,6 +188,9 @@ LASTCOUNT=${RETRIEVED}
 # in previous status mappings
 eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\+\)$/\2 \1/;s/d[^0]::t[^0]/retrieved/;s/d[^0]::t0/copied/;s/d0::t0/error/;s/d0::t[^0]/tapeonly/' > ${STATUS_FILE}
 
+echo "RAW STATUS_FILE (${STATUS_FILE})"
+cat ${STATUS_FILE}
+
 echo "LIST OF RETRIEVED FILES"
 for RETRIEVED_FILE in `cat ${STATUS_FILE} | grep retrieved | awk '{print $NF;}'`; do
   RETRIEVED_FILE_FULL_PATH=${EOS_DIR}/${RETRIEVED_FILE}
