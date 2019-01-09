@@ -6,6 +6,7 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
+  RepackRequest.cpp
   TapeMount.cpp
   LogicalLibrary.cpp
   MountType.cpp

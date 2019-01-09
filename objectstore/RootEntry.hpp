@@ -151,7 +151,6 @@ private:
 public:
   // Dump the root entry
   std::string dump ();
-};
+}; 
 
 }}
-

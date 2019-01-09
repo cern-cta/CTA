@@ -374,9 +374,11 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
 // getNextRepackRequestToExpand
 //------------------------------------------------------------------------------
 std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
-    auto repackRequest = m_db.getNextRequestToExpand();
-    std::unique_ptr<RepackRequest> repReqRet(new RepackRequest());
+    std::unique_ptr<cta::SchedulerDatabase::RepackRequest> repackRequest;
+    repackRequest = m_db.getNextRequestToExpand();
     
+    std::unique_ptr<RepackRequest> ret(new RepackRequest());
+    ret->m_dbReq.reset(repackRequest.release());
     throw exception::Exception("In Scheduler::getNextRepackRequestToExpand(): not implemented.");
 }
 

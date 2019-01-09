@@ -19,6 +19,8 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
+#include "common/dataStructures/RepackInfo.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 
 namespace cta {
 
@@ -26,9 +28,13 @@ namespace cta {
  * Control structure for the RepackRequest.
  */
 class RepackRequest {
+  friend class Scheduler;
 public:
+  RepackRequest();
   void expand();
-private:
+  const cta::common::dataStructures::RepackInfo getRepackInfo() const;
+  
+protected:
   std::unique_ptr<cta::SchedulerDatabase::RepackRequest> m_dbReq;
 }; // class RepackRequest
 

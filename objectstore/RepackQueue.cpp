@@ -146,7 +146,7 @@ auto RepackQueue::getCandidateList(uint64_t maxRequests, std::set<std::string> r
 //------------------------------------------------------------------------------
 bool RepackQueue::isEmpty() {
   checkPayloadReadable();
-  return m_payload.repackrequestpointers().size();
+  return !m_payload.repackrequestpointers().size();
 }
 
 //------------------------------------------------------------------------------

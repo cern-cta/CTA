@@ -1030,6 +1030,28 @@ TEST_P(SchedulerTest, repack) {
   }
 }
 
+TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
+  using namespace cta;
+  
+  setupDefaultCatalogue();
+  
+  Scheduler &scheduler = getScheduler();
+  
+  log::DummyLogger dl("", "");
+  log::LogContext lc(dl);
+  
+  // Create and then cancel repack
+  common::dataStructures::SecurityIdentity cliId;
+  std::string tape1 = "Tape";
+  scheduler.queueRepack(cliId, tape1, "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
+  
+  scheduler.promoteRepackRequestsToToExpand(lc);
+  
+  /*auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+  ASSERT_EQ(repackRequestToExpand.get()->getRepackInfo().vid,tape1);*/
+    
+}
+
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;

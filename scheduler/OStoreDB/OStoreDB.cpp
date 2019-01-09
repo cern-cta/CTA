@@ -1267,10 +1267,8 @@ auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase:
 // OStoreDB::getNextRequestToExpand()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRequestToExpand() {
-  typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueuePending> RQTEAlgo;
-  RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);
-  RootEntry re(m_objectStore);
-  re.fetchNoLock();
+  typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueueToExpand> RQTEAlgo;
+  RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);  
   log::LogContext lc(m_logger);
   while(true){
     RQTEAlgo::PopCriteria criteria;
@@ -1278,24 +1276,13 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRequestToExpa
     if(jobs.elements.empty()){
       continue;
     }
+    auto repackRequest = jobs.elements.front().repackRequest.get();
+    auto repackInfo = jobs.elements.front().repackInfo;
     std::unique_ptr<OStoreDB::RepackRequest> ret;
-    for(auto &elt : jobs.elements){
-      ret.reset(new OStoreDB::RepackRequest(elt.repackRequest->getAddressIfSet(),*this));
-      std::cout<<elt.repackInfo.vid<<std::endl;
-      ret->m_repackRequest.initialize();
-      ret->m_repackRequest.getInfo().vid;
-    }
-    auto elt = jobs.elements.front().repackRequest.get();
-    
-    ret.reset(new OStoreDB::RepackRequest(elt->getAddressIfSet(),*this));
-    ret->repackInfo.vid = elt->getInfo().vid;
-    std::cout<<jobs.elements.front().repackRequest->dump()<<std::endl;
-    /*for(auto elt : jobs.elements){
-      ret.reset(new OStoreDB::RepackRequest(elt.getAddressIfSet(),*this));
-      ret->repackInfo.vid = elt.repackRequest->getInfo().vid;
-      ret->repackInfo.status = elt.repackRequest->getInfo().status;
-      ret->repackInfo.type = elt.repackRequest->getInfo().status;
-    }*/
+    ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(),*this));
+    ret->repackInfo.vid = repackInfo.vid;
+    ret->repackInfo.type = repackInfo.type;
+    ret->repackInfo.status = repackInfo.status;
     return std::move(ret);
   }
 }

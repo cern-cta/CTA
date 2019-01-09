@@ -217,7 +217,10 @@ trimContainerIfNeeded(Container& cont,  ScopedExclusiveLock & contLock,
   const ContainerIdentifier & cId, log::LogContext& lc)
 {
   // Repack queues are one per status, so we do not need to trim them.
-  return false;
+  if(!cont.isEmpty()){
+    return false;
+  }
+  return true;
 }
 
 template<typename C>
@@ -355,8 +358,29 @@ auto ContainerTraits<RepackQueue,C>::switchElementsOwnership(PoppedElementsBatch
   const ContainerAddress& previousOwnerAddress, log::TimingList& timingList, utils::Timer &t, log::LogContext& lc)
   -> typename OpFailure<PoppedElement>::list
 {
+    std::list<std::unique_ptr<RepackRequest::AsyncOwnerAndStatusUpdater>> updaters;
+    for(auto &e : poppedElementBatch.elements){
+      RepackRequest & repackRequest = *e.repackRequest;
+      updaters.emplace_back(repackRequest.asyncUpdateOwnerAndStatus(contAddress,previousOwnerAddress,cta::nullopt));
+    }
+    timingList.insertAndReset("asyncUpdateLaunchTime", t);
+    
     typename OpFailure<PoppedElement>::list ret;
-    //TODO : Implement this method
+    
+    for(auto el = std::make_pair(updaters.begin(), poppedElementBatch.elements.begin());
+      el.first != updaters.end(); ++el.first, ++el.second)
+    {
+      auto & updater = *(el.first);
+      auto & element = *(el.second);
+      try{
+	updater.get()->wait();
+	element.repackInfo = updater.get()->getInfo();
+      } catch(...)
+      {
+	 ret.push_back(OpFailure<PoppedElement>(&element, std::current_exception()));
+      }
+    }
+    timingList.insertAndReset("asyncUpdateCompletionTime", t);
     return ret;
 }
 
