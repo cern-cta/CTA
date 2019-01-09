@@ -561,4 +561,14 @@ auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::s
   return ret;
 }
 
+auto ArchiveQueue::getCandidateSummary() -> CandidateJobList {
+  checkPayloadReadable();
+  CandidateJobList ret;
+  for(auto & rqsp: m_payload.archivequeueshards()) {
+    ret.candidateBytes += rqsp.shardbytescount();
+    ret.candidateFiles += rqsp.shardjobscount();
+  }
+  return ret;
+}
+
 }} // namespace cta::objectstore

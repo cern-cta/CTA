@@ -100,6 +100,9 @@ public:
   // The set of retrieve requests to skip are requests previously identified by the caller as bad,
   // which still should be removed from the queue. They will be disregarded from  listing.
   CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip);
+
+  //! Return a summary of the number of jobs and number of bytes in the queue
+  CandidateJobList getCandidateSummary();
   
   void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
   // -- Generic parameters

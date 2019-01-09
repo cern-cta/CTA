@@ -30,6 +30,8 @@ using XrdSsiPb::PbException;
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
 
+#include <scheduler/RetrieveJob.hpp>
+
 
 
 namespace cta {
@@ -1034,8 +1036,44 @@ void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::
 
 void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
-   //m_scheduler.listQueueItems(m_cliIdentity.username, "failed queue", m_lc);
-   //auto retrieveJobFailedList = scheduler.getNextRetrieveJobsFailedBatch(10,lc);
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+#if 0
+   m_scheduler.listQueueItems(m_cliIdentity.username, "failed queue", m_lc);
+   auto archiveJobFailedList = m_scheduler.getNextArchiveJobsFailedBatch(10,m_lc);
+   cmdlineOutput << "Failed archive jobs: " << archiveJobFailedList.size() << std::endl;
+   auto retrieveJobFailedList = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
+   cmdlineOutput << "Failed retrieve jobs: " << retrieveJobFailedList.size() << std::endl;
+#endif
+
+   // header
+   std::vector<std::vector<std::string>> responseTable;
+   std::vector<std::string> header = {
+     "request type","failed jobs","total size (bytes)"
+   };
+#if 0
+   if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
+#endif
+   responseTable.push_back(header);
+
+   // summary
+
+#if 0
+   // failed archive jobs
+   auto archive_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
+   responseTable.push_back({ "archive", std::to_string(archive_summary.candidateFiles), std::to_string(archive_summary.candidateBytes) });
+
+   // failed retrieve jobs
+   auto retrieve_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
+   responseTable.push_back({ "retrieve", std::to_string(retrieve_summary.candidateFiles), std::to_string(retrieve_summary.candidateBytes) });
+#endif
+
+   cmdlineOutput << formatResponse(responseTable);
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 

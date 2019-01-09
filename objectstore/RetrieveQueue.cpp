@@ -608,8 +608,8 @@ auto RetrieveQueue::dumpJobs() -> std::list<JobDump> {
 auto RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip) -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
-  for (auto & rqsp: m_payload.retrievequeueshards()) {
-    // We need to go through all shard poiters unconditionnaly to count what is left (see else part)
+  for(auto & rqsp: m_payload.retrievequeueshards()) {
+    // We need to go through all shard pointers unconditionnaly to count what is left (see else part)
     if (ret.candidateBytes < maxBytes && ret.candidateFiles < maxFiles) {
       // Fetch the shard
       RetrieveQueueShard rqs(rqsp.address(), m_objectStore);
@@ -627,6 +627,16 @@ auto RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::
       ret.remainingBytesAfterCandidates += rqsp.shardbytescount();
       ret.remainingFilesAfterCandidates += rqsp.shardjobscount();
     }
+  }
+  return ret;
+}
+
+auto RetrieveQueue::getCandidateSummary() -> CandidateJobList {
+  checkPayloadReadable();
+  CandidateJobList ret;
+  for(auto & rqsp: m_payload.retrievequeueshards()) {
+    ret.candidateBytes += rqsp.shardbytescount();
+    ret.candidateFiles += rqsp.shardjobscount();
   }
   return ret;
 }

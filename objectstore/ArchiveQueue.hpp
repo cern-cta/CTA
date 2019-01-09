@@ -119,7 +119,10 @@ public:
   // The set of archive requests to skip are requests previously identified by the caller as bad,
   // which still should be removed from the queue. They will be disregarded from  listing.
   CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip);
-   
+
+  //! Return a summary of the number of jobs and number of bytes in the queue
+  CandidateJobList getCandidateSummary();
+
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();
  
