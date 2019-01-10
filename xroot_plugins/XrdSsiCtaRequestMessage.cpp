@@ -1040,6 +1040,13 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
 
    std::stringstream cmdlineOutput;
 
+   if(has_flag(OptionBoolean::JUSTARCHIVE) && has_flag(OptionBoolean::JUSTRETRIEVE)) {
+      throw cta::exception::UserError("--justarchive and --justretrieve are mutually exclusive");
+   }
+   if(has_flag(OptionBoolean::SHOW_LOG_ENTRIES) && has_flag(OptionBoolean::SUMMARY)) {
+      throw cta::exception::UserError("--log and --summary are mutually exclusive");
+   }
+
 #if 0
    m_scheduler.listQueueItems(m_cliIdentity.username, "failed queue", m_lc);
    auto archiveJobFailedList = m_scheduler.getNextArchiveJobsFailedBatch(10,m_lc);
@@ -1047,16 +1054,6 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
    auto retrieveJobFailedList = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
    cmdlineOutput << "Failed retrieve jobs: " << retrieveJobFailedList.size() << std::endl;
 #endif
-
-   // header
-   std::vector<std::vector<std::string>> responseTable;
-   std::vector<std::string> header = {
-     "request type","failed jobs","total size (bytes)"
-   };
-#if 0
-   if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
-#endif
-   responseTable.push_back(header);
 
    // summary
 
@@ -1070,9 +1067,14 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
    responseTable.push_back({ "retrieve", std::to_string(retrieve_summary.candidateFiles), std::to_string(retrieve_summary.candidateBytes) });
 #endif
 
-   cmdlineOutput << formatResponse(responseTable);
-
    response.set_message_txt(cmdlineOutput.str());
+
+   // Should the client display column headers?
+   if(has_flag(OptionBoolean::SHOW_HEADER)) {
+      response.set_show_header(has_flag(OptionBoolean::SUMMARY) ?
+         HeaderType::FAILEDREQUEST_LS_SUMMARY : HeaderType::FAILEDREQUEST_LS);
+   }
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

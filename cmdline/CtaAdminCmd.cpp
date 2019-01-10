@@ -215,6 +215,8 @@ void CtaAdminCmd::send() const
          if(!isJson()) switch(response.show_header()) {
             case HeaderType::ARCHIVEFILE_LS:               printAfLsHeader(); break;
             case HeaderType::ARCHIVEFILE_LS_SUMMARY:       printAfLsSummaryHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS:             printFrLsHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS_SUMMARY:     printFrLsSummaryHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES:          printLpaHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  printLpaSummaryHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES:         printLprHeader(); break;
@@ -440,6 +442,37 @@ void CtaAdminCmd::print(const cta::admin::ArchiveFileLsSummary &afls_summary)
    std::cout << std::setfill(' ') << std::setw(13) << std::right << afls_summary.total_files() << ' '
              << std::setfill(' ') << std::setw(12) << std::right << afls_summary.total_size()  << ' '
              << std::endl;
+}
+
+void CtaAdminCmd::printFrLsHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(11) << std::right << "request type"   << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "vid"            << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "requester"      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
+                                                                 << "path"
+             << TEXT_NORMAL << std::endl;
+}
+
+void CtaAdminCmd::print(const cta::admin::FailedRequestLsItem &frls_item)
+{
+   throw std::runtime_error("Not implemented.");
+}
+
+void CtaAdminCmd::printFrLsSummaryHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(11) << std::right << "request type"   << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
+             << TEXT_NORMAL << std::endl;
+}
+
+void CtaAdminCmd::print(const cta::admin::FailedRequestLsSummary &frls_summary)
+{
+   throw std::runtime_error("Not implemented.");
 }
 
 void CtaAdminCmd::printLpaHeader()

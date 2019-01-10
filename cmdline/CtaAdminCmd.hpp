@@ -50,6 +50,8 @@ public:
    // Output headers
    static void printAfLsHeader();
    static void printAfLsSummaryHeader();
+   static void printFrLsHeader();
+   static void printFrLsSummaryHeader();
    static void printLpaHeader();
    static void printLpaSummaryHeader();
    static void printLprHeader();
@@ -59,6 +61,8 @@ public:
    // Output records
    static void print(const ArchiveFileLsItem &afls_item);
    static void print(const ArchiveFileLsSummary &afls_summary);
+   static void print(const FailedRequestLsItem &frls_item);
+   static void print(const FailedRequestLsSummary &frls_summary);
    static void print(const ListPendingArchivesItem &lpa_item);
    static void print(const ListPendingArchivesSummary &lpa_summary);
    static void print(const ListPendingRetrievesItem &lpr_item);
