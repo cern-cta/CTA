@@ -26,11 +26,10 @@ using XrdSsiPb::PbException;
 
 #include <cmdline/CtaAdminCmdParse.hpp>
 #include "XrdCtaArchiveFileLs.hpp"
+#include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaListPendingQueue.hpp"
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
-
-#include <scheduler/RetrieveJob.hpp>
 
 
 
@@ -142,7 +141,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processDrive_Rm(request.admincmd(), response);
                break;
             case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS):
-               processFailedRequest_Ls(request.admincmd(), response);
+               processFailedRequest_Ls(request.admincmd(), response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD):
                processGroupMountRule_Add(request.admincmd(), response);
@@ -1034,11 +1033,9 @@ void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::
 
 
 
-void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
    using namespace cta::admin;
-
-   std::stringstream cmdlineOutput;
 
    if(has_flag(OptionBoolean::JUSTARCHIVE) && has_flag(OptionBoolean::JUSTRETRIEVE)) {
       throw cta::exception::UserError("--justarchive and --justretrieve are mutually exclusive");
@@ -1047,27 +1044,12 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
       throw cta::exception::UserError("--log and --summary are mutually exclusive");
    }
 
-#if 0
-   m_scheduler.listQueueItems(m_cliIdentity.username, "failed queue", m_lc);
-   auto archiveJobFailedList = m_scheduler.getNextArchiveJobsFailedBatch(10,m_lc);
-   cmdlineOutput << "Failed archive jobs: " << archiveJobFailedList.size() << std::endl;
-   auto retrieveJobFailedList = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
-   cmdlineOutput << "Failed retrieve jobs: " << retrieveJobFailedList.size() << std::endl;
-#endif
+   bool is_archive = !has_flag(OptionBoolean::JUSTRETRIEVE);
+   bool is_retrieve = !has_flag(OptionBoolean::JUSTARCHIVE);
 
-   // summary
-
-#if 0
-   // failed archive jobs
-   auto archive_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
-   responseTable.push_back({ "archive", std::to_string(archive_summary.candidateFiles), std::to_string(archive_summary.candidateBytes) });
-
-   // failed retrieve jobs
-   auto retrieve_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
-   responseTable.push_back({ "retrieve", std::to_string(retrieve_summary.candidateFiles), std::to_string(retrieve_summary.candidateBytes) });
-#endif
-
-   response.set_message_txt(cmdlineOutput.str());
+   // Create a XrdSsi stream object to return the results
+   stream = new FailedRequestLsStream(m_scheduler, is_archive, is_retrieve,
+      has_flag(OptionBoolean::SHOW_LOG_ENTRIES), has_flag(OptionBoolean::SUMMARY));
 
    // Should the client display column headers?
    if(has_flag(OptionBoolean::SHOW_HEADER)) {

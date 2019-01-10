@@ -91,7 +91,6 @@ private:
    admincmd_t processDrive_Down;
    admincmd_t processDrive_Ls;
    admincmd_t processDrive_Rm;
-   admincmd_t processFailedRequest_Ls;
    admincmd_t processGroupMountRule_Add;
    admincmd_t processGroupMountRule_Ch;
    admincmd_t processGroupMountRule_Rm;
@@ -146,6 +145,7 @@ private:
    typedef void admincmdstream_t(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream);
 
    admincmdstream_t processArchiveFile_Ls;
+   admincmdstream_t processFailedRequest_Ls;
    admincmdstream_t processListPendingArchives;
    admincmdstream_t processListPendingRetrieves;
    admincmdstream_t processTapePool_Ls;
