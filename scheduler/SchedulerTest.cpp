@@ -1040,16 +1040,37 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
   
-  // Create and then cancel repack
+  // Create a repack request
   common::dataStructures::SecurityIdentity cliId;
   std::string tape1 = "Tape";
   scheduler.queueRepack(cliId, tape1, "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
   
+  std::string tape2 = "Tape2";
+  scheduler.queueRepack(cliId,tape2,"root://server/repackDir",common::dataStructures::RepackInfo::Type::ExpandOnly,lc);
+  
+  //Test the repack request queued has status Pending
+  ASSERT_EQ(scheduler.getRepack(tape1).status,common::dataStructures::RepackInfo::Status::Pending);
+  ASSERT_EQ(scheduler.getRepack(tape2).status,common::dataStructures::RepackInfo::Status::Pending);
+  
+  //Change the repack request status to ToExpand
   scheduler.promoteRepackRequestsToToExpand(lc);
   
-  /*auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
-  ASSERT_EQ(repackRequestToExpand.get()->getRepackInfo().vid,tape1);*/
-    
+  //Test the getNextRepackRequestToExpand method that is supposed to retrieve the previously first inserted request
+  auto repackRequestToExpand1 = scheduler.getNextRepackRequestToExpand();
+  //Check vid
+  ASSERT_EQ(repackRequestToExpand1.get()->getRepackInfo().vid,tape1);
+  //Check status changed from Pending to ToExpand
+  ASSERT_EQ(repackRequestToExpand1.get()->getRepackInfo().status,common::dataStructures::RepackInfo::Status::ToExpand);
+  ASSERT_EQ(repackRequestToExpand1.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::RepackOnly);
+  
+  //Test the getNextRepackRequestToExpand method that is supposed to retrieve the previously second inserted request
+  auto repackRequestToExpand2 = scheduler.getNextRepackRequestToExpand();
+  
+  //Check vid
+  ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().vid,tape2);
+  //Check status changed from Pending to ToExpand
+  ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().status,common::dataStructures::RepackInfo::Status::ToExpand);
+  ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::ExpandOnly); 
 }
 
 #undef TEST_MOCK_DB

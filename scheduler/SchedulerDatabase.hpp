@@ -414,7 +414,7 @@ public:
   };
   
   /***/
-  virtual std::unique_ptr<RepackRequest> getNextRequestToExpand() = 0;
+  virtual std::unique_ptr<RepackRequest> getNextRepackJobToExpand() = 0;
   /*============ Repack management: maintenance process side =========================*/
   
   /*!

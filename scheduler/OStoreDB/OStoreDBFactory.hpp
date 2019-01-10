@@ -207,8 +207,8 @@ public:
     return m_OStoreDB.getRepackStatisticsNoLock();
   }
   
-  std::unique_ptr<RepackRequest> getNextRequestToExpand() override {
-    return m_OStoreDB.getNextRequestToExpand();
+  std::unique_ptr<RepackRequest> getNextRepackJobToExpand() override {
+    return m_OStoreDB.getNextRepackJobToExpand();
   }
 
   std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {

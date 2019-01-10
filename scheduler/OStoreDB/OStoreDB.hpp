@@ -359,7 +359,12 @@ public:
   std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override;
   std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override;
   
-  std::unique_ptr<SchedulerDatabase::RepackRequest> getNextRequestToExpand() override;
+  /**
+   * Returns the Object Store representation of a RepackRequest that is in
+   * the RepackQueueToExpand queue (the repack request has Status "ToExpand"
+   * @return a unique_ptr holding the RepackRequest
+   */
+  std::unique_ptr<SchedulerDatabase::RepackRequest> getNextRepackJobToExpand() override;
   
   /* === Drive state handling  ============================================== */
   /**

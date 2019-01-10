@@ -1266,18 +1266,22 @@ auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase:
 //------------------------------------------------------------------------------
 // OStoreDB::getNextRequestToExpand()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRequestToExpand() {
+std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToExpand() {
   typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueueToExpand> RQTEAlgo;
   RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);  
   log::LogContext lc(m_logger);
   while(true){
     RQTEAlgo::PopCriteria criteria;
+    //pop request that is in the RepackQueueToExpandRequest
     auto jobs = rqteAlgo.popNextBatch(cta::nullopt,criteria,lc);
     if(jobs.elements.empty()){
+      //wait for a repack request to be in the RepackQueueToExpand
       continue;
     }
+    //Get the first one request that is in elements
     auto repackRequest = jobs.elements.front().repackRequest.get();
     auto repackInfo = jobs.elements.front().repackInfo;
+    //build the repackRequest with the repack infos
     std::unique_ptr<OStoreDB::RepackRequest> ret;
     ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(),*this));
     ret->repackInfo.vid = repackInfo.vid;
