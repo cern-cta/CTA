@@ -259,8 +259,11 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--checkchecksum",         OptionBoolean::CHECK_CHECKSUM },
    { "--extended",              OptionBoolean::EXTENDED },
    { "--header",                OptionBoolean::SHOW_HEADER },
-   { "--justexpand",            OptionBoolean::JUSTEXPAND },
+   { "--justarchive",           OptionBoolean::JUSTARCHIVE },
    { "--justrepack",            OptionBoolean::JUSTREPACK },
+   { "--justexpand",            OptionBoolean::JUSTEXPAND },
+   { "--justretrieve",          OptionBoolean::JUSTRETRIEVE },
+   { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
    { "--summary",               OptionBoolean::SUMMARY }
 };
 
@@ -387,10 +390,13 @@ const Option opt_hostname_alias       { Option::OPT_STR,  "--name",             
                                         "--hostname" };
 const Option opt_input                { Option::OPT_STR,  "--input",                 "-i",   " <\"zero\" or \"urandom\">" };
 const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <instance_name>" };
-const Option opt_justexpand           { Option::OPT_FLAG, "--justexpand",            "-e",   "" };
+const Option opt_justarchive          { Option::OPT_FLAG, "--justarchive",           "-a",   "" };
 const Option opt_justrepack           { Option::OPT_FLAG, "--justrepack",            "-r",   "" };
+const Option opt_justexpand           { Option::OPT_FLAG, "--justexpand",            "-e",   "" };
+const Option opt_justretrieve         { Option::OPT_FLAG, "--justretrieve",          "-r",   "" };
 const Option opt_lastfseq             { Option::OPT_UINT, "--lastfseq",              "-l",   " <last_fseq>" };
 const Option opt_lbp                  { Option::OPT_BOOL, "--lbp",                   "-p",   " <\"true\" or \"false\">" };
+const Option opt_log                  { Option::OPT_FLAG, "--log",                   "-l",   "" };
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>",
                                         "--logicallibrary" };
@@ -451,7 +457,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_DOWN  }, { opt_drivename_cmd, opt_force_flag.optional() }},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_LS    }, { opt_drivename_cmd.optional() }},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_RM    }, { opt_drivename_cmd, opt_force_flag.optional() }},
-   {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_LS    }, { }},
+   {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_LS    },
+      { opt_header.optional(), opt_justarchive.optional(), opt_justretrieve.optional(), opt_log.optional(), opt_summary.optional() }},
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_SHOW  }, { opt_copynb.optional() }},
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_RETRY }, { opt_copynb.optional() }},
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_RM    }, { opt_copynb.optional() }},
