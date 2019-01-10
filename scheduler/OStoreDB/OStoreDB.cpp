@@ -1264,7 +1264,7 @@ auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase:
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getNextRequestToExpand()
+// OStoreDB::getNextRepackJobToExpand()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToExpand() {
   typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueueToExpand> RQTEAlgo;
@@ -1275,8 +1275,8 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
     //pop request that is in the RepackQueueToExpandRequest
     auto jobs = rqteAlgo.popNextBatch(cta::nullopt,criteria,lc);
     if(jobs.elements.empty()){
-      //wait for a repack request to be in the RepackQueueToExpand
-      continue;
+      //If there is no request, return a nullptr
+      return nullptr;
     }
     //Get the first one request that is in elements
     auto repackRequest = jobs.elements.front().repackRequest.get();

@@ -376,9 +376,12 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
 std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
     std::unique_ptr<cta::SchedulerDatabase::RepackRequest> repackRequest;
     repackRequest = m_db.getNextRepackJobToExpand();
-    std::unique_ptr<RepackRequest> ret(new RepackRequest());
-    ret->m_dbReq.reset(repackRequest.release());
-    return ret;
+    if(repackRequest != nullptr){
+      std::unique_ptr<RepackRequest> ret(new RepackRequest());
+      ret->m_dbReq.reset(repackRequest.release());
+      return ret;
+    }
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------

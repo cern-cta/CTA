@@ -1070,7 +1070,10 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().vid,tape2);
   //Check status changed from Pending to ToExpand
   ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().status,common::dataStructures::RepackInfo::Status::ToExpand);
-  ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::ExpandOnly); 
+  ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::ExpandOnly);
+  
+  auto nullRepackRequest = scheduler.getNextRepackRequestToExpand();
+  ASSERT_EQ(nullRepackRequest,nullptr);
 }
 
 #undef TEST_MOCK_DB

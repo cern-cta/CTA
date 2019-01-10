@@ -28,7 +28,6 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
   // TODO: implement expansion
   // Next promote requests to ToExpand if needed
   m_scheduler.promoteRepackRequestsToToExpand(lc);
-  
 }
 
 } // namespace cta
