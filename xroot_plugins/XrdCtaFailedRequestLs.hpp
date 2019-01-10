@@ -19,6 +19,8 @@
 #pragma once
 
 #include <XrdSsiPbOStreamBuffer.hpp>
+#include <objectstore/ArchiveQueue.hpp>
+#include <objectstore/RetrieveQueue.hpp>
 #include <scheduler/Scheduler.hpp>
 #include <scheduler/RetrieveJob.hpp>
 
@@ -48,7 +50,6 @@ public:
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~FailedRequestLsStream() destructor");
    }
 
-#if 0
    /*!
     * Synchronously obtain data from an active stream
     *
@@ -74,7 +75,7 @@ public:
       XrdSsiPb::OStreamBuffer<Data> *streambuf;
 
       try {
-         if(!m_isSummary && !m_archiveFileItor.hasMore()) {
+         if(!m_isSummary && true) {
             // Nothing more to send, close the stream
             last = true;
             return nullptr;
@@ -96,17 +97,8 @@ public:
    auto retrieveJobFailedList = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
    cmdlineOutput << "Failed retrieve jobs: " << retrieveJobFailedList.size() << std::endl;
 #endif
+
 #if 0
-   // failed archive jobs
-   auto archive_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
-   responseTable.push_back({ "archive", std::to_string(archive_summary.candidateFiles), std::to_string(archive_summary.candidateBytes) });
-
-   // failed retrieve jobs
-   auto retrieve_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
-   responseTable.push_back({ "retrieve", std::to_string(retrieve_summary.candidateFiles), std::to_string(retrieve_summary.candidateBytes) });
-#endif
-
-
          for(bool is_buffer_full = false; m_archiveFileItor.hasMore() && !is_buffer_full; )
          {
             const cta::common::dataStructures::FailedRequest archiveFile = m_archiveFileItor.next();
@@ -145,6 +137,7 @@ public:
                is_buffer_full = streambuf->Push(record);
             }
          }
+#endif
          dlen = streambuf->Size();
          XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
       } catch(cta::exception::Exception &ex) {
@@ -162,26 +155,48 @@ public:
       }
       return streambuf;
    }
-#endif
 
 #if 0
+   // failed archive jobs
+   auto archive_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
+   responseTable.push_back({ "archive", std::to_string(archive_summary.candidateFiles), std::to_string(archive_summary.candidateBytes) });
+
+   // failed retrieve jobs
+   auto retrieve_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
+   responseTable.push_back({ "retrieve", std::to_string(retrieve_summary.candidateFiles), std::to_string(retrieve_summary.candidateBytes) });
+#endif
    void GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-      common::dataStructures::FailedRequestSummary summary = m_catalogue.getTapeFileSummary(m_searchCriteria);
+
+      cta::objectstore::ArchiveQueue::CandidateJobList archive_summary;
+      cta::objectstore::RetrieveQueue::CandidateJobList retrieve_summary;
 
       Data record;
 
-      // Summary statistics
-      record.mutable_afls_summary()->set_total_files(summary.totalFiles);
-      record.mutable_afls_summary()->set_total_size(summary.totalBytes);
-
-      streambuf->Push(record);
+      if(m_isArchive) {
+         record.mutable_frls_summary()->set_request_type(cta::admin::RequestType::ARCHIVE_REQUEST);
+         record.mutable_frls_summary()->set_total_files(archive_summary.candidateFiles);
+         record.mutable_frls_summary()->set_total_size(archive_summary.candidateBytes);
+         streambuf->Push(record);
+      }
+      if(m_isRetrieve) {
+         record.mutable_frls_summary()->set_request_type(cta::admin::RequestType::RETRIEVE_REQUEST);
+         record.mutable_frls_summary()->set_total_files(retrieve_summary.candidateFiles);
+         record.mutable_frls_summary()->set_total_size(retrieve_summary.candidateBytes);
+         streambuf->Push(record);
+      }
+      if(m_isArchive && m_isRetrieve) {
+         record.mutable_frls_summary()->set_request_type(cta::admin::RequestType::TOTAL);
+         record.mutable_frls_summary()->set_total_files(archive_summary.candidateFiles + retrieve_summary.candidateFiles);
+         record.mutable_frls_summary()->set_total_size(archive_summary.candidateBytes + retrieve_summary.candidateBytes);
+         streambuf->Push(record);
+      }
 
       m_isSummary = false;
    }
-#endif
 
 private:
    Scheduler &m_scheduler;                 //!< Reference to CTA Scheduler
+
    bool m_isArchive;                       //!< List failed archive requests
    bool m_isRetrieve;                      //!< List failed retrieve requests
    bool m_isLogEntries;                    //!< Show failure log messages (verbose)

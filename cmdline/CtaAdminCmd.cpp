@@ -62,6 +62,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
       switch(record.data_case()) {
          case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
          case Data::kAflsSummary:   std::cout << Log::DumpProtobuf(&record.afls_summary()); break;
+         case Data::kFrlsItem:      std::cout << Log::DumpProtobuf(&record.frls_item());    break;
+         case Data::kFrlsSummary:   std::cout << Log::DumpProtobuf(&record.frls_summary()); break;
          case Data::kLpaItem:       std::cout << Log::DumpProtobuf(&record.lpa_item());     break;
          case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
          case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
@@ -75,6 +77,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    else switch(record.data_case()) {
          case Data::kAflsItem:      CtaAdminCmd::print(record.afls_item());    break;
          case Data::kAflsSummary:   CtaAdminCmd::print(record.afls_summary()); break;
+         case Data::kFrlsItem:      CtaAdminCmd::print(record.frls_item());    break;
+         case Data::kFrlsSummary:   CtaAdminCmd::print(record.frls_summary()); break;
          case Data::kLpaItem:       CtaAdminCmd::print(record.lpa_item());     break;
          case Data::kLpaSummary:    CtaAdminCmd::print(record.lpa_summary());  break;
          case Data::kLprItem:       CtaAdminCmd::print(record.lpr_item());     break;
@@ -464,15 +468,22 @@ void CtaAdminCmd::print(const cta::admin::FailedRequestLsItem &frls_item)
 void CtaAdminCmd::printFrLsSummaryHeader()
 {
    std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(11) << std::right << "request type"   << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "request type"        << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "total files"         << ' '
+             << std::setfill(' ') << std::setw(20) << std::right << "total size (bytes)"  << ' '
              << TEXT_NORMAL << std::endl;
 }
 
 void CtaAdminCmd::print(const cta::admin::FailedRequestLsSummary &frls_summary)
 {
-   throw std::runtime_error("Not implemented.");
+   std::string request_type =
+      frls_summary.request_type() == cta::admin::RequestType::ARCHIVE_REQUEST  ? "archive" :
+      frls_summary.request_type() == cta::admin::RequestType::RETRIEVE_REQUEST ? "retrieve" : "total";
+
+   std::cout << std::setfill(' ') << std::setw(11) << std::right << request_type               << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << frls_summary.total_files() << ' '
+             << std::setfill(' ') << std::setw(20) << std::right << frls_summary.total_size()  << ' '
+             << std::endl;
 }
 
 void CtaAdminCmd::printLpaHeader()
