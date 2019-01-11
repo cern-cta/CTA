@@ -1049,7 +1049,7 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
 
    // Create a XrdSsi stream object to return the results
    stream = new FailedRequestLsStream(m_scheduler, is_archive, is_retrieve,
-      has_flag(OptionBoolean::SHOW_LOG_ENTRIES), has_flag(OptionBoolean::SUMMARY));
+      has_flag(OptionBoolean::SHOW_LOG_ENTRIES), has_flag(OptionBoolean::SUMMARY), m_lc);
 
    // Should the client display column headers?
    if(has_flag(OptionBoolean::SHOW_HEADER)) {

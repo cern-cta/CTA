@@ -255,6 +255,8 @@ public:
 
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, 
      log::LogContext & logContext) override;
+
+  JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &logContext) override;
   
   void setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*> & jobsBatch,
      log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
@@ -289,7 +291,9 @@ public:
      log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) override;
-  
+
+  JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) override;
+
   /* === Drive state handling  ============================================== */
   /**
    * Get states of all drives.

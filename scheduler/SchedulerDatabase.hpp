@@ -192,7 +192,16 @@ public:
    */
   virtual std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested,
     log::LogContext & logContext) = 0;
-  
+
+  /*======================= Failed archive jobs support ======================*/
+  struct JobsFailedSummary {
+     JobsFailedSummary(uint64_t f = 0, uint64_t b = 0) : totalFiles(f), totalBytes(b) {}
+     uint64_t totalFiles;
+     uint64_t totalBytes;
+  };
+
+  virtual JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &logContext) = 0;
+
   /**
    * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
    * @param jobsBatch
@@ -378,6 +387,8 @@ public:
     log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
   
   virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
+
+  virtual JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) = 0;
 
   /*============ Label management: user side =================================*/
   // TODO

@@ -694,6 +694,24 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArch
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::getArchiveJobsFailedSummary
+//------------------------------------------------------------------------------
+SchedulerDatabase::JobsFailedSummary OStoreDB::getArchiveJobsFailedSummary(log::LogContext &logContext) {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+
+  SchedulerDatabase::JobsFailedSummary ret;
+  auto queueList = re.dumpArchiveQueues(QueueType::FailedJobs);
+  for(auto &aj : queueList) {
+    ArchiveQueue aq(aj.address, m_objectStore);
+    auto summary = aq.getCandidateSummary();
+    ret.totalFiles += summary.candidateFiles;
+    ret.totalBytes += summary.candidateBytes;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::setArchiveJobBatchReported()
 //------------------------------------------------------------------------------
 void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*> & jobsBatch,
@@ -1113,6 +1131,24 @@ getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logCo
     }
     return ret;
   }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getRetrieveJobsFailedSummary
+//------------------------------------------------------------------------------
+SchedulerDatabase::JobsFailedSummary OStoreDB::getRetrieveJobsFailedSummary(log::LogContext &logContext) {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+
+  SchedulerDatabase::JobsFailedSummary ret;
+  auto queueList = re.dumpRetrieveQueues(QueueType::FailedJobs);
+  for(auto &rj : queueList) {
+    RetrieveQueue rq(rj.address, m_objectStore);
+    auto summary = rq.getCandidateSummary();
+    ret.totalFiles += summary.candidateFiles;
+    ret.totalBytes += summary.candidateBytes;
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------

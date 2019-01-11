@@ -138,12 +138,20 @@ public:
     return m_OStoreDB.getNextArchiveJobsToReportBatch(filesRequested, lc);
   }
 
+  JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &lc) override {
+    return m_OStoreDB.getArchiveJobsFailedSummary(lc);
+  }
+
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &lc) override {
     return m_OStoreDB.getNextRetrieveJobsToReportBatch(filesRequested, lc);
   }
   
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &lc) override {
     return m_OStoreDB.getNextRetrieveJobsFailedBatch(filesRequested, lc);
+  }
+
+  JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &lc) override {
+    return m_OStoreDB.getRetrieveJobsFailedSummary(lc);
   }
 
   void setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList,

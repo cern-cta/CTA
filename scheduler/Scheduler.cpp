@@ -1080,6 +1080,13 @@ std::list<std::unique_ptr<ArchiveJob> > Scheduler::getNextArchiveJobsToReportBat
 }
 
 //------------------------------------------------------------------------------
+// getArchiveJobsFailedSummary
+//------------------------------------------------------------------------------
+SchedulerDatabase::JobsFailedSummary Scheduler::getArchiveJobsFailedSummary(log::LogContext &logContext) {
+  return m_db.getArchiveJobsFailedSummary(logContext);
+}
+
+//------------------------------------------------------------------------------
 // getNextRetrieveJobsToReportBatch
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<RetrieveJob>> Scheduler::
@@ -1112,6 +1119,13 @@ getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logCont
     ret.back()->m_dbJob.reset(j.release());
   }
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// getRetrieveJobsFailedSummary
+//------------------------------------------------------------------------------
+SchedulerDatabase::JobsFailedSummary Scheduler::getRetrieveJobsFailedSummary(log::LogContext &logContext) {
+  return m_db.getRetrieveJobsFailedSummary(logContext);
 }
 
 //------------------------------------------------------------------------------

@@ -19,10 +19,8 @@
 #pragma once
 
 #include <XrdSsiPbOStreamBuffer.hpp>
-#include <objectstore/ArchiveQueue.hpp>
-#include <objectstore/RetrieveQueue.hpp>
 #include <scheduler/Scheduler.hpp>
-#include <scheduler/RetrieveJob.hpp>
+//#include <scheduler/RetrieveJob.hpp>
 
 
 
@@ -35,13 +33,14 @@ class FailedRequestLsStream : public XrdSsiStream
 {
 public:
    FailedRequestLsStream(Scheduler &scheduler, bool is_archive, bool is_retrieve,
-      bool is_log_entries, bool is_summary) :
+      bool is_log_entries, bool is_summary, cta::log::LogContext &lc) :
       XrdSsiStream(XrdSsiStream::isActive),
       m_scheduler(scheduler),
       m_isArchive(is_archive),
       m_isRetrieve(is_retrieve),
       m_isLogEntries(is_log_entries),
-      m_isSummary(is_summary)
+      m_isSummary(is_summary),
+      m_lc(lc)
    {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "FailedRequestLsStream() constructor");
    }
@@ -88,6 +87,7 @@ public:
             GetBuffSummary(streambuf);
             dlen = streambuf->Size();
             last = true;
+            XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
             return streambuf;
          }
 #if 0
@@ -141,7 +141,10 @@ public:
          dlen = streambuf->Size();
          XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
       } catch(cta::exception::Exception &ex) {
-         throw std::runtime_error(ex.getMessage().str());
+         std::ostringstream errMsg;
+         errMsg << __FUNCTION__ << " failed: Caught CTA exception: " << ex.what();
+         eInfo.Set(errMsg.str().c_str(), ECANCELED);
+         delete streambuf;
       } catch(std::exception &ex) {
          std::ostringstream errMsg;
          errMsg << __FUNCTION__ << " failed: " << ex.what();
@@ -156,38 +159,31 @@ public:
       return streambuf;
    }
 
-#if 0
-   // failed archive jobs
-   auto archive_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
-   responseTable.push_back({ "archive", std::to_string(archive_summary.candidateFiles), std::to_string(archive_summary.candidateBytes) });
-
-   // failed retrieve jobs
-   auto retrieve_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
-   responseTable.push_back({ "retrieve", std::to_string(retrieve_summary.candidateFiles), std::to_string(retrieve_summary.candidateBytes) });
-#endif
    void GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-
-      cta::objectstore::ArchiveQueue::CandidateJobList archive_summary;
-      cta::objectstore::RetrieveQueue::CandidateJobList retrieve_summary;
-
-      Data record;
+      SchedulerDatabase::JobsFailedSummary archive_summary;
+      SchedulerDatabase::JobsFailedSummary retrieve_summary;
 
       if(m_isArchive) {
+         Data record;
+         archive_summary = m_scheduler.getArchiveJobsFailedSummary(m_lc);
          record.mutable_frls_summary()->set_request_type(cta::admin::RequestType::ARCHIVE_REQUEST);
-         record.mutable_frls_summary()->set_total_files(archive_summary.candidateFiles);
-         record.mutable_frls_summary()->set_total_size(archive_summary.candidateBytes);
+         record.mutable_frls_summary()->set_total_files(archive_summary.totalFiles);
+         record.mutable_frls_summary()->set_total_size(archive_summary.totalBytes);
          streambuf->Push(record);
       }
       if(m_isRetrieve) {
+         Data record;
+         retrieve_summary = m_scheduler.getRetrieveJobsFailedSummary(m_lc);
          record.mutable_frls_summary()->set_request_type(cta::admin::RequestType::RETRIEVE_REQUEST);
-         record.mutable_frls_summary()->set_total_files(retrieve_summary.candidateFiles);
-         record.mutable_frls_summary()->set_total_size(retrieve_summary.candidateBytes);
+         record.mutable_frls_summary()->set_total_files(retrieve_summary.totalFiles);
+         record.mutable_frls_summary()->set_total_size(retrieve_summary.totalBytes);
          streambuf->Push(record);
       }
       if(m_isArchive && m_isRetrieve) {
+         Data record;
          record.mutable_frls_summary()->set_request_type(cta::admin::RequestType::TOTAL);
-         record.mutable_frls_summary()->set_total_files(archive_summary.candidateFiles + retrieve_summary.candidateFiles);
-         record.mutable_frls_summary()->set_total_size(archive_summary.candidateBytes + retrieve_summary.candidateBytes);
+         record.mutable_frls_summary()->set_total_files(archive_summary.totalFiles + retrieve_summary.totalFiles);
+         record.mutable_frls_summary()->set_total_size(archive_summary.totalBytes + retrieve_summary.totalBytes);
          streambuf->Push(record);
       }
 
@@ -195,14 +191,16 @@ public:
    }
 
 private:
-   Scheduler &m_scheduler;                 //!< Reference to CTA Scheduler
+   cta::Scheduler &m_scheduler;            //!< Reference to CTA Scheduler
 
    bool m_isArchive;                       //!< List failed archive requests
    bool m_isRetrieve;                      //!< List failed retrieve requests
    bool m_isLogEntries;                    //!< Show failure log messages (verbose)
    bool m_isSummary;                       //!< Short summary of number of failures
 
-   static constexpr const char* const LOG_SUFFIX  = "FailedRequestLsStream";    //!< Identifier for log messages
+   cta::log::LogContext &m_lc;             //!< Reference to CTA Log Context
+
+   static constexpr const char* const LOG_SUFFIX  = "FailedRequestLsStream";    //!< Identifier for SSI log messages
 };
 
 }} // namespace cta::xrd
