@@ -287,7 +287,7 @@ void SqliteStmt::startDeferredTransactionIfNecessary(const AutocommitMode autoco
       " AUTOCOMMIT_ON statement.  Use commit() between the statements instead");
   }
 
-  if(m_conn.m_transactionInProgress && !autocommit) {
+  if(!m_conn.m_transactionInProgress && !autocommit) {
     beginDeferredTransaction();
     m_conn.m_transactionInProgress = true;
   }
