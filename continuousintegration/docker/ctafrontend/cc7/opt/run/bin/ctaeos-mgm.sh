@@ -214,9 +214,11 @@ fi
   # enable eos workflow engine
   eos space config default space.wfe=on
   # set the thread-pool size of concurrently running workflows
-  eos space config default space.wfe.ntx=10
+  # it should not be ridiculous (was 10 and we have 500 in production)
+  eos space config default space.wfe.ntx=200
+  ## Is the following really needed?
   # set interval in which the WFE engine is running
-  eos space config default space.wfe.interval=1
+  # eos space config default space.wfe.interval=1
 
 # prepare EOS garbage collectors
   # enable the 'file archived' garbage collector
