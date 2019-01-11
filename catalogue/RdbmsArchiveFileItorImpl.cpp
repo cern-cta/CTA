@@ -233,7 +233,7 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
     if(searchCriteria.tapePool) {
       m_stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     }
-    m_rset = m_stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    m_rset = m_stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
 
     m_rsetIsEmpty = !m_rset.next();
   } catch(exception::UserError &) {

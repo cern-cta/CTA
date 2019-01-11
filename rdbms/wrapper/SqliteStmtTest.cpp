@@ -53,7 +53,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
       "WHERE "
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
     ASSERT_TRUE((bool)nbTables);
@@ -83,7 +83,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
         "NAME = 'TEST1' AND "
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
     ASSERT_TRUE((bool)nbTables);
@@ -114,7 +114,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
         "NAME = 'TEST2' AND "
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
     ASSERT_TRUE((bool)nbTables);
@@ -162,7 +162,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, select_from_empty_table) {
       "FROM "
         "TEST;";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
     ASSERT_FALSE(rset->next());
   }
 }
@@ -213,7 +213,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
       "FROM "
         "TEST;";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
     ASSERT_TRUE(rset->next());
 
     const auto col1 = rset->columnOptionalString("COL1");
@@ -282,7 +282,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
       "FROM "
         "TEST;";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
     ASSERT_TRUE(rset->next());
 
     const auto col1 = rset->columnOptionalString("COL1");
@@ -349,7 +349,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
       "FROM "
         "TEST;";
     auto stmt = connForSelect.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
     ASSERT_TRUE(rset->next());
 
     const auto nbRows = rset->columnOptionalUint64("NB_ROWS");
