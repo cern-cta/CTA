@@ -1,15 +1,20 @@
 #!/bin/bash
 
+LOG_DIR=/tmp  # by default writte tar files of logs to /tmp
+
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace>
+Usage: $0 -n <namespace> [-d <log_directory>]
 EOF
 exit 1
 }
 
-while getopts "n:" o; do
+while getopts "n:d:" o; do
     case "${o}" in
         n)
             instance=${OPTARG}
+            ;;
+        d)
+            LOG_DIR=${OPTARG}
             ;;
         *)
             usage
@@ -27,6 +32,16 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+if [ ! -d ${LOG_DIR} ]; then
+    echo -e "ERROR: directory ${LOG_DIR} does not exist"
+    exit 1
+fi
+if [ ! -w ${LOG_DIR} ]; then
+    echo -e "ERROR: cannot write to directory ${LOG_DIR}"
+    exit 1
+fi
+
+
 ###
 # Display all backtraces if any
 ###
@@ -43,7 +58,7 @@ done
 
 # First in a temporary directory so that we can get the logs on the gitlab runner if something bad happens
 # indeed if the system test fails, artifacts are not collected for the build
-tmpdir=$(mktemp -d -t ${instance}_delete_XXXX)
+tmpdir=$(mktemp --tmpdir=${LOG_DIR} -d -t ${instance}_delete_XXXX)
 echo "Collecting stdout logs of pods to ${tmpdir}"
 for podcontainer in "init -c ctainit" "client -c client" "ctacli -c ctacli" "ctaeos -c mgm" "ctafrontend -c ctafrontend" "kdc -c kdc" "tpsrv01 -c taped" "tpsrv01 -c rmcd" "tpsrv02 -c taped" "tpsrv02 -c rmcd"; do
   kubectl --namespace ${instance} logs ${podcontainer} > ${tmpdir}/$(echo ${podcontainer} | sed -e 's/ -c /-/').log
