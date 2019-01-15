@@ -218,6 +218,7 @@ The xroot plugin
 %files -n cta-cli
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-admin
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-admin.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-wfe-test
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
 

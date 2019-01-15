@@ -44,7 +44,7 @@ if [[ -n ${BUILDTREE_BASE} ]]; then
   yum() { echo "Skipping yum $@"; }
   /opt/run/bin/mkSymlinks.sh
 
-  # cta:cta needed for ctafrontend and taped but adding it inconditionally in buildtree
+  # cta:tape needed for ctafrontend and taped but adding it inconditionally in buildtree
   echo "Adding cta user and group"
   /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g tape cta
   ## The following is not working as one cannot refresh groups in current shell...

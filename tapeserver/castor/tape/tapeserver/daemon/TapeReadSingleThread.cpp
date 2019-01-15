@@ -177,15 +177,6 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
   try{
     std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(
     new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo, m_useLbp));
-    cta::log::ScopedParamContainer params(m_logContext);
-    params.add("vo",m_retrieveMount.getVo());
-    params.add("mediaType",m_retrieveMount.getMediaType());
-    params.add("tapePool",m_retrieveMount.getPoolName());
-    params.add("logicalLibrary",m_drive.config.logicalLibrary);
-    params.add("mountType",mountTypeToString(m_volInfo.mountType));
-    params.add("vendor",m_retrieveMount.getVendor());
-    params.add("capacityInBytes",m_retrieveMount.getCapacityInBytes());
-    m_logContext.log(cta::log::INFO, "Tape session started");
     //m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
     
     return rs;
@@ -244,6 +235,15 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
       m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting);
+      cta::log::ScopedParamContainer params(m_logContext);
+      params.add("vo",m_retrieveMount.getVo());
+      params.add("mediaType",m_retrieveMount.getMediaType());
+      params.add("tapePool",m_retrieveMount.getPoolName());
+      params.add("logicalLibrary",m_drive.config.logicalLibrary);
+      params.add("mountType",mountTypeToString(m_volInfo.mountType));
+      params.add("vendor",m_retrieveMount.getVendor());
+      params.add("capacityInBytes",m_retrieveMount.getCapacityInBytes());
+      m_logContext.log(cta::log::INFO, "Tape session started");
       mountTapeReadOnly();
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();

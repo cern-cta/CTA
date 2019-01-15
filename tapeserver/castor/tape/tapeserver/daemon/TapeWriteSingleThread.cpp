@@ -173,15 +173,6 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
     new castor::tape::tapeFile::WriteSession(m_drive, m_volInfo, m_lastFseq,
       m_compress, m_useLbp)
     );
-    cta::log::ScopedParamContainer params(m_logContext);
-    params.add("vo",m_archiveMount.getVo());
-    params.add("mediaType",m_archiveMount.getMediaType());
-    params.add("tapePool",m_archiveMount.getPoolName());
-    params.add("logicalLibrary",m_drive.config.logicalLibrary);
-    params.add("mountType",mountTypeToString(m_volInfo.mountType));
-    params.add("vendor",m_archiveMount.getVendor());
-    params.add("capacityInBytes",m_archiveMount.getCapacityInBytes());
-    m_logContext.log(cta::log::INFO, "Tape session started");
   }
   catch (cta::exception::Exception & e) {
     ScopedParam sp0(m_logContext, Param("ErrorMessage", e.getMessageValue()));
@@ -317,6 +308,15 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, m_logContext);
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
+      cta::log::ScopedParamContainer params(m_logContext);
+      params.add("vo",m_archiveMount.getVo());
+      params.add("mediaType",m_archiveMount.getMediaType());
+      params.add("tapePool",m_archiveMount.getPoolName());
+      params.add("logicalLibrary",m_drive.config.logicalLibrary);
+      params.add("mountType",mountTypeToString(m_volInfo.mountType));
+      params.add("vendor",m_archiveMount.getVendor());
+      params.add("capacityInBytes",m_archiveMount.getCapacityInBytes());
+      m_logContext.log(cta::log::INFO, "Tape session started");
       mountTapeReadWrite();
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();

@@ -14,7 +14,7 @@
     missingok
     rotate 500
     copytruncate
-    create 755 cta cta
+    create 755 cta tape
     compress
     delaycompress
 }
