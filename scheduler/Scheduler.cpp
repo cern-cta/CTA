@@ -29,6 +29,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "objectstore/RepackRequest.hpp"
+#include "RetrieveRequestDump.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -387,7 +388,11 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
 //------------------------------------------------------------------------------
 // expandRepackRequest
 //------------------------------------------------------------------------------
-void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext&) {
+void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) {
+  typedef cta::common::dataStructures::RetrieveRequest RetrieveRequest;
+  RetrieveRequest retrieveRequest;
+  retrieveRequest.dstURL = "";
+  this->queueRetrieve("ExpandRepack",retrieveRequest,lc);
   throw exception::Exception("In Scheduler::expandRepackRequest(): not implemented");
 }
 

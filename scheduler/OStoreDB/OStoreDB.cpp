@@ -1291,6 +1291,11 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
   }
 }
 
+void OStoreDB::expandRepackRequest(std::unique_ptr<cta::RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc)
+{
+  //TODO
+}
+
 //------------------------------------------------------------------------------
 // OStoreDB::cancelRepack()
 //------------------------------------------------------------------------------

@@ -73,6 +73,7 @@ class Tape;
 class TapeMount;
 class TapeSession;
 class UserIdentity;
+class RepackRequest;
 } // cta
 
 namespace cta {
@@ -415,6 +416,8 @@ public:
   
   /***/
   virtual std::unique_ptr<RepackRequest> getNextRepackJobToExpand() = 0;
+  
+  virtual void expandRepackRequest(std::unique_ptr<cta::RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) = 0;
   /*============ Repack management: maintenance process side =========================*/
   
   /*!

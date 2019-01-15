@@ -366,6 +366,8 @@ public:
    */
   std::unique_ptr<SchedulerDatabase::RepackRequest> getNextRepackJobToExpand() override;
   
+  void expandRepackRequest(std::unique_ptr<cta::RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) override;
+  
   /* === Drive state handling  ============================================== */
   /**
    * Get states of all drives.

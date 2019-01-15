@@ -24,10 +24,24 @@ namespace cta {
 void RepackRequestManager::runOnePass(log::LogContext& lc) {
   // We give ourselves a budget of 30s for those operations...
   utils::Timer t;
+  log::TimingList timingList;
   // First expand any request to expand
   // TODO: implement expansion
   // Next promote requests to ToExpand if needed
+  
+  //Putting pending repack request into the RepackQueueToExpand queue
   m_scheduler.promoteRepackRequestsToToExpand(lc);
+  //Retrieve the first repack request from the RepackQueueToExpand queue
+  std::unique_ptr<cta::RepackRequest> repackRequest = m_scheduler.getNextRepackRequestToExpand();
+  if(repackRequest != nullptr){
+    //We have a RepackRequest that has the status ToExpand, expand it
+    timingList.insertAndReset("epxandRepackRequestTime", t);
+    m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
+    log::ScopedParamContainer params(lc);
+    params.add("tapeVid",repackRequest->getRepackInfo().vid);
+    timingList.addToLog(params);
+    lc.log(log::INFO, "In RepackRequestManager::runOnePass(): Repack Request expanded");
+  }
 }
 
 } // namespace cta
