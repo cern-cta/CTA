@@ -215,7 +215,25 @@ struct Login {
   static Login parseMySql(const std::string &connectionDetails);
 
   /**
-   * Parses the specified connection details.
+   * Parses the specified connection details for the Postgres database.
+   * The postgres selection type in the config file is "postgres".
+   *
+   * Possible database login configuration lines for postgres:
+   *
+   *     postgresql:[connectinfo]
+   * or
+   *     postgresql:[URI]
+   *
+   * connectinfo or URI are the connectionDetails and may be empty.
+   * Otherwise connectinfo is a series of 1 or more keyword=value
+   * separated by whitespace. See doucmentaion, e.g.
+   * https://www.postgresql.org/docs/11/libpq-connect.html#LIBPQ-CONNSTRING
+   *
+   * an example configuraiton using the URI is
+   * postgresql:postgresql://user:secret@localhost/mydb
+   *
+   * an example configuraiton using connect info
+   * postgresql:user=user password=secret host=localhost db=mydb
    *
    * @param connectionDetails The database connection details.
    */

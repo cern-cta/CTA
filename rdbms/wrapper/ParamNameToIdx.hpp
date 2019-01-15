@@ -47,13 +47,6 @@ public:
    */
   uint32_t getIdx(const std::string &paramName) const;
 
-private:
-
-  /**
-   * Map from SQL parameter name to parameter index.
-   */
-  std::map<std::string, uint32_t> m_nameToIdx;
-
   /**
    * Returns true if the specified character is a valid parameter name
    * character.
@@ -62,7 +55,14 @@ private:
    * @return True if the specified character is a valid parameter name
    * character.
    */
-  bool isValidParamNameChar(const char c);
+  static bool isValidParamNameChar(const char c);
+
+private:
+
+  /**
+   * Map from SQL parameter name to parameter index.
+   */
+  std::map<std::string, uint32_t> m_nameToIdx;
 
 }; // class ParamNameToIdx
 

@@ -55,6 +55,7 @@ BuildRequires: json-c-devel >= 0.11
 BuildRequires: libattr-devel >= 2.4.44
 BuildRequires: oracle-instantclient12.2-devel
 BuildRequires: mariadb-devel
+BuildRequires: postgresql-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
 %{?systemd_requires}
@@ -228,6 +229,7 @@ Group: Application/CTA
 Requires: oracle-instantclient12.2-basic
 Requires: librados2 = %{radosVersion}
 Requires: mariadb-libs
+Requires: postgresql-libs
 Requires: zeromq
 %description -n cta-lib
 CERN Tape Archive:

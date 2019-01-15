@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 #include "catalogue/CreateSchemaCmdLineArgs.hpp"
 #include "catalogue/MysqlCatalogueSchema.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
+#include "catalogue/PostgresCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
@@ -70,6 +71,12 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   case rdbms::Login::DBTYPE_SQLITE:
     {
        SqliteCatalogueSchema schema;
+       conn.executeNonQueries(schema.sql);
+    }
+    break;
+  case rdbms::Login::DBTYPE_POSTGRESQL:
+    {
+       PostgresCatalogueSchema schema;
        conn.executeNonQueries(schema.sql);
     }
     break;

@@ -86,6 +86,7 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       sudo \
       zeromq \
       mariadb-devel \
+      postgresql-libs \
   && \
     yum clean all \
   && \

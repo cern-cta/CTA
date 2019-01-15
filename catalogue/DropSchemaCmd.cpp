@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -105,6 +105,9 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
       break;
     case rdbms::Login::DBTYPE_MYSQL:
       dropMysqlCatalogueSchema(conn);
+      break;
+    case rdbms::Login::DBTYPE_POSTGRESQL:
+      dropPostgresCatalogueSchema(conn);
       break;
     case rdbms::Login::DBTYPE_ORACLE:
       dropOracleCatalogueSchema(conn);
@@ -224,6 +227,37 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "ARCHIVE_FILE",
       "TAPE",
       "TEMP_TAPE_FILE_BATCH",
+      "REQUESTER_MOUNT_RULE",
+      "REQUESTER_GROUP_MOUNT_RULE",
+      "ADMIN_USER",
+      "ADMIN_HOST",
+      "STORAGE_CLASS",
+      "TAPE_POOL",
+      "LOGICAL_LIBRARY",
+      "MOUNT_POLICY"
+    };
+
+    dropDatabaseTables(conn, tablesToDrop);
+
+    std::list<std::string> sequencesToDrop = {"ARCHIVE_FILE_ID_SEQ", "STORAGE_CLASS_ID_SEQ"};
+    dropDatabaseSequences(conn, sequencesToDrop);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// dropPostgresCatalogueSchema
+//------------------------------------------------------------------------------
+void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
+  try {
+    std::list<std::string> tablesInDb = conn.getTableNames();
+    std::list<std::string> tablesToDrop = {
+      "CTA_CATALOGUE",
+      "ARCHIVE_ROUTE",
+      "TAPE_FILE",
+      "ARCHIVE_FILE",
+      "TAPE",
       "REQUESTER_MOUNT_RULE",
       "REQUESTER_GROUP_MOUNT_RULE",
       "ADMIN_USER",

@@ -30,7 +30,12 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // s_fileFormat
 //------------------------------------------------------------------------------
-const char *Login::s_fileFormat = "either in_memory or oracle:username/password@database or sqlite:filename";
+const char *Login::s_fileFormat = "one of "
+  "in_memory, "
+  "oracle:username/password@database, "
+  "sqlite:filename, "
+  "mysql://<username>:<password>@<host>:<port>/<db_name> or "
+  "postgresql:[connectinfo | URI]";
 
 //------------------------------------------------------------------------------
 // constructor
@@ -348,8 +353,7 @@ Login Login::parseMySql(const std::string &connectionDetails) {
 // parsePostgresql
 //------------------------------------------------------------------------------
 Login Login::parsePostgresql(const std::string &connectionDetails) {
-  //return Login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0);
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  return Login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0);
 }
 
 } // namespace catalogue

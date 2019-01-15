@@ -99,6 +99,14 @@ private:
   void dropMysqlCatalogueSchema(rdbms::Conn &conn);
 
   /**
+   * Unconditionally drops the schema of the catalogue database associated with
+   * the specified database connection.
+   *
+   * @param conn The database connection.
+   */
+  void dropPostgresCatalogueSchema(rdbms::Conn &conn);
+
+  /**
    * Drops the database tables with the specified names.
    *
    * @param tablesToDrop The names of the database tables to be dropped.

@@ -19,8 +19,10 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 find_package (sqlite REQUIRED)
 find_package (mysql REQUIRED)
+find_package (postgres REQUIRED)
 find_package (oracle-instantclient REQUIRED)
 include_directories (${MYSQL_INCLUDE_DIRS})
+include_directories (${POSTGRES_INCLUDE_DIRS})
 include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
 set (RDBMS_WRAPPER_LIB_SRC_FILES
@@ -47,6 +49,14 @@ set (RDBMS_WRAPPER_LIB_SRC_FILES
 
 set (RDBMS_WRAPPER_LIB_SRC_FILES
   ${RDBMS_WRAPPER_LIB_SRC_FILES}
+  PostgresConn.cpp
+  PostgresConnFactory.cpp
+  PostgresRset.cpp
+  PostgresStmt.cpp
+  PostgresColumn.cpp)
+
+set (RDBMS_WRAPPER_LIB_SRC_FILES
+  ${RDBMS_WRAPPER_LIB_SRC_FILES}
   ConnFactoryFactory.cpp
   OcciColumn.cpp
   OcciConn.cpp
@@ -65,6 +75,7 @@ target_link_libraries (ctardbmswrapper
   ctacommon
   ${SQLITE_LIBRARIES}
   ${MYSQL_LIBRARIES}
+  ${POSTGRES_LIBRARIES}
   ${ORACLE-INSTANTCLIENT_LIBRARIES})
 
 install (TARGETS ctardbmswrapper DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
@@ -73,6 +84,7 @@ set(RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES
   ConnTest.cpp
   OcciColumnTest.cpp
   ParamNameToIdxTest.cpp
+  PostgresStmtTest.cpp
   SqliteStmtTest.cpp)
 
 add_library (ctardbmswrapperunittests SHARED
