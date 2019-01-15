@@ -61,6 +61,10 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   echo "Status is now:"
   systemctl status cta-taped
 
+  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
+  yum install -y systemd-resolved
+  systemctl start systemd-resolved
+
 else
   # systemd is not available
 
