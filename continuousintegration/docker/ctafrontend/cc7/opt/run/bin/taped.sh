@@ -30,8 +30,9 @@ echo "Configuring database"
 echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
 
 # cta-taped setup
-  echo "taped BufferCount 10" > /etc/cta/cta-taped.conf
-  echo "taped MountCriteria 2000000, 5" >> /etc/cta/cta-taped.conf 
+  echo "taped BufferSizeBytes 262144" > /etc/cta/cta-taped.conf
+  echo "taped BufferCount 200" >> /etc/cta/cta-taped.conf
+  echo "taped MountCriteria 2000000, 100" >> /etc/cta/cta-taped.conf 
   echo "ObjectStore BackendPath $OBJECTSTOREURL" >> /etc/cta/cta-taped.conf
   echo "${tpconfig}" > /etc/cta/TPCONFIG
 
