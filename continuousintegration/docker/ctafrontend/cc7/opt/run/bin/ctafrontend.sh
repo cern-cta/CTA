@@ -51,6 +51,10 @@ if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   /opt/run/bin/ctafrontend_bt.sh
   sleep infinity
 else
+  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
+  yum install -y systemd-resolved
+  systemctl start systemd-resolved
+
   # systemd is available
   echo "Launching frontend with systemd:"
   systemctl start cta-frontend
