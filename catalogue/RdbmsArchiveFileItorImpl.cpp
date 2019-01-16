@@ -201,8 +201,8 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
       }
     }
 
-    auto conn = connPool.getConn();
-    m_stmt = conn.createStmt(sql);
+    m_conn = connPool.getConn();
+    m_stmt = m_conn.createStmt(sql);
     if(searchCriteria.archiveFileId) {
       m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
