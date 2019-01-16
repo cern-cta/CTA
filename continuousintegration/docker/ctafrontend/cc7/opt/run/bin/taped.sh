@@ -18,7 +18,9 @@ cat /tmp/library-rc.sh
 
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
 
-tpconfig="${DRIVENAMES[${driveslot}]} ${LIBRARYNAME} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
+# tpconfig="${DRIVENAMES[${driveslot}]} ${LIBRARYNAME} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
+# Configuring one library per tape drive so that mhvtl can work with multiple tapeservers
+tpconfig="${DRIVENAMES[${driveslot}]} ${DRIVENAMES[${driveslot}]} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
 
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh

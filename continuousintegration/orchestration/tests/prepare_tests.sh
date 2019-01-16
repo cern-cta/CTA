@@ -57,11 +57,20 @@ cat ${tempdir}/library-rc.sh
 
 ctacliIP=`kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -E 's/IP:[[:space:]]+//'`
 
+# Get list of tape drives that have a tape server
+TAPEDRIVES_IN_USE=()
+for tapeserver in $(kubectl --namespace ${NAMESPACE} get pods | grep tpsrv | awk '{print $1}'); do
+  TAPEDRIVES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${tapeserver} -c taped -- cat /etc/cta/TPCONFIG | awk '{print $1}'))
+done
+NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
+
 echo "Preparing CTA configuration for tests"
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
-     --name ${LIBRARYNAME}                                            \
-     --comment "ctasystest"                                           
+  for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
+    kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
+      --name ${TAPEDRIVES_IN_USE[${i}]}                                            \
+      --comment "ctasystest library mapped to drive ${TAPEDRIVES_IN_USE[${i}]}"
+  done
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add       \
     --name ctasystest                                                 \
     --vo vo                                                           \
@@ -71,16 +80,16 @@ echo "Preparing CTA configuration for tests"
   # add all tapes
   for ((i=0; i<${#TAPES[@]}; i++)); do
     VID=${TAPES[${i}]}
-    kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add         \
-      --mediatype mediatype                                           \
-      --vendor vendor                                                 \
-      --logicallibrary ${LIBRARYNAME}                                 \
-      --tapepool ctasystest                                           \
-      --capacity 1000000000                                           \
-      --comment "ctasystest"                                          \
-      --vid ${VID}                                                    \
-      --disabled false                                                \
-      --full false                                                    \
+    kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add     \
+      --mediatype mediatype                                                \
+      --vendor vendor                                                      \
+      --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}  \
+      --tapepool ctasystest                                                \
+      --capacity 1000000000                                                \
+      --comment "ctasystest"                                               \
+      --vid ${VID}                                                         \
+      --disabled false                                                     \
+      --full false                                                         \
       --comment "ctasystest"
   done
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add   \
