@@ -19,6 +19,11 @@ tar -c . | tar -C ${PV_PATH} -xv
 echo "Mounting logs volume ${PV_PATH} in /var/log"
 mount --bind ${PV_PATH} /var/log
 
+# all core dumps will go there as all the pods AND kubelet are sharing the same kernel.core_pattern
+mkdir /var/log/tmp
+chmod 1777 /var/log/tmp
+echo '/var/log/tmp/%h-%t-%e-%p-%s.core' > /proc/sys/kernel/core_pattern
+
 echo -n "Fixing reverse DNS for $(hostname): "
 sed -i -c "s/^\($(hostname -i)\)\s\+.*$/\1 $(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2) $(hostname -s)/" /etc/hosts
 echo "DONE"
