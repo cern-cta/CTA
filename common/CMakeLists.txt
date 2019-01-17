@@ -53,6 +53,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/RepackInfo.cpp
   dataStructures/RequesterGroupMountRule.cpp
   dataStructures/RequesterMountRule.cpp
+  dataStructures/RetrieveFileQueueCriteria.cpp
   dataStructures/RetrieveJob.cpp
   dataStructures/RetrieveRequest.cpp
   dataStructures/SecurityIdentity.cpp

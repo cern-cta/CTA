@@ -142,6 +142,17 @@ public:
   void queueRetrieve(const std::string &instanceName, const cta::common::dataStructures::RetrieveRequest &request,
     log::LogContext &lc);
   
+  
+  /**
+   * Queue a retrieve request specific for Repack
+   * @param instanceName
+   * @param request
+   * @param copyNbs
+   * @param lc
+   */
+  void queueRetrieveRequestForRepack(const std::string &instanceName, const cta::common::dataStructures::RetrieveRequest &request,
+  std::list<uint64_t> copyNbs, log::LogContext &lc);
+  
   /** 
    * Delete an archived file or a file which is in the process of being archived.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
@@ -282,6 +293,9 @@ public:
 
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
+  const uint64_t c_defaultFseqForRepack = 1;
+  const size_t c_defaultMaxNbFilesForRepack = 500;
+  
   typedef std::pair<std::string, common::dataStructures::MountType> tpType;
   /**
    * Common part to getNextMountDryRun() and getNextMount() to populate mount decision info.
@@ -291,6 +305,8 @@ private:
     const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer, 
     std::map<tpType, uint32_t> & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
+  
+  const std::string generateRetrieveDstURL(const cta::common::dataStructures::DiskFileInfo dfi) const;
   
 public:
   /**

@@ -34,6 +34,8 @@
 #include "objectstore/GarbageCollector.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
+#include "common/Timer.hpp"
+
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
@@ -107,6 +109,7 @@ public:
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     const uint32_t maxTriesToConnect = 1;
+    //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_dummyLog,"/home/cedric/db/test.db",nbConns,nbArchiveFileListingConns,maxTriesToConnect);
     m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
   }
@@ -1074,6 +1077,111 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   
   auto nullRepackRequest = scheduler.getNextRepackRequestToExpand();
   ASSERT_EQ(nullRepackRequest,nullptr);
+}
+
+TEST_P(SchedulerTest, expandRepackRequest) {
+  using namespace cta;
+  
+  setupDefaultCatalogue();
+  
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  cta::log::DummyLogger dummyLogger("dummy","dummy");
+  log::LogContext lc(dummyLogger);
+  
+  const std::string vid1 = "VID123";
+  const std::string vid2 = "VID456";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const std::string vo = "vo";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+  
+  catalogue.createLogicalLibrary(admin, logicalLibraryName, "Create logical library");
+  catalogue.createTapePool(admin, tapePoolName1, vo, 1, true, "Create tape pool");
+  catalogue.createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName1, capacityInBytes,
+    disabledValue, fullValue, comment);
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  catalogue.createStorageClass(admin, storageClass);
+  
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
+  const std::string tapeDrive = "tape_drive";
+  
+  const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 fo rthis test
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+  const uint64_t compressedFileSize = archiveFileSize;
+
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    std::ostringstream diskFileId;
+    diskFileId << (12345677 + i);
+    std::ostringstream diskFilePath;
+    diskFilePath << "/public_dir/public_file_" << i;
+
+    // Tape copy 1 written to tape
+    auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = i;
+    fileWritten.diskInstance = storageClass.diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFilePath = diskFilePath.str();
+    fileWritten.diskFileUser = "public_disk_user";
+    fileWritten.diskFileGroup = "public_disk_group";
+    fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumType = checksumType;
+    fileWritten.checksumValue = checksumValue;
+    fileWritten.storageClassName = storageClass.name;
+    fileWritten.vid = vid1;
+    fileWritten.fSeq = i;
+    fileWritten.blockId = i * 100;
+    fileWritten.compressedSize = compressedFileSize;
+    fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+  }
+  //update the DB tape
+  catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+  
+  scheduler.queueRepack(admin,vid1,"bufferURL",common::dataStructures::RepackInfo::Type::ExpandOnly,lc);
+  scheduler.promoteRepackRequestsToToExpand(lc);
+  auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+  log::TimingList tl;
+  utils::Timer t;
+  
+  scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  
+  std::list<common::dataStructures::RetrieveJob> retrieveJobs = scheduler.getPendingRetrieveJobs(vid1,lc);
+  ASSERT_EQ(retrieveJobs.size(),10);
+  int i = 1;
+  for(auto retrieveJob : retrieveJobs){
+    ASSERT_EQ(retrieveJob.request.archiveFileID,i);
+    ASSERT_EQ(retrieveJob.fileSize,compressedFileSize);
+    std::stringstream ss;
+    ss<<"repack://public_dir/public_file_"<<i;
+    ASSERT_EQ(retrieveJob.request.dstURL, ss.str());
+    ASSERT_EQ(retrieveJob.tapeCopies[vid1].second.copyNb,1);
+    ASSERT_EQ(retrieveJob.tapeCopies[vid1].second.checksumType,checksumType);
+    ASSERT_EQ(retrieveJob.tapeCopies[vid1].second.checksumValue,checksumValue);
+    ASSERT_EQ(retrieveJob.tapeCopies[vid1].second.blockId,i*100);
+    ASSERT_EQ(retrieveJob.tapeCopies[vid1].second.compressedSize,compressedFileSize);
+    ASSERT_EQ(retrieveJob.tapeCopies[vid1].second.fSeq,i);
+    ASSERT_EQ(retrieveJob.tapeCopies[vid1].second.vid,vid1);
+    ++i;
+  }
 }
 
 #undef TEST_MOCK_DB

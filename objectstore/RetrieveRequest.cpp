@@ -57,6 +57,7 @@ void RetrieveRequest::initialize() {
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>::initialize();
   m_payload.set_failurereportlog("");
   m_payload.set_failurereporturl("");
+  m_payload.set_isrepack(false);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -848,6 +849,16 @@ void RetrieveRequest::setJobStatus(uint64_t copyNumber, const serializers::Retri
     }
   }
   throw exception::Exception("In RetrieveRequest::setJobStatus(): job not found.");
+}
+
+bool RetrieveRequest::isRepack(){
+  checkPayloadReadable();
+  return m_payload.isrepack();
+}
+
+void RetrieveRequest::setIsRepack(const bool isRepack){
+  checkPayloadWritable();
+  m_payload.set_isrepack(isRepack);
 }
 
 }} // namespace cta::objectstore

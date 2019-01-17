@@ -16,37 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/MountPolicy.hpp"
-
-#include <map>
-#include <stdint.h>
-
+#include "RetrieveFileQueueCriteria.hpp"
 namespace cta {
 namespace common {
 namespace dataStructures {
+    
+RetrieveFileQueueCriteria& RetrieveFileQueueCriteria::operator=(const RetrieveFileQueueCriteria& other){
+    if(this != &other){
+        this->archiveFile = other.archiveFile;
+        this->mountPolicy = other.mountPolicy;
+    }
+    return *this;
+}
 
-/**
- * The queueing criteria returned by the catalogue for a file retrieve request.
- */
-struct RetrieveFileQueueCriteria {
-
-  /**
-   * The archived file.
-   */
-  ArchiveFile archiveFile;
-
-  /**
-   * The mount policy.
-   */
-  MountPolicy mountPolicy;
-  
-  RetrieveFileQueueCriteria &operator=(const RetrieveFileQueueCriteria& other);
-
-}; // struct RetrieveFileQueueCriteria
-
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}}}

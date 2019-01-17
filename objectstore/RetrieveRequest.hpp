@@ -93,6 +93,9 @@ public:
     //! The copy number to enqueue. It could be different from the updated one in mixed success/failure scenario.
     serializers::RetrieveJobStatus nextStatus;
   };
+  bool isRepack();
+  void setIsRepack(const bool isRepack);
+  
 private:
   /*!
    * Determine and set the new status of the job.

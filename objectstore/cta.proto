@@ -369,6 +369,7 @@ message RetrieveRequest {
   repeated RetrieveJob jobs = 9154;
   required string failurereporturl = 9155;
   required string failurereportlog = 9156;
+  required bool isrepack = 9157; //In protobuf, default values for bool is false
 }
 
 message ValueCountPair {

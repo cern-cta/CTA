@@ -48,6 +48,7 @@ struct RetrieveRequest {
   std::string errorReportURL;
   DiskFileInfo diskFileInfo;
   EntryLog creationLog;
+  bool isRepack;
 
 }; // struct RetrieveRequest
 
