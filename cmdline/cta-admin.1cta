@@ -126,6 +126,10 @@ Log level \fIall\fR is a synonym for "\fIdebug\fR \fIprotobuf\fR \fIprotoraw\fR"
 XRDDEBUG
 If the XRootD environment variable XRDDEBUG=1, the log level is set to \fIall\fR (see above).
 .TP
+XRDSSIDEBUG
+If the XRootD environment variable XRDSSIDEBUG=1, debug messages will be displayed for each low-level SSI
+event.
+.TP
 XRD_REQUESTTIMEOUT (default: \fI1800\fR seconds)
 Sets a limit on the time for the entire request to be processed: connection to load balancer +
 redirection + connection to data server + request/response round-trip. Normally this should be less than
