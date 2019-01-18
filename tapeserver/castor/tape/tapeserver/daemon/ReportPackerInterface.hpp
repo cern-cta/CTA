@@ -24,7 +24,7 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
-#include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
+#include "tapeserver/castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 
 #include <memory>
 

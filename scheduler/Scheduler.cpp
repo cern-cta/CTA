@@ -189,6 +189,7 @@ void Scheduler::queueRetrieve(
   } else {
     //Repack does not need policy
     queueCriteria.archiveFile = m_catalogue.getArchiveFileById(request.archiveFileID);
+    queueCriteria.mountPolicy = common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack;
   }
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
@@ -410,7 +411,6 @@ const std::string Scheduler::generateRetrieveDstURL(const cta::common::dataStruc
 void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) {
   uint64_t fseq = c_defaultFseqForRepack;
   std::list<common::dataStructures::ArchiveFile> files;
-  std::list<uint64_t> copyNbs;
   auto vid = repackRequest->getRepackInfo().vid;
   while(true) {
     files = m_catalogue.getFilesForRepack(vid,fseq,c_defaultMaxNbFilesForRepack);
@@ -421,7 +421,6 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
       retrieveRequest.dstURL = generateRetrieveDstURL(archiveFile.diskFileInfo);
       retrieveRequest.isRepack = true;
-      //retrieveRequest.requester = repackRequest->
       queueRetrieve(archiveFile.diskInstance,retrieveRequest,lc);
     }
     if (files.size()) {

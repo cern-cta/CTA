@@ -3044,13 +3044,13 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
   switch (enQueueingNextStep.nextStep) {
     // We have a reduced set of supported next steps as some are not compatible with this event
     case NextStep::EnqueueForReport: {
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaAqtr;
-      CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-      CaAqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaAqtr::InsertedElement{
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaRqtr;
+      CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+      CaRqtr::InsertedElement::list insertedElements;
+      insertedElements.push_back(CaRqtr::InsertedElement{
         &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToReportForFailure
       });
-      caAqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
+      caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tf.copyNb)
