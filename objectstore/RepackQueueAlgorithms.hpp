@@ -245,7 +245,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   ContainerTraits<RepackQueue,C>::QueueType queueType;
   try {
     rpkQAddress = re.getRepackQueueAddress(queueType.value);
-  } catch (RootEntry::NotAllocated &) {
+  } catch (RootEntry::NoSuchRepackQueue &) {
     throw NoSuchContainer("In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): no such repack queue");
   }
   // try and lock the repack queue. Any failure from here on means the end of the getting jobs.
