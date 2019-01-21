@@ -158,6 +158,8 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
     }
     //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
     attemptCount++;
+    // Reset the address so we can reuse the in-memory object with potentially ane address.
+    cont.resetAddress();
     goto retry;
   }
 }
