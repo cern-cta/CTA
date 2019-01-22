@@ -190,9 +190,27 @@ void BackendRados::create(std::string name, std::string content) {
   bl.append(content.c_str(), content.size());
   wop.write_full(bl);
   RadosTimeoutLogger rtl;
-  cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() { return -getRadosCtx().operate(name, &wop); },
+  try {
+    cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException(
+      [&]() { 
+        int ret = -getRadosCtx().operate(name, &wop);
+        return ret;
+      },
       std::string("In ObjectStoreRados::create, failed to create exclusively or write: ")
       + name);
+  } catch (cta::exception::Errnum & en) {
+    if (en.errorNumber() == EEXIST) {
+      uint64_t size;
+      time_t date;
+      int statRet = getRadosCtx().stat(name, &size, &date);
+      if (-ENOENT == statRet) {
+        en.getMessage() << " Error is EEXIST, yet stating returns ENOENT.";
+      } else {
+        en.getMessage() << " Error is EEXIST. Trying to statRet=" << statRet << " size=" << size << " date=" << date;
+      }
+      throw en;
+    }
+  }
   rtl.logIfNeeded("In BackendRados::create(): m_radosCtx.operate(create+write_full)", name);
 }
 
