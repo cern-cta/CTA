@@ -2445,6 +2445,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
         params.add("tapeVid", list.first)
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting.");
+        lc.logBacktrace(log::ERR, ex.backtrace());
       }
     }
     timingList.insertAndReset("queueingToReportTime", t);
