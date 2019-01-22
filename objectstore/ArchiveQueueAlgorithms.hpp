@@ -488,7 +488,7 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::QueueType {
 
 template<>
 struct ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::QueueType {
-    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReport;
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToUser;
 };
 
 }} // namespace cta::objectstore

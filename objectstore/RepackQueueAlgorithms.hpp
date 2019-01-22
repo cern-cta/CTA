@@ -426,11 +426,11 @@ getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
 
 template<>
 struct ContainerTraits<RepackQueue,RepackQueuePending>::QueueType{
-    objectstore::RepackQueueType value = objectstore::RepackQueueType::Pending;
+  objectstore::RepackQueueType value = objectstore::RepackQueueType::Pending;
 };
 
 template<>
 struct ContainerTraits<RepackQueue,RepackQueueToExpand>::QueueType{
-    objectstore::RepackQueueType value = objectstore::RepackQueueType::ToExpand;
+  objectstore::RepackQueueType value = objectstore::RepackQueueType::ToExpand;
 };
 }} // namespace cta::objectstore

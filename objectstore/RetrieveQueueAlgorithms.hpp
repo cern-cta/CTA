@@ -471,7 +471,12 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::QueueType{
 
 template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::QueueType{
-    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReport;
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToUser;
+};
+
+template<>
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess>::QueueType{
+  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForSuccess;
 };
 
 }} // namespace cta::objectstore

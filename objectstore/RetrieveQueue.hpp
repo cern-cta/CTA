@@ -160,4 +160,8 @@ public:
   template<typename...Ts> RetrieveQueueFailed(Ts&...args): RetrieveQueue(args...) {}
 };
   
+class RetrieveQueueToReportToRepackForSuccess : public RetrieveQueue {
+public:
+  template<typename...Ts> RetrieveQueueToReportToRepackForSuccess(Ts&...args): RetrieveQueue(args...) {}
+};
 }}

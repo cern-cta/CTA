@@ -393,7 +393,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  for (auto & queueType: { JobQueueType::JobsToTransfer, JobQueueType::JobsToReport, JobQueueType::FailedJobs} ) {
+  for (auto & queueType: { JobQueueType::JobsToTransfer, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs} ) {
     try {
       auto archiveQueueList = re.dumpArchiveQueues(queueType);
       for (auto & a: archiveQueueList) {
@@ -688,7 +688,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArch
   RootEntry re(m_objectStore);
   re.fetchNoLock();
   while (true) {
-    auto queueList = re.dumpArchiveQueues(JobQueueType::JobsToReport);
+    auto queueList = re.dumpArchiveQueues(JobQueueType::JobsToReportToUser);
     std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
     if (queueList.empty()) return ret;
     // Try to get jobs from the first queue. If it is empty, it will be trimmed,
@@ -868,6 +868,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
     rReq->setOwner(m_agentReference->getAgentAddress());
     // "Select" an arbitrary copy number. This is needed to serialize the object.
     rReq->setActiveCopyNumber(criteria.archiveFile.tapeFiles.begin()->second.copyNb);
+    rReq->setIsRepack(rqst.isRepack);
     rReq->insert();
     double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     m_taskQueueSize++;
@@ -1361,7 +1362,7 @@ getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logCo
   RootEntry re(m_objectStore);
   re.fetchNoLock();
   while(true) {
-    auto queueList = re.dumpRetrieveQueues(JobQueueType::JobsToReport);
+    auto queueList = re.dumpRetrieveQueues(JobQueueType::JobsToReportToUser);
     std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
     if (queueList.empty()) return ret;
 
@@ -2345,6 +2346,59 @@ std::set<cta::SchedulerDatabase::RetrieveJob*> OStoreDB::RetrieveMount::finishSe
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::batchSucceedRetrieveForRepack()
+//------------------------------------------------------------------------------
+std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSucceedRetrieveForRepack(
+    std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, cta::log::LogContext & lc)
+{
+  std::set<cta::SchedulerDatabase::RetrieveJob *> ret;
+  //typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> RQTRTRAlgos;
+  
+  for(auto & retrieveJob : jobsBatch){
+    auto osdbJob = castFromSchedDBJob(retrieveJob);
+    osdbJob->asyncSucceedForRepack();
+    auto update_callback = [this,&osdbJob](const std::string &in)->std::string{ 
+       // We have a locked and fetched object, so we just need to work on its representation.
+        cta::objectstore::serializers::ObjectHeader oh;
+        if (!oh.ParseFromString(in)) {
+          // Use a the tolerant parser to assess the situation.
+          oh.ParsePartialFromString(in);
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse header: ")+
+            oh.InitializationErrorString());
+        }
+        if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
+          std::stringstream err;
+          err << "In RetrieveRequest::asyncUpdateJobOwner()::lambda(): wrong object type: " << oh.type();
+          throw cta::exception::Exception(err.str());
+        }
+        serializers::RetrieveRequest payload;
+        
+        if (!payload.ParseFromString(oh.payload())) {
+          // Use a the tolerant parser to assess the situation.
+          payload.ParsePartialFromString(oh.payload());
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse payload: ")+
+            payload.InitializationErrorString());
+        }
+        //payload.set_status(osdbJob->selectedCopyNb,serializers::RetrieveJobStatus::RJS_Succeeded);
+        auto retrieveJobs = payload.mutable_jobs();
+        for(auto &job : *retrieveJobs){
+          if(job.copynb() == osdbJob->selectedCopyNb)
+          {
+            job.set_status(serializers::RetrieveJobStatus::RJS_Succeeded);
+            oh.set_payload(payload.SerializePartialAsString());
+            return oh.SerializeAsString();
+          }
+        }
+        throw cta::exception::Exception("In OStoreDB::RetrieveMount::batchSucceedRetrieveForRepack::lambda(): copyNb not found");
+    };
+    std::function <std::string(const std::string &)> update = update_callback;
+    cta::objectstore::Backend::AsyncUpdater * updater = this->m_oStoreDB.m_objectStore.asyncUpdate(osdbJob->m_retrieveRequest.getAddressIfSet(), update);
+    //cta::objectstore::Backend::AsyncUpdater * updater = osdbJob->m_retrieveMount->m_oStoreDB.m_objectStore.asyncUpdate(osdbJob->m_retrieveRequest.getAddressIfSet(), update);
+    updater->wait();//osdbJob->m_retrieveRequest.getAddressIfSet())<<std::endl;
+  }
+  return ret;
+}
+//------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::setDriveStatus()
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) {
@@ -3109,6 +3163,10 @@ void OStoreDB::RetrieveJob::asyncSucceed() {
   m_jobDelete.reset(m_retrieveRequest.asyncDeleteJob());
 }
 
+void OStoreDB::RetrieveJob::asyncSucceedForRepack(){
+  //TODO : put the code to async change retrieve request status as RJS_Success
+}
+
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::checkSucceed()
 //------------------------------------------------------------------------------
@@ -3121,4 +3179,3 @@ void OStoreDB::RetrieveJob::checkSucceed() {
 }
 
 } // namespace cta
-

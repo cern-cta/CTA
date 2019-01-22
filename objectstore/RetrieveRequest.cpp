@@ -152,7 +152,7 @@ queueForFailure:;
     // We now need to grab the failed queue and queue the request.
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
-    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, JobQueueType::JobsToReport, lc);
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, JobQueueType::JobsToReportToUser, lc);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
@@ -551,7 +551,7 @@ JobQueueType RetrieveRequest::getQueueType() {
     default: break;
     }
   }
-  if (hasToReport) return JobQueueType::JobsToReport;
+  if (hasToReport) return JobQueueType::JobsToReportToUser;
   return JobQueueType::FailedJobs;
 }
 
@@ -708,12 +708,14 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint16_t copyNumber, const std::string
             dfi.deserialize(payload.schedulerrequest().diskfileinfo());
             retRef.m_retrieveRequest.diskFileInfo = dfi;
             retRef.m_retrieveRequest.dstURL = payload.schedulerrequest().dsturl();
+            retRef.m_retrieveRequest.isRepack = payload.isrepack();
             retRef.m_retrieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
             retRef.m_retrieveRequest.requester.name = payload.schedulerrequest().requester().name();
             retRef.m_retrieveRequest.requester.group = payload.schedulerrequest().requester().group();
             objectstore::ArchiveFileSerDeser af;
             af.deserialize(payload.archivefile());
             retRef.m_archiveFile = af;
+            // TODO serialization of payload maybe not necessary
             oh.set_payload(payload.SerializePartialAsString());
             return oh.SerializeAsString();
           }
@@ -856,7 +858,7 @@ bool RetrieveRequest::isRepack(){
   return m_payload.isrepack();
 }
 
-void RetrieveRequest::setIsRepack(const bool isRepack){
+void RetrieveRequest::setIsRepack(bool isRepack){
   checkPayloadWritable();
   m_payload.set_isrepack(isRepack);
 }

@@ -118,6 +118,7 @@ message RootEntry {
   repeated ArchiveQueuePointer failedarchivejobsqueuepointers = 1062;
   repeated RetrieveQueuePointer retrievefailurestoreportqueuepointers = 1063;
   repeated RetrieveQueuePointer failedretrievejobsqueuepointers = 1065;
+  repeated RetrieveQueuePointer retrieve_queue_to_report_to_repack_for_success_pointers = 1066;
   repeated ArchiveQueuePointer archivejobstoreportqueuepointers = 1068;
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
@@ -336,6 +337,7 @@ enum RetrieveJobStatus {
   RJS_ToTransfer = 1;
   RJS_ToReportForFailure = 997;
   RJS_Failed = 998;
+  RJS_Succeeded = 1002; //For Retrieve request created by a Repack request
 }
 
 message SchedulerRetrieveRequest {

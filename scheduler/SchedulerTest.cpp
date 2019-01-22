@@ -1229,7 +1229,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 
     rrp.reportEndOfSession();
     rrp.waitThread();
-    
     ASSERT_EQ(rrp.allThreadsDone(),true);
   }
 }

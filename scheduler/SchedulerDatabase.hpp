@@ -346,6 +346,8 @@ public:
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     virtual std::set<cta::SchedulerDatabase::RetrieveJob *> finishSettingJobsBatchSuccessful(
       std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc) = 0;
+    virtual std::set<cta::SchedulerDatabase::RetrieveJob *> batchSucceedRetrieveForRepack(
+      std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, cta::log::LogContext & lc) = 0;
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -358,6 +360,7 @@ public:
     uint64_t selectedCopyNb;
     virtual void asyncSucceed() = 0;
     virtual void checkSucceed() = 0;
+    virtual void asyncSucceedForRepack() = 0;
     virtual void failTransfer(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual void failReport(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual ~RetrieveJob() {}

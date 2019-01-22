@@ -100,10 +100,10 @@ JobQueueType ArchiveRequest::getJobQueueType(uint16_t copyNumber) {
         throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Complete jobs are not queueable. They are finished and pend siblings completion.");
       case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
         // We should report a success...
-        return JobQueueType::JobsToReport;
+        return JobQueueType::JobsToReportToUser;
       case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
         // We should report a failure. The report queue can be shared.
-        return JobQueueType::JobsToReport;
+        return JobQueueType::JobsToReportToUser;
       case serializers::ArchiveJobStatus::AJS_Failed:
         return JobQueueType::FailedJobs;
       case serializers::ArchiveJobStatus::AJS_Abandoned:
@@ -715,7 +715,7 @@ JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& s
     return JobQueueType::JobsToTransfer;
   case ArchiveJobStatus::AJS_ToReportForTransfer:
   case ArchiveJobStatus::AJS_ToReportForFailure:
-    return JobQueueType::JobsToReport;
+    return JobQueueType::JobsToReportToUser;
   case ArchiveJobStatus::AJS_Failed:
     return JobQueueType::FailedJobs;
   default:

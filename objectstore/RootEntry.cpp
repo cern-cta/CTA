@@ -69,11 +69,11 @@ bool RootEntry::isEmpty() {
   if (m_payload.has_schedulerlockpointer() &&
       m_payload.schedulerlockpointer().address().size())
     return false;
-  for (auto &qt: {JobQueueType::JobsToTransfer, JobQueueType::JobsToReport, JobQueueType::FailedJobs}) {
+  for (auto &qt: {JobQueueType::JobsToTransfer, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs}) {
     if (archiveQueuePointers(qt).size())
       return false;
   }
-  for (auto &qt: {JobQueueType::JobsToTransfer, JobQueueType::JobsToReport, JobQueueType::FailedJobs}) {
+  for (auto &qt: {JobQueueType::JobsToTransfer, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs, JobQueueType::JobsToReportToRepackForSuccess}) {
     if (retrieveQueuePointers(qt).size())
       return false;
   }
@@ -105,7 +105,7 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Arch
   switch(queueType) {
   case JobQueueType::JobsToTransfer:
     return m_payload.livearchivejobsqueuepointers();
-  case JobQueueType::JobsToReport:
+  case JobQueueType::JobsToReportToUser:
     return m_payload.archivejobstoreportqueuepointers();
   case JobQueueType::FailedJobs:
     return m_payload.failedarchivejobsqueuepointers();
@@ -118,7 +118,7 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Arch
   switch(queueType) {
   case JobQueueType::JobsToTransfer:
     return m_payload.mutable_livearchivejobsqueuepointers();
-  case JobQueueType::JobsToReport:
+  case JobQueueType::JobsToReportToUser:
     return m_payload.mutable_archivejobstoreportqueuepointers();
   case JobQueueType::FailedJobs:
     return m_payload.mutable_failedarchivejobsqueuepointers();
@@ -131,10 +131,12 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Retr
   switch(queueType) {
   case JobQueueType::JobsToTransfer:
     return m_payload.liveretrievejobsqueuepointers();
-  case JobQueueType::JobsToReport:
+  case JobQueueType::JobsToReportToUser:
     return m_payload.retrievefailurestoreportqueuepointers();
   case JobQueueType::FailedJobs:
     return m_payload.failedretrievejobsqueuepointers();
+  case JobQueueType::JobsToReportToRepackForSuccess:
+     return m_payload.retrieve_queue_to_report_to_repack_for_success_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::retrieveQueuePointers(): unknown queue type.");
   }
@@ -144,10 +146,12 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Retr
   switch(queueType) {
   case JobQueueType::JobsToTransfer:
     return m_payload.mutable_liveretrievejobsqueuepointers();
-  case JobQueueType::JobsToReport:
+  case JobQueueType::JobsToReportToUser:
     return m_payload.mutable_retrievefailurestoreportqueuepointers();
   case JobQueueType::FailedJobs:
     return m_payload.mutable_failedretrievejobsqueuepointers();
+  case JobQueueType::JobsToReportToRepackForSuccess:
+    return m_payload.mutable_retrieve_queue_to_report_to_repack_for_success_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::mutableRetrieveQueuePointers(): unknown queue type.");
   }
@@ -177,7 +181,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   std::string archiveQueueNameHeader = "ArchiveQueue";
   switch(queueType) {
   case JobQueueType::JobsToTransfer: archiveQueueNameHeader+="ToTransfer"; break;
-  case JobQueueType::JobsToReport: archiveQueueNameHeader+="ToReport"; break;
+  case JobQueueType::JobsToReportToUser: archiveQueueNameHeader+="ToReport"; break;
   case JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
   default: break;
   }
@@ -307,8 +311,9 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   std::string retrieveQueueNameHeader = "RetrieveQueue";
   switch(queueType) {
   case JobQueueType::JobsToTransfer: retrieveQueueNameHeader+="ToTransfer"; break;
-  case JobQueueType::JobsToReport: retrieveQueueNameHeader+="ToReport"; break;
+  case JobQueueType::JobsToReportToUser: retrieveQueueNameHeader+="ToReport"; break;
   case JobQueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
+  case JobQueueType::JobsToReportToRepackForSuccess: retrieveQueueNameHeader+="ToReportToRepackForSuccess"; break;
   default: break;
   }
   std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+vid);

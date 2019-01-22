@@ -94,7 +94,7 @@ public:
     serializers::RetrieveJobStatus nextStatus;
   };
   bool isRepack();
-  void setIsRepack(const bool isRepack);
+  void setIsRepack(bool isRepack);
   
 private:
   /*!

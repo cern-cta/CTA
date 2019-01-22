@@ -20,6 +20,7 @@
 
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
+#include "RetrieveQueue.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -79,5 +80,4 @@ class RepackQueuePending: public RepackQueue {
 class RepackQueueToExpand: public RepackQueue {
   using RepackQueue::RepackQueue;
 };
-
 }} // namespace cta::objectstore
