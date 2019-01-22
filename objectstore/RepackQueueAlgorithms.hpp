@@ -274,7 +274,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
             .add("Message", ex.getMessageValue());
       lc.log(log::INFO, 
           "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
-    } catch (RootEntry::NoSuchRepackQueue & ex) {
+    } catch (RootEntry::NoSuchRepackQueue &) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("queueObject", cont.getAddressIfSet());
