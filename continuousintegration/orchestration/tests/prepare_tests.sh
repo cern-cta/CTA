@@ -145,3 +145,20 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username c
 
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/poweruser1.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/poweruser1.keytab; mkdir -p /tmp/poweruser1"
+
+###
+# Filling services in DNS on all pods
+###
+# Generate hosts file for all defined services
+TMP_HOSTS=$(mktemp)
+KUBERNETES_DOMAIN_NAME='svc.cluster.local'
+KUBEDNS_IP=$(kubectl -n kube-system get service kube-dns -o json | jq -r '.spec.clusterIP')
+for service in $(kubectl --namespace=${NAMESPACE} get service -o json | jq -r '.items[].metadata.name'); do
+  service_IP=$(nslookup -timeout=1 ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${KUBEDNS_IP} | grep -A1 ${service}.${NAMESPACE} | grep Address | awk '{print $2}')
+  echo "${service_IP} ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${service}"
+done > ${TMP_HOSTS}
+
+# push to all Running containers removing already generated entries
+kubectl -n ${NAMESPACE} get pods -o json | jq -r '.items[] | select(.status.phase=="Running") | {name: .metadata.name, containers: .spec.containers[].name} | {command: (.name + " -c " + .containers)}|to_entries[]|(.value)' | while read container; do
+  cat ${TMP_HOSTS} | grep -v $(echo ${container} | awk '{print $1}')| kubectl -n ${NAMESPACE} exec ${container} -i -- bash -c "cat >> /etc/hosts"
+done
