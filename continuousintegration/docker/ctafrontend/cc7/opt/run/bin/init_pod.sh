@@ -24,8 +24,14 @@ mkdir /var/log/tmp
 chmod 1777 /var/log/tmp
 echo '/var/log/tmp/%h-%t-%e-%p-%s.core' > /proc/sys/kernel/core_pattern
 
-echo -n "Fixing reverse DNS for $(hostname): "
+echo -n "Fixing reverse DNS for $(hostname) for xrootd: "
 sed -i -c "s/^\($(hostname -i)\)\s\+.*$/\1 $(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2) $(hostname -s)/" /etc/hosts
+echo "DONE"
+
+echo -n "Adding services in /etc/hosts to lower the load on kubernetes DNS: "
+for servicename in ctaeos ctafrontend kdc; do
+  ping -c1 -W1 ${servicename} | grep ^PING | awk '{print $3 " " $2}' | sed -e "s/[()]//g;s/$/ ${servicename}/"
+done | grep -v $(hostname -f) >> /etc/hosts
 echo "DONE"
 
 # Not needed anymore, keep it in case it comes back
