@@ -26,7 +26,6 @@
 #include "rdbms/wrapper/MysqlRset.hpp"
 #include "rdbms/wrapper/MysqlStmt.hpp"
 
-#include <my_global.h>
 #include <mysql.h>
 #include <mysqld_error.h>
 

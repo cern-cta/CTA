@@ -18,7 +18,9 @@ cat /tmp/library-rc.sh
 
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
 
-tpconfig="${DRIVENAMES[${driveslot}]} ${LIBRARYNAME} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
+# tpconfig="${DRIVENAMES[${driveslot}]} ${LIBRARYNAME} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
+# Configuring one library per tape drive so that mhvtl can work with multiple tapeservers
+tpconfig="${DRIVENAMES[${driveslot}]} ${DRIVENAMES[${driveslot}]} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
 
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
@@ -30,8 +32,9 @@ echo "Configuring database"
 echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
 
 # cta-taped setup
-  echo "taped BufferCount 10" > /etc/cta/cta-taped.conf
-  echo "taped MountCriteria 2000000, 5" >> /etc/cta/cta-taped.conf 
+  echo "taped BufferSizeBytes 262144" > /etc/cta/cta-taped.conf
+  echo "taped BufferCount 200" >> /etc/cta/cta-taped.conf
+  echo "taped MountCriteria 2000000, 100" >> /etc/cta/cta-taped.conf 
   echo "ObjectStore BackendPath $OBJECTSTOREURL" >> /etc/cta/cta-taped.conf
   echo "${tpconfig}" > /etc/cta/TPCONFIG
 
@@ -59,6 +62,10 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
 
   echo "Status is now:"
   systemctl status cta-taped
+
+  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
+  yum install -y systemd-resolved
+  systemctl start systemd-resolved
 
 else
   # systemd is not available

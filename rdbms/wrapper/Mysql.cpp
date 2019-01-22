@@ -19,7 +19,6 @@
 
 #include "rdbms/wrapper/Mysql.hpp"
 
-#include <my_global.h>
 #include <mysql.h>
 
 #include <iostream>
