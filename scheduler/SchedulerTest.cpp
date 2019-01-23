@@ -19,6 +19,7 @@
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/log/StdoutLogger.hpp"
 #include "common/make_unique.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -33,6 +34,8 @@
 #include "common/log/DummyLogger.hpp"
 #include "objectstore/GarbageCollector.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
+#include "objectstore/RootEntry.hpp"
+#include "objectstore/JobQueueType.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "common/Timer.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
@@ -1085,10 +1088,11 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
+  //auto &schedulerDB = getSchedulerDB();
   
   setupDefaultCatalogue();
     
-  cta::log::DummyLogger dummyLogger("dummy","dummy");
+  cta::log::StdoutLogger dummyLogger("dummy","dummy");
   log::LogContext lc(dummyLogger);
   
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
@@ -1117,7 +1121,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   const std::string checksumType = "checksum_type";
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
-  const uint64_t nbArchiveFiles = 10;
+  const uint64_t nbArchiveFiles = 1;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
   const uint64_t compressedFileSize = archiveFileSize;
 
@@ -1166,9 +1170,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
   {
-    //The expandRepackRequest method should have queued 10 retrieve request corresponding to the 10 previous file inserted in the catalogue
+    //The expandRepackRequest method should have queued nbArchiveFiles retrieve request corresponding to the nbArchiveFiles previous file inserted in the catalogue
     std::list<common::dataStructures::RetrieveJob> retrieveJobs = scheduler.getPendingRetrieveJobs(s_vid,lc);
-    ASSERT_EQ(retrieveJobs.size(),10);
+    ASSERT_EQ(retrieveJobs.size(),nbArchiveFiles);
     int i = 1;
     for(auto retrieveJob : retrieveJobs){
       //Test that the informations are correct for each file
@@ -1202,18 +1206,15 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     
     std::list<std::unique_ptr<cta::RetrieveJob>> executedJobs;
     
-    for(int i = 1;i<=10;++i)
+    for(uint64_t i = 1;i<=nbArchiveFiles;++i)
     {
       auto jobBatch = retrieveMount->getNextJobBatch(1,archiveFileSize,lc);
       retrieveJob.reset(jobBatch.front().release());
       ASSERT_NE(nullptr, retrieveJob.get());
       ASSERT_EQ(retrieveJob->archiveFile.archiveFileID,i);
-      //Set the retrieve job to succeed
-      retrieveJob->asyncComplete();
-      retrieveJob->checkComplete();
       executedJobs.push_back(std::move(retrieveJob));
     }
-    
+   
     //Now, report the retrieve jobs to be completed
     castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
     
@@ -1229,7 +1230,14 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 
     rrp.reportEndOfSession();
     rrp.waitThread();
+    
     ASSERT_EQ(rrp.allThreadsDone(),true);
+    /*cta::objectstore::RootEntry re(schedulerDB.getBackend());
+    cta::objectstore::ScopedExclusiveLock sel(re);
+    re.fetchNoLock();
+    
+    std::string test = re.getRetrieveQueueAddress(s_vid,cta::objectstore::JobQueueType::JobsToTransfer);*/
+    
   }
 }
 

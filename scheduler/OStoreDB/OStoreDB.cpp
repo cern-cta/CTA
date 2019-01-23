@@ -2352,13 +2352,16 @@ std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSu
     std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, cta::log::LogContext & lc)
 {
   std::set<cta::SchedulerDatabase::RetrieveJob *> ret;
-  //typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> RQTRTRAlgos;
+  typedef objectstore::ContainerAlgorithms<objectstore::RetrieveQueue,objectstore::RetrieveQueueToReportToRepackForSuccess> AqtrtrfsCa;
+  AqtrtrfsCa aqtrtrfsCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+  std::map<std::string, AqtrtrfsCa::InsertedElement::list> insertedElementsLists;
   
   for(auto & retrieveJob : jobsBatch){
     auto osdbJob = castFromSchedDBJob(retrieveJob);
-    osdbJob->asyncSucceedForRepack();
+    ret.insert(retrieveJob);
+    //osdbJob->asyncSucceedForRepack();
     auto update_callback = [this,&osdbJob](const std::string &in)->std::string{ 
-       // We have a locked and fetched object, so we just need to work on its representation.
+        // We have a locked and fetched object, so we just need to work on its representation.
         cta::objectstore::serializers::ObjectHeader oh;
         if (!oh.ParseFromString(in)) {
           // Use a the tolerant parser to assess the situation.
@@ -2384,6 +2387,7 @@ std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSu
         for(auto &job : *retrieveJobs){
           if(job.copynb() == osdbJob->selectedCopyNb)
           {
+            //Change the status to RJS_Succeed
             job.set_status(serializers::RetrieveJobStatus::RJS_Succeeded);
             oh.set_payload(payload.SerializePartialAsString());
             return oh.SerializeAsString();
@@ -2393,9 +2397,14 @@ std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSu
     };
     std::function <std::string(const std::string &)> update = update_callback;
     cta::objectstore::Backend::AsyncUpdater * updater = this->m_oStoreDB.m_objectStore.asyncUpdate(osdbJob->m_retrieveRequest.getAddressIfSet(), update);
-    //cta::objectstore::Backend::AsyncUpdater * updater = osdbJob->m_retrieveMount->m_oStoreDB.m_objectStore.asyncUpdate(osdbJob->m_retrieveRequest.getAddressIfSet(), update);
-    updater->wait();//osdbJob->m_retrieveRequest.getAddressIfSet())<<std::endl;
+    //TODO : Should the wait be removed ?
+    updater->wait();
+    auto & tapeFile = osdbJob->archiveFile.tapeFiles[osdbJob->selectedCopyNb];
+    std::string vid = osdbJob->m_retrieveMount->mountInfo.vid;
+    insertedElementsLists[vid].emplace_back(AqtrtrfsCa::InsertedElement{&osdbJob->m_retrieveRequest, (uint16_t)osdbJob->selectedCopyNb, tapeFile.fSeq,osdbJob->archiveFile.fileSize,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,serializers::RetrieveJobStatus::RJS_Succeeded});
+    //TODO : Insert the retrieve request into the RetrieveQueueToReporttoRepackForSuccess
   }
+  
   return ret;
 }
 //------------------------------------------------------------------------------
@@ -3161,10 +3170,6 @@ OStoreDB::RetrieveJob::~RetrieveJob() {
 void OStoreDB::RetrieveJob::asyncSucceed() {
   // set the request as successful (delete it).
   m_jobDelete.reset(m_retrieveRequest.asyncDeleteJob());
-}
-
-void OStoreDB::RetrieveJob::asyncSucceedForRepack(){
-  //TODO : put the code to async change retrieve request status as RJS_Success
 }
 
 //------------------------------------------------------------------------------

@@ -231,7 +231,6 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void asyncSucceed() override;
     virtual void checkSucceed() override;
-    virtual void asyncSucceedForRepack() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     virtual ~RetrieveJob() override;

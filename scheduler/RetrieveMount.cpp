@@ -188,6 +188,7 @@ void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::
             .add("files", files)
             .add("bytes", bytes);
       tl.addToLog(params);
+      //TODO : if repack, add log to say that the jobs were marked as RJS_Succeeded
       logContext.log(cta::log::DEBUG,"In RetrieveMout::waitAndFinishSettingJobsBatchRetrieved(): deleted complete retrieve jobs.");
     }
   } catch(const cta::exception::Exception& e){
@@ -201,6 +202,7 @@ void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::
     }
     const std::string msg_error="In RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
+    logContext.logBacktrace(cta::log::ERR, e.backtrace());
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
     // will be retried.
   } catch(const std::exception& e){

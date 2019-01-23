@@ -208,7 +208,6 @@ trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock,
   try {
     // The queue should be removed as it is empty.
     ContainerTraits<ArchiveQueue,C>::QueueType queueType;
-    //TODO : Voir si le queue type correspondra au bon type
     RootEntry re(cont.m_objectStore);
     ScopedExclusiveLock rexl(re);
     re.fetch();
