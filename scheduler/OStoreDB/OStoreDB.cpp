@@ -704,6 +704,15 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getArchiveJobsFailedSummary(log::
   auto queueList = re.dumpArchiveQueues(QueueType::FailedJobs);
   for(auto &aj : queueList) {
     ArchiveQueue aq(aj.address, m_objectStore);
+    try {
+      aq.fetchNoLock();
+    } catch (cta::exception::Exception &ex) {
+      log::ScopedParamContainer params (logContext);
+      params.add("queueObject", aj.address)
+            .add("exceptionMessage", ex.getMessageValue());
+      logContext.log(log::WARNING, "In OStoreDB::getArchiveJobsFailedSummary(): failed to lock/fetch an archive queue.");
+      continue;
+    }
     auto summary = aq.getCandidateSummary();
     ret.totalFiles += summary.candidateFiles;
     ret.totalBytes += summary.candidateBytes;
@@ -1144,6 +1153,15 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getRetrieveJobsFailedSummary(log:
   auto queueList = re.dumpRetrieveQueues(QueueType::FailedJobs);
   for(auto &rj : queueList) {
     RetrieveQueue rq(rj.address, m_objectStore);
+    try {
+      rq.fetchNoLock();
+    } catch (cta::exception::Exception &ex) {
+      log::ScopedParamContainer params (logContext);
+      params.add("queueObject", rj.address)
+            .add("exceptionMessage", ex.getMessageValue());
+      logContext.log(log::WARNING, "In OStoreDB::getRetrieveJobsFailedSummary(): failed to lock/fetch a retrieve queue.");
+      continue;
+    }
     auto summary = rq.getCandidateSummary();
     ret.totalFiles += summary.candidateFiles;
     ret.totalBytes += summary.candidateBytes;

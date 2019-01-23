@@ -564,9 +564,9 @@ auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::s
 auto ArchiveQueue::getCandidateSummary() -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
-  for(auto & rqsp: m_payload.archivequeueshards()) {
-    ret.candidateBytes += rqsp.shardbytescount();
-    ret.candidateFiles += rqsp.shardjobscount();
+  for(auto & aqsp: m_payload.archivequeueshards()) {
+    ret.candidateBytes += aqsp.shardbytescount();
+    ret.candidateFiles += aqsp.shardjobscount();
   }
   return ret;
 }
