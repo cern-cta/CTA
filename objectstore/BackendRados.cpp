@@ -183,6 +183,7 @@ librados::IoCtx& BackendRados::getRadosCtx() {
 }
 
 void BackendRados::create(std::string name, std::string content) {
+  if (content.empty()) throw exception::Exception("In BackendRados::create: trying to create an empty object.");
   librados::ObjectWriteOperation wop;
   const bool createExclusive = true;
   wop.create(createExclusive);
