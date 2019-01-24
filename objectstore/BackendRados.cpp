@@ -190,29 +190,49 @@ void BackendRados::create(std::string name, std::string content) {
   ceph::bufferlist bl;
   bl.append(content.c_str(), content.size());
   wop.write_full(bl);
-  RadosTimeoutLogger rtl;
-  try {
-    cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException(
-      [&]() { 
-        int ret = -getRadosCtx().operate(name, &wop);
-        return ret;
-      },
-      std::string("In BackendRados::create, failed to create exclusively or write: ")
-      + name);
-  } catch (cta::exception::Errnum & en) {
-    if (en.errorNumber() == EEXIST) {
-      uint64_t size;
-      time_t date;
-      int statRet = getRadosCtx().stat(name, &size, &date);
-      if (-ENOENT == statRet) {
-        en.getMessage() << " Error is EEXIST, yet stating returns ENOENT.";
-      } else {
-        en.getMessage() << " Error is EEXIST. Trying to statRet=" << statRet << " size=" << size << " date=" << date;
+  retry:;
+  {
+    RadosTimeoutLogger rtl;
+    try {
+      cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException(
+        [&]() { 
+          int ret = -getRadosCtx().operate(name, &wop);
+          return ret;
+        },
+        std::string("In BackendRados::create, failed to create exclusively or write: ")
+        + name);
+    } catch (cta::exception::Errnum & en) {
+      if (en.errorNumber() == EEXIST) {
+        rtl.logIfNeeded("In BackendRados::create(): m_radosCtx.operate(create+write_full)", name);
+        // We can race with locking in some situations: attempting to lock a non-existing object creates it, of size
+        // zero.
+        // The lock function will delete it immediately, but we could have attempted to create the object in this very moment.
+        // We will stat-poll the object and retry the create as soon as it's gone.
+        uint64_t size;
+        time_t date;
+        cta::utils::Timer t;
+        restat:;
+        int statRet = getRadosCtx().stat(name, &size, &date);
+        if (-ENOENT == statRet) {
+          // Object is gone already, let's retry.
+          goto retry;
+        } else if (!statRet) {
+          // If the size of the object is not zero, this is another problem.
+          if (size) {
+            en.getMessage() << " After statRet=" << statRet << " size=" << size << " date=" << date;
+            throw en;
+          } else if (t.secs() > 10) {
+            en.getMessage() << " Object is still here after 10s. statRet=" << statRet << " size=" << size << " date=" << date;
+            throw en;
+          } else goto restat;
+        } else {
+          en.getMessage() << " And stating failed with errno=" << -statRet;
+          throw en;
+        }
       }
-      throw en;
     }
+    rtl.logIfNeeded("In BackendRados::create(): m_radosCtx.operate(create+write_full)", name);
   }
-  rtl.logIfNeeded("In BackendRados::create(): m_radosCtx.operate(create+write_full)", name);
 }
 
 void BackendRados::atomicOverwrite(std::string name, std::string content) {
@@ -247,6 +267,9 @@ std::string BackendRados::read(std::string name) {
     }
   }
   rtl.logIfNeeded("In BackendRados::read(): m_radosCtx.read()", name);
+  // Transient empty object can exist (due to locking)
+  // They are regarded as not-existing.
+  if (!bl.length()) throw NoSuchObject("In BackendRados::read(): considering empty object as non-existing.");
   bl.copy(0, bl.length(), ret);
   return ret;
 }
@@ -882,6 +905,10 @@ void BackendRados::AsyncUpdater::UpdateJob::execute() {
   AsyncUpdater & au = *m_parentUpdater;
   try {
     // The data is in the buffer list.
+    // Transient empty object can exist (due to locking)
+    // They are regarded as not-existing.
+    if (!au.m_radosBufferList.length()) throw NoSuchObject(
+        "In BackendRados::AsyncUpdater::UpdateJob::execute(): considering empty object as non-existing");
     std::string value;
     try {
       au.m_radosBufferList.copy(0, au.m_radosBufferList.length(), value);
@@ -1125,6 +1152,10 @@ void BackendRados::AsyncLockfreeFetcher::fetchCallback(librados::completion_t co
       throw Backend::CouldNotFetch(errnum.getMessageValue());
     }
     // The data is in the buffer list.
+    // Transient empty object can exist (due to locking)
+    // They are regarded as not-existing.
+    if (!au.m_radosBufferList.length()) throw NoSuchObject(
+        "In BackendRados::AsyncLockfreeFetcher::fetchCallback(): considering empty object as non-existing");
     std::string value;
     try {
       au.m_radosBufferList.copy(0, au.m_radosBufferList.length(), value);
