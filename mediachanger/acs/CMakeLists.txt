@@ -44,29 +44,6 @@ set_target_properties (cta-acs PROPERTIES
  COMPILE_DEFINITIONS LINUX)
 
 ################################################################################
-# Rules to build and install unit-tests
-################################################################################
-
-set(MEDIACHANGER_ACS_UNIT_TESTS_LIB_SRC_FILES
-  AcsCmdLine.cpp
-  AcsCmdLineTest.cpp
-  AcsTest.cpp)
-
-add_library (ctamediachangeracsunittests SHARED
-  ${MEDIACHANGER_ACS_UNIT_TESTS_LIB_SRC_FILES})
-set_property(TARGET ctamediachangeracsunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctamediachangeracsunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-target_link_libraries (ctamediachangeracsunittests
-  cta-acs)
-
-set_target_properties (ctamediachangeracsunittests PROPERTIES
- COMPILE_FLAGS -I/usr/include/CDK
- COMPILE_DEFINITIONS LINUX)
-
-install(TARGETS ctamediachangeracsunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-################################################################################
 # Rules to build and install castor-tape-acs-dismount
 ################################################################################
 message(STATUS "Adding cta-acs-dismount target")
