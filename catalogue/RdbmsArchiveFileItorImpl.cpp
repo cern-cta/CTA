@@ -185,20 +185,12 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
       sql += "TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
     }
 
-    // Only put an ORDER BY clause if there is at least one search criteria.
-    //
-    // If the whole contents of the ARCHIVE_FILE and TAPE_FILE tables are
-    // listed without a search criteria and with an ORDER BY clause then the
-    // first row back from the database will take a relatively long period of
-    // time to be returned.  This is because the database will have to sort
-    // every row before returning the first.  This long period of time will
-    // cause the current (non SSI) cta command-line tool to time out.
-    if(thereIsAtLeastOneSearchCriteria) {
-      if(searchCriteria.vid) {
-        sql += " ORDER BY FSEQ";
-      } else {
-        sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
-      }
+    // Order by FSEQ if we are listing the contents of a tape, else order by
+    // archive file ID
+    if(searchCriteria.vid) {
+      sql += " ORDER BY FSEQ";
+    } else {
+      sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
     }
 
     m_conn = connPool.getConn();
