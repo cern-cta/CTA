@@ -2291,9 +2291,9 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       return;
     }
   case NextStep::EnqueueForReport: {
-      // Algorithms suppose the objects are not locked.
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       m_archiveRequest.commit();
+      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+      // Algorithms suppose the objects are not locked.
       arl.release();
       typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReport> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -2313,10 +2313,10 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       return;
     }
   case NextStep::EnqueueForTransfer: {
-      // Algorithms suppose the objects are not locked.
+      m_archiveRequest.commit();
       auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
-      m_archiveRequest.commit();
+      // Algorithms suppose the objects are not locked.
       arl.release();
       typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -2338,9 +2338,9 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       return;
     }
   case NextStep::StoreInFailedJobsContainer: {
-      // Algorithms suppose the objects are not locked.
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       m_archiveRequest.commit();
+      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+      // Algorithms suppose the objects are not locked.
       arl.release();
       typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueFailed> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -2384,15 +2384,15 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
   switch (enQueueingNextStep.nextStep) {
     // We have a reduced set of supported next steps as some are not compatible with this event (see default).
   case NextStep::EnqueueForReport: {
-      // Algorithms suppose the objects are not locked.
       m_archiveRequest.commit();
+      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+      // Algorithms suppose the objects are not locked.
       arl.release();
       typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReport> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
       caAqtr.referenceAndSwitchOwnership(tapeFile.vid, objectstore::QueueType::JobsToReport, insertedElements, lc);
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2404,15 +2404,15 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       return;
     }
   default: {
-      // Algorithms suppose the objects are not locked.
       m_archiveRequest.commit();
+      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+      // Algorithms suppose the objects are not locked.
       arl.release();
       typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueFailed> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
       caAqtr.referenceAndSwitchOwnership(tapeFile.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2729,10 +2729,9 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
   // First set the job status
   m_retrieveRequest.setJobStatus(tf.copyNb, enQueueingNextStep.nextStatus);
 
-  auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
-
-  // Algorithms suppose the objects are not locked.
   m_retrieveRequest.commit();
+  auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
+  // Algorithms suppose the objects are not locked.
   rrl.release();
 
   // Now apply the decision
