@@ -45,8 +45,7 @@ target_link_libraries(cta-unitTests
 
 if (NOT DEFINED NoACS)
   target_link_libraries(cta-unitTests
-    ctamediachangeracsdaemonunittests
-    ctamediachangeracsunittests)
+    ctamediachangeracsdaemonunittests)
 endif (NOT DEFINED NoACS)
 
 set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
