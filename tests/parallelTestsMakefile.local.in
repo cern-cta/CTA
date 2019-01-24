@@ -1,0 +1,50 @@
+.phony: all
+
+all: valgrind valgrindMultiprocess helgrindBase helgrindScheduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue helgrindMultiprocess
+	
+	
+valgrind: valgrindMultiprocess helgrindMultiprocess
+	valgrind -q @VALGRIND_OPTS_STR@                                               \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/valgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests | ts "vg: %b %d %H:%M:%S"
+
+valgrindMultiprocess:
+	valgrind -q @VALGRIND_OPTS_STR@ --child-silent-after-fork=yes                 \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/valgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests-multiProcess | ts "vgmp: %b %d %H:%M:%S"
+
+helgrindBase: valgrindMultiprocess helgrindMultiprocess
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	--gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory* \
+	| ts "hgb: %b %d %H:%M:%S"
+
+helgrindScheduler: valgrindMultiprocess helgrindMultiprocess
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler* | ts "hgs: %b %d %H:%M:%S"
+
+helgrindOStoreDB: valgrindMultiprocess helgrindMultiprocess
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	--gtest_filter=OStoreTestVFS* | ts "hgosdb: %b %d %H:%M:%S"
+
+helgrindDataTransfer: valgrindMultiprocess helgrindMultiprocess
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest* | ts "hgdt: %b %d %H:%M:%S"
+
+helgrindInMemoryCatalogue: valgrindMultiprocess helgrindMultiprocess
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	--gtest_filter=InMemory/* | ts "hgimc: %b %d %H:%M:%S"
+
+helgrindMultiprocess: valgrindMultiprocess
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests-multiProcess | ts "hgmp: %b %d %H:%M:%S"
