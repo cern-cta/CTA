@@ -37,6 +37,11 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
     utils::Timer t2, roundTime;
 
     auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(BATCH_SIZE, lc);
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("jobsToReport", archiveJobsToReport.size());
+      lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): ready to process archive reports.");
+    }
     is_done = archiveJobsToReport.empty();
     if(!archiveJobsToReport.empty()) {
       timings.insertAndReset("getArchiveJobsToReportTime", t2);
@@ -47,6 +52,11 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
     }
 
     auto retrieveJobsToReport = m_scheduler.getNextRetrieveJobsToReportBatch(BATCH_SIZE, lc);
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("jobsToReport", retrieveJobsToReport.size());
+      lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): ready to process retrieve reports.");
+    }
     is_done = retrieveJobsToReport.empty();
     if(!retrieveJobsToReport.empty()) {
       timings.insertAndReset("getRetrieveJobsToReportTime", t2);
@@ -59,7 +69,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
   log::ScopedParamContainer params(lc);  
   params.add("roundCount", roundCount)
         .add("passTime", t.secs());
-  lc.log(log::INFO, "In ReporterProcess::runOnePass(): finished one pass.");
+  lc.log(log::INFO, "In DiskReportRunner::runOnePass(): finished one pass.");
 }
 
 } // namespace cta

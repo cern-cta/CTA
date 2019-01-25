@@ -77,7 +77,7 @@ void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
   if (!isEmpty()) {
     std::list<std::string> ownershipList = getOwnershipList();
     std::stringstream exSs;
-    exSs << "In Agent::deleteAndUnregisterSelf: agent still owns objects. Here's the list:";
+    exSs << "In Agent::removeAndUnregisterSelf: agent still owns objects. Here's the list:";
     for(auto i=ownershipList.begin(); i!=ownershipList.end(); i++) {
       exSs << " " << *i;
     }

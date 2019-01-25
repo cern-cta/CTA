@@ -175,6 +175,7 @@ queueForFailure:;
             .add("commitUnlockQueueTime", commitUnlockQueueTime);
       lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): queued the request to the failed queue.");
     }
+    return;
   }
   
   // Find the corresponding tape file, which will give the copynb, which will allow finding the retrieve job.
