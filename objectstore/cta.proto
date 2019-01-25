@@ -521,7 +521,7 @@ message RepackIndex {
 }
 
 message RepackRequestQueuePointer {
-  required string address = 12100;
+  required string address = 12101;
 }
 
 message RepackQueue {

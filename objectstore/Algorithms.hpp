@@ -115,7 +115,6 @@ public:
     ScopedExclusiveLock contLock;
     log::TimingList timingList;
     utils::Timer t;
-    typename ContainerTraits<Q,C>::QueueType queueType;
     ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId,  lc);
     contAddress = cont.getAddressIfSet();
     auto contSummaryBefore = ContainerTraits<Q,C>::getContainerSummary(cont);

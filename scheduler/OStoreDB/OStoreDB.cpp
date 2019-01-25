@@ -2354,13 +2354,13 @@ std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSu
   std::set<cta::SchedulerDatabase::RetrieveJob *> ret;
   typedef objectstore::ContainerAlgorithms<objectstore::RetrieveQueue,objectstore::RetrieveQueueToReportToRepackForSuccess> AqtrtrfsCa;
   AqtrtrfsCa aqtrtrfsCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-  std::map<std::string, AqtrtrfsCa::InsertedElement::list> insertedElementsLists;
-  
+  AqtrtrfsCa::InsertedElement::list insertedElementsLists;
+  std::string vid;
   for(auto & retrieveJob : jobsBatch){
     auto osdbJob = castFromSchedDBJob(retrieveJob);
     ret.insert(retrieveJob);
     //osdbJob->asyncSucceedForRepack();
-    auto update_callback = [this,&osdbJob](const std::string &in)->std::string{ 
+    auto update_callback = [&osdbJob](const std::string &in)->std::string{ 
         // We have a locked and fetched object, so we just need to work on its representation.
         cta::objectstore::serializers::ObjectHeader oh;
         if (!oh.ParseFromString(in)) {
@@ -2400,11 +2400,10 @@ std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSu
     //TODO : Should the wait be removed ?
     updater->wait();
     auto & tapeFile = osdbJob->archiveFile.tapeFiles[osdbJob->selectedCopyNb];
-    std::string vid = osdbJob->m_retrieveMount->mountInfo.vid;
-    insertedElementsLists[vid].emplace_back(AqtrtrfsCa::InsertedElement{&osdbJob->m_retrieveRequest, (uint16_t)osdbJob->selectedCopyNb, tapeFile.fSeq,osdbJob->archiveFile.fileSize,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,serializers::RetrieveJobStatus::RJS_Succeeded});
-    //TODO : Insert the retrieve request into the RetrieveQueueToReporttoRepackForSuccess
+    vid = osdbJob->m_retrieveMount->mountInfo.vid;
+    insertedElementsLists.push_back(AqtrtrfsCa::InsertedElement{&osdbJob->m_retrieveRequest, (uint16_t)osdbJob->selectedCopyNb, tapeFile.fSeq,osdbJob->archiveFile.fileSize,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,serializers::RetrieveJobStatus::RJS_Succeeded});
   }
-  
+  aqtrtrfsCa.referenceAndSwitchOwnership(vid,insertedElementsLists,lc);
   return ret;
 }
 //------------------------------------------------------------------------------

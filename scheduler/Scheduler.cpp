@@ -394,7 +394,7 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
     if(repackRequest != nullptr){
       std::unique_ptr<RepackRequest> ret(new RepackRequest());
       ret->m_dbReq.reset(repackRequest.release());
-      return ret;
+      return std::move(ret);
     }
     return nullptr;
 }

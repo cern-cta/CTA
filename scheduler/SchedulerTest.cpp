@@ -39,6 +39,7 @@
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "common/Timer.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "objectstore/Algorithms.hpp"
 
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
@@ -1088,11 +1089,12 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
-  //auto &schedulerDB = getSchedulerDB();
+  auto &schedulerDB = getSchedulerDB();
   
   setupDefaultCatalogue();
     
-  cta::log::StdoutLogger dummyLogger("dummy","dummy");
+  //cta::log::StdoutLogger dummyLogger("dummy","dummy");
+  cta::log::DummyLogger dummyLogger("dummy","dummy");
   log::LogContext lc(dummyLogger);
   
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
@@ -1121,7 +1123,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   const std::string checksumType = "checksum_type";
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
-  const uint64_t nbArchiveFiles = 1;
+  const uint64_t nbArchiveFiles = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
   const uint64_t compressedFileSize = archiveFileSize;
 
@@ -1232,12 +1234,65 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     rrp.waitThread();
     
     ASSERT_EQ(rrp.allThreadsDone(),true);
-    /*cta::objectstore::RootEntry re(schedulerDB.getBackend());
+    
+    //After the jobs reported as completed, we will test that all jobs have been put in 
+    //the RetrieveQueueToReportToRepackForSuccess and that they have the status RJS_Succeeded
+    
+    cta::objectstore::RootEntry re(schedulerDB.getBackend());
     cta::objectstore::ScopedExclusiveLock sel(re);
-    re.fetchNoLock();
+    re.fetch();
     
-    std::string test = re.getRetrieveQueueAddress(s_vid,cta::objectstore::JobQueueType::JobsToTransfer);*/
+    //Get the retrieveQueueToReportToRepackForSuccess
+    std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(s_vid,cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+    cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForSuccessAddress,schedulerDB.getBackend());
     
+    //Fetch the queue so that we can get the retrieveRequests from it
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    
+    //There should be nbArchiveFiles jobs in the retrieve queue
+    ASSERT_EQ(rq.dumpJobs().size(),nbArchiveFiles);
+    
+    int i = 1;
+    for (auto &job: rq.dumpJobs()) {
+      //Create the retrieve request from the address of the job and the current backend
+      cta::objectstore::RetrieveRequest retrieveRequest(job.address,schedulerDB.getBackend());
+      retrieveRequest.fetchNoLock();
+      uint64_t copyNb = job.copyNb;
+      common::dataStructures::TapeFile tapeFile = retrieveRequest.getArchiveFile().tapeFiles[copyNb];
+      common::dataStructures::RetrieveRequest schedulerRetrieveRequest = retrieveRequest.getSchedulerRequest();
+      common::dataStructures::ArchiveFile archiveFile = retrieveRequest.getArchiveFile();
+      
+      //Testing tape file
+      ASSERT_EQ(tapeFile.vid,s_vid);
+      ASSERT_EQ(tapeFile.blockId,i * 100);
+      ASSERT_EQ(tapeFile.fSeq,i);
+      ASSERT_EQ(tapeFile.checksumType, checksumType);
+      ASSERT_EQ(tapeFile.checksumValue,checksumValue);
+      ASSERT_EQ(tapeFile.compressedSize, compressedFileSize);
+      
+      //Testing scheduler retrieve request
+      ASSERT_EQ(schedulerRetrieveRequest.archiveFileID,i);
+      std::stringstream ss;
+      ss<<"repack://public_dir/public_file_"<<i;
+      ASSERT_EQ(schedulerRetrieveRequest.dstURL,ss.str());
+      ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_" << i;
+      ASSERT_EQ(schedulerRetrieveRequest.diskFileInfo.path,diskFilePath.str());
+      //Testing the retrieve request
+      ASSERT_EQ(retrieveRequest.isRepack(),true);
+      ASSERT_EQ(retrieveRequest.getQueueType(),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+      ASSERT_EQ(retrieveRequest.getRetrieveFileQueueCriteria().mountPolicy,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
+      ASSERT_EQ(retrieveRequest.getActiveCopyNumber(),1);
+      ASSERT_EQ(retrieveRequest.getJobStatus(job.copyNb),cta::objectstore::serializers::RetrieveJobStatus::RJS_Succeeded);
+      ASSERT_EQ(retrieveRequest.getJobs().size(),1);
+      
+      //Testing the archive file associated to the retrieve request
+      ASSERT_EQ(archiveFile.storageClass,storageClass.name);
+      ASSERT_EQ(archiveFile.diskInstance,storageClass.diskInstance);
+      ++i;
+    }
   }
 }
 

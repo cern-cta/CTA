@@ -400,6 +400,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   objectstore::EntryLogSerDeser el(ret.creationLog);
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.dstURL = m_payload.schedulerrequest().dsturl();
+  ret.isRepack = m_payload.isrepack();
   ret.errorReportURL = m_payload.schedulerrequest().retrieveerrorreporturl();
   objectstore::DiskFileInfoSerDeser dfisd;
   dfisd.deserialize(m_payload.schedulerrequest().diskfileinfo());
@@ -543,6 +544,9 @@ JobQueueType RetrieveRequest::getQueueType() {
     switch(j.status()) {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return JobQueueType::JobsToTransfer;
+      break;
+    case serializers::RetrieveJobStatus::RJS_Succeeded:
+      return JobQueueType::JobsToReportToRepackForSuccess;
       break;
     case serializers::RetrieveJobStatus::RJS_ToReportForFailure:
       // Else any job to report => to report.
