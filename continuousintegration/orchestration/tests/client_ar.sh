@@ -142,7 +142,9 @@ TAPEONLY=$(grep -c tapeonly$ ${STATUS_FILE})
 echo "###"
 echo "${TAPEONLY}/${ARCHIVED} on tape only"
 echo "###"
-
+echo "Sleeping 400 seconds to allow MGM-FST communication to settle after disk copy deletion."
+sleep 400
+echo "###"
 
 echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 #for TEST_FILE_NAME in $(grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
