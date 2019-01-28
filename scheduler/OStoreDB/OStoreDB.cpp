@@ -687,32 +687,32 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArch
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
   re.fetchNoLock();
-  while (true) {
-    auto queueList = re.dumpArchiveQueues(JobQueueType::JobsToReportToUser);
-    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
-    if (queueList.empty()) return ret;
-    // Try to get jobs from the first queue. If it is empty, it will be trimmed,
-    // so we can got for another round.
-    AQTRAlgo::PopCriteria criteria;
-    criteria.files = filesRequested;
-    auto jobs = aqtrAlgo.popNextBatch(queueList.front().tapePool, criteria, logContext);
-    if (jobs.elements.empty()) continue;
-    for (auto & j: jobs.elements) {
-      std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), *this));
-      aj->tapeFile.copyNb = j.copyNb;
-      aj->archiveFile = j.archiveFile;
-      aj->srcURL = j.srcURL;
-      aj->archiveReportURL = j.archiveReportURL;
-      aj->errorReportURL = j.errorReportURL;
-      aj->latestError = j.latestError;
-      aj->reportType = j.reportType;
-      // We leave the tape file not set. It does not exist in all cases (not in case of failure).
-      aj->m_jobOwned = true;
-      aj->m_mountId = 0;
-      ret.emplace_back(std::move(aj));
-    }
-    return ret;
+  auto queueList = re.dumpArchiveQueues(JobQueueType::JobsToReportToUser);
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
+  if (queueList.empty()) return ret;
+  // Try to get jobs from the first non-empty queue.
+  AQTRAlgo::PopCriteria criteria;
+  criteria.files = filesRequested;
+  AQTRAlgo::PoppedElementsBatch jobs;
+  for (auto & q: queueList) {
+    jobs = aqtrAlgo.popNextBatch(q.tapePool, criteria, logContext);
+    if (!jobs.elements.empty()) break;
   }
+  for (auto & j: jobs.elements) {
+    std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), *this));
+    aj->tapeFile.copyNb = j.copyNb;
+    aj->archiveFile = j.archiveFile;
+    aj->srcURL = j.srcURL;
+    aj->archiveReportURL = j.archiveReportURL;
+    aj->errorReportURL = j.errorReportURL;
+    aj->latestError = j.latestError;
+    aj->reportType = j.reportType;
+    // We leave the tape file not set. It does not exist in all cases (not in case of failure).
+    aj->m_jobOwned = true;
+    aj->m_mountId = 0;
+    ret.emplace_back(std::move(aj));
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -2507,6 +2507,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
         params.add("tapeVid", list.first)
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting.");
+        lc.logBacktrace(log::ERR, ex.backtrace());
       }
     }
     timingList.insertAndReset("queueingToReportTime", t);

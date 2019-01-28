@@ -392,7 +392,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled)
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
       }
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range &) {
       // We need to update the entry in the cache (miss or stale, we handle the same way).
       // We just update one vid at a time as doing several in parallel would be quite
       // hairy lock-wise (but give a slight performance boost).

@@ -49,7 +49,7 @@ void Thread::wait()
   if (m_hadException && res != PTHREAD_CANCELED) {
     std::string w = "Uncaught exception of type \"";
     w += m_type;
-    w += "\" in Thread.run():\n>>>>\n";
+    w += "\" in Thread.run(): >>>>";
     w += m_what;
     w += "<<<< End of uncaught exception";
     throw UncaughtExceptionInThread(w);

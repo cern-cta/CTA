@@ -40,8 +40,7 @@ echo -n "Waiting for /etc/cta/cta-frontend.krb5.keytab."
 for ((;;)); do test -e /etc/cta/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
 echo OK
 
-echo "Generating core file in /var/log/cta directory so that those are available as artifacts"
-echo '/var/log/cta/core_%e.%p' > /proc/sys/kernel/core_pattern
+echo "Core files are available as $(cat /proc/sys/kernel/core_pattern) so that those are available as artifacts"
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # systemd is not available
@@ -51,6 +50,10 @@ if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   /opt/run/bin/ctafrontend_bt.sh
   sleep infinity
 else
+  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
+  yum install -y systemd-resolved
+  systemctl start systemd-resolved
+
   # systemd is available
   echo "Launching frontend with systemd:"
   systemctl start cta-frontend

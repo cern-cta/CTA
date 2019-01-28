@@ -38,6 +38,11 @@ public:
 
   /**
    * Constructor.
+   */
+  Conn();
+
+  /**
+   * Constructor.
    *
    * @param connAndStmts The database connection and its pool of prepared
    * statements.
