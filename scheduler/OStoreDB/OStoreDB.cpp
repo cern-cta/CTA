@@ -249,13 +249,13 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
-    if (rqueue.getJobsSummary().files) {
+    if (rqueue.getJobsSummary().jobs) {
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
       m.vid = rqp.vid;
       m.type = cta::common::dataStructures::MountType::Retrieve;
       m.bytesQueued = rqueue.getJobsSummary().bytes;
-      m.filesQueued = rqueue.getJobsSummary().files;      
+      m.filesQueued = rqueue.getJobsSummary().jobs;      
       m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
       m.priority = rqueue.getJobsSummary().priority;
       m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
@@ -415,7 +415,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
         RetrieveQueue rq(r.address, m_objectStore);
         ScopedSharedLock rql(rq);
         rq.fetch();
-        if (!rq.getJobsSummary().files) {
+        if (!rq.getJobsSummary().jobs) {
           rql.release();
           re.removeRetrieveQueueAndCommit(r.vid, queueType, lc);
           log::ScopedParamContainer params(lc);

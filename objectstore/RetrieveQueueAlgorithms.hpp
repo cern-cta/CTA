@@ -155,9 +155,9 @@ struct ContainerTraits<RetrieveQueue,C>
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::ContainerSummary::
 addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &params) const {
-  params.add("queueFilesBefore", previous.files)
+  params.add("queueFilesBefore", previous.jobs)
         .add("queueBytesBefore", previous.bytes)
-        .add("queueFilesAfter", files)
+        .add("queueFilesAfter", jobs)
         .add("queueBytesAfter", bytes);
 }
 

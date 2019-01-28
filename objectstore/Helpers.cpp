@@ -525,7 +525,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
     ret.back().vid=rq.getVid();
     ret.back().currentPriority=rq.getJobsSummary().priority;
     ret.back().bytesQueued=rq.getJobsSummary().bytes;
-    ret.back().filesQueued=rq.getJobsSummary().files;
+    ret.back().filesQueued=rq.getJobsSummary().jobs;
   }
   return ret;
 }
