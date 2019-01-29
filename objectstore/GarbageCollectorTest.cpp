@@ -633,7 +633,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     auto dump=rq.dumpJobs();
     // We expect all jobs with sizes 1002-1005 inclusive to be connected to
     // their respective tape pools.
-    ASSERT_EQ(5, rq.getJobsSummary().files);
+    ASSERT_EQ(5, rq.getJobsSummary().jobs);
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);

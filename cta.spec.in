@@ -286,7 +286,6 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libctadaemonunittests.so*
 %{_libdir}/libctamediachangerunittests.so*
 %{_libdir}/libctamediachangeracsdaemonunittests.so*
-%{_libdir}/libctamediachangeracsunittests.so*
 %{_bindir}/cta-systemTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr

@@ -223,7 +223,7 @@ queueForTransfer:;
     m_payload.set_activecopynb(bestJob->copynb());
     setOwner(rq.getAddressIfSet());
     commit();
-    Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.files, jobsSummary.bytes, jobsSummary.priority);
+    Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.jobs, jobsSummary.bytes, jobsSummary.priority);
     rql.release();
     auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
     {

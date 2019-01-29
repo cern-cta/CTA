@@ -16,5 +16,11 @@ cat <<EOF > /etc/cta/cta-cli.conf
 cta.endpoint ctafrontend:10955
 EOF
 
-# sleep forever but exit immediately when pod is deleted
-exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
+if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
+  # sleep forever but exit immediately when pod is deleted
+  exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
+else
+  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
+  yum install -y systemd-resolved
+  systemctl start systemd-resolved
+fi

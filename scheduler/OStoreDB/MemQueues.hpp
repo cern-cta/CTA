@@ -303,11 +303,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     objectstore::Helpers::getLockedAndFetchedJobQueue<Queue>(queue, aql, 
             *oStoreDB.m_agentReference, queueIndex, objectstore::JobQueueType::JobsToTransfer, logContext);
     double getFetchedQueueTime = timer.secs(utils::Timer::resetCounter);
-    size_t qJobsBefore=queue.dumpJobs().size();
-    uint64_t qBytesBefore=0;
-    for (auto j: queue.dumpJobs()) {
-      qBytesBefore+=j.size;
-    }
+    auto summaryBefore=queue.getJobsSummary();
     size_t addedJobs=1;
     // Build the list of jobs to add to the queue
     std::list<JobAndRequest> jta;
@@ -328,11 +324,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     specializedUpdateCachedQueueStats(queue);
     double cacheUpdateTime = timer.secs(utils::Timer::resetCounter);
     // Log
-    size_t qJobsAfter=queue.dumpJobs().size();
-    uint64_t qBytesAfter=0;
-    for (auto j: queue.dumpJobs()) {
-      qBytesAfter+=j.size;
-    }
+    auto summaryAfter=queue.getJobsSummary();
     {
       log::ScopedParamContainer params(logContext);
       if (typeid(Queue) == typeid(objectstore::ArchiveQueue)) {
@@ -343,10 +335,10 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
               .add("tapeVid", queueIndex);
       }
       params.add("objectQueue", queue.getAddressIfSet())
-            .add("jobsBefore", qJobsBefore)
-            .add("jobsAfter", qJobsAfter)
-            .add("bytesBefore", qBytesBefore)
-            .add("bytesAfter", qBytesAfter)
+            .add("jobsBefore", summaryBefore.jobs)
+            .add("jobsAfter", summaryAfter.jobs)
+            .add("bytesBefore", summaryBefore.bytes)
+            .add("bytesAfter", summaryAfter.bytes)
             .add("addedJobs", addedJobs)
             .add("waitTime", waitTime)
             .add("getFetchedQueueTime", getFetchedQueueTime)

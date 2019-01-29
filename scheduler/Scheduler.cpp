@@ -399,6 +399,9 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
     return nullptr;
 }
 
+//------------------------------------------------------------------------------
+// generateRetrieveDstURL
+//------------------------------------------------------------------------------
 const std::string Scheduler::generateRetrieveDstURL(const cta::common::dataStructures::DiskFileInfo dfi) const{
   std::ostringstream strStream;
   strStream<<"repack:/"<<dfi.path;

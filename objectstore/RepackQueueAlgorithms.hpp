@@ -245,7 +245,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   ContainerTraits<RepackQueue,C>::QueueType queueType;
   try {
     rpkQAddress = re.getRepackQueueAddress(queueType.value);
-  } catch (RootEntry::NotAllocated &) {
+  } catch (RootEntry::NoSuchRepackQueue &) {
     throw NoSuchContainer("In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): no such repack queue");
   }
   // try and lock the repack queue. Any failure from here on means the end of the getting jobs.
@@ -274,7 +274,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
             .add("Message", ex.getMessageValue());
       lc.log(log::INFO, 
           "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
-    } catch (RootEntry::NoSuchRepackQueue & ex) {
+    } catch (RootEntry::NoSuchRepackQueue &) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("queueObject", cont.getAddressIfSet());
@@ -283,6 +283,9 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
     }
     //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
     attemptCount++;
+    // Unlock and reset the address so we can reuse the in-memory object with potentially ane address.
+    if (contLock.isLocked()) contLock.release();
+    cont.resetAddress();
     goto retry;
   }
 }

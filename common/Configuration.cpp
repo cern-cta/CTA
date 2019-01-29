@@ -134,7 +134,7 @@ const std::string& cta::common::Configuration::getConfEntString(
     }
     // Unlock and return default
     pthread_rwlock_unlock(&m_lock);
-  } catch (cta::exception::Exception) {
+  } catch (cta::exception::Exception &) {
     // exception caught : Unlock and return default
     pthread_rwlock_unlock(&m_lock);
     // log the exception

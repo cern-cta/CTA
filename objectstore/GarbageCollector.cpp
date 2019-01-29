@@ -534,7 +534,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,rql, agentReference, vid, queueType, lc);
       queueLockFetchTime = t.secs(utils::Timer::resetCounter);
       auto jobsSummary=rq.getJobsSummary();
-      filesBefore=jobsSummary.files;
+      filesBefore=jobsSummary.jobs;
       bytesBefore=jobsSummary.bytes;
       // Prepare the list of requests to add to the queue (if needed).
       std::list<RetrieveQueue::JobToAdd> jta;
@@ -651,7 +651,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
               .add("bytesDequeuedAfterErrors", bytesDequeued)
               .add("filesBefore", filesBefore)
               .add("bytesBefore", bytesBefore)
-              .add("filesAfter", jobsSummary.files)
+              .add("filesAfter", jobsSummary.jobs)
               .add("bytesAfter", jobsSummary.bytes)
               .add("queueLockFetchTime", queueLockFetchTime)
               .add("queuePreparationTime", queueProcessAndCommitTime)
