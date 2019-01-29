@@ -576,3 +576,25 @@
    fun:_dl_init
    obj:/usr/lib64/ld-2.17.so
 }
+{
+   repack_getCandidateList
+    Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs6assignERKSs
+   fun:_ZN3cta11objectstore11RepackQueue16getCandidateListEmSt3setISsSt4lessISsESaISsEE
+}
+
+{
+   retrieveQueueShard_getCandidateJobList
+   Memcheck:Leak
+   match-leak-kinds: indirect
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSsC1ERKSs
+   fun:_ZN3cta11objectstore18RetrieveQueueShard19getCandidateJobListEmmSt3setISsSt4lessISsESaISsEE
+   fun:_ZN3cta11objectstore13RetrieveQueue16getCandidateListEmmSt3setISsSt4lessISsESaISsEE
+}

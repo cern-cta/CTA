@@ -2397,8 +2397,9 @@ std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSu
     };
     std::function <std::string(const std::string &)> update = update_callback;
     cta::objectstore::Backend::AsyncUpdater * updater = this->m_oStoreDB.m_objectStore.asyncUpdate(osdbJob->m_retrieveRequest.getAddressIfSet(), update);
-    //TODO : Should the wait be removed ?
+    //TODO: Should the wait be removed ?
     updater->wait();
+    delete updater;
     auto & tapeFile = osdbJob->archiveFile.tapeFiles[osdbJob->selectedCopyNb];
     vid = osdbJob->m_retrieveMount->mountInfo.vid;
     insertedElementsLists.push_back(AqtrtrfsCa::InsertedElement{&osdbJob->m_retrieveRequest, (uint16_t)osdbJob->selectedCopyNb, tapeFile.fSeq,osdbJob->archiveFile.fileSize,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,serializers::RetrieveJobStatus::RJS_Succeeded});

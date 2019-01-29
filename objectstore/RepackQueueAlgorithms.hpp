@@ -164,7 +164,7 @@ getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria, 
 {
   PoppedElementsBatch ret;
   auto candidateReqsFromQueue=cont.getCandidateList(unfulfilledCriteria.requests, elemtsToSkip);
-  for (auto &crfq: candidateReqsFromQueue.candidates) {
+  for (auto& crfq: candidateReqsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement());
     PoppedElement & elem = ret.elements.back();
     elem.repackRequest = cta::make_unique<RepackRequest>(crfq.address, cont.m_objectStore);

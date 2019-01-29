@@ -351,14 +351,14 @@ common::dataStructures::RepackInfo Scheduler::getRepack(const std::string &vid) 
 //------------------------------------------------------------------------------
 void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
   // We target 2 fresh requests available for processing (ToExpand or Starting).
-  const size_t targetAvailbleRequests = 2;
+  const size_t targetAvailableRequests = 2;
   // Dry-run test to check if promotion is needed.
   auto repackStatsNL = m_db.getRepackStatisticsNoLock();
   // Statistics are supposed to be initialized for each status value. We only try to
   // expand if there are requests available in Pending status.
   typedef common::dataStructures::RepackInfo::Status Status;
   if (repackStatsNL->at(Status::Pending) &&
-          (targetAvailbleRequests > repackStatsNL->at(Status::ToExpand) + repackStatsNL->at(Status::Starting))) {
+          (targetAvailableRequests > repackStatsNL->at(Status::ToExpand) + repackStatsNL->at(Status::Starting))) {
     // Let's try to promote a repack request. Take the lock.
     repackStatsNL.reset();
     decltype(m_db.getRepackStatistics()) repackStats;
@@ -369,8 +369,8 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
       return;
     }
     if (repackStats->at(Status::Pending) &&
-            (targetAvailbleRequests > repackStats->at(Status::ToExpand) + repackStats->at(Status::Starting))) {
-      auto requestsToPromote = targetAvailbleRequests;
+            (targetAvailableRequests > repackStats->at(Status::ToExpand) + repackStats->at(Status::Starting))) {
+      auto requestsToPromote = targetAvailableRequests;
       requestsToPromote -= repackStats->at(Status::ToExpand);
       requestsToPromote -= repackStats->at(Status::Starting);
       auto stats = repackStats->promotePendingRequestsForExpansion(requestsToPromote, lc);

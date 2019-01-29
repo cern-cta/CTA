@@ -123,6 +123,7 @@ auto RepackQueue::getRequestsSummary() -> RequestsSummary {
   return ret;
 }
 
+
 //------------------------------------------------------------------------------
 // RepackQueue::getCandidateList()
 //------------------------------------------------------------------------------
@@ -130,13 +131,12 @@ auto RepackQueue::getCandidateList(uint64_t maxRequests, std::set<std::string> r
   -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
-  auto repreq = m_payload.repackrequestpointers().begin();
-  for (auto __attribute__((unused)) i: cta::range<uint64_t>(maxRequests)) {
-    if (repreq == m_payload.repackrequestpointers().end()) break;
-    RequestDump requestDump;
-    requestDump.address = repreq->address();
-    ret.candidates.push_back(requestDump);
-    ++repreq;
+  uint64_t count=0;
+  for (auto & repreq : m_payload.repackrequestpointers()) {
+    RequestDump rd;
+    rd.address = repreq.address();
+    ret.candidates.push_back(rd);
+    if (++count >= maxRequests) break;
   }
   ret.candidateRequests = ret.candidates.size();
   ret.remainingRequestsAfterCandidates = m_payload.repackrequestpointers_size() - ret.candidateRequests;

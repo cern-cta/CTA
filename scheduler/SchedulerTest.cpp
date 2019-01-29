@@ -1108,9 +1108,19 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   //Create a logical library in the catalogue
   catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
   
-  //Create the tape from which we will retrieve
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+  uint64_t nbTapesToRepack = 3;
+  uint64_t nbTapesForTest = 2; //corresponds to the targetAvailableRequests variable in the Scheduler::promoteRepackRequestsToToExpand() method
+  
+  std::vector<std::string> allVid;
+  //Create the tapes from which we will retrieve
+  for(uint64_t i = 1; i <= nbTapesToRepack ; ++i){
+    std::ostringstream ossVid;
+    ossVid << s_vid << "_" << i;
+    std::string vid = ossVid.str();
+    allVid.push_back(vid);
+    catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+      disabledValue, fullValue, comment);
+  }
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -1127,171 +1137,196 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
   const uint64_t compressedFileSize = archiveFileSize;
 
-  //Simulate the writing of 10 files in a tape (just in the catalogue)
+  //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
-      std::ostringstream diskFileId;
-      diskFileId << (12345677 + i);
-      std::ostringstream diskFilePath;
-      diskFilePath << "/public_dir/public_file_" << i;
-
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
-      auto & fileWritten = *fileWrittenUP;
-      fileWritten.archiveFileId = i;
-      fileWritten.diskInstance = storageClass.diskInstance;
-      fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
-      fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
-      fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
-      fileWritten.storageClassName = storageClass.name;
-      fileWritten.vid = s_vid;
-      fileWritten.fSeq = i;
-      fileWritten.blockId = i * 100;
-      fileWritten.compressedSize = compressedFileSize;
-      fileWritten.copyNb = 1;
-      fileWritten.tapeDrive = tapeDrive;
-      tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+    uint64_t archiveFileId = 1;
+    for(uint64_t i = 1; i<= nbTapesToRepack;++i){
+      std::string currentVid = allVid.at(i-1);
+      for(uint64_t j = 1; j <= nbArchiveFiles; ++j) {
+        std::ostringstream diskFileId;
+        diskFileId << (12345677 + archiveFileId);
+        std::ostringstream diskFilePath;
+        diskFilePath << "/public_dir/public_file_"<<i<<"_"<< j;
+        auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+        auto & fileWritten = *fileWrittenUP;
+        fileWritten.archiveFileId = archiveFileId++;
+        fileWritten.diskInstance = storageClass.diskInstance;
+        fileWritten.diskFileId = diskFileId.str();
+        fileWritten.diskFilePath = diskFilePath.str();
+        fileWritten.diskFileUser = "public_disk_user";
+        fileWritten.diskFileGroup = "public_disk_group";
+        fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+        fileWritten.size = archiveFileSize;
+        fileWritten.checksumType = checksumType;
+        fileWritten.checksumValue = checksumValue;
+        fileWritten.storageClassName = storageClass.name;
+        fileWritten.vid = currentVid;
+        fileWritten.fSeq = j;
+        fileWritten.blockId = j * 100;
+        fileWritten.compressedSize = compressedFileSize;
+        fileWritten.copyNb = 1;
+        fileWritten.tapeDrive = tapeDrive;
+        tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+      }
+      //update the DB tape
+      catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+      tapeFilesWrittenCopy1.clear();
     }
-    //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
   }
   //Test the expandRepackRequest method
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
-    scheduler.queueRepack(admin,s_vid,"bufferURL",common::dataStructures::RepackInfo::Type::ExpandOnly,lc);
-    scheduler.promoteRepackRequestsToToExpand(lc);
-    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
-    log::TimingList tl;
-    utils::Timer t;
-    scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+    for(uint64_t i = 0; i < nbTapesToRepack ; ++i) {
+      scheduler.queueRepack(admin,allVid.at(i),"bufferURL",common::dataStructures::RepackInfo::Type::ExpandOnly,lc);
+    }
+    scheduler.waitSchedulerDbSubthreadsComplete();
+    //scheduler.waitSchedulerDbSubthreadsComplete();
+    for(uint64_t i = 0; i < nbTapesToRepack;++i){
+      log::TimingList tl;
+      utils::Timer t;
+      if(i % nbTapesForTest == 0){
+        //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
+        scheduler.promoteRepackRequestsToToExpand(lc);
+        scheduler.waitSchedulerDbSubthreadsComplete();
+      }
+      auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+      //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
+      //to promote more than 2 repack requests at a time. So we break here.
+      if(repackRequestToExpand == nullptr) break;
+      
+      scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+    }
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
+  //Here, we will only test that the two repack requests have been expanded
   {
     //The expandRepackRequest method should have queued nbArchiveFiles retrieve request corresponding to the nbArchiveFiles previous file inserted in the catalogue
-    std::list<common::dataStructures::RetrieveJob> retrieveJobs = scheduler.getPendingRetrieveJobs(s_vid,lc);
-    ASSERT_EQ(retrieveJobs.size(),nbArchiveFiles);
-    int i = 1;
-    for(auto retrieveJob : retrieveJobs){
-      //Test that the informations are correct for each file
-      ASSERT_EQ(retrieveJob.request.archiveFileID,i);
-      ASSERT_EQ(retrieveJob.fileSize,compressedFileSize);
-      std::stringstream ss;
-      ss<<"repack://public_dir/public_file_"<<i;
-      ASSERT_EQ(retrieveJob.request.dstURL, ss.str());
-      ASSERT_EQ(retrieveJob.tapeCopies[s_vid].second.copyNb,1);
-      ASSERT_EQ(retrieveJob.tapeCopies[s_vid].second.checksumType,checksumType);
-      ASSERT_EQ(retrieveJob.tapeCopies[s_vid].second.checksumValue,checksumValue);
-      ASSERT_EQ(retrieveJob.tapeCopies[s_vid].second.blockId,i*100);
-      ASSERT_EQ(retrieveJob.tapeCopies[s_vid].second.compressedSize,compressedFileSize);
-      ASSERT_EQ(retrieveJob.tapeCopies[s_vid].second.fSeq,i);
-      ASSERT_EQ(retrieveJob.tapeCopies[s_vid].second.vid,s_vid);
-      ++i;
+    uint64_t archiveFileId = 1;
+    for(uint64_t i = 1 ; i <= nbTapesForTest ; ++i){
+      std::string vid = allVid.at(i-1);
+      std::list<common::dataStructures::RetrieveJob> retrieveJobs = scheduler.getPendingRetrieveJobs(vid,lc);
+      ASSERT_EQ(retrieveJobs.size(),nbArchiveFiles);
+      int j = 1;
+      for(auto retrieveJob : retrieveJobs){
+        //Test that the informations are correct for each file
+        ASSERT_EQ(retrieveJob.request.archiveFileID,archiveFileId++);
+        ASSERT_EQ(retrieveJob.fileSize,compressedFileSize);
+        std::stringstream ss;
+        ss<<"repack://public_dir/public_file_"<<i<<"_"<<j;
+        ASSERT_EQ(retrieveJob.request.dstURL, ss.str());
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.copyNb,1);
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumType,checksumType);
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumValue,checksumValue);
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.blockId,j*100);
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.compressedSize,compressedFileSize);
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.fSeq,j);
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.vid,vid);
+        ++j;
+      }
     }
   }
-  //Now, we need to simulate a retrieve for each file
   scheduler.waitSchedulerDbSubthreadsComplete();
+  
+  //Now, we need to simulate a retrieve for each file
   {
     // Emulate a tape server by asking for a mount and then a file
-    std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
-    ASSERT_NE(nullptr, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
-    std::unique_ptr<cta::RetrieveMount> retrieveMount;
-    retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
-    ASSERT_NE(nullptr, retrieveMount.get());
-    std::unique_ptr<cta::RetrieveJob> retrieveJob;
-    
-    std::list<std::unique_ptr<cta::RetrieveJob>> executedJobs;
-    
-    for(uint64_t i = 1;i<=nbArchiveFiles;++i)
-    {
-      auto jobBatch = retrieveMount->getNextJobBatch(1,archiveFileSize,lc);
-      retrieveJob.reset(jobBatch.front().release());
-      ASSERT_NE(nullptr, retrieveJob.get());
-      ASSERT_EQ(retrieveJob->archiveFile.archiveFileID,i);
-      executedJobs.push_back(std::move(retrieveJob));
-    }
-   
-    //Now, report the retrieve jobs to be completed
-    castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
-    
-    rrp.startThreads();
-    for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
-    {
-      rrp.reportCompletedJob(std::move(*it));
-    }
-    rrp.setDiskDone();
-    rrp.setTapeDone();
+    uint64_t archiveFileId = 1;
+    for(uint64_t i = 1; i<= nbTapesForTest ;++i){
+      std::unique_ptr<cta::TapeMount> mount;
+      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      ASSERT_NE(nullptr, mount.get());
+      ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
+      std::unique_ptr<cta::RetrieveMount> retrieveMount;
+      retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
+      ASSERT_NE(nullptr, retrieveMount.get());
+      std::unique_ptr<cta::RetrieveJob> retrieveJob;
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+      std::list<std::unique_ptr<cta::RetrieveJob>> executedJobs;
+      //For each tape we will see if the retrieve jobs are not null
+      for(uint64_t j = 1; j<=nbArchiveFiles; ++j)
+      {
+        auto jobBatch = retrieveMount->getNextJobBatch(1,archiveFileSize,lc);
+        retrieveJob.reset(jobBatch.front().release());
+        ASSERT_NE(nullptr, retrieveJob.get());
+        executedJobs.push_back(std::move(retrieveJob));
+      }
+      //Now, report the retrieve jobs to be completed
+      castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
 
-    rrp.reportEndOfSession();
-    rrp.waitThread();
-    
-    ASSERT_EQ(rrp.allThreadsDone(),true);
-    
-    //After the jobs reported as completed, we will test that all jobs have been put in 
-    //the RetrieveQueueToReportToRepackForSuccess and that they have the status RJS_Succeeded
-    
-    cta::objectstore::RootEntry re(schedulerDB.getBackend());
-    cta::objectstore::ScopedExclusiveLock sel(re);
-    re.fetch();
-    
-    //Get the retrieveQueueToReportToRepackForSuccess
-    std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(s_vid,cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
-    cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForSuccessAddress,schedulerDB.getBackend());
-    
-    //Fetch the queue so that we can get the retrieveRequests from it
-    cta::objectstore::ScopedExclusiveLock rql(rq);
-    rq.fetch();
-    
-    //There should be nbArchiveFiles jobs in the retrieve queue
-    ASSERT_EQ(rq.dumpJobs().size(),nbArchiveFiles);
-    
-    int i = 1;
-    for (auto &job: rq.dumpJobs()) {
-      //Create the retrieve request from the address of the job and the current backend
-      cta::objectstore::RetrieveRequest retrieveRequest(job.address,schedulerDB.getBackend());
-      retrieveRequest.fetchNoLock();
-      uint64_t copyNb = job.copyNb;
-      common::dataStructures::TapeFile tapeFile = retrieveRequest.getArchiveFile().tapeFiles[copyNb];
-      common::dataStructures::RetrieveRequest schedulerRetrieveRequest = retrieveRequest.getSchedulerRequest();
-      common::dataStructures::ArchiveFile archiveFile = retrieveRequest.getArchiveFile();
+      rrp.startThreads();
+      for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
+      {
+        rrp.reportCompletedJob(std::move(*it));
+      }
+      rrp.setDiskDone();
+      rrp.setTapeDone();
+
+      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+
+      rrp.reportEndOfSession();
+      rrp.waitThread();
+
+      ASSERT_EQ(rrp.allThreadsDone(),true);
+
+      //After the jobs reported as completed, we will test that all jobs have been put in 
+      //the RetrieveQueueToReportToRepackForSuccess and that they have the status RJS_Succeeded
+
+      cta::objectstore::RootEntry re(schedulerDB.getBackend());
+      cta::objectstore::ScopedExclusiveLock sel(re);
+      re.fetch();
       
-      //Testing tape file
-      ASSERT_EQ(tapeFile.vid,s_vid);
-      ASSERT_EQ(tapeFile.blockId,i * 100);
-      ASSERT_EQ(tapeFile.fSeq,i);
-      ASSERT_EQ(tapeFile.checksumType, checksumType);
-      ASSERT_EQ(tapeFile.checksumValue,checksumValue);
-      ASSERT_EQ(tapeFile.compressedSize, compressedFileSize);
-      
-      //Testing scheduler retrieve request
-      ASSERT_EQ(schedulerRetrieveRequest.archiveFileID,i);
-      std::stringstream ss;
-      ss<<"repack://public_dir/public_file_"<<i;
-      ASSERT_EQ(schedulerRetrieveRequest.dstURL,ss.str());
-      ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
-      std::ostringstream diskFilePath;
-      diskFilePath << "/public_dir/public_file_" << i;
-      ASSERT_EQ(schedulerRetrieveRequest.diskFileInfo.path,diskFilePath.str());
-      //Testing the retrieve request
-      ASSERT_EQ(retrieveRequest.isRepack(),true);
-      ASSERT_EQ(retrieveRequest.getQueueType(),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
-      ASSERT_EQ(retrieveRequest.getRetrieveFileQueueCriteria().mountPolicy,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
-      ASSERT_EQ(retrieveRequest.getActiveCopyNumber(),1);
-      ASSERT_EQ(retrieveRequest.getJobStatus(job.copyNb),cta::objectstore::serializers::RetrieveJobStatus::RJS_Succeeded);
-      ASSERT_EQ(retrieveRequest.getJobs().size(),1);
-      
-      //Testing the archive file associated to the retrieve request
-      ASSERT_EQ(archiveFile.storageClass,storageClass.name);
-      ASSERT_EQ(archiveFile.diskInstance,storageClass.diskInstance);
-      ++i;
+      //Get the retrieveQueueToReportToRepackForSuccess
+      std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(allVid.at(i-1),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+      cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForSuccessAddress,schedulerDB.getBackend());
+
+      //Fetch the queue so that we can get the retrieveRequests from it
+      cta::objectstore::ScopedExclusiveLock rql(rq);
+      rq.fetch();
+
+      //There should be nbArchiveFiles jobs in the retrieve queue
+      ASSERT_EQ(rq.dumpJobs().size(),nbArchiveFiles);
+
+      int j = 1;
+      for (auto &job: rq.dumpJobs()) {
+        //Create the retrieve request from the address of the job and the current backend
+        cta::objectstore::RetrieveRequest retrieveRequest(job.address,schedulerDB.getBackend());
+        retrieveRequest.fetchNoLock();
+        uint64_t copyNb = job.copyNb;
+        common::dataStructures::TapeFile tapeFile = retrieveRequest.getArchiveFile().tapeFiles[copyNb];
+        common::dataStructures::RetrieveRequest schedulerRetrieveRequest = retrieveRequest.getSchedulerRequest();
+        common::dataStructures::ArchiveFile archiveFile = retrieveRequest.getArchiveFile();
+
+        //Testing tape file
+        ASSERT_EQ(tapeFile.vid,allVid.at(i-1));
+        ASSERT_EQ(tapeFile.blockId,j * 100);
+        ASSERT_EQ(tapeFile.fSeq,j);
+        ASSERT_EQ(tapeFile.checksumType, checksumType);
+        ASSERT_EQ(tapeFile.checksumValue,checksumValue);
+        ASSERT_EQ(tapeFile.compressedSize, compressedFileSize);
+
+        //Testing scheduler retrieve request
+        ASSERT_EQ(schedulerRetrieveRequest.archiveFileID,archiveFileId++);
+        std::stringstream ss;
+        ss<<"repack://public_dir/public_file_"<<i<<"_"<<j;
+        ASSERT_EQ(schedulerRetrieveRequest.dstURL,ss.str());
+        ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
+        std::ostringstream diskFilePath;
+        diskFilePath << "/public_dir/public_file_"<<i<<"_"<<j;
+        ASSERT_EQ(schedulerRetrieveRequest.diskFileInfo.path,diskFilePath.str());
+        //Testing the retrieve request
+        ASSERT_EQ(retrieveRequest.isRepack(),true);
+        ASSERT_EQ(retrieveRequest.getQueueType(),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+        ASSERT_EQ(retrieveRequest.getRetrieveFileQueueCriteria().mountPolicy,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
+        ASSERT_EQ(retrieveRequest.getActiveCopyNumber(),1);
+        ASSERT_EQ(retrieveRequest.getJobStatus(job.copyNb),cta::objectstore::serializers::RetrieveJobStatus::RJS_Succeeded);
+        ASSERT_EQ(retrieveRequest.getJobs().size(),1);
+
+        //Testing the archive file associated to the retrieve request
+        ASSERT_EQ(archiveFile.storageClass,storageClass.name);
+        ASSERT_EQ(archiveFile.diskInstance,storageClass.diskInstance);
+        ++j;
+      }
     }
   }
 }

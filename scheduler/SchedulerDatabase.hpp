@@ -480,6 +480,19 @@ public:
         return true;
       if (ratioOfMountQuotaUsed < other.ratioOfMountQuotaUsed)
         return true;
+      if(minRequestAge < other.minRequestAge)
+	return true;
+      if(minRequestAge > other.minRequestAge)
+	return false;
+      /**
+       * For the tests, we try to have the priority by 
+       * alphabetical order : vid1 should be treated before vid2,
+       * so if this->vid < other.vid : then this > other.vid, so return false
+       */
+      if(vid < other.vid)
+	return false;
+      if(vid > other.vid)
+	return true;
       return false;
     }
   };
