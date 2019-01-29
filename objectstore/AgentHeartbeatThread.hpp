@@ -64,7 +64,7 @@ private:
   std::promise<void> m_exit;
   
   /// The heartbeat update rate.
-  std::chrono::seconds const m_heartRate = std::chrono::seconds(30);
+  std::chrono::seconds const m_heartRate = std::chrono::seconds(60);
   
   /// The logging context
   log::Logger & m_logger;
