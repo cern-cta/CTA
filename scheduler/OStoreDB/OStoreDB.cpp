@@ -2097,7 +2097,7 @@ OStoreDB::RetrieveJob * OStoreDB::castFromSchedDBJob(SchedulerDatabase::Retrieve
   if (!ret) {
     std::string unexpectedType = typeid(*job).name();
     throw cta::exception::Exception(
-      "In OStoreDB::RetrieveMount::castFromSchedDBJob(): unexpected archive job type while casting: " + unexpectedType
+      "In OStoreDB::RetrieveMount::castFromSchedDBJob(): unexpected retrieve job type while casting: " + unexpectedType
     );
   }
   return ret;
@@ -2425,7 +2425,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
             "In ArchiveJob::failReport(): stored job in failed container for operator handling.");
       else
         lc.log(log::ERR,
-            "In ArchiveJob::failReport(): stored job in failed contained after unexpected next step.");
+            "In ArchiveJob::failReport(): stored job in failed container after unexpected next step.");
       return;
     }
   }
@@ -2775,7 +2775,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
             "In RetrieveJob::failReport(): stored job in failed container for operator handling.");
       else
         lc.log(log::ERR,
-            "In RetrieveJob::failReport(): stored job in failed contained after unexpected next step.");
+            "In RetrieveJob::failReport(): stored job in failed container after unexpected next step.");
       return;
     }
   }

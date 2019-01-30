@@ -186,7 +186,7 @@ public:
     std::unique_ptr<objectstore::ArchiveRequest::AsyncTransferSuccessfulUpdater> m_succesfulTransferUpdater;
     std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> m_requestDeleter;
   };
-  friend class ArchiveJob;
+  //friend class ArchiveJob;
   static ArchiveJob * castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
   
   /* === Retrieve Mount handling ============================================ */
