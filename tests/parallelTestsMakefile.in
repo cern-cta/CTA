@@ -4,7 +4,7 @@ all: baretests valgrind valgrindMultiprocess helgrindBase helgrindScheduler helg
 	
 baretests:
 	MALLOC_CHECK_=3 /usr/bin/cta-unitTests | ts "bt: %b %d %H:%M:%S"; (exit ${PIPESTATUS[0]})
-	MALLOC_CHECK_=3 /usr/bin/cta-unitTests-multiProcess | ts "btmp: %b %d %H:%M:%S"; (exit \${PIPESTATUS[0]})
+	MALLOC_CHECK_=3 /usr/bin/cta-unitTests-multiProcess | ts "btmp: %b %d %H:%M:%S"; (exit ${PIPESTATUS[0]})
 
 valgrind: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q @VALGRIND_OPTS_STR@                                               \
