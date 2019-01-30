@@ -822,6 +822,58 @@ void RetrieveRequest::AsyncJobDeleter::wait() {
 }
 
 //------------------------------------------------------------------------------
+// RetrieveRequest::AsyncJobSucceedForRepackReporter::asyncReportSucceedForRepack()
+//------------------------------------------------------------------------------
+RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReportSucceedForRepack(uint64_t copyNb)
+{
+  std::unique_ptr<AsyncJobSucceedForRepackReporter> ret(new AsyncJobSucceedForRepackReporter);
+  ret->m_updaterCallback = [copyNb](const std::string &in)->std::string{ 
+        // We have a locked and fetched object, so we just need to work on its representation.
+        cta::objectstore::serializers::ObjectHeader oh;
+        if (!oh.ParseFromString(in)) {
+          // Use a the tolerant parser to assess the situation.
+          oh.ParsePartialFromString(in);
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncReportSucceedForRepack(): could not parse header: ")+
+            oh.InitializationErrorString());
+        }
+        if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
+          std::stringstream err;
+          err << "In RetrieveRequest::asyncReportSucceedForRepack()::lambda(): wrong object type: " << oh.type();
+          throw cta::exception::Exception(err.str());
+        }
+        serializers::RetrieveRequest payload;
+        
+        if (!payload.ParseFromString(oh.payload())) {
+          // Use a the tolerant parser to assess the situation.
+          payload.ParsePartialFromString(oh.payload());
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncReportSucceedForRepack(): could not parse payload: ")+
+            payload.InitializationErrorString());
+        }
+        //payload.set_status(osdbJob->selectedCopyNb,serializers::RetrieveJobStatus::RJS_Succeeded);
+        auto retrieveJobs = payload.mutable_jobs();
+        for(auto &job : *retrieveJobs){
+          if(job.copynb() == copyNb)
+          {
+            //Change the status to RJS_Succeed
+            job.set_status(serializers::RetrieveJobStatus::RJS_Succeeded);
+            oh.set_payload(payload.SerializePartialAsString());
+            return oh.SerializeAsString();
+          }
+        }
+        throw cta::exception::Exception("In RetrieveRequest::asyncReportSucceedForRepack::lambda(): copyNb not found");
+    };
+    ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(),ret->m_updaterCallback));
+    return ret.release();
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncJobSucceedForRepackReporter::wait()
+//------------------------------------------------------------------------------
+void RetrieveRequest::AsyncJobSucceedForRepackReporter::wait(){
+  m_backendUpdater->wait();
+}
+
+//------------------------------------------------------------------------------
 // RetrieveRequest::getFailures()
 //------------------------------------------------------------------------------
 std::list<std::string> RetrieveRequest::getFailures() {

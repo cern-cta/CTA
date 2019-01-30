@@ -31,7 +31,8 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta { 
+  namespace objectstore {
   
 class Backend;
 class Agent;
@@ -63,6 +64,32 @@ public:
     std::unique_ptr<Backend::AsyncDeleter> m_backendDeleter;
   };
   AsyncJobDeleter * asyncDeleteJob();
+  
+  
+  class AsyncJobSucceedForRepackReporter{
+    friend class RetrieveRequest;
+  public:
+    /**
+     * Wait for the end of the execution of the updater callback
+     */
+    void wait();
+  private:
+    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    //Callback to be executed by the AsyncUpdater
+    std::function<std::string(const std::string &)> m_updaterCallback;
+  };
+  
+  /**
+   * Asynchronously report the RetrieveJob corresponding to the copyNb parameter
+   * as RJS_Success
+   * @param copyNb the copyNb corresponding to the RetrieveJob we want to report as
+   * RJS_Succeeded
+   * @return the class that is Reponsible to save the updater callback
+   * and the backend async updater (responsible for executing asynchronously the updater callback
+   */
+  AsyncJobSucceedForRepackReporter * asyncReportSucceedForRepack(uint64_t copyNb);
+  
   JobDump getJob(uint16_t copyNb);
   std::list<JobDump> getJobs();
   bool addJobFailure(uint16_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc); 

@@ -231,6 +231,13 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void asyncSucceed() override;
     virtual void checkSucceed() override;
+    /**
+     * Allows to asynchronously report this RetrieveJob as success
+     * for repack. It will call the retrieveRequest.asyncReportSucceedForRepack(this->selectedCopyNb) method
+     * that will set the status of the Job as RJS_Succeeded
+     */
+    virtual void asyncReportSucceedForRepack() override;
+    virtual void checkReportSucceedForRepack() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     virtual ~RetrieveJob() override;
@@ -250,6 +257,7 @@ public:
     objectstore::RetrieveRequest m_retrieveRequest;
     OStoreDB::RetrieveMount *m_retrieveMount;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
+    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
   };
 
   /* === Archive requests handling  ========================================= */
@@ -366,8 +374,6 @@ public:
    * @return a unique_ptr holding the RepackRequest
    */
   std::unique_ptr<SchedulerDatabase::RepackRequest> getNextRepackJobToExpand() override;
-  
-  void expandRepackRequest(std::unique_ptr<cta::RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) override;
   
   /* === Drive state handling  ============================================== */
   /**

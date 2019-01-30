@@ -1108,10 +1108,11 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   //Create a logical library in the catalogue
   catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
   
-  uint64_t nbTapesToRepack = 3;
+  uint64_t nbTapesToRepack = 10;
   uint64_t nbTapesForTest = 2; //corresponds to the targetAvailableRequests variable in the Scheduler::promoteRepackRequestsToToExpand() method
   
   std::vector<std::string> allVid;
+  
   //Create the tapes from which we will retrieve
   for(uint64_t i = 1; i <= nbTapesToRepack ; ++i){
     std::ostringstream ossVid;
@@ -1201,9 +1202,10 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   }
   //Here, we will only test that the two repack requests have been expanded
   {
-    //The expandRepackRequest method should have queued nbArchiveFiles retrieve request corresponding to the nbArchiveFiles previous file inserted in the catalogue
+    //The expandRepackRequest method should have queued nbArchiveFiles retrieve request corresponding to the previous files inserted in the catalogue
     uint64_t archiveFileId = 1;
     for(uint64_t i = 1 ; i <= nbTapesForTest ; ++i){
+      //For each tapes
       std::string vid = allVid.at(i-1);
       std::list<common::dataStructures::RetrieveJob> retrieveJobs = scheduler.getPendingRetrieveJobs(vid,lc);
       ASSERT_EQ(retrieveJobs.size(),nbArchiveFiles);
@@ -1230,7 +1232,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   
   //Now, we need to simulate a retrieve for each file
   {
-    // Emulate a tape server by asking for a mount and then a file
+    // Emulate a tape server by asking for nbTapesForTest mount and then all files
     uint64_t archiveFileId = 1;
     for(uint64_t i = 1; i<= nbTapesForTest ;++i){
       std::unique_ptr<cta::TapeMount> mount;

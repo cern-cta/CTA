@@ -360,6 +360,8 @@ public:
     uint64_t selectedCopyNb;
     virtual void asyncSucceed() = 0;
     virtual void checkSucceed() = 0;
+    virtual void asyncReportSucceedForRepack() = 0;
+    virtual void checkReportSucceedForRepack() = 0;
     virtual void failTransfer(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual void failReport(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual ~RetrieveJob() {}
@@ -419,7 +421,6 @@ public:
   /***/
   virtual std::unique_ptr<RepackRequest> getNextRepackJobToExpand() = 0;
   
-  virtual void expandRepackRequest(std::unique_ptr<cta::RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) = 0;
   /*============ Repack management: maintenance process side =========================*/
   
   /*!

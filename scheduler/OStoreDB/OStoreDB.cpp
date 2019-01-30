@@ -1292,11 +1292,6 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
   }
 }
 
-void OStoreDB::expandRepackRequest(std::unique_ptr<cta::RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc)
-{
-  //TODO
-}
-
 //------------------------------------------------------------------------------
 // OStoreDB::cancelRepack()
 //------------------------------------------------------------------------------
@@ -2359,47 +2354,8 @@ std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSu
   for(auto & retrieveJob : jobsBatch){
     auto osdbJob = castFromSchedDBJob(retrieveJob);
     ret.insert(retrieveJob);
-    //osdbJob->asyncSucceedForRepack();
-    auto update_callback = [&osdbJob](const std::string &in)->std::string{ 
-        // We have a locked and fetched object, so we just need to work on its representation.
-        cta::objectstore::serializers::ObjectHeader oh;
-        if (!oh.ParseFromString(in)) {
-          // Use a the tolerant parser to assess the situation.
-          oh.ParsePartialFromString(in);
-          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse header: ")+
-            oh.InitializationErrorString());
-        }
-        if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
-          std::stringstream err;
-          err << "In RetrieveRequest::asyncUpdateJobOwner()::lambda(): wrong object type: " << oh.type();
-          throw cta::exception::Exception(err.str());
-        }
-        serializers::RetrieveRequest payload;
-        
-        if (!payload.ParseFromString(oh.payload())) {
-          // Use a the tolerant parser to assess the situation.
-          payload.ParsePartialFromString(oh.payload());
-          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse payload: ")+
-            payload.InitializationErrorString());
-        }
-        //payload.set_status(osdbJob->selectedCopyNb,serializers::RetrieveJobStatus::RJS_Succeeded);
-        auto retrieveJobs = payload.mutable_jobs();
-        for(auto &job : *retrieveJobs){
-          if(job.copynb() == osdbJob->selectedCopyNb)
-          {
-            //Change the status to RJS_Succeed
-            job.set_status(serializers::RetrieveJobStatus::RJS_Succeeded);
-            oh.set_payload(payload.SerializePartialAsString());
-            return oh.SerializeAsString();
-          }
-        }
-        throw cta::exception::Exception("In OStoreDB::RetrieveMount::batchSucceedRetrieveForRepack::lambda(): copyNb not found");
-    };
-    std::function <std::string(const std::string &)> update = update_callback;
-    cta::objectstore::Backend::AsyncUpdater * updater = this->m_oStoreDB.m_objectStore.asyncUpdate(osdbJob->m_retrieveRequest.getAddressIfSet(), update);
-    //TODO: Should the wait be removed ?
-    updater->wait();
-    delete updater;
+    osdbJob->asyncReportSucceedForRepack();
+    osdbJob->checkReportSucceedForRepack();
     auto & tapeFile = osdbJob->archiveFile.tapeFiles[osdbJob->selectedCopyNb];
     vid = osdbJob->m_retrieveMount->mountInfo.vid;
     insertedElementsLists.push_back(AqtrtrfsCa::InsertedElement{&osdbJob->m_retrieveRequest, (uint16_t)osdbJob->selectedCopyNb, tapeFile.fSeq,osdbJob->archiveFile.fileSize,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,serializers::RetrieveJobStatus::RJS_Succeeded});
@@ -3182,6 +3138,21 @@ void OStoreDB::RetrieveJob::checkSucceed() {
   // We no more own the job (which could be gone)
   m_jobOwned = false;
   // Ownership will be removed from agent by caller through retrieve mount object.
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::asyncReportSucceedForRepack()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveJob::asyncReportSucceedForRepack()
+{
+  m_jobSucceedForRepackReporter.reset(m_retrieveRequest.asyncReportSucceedForRepack(this->selectedCopyNb));
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::checkReportSucceedForRepack()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveJob::checkReportSucceedForRepack(){
+  m_jobSucceedForRepackReporter->wait();
 }
 
 } // namespace cta

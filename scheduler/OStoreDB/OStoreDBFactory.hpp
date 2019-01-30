@@ -210,15 +210,10 @@ public:
   std::unique_ptr<RepackRequest> getNextRepackJobToExpand() override {
     return m_OStoreDB.getNextRepackJobToExpand();
   }
-  
-  void expandRepackRequest(std::unique_ptr<cta::RepackRequest>& repackRequest, log::TimingList& tl, utils::Timer& t, log::LogContext& lc) override{
-    m_OStoreDB.expandRepackRequest(repackRequest,tl,t,lc);
-  }
 
   std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
     return m_OStoreDB.getDriveStates(lc);
   }
-  
   
   void setDesiredDriveState(const std::string& drive, const cta::common::dataStructures::DesiredDriveState& state, log::LogContext& lc) override {
     return m_OStoreDB.setDesiredDriveState(drive, state, lc);
