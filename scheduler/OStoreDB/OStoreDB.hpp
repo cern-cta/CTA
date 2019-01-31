@@ -219,9 +219,8 @@ public:
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     virtual ~RetrieveJob() override;
-  //private:
-  // This can't be private any more as it has to be instantiated for queues to report as well as queues
-  // to transfer, i.e. it must be possible to instantiate retrieve jobs independent from a mount
+  private:
+    // Can be instantiated from a mount (queue to transfer) or a report queue
     RetrieveJob(const std::string &jobAddress, OStoreDB &oStoreDB, RetrieveMount *rm) :
       m_jobOwned(false), m_oStoreDB(oStoreDB),
       m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore),

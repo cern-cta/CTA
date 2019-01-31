@@ -1829,7 +1829,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo()
 //------------------------------------------------------------------------------
-OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStroeDb): m_lockTaken(false), m_oStoreDB(oStroeDb) {}
+OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStoreDb): m_lockTaken(false), m_oStoreDB(oStoreDb) {}
 
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
@@ -2698,85 +2698,64 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
   auto  rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
   auto &af   = rfqc.archiveFile;
 
-  std::set<std::string> candidateVids;
-  for(auto &tf: af.tapeFiles) {
-    if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportForFailure)
-      candidateVids.insert(tf.second.vid);
-  }
-  if(candidateVids.empty()) {
-    throw cta::exception::Exception(
-      "In OStoreDB::RetrieveJob::failReport(): no active job after addJobFailure() returned false."
-    );
-  }
+  // Handle report failures for all tape copies in turn
+  for(auto &aftf: af.tapeFiles) {
+    auto &tf = aftf.second;
 
-  // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
-  std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
-    m_oStoreDB.m_objectStore);
+    // Add a job failure and decide what to do next
+    EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addReportFailure(tf.copyNb, m_mountId, failureReason, lc);
 
-  auto tf_it = af.tapeFiles.begin();
-  for( ; tf_it != af.tapeFiles.end() && tf_it->second.vid != bestVid; ++tf_it) ;
-  if(tf_it == af.tapeFiles.end()) {
-    std::stringstream err;
-    err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."
-        << " archiveId=" << af.archiveFileID << " vid=" << bestVid;
-    throw RetrieveRequestHasNoCopies(err.str());
-  }
-  auto &tf = tf_it->second;
+    // Set the job status
+    m_retrieveRequest.setJobStatus(tf.copyNb, enQueueingNextStep.nextStatus);
+    m_retrieveRequest.commit();
+    auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
+    // Algorithms suppose the objects are not locked.
+    rrl.release();
 
-  // Add a job failure. We will know what to do next.
-  EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addReportFailure(tf.copyNb, m_mountId, failureReason, lc);
-
-  // First set the job status
-  m_retrieveRequest.setJobStatus(tf.copyNb, enQueueingNextStep.nextStatus);
-
-  m_retrieveRequest.commit();
-  auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
-  // Algorithms suppose the objects are not locked.
-  rrl.release();
-
-  // Now apply the decision
-  switch (enQueueingNextStep.nextStep) {
-    // We have a reduced set of supported next steps as some are not compatible with this event
-    case NextStep::EnqueueForReport: {
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaAqtr;
-      CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-      CaAqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaAqtr::InsertedElement{
-        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToReportForFailure
-      });
-      caAqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::JobsToReport, insertedElements, lc);
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", tf.copyNb)
-            .add("failureReason", failureReason)
-            .add("requestObject", m_retrieveRequest.getAddressIfSet())
-            .add("totalReportRetries", retryStatus.totalReportRetries)
-            .add("maxReportRetries", retryStatus.maxReportRetries);
-      lc.log(log::INFO, "In RetrieveJob::failReport(): requeued job for report retry.");
-      return;
-    }
-    default: {
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaAqtr;
-      CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-      CaAqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaAqtr::InsertedElement{
-        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
-      });
-      caAqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", tf.copyNb)
-            .add("failureReason", failureReason)
-            .add("requestObject", m_retrieveRequest.getAddressIfSet())
-            .add("totalReportRetries", retryStatus.totalReportRetries)
-            .add("maxReportRetries", retryStatus.maxReportRetries);
-      if (enQueueingNextStep.nextStep == NextStep::StoreInFailedJobsContainer)
-        lc.log(log::INFO,
-            "In RetrieveJob::failReport(): stored job in failed container for operator handling.");
-      else
-        lc.log(log::ERR,
-            "In RetrieveJob::failReport(): stored job in failed container after unexpected next step.");
-      return;
+    // Apply the decision
+    switch (enQueueingNextStep.nextStep) {
+      // We have a reduced set of supported next steps as some are not compatible with this event
+      case NextStep::EnqueueForReport: {
+        typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaRqtr;
+        CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+        CaRqtr::InsertedElement::list insertedElements;
+        insertedElements.push_back(CaRqtr::InsertedElement{
+          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToReportForFailure
+        });
+        caRqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::JobsToReport, insertedElements, lc);
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", archiveFile.archiveFileID)
+              .add("copyNb", tf.copyNb)
+              .add("failureReason", failureReason)
+              .add("requestObject", m_retrieveRequest.getAddressIfSet())
+              .add("totalReportRetries", retryStatus.totalReportRetries)
+              .add("maxReportRetries", retryStatus.maxReportRetries);
+        lc.log(log::INFO, "In RetrieveJob::failReport(): requeued job for report retry.");
+        return;
+      }
+      default: {
+        typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaRqtr;
+        CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+        CaRqtr::InsertedElement::list insertedElements;
+        insertedElements.push_back(CaRqtr::InsertedElement{
+          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
+        });
+        caRqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", archiveFile.archiveFileID)
+              .add("copyNb", tf.copyNb)
+              .add("failureReason", failureReason)
+              .add("requestObject", m_retrieveRequest.getAddressIfSet())
+              .add("totalReportRetries", retryStatus.totalReportRetries)
+              .add("maxReportRetries", retryStatus.maxReportRetries);
+        if (enQueueingNextStep.nextStep == NextStep::StoreInFailedJobsContainer)
+          lc.log(log::INFO,
+              "In RetrieveJob::failReport(): stored job in failed container for operator handling.");
+        else
+          lc.log(log::ERR,
+              "In RetrieveJob::failReport(): stored job in failed container after unexpected next step.");
+        return;
+      }
     }
   }
 }
