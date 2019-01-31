@@ -290,11 +290,16 @@ bool BackendRados::exists(std::string name) {
     return 0;
   }, "In BackendRados::exists: failed to getRadosCtx().stat()");
   rtl.logIfNeeded("In BackendRados::exists(): m_radosCtx.stat()", name);
-  if (statRet) {
+  if (ENOENT == -statRet) {
     return false;
-  } else {
-    return true;
+  } else if (statRet) {
+    cta::exception::Errnum::throwOnReturnedErrno(statRet, "In BackendRados::exists(): m_radosCtx.stat() failed");
+    throw cta::exception::Exception("In BackendRados::exists(): we should not be here :-P");
+  } else if (!size){
+    // A zero sized object is considered as non-existent.
+    return false;
   }
+  return true;
 }
 
 std::list<std::string> BackendRados::list() {
