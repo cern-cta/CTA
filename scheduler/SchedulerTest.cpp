@@ -720,7 +720,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     scheduler.queueRetrieve("disk_instance", request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-
+  
   // Try mounting the tape twice
   for(int mountPass = 0; mountPass < 2; ++mountPass)
   {
@@ -800,7 +800,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       getSchedulerDB().replaceAgent(new objectstore::AgentReference("OStoreDBFactory2", dl));
     } // end of retries
   } // end of pass
-
+  
   {
     // We expect the retrieve queue to be empty
     auto rqsts = scheduler.getPendingRetrieveJobs(lc);

@@ -40,6 +40,14 @@ GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference
   m_agentRegister.fetch();
 }
 
+GarbageCollector::~GarbageCollector(){
+  //Normally, the Garbage collector is never destroyed in production
+  //this destructor is here to avoid memory leaks on unit tests
+  for(auto &kv : m_watchedAgents){
+    delete kv.second;
+  }
+}
+
 void GarbageCollector::runOnePass(log::LogContext & lc) {
   trimGoneTargets(lc);
   acquireTargets(lc);

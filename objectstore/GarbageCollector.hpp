@@ -41,7 +41,7 @@ class RetrieveRequest;
 class GarbageCollector {
 public:
   GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue);
-  
+  ~GarbageCollector();
   void runOnePass(log::LogContext & lc);
   
   void acquireTargets(log::LogContext & lc);
