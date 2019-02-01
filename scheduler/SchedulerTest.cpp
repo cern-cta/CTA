@@ -1331,6 +1331,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       }
     }
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  scheduler.getNextSucceededRetrieveRequestForRepackBatch(5,lc);
+  //scheduler.transformRetrieveRequestsToArchiveForRepack(lc);
 }
 
 #undef TEST_MOCK_DB

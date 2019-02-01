@@ -237,11 +237,6 @@ void Scheduler::queueRetrieve(
   lc.log(log::INFO, "Queued retrieve request");
 }
 
-void Scheduler::queueRetrieveRequestForRepack(const std::string &instanceName, const cta::common::dataStructures::RetrieveRequest &request,
-  std::list<uint64_t> copyNbs, log::LogContext &lc)
-{
-
-}
 
 //------------------------------------------------------------------------------
 // deleteArchive
@@ -323,6 +318,11 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
         .add("repackType", toString(repackType));
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
+}
+
+std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> Scheduler::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
+{
+  return m_db.getNextSucceededRetrieveRequestForRepackBatch(filesRequested,lc);
 }
 
 //------------------------------------------------------------------------------

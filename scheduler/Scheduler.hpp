@@ -48,6 +48,7 @@
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/RepackRequest.hpp"
+#include "objectstore/RetrieveRequest.hpp"
 
 #include "eos/DiskReporter.hpp"
 #include "eos/DiskReporterFactory.hpp"
@@ -142,17 +143,6 @@ public:
   void queueRetrieve(const std::string &instanceName, const cta::common::dataStructures::RetrieveRequest &request,
     log::LogContext &lc);
   
-  
-  /**
-   * Queue a retrieve request specific for Repack
-   * @param instanceName
-   * @param request
-   * @param copyNbs
-   * @param lc
-   */
-  void queueRetrieveRequestForRepack(const std::string &instanceName, const cta::common::dataStructures::RetrieveRequest &request,
-  std::list<uint64_t> copyNbs, log::LogContext &lc);
-  
   /** 
    * Delete an archived file or a file which is in the process of being archived.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
@@ -207,6 +197,14 @@ public:
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc);
   std::list<cta::common::dataStructures::RepackInfo> getRepacks();
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
+
+  /**
+   * Return the list of all RetrieveRequests that are in the RetrieveQueueToReportToRepackForSuccess
+   * @param nbRequests : The number of request we would like to return 
+   * @param lc
+   * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
+   */
+  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t nbRequests, log::LogContext& lc);
 
   void shrink(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool); 
     // removes extra tape copies from a specific pool(usually an "_2" pool)

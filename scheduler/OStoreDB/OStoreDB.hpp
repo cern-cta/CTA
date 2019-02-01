@@ -309,6 +309,8 @@ public:
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) override;
   
+  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc) override;
+  
   /* === Repack requests handling =========================================== */
   void queueRepack(const std::string& vid, const std::string& bufferURL, 
     common::dataStructures::RepackInfo::Type repackType, log::LogContext &logContext) override;

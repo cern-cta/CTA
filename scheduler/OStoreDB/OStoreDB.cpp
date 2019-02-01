@@ -3155,4 +3155,10 @@ void OStoreDB::RetrieveJob::checkReportSucceedForRepack(){
   m_jobSucceedForRepackReporter->wait();
 }
 
+std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> OStoreDB::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
+{
+  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> ret;
+  //TODO : Use Algorithms to retrieve the jobs from the RetrieveQueueToReportToRepackForSuccess
+  return ret;
+}
 } // namespace cta
