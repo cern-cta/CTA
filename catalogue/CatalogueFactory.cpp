@@ -41,7 +41,7 @@ std::unique_ptr<Catalogue> CatalogueFactory::create(
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
       {
-        auto c = cta::make_unique<InMemoryCatalogue>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+        auto c = cta::make_unique<InMemoryCatalogue>(log, nbConns, nbArchiveFileListingConns);
         return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
       }
     case rdbms::Login::DBTYPE_ORACLE:
