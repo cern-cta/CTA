@@ -47,19 +47,17 @@ std::unique_ptr<Catalogue> CatalogueFactory::create(
     case rdbms::Login::DBTYPE_ORACLE:
       {
         auto c = cta::make_unique<OracleCatalogue>(log, login.username, login.password, login.database, nbConns,
-          nbArchiveFileListingConns, maxTriesToConnect);
+          nbArchiveFileListingConns);
         return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
       }
     case rdbms::Login::DBTYPE_SQLITE:
       {
-        auto c = cta::make_unique<SqliteCatalogue>(log, login.database, nbConns, nbArchiveFileListingConns,
-          maxTriesToConnect);
+        auto c = cta::make_unique<SqliteCatalogue>(log, login.database, nbConns, nbArchiveFileListingConns);
         return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
       }
     case rdbms::Login::DBTYPE_MYSQL:
       {
-        auto c = cta::make_unique<MysqlCatalogue>(log, login, nbConns, nbArchiveFileListingConns,
-          maxTriesToConnect);
+        auto c = cta::make_unique<MysqlCatalogue>(log, login, nbConns, nbArchiveFileListingConns);
         return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
       }
     case rdbms::Login::DBTYPE_NONE:

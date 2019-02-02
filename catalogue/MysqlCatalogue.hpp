@@ -43,16 +43,12 @@ public:
    * @param nbArchiveFileListingConns The maximum number of concurrent
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
-   * @param maxTriesToConnext The maximum number of times a single method should
-   * try to connect to the database in the event of LostDatabaseConnection
-   * exceptions being thrown.
    */
   MysqlCatalogue(
     log::Logger &log,
     const rdbms::Login &login,
     const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns,
-    const uint32_t maxTriesToConnect);
+    const uint64_t nbArchiveFileListingConns);
 
   /**
    * Destructor.

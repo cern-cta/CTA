@@ -42,16 +42,14 @@ MysqlCatalogue::MysqlCatalogue(
   log::Logger &log,
   const rdbms::Login &login,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect):
+  const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
     log,
     rdbms::Login(rdbms::Login::DBTYPE_MYSQL, 
                  login.username, login.password, login.database,
                  login.hostname, login.port),
     nbConns,
-    nbArchiveFileListingConns,
-    maxTriesToConnect) {
+    nbArchiveFileListingConns) {
 }
 
 //------------------------------------------------------------------------------
