@@ -20,7 +20,7 @@
 
 #include <XrdSsiPbOStreamBuffer.hpp>
 #include <scheduler/Scheduler.hpp>
-//#include <scheduler/RetrieveJob.hpp>
+#include <scheduler/OStoreDB/OStoreDB.hpp>
 
 
 
@@ -32,15 +32,18 @@ namespace cta { namespace xrd {
 class FailedRequestLsStream : public XrdSsiStream
 {
 public:
-  FailedRequestLsStream(Scheduler &scheduler, bool is_archive, bool is_retrieve,
+  FailedRequestLsStream(Scheduler &scheduler, OStoreDB::ArchiveQueueItor_t archiveQueueItor,
+    OStoreDB::RetrieveQueueItor_t retrieveQueueItor, bool is_archive, bool is_retrieve,
     bool is_log_entries, bool is_summary, log::LogContext &lc) :
-    XrdSsiStream(XrdSsiStream::isActive),
-    m_scheduler(scheduler),
-    m_isArchive(is_archive),
-    m_isRetrieve(is_retrieve),
-    m_isLogEntries(is_log_entries),
-    m_isSummary(is_summary),
-    m_lc(lc)
+      XrdSsiStream(XrdSsiStream::isActive),
+      m_scheduler(scheduler),
+      m_archiveQueueItor(std::move(archiveQueueItor)),
+      m_retrieveQueueItor(std::move(retrieveQueueItor)),
+      m_isArchive(is_archive),
+      m_isRetrieve(is_retrieve),
+      m_isLogEntries(is_log_entries),
+      m_isSummary(is_summary),
+      m_lc(lc)
   {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "FailedRequestLsStream() constructor");
   }
@@ -232,14 +235,17 @@ public:
   }
 
 private:
-  Scheduler &m_scheduler;            //!< Reference to CTA Scheduler
+  Scheduler &m_scheduler;                               //!< Reference to CTA Scheduler
 
-  bool m_isArchive;                  //!< List failed archive requests
-  bool m_isRetrieve;                 //!< List failed retrieve requests
-  bool m_isLogEntries;               //!< Show failure log messages (verbose)
-  bool m_isSummary;                  //!< Short summary of number of failures
+  OStoreDB::ArchiveQueueItor_t m_archiveQueueItor;      //!< Archive Queue Iterator
+  OStoreDB::RetrieveQueueItor_t m_retrieveQueueItor;    //!< Retrieve Queue Iterator
 
-  log::LogContext &m_lc;             //!< Reference to CTA Log Context
+  bool m_isArchive;                                     //!< List failed archive requests
+  bool m_isRetrieve;                                    //!< List failed retrieve requests
+  bool m_isLogEntries;                                  //!< Show failure log messages (verbose)
+  bool m_isSummary;                                     //!< Short summary of number of failures
+
+  log::LogContext &m_lc;                                //!< Reference to CTA Log Context
 
   static constexpr const char* const LOG_SUFFIX  = "FailedRequestLsStream";    //!< Identifier for SSI log messages
 };

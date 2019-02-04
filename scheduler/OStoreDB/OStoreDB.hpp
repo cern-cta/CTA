@@ -250,7 +250,9 @@ public:
   std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
 
   typedef QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> ArchiveQueueItor_t;
-  ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName) const;
+
+  ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName,
+    objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, 
      log::LogContext & logContext) override;
@@ -282,7 +284,9 @@ public:
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>> getRetrieveJobs() const override;
 
   typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
-  RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid) const;
+
+  RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid,
+    objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
 

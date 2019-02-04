@@ -28,7 +28,7 @@ namespace cta {
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
-QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
+QueueItor(objectstore::Backend &objectStore, objectstore::QueueType queueType, const std::string &queue_id) :
   m_objectStore(objectStore),
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)
@@ -38,7 +38,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
     objectstore::RootEntry re(m_objectStore);
     objectstore::ScopedSharedLock rel(re);
     re.fetch();
-    m_jobQueuesQueue = re.dumpArchiveQueues(objectstore::QueueType::JobsToTransfer);
+    m_jobQueuesQueue = re.dumpArchiveQueues(queueType);
   }
 
   // Set queue iterator to the first queue in the list
@@ -131,7 +131,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
-QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
+QueueItor(objectstore::Backend &objectStore, objectstore::QueueType queueType, const std::string &queue_id) :
   m_objectStore(objectStore),
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)
@@ -141,7 +141,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
     objectstore::RootEntry re(m_objectStore);
     objectstore::ScopedSharedLock rel(re);
     re.fetch();
-    m_jobQueuesQueue = re.dumpRetrieveQueues(objectstore::QueueType::JobsToTransfer);
+    m_jobQueuesQueue = re.dumpRetrieveQueues(queueType);
   }
 
   // Find the first queue
