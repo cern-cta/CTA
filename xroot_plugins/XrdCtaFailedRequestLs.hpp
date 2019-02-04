@@ -83,13 +83,14 @@ public:
         // List failed archive requests
         streambuf = new XrdSsiPb::OStreamBuffer<Data>(dlen);
 
-        //auto aqList = m_scheduler.getArchiveJobsFailedQueues(m_lc);
-
         pushRecord(streambuf, admin::RequestType::ARCHIVE_REQUEST);
 
+        m_isArchive = false;
       } else if(m_isRetrieve) {
         // List failed retrieve requests
         streambuf = new XrdSsiPb::OStreamBuffer<Data>(dlen);
+
+        pushRecord(streambuf, admin::RequestType::RETRIEVE_REQUEST);
 
 /*
    Take a look at OStoreDB::getNextRetrieveJobsFailedBatch()
@@ -101,6 +102,7 @@ public:
    5. when all queues are done and all jobs are done, set m_isRetrieve to false
 */
 
+        m_isRetrieve = false;
       } else {
         // Nothing more to send, close the stream
         last = true;
