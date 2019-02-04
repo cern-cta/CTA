@@ -204,7 +204,7 @@ public:
    * @param lc
    * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
    */
-  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t nbRequests, log::LogContext& lc);
+  std::list<std::unique_ptr<RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t nbRequests, log::LogContext& lc);
 
   void shrink(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool); 
     // removes extra tape copies from a specific pool(usually an "_2" pool)

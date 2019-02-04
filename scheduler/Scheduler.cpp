@@ -320,11 +320,6 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
 }
 
-std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> Scheduler::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
-{
-  return m_db.getNextSucceededRetrieveRequestForRepackBatch(filesRequested,lc);
-}
-
 //------------------------------------------------------------------------------
 // cancelRepack
 //------------------------------------------------------------------------------
@@ -1251,6 +1246,21 @@ getNextFailedRetrieveJobsBatch(uint64_t filesRequested, log::LogContext &logCont
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// getNextSucceededRetrieveRequestForRepackBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<RetrieveJob>> Scheduler::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
+{
+  std::list<std::unique_ptr<RetrieveJob>> ret;
+  //We need to go through the queues of SucceededRetrieveJobs
+  auto dbRet = m_db.getNextSucceededRetrieveRequestForRepackBatch(filesRequested,lc);
+  for(auto &j : dbRet)
+  {
+    ret.emplace_back(new RetrieveJob(nullptr, j->retrieveRequest,j->archiveFile, j->selectedCopyNb, PositioningMethod::ByFSeq));
+    ret.back()->m_dbJob.reset(j.release());
+  }  
+  return ret;
+}
 //------------------------------------------------------------------------------
 // reportArchiveJobsBatch
 //------------------------------------------------------------------------------
