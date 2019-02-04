@@ -451,18 +451,40 @@ void CtaAdminCmd::print(const cta::admin::ArchiveFileLsSummary &afls_summary)
 void CtaAdminCmd::printFrLsHeader()
 {
    std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(11) << std::right << "request type"   << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "vid"            << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "requester"      << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "request type"   << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "copy no"        << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "tapepool/vid"   << ' '
+             << std::setfill(' ') << std::setw(10) << std::right << "requester"      << ' '
+             << std::setfill(' ') << std::setw(6)  << std::right << "group"          << ' '
                                                                  << "path"
              << TEXT_NORMAL << std::endl;
 }
 
 void CtaAdminCmd::print(const cta::admin::FailedRequestLsItem &frls_item)
 {
-   throw std::runtime_error("Not implemented.");
+   std::string request_type;
+   std::string tapepool_vid;
+
+   switch(frls_item.request_type()) {
+      case admin::RequestType::ARCHIVE_REQUEST:
+         request_type = "archive";
+         tapepool_vid = frls_item.tapepool();
+         break;
+      case admin::RequestType::RETRIEVE_REQUEST:
+         request_type = "retrieve";
+         tapepool_vid = frls_item.tf().vid();
+         break;
+      default:
+         throw std::runtime_error("Unrecognised request type: " + std::to_string(frls_item.request_type()));
+   }
+
+   std::cout << std::setfill(' ') << std::setw(11) << std::right << request_type                      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << frls_item.copy_nb()               << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << tapepool_vid                      << ' '
+             << std::setfill(' ') << std::setw(10) << std::right << frls_item.requester().username()  << ' '
+             << std::setfill(' ') << std::setw(6)  << std::right << frls_item.requester().groupname() << ' '
+                                                                 << frls_item.af().df().path()
+             << std::endl;
 }
 
 void CtaAdminCmd::printFrLsSummaryHeader()
