@@ -43,6 +43,7 @@ struct RetrieveQueue;
 struct RetrieveQueueToTransfer;
 struct RetrieveQueueToReport;
 struct RetrieveQueueFailed;
+struct RetrieveQueueToReportToRepackForSuccess;
 struct RepackQueue;
 struct RepackQueuePending;
 struct RepackQueueToExpand;
@@ -58,6 +59,7 @@ class ObjectOpsBase {
   friend ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueToReport>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueFailed>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess>;
   friend ContainerTraits<RepackQueue,RepackQueuePending>;
   friend ContainerTraits<RepackQueue,RepackQueueToExpand>;
 protected:

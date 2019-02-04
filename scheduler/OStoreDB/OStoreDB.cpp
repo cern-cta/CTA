@@ -3158,7 +3158,31 @@ void OStoreDB::RetrieveJob::checkReportSucceedForRepack(){
 std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> OStoreDB::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
 {
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> ret;
-  //TODO : Use Algorithms to retrieve the jobs from the RetrieveQueueToReportToRepackForSuccess
-  return ret;
+  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> Carqtrtrfs;
+  Carqtrtrfs algo(this->m_objectStore, *m_agentReference);
+  // Decide from which queue we are going to pop.
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  while(true) {
+    auto queueList = re.dumpRetrieveQueues(JobQueueType::JobsToReportToRepackForSuccess);
+    if (queueList.empty()) return ret;
+
+    // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
+    Carqtrtrfs::PopCriteria criteria;
+    criteria.files = filesRequested;
+    auto jobs = algo.popNextBatch(queueList.front().vid, criteria, lc);
+    if(jobs.elements.empty()) continue;
+    for(auto &j : jobs.elements)
+    {
+      std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this, nullptr));
+      rj->archiveFile = j.archiveFile;
+      rj->retrieveRequest = j.rr;
+      rj->selectedCopyNb = j.copyNb;
+      rj->setJobOwned();
+      ret.emplace_back(std::move(rj));
+    }
+    return ret;
+  }
 }
+
 } // namespace cta
