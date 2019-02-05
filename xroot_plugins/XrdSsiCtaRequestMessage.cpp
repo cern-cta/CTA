@@ -1044,17 +1044,13 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
       throw cta::exception::UserError("--log and --summary are mutually exclusive");
    }
 
-   bool is_archive = !has_flag(OptionBoolean::JUSTRETRIEVE);
-   bool is_retrieve = !has_flag(OptionBoolean::JUSTARCHIVE);
-
-   std::string tapepool = is_archive  ? "" : "INVALID_TAPEPOOL";
-   std::string vid      = is_retrieve ? "" : "INVALID_VID";
+   std::string tapepool = has_flag(OptionBoolean::JUSTRETRIEVE) ? "" : "INVALID_TAPEPOOL";
+   std::string vid      = has_flag(OptionBoolean::JUSTARCHIVE)  ? "" : "INVALID_VID";
 
    // Create a XrdSsi stream object to return the results
    stream = new FailedRequestLsStream(m_scheduler,
       m_scheddb.getArchiveJobItor(tapepool), m_scheddb.getRetrieveJobItor(vid),
-      is_archive, is_retrieve, has_flag(OptionBoolean::SHOW_LOG_ENTRIES),
-      has_flag(OptionBoolean::SUMMARY), m_lc);
+      has_flag(OptionBoolean::SHOW_LOG_ENTRIES), has_flag(OptionBoolean::SUMMARY), m_lc);
 
    // Should the client display column headers?
    if(has_flag(OptionBoolean::SHOW_HEADER)) {
