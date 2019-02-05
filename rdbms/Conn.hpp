@@ -109,7 +109,7 @@ public:
    * @param sql The SQL statement.
    * @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode);
+  void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode = AutocommitMode::AUTOCOMMIT_ON);
 
   /**
    * Commits the current transaction.
