@@ -913,11 +913,9 @@ protected:
    * ArchiveFile table.
    *
    * @param conn The database connection.
-   * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param row The row to be inserted.
    */
-  void insertArchiveFile(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
-    const ArchiveFileRow &row);
+  void insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row);
 
   /**
    * Creates the database schema.
@@ -994,14 +992,12 @@ protected:
    * Inserts the specified tape file into the Tape table.
    *
    * @param conn The database connection.
-   * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param tapeFile The tape file.
    * @param archiveFileId The identifier of the archive file of which the tape
    * file is a copy.
    */
   void insertTapeFile(
     rdbms::Conn &conn,
-    const rdbms::AutocommitMode autocommitMode,
     const common::dataStructures::TapeFile &tapeFile,
     const uint64_t archiveFileId);
 
@@ -1027,7 +1023,6 @@ protected:
    * Updates the specified tape with the specified information.
    *
    * @param conn The database connection.
-   * @param autocommitMode The autocommit mode of the update statement.
    * @param vid The volume identifier of the tape.
    * @param lastFSeq The sequence number of the last tape file written to the
    * tape.
@@ -1037,7 +1032,6 @@ protected:
    */
   void updateTape(
     rdbms::Conn &conn,
-    const rdbms::AutocommitMode autocommitMode,
     const std::string &vid,
     const uint64_t lastFSeq,
     const uint64_t compressedBytesWritten,

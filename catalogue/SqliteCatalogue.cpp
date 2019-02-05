@@ -388,8 +388,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, rdbms::AutocommitMode::AUTOCOMMIT_ON, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
-      lastEvent.tapeDrive);
+    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten, lastEvent.tapeDrive);
 
     for(const auto &event : events) {
       try {
@@ -429,7 +428,7 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMo
       row.diskFileUser = event.diskFileUser;
       row.diskFileGroup = event.diskFileGroup;
       row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
-      insertArchiveFile(conn, autocommitMode, row);
+      insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error
     } catch(...) {
@@ -479,7 +478,7 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMo
     tapeFile.compressedSize = event.compressedSize;
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
-    insertTapeFile(conn, autocommitMode, tapeFile, event.archiveFileId);
+    insertTapeFile(conn, tapeFile, event.archiveFileId);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

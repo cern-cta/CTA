@@ -377,8 +377,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, rdbms::AutocommitMode::AUTOCOMMIT_OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
-      lastEvent.tapeDrive);
+    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten, lastEvent.tapeDrive);
 
     // If we had only placeholders and no file recorded, we are done.
     if (fileEvents.empty()) return;
