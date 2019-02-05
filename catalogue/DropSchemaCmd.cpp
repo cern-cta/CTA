@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/DropSchemaCmd.hpp"
 #include "catalogue/DropSchemaCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
