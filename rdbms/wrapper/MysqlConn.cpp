@@ -19,8 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
-
-// Mysql related
+#include "rdbms/Conn.hpp"
 #include "rdbms/wrapper/Mysql.hpp"
 #include "rdbms/wrapper/MysqlConn.hpp"
 #include "rdbms/wrapper/MysqlStmt.hpp"
@@ -96,6 +95,23 @@ void MysqlConn::close() {
     mysql_close(m_mysqlConn);
     m_mysqlConn = nullptr;
   }
+}
+
+//------------------------------------------------------------------------------
+// setAutocommitMode
+//------------------------------------------------------------------------------
+void MysqlConn::setAutocommitMode(const AutocommitMode autocommitMode) {
+  if(AutocommitMode::AUTOCOMMIT_OFF == autocommitMode) {
+    throw rdbms::Conn::AutocommitModeNotSupported("Failed to set autocommit mode to AUTOCOMMIT_OFF: MysqlConn only"
+      " supports AUTOCOMMIT_ON");
+  }
+}
+
+//------------------------------------------------------------------------------
+// getAutocommitMode
+//------------------------------------------------------------------------------
+AutocommitMode MysqlConn::getAutocommitMode() const noexcept{
+  return AutocommitMode::AUTOCOMMIT_ON;
 }
 
 //------------------------------------------------------------------------------

@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "common/exception/Exception.hpp"
+#include "rdbms/AutocommitMode.hpp"
 #include "rdbms/ConnAndStmts.hpp"
 #include "rdbms/Stmt.hpp"
 
@@ -82,6 +84,30 @@ public:
    * @return This object.
    */
   Conn &operator=(Conn &&rhs);
+
+  /**
+   * Thrown when a requested autocommit mode is not supported.
+   */
+  struct AutocommitModeNotSupported: public exception::Exception {
+    AutocommitModeNotSupported(const std::string &context = "", const bool embedBacktrace = true):
+      Exception(context, embedBacktrace) {}
+  };
+
+  /**
+   * Sets the autocommit mode of the connection.
+   *
+   * @param autocommitMode The autocommit mode of the connection.
+   * @throw AutocommitModeNotSupported If the specified autocommit mode is not
+   * supported.
+   */
+  void setAutocommitMode(const AutocommitMode autocommitMode);
+
+  /**
+   * Returns the autocommit mode of the connection.
+   *
+   * @return The autocommit mode of the connection.
+   */
+  AutocommitMode getAutocommitMode() const noexcept;
 
   /**
    * Creates a prepared statement.

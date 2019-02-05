@@ -81,6 +81,28 @@ Conn &Conn::operator=(Conn &&rhs) {
 }
 
 //------------------------------------------------------------------------------
+// setAutocommitMode
+//------------------------------------------------------------------------------
+void Conn::setAutocommitMode(const AutocommitMode autocommitMode) {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    m_connAndStmts->conn->setAutocommitMode(autocommitMode);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// getAutocommitMode
+//------------------------------------------------------------------------------
+AutocommitMode Conn::getAutocommitMode() const noexcept {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getAutocommitMode();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
 Stmt Conn::createStmt(const std::string &sql) {

@@ -17,9 +17,13 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/threading/RWLockRdLocker.hpp"
+#include "common/threading/RWLockWrLocker.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/wrapper/OcciConn.hpp"
 #include "rdbms/wrapper/OcciEnv.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
@@ -36,7 +40,8 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 OcciConn::OcciConn(oracle::occi::Environment *const env, oracle::occi::Connection *const conn):
   m_env(env),
-  m_occiConn(conn) {
+  m_occiConn(conn),
+  m_autocommitMode(AutocommitMode::AUTOCOMMIT_ON) {
   if(nullptr == conn) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed"
       ": The OCCI connection is a nullptr pointer");
@@ -64,6 +69,22 @@ void OcciConn::close() {
     m_env->terminateConnection(m_occiConn);
     m_occiConn = nullptr;
   }
+}
+
+//------------------------------------------------------------------------------
+// setAutocommitMode
+//------------------------------------------------------------------------------
+void OcciConn::setAutocommitMode(const AutocommitMode autocommitMode) {
+  threading::RWLockWrLocker wrLocker(m_autocommitModeRWLock);
+  m_autocommitMode = autocommitMode;
+}
+
+//------------------------------------------------------------------------------
+// getAutocommitMode
+//------------------------------------------------------------------------------
+AutocommitMode OcciConn::getAutocommitMode() const noexcept{
+  threading::RWLockRdLocker rdLocker(m_autocommitModeRWLock);
+  return m_autocommitMode;
 }
 
 //------------------------------------------------------------------------------

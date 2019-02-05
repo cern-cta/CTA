@@ -67,6 +67,22 @@ public:
   void close() override;
 
   /**
+   * Sets the autocommit mode of the connection.
+   *
+   * @param autocommitMode The autocommit mode of the connection.
+   * @throw AutocommitModeNotSupported If the specified autocommit mode is not
+   * supported.
+   */
+  void setAutocommitMode(const AutocommitMode autocommitMode) override;
+
+  /**
+   * Returns the autocommit mode of the connection.
+   *
+   * @return The autocommit mode of the connection.
+   */
+  AutocommitMode getAutocommitMode() const noexcept override;
+
+  /**
    * Executes the statement.
    *
    * @param sql The SQL statement.

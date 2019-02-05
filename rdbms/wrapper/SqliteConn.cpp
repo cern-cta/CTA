@@ -19,6 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "rdbms/Conn.hpp"
 #include "rdbms/wrapper/Sqlite.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
@@ -94,6 +95,23 @@ void SqliteConn::close() {
     }
     m_sqliteConn = nullptr;
   }
+}
+
+//------------------------------------------------------------------------------
+// setAutocommitMode
+//------------------------------------------------------------------------------
+void SqliteConn::setAutocommitMode(const AutocommitMode autocommitMode) {
+  if(AutocommitMode::AUTOCOMMIT_OFF == autocommitMode) {
+    throw rdbms::Conn::AutocommitModeNotSupported("Failed to set autocommit mode to AUTOCOMMIT_OFF: SqliteConn only"
+      " supports AUTOCOMMIT_ON");
+  }
+}
+
+//------------------------------------------------------------------------------
+// getAutocommitMode
+//------------------------------------------------------------------------------
+AutocommitMode SqliteConn::getAutocommitMode() const noexcept{
+  return AutocommitMode::AUTOCOMMIT_ON;
 }
 
 //------------------------------------------------------------------------------
