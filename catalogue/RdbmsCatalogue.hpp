@@ -563,6 +563,15 @@ public:
    */
   void ping() override;
 
+  /**
+   * Returns the names of all the tables in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the tables in the database schema in alphabetical
+   * order.
+   */
+  std::list<std::string> getTableNames() const;
+
 protected:
 
   /**

@@ -5502,6 +5502,14 @@ void RdbmsCatalogue::ping() {
 }
 
 //------------------------------------------------------------------------------
+// getTableNames
+//------------------------------------------------------------------------------
+std::list<std::string> RdbmsCatalogue::getTableNames() const {
+  auto conn = m_connPool.getConn();
+  return conn.getTableNames();
+}
+
+//------------------------------------------------------------------------------
 // checkTapeWrittenFilesAreSet
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc, const TapeFileWritten &event)
