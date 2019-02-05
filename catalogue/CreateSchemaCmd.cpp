@@ -70,25 +70,25 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   case rdbms::Login::DBTYPE_SQLITE:
     {
        SqliteCatalogueSchema schema;
-       conn.executeNonQueries(schema.sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+       conn.executeNonQueries(schema.sql);
     }
     break;
   case rdbms::Login::DBTYPE_MYSQL:
     {
        MysqlCatalogueSchema schema;
-       conn.executeNonQueries(schema.sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+       conn.executeNonQueries(schema.sql);
 
        // execute triggers
        auto triggers = schema.triggers();
        for (auto trigger: triggers) {
-         conn.executeNonQuery(trigger, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+         conn.executeNonQuery(trigger);
        }
     }
     break;
   case rdbms::Login::DBTYPE_ORACLE:
     {
       OracleCatalogueSchema schema;
-      conn.executeNonQueries(schema.sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+      conn.executeNonQueries(schema.sql);
     }
     break;
   case rdbms::Login::DBTYPE_NONE:
