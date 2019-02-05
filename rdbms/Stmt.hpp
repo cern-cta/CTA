@@ -162,17 +162,14 @@ public:
   /**
    *  Executes the statement and returns the result set.
    *
-   *  @param autocommitMode The autocommit mode of the statement.
    *  @return The result set.
    */
-  Rset executeQuery(const AutocommitMode autocommitMode = AutocommitMode::AUTOCOMMIT_ON);
+  Rset executeQuery();
 
   /**
    * Executes the statement.
-   *
-   *  @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery(const AutocommitMode autocommitMode = AutocommitMode::AUTOCOMMIT_ON);
+  void executeNonQuery();
 
   /**
    * Returns the number of rows affected by the last execution of this

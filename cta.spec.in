@@ -270,11 +270,13 @@ Unit tests and system tests with virtual tape drives
 %{_bindir}/cta-unitTests-multiProcess
 %{_bindir}/cta-valgrindUnitTests.sh
 %{_bindir}/cta-unitPlusSystemTests.sh
-%{_libdir}/libctacatalogueunittests.so*
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
+%{_libdir}/libctadbconfigcatalogueunittests.so*
+%{_libdir}/libctadbconfigconnunittests.so*
 %{_libdir}/libctaexceptionunittests.so*
 %{_libdir}/libctainmemorycatalogueunittests.so*
+%{_libdir}/libctainmemoryconnunittests.so*
 %{_libdir}/libctaobjectstoreunittests.so*
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*

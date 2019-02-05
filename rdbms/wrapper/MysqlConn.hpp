@@ -86,9 +86,8 @@ public:
    * Executes the statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) override;
+  void executeNonQuery(const std::string &sql) override;
 
   /**
    * Creates a prepared statement.

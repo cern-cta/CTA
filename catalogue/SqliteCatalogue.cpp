@@ -120,10 +120,15 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 
     t.reset();
     {
+      const char *const sql = "BEGIN DEFERRED;";
+      auto stmt = conn.createStmt(sql);
+      stmt.executeNonQuery();
+    }
+    {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
       auto stmt = conn.createStmt(sql);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt.executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+      stmt.executeNonQuery();
     }
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
@@ -131,7 +136,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
       auto stmt = conn.createStmt(sql);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt.executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+      stmt.executeNonQuery();
     }
     const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
@@ -183,12 +188,12 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 //------------------------------------------------------------------------------
 uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
   try {
-    conn.executeNonQuery("INSERT INTO ARCHIVE_FILE_ID VALUES(NULL)", rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    conn.executeNonQuery("INSERT INTO ARCHIVE_FILE_ID VALUES(NULL)");
     uint64_t archiveFileId = 0;
     {
       const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
       auto stmt = conn.createStmt(sql);
-      auto rset = stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+      auto rset = stmt.executeQuery();
       if(!rset.next()) {
         throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
       }
@@ -197,7 +202,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
         throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
       }
     }
-    conn.executeNonQuery("DELETE FROM ARCHIVE_FILE_ID", rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    conn.executeNonQuery("DELETE FROM ARCHIVE_FILE_ID");
 
     return archiveFileId;
   } catch(exception::UserError &) {
@@ -213,12 +218,12 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
 //------------------------------------------------------------------------------
 uint64_t SqliteCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
   try {
-    conn.executeNonQuery("INSERT INTO STORAGE_CLASS_ID VALUES(NULL)", rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    conn.executeNonQuery("INSERT INTO STORAGE_CLASS_ID VALUES(NULL)");
     uint64_t storageClassId = 0;
     {
       const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
       auto stmt = conn.createStmt(sql);
-      auto rset = stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+      auto rset = stmt.executeQuery();
       if(!rset.next()) {
         throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
       }
@@ -227,7 +232,7 @@ uint64_t SqliteCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
         throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
       }
     }
-    conn.executeNonQuery("DELETE FROM STORAGE_CLASS_ID", rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    conn.executeNonQuery("DELETE FROM STORAGE_CLASS_ID");
 
     return storageClassId;
   } catch(exception::UserError &) {
@@ -239,10 +244,9 @@ uint64_t SqliteCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
 }
 
 //------------------------------------------------------------------------------
-// selectTapeForUpdate
+// selectTape
 //------------------------------------------------------------------------------
-common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::AutocommitMode autocommitMode,
-  rdbms::Conn &conn, const std::string &vid) {
+common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, const std::string &vid) {
   try {
     const char *const sql =
       "SELECT "
@@ -282,7 +286,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Autocommit
 
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
-    auto rset = stmt.executeQuery(autocommitMode);
+    auto rset = stmt.executeQuery();
     if (!rset.next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
@@ -357,7 +361,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     threading::MutexLocker locker(m_mutex);
     auto conn = m_connPool.getConn();
 
-    const auto tape = selectTape(rdbms::AutocommitMode::AUTOCOMMIT_ON, conn, firstEvent.vid);
+    const auto tape = selectTape(conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
     uint64_t totalCompressedBytesWritten = 0;
 
@@ -394,7 +398,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(*event); 
-        fileWrittenToTape(rdbms::AutocommitMode::AUTOCOMMIT_ON, conn, fileEvent);
+        fileWrittenToTape(conn, fileEvent);
       } catch (std::bad_cast&) {}
     }
   } catch(exception::UserError &) {
@@ -408,8 +412,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
 //------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMode, rdbms::Conn &conn,
-  const TapeFileWritten &event) {
+void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten &event) {
   try {
     checkTapeFileWrittenFieldsAreSet(__FUNCTION__, event);
 

@@ -154,17 +154,14 @@ public:
   /**
    *  Executes the statement and returns the result set.
    *
-   *  @param autocommitMode The autocommit mode of the statement.
    *  @return The result set.
    */
-  virtual std::unique_ptr<Rset> executeQuery(const AutocommitMode autocommitMode) = 0;
+  virtual std::unique_ptr<Rset> executeQuery() = 0;
 
   /**
    * Executes the statement.
-   *
-   *  @param autocommitMode The autocommit mode of the statement.
    */
-  virtual void executeNonQuery(const AutocommitMode autocommitMode) = 0;
+  virtual void executeNonQuery() = 0;
 
   /**
    * Returns the number of rows affected by the last execution of this

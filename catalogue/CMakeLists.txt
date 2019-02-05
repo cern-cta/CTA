@@ -142,19 +142,19 @@ target_link_libraries (ctainmemorycatalogueunittests
 
 install (TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
+set (DBCONFIG_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
   DbConfigVersionOfCatalogueTest.cpp)
 
-add_library (ctacatalogueunittests SHARED
-  ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
-set_property(TARGET ctacatalogueunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctacatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+add_library (ctadbconfigcatalogueunittests SHARED
+  ${DBCONFIG_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctadbconfigcatalogueunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctadbconfigcatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries (ctacatalogueunittests
+target_link_libraries (ctadbconfigcatalogueunittests
   ctacatalogue)
 
-install (TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctadbconfigcatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 install (FILES cta-catalogue.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta

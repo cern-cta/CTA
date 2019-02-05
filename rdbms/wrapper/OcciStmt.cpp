@@ -154,8 +154,10 @@ void OcciStmt::bindOptionalString(const std::string &paramName, const optional<s
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> OcciStmt::executeQuery(const AutocommitMode autocommitMode) {
+std::unique_ptr<Rset> OcciStmt::executeQuery() {
   using namespace oracle;
+
+  const auto autocommitMode = m_conn.getAutocommitMode();
 
   try {
     switch(autocommitMode) {
@@ -194,8 +196,10 @@ std::unique_ptr<Rset> OcciStmt::executeQuery(const AutocommitMode autocommitMode
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void OcciStmt::executeNonQuery(const AutocommitMode autocommitMode) {
+void OcciStmt::executeNonQuery() {
   using namespace oracle;
+
+  const auto autocommitMode = m_conn.getAutocommitMode();
 
   try {
     switch(autocommitMode) {

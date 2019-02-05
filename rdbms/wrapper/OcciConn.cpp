@@ -90,10 +90,10 @@ AutocommitMode OcciConn::getAutocommitMode() const noexcept{
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void OcciConn::executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) {
+void OcciConn::executeNonQuery(const std::string &sql) {
   try {
     auto stmt = createStmt(sql);
-    stmt->executeNonQuery(AutocommitMode::AUTOCOMMIT_OFF);
+    stmt->executeNonQuery();
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -175,7 +175,7 @@ std::list<std::string> OcciConn::getTableNames() {
       "ORDER BY "
         "TABLE_NAME";
     auto stmt = createStmt(sql);
-    auto rset = stmt->executeQuery(AutocommitMode::AUTOCOMMIT_OFF);
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("TABLE_NAME");
       if(name) {
@@ -203,7 +203,7 @@ std::list<std::string> OcciConn::getSequenceNames() {
       "ORDER BY "
         "SEQUENCE_NAME";
     auto stmt = createStmt(sql);
-    auto rset = stmt->executeQuery(AutocommitMode::AUTOCOMMIT_OFF);
+    auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("SEQUENCE_NAME");
       names.push_back(name.value());

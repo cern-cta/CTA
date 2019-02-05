@@ -129,12 +129,12 @@ public:
    *
    * @return The result set.
    */
-  std::unique_ptr<Rset> executeQuery(const AutocommitMode autocommitMode) override;
+  std::unique_ptr<Rset> executeQuery() override;
 
   /**
    * Executes the statement.
    */
-  void executeNonQuery(const AutocommitMode autocommitMode) override;
+  void executeNonQuery() override;
 
   /**
    * Returns the number of rows affected by the last execution of this
@@ -187,19 +187,9 @@ private:
   uint64_t m_nbAffectedRows;
 
   /**
-   * Begins an SQLite deferred transaction.
-   *
-   * This method is called by the constructor which in turn was called by the
-   * MysqlStmt::createStmt() method and assumes that a lock has already been
-   * taken on MysqlStmt::m_mutex;
-   */
-  void beginDeferredTransaction();
-
-  /**
    * Bind the values
    */
   bool do_bind();
-
 
   /**
    * Placeholders for retrieving data

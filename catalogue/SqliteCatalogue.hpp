@@ -126,22 +126,18 @@ private:
   /**
    * Notifies the catalogue that a file has been written to tape.
    *
-   * @param autocommitMode The autocommit mode of the statement.
    * @param conn The database connection.
    * @param event The tape file written event.
    */
-  void fileWrittenToTape(const rdbms::AutocommitMode autocommitMode, rdbms::Conn &conn,
-    const TapeFileWritten &event);
+  void fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten &event);
 
   /**
    * Selects the specified tape within the Tape table.
    *
-   * @param autocommitMode The autocommit mode of the statement.
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  common::dataStructures::Tape selectTape(const rdbms::AutocommitMode autocommitMode, rdbms::Conn &conn,
-    const std::string &vid);
+  common::dataStructures::Tape selectTape(rdbms::Conn &conn, const std::string &vid);
 
 }; // class SqliteCatalogue
 

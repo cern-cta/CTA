@@ -116,7 +116,7 @@ Stmt Conn::createStmt(const std::string &sql) {
 //------------------------------------------------------------------------------
 // executeNonQueries
 //------------------------------------------------------------------------------
-void Conn::executeNonQueries(const std::string &sqlStmts, const AutocommitMode autocommitMode) {
+void Conn::executeNonQueries(const std::string &sqlStmts) {
   try {
     std::string::size_type searchPos = 0;
     std::string::size_type findResult = std::string::npos;
@@ -128,7 +128,7 @@ void Conn::executeNonQueries(const std::string &sqlStmts, const AutocommitMode a
       searchPos = findResult + 1;
 
       if(0 < sqlStmt.size()) { // Ignore empty statements
-        executeNonQuery(sqlStmt, autocommitMode);
+        executeNonQuery(sqlStmt);
       }
     }
 
@@ -140,9 +140,9 @@ void Conn::executeNonQueries(const std::string &sqlStmts, const AutocommitMode a
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void Conn::executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) {
+void Conn::executeNonQuery(const std::string &sql) {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
-    m_connAndStmts->conn->executeNonQuery(sql,autocommitMode);
+    m_connAndStmts->conn->executeNonQuery(sql);
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
   }
@@ -173,7 +173,7 @@ void Conn::rollback() {
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getTableNames() {
+std::list<std::string> Conn::getTableNames() const {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getTableNames();
   } else {

@@ -117,7 +117,7 @@ AutocommitMode MysqlConn::getAutocommitMode() const noexcept{
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void MysqlConn::executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) {
+void MysqlConn::executeNonQuery(const std::string &sql) {
   try {
     threading::MutexLocker locker(m_mutex);
 

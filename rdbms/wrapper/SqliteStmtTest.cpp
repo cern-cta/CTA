@@ -53,7 +53,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
       "WHERE "
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
     ASSERT_TRUE((bool)nbTables);
@@ -70,7 +70,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
         "COL2 TEXT,"
         "COL3 INTEGER);";
     auto stmt = conn.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
   }
 
   // Test for the existence of the test table
@@ -83,7 +83,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
         "NAME = 'TEST1' AND "
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
     ASSERT_TRUE((bool)nbTables);
@@ -101,7 +101,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
         "COL2 TEXT,"
         "COL3 INTEGER);";
     auto stmt = conn.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
   }
 
   // Test for the existence of the second test table
@@ -114,7 +114,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
         "NAME = 'TEST2' AND "
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
     ASSERT_TRUE((bool)nbTables);
@@ -147,7 +147,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, select_from_empty_table) {
         "COL2 TEXT,"
         "COL3 INTEGER);";
     auto stmt = conn.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
   }
@@ -162,7 +162,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, select_from_empty_table) {
       "FROM "
         "TEST;";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto rset = stmt->executeQuery();
     ASSERT_FALSE(rset->next());
   }
 }
@@ -183,7 +183,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
         "COL2 TEXT,"
         "COL3 INTEGER);";
     auto stmt = conn.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
   }
@@ -200,7 +200,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
         "'two',"
         "3);";
     auto stmt = conn.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
   }
 
   // Select the row back from the table
@@ -213,7 +213,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
       "FROM "
         "TEST;";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
     const auto col1 = rset->columnOptionalString("COL1");
@@ -249,7 +249,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
         "COL2 TEXT,"
         "COL3 INTEGER);";
     auto stmt = conn.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
   }
@@ -269,7 +269,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
     stmt->bindString(":COL1", "one");
     stmt->bindString(":COL2", "two");
     stmt->bindUint64(":COL3", 3);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
   }
 
   // Select the row back from the table
@@ -282,7 +282,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
       "FROM "
         "TEST;";
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
     const auto col1 = rset->columnOptionalString("COL1");
@@ -317,7 +317,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
         "COL2 TEXT,"
         "COL3 INTEGER);";
     auto stmt = connForCreate.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
     ASSERT_EQ(1, connForCreate.getTableNames().size());
     ASSERT_EQ("TEST", connForCreate.getTableNames().front());
   }
@@ -335,7 +335,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
         "'two',"
         "3);";
     auto stmt = connForInsert.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
   }
 
   // Count the number of rows in the table from within another connection
@@ -349,7 +349,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
       "FROM "
         "TEST;";
     auto stmt = connForSelect.createStmt(sql);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
     const auto nbRows = rset->columnOptionalUint64("NB_ROWS");
@@ -376,7 +376,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
         "COL1 INTEGER,"
         "CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1));";
     auto stmt = conn.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
   }
@@ -390,7 +390,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
         ":COL1);";
     auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
   }
 
   // Try to insert an identical row into the test table
@@ -402,7 +402,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
         ":COL1);";
     auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
-    ASSERT_THROW(stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON), exception::DatabasePrimaryKeyError);
+    ASSERT_THROW(stmt->executeNonQuery(), exception::DatabasePrimaryKeyError);
   }
 }
 
@@ -422,7 +422,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
         "COL1 INTEGER,"
         "CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1));";
     auto stmt = conn.createStmt(sql);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
   }
@@ -436,7 +436,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
         ":COL1);";
     auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
-    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    stmt->executeNonQuery();
   }
 
   // Try to insert an identical row into the test table
@@ -448,7 +448,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
         ":COL1);";
     auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
-    auto rset = stmt->executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto rset = stmt->executeQuery();
     ASSERT_THROW(rset->next(), exception::DatabasePrimaryKeyError);
   }
 }

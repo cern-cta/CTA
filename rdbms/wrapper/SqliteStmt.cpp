@@ -223,10 +223,8 @@ void SqliteStmt::bindOptionalString(const std::string &paramName, const optional
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> SqliteStmt::executeQuery(const AutocommitMode autocommitMode) {
+std::unique_ptr<Rset> SqliteStmt::executeQuery() {
   threading::MutexLocker connLocker(m_conn.m_mutex);
-
-  startDeferredTransactionIfNecessary(autocommitMode);
 
   return cta::make_unique<SqliteRset>(*this);
 }
@@ -234,10 +232,8 @@ std::unique_ptr<Rset> SqliteStmt::executeQuery(const AutocommitMode autocommitMo
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void SqliteStmt::executeNonQuery(const AutocommitMode autocommitMode) {
+void SqliteStmt::executeNonQuery() {
   threading::MutexLocker connLocker(m_conn.m_mutex);
-
-  startDeferredTransactionIfNecessary(autocommitMode);
 
   const int stepRc = sqlite3_step(m_stmt);
 
@@ -276,24 +272,6 @@ uint64_t SqliteStmt::getNbAffectedRows() const {
 }
 
 //------------------------------------------------------------------------------
-// startDeferredTransactionIfNecessary
-//------------------------------------------------------------------------------
-void SqliteStmt::startDeferredTransactionIfNecessary(const AutocommitMode autocommitMode) {
-  // PLEASE NOTE this method assumes a lock has been taken on m_conn.m_mutex
-  const bool autocommit = autocommitModeToBool(autocommitMode);
-
-  if(m_conn.m_transactionInProgress && autocommit) {
-    throw exception::Exception("SqliteStmt does not support the execution of an AUTOCOMMIT_OFF statement followed an"
-      " AUTOCOMMIT_ON statement.  Use commit() between the statements instead");
-  }
-
-  if(!m_conn.m_transactionInProgress && !autocommit) {
-    beginDeferredTransaction();
-    m_conn.m_transactionInProgress = true;
-  }
-}
-
-//------------------------------------------------------------------------------
 // autoCommitModeToBool
 //------------------------------------------------------------------------------
 bool SqliteStmt::autocommitModeToBool(const AutocommitMode autocommitMode) {
@@ -301,26 +279,6 @@ bool SqliteStmt::autocommitModeToBool(const AutocommitMode autocommitMode) {
   case AutocommitMode::AUTOCOMMIT_ON: return true;
   case AutocommitMode::AUTOCOMMIT_OFF: return false;
   default: throw exception::Exception("Unknown autocommit mode");
-  }
-}
-
-//------------------------------------------------------------------------------
-// beginDeferredTransaction
-//------------------------------------------------------------------------------
-void SqliteStmt::beginDeferredTransaction() {
-  try {
-    char *errMsg = nullptr;
-    if(SQLITE_OK != sqlite3_exec(m_conn.m_sqliteConn, "BEGIN DEFERRED", nullptr, nullptr, &errMsg)) {
-      exception::Exception ex;
-      ex.getMessage() << "sqlite3_exec failed";
-      if(nullptr != errMsg) {
-        ex.getMessage() << ": " << errMsg;
-        sqlite3_free(errMsg);
-      }
-      throw ex;
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

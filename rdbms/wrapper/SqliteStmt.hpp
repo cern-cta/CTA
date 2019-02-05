@@ -121,14 +121,12 @@ public:
    * @param autocommitMode The autocommit mode of the statement.
    * @return The result set.
    */
-  std::unique_ptr<Rset> executeQuery(const AutocommitMode autocommitMode) override;
+  std::unique_ptr<Rset> executeQuery() override;
 
   /**
    * Executes the statement.
-   *
-   * @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery(const AutocommitMode autocommitMode) override;
+  void executeNonQuery() override;
 
   /**
    * Returns the number of rows affected by the last execution of this
@@ -161,15 +159,6 @@ private:
   uint64_t m_nbAffectedRows;
 
   /**
-   * Starts a deferred transaction if necessary.
-   *
-   * PLEASE NOTE this method assumes a lock has been taken on m_conn.m_mutex.
-   *
-   * @param autocommitMode The autocommit mode of the statement.
-   */
-  void startDeferredTransactionIfNecessary(const AutocommitMode autocommitMode);
-
-  /**
    * @param autocommitMode The autocommit mode of the statement.
    *
    * @return true if autocommitMode is AUTOCOMMIT_ON, false if autocommitMode
@@ -178,15 +167,6 @@ private:
    * nor AUTOCOMMIT_OFF.
    */
   static bool autocommitModeToBool(const AutocommitMode autocommitMode);
-
-  /**
-   * Begins an SQLite deferred transaction.
-   *
-   * This method is called by the constructor which in turn was called by the
-   * SqliteStmt::createStmt() method and assumes that a lock has already been
-   * taken on SqliteStmt::m_mutex;
-   */
-  void beginDeferredTransaction();
 
 }; // class SqlLiteStmt
 

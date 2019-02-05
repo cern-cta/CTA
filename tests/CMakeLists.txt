@@ -24,22 +24,22 @@ add_executable(cta-unitTests
   ${GMOCK_SRC})
 
 target_link_libraries(cta-unitTests
-  ctainmemorycatalogueunittests
+  ctacataloguecmdlineunittests
+  ctacommon
+  ctacommonunittests
+  ctadaemonunittests
   ctaexceptionunittests
+  ctamediachangerunittests
+  ctainmemorycatalogueunittests
+  ctainmemoryconnunittests
+  ctaobjectstore
+  ctaobjectstoreunittests
+  ctardbmswrapperunittests
+  ctaschedulerunittests
   ctatapeserverdaemonunittests
   ctatapeserverdriveunittests
   ctatapeserverfileunittests
   ctatapeserverscsiunittests
-  ctacataloguecmdlineunittests
-  ctacommon
-  ctacommonunittests
-  ctaobjectstore
-  ctaobjectstoreunittests
-  ctardbmsunittests
-  ctardbmswrapperunittests
-  ctaschedulerunittests
-  ctadaemonunittests
-  ctamediachangerunittests
   gtest
   pthread)
 
@@ -60,7 +60,8 @@ add_executable(cta-rdbmsUnitTests
   ${GMOCK_SRC})
 
 target_link_libraries(cta-rdbmsUnitTests
-  ctacatalogueunittests
+  ctadbconfigcatalogueunittests
+  ctadbconfigconnunittests
   gtest
   pthread)
 

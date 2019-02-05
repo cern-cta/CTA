@@ -125,17 +125,15 @@ public:
    * semicolon.
    *
    * @param sqlStmts The SQL statements to be executed.
-   * @param autocommitMode The autocommit mode of the statements.
    */
-  void executeNonQueries(const std::string &sqlStmts, const AutocommitMode autocommitMode = AutocommitMode::AUTOCOMMIT_ON);
+  void executeNonQueries(const std::string &sqlStmts);
 
   /**
    * Executes the statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode = AutocommitMode::AUTOCOMMIT_ON);
+  void executeNonQuery(const std::string &sql);
 
   /**
    * Commits the current transaction.
@@ -154,7 +152,7 @@ public:
    * @return The names of all the tables in the database schema in alphabetical
    * order.
    */
-  std::list<std::string> getTableNames();
+  std::list<std::string> getTableNames() const;
 
   /**
    * Closes the underlying cached database statements and their connection.

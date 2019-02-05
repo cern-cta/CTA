@@ -82,9 +82,8 @@ public:
    * Executes the statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) override;
+  void executeNonQuery(const std::string &sql) override;
 
   /**
    * Creates a prepared statement.
@@ -152,11 +151,6 @@ private:
    * The database connection.
    */
   sqlite3 *m_sqliteConn;
-
-  /**
-   * True of there is an on-going transaction.
-   */
-  bool m_transactionInProgress;
 
 }; // class SqliteConn
 

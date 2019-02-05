@@ -279,33 +279,10 @@ void MysqlStmt::bindOptionalString(const std::string &paramName, const optional<
   }
 }
 
-/**
- * This is just for fun
- */
-struct HelperAutoCommit {
-  HelperAutoCommit(const AutocommitMode mode, MysqlConn& conn, MysqlStmt& stmt)
-    : m_mode(mode), m_conn(conn), m_stmt(stmt) {
-
-  }
-
-  ~HelperAutoCommit() {
-    if (m_mode == AutocommitMode::AUTOCOMMIT_ON) {
-      m_conn.commit();
-    }
-  }
-
-  AutocommitMode m_mode;
-  MysqlConn& m_conn;
-  MysqlStmt& m_stmt;
-};
-
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> MysqlStmt::executeQuery(const AutocommitMode autocommitMode) {
-  HelperAutoCommit hac(autocommitMode, m_conn, *this);
-
-
+std::unique_ptr<Rset> MysqlStmt::executeQuery() {
   // bind values before execute
   do_bind();
 
@@ -336,7 +313,7 @@ std::unique_ptr<Rset> MysqlStmt::executeQuery(const AutocommitMode autocommitMod
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void MysqlStmt::executeNonQuery(const AutocommitMode autocommitMode) {
+void MysqlStmt::executeNonQuery() {
   // FIXME: deadlock found
   {
     // threading::MutexLocker connLocker(m_conn.m_mutex);
@@ -367,7 +344,6 @@ void MysqlStmt::executeNonQuery(const AutocommitMode autocommitMode) {
     m_nbAffectedRows = mysql_stmt_affected_rows(m_stmt);
 
   }
-  HelperAutoCommit hac(autocommitMode, m_conn, *this);
 }
 
 //------------------------------------------------------------------------------
@@ -388,12 +364,6 @@ Mysql::Placeholder* MysqlStmt::columnHolder(const std::string& colName) const {
   return m_holders_results[idx];
 
 
-}
-
-//------------------------------------------------------------------------------
-// beginDeferredTransaction
-//------------------------------------------------------------------------------
-void MysqlStmt::beginDeferredTransaction() {
 }
 
 //------------------------------------------------------------------------------
