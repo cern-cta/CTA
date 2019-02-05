@@ -24,9 +24,6 @@ template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::c_containerTypeName = "RetrieveQueueToTransfer";
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::c_identifierType = "tapeVid";
-
-template<>
 auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
 getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;

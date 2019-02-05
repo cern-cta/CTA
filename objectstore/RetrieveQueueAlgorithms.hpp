@@ -462,6 +462,30 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSum
   }
 };
 
+template<typename C>
+auto ContainerTraits<RetrieveQueue,C>::
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
+  log::LogContext &lc) -> PoppedElementsBatch
+{
+  PoppedElementsBatch ret;
+
+  auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
+  for(auto &cjfq : candidateJobsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement{
+      cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
+      cjfq.copyNb,
+      cjfq.size,
+      common::dataStructures::ArchiveFile(),
+      common::dataStructures::RetrieveRequest()
+    });
+    ret.summary.files++;
+  }
+  return ret;
+}
+
+template<typename C>
+const std::string ContainerTraits<RetrieveQueue,C>::c_identifierType = "tapeVid";
+  
 template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::QueueType{
     objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransfer;
