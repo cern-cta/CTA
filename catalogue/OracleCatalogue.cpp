@@ -142,14 +142,12 @@ OracleCatalogue::OracleCatalogue(
   const std::string &password,
   const std::string &database,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect):
+  const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
     log,
     rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database, "", 0),
     nbConns,
-    nbArchiveFileListingConns,
-    maxTriesToConnect) {
+    nbArchiveFileListingConns) {
 }
 
 //------------------------------------------------------------------------------

@@ -1,11 +1,11 @@
 /*
- * The CERN Tape Archive(CTA) project
- * Copyright(C) 2015  CERN
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
- *(at your option) any later version.
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,26 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/InMemoryCatalogue.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/threading/RWLock.hpp"
+#include "common/threading/RWLockRdLocker.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta { 
+namespace threading {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-InMemoryCatalogue::InMemoryCatalogue(
-  log::Logger &log,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  SchemaCreatingSqliteCatalogue(log, "file::memory:?cache=shared", nbConns, nbArchiveFileListingConns) {
+RWLockRdLocker::RWLockRdLocker(RWLock &lock): m_lock(lock) {
+  try {
+    m_lock.rdlock();
+  } catch(exception::Exception &ne) {
+    exception::Exception ex;
+    ex.getMessage() << __FUNCTION__ << " failed to take read lock: " << ne.getMessage().str();
+    throw ex;
+  }
 }
-
+  
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-InMemoryCatalogue::~InMemoryCatalogue() {
+RWLockRdLocker::~RWLockRdLocker() {
+  m_lock.unlock();
 }
 
-} // namespace catalogue
+} // namespace threading
 } // namespace cta

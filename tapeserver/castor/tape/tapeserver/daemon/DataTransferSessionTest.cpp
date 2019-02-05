@@ -129,7 +129,6 @@ public:
     m_db = param.dbFactory.create();
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
-    const uint32_t maxTriesToConnect = 1;
 #ifdef USE_ORACLE_CATALOGUE
     cta::rdbms::Login login=cta::rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
     
@@ -147,8 +146,7 @@ public:
     } catch (std::bad_cast &) {}
 #else
     //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
-    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns,
-      maxTriesToConnect);
+    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
 #endif
     m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
     

@@ -39,16 +39,15 @@ TEST_F(cta_catalogue_InMemoryCatalogue, createSameSchemaInTwoSeparateInMemoryDat
   log::DummyLogger dummyLog("dummy", "dummy");
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
-  const uint32_t maxTriesToConnect = 1;
 
   // First in-memory database
   {
-    catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+    catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns);
   }
 
   // Second in-memory database
   {
-    catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+    catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns);
   }
 }
 

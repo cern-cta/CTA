@@ -113,9 +113,8 @@ public:
 
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
-    const uint32_t maxTriesToConnect = 1;
-    //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_dummyLog,"/home/cedric/db/test.db",nbConns,nbArchiveFileListingConns,maxTriesToConnect);
-    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+    //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
+    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
   }
 

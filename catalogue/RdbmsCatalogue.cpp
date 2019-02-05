@@ -59,12 +59,10 @@ RdbmsCatalogue::RdbmsCatalogue(
   log::Logger &log,
   const rdbms::Login &login,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect):
+  const uint64_t nbArchiveFileListingConns):
   m_log(log),
   m_connPool(login, nbConns),
   m_archiveFileListingConnPool(login, nbArchiveFileListingConns),
-  m_maxTriesToConnect(maxTriesToConnect),
   m_tapeCopyToPoolCache(10),
   m_groupMountPolicyCache(10),
   m_userMountPolicyCache(10),
