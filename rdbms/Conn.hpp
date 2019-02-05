@@ -101,7 +101,7 @@ public:
    * @param sqlStmts The SQL statements to be executed.
    * @param autocommitMode The autocommit mode of the statements.
    */
-  void executeNonQueries(const std::string &sqlStmts, const AutocommitMode autocommitMode);
+  void executeNonQueries(const std::string &sqlStmts, const AutocommitMode autocommitMode = AutocommitMode::AUTOCOMMIT_ON);
 
   /**
    * Executes the statement.
