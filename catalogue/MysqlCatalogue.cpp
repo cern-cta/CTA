@@ -291,7 +291,7 @@ void MysqlCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(*event); 
-        fileWrittenToTape(rdbms::AutocommitMode::AUTOCOMMIT_ON, conn, fileEvent);
+        fileWrittenToTape(conn, fileEvent);
       } catch (std::bad_cast&) {}
     }
     conn.commit();
@@ -306,8 +306,7 @@ void MysqlCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &
 //------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
-void MysqlCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMode, rdbms::Conn &conn,
-  const TapeFileWritten &event) {
+void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten &event) {
   try {
     checkTapeFileWrittenFieldsAreSet(__FUNCTION__, event);
 
