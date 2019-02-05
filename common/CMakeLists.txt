@@ -124,6 +124,9 @@ set (COMMON_LIB_SRC_FILES
   threading/CondVar.cpp
   threading/Daemon.cpp
   threading/Mutex.cpp
+  threading/RWLock.cpp
+  threading/RWLockRdLocker.cpp
+  threading/RWLockWrLocker.cpp
   threading/SocketPair.cpp
   threading/System.cpp
   threading/Thread.cpp
@@ -173,6 +176,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   CRCTest.cpp
   threading/CondVarTest.cpp
   threading/DaemonTest.cpp
+  threading/RWLockTest.cpp
   threading/SocketPairTest.cpp
   threading/ThreadingBlockingQTests.cpp
 # threading/ThreadingMPTests.cpp is commented out because of errors caused by libust
