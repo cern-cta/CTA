@@ -22,13 +22,14 @@
 #include "Agent.hpp"
 #include "AgentWatchdog.hpp"
 #include "AgentRegister.hpp"
+#include "JobQueueType.hpp"
 #include "common/log/LogContext.hpp"
 
 /**
  * Plan => Garbage collector keeps track of the agents.
  * If an agent is declared dead => tape ownership of owned objects
  * Using the backup owner, re-post the objet to the container.
- * All containers will have a "repost" method, which is more thourough 
+ * All containers will have a "repost" method, which is more thorough 
  * (and expensive) than the usual one. It can for example prevent double posting.
  */
 
@@ -40,10 +41,10 @@ class RetrieveRequest;
 class GarbageCollector {
 public:
   GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue);
-  
+  ~GarbageCollector();
   void runOnePass(log::LogContext & lc);
   
-  void aquireTargets(log::LogContext & lc);
+  void acquireTargets(log::LogContext & lc);
   
   void trimGoneTargets(log::LogContext & lc);
   
@@ -54,19 +55,22 @@ public:
   /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
     * one batch per queue. */
   struct OwnedObjectSorter {
-    std::map<std::string, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
-    std::map<std::string, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
+    std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
+    std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
     std::list<std::shared_ptr<GenericObject>> otherObjects;
     /// Fill up the fetchedObjects with objects of interest.
-    void fetchOwnedObjects(Agent & agent, std::list<std::shared_ptr<GenericObject>> & fetchedObjects, Backend & objectStore, log::LogContext & lc);
+    void fetchOwnedObjects(Agent & agent, std::list<std::shared_ptr<GenericObject>> & fetchedObjects, Backend & objectStore,
+        log::LogContext & lc);
     /// Fill up the sorter with the fetched objects
-    void sortFetchedObjects(Agent & agent, std::list<std::shared_ptr<GenericObject>> & fetchedObjects, Backend & objectStore, cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
+    void sortFetchedObjects(Agent & agent, std::list<std::shared_ptr<GenericObject>> & fetchedObjects, Backend & objectStore,
+        cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
     /// Lock, fetch and update archive jobs
     void lockFetchAndUpdateArchiveJobs(Agent & agent, AgentReference & agentReference, Backend & objectStore, log::LogContext & lc);
     /// Lock, fetch and update retrieve jobs
     void lockFetchAndUpdateRetrieveJobs(Agent & agent, AgentReference & agentReference, Backend & objectStore, log::LogContext & lc);
     // Lock, fetch and update other objects
-    void lockFetchAndUpdateOtherObjects(Agent & agent, AgentReference & agentReference, Backend & objectStore, cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
+    void lockFetchAndUpdateOtherObjects(Agent & agent, AgentReference & agentReference, Backend & objectStore,
+        cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
   };
 private:
   Backend & m_objectStore;

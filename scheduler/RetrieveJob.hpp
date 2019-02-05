@@ -41,6 +41,7 @@ class RetrieveJob {
    * constructor of RetrieveJob.
    */
   friend class RetrieveMount;
+  friend class Scheduler;
   
 public:
   /**
@@ -52,7 +53,7 @@ public:
    * @param tapeFileLocation the location of the tape file
    * @param positioningMethod the positioning method
    */
-  RetrieveJob(RetrieveMount &mount,
+  RetrieveJob(RetrieveMount *mount,
   const common::dataStructures::RetrieveRequest &retrieveRequest,
   const common::dataStructures::ArchiveFile & archiveFile,
   const uint64_t selectedCopyNb,
@@ -64,7 +65,7 @@ private:
   /**
    * The mount that generated this job
    */
-  RetrieveMount &m_mount;
+  RetrieveMount *m_mount;
 
 public:
 
@@ -86,12 +87,18 @@ public:
    * 
    */
   virtual void checkComplete();
-  
+
   /**
-   * Indicates that the job failed. Reason for failure is indicated. Retry policy will
+   * Triggers a scheduler update following the failure of the job. Retry policy will
    * be applied by the scheduler.
    */
-  virtual void failed(const std::string &failureReason, cta::log::LogContext &);
+  virtual void transferFailed(const std::string &failureReason, log::LogContext &lc);
+  
+  /**
+   * Triggers a scheduler update following the failure of the report. Retry policy will
+   * be applied by the scheduler.
+   */
+  virtual void reportFailed(const std::string &failureReason, log::LogContext &lc);
   
   /**
    * Helper function returning a reference to the currently selected tape file.

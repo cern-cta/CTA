@@ -18,8 +18,18 @@
 
 #include "scheduler/SchedulerDatabase.hpp"
 
+namespace cta {
+
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::SchedulerDatabase::~SchedulerDatabase() throw() {
+cta::SchedulerDatabase::~SchedulerDatabase() throw() { }
+
+SchedulerDatabase::RepackRequestStatistics::RepackRequestStatistics() {
+  typedef common::dataStructures::RepackInfo::Status Status;
+  for (auto & s: {Status::Aborted, Status::Aborting, Status::Complete, Status::Failed, Status::Pending, 
+      Status::Running, Status::Starting, Status::ToExpand})
+    operator [](s) = 0;
 }
+
+} //namespace cta

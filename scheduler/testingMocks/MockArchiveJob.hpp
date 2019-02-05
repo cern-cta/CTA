@@ -28,14 +28,14 @@ namespace cta {
   public:
     int completes;
     int failures;
-    MockArchiveJob(cta::ArchiveMount & am, cta::catalogue::Catalogue &catalogue): cta::ArchiveJob(am, 
+    MockArchiveJob(cta::ArchiveMount * am, cta::catalogue::Catalogue &catalogue): cta::ArchiveJob(am, 
         catalogue, cta::common::dataStructures::ArchiveFile(), 
         "", cta::common::dataStructures::TapeFile()),
         completes(0), failures(0) {} 
       
     ~MockArchiveJob() throw() {} 
 
-    void failed(const std::string& failureReason, log::LogContext& lc) override {
+    void transferFailed(const std::string& failureReason, log::LogContext& lc) override {
       failures++;
     }
     

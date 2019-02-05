@@ -23,4 +23,8 @@
 
 #include "optional.hpp"
 
-nullopt_t nullopt{};
+namespace cta{
+
+const cta::nullopt_t nullopt{};
+
+}

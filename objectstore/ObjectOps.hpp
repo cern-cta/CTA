@@ -32,18 +32,36 @@ namespace cta { namespace objectstore {
 class AgentReference;
 class ScopedLock;
 class ScopedExclusiveLock;
-template <class C> class ContainerTraits;
-class ArchiveQueue;
-class RetrieveQueue;
+template<typename Q,typename C> struct ContainerTraits;
 
+// Defined queue types
+struct ArchiveQueue;
+struct ArchiveQueueToTransfer;
+struct ArchiveQueueToReport;
+struct ArchiveQueueFailed;
+struct RetrieveQueue;
+struct RetrieveQueueToTransfer;
+struct RetrieveQueueToReport;
+struct RetrieveQueueFailed;
+struct RetrieveQueueToReportToRepackForSuccess;
+struct RepackQueue;
+struct RepackQueuePending;
+struct RepackQueueToExpand;
 class ObjectOpsBase {
   friend class ScopedLock;
   friend class ScopedSharedLock;
   friend class ScopedExclusiveLock;
   friend class GenericObject;
   friend class Helpers;
-  friend ContainerTraits<ArchiveQueue>;
-  friend ContainerTraits<RetrieveQueue>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToReport>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueFailed>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToReport>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueFailed>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess>;
+  friend ContainerTraits<RepackQueue,RepackQueuePending>;
+  friend ContainerTraits<RepackQueue,RepackQueueToExpand>;
 protected:
   ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 
     m_headerInterpreted(false), m_payloadInterpreted(false),

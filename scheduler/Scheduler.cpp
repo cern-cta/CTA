@@ -27,6 +27,9 @@
 #include "common/Timer.hpp"
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/make_unique.hpp"
+#include "objectstore/RepackRequest.hpp"
+#include "RetrieveRequestDump.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -180,8 +183,14 @@ void Scheduler::queueRetrieve(
   using utils::midEllipsis;
   utils::Timer t;
   // Get the queue criteria
-  const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, lc);
+  common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
+  if(!request.isRepack){
+    queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, lc);
+  } else {
+    //Repack does not need policy
+    queueCriteria.archiveFile = m_catalogue.getArchiveFileById(request.archiveFileID);
+    queueCriteria.mountPolicy = common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack;
+  }
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
   auto schedulerDbTime = t.secs();
@@ -217,19 +226,23 @@ void Scheduler::queueRetrieve(
     spc.add(tc.str(), tf.second);
   }
   spc.add("selectedVid", selectedVid)
-     .add("policyName", queueCriteria.mountPolicy.name)
-     .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
-     .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
-     .add("policyPriority", queueCriteria.mountPolicy.retrievePriority)
      .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime);
+  if(!request.isRepack){
+      spc.add("policyName", queueCriteria.mountPolicy.name)
+     .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
+     .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
+     .add("policyPriority", queueCriteria.mountPolicy.retrievePriority);
+  }
   lc.log(log::INFO, "Queued retrieve request");
 }
+
 
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
+void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request, 
+    log::LogContext & lc) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
@@ -291,30 +304,131 @@ void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliId
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
-void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const common::dataStructures::RepackType) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
+    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) {
+  // Check request sanity
+  if (vid.empty()) throw exception::UserError("Empty VID name.");
+  if (bufferURL.empty()) throw exception::UserError("Empty buffer URL.");
+  utils::Timer t;
+  m_db.queueRepack(vid, bufferURL, repackType, lc);
+  log::TimingList tl;
+  tl.insertAndReset("schedulerDbTime", t);
+  log::ScopedParamContainer params(lc);
+  params.add("tapeVid", vid)
+        .add("repackType", toString(repackType));
+  tl.addToLog(params);
+  lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
 }
 
 //------------------------------------------------------------------------------
 // cancelRepack
 //------------------------------------------------------------------------------
-void Scheduler::cancelRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::cancelRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc) {
+  m_db.cancelRepack(vid, lc);
 }
 
 //------------------------------------------------------------------------------
 // getRepacks
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::RepackInfo> Scheduler::getRepacks(const common::dataStructures::SecurityIdentity &cliIdentity) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+std::list<common::dataStructures::RepackInfo> Scheduler::getRepacks() {
+  return m_db.getRepackInfo();
 }
 
 //------------------------------------------------------------------------------
 // getRepack
 //------------------------------------------------------------------------------
-common::dataStructures::RepackInfo Scheduler::getRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__); 
+common::dataStructures::RepackInfo Scheduler::getRepack(const std::string &vid) {
+  return m_db.getRepackInfo(vid);
 }
+
+//------------------------------------------------------------------------------
+// promoteRepackRequestsToToExpand
+//------------------------------------------------------------------------------
+void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
+  // We target 2 fresh requests available for processing (ToExpand or Starting).
+  const size_t targetAvailableRequests = 2;
+  // Dry-run test to check if promotion is needed.
+  auto repackStatsNL = m_db.getRepackStatisticsNoLock();
+  // Statistics are supposed to be initialized for each status value. We only try to
+  // expand if there are requests available in Pending status.
+  typedef common::dataStructures::RepackInfo::Status Status;
+  if (repackStatsNL->at(Status::Pending) &&
+          (targetAvailableRequests > repackStatsNL->at(Status::ToExpand) + repackStatsNL->at(Status::Starting))) {
+    // Let's try to promote a repack request. Take the lock.
+    repackStatsNL.reset();
+    decltype(m_db.getRepackStatistics()) repackStats;
+    try {
+      repackStats = m_db.getRepackStatistics();
+    } catch (SchedulerDatabase::RepackRequestStatistics::NoPendingRequestQueue &) {
+      // Nothing to promote after all.
+      return;
+    }
+    if (repackStats->at(Status::Pending) &&
+            (targetAvailableRequests > repackStats->at(Status::ToExpand) + repackStats->at(Status::Starting))) {
+      auto requestsToPromote = targetAvailableRequests;
+      requestsToPromote -= repackStats->at(Status::ToExpand);
+      requestsToPromote -= repackStats->at(Status::Starting);
+      auto stats = repackStats->promotePendingRequestsForExpansion(requestsToPromote, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("promotedRequests", stats.promotedRequests)
+            .add("pendingBefore", stats.pendingBefore)
+            .add("toEnpandBefore", stats.toEnpandBefore)
+            .add("pendingAfter", stats.pendingAfter)
+            .add("toExpandAfter", stats.toExpandAfter);
+      lc.log(log::INFO,"In Scheduler::promoteRepackRequestsToToExpand(): Promoted repack request to \"to expand\"");
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// getNextRepackRequestToExpand
+//------------------------------------------------------------------------------
+std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
+    std::unique_ptr<cta::SchedulerDatabase::RepackRequest> repackRequest;
+    repackRequest = m_db.getNextRepackJobToExpand();
+    if(repackRequest != nullptr){
+      std::unique_ptr<RepackRequest> ret(new RepackRequest());
+      ret->m_dbReq.reset(repackRequest.release());
+      return std::move(ret);
+    }
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+// generateRetrieveDstURL
+//------------------------------------------------------------------------------
+const std::string Scheduler::generateRetrieveDstURL(const cta::common::dataStructures::DiskFileInfo dfi) const{
+  std::ostringstream strStream;
+  strStream<<"repack:/"<<dfi.path;
+  return strStream.str();
+}
+
+//------------------------------------------------------------------------------
+// expandRepackRequest
+//------------------------------------------------------------------------------
+void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) {
+  uint64_t fseq = c_defaultFseqForRepack;
+  std::list<common::dataStructures::ArchiveFile> files;
+  auto vid = repackRequest->getRepackInfo().vid;
+  while(true) {
+    files = m_catalogue.getFilesForRepack(vid,fseq,c_defaultMaxNbFilesForRepack);
+    for(auto &archiveFile : files)
+    {
+      cta::common::dataStructures::RetrieveRequest retrieveRequest;
+      retrieveRequest.archiveFileID = archiveFile.archiveFileID;
+      retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
+      retrieveRequest.dstURL = generateRetrieveDstURL(archiveFile.diskFileInfo);
+      retrieveRequest.isRepack = true;
+      queueRetrieve(archiveFile.diskInstance,retrieveRequest,lc);
+    }
+    if (files.size()) {
+      auto & tf=files.back().tapeFiles;
+      fseq = std::find_if(tf.cbegin(), tf.cend(), [vid](decltype(*(tf.cbegin())) &f){ return f.second.vid == vid; })->second.fSeq + 1;
+    } else break;
+  }
+}
+
+
 
 //------------------------------------------------------------------------------
 // shrink
@@ -1080,5 +1194,141 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// getNextArchiveJobsToReportBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<ArchiveJob> > Scheduler::getNextArchiveJobsToReportBatch(
+  uint64_t filesRequested, log::LogContext& logContext) {
+  // We need to go through the queues of archive jobs to report 
+  std::list<std::unique_ptr<ArchiveJob> > ret;
+  // Get the list of jobs to report from the scheduler db
+  auto dbRet = m_db.getNextArchiveJobsToReportBatch(filesRequested, logContext);
+  for (auto & j: dbRet) {
+    ret.emplace_back(new ArchiveJob(nullptr, m_catalogue, j->archiveFile,
+        j->srcURL, j->tapeFile));
+    ret.back()->m_dbJob.reset(j.release());
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// getNextRetrieveJobsToReportBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<RetrieveJob>> Scheduler::
+getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext)
+{
+  // We need to go through the queues of retrieve jobs to report 
+  std::list<std::unique_ptr<RetrieveJob>> ret;
+  // Get the list of jobs to report from the scheduler db
+  auto dbRet = m_db.getNextRetrieveJobsToReportBatch(filesRequested, logContext);
+  for (auto &j : dbRet) {
+    ret.emplace_back(new RetrieveJob(nullptr, j->retrieveRequest, j->archiveFile, j->selectedCopyNb, PositioningMethod::ByFSeq));
+
+    ret.back()->m_dbJob.reset(j.release());
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// getNextFailedRetrieveJobsBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<RetrieveJob>> Scheduler::
+getNextFailedRetrieveJobsBatch(uint64_t filesRequested, log::LogContext &logContext)
+{
+  // We need to go through the queues of failed retrieve jobs
+  std::list<std::unique_ptr<RetrieveJob>> ret;
+  // Get the list of failed jobs from the scheduler db
+  auto dbRet = m_db.getNextRetrieveJobsFailedBatch(filesRequested, logContext);
+  for (auto &j : dbRet) {
+    ret.emplace_back(new RetrieveJob(nullptr, j->retrieveRequest, j->archiveFile, j->selectedCopyNb, PositioningMethod::ByFSeq));
+    ret.back()->m_dbJob.reset(j.release());
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// getNextSucceededRetrieveRequestForRepackBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<RetrieveJob>> Scheduler::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
+{
+  std::list<std::unique_ptr<RetrieveJob>> ret;
+  //We need to go through the queues of SucceededRetrieveJobs
+  auto dbRet = m_db.getNextSucceededRetrieveRequestForRepackBatch(filesRequested,lc);
+  for(auto &j : dbRet)
+  {
+    ret.emplace_back(new RetrieveJob(nullptr, j->retrieveRequest,j->archiveFile, j->selectedCopyNb, PositioningMethod::ByFSeq));
+    ret.back()->m_dbJob.reset(j.release());
+  }  
+  return ret;
+}
+//------------------------------------------------------------------------------
+// reportArchiveJobsBatch
+//------------------------------------------------------------------------------
+void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& archiveJobsBatch,
+    eos::DiskReporterFactory & reporterFactory, log::TimingList& timingList, utils::Timer& t, 
+    log::LogContext& lc){
+  // Create the reporters
+  struct JobAndReporter {
+    std::unique_ptr<eos::DiskReporter> reporter;
+    ArchiveJob * archiveJob;
+  };
+  std::list<JobAndReporter> pendingReports;
+  std::list<ArchiveJob *> reportedJobs;
+  for (auto &j: archiveJobsBatch) {
+    pendingReports.push_back(JobAndReporter());
+    auto & current = pendingReports.back();
+    // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
+    try {
+      current.reporter.reset(reporterFactory.createDiskReporter(j->reportURL()));
+      current.reporter->asyncReport();
+      current.archiveJob = j.get();
+    } catch (cta::exception::Exception & ex) {
+      // Whether creation or launching of reporter failed, the promise will not receive result, so we can safely delete it.
+      // we will first determine if we need to clean up the reporter as well or not.
+      pendingReports.pop_back();
+      // We are ready to carry on for other files without interactions.
+      // Log the error, update the request.
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", j->archiveFile.archiveFileID)
+            .add("reportType", j->reportType())
+            .add("exceptionMSG", ex.getMessageValue());
+      lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to launch reporter.");
+      j->reportFailed(ex.getMessageValue(), lc);
+    }
+  }
+  timingList.insertAndReset("asyncReportLaunchTime", t);
+  for (auto &current: pendingReports) {
+    try {
+      current.reporter->waitReport();
+      reportedJobs.push_back(current.archiveJob);
+    } catch (cta::exception::Exception & ex) {
+      // Log the error, update the request.
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", current.archiveJob->archiveFile.archiveFileID)
+            .add("reportType", current.archiveJob->reportType())
+            .add("exceptionMSG", ex.getMessageValue());
+      lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to report.");
+      current.archiveJob->reportFailed(ex.getMessageValue(), lc);
+    }
+  }
+  timingList.insertAndReset("reportCompletionTime", t);
+  std::list<SchedulerDatabase::ArchiveJob *> reportedDbJobs;
+  for (auto &j: reportedJobs) reportedDbJobs.push_back(j->m_dbJob.get());
+  m_db.setJobBatchReported(reportedDbJobs, timingList, t, lc);
+  // Log the successful reports.
+  for (auto & j: reportedJobs) {
+    log::ScopedParamContainer params(lc);
+    params.add("fileId", j->archiveFile.archiveFileID)
+          .add("reportType", j->reportType());
+    lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): report successful.");
+  }
+  timingList.insertAndReset("reportRecordingInSchedDbTime", t);
+  log::ScopedParamContainer params(lc);
+  params.add("totalReports", archiveJobsBatch.size())
+        .add("failedReports", archiveJobsBatch.size() - reportedJobs.size())
+        .add("successfulReports", reportedJobs.size());
+  timingList.addToLog(params);
+  lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
+}
 
 } // namespace cta

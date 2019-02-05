@@ -32,7 +32,7 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
+cta::ArchiveJob::ArchiveJob(ArchiveMount *mount,
   catalogue::Catalogue & catalogue,
   const common::dataStructures::ArchiveFile &archiveFile,
   const std::string &srcURL,
@@ -41,15 +41,6 @@ cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
   archiveFile(archiveFile),
   srcURL(srcURL),
   tapeFile(tapeFile) {}
-
-//------------------------------------------------------------------------------
-// asyncReportComplete
-//------------------------------------------------------------------------------
-void cta::ArchiveJob::asyncReportComplete() {
-  m_reporter.reset(m_mount.createDiskReporter(m_dbJob->archiveReportURL, m_reporterState));
-  m_reporter->asyncReportArchiveFullyComplete();
-  m_reporterTimer.reset();
-}
 
 //------------------------------------------------------------------------------
 // getReportTiming()
@@ -80,7 +71,7 @@ cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWr
   fileReport.fSeq = tapeFile.fSeq;
   fileReport.size = archiveFile.fileSize;
   fileReport.storageClassName = archiveFile.storageClass;
-  fileReport.tapeDrive = m_mount.getDrive();
+  fileReport.tapeDrive = getMount().getDrive();
   fileReport.vid = tapeFile.vid;
   return cta::catalogue::TapeItemWrittenPointer(fileReportUP.release());
 }
@@ -111,48 +102,60 @@ void cta::ArchiveJob::validate(){
 // ArchiveJob::reportURL
 //------------------------------------------------------------------------------
 std::string cta::ArchiveJob::reportURL() {
-  return m_dbJob->archiveReportURL;
+  switch (m_dbJob->reportType) {
+  case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
+    return m_dbJob->archiveReportURL;
+  case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
+    {
+      if (m_dbJob->latestError.empty()) {
+        throw exception::Exception("In ArchiveJob::reportURL(): empty failure reason.");
+      }
+      std::string base64ErrorReport;
+      // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
+      const bool noNewLineInBase64Output = false;
+      CryptoPP::StringSource ss1(m_dbJob->latestError, true, 
+        new CryptoPP::Base64Encoder(
+          new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
+      return m_dbJob->errorReportURL + base64ErrorReport;
+    }
+  default:
+    { 
+      throw exception::Exception("In ArchiveJob::reportURL(): job status does not require reporting.");
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
-// failed
+// ArchiveJob::reportType
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::failed(const std::string &failureReason,  log::LogContext & lc) {
-  if (m_dbJob->fail(failureReason, lc)) {
-    std::string base64ErrorReport;
-    // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
-    const bool noNewLineInBase64Output = false;
-    CryptoPP::StringSource ss1(failureReason, true, 
-        new CryptoPP::Base64Encoder(
-          new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
-    std::string fullReportURL = m_dbJob->errorReportURL + base64ErrorReport;
-    // That's all job's already done.
-    std::promise<void> reporterState;
-    utils::Timer t;
-    std::unique_ptr<cta::eos::DiskReporter> reporter(m_mount.createDiskReporter(fullReportURL, reporterState));
-    reporter->asyncReportArchiveFullyComplete();
-    try {
-      reporterState.get_future().get();
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", m_dbJob->archiveFile.archiveFileID)
-            .add("diskInstance", m_dbJob->archiveFile.diskInstance)
-            .add("diskFileId", m_dbJob->archiveFile.diskFileId)
-            .add("fullReportURL", fullReportURL)
-            .add("errorReport", failureReason)
-            .add("reportTime", t.secs());
-      lc.log(log::INFO, "In ArchiveJob::failed(): reported error to client.");
-    } catch (cta::exception::Exception & ex) {
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", m_dbJob->archiveFile.archiveFileID)
-            .add("diskInstance", m_dbJob->archiveFile.diskInstance)
-            .add("diskFileId", m_dbJob->archiveFile.diskFileId)
-            .add("errorReport", failureReason)
-            .add("exceptionMsg", ex.getMessageValue())
-            .add("reportTime", t.secs());
-      lc.log(log::ERR, "In ArchiveJob::failed(): failed to report error to client.");
-      lc.logBacktrace(log::ERR, ex.backtrace());
+std::string cta::ArchiveJob::reportType() {
+  switch (m_dbJob->reportType) {
+  case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
+    return "CompletionReport";
+  case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
+    return "ErrorReport";
+  default:
+    { 
+      throw exception::Exception("In ArchiveJob::reportType(): job status does not require reporting.");
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// ArchiveJob::reportFailed
+//------------------------------------------------------------------------------
+void cta::ArchiveJob::reportFailed(const std::string& failureReason, log::LogContext& lc) {
+  // This is fully delegated to the DB, which will handle the queueing for next steps, if any.
+  m_dbJob->failReport(failureReason, lc);
+}
+
+
+//------------------------------------------------------------------------------
+// ArchiveJob::transferFailed
+//------------------------------------------------------------------------------
+void cta::ArchiveJob::transferFailed(const std::string &failureReason,  log::LogContext & lc) {
+  // This is fully delegated to the DB, which will handle the queueing for next steps, if any.
+  m_dbJob->failTransfer(failureReason, lc);
 }
 
 //------------------------------------------------------------------------------
@@ -160,4 +163,12 @@ void cta::ArchiveJob::failed(const std::string &failureReason,  log::LogContext 
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::waitForReporting() {
   m_reporterState.get_future().get();
+}
+
+//------------------------------------------------------------------------------
+// cta::ArchiveJob::getMount()
+//------------------------------------------------------------------------------
+cta::ArchiveMount& cta::ArchiveJob::getMount() {
+  if (m_mount) return *m_mount;
+  throw exception::Exception("In ArchiveJob::getMount(): no mount set.");
 }

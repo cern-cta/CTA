@@ -24,7 +24,9 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "JobQueueType.hpp"
 #include "common/Timer.hpp"
+#include "common/optional.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include <list>
@@ -42,29 +44,61 @@ public:
   ArchiveRequest(Backend & os);
   ArchiveRequest(GenericObject & go);
   void initialize();
+  // Ownership of archive requests is managed per job. Object level owner has no meaning.
+  std::string getOwner() = delete;
+  void setOwner(const std::string &) = delete;
   // Job management ============================================================
   void addJob(uint16_t copyNumber, const std::string & tapepool,
-    const std::string & archivequeueaddress, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
-  void setJobSelected(uint16_t copyNumber, const std::string & owner);
-  void setJobPending(uint16_t copyNumber);
-  bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
-  bool addJobFailure(uint16_t copyNumber, uint64_t sessionId, const std::string & failureReason, log::LogContext &lc); //< returns true the job is failed
+    const std::string & initialOwner, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   struct RetryStatus {
     uint64_t retriesWithinMount = 0;
     uint64_t maxRetriesWithinMount = 0;
     uint64_t totalRetries = 0;
     uint64_t maxTotalRetries = 0;
+    uint64_t reportRetries = 0;
+    uint64_t maxReportRetries = 0;
   };
   RetryStatus getRetryStatus(uint16_t copyNumber);
   std::list<std::string> getFailures();
   serializers::ArchiveJobStatus getJobStatus(uint16_t copyNumber);
+  void setJobStatus(uint16_t copyNumber, const serializers::ArchiveJobStatus & status);
+  std::string getTapePoolForJob(uint16_t copyNumber);
   std::string statusToString(const serializers::ArchiveJobStatus & status);
-  bool finishIfNecessary(log::LogContext & lc);/**< Handling of the consequences of a job status change for the entire request.
-                                                * This function returns true if the request got finished. */
-  // Mark all jobs as pending mount (following their linking to a tape pool)
-  void setAllJobsLinkingToArchiveQueue();
-  // Mark all the jobs as being deleted, in case of a cancellation
-  void setAllJobsFailed();
+  enum class JobEvent {
+    TransferFailed,
+    ReportFailed
+  };
+  std::string eventToString (JobEvent jobEvent);
+  struct EnqueueingNextStep {
+    enum class NextStep {
+      Nothing,
+      EnqueueForTransfer,
+      EnqueueForReport,
+      StoreInFailedJobsContainer,
+      Delete
+    } nextStep = NextStep::Nothing;
+    /** The copy number to enqueue. It could be different from the updated one in mixed
+     * success/failure scenario. */
+    serializers::ArchiveJobStatus nextStatus;
+  };
+private:
+  /**
+   * Determine and set the new status of the job and determine whether and where the request should be queued 
+   * or deleted after the job status change. This function only handles failures, which have a more varied
+   * array of possibilities.
+   * @param copyNumberUpdated
+   * @param jobEvent the event that happened to the job
+   * @param lc
+   * @return The next step to be taken by the caller (OStoreDB), which is in charge of the queueing and status setting.
+   */
+  EnqueueingNextStep determineNextStep(uint16_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext & lc);
+public:
+  EnqueueingNextStep addTransferFailure(uint16_t copyNumber, uint64_t sessionId, const std::string & failureReason,
+      log::LogContext &lc); //< returns next step to take with the job
+  EnqueueingNextStep addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string & failureReason,
+      log::LogContext &lc); //< returns next step to take with the job
+  CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
+  JobQueueType getJobQueueType(uint16_t copyNumber);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // Set a job ownership
   void setJobOwner(uint16_t copyNumber, const std::string & owner);
@@ -77,6 +111,9 @@ public:
     const std::string & getSrcURL();
     const std::string & getArchiveReportURL();
     const std::string & getArchiveErrorReportURL();
+    const std::string & getLastestError();
+    serializers::ArchiveJobStatus getJobStatus();
+    // TODO: use the more general structure from utils.
     struct TimingsReport {
       double lockFetchTime = 0;
       double processTime = 0;
@@ -90,29 +127,43 @@ public:
     std::string m_srcURL;
     std::string m_archiveReportURL;
     std::string m_archiveErrorReportURL;
+    serializers::ArchiveJobStatus m_jobStatus;
+    std::string m_latestError;
     utils::Timer m_timer;
     TimingsReport m_timingReport;
   };
-  // An job owner updater factory. The owner MUST be previousOwner for the update to be executed.
-  AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint16_t copyNumber, const std::string & owner, const std::string &previousOwner);
+  // An job owner updater factory. The owner MUST be previousOwner for the update to be executed. If the owner is already the targeted
+  // one, the request will do nothing and not fail.
+  AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint16_t copyNumber, const std::string & owner, const std::string &previousOwner,
+      const cta::optional<serializers::ArchiveJobStatus>& newStatus);
 
-  // An asynchronous job updating class for success.
-  class AsyncJobSuccessfulUpdater {
+  // An asynchronous job updating class for transfer success.
+  class AsyncTransferSuccessfulUpdater {
     friend class ArchiveRequest;
   public:
     void wait();
-    bool m_isLastJob;
+    bool m_doReportTransferSuccess;
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
-  AsyncJobSuccessfulUpdater * asyncUpdateJobSuccessful(uint16_t copyNumber);
-
+  AsyncTransferSuccessfulUpdater * asyncUpdateTransferSuccessful(uint16_t copyNumber);
+  
+  // An asynchronous request deleter class after report of success.
+  class AsyncRequestDeleter {
+    friend class ArchiveRequest;
+  public:
+    void wait();
+  private:
+    std::unique_ptr<Backend::AsyncDeleter> m_backendDeleter;
+  };
+  AsyncRequestDeleter * asyncDeleteRequest();
   // Get a job owner
   std::string getJobOwner(uint16_t copyNumber);
-  // Request management ========================================================
-  void setSuccessful();
-  void setFailed();
+
+  // Utility to convert status to queue type
+  static JobQueueType getQueueType(const serializers::ArchiveJobStatus &status);
+
   // ===========================================================================
   // TODO: ArchiveFile comes with extraneous information. 
   void setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile);

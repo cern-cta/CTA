@@ -50,6 +50,9 @@ public:
   virtual objectstore::Backend & getBackend() = 0;
   virtual objectstore::AgentReference & getAgentReference() = 0;
   virtual cta::OStoreDB & getOstoreDB() = 0;
+
+  //! Create a new agent to allow tests to continue after garbage collection
+  virtual void replaceAgent(objectstore::AgentReference * agentReferencePtr) = 0;
 };
 
 }
@@ -71,8 +74,28 @@ public:
   
   objectstore::Backend& getBackend() override { return *m_backend; }
   
-  objectstore::AgentReference& getAgentReference() override { return m_agentReference; }
-  
+  objectstore::AgentReference& getAgentReference() override { return *m_agentReferencePtr; }
+
+  void replaceAgent(objectstore::AgentReference *agentReferencePtr) override {
+    m_agentReferencePtr.reset(agentReferencePtr);
+    objectstore::RootEntry re(*m_backend);
+    objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    objectstore::Agent agent(m_agentReferencePtr->getAgentAddress(), *m_backend);
+    agent.initialize();
+    objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
+    log::LogContext lc(*m_logger);
+    re.addOrGetAgentRegisterPointerAndCommit(*m_agentReferencePtr, cl, lc);
+    rel.release();
+    agent.insertAndRegisterSelf(lc);
+    rel.lock(re);
+    re.fetch();
+    re.addOrGetDriveRegisterPointerAndCommit(*m_agentReferencePtr, cl);
+    re.addOrGetSchedulerGlobalLockAndCommit(*m_agentReferencePtr, cl);
+    rel.release();
+    m_OStoreDB.setAgentReference(m_agentReferencePtr.get());
+  }
+
   cta::OStoreDB& getOstoreDB() override { return m_OStoreDB; }
 
   void waitSubthreadsComplete() override {
@@ -111,6 +134,27 @@ public:
     return m_OStoreDB.getRetrieveRequests();
   }
 
+  std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogContext &lc) override {
+    return m_OStoreDB.getNextArchiveJobsToReportBatch(filesRequested, lc);
+  }
+
+  std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &lc) override {
+    return m_OStoreDB.getNextRetrieveJobsToReportBatch(filesRequested, lc);
+  }
+  
+  std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &lc) override {
+    return m_OStoreDB.getNextRetrieveJobsFailedBatch(filesRequested, lc);
+  }
+  
+  std::list<std::unique_ptr<RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc) override {
+    return m_OStoreDB.getNextSucceededRetrieveRequestForRepackBatch(filesRequested,lc);
+  }
+  
+  void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList,
+      utils::Timer & t, log::LogContext& lc) override {
+    m_OStoreDB.setJobBatchReported(jobsBatch, timingList, t, lc);
+  }
+
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {
     return m_OStoreDB.getRetrieveRequestsByVid(vid);
   }
@@ -142,10 +186,38 @@ public:
     return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
   }
   
+
+  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, log::LogContext& lc) override {
+    m_OStoreDB.queueRepack(vid, bufferURL, repackType, lc);
+  }
+  
+  std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
+    return m_OStoreDB.getRepackInfo();
+  }
+  
+  common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override {
+    return m_OStoreDB.getRepackInfo(vid);
+  }
+  
+  void cancelRepack(const std::string& vid, log::LogContext & lc) override {
+    m_OStoreDB.cancelRepack(vid, lc);
+  }
+  
+  std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override {
+    return m_OStoreDB.getRepackStatistics();
+  }
+  
+  std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override {
+    return m_OStoreDB.getRepackStatisticsNoLock();
+  }
+  
+  std::unique_ptr<RepackRequest> getNextRepackJobToExpand() override {
+    return m_OStoreDB.getNextRepackJobToExpand();
+  }
+
   std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
     return m_OStoreDB.getDriveStates(lc);
   }
-  
   
   void setDesiredDriveState(const std::string& drive, const cta::common::dataStructures::DesiredDriveState& state, log::LogContext& lc) override {
     return m_OStoreDB.setDesiredDriveState(drive, state, lc);
@@ -167,7 +239,7 @@ private:
   std::unique_ptr <cta::objectstore::Backend> m_backend;
   std::unique_ptr <cta::catalogue::Catalogue> m_catalogue;
   cta::OStoreDB m_OStoreDB;
-  objectstore::AgentReference m_agentReference;
+  std::unique_ptr<objectstore::AgentReference> m_agentReferencePtr;
 };
 
 template <>
@@ -175,26 +247,28 @@ OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_logger(new cta::log::DummyLogger("", "")), m_backend(new cta::objectstore::BackendVFS()), 
 m_catalogue(new cta::catalogue::DummyCatalogue),
-m_OStoreDB(*m_backend, *m_catalogue, *m_logger), m_agentReference("OStoreDBFactory", *m_logger) {
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
+  m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
+{
   // We need to populate the root entry before using.
   objectstore::RootEntry re(*m_backend);
   re.initialize();
   re.insert();
   objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
-  objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
+  objectstore::Agent agent(m_agentReferencePtr->getAgentAddress(), *m_backend);
   agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
   log::LogContext lc(*m_logger);
-  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl, lc);
+  re.addOrGetAgentRegisterPointerAndCommit(*m_agentReferencePtr, cl, lc);
   rel.release();
   agent.insertAndRegisterSelf(lc);
   rel.lock(re);
   re.fetch();
-  re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
-  re.addOrGetSchedulerGlobalLockAndCommit(m_agentReference, cl);
+  re.addOrGetDriveRegisterPointerAndCommit(*m_agentReferencePtr, cl);
+  re.addOrGetSchedulerGlobalLockAndCommit(*m_agentReferencePtr, cl);
   rel.release();
-  m_OStoreDB.setAgentReference(&m_agentReference);
+  m_OStoreDB.setAgentReference(m_agentReferencePtr.get());
 }
 
 template <>
@@ -202,7 +276,9 @@ OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_logger(new cta::log::DummyLogger("", "")), m_backend(cta::objectstore::BackendFactory::createBackend(URL, *m_logger).release()), 
 m_catalogue(new cta::catalogue::DummyCatalogue),
-m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFactory", *m_logger) {
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
+  m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
+{
   // We need to first clean up possible left overs in the pool
   auto l = m_backend->list();
   for (auto o=l.begin(); o!=l.end(); o++) {
@@ -216,19 +292,19 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFact
   re.insert();
   objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
-  objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
+  objectstore::Agent agent(m_agentReferencePtr->getAgentAddress(), *m_backend);
   agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
   log::LogContext lc(*m_logger);
-  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl, lc);
+  re.addOrGetAgentRegisterPointerAndCommit(*m_agentReferencePtr, cl, lc);
   rel.release();
   agent.insertAndRegisterSelf(lc);
   rel.lock(re);
   re.fetch();
-  re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
-  re.addOrGetSchedulerGlobalLockAndCommit(m_agentReference, cl);
+  re.addOrGetDriveRegisterPointerAndCommit(*m_agentReferencePtr, cl);
+  re.addOrGetSchedulerGlobalLockAndCommit(*m_agentReferencePtr, cl);
   rel.release();
-  m_OStoreDB.setAgentReference(&m_agentReference);
+  m_OStoreDB.setAgentReference(m_agentReferencePtr.get());
 }
 
 }

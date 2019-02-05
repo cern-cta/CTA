@@ -41,8 +41,8 @@ kubectl -n ${NAMESPACE} exec client -- bash /root/simple_client_ar.sh || exit 1
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/grep_xrdlog_mgm_for_error.sh
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-NB_FILES=1000
-FILE_SIZE_KB=150
+NB_FILES=10000
+FILE_SIZE_KB=15
 
 echo
 echo "Launching client_ar.sh on client pod"

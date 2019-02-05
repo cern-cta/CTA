@@ -23,7 +23,7 @@
 #include "ProcessManager.hpp"
 #include "SignalHandler.hpp"
 #include "DriveHandler.hpp"
-#include "GarbageCollectorHandler.hpp"
+#include "MaintenanceHandler.hpp"
 #include <google/protobuf/service.h>
 #include <limits.h>
 #include <sys/prctl.h>
@@ -92,7 +92,7 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   setProcessCapabilities("cap_sys_rawio+p");
   
   // Set the name of the (unique) thread for easy process identification.
-  prctl(PR_SET_NAME, "cta-taped-main");
+  prctl(PR_SET_NAME, "cta-tpd-master");
   mainEventLoop();
 }
 
@@ -112,7 +112,7 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
     pm.addHandler(std::move(dh));
   }
   // Create the garbage collector
-  std::unique_ptr<GarbageCollectorHandler> gc(new GarbageCollectorHandler(m_globalConfiguration, pm));
+  std::unique_ptr<MaintenanceHandler> gc(new MaintenanceHandler(m_globalConfiguration, pm));
   pm.addHandler(std::move(gc));
   // And run the process manager
   int ret=pm.run();

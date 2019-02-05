@@ -201,10 +201,11 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   while (!done) {
     auto aj = am->getNextJobBatch(1,1,lc);
     if (aj.size()) {
-      std::list <cta::SchedulerDatabase::ArchiveJob *> jobBatch;
-      jobBatch.emplace_back(std::move(aj.front()).get());
+      std::list <std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> > jobBatch;
+      jobBatch.emplace_back(std::move(aj.front()));
+      aj.pop_front();
       count++;
-      am->setJobBatchSuccessful(jobBatch, lc);
+      am->setJobBatchTransferred(jobBatch, lc);
     }
     else
       done = true;
@@ -288,10 +289,11 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   while (!done) {
     auto aj = am->getNextJobBatch(1,1,lc);
     if (aj.size()) {
-      std::list <cta::SchedulerDatabase::ArchiveJob *> jobBatch;
-      jobBatch.emplace_back(aj.front().get());
+      std::list <std::unique_ptr <cta::SchedulerDatabase::ArchiveJob> > jobBatch;
+      jobBatch.emplace_back(std::move(aj.front()));
+      aj.pop_front();
       count++;
-      am->setJobBatchSuccessful(jobBatch, lc);
+      am->setJobBatchTransferred(jobBatch, lc);
     }
     else
       done = true;

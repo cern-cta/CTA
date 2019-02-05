@@ -31,13 +31,30 @@ void TimingList::addToLog(ScopedParamContainer& spc) {
   }
 }
 
-void TimingList::insert(const std::string& name, double value) {
-  push_back(std::make_tuple(name, value));
+double& TimingList::at(const std::string& name) {
+  for (auto &e: *this) {
+    if (std::get<0>(e) == name) return std::get<1>(e);
+  }
+  throw std::out_of_range("In TimingList::at(): no such element.");
+}
+
+
+void TimingList::insertOrIncrement(const std::string& name, double value) {
+  try {
+    at(name)+=value;
+  } catch (std::out_of_range&) {
+    push_back(std::make_tuple(name, value));
+  }
+}
+
+void TimingList::insOrIncAndReset(const std::string& name, utils::Timer& t) {
+  insertOrIncrement(name, t.secs(utils::Timer::resetCounter));
 }
 
 void TimingList::insertAndReset(const std::string& name, utils::Timer& t) {
   push_back(std::make_tuple(name, t.secs(utils::Timer::resetCounter)));
 }
+
 
 TimingList& TimingList::operator+=(const TimingList& other) {
   for (auto & ot: other) {

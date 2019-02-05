@@ -126,9 +126,9 @@ void BackendVFS::create(std::string name, std::string content) {
     int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
     lockCreated = true;
     cta::exception::Errnum::throwOnMinusOne(fdLock,
-        "In ObjectStoreVFS::create, failed to creat the lock file");
+        std::string("In ObjectStoreVFS::create, failed to create the lock file: ") + name);
     cta::exception::Errnum::throwOnMinusOne(::close(fdLock),
-        "In ObjectStoreVFS::create, failed to close the lock file");
+        std::string("In ObjectStoreVFS::create, failed to close the lock file: ") + name);
   } catch (...) {
     if (fileCreated) unlink(path.c_str());
     if (lockCreated) unlink(lockPath.c_str());
@@ -261,7 +261,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint
     // Create the lock file if missing and the main file can be stated.
     int openErrno = errno;
     struct ::stat sBuff;
-    int statResult = ::stat((m_root + name).c_str(), &sBuff);
+    int statResult = ::stat((m_root + '/' + name).c_str(), &sBuff);
     int statErrno = errno;
     if (ENOENT == openErrno && !statResult) {
       int fd=::open(path.c_str(), O_RDONLY | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH);
@@ -269,7 +269,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint
       ret->set(fd, path);
     } else {
       if (statErrno == ENOENT)
-        throw Backend::NoSuchObject("In BackendVFS::lockHelper(): no such file");
+        throw Backend::NoSuchObject("In BackendVFS::lockHelper(): no such file " + m_root + '/' + name);
       const std::string errnoStr = utils::errnoToString(errno);
       exception::Exception ex;
       ex.getMessage() << "In BackendVFS::lockHelper(): Failed to open file " << path <<

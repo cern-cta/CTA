@@ -24,6 +24,7 @@
 #include <poll.h>
 #include <memory>
 #include <list>
+#include <algorithm>
 
 namespace cta { namespace server {
 
@@ -98,6 +99,7 @@ void SocketPair::poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll) {
     fdsp->events = POLLIN;
     fdsp++;
   }
+  timeout = std::max(timeout, (time_t)0);
   int rc=::poll(fds.get(), socketPairs.size(), timeout * 1000);
   if (rc > 0) {
     // We have readable fds, copy the results in the provided map

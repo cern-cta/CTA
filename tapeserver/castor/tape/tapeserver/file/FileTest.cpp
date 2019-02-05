@@ -40,7 +40,7 @@ namespace unitTests {
 
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
-    TestingRetrieveJob() : cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
+    TestingRetrieveJob() : cta::RetrieveJob(nullptr,
     cta::common::dataStructures::RetrieveRequest(), 
     cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByBlock) {}
@@ -48,7 +48,7 @@ namespace unitTests {
 
   class TestingArchiveJob: public cta::ArchiveJob {
   public:
-    TestingArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
+    TestingArchiveJob(): cta::ArchiveJob(nullptr, 
         *((cta::catalogue::Catalogue *)NULL), cta::common::dataStructures::ArchiveFile(), 
         "", cta::common::dataStructures::TapeFile()) {
     }

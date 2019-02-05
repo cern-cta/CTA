@@ -123,7 +123,7 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     // no interleaved push and pop.
     ASSERT_EQ(minStartTime, rq.getJobsSummary().oldestJobStartTime);
     uint64_t nextExpectedFseq=0;
-    while (rq.getJobsSummary().files) {
+    while (rq.getJobsSummary().jobs) {
       auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>());
       std::set<std::string> jobsToSkip;
       std::list<std::string> jobsToDelete;

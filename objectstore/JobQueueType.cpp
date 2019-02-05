@@ -16,8 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "JobQueueType.hpp"
 
 namespace cta { namespace objectstore {
-enum class QueueType { LiveJobs, FailedJobs, JobsToReport };
-}} // namespace cta::objectstore
+
+std::string toString(JobQueueType queueType) {
+  switch (queueType) {
+  case JobQueueType::FailedJobs:
+    return "failedJobs";
+  case JobQueueType::JobsToReportToUser:
+    return "JobsToReportToUser";
+  case JobQueueType::JobsToTransfer:
+    return "jobsToTranfer";
+  case JobQueueType::JobsToReportToRepackForSuccess:
+    return "JobsToReportToRepackForSuccess";
+  case JobQueueType::JobsToReportToRepackForFailure:
+    return "JobsToReportToRepackForFailure";
+  default:
+    return "Unknown queue type.";
+  }
+}
+
+}} //namespace cta::objectstore

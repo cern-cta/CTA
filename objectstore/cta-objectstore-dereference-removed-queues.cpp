@@ -58,14 +58,14 @@ int main(int argc, char ** argv) {
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
     std::list<std::string> missingArchiveQueues, missingRetrieveQueues;
-    for (auto & aq: re.dumpArchiveQueues(cta::objectstore::QueueType::LiveJobs)) {
+    for (auto & aq: re.dumpArchiveQueues(cta::objectstore::JobQueueType::JobsToTransfer)) {
       if (!be->exists(aq.address)) {
         missingArchiveQueues.emplace_back(aq.tapePool);
         std::cout << "The archive queue for tape pool " << aq.tapePool << " at address " << aq.address
             << " is missing and will be dereferenced." << std::endl;
       }
     }
-    for (auto & rq: re.dumpRetrieveQueues(cta::objectstore::QueueType::LiveJobs)) {
+    for (auto & rq: re.dumpRetrieveQueues(cta::objectstore::JobQueueType::JobsToTransfer)) {
       if (!be->exists(rq.address)) {
         missingRetrieveQueues.emplace_back(rq.vid);
         std::cout << "The retrieve queue for vid " << rq.vid << " at address " << rq.address
@@ -74,11 +74,11 @@ int main(int argc, char ** argv) {
     }
     // Actually do the job
     for (auto & tp: missingArchiveQueues) {
-      re.removeMissingArchiveQueueReference(tp, cta::objectstore::QueueType::LiveJobs);
+      re.removeMissingArchiveQueueReference(tp, cta::objectstore::JobQueueType::JobsToTransfer);
       std::cout << "Archive queue for tape pool " << tp << "dereferenced." << std::endl;
     }
     for (auto & vid: missingRetrieveQueues) {
-      re.removeMissingRetrieveQueueReference(vid, cta::objectstore::QueueType::LiveJobs);
+      re.removeMissingRetrieveQueueReference(vid, cta::objectstore::JobQueueType::JobsToTransfer);
       std::cout << "Retrieve queue for vid " << vid << "dereferenced." << std::endl;
     }
     if (missingArchiveQueues.size() || missingRetrieveQueues.size()) {

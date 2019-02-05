@@ -45,7 +45,6 @@ class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
   Agent(GenericObject & go);
-  
   Agent(const std::string & name, Backend & os);
 
   void initialize();
@@ -59,61 +58,11 @@ public:
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   
- /* class ScopedIntent {
-  public:
-    ScopedIntent(Agent & agent, std::string container, std::string name, serializers::ObjectType objectType):
-    m_agent(agent), m_container(container), m_name(name), m_objectType(objectType), m_present(false) {
-      m_agent.addToOwnership(m_name);
-      m_present = true;
-    }
-    void removeFromIntent() {
-      if(!m_present) return;
-      m_agent.removeFromOwnership(m_name);
-      m_present = false;
-    }
-    ~ScopedIntent() {
-      try {
-        removeFromIntent();
-      } catch (std::exception &) {
-      } catch (...) {throw;}
-    }
-  private:
-    Agent & m_agent;
-    std::string m_container;
-    std::string m_name;
-    serializers::ObjectType m_objectType;
-    bool m_present;
-  };*/
-  
-  /*class ScopedOwnership {
-  public:
-    ScopedOwnership(Agent & agent, std::string name):
-    m_agent(agent), m_name(name), m_present(false) {
-      m_agent.addToOwnership(m_name);
-      m_present = true;
-    }
-    void removeFromOwnership() {
-      if(!m_present) return;
-      m_agent.removeFromOwnership( m_name);
-      m_present = false;
-    }
-    ~ScopedOwnership() {
-      try {
-        removeFromOwnership();
-      } catch (std::exception &) {
-      } catch (...) {throw;}
-    }
-  private:
-    Agent & m_agent;
-    std::string m_name;
-    bool m_present;
-  };*/
-  
 private:
   void addToOwnership(std::string name);
   
   void removeFromOwnership(std::string name);
-  
+
 public:
   std::list<std::string> getOwnershipList();
   

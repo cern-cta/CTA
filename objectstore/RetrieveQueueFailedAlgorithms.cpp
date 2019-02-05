@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright © 2018 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,17 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/RepackType.hpp"
+#include "RetrieveQueueAlgorithms.hpp"
 
-std::string cta::common::dataStructures::toString(cta::common::dataStructures::RepackType type) {
-  switch(type) {
-    case cta::common::dataStructures::RepackType::expandandrepack:
-      return "expandandrepack";
-    case cta::common::dataStructures::RepackType::justexpand:
-      return "justexpand";
-    case cta::common::dataStructures::RepackType::justrepack:
-      return "justrepack";
-    default:
-      return "UNKNOWN";
-  }
-}
+namespace cta { namespace objectstore {
+
+template<>
+const std::string ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::c_containerTypeName = "RetrieveQueueFailed";
+
+}} // namespace cta::objectstore

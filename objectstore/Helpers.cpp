@@ -21,22 +21,26 @@
 #include "ArchiveQueue.hpp"
 #include "AgentReference.hpp"
 #include "RetrieveQueue.hpp"
+#include "RepackQueue.hpp"
 #include "RootEntry.hpp"
 #include "DriveRegister.hpp"
 #include "DriveState.hpp"
+#include "RepackIndex.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NonRetryableError.hpp"
+#include "common/range.hpp"
+#include "common/log/TimingList.hpp"
 #include <random>
 
 namespace cta { namespace objectstore {
 
 //------------------------------------------------------------------------------
-// Helpers::getLockedAndFetchedArchiveQueue()
+// Helpers::getLockedAndFetchedQueue <ArchiveQueue> ()
 //------------------------------------------------------------------------------
 template <>
-void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
+void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
   ScopedExclusiveLock& archiveQueueLock, AgentReference & agentReference,
-  const std::string& tapePool, QueueType queueType, log::LogContext & lc) {
+  const cta::optional<std::string>& tapePool, JobQueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
@@ -57,13 +61,13 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
       re.fetchNoLock();
       rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
       try {
-        archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool, queueType));
+        archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool.value(), queueType));
       } catch (cta::exception::Exception & ex) {
         ScopedExclusiveLock rexl(re);
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
         rootRefetchTime = t.secs(utils::Timer::resetCounter);
-        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, agentReference, queueType, lc));
+        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool.value(), agentReference, queueType));
         addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
@@ -107,11 +111,10 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
         re.fetch();
         rootRefetchTime += t.secs(utils::Timer::resetCounter);
         try {
-          re.removeArchiveQueueAndCommit(tapePool, queueType, lc);
-     
+          re.removeArchiveQueueAndCommit(tapePool.value(), queueType, lc);
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
-          params.add("tapePool", tapePool)
+          params.add("tapePool", tapePool.value())
                 .add("queueObject", archiveQueue.getAddressIfSet())
                 .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): removed reference to gone archive queue from root entry.");
@@ -144,17 +147,17 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
   archiveQueue.resetAddress();
   throw cta::exception::Exception(std::string(
       "In OStoreDB::getLockedAndFetchedArchiveQueue(): failed to find or create and lock archive queue after 5 retries for tapepool: ")
-      + tapePool);
+      + tapePool.value());
 }
 
 
 //------------------------------------------------------------------------------
-// Helpers::getLockedAndFetchedRetrieveQueue()
+// Helpers::getLockedAndFetchedQueue <RetrieveQueue> ()
 //------------------------------------------------------------------------------
 template <>
-void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue,
+void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue,
   ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference,
-  const std::string& vid, QueueType queueType, log::LogContext & lc) {
+  const cta::optional<std::string>& vid, JobQueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
@@ -175,13 +178,13 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
       re.fetchNoLock();
       rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
       try {
-        retrieveQueue.setAddress(re.getRetrieveQueueAddress(vid, queueType));
+        retrieveQueue.setAddress(re.getRetrieveQueueAddress(vid.value(), queueType));
       } catch (cta::exception::Exception & ex) {
         ScopedExclusiveLock rexl(re);
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
         rootRefetchTime = t.secs(utils::Timer::resetCounter);
-        retrieveQueue.setAddress(re.addOrGetRetrieveQueueAndCommit(vid, agentReference, queueType, lc));
+        retrieveQueue.setAddress(re.addOrGetRetrieveQueueAndCommit(vid.value(), agentReference, queueType));
         addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
@@ -225,11 +228,10 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
         re.fetch();
         rootRefetchTime += t.secs(utils::Timer::resetCounter);
         try {
-          re.removeRetrieveQueueAndCommit(vid, queueType, lc);
-     
+          re.removeRetrieveQueueAndCommit(vid.value(), queueType, lc);
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
-          params.add("tapeVid", vid)
+          params.add("tapeVid", vid.value())
                 .add("queueObject", retrieveQueue.getAddressIfSet())
                 .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<RetrieveQueue>(): removed reference to gone retrieve queue from root entry.");
@@ -262,7 +264,98 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
   retrieveQueue.resetAddress();
   throw cta::exception::Exception(std::string(
       "In OStoreDB::getLockedAndFetchedRetrieveQueue(): failed to find or create and lock archive queue after 5 retries for vid: ")
-      + vid);
+      + vid.value());
+}
+
+//------------------------------------------------------------------------------
+// Helpers::getLockedAndFetchedRepackQueue()
+//------------------------------------------------------------------------------
+void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusiveLock& queueLock, AgentReference& agentReference,
+    RepackQueueType queueType, log::LogContext& lc) {
+  // Try and find the repack queue.
+  Backend & be = queue.m_objectStore;
+  for (auto i: cta::range<size_t>(5)) {
+    utils::Timer t;
+    log::TimingList timings;
+    {
+      RootEntry re(be);
+      re.fetchNoLock();
+      timings.insertAndReset("rootFetchNoLockTime", t);
+      try {
+        queue.setAddress(re.getRepackQueueAddress(queueType));
+      } catch (cta::exception::Exception & ex) {
+        ScopedExclusiveLock rexl(re);
+        timings.insertAndReset("rootRelockExclusiveTime", t);
+        re.fetch();
+        timings.insertAndReset("rootRelockExclusiveTime", t);
+        queue.setAddress(re.addOrGetRepackQueueAndCommit(agentReference, queueType));
+        timings.insertAndReset("addOrGetQueueandCommitTime", t);
+        rexl.release();
+        timings.insertAndReset("rootUnlockExclusiveTime", t);
+      }
+    }
+    try {
+      queueLock.lock(queue);
+      timings.insertAndReset("queueLockTime", t);
+      queue.fetch();
+      timings.insertAndReset("queueFetchTime", t);
+      log::ScopedParamContainer params(lc);
+      params.add("attemptNb", i+1)
+            .add("queueObject", queue.getAddressIfSet());
+      timings.addToLog(params);
+      lc.log(log::INFO, "In Helpers::getLockedAndFetchedRepackQueue(): Successfully found and locked a repack queue.");
+      return;
+    } catch (cta::exception::Exception & ex) {
+      // We have a (rare) opportunity for a race condition, where we identify the
+      // queue and it gets deleted before we manage to lock it.
+      // The locking or fetching will fail in this case.
+      // We hence allow ourselves to retry a couple times.
+      // We also need to make sure the lock on the queue is released (it is
+      // an object and hence not scoped).
+      // We should also deal with the case where a queue was deleted but left 
+      // referenced in the root entry. We will try to clean up if necessary.
+      // Failing to do this, we will spin and exhaust all of our retries.
+      if (i && typeid(ex) == typeid(cta::objectstore::Backend::NoSuchObject)) {
+        // The queue has been proven to not exist. Let's make sure we de-reference
+        // it form the root entry.
+        RootEntry re(be);
+        ScopedExclusiveLock rexl(re);
+        timings.insOrIncAndReset("rootRelockExclusiveTime", t);
+        re.fetch();
+        timings.insOrIncAndReset("rootRefetchTime", t);
+        try {
+          re.removeRepackQueueAndCommit(queueType, lc);
+          timings.insOrIncAndReset("rootQueueDereferenceTime", t);
+          log::ScopedParamContainer params(lc);
+          params.add("queueObject", queue.getAddressIfSet())
+                .add("exceptionMsg", ex.getMessageValue());
+          lc.log(log::INFO, "In Helpers::getLockedAndFetchedRepackQueue(): removed reference to gone repack queue from root entry.");
+        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ } 
+      }
+      if (queueLock.isLocked()) {
+        queueLock.release();
+        timings.insOrIncAndReset("queueLockReleaseTime", t);
+      }
+      log::ScopedParamContainer params(lc);
+      params.add("attemptNb", i+1)
+            .add("exceptionMessage", ex.getMessageValue())
+            .add("queueObject", queue.getAddressIfSet());
+      timings.addToLog(params);
+      lc.log(log::INFO, "In Helpers::getLockedAndFetchedRepackQueue(): failed to fetch an existing queue. Retrying.");
+      queue.resetAddress();
+      continue;
+    } catch (...) {
+      // Also release the lock if needed here.
+      if (queueLock.isLocked()) queueLock.release();
+      queue.resetAddress();
+      throw;
+    }
+  } // end of retry loop.
+  // Also release the lock if needed here.
+  if (queueLock.isLocked()) queueLock.release();
+  queue.resetAddress();
+  throw cta::exception::Exception(
+      "In OStoreDB::getLockedAndFetchedRepackQueue(): failed to find or create and lock repack queue after 5 retries");
 }
 
 //------------------------------------------------------------------------------
@@ -413,7 +506,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       continue;
     std::string rqAddr;
     try {
-      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, QueueType::LiveJobs);
+      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, JobQueueType::JobsToTransfer);
     } catch (cta::exception::Exception &) {
       ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
       ret.back().vid=tf.second.vid;
@@ -432,7 +525,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
     ret.back().vid=rq.getVid();
     ret.back().currentPriority=rq.getJobsSummary().priority;
     ret.back().bytesQueued=rq.getJobsSummary().bytes;
-    ret.back().filesQueued=rq.getJobsSummary().files;
+    ret.back().filesQueued=rq.getJobsSummary().jobs;
   }
   return ret;
 }
@@ -559,5 +652,50 @@ std::list<cta::common::dataStructures::DriveState> Helpers::getAllDriveStates(Ba
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// Helpers::registerRepackRequestToIndex()
+//------------------------------------------------------------------------------
+void Helpers::registerRepackRequestToIndex(const std::string& vid, const std::string& requestAddress,
+    AgentReference & agentReference, Backend& backend, log::LogContext& lc) {
+  // Try to reference the object in the index (will fail if there is already a request with this VID.
+  RootEntry re(backend);
+  re.fetchNoLock();
+  std::string repackIndexAddress;
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    repackIndexAddress = re.getRepackIndexAddress();
+  } catch (RootEntry::NotAllocated &){
+    ScopedExclusiveLock rel(re);
+    re.fetch();
+    repackIndexAddress = re.addOrGetRepackIndexAndCommit(agentReference);
+  }
+  RepackIndex ri(repackIndexAddress, backend);
+  ScopedExclusiveLock ril(ri);
+  ri.fetch();
+  ri.addRepackRequestAddress(vid, requestAddress);
+  ri.commit();
+}
+
+//------------------------------------------------------------------------------
+// Helpers::removeRepackRequestFromIndex()
+//------------------------------------------------------------------------------
+void Helpers::removeRepackRequestToIndex(const std::string& vid, Backend& backend, log::LogContext& lc) {
+  // Try to reference the object in the index (will fail if there is already a request with this VID.
+  RootEntry re(backend);
+  re.fetchNoLock();
+  std::string repackIndexAddress;
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    repackIndexAddress = re.getRepackIndexAddress();
+  } catch (RootEntry::NotAllocated &){
+    // No repack index, nothing to do.
+    return;
+  }
+  RepackIndex ri(repackIndexAddress, backend);
+  ScopedExclusiveLock ril(ri);
+  ri.fetch();
+  ri.removeRepackRequest(vid);
+  ri.commit();
+}
 
 }} // namespace cta::objectstore.

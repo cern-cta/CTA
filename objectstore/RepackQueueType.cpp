@@ -16,20 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "RepackQueueType.hpp"
+#include "common/exception/Exception.hpp"
 
-#include <string>
+namespace cta { namespace objectstore {
 
-namespace cta {
-namespace common {
-namespace dataStructures {
-enum RepackType {
-  expandandrepack,
-  justexpand,
-  justrepack
-};
+std::string toString(RepackQueueType queueType) {
+  switch(queueType) {
+  case RepackQueueType::Pending:
+    return "Pending";
+  case RepackQueueType::ToExpand:
+    return "ToExpand";
+  }
+  throw exception::Exception("In toString(RepackQueueType): unexpected queue type.");
+}
 
-std::string toString(RepackType type);
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}} // namespace cta::objectstore

@@ -52,7 +52,7 @@ public:
   // In memory initialiser
   void initialize(const std::string & name);
   
-  // Commit with sanity checks (override from ObjectOps
+  // Commit with sanity checks (overload from ObjectOps)
   void commit();
 private:
   // Validates all summaries are in accordance with each other.
@@ -136,6 +136,18 @@ public:
   // (meaning the queue object updates start to take too much time).
   // with this current value of 25k, the performance should be roughly flat until 25k^2=625M.
   static const uint64_t c_maxShardSize = 25000;
+};
+
+class ArchiveQueueToTransfer: public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
+};
+
+class ArchiveQueueToReport: public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
+};
+
+class ArchiveQueueFailed: public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
 };
   
 }}

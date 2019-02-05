@@ -34,6 +34,10 @@ MountPolicy::MountPolicy():
   retrieveMinRequestAge(0),
   maxDrivesAllowed(0) {}
 
+MountPolicy::MountPolicy(const std::string name, const uint64_t archivePriority,const uint64_t archiveMinRequestAge, const uint64_t retrievePriority, 
+        const uint64_t retrieveMinRequestAge, const uint64_t maxDrivesAllowed):
+        name(name), archivePriority(archivePriority), archiveMinRequestAge(archiveMinRequestAge), retrievePriority(retrievePriority), 
+        retrieveMinRequestAge(retrieveMinRequestAge), maxDrivesAllowed(maxDrivesAllowed) {}
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
@@ -71,6 +75,8 @@ std::ostream &operator<<(std::ostream &os, const MountPolicy &obj) {
      << " comment=" << obj.comment << ")";
   return os;
 }
+
+MountPolicy MountPolicy::s_defaultMountPolicyForRepack("default_mount_policy_repack",1,1,1,1,1);
 
 } // namespace dataStructures
 } // namespace common

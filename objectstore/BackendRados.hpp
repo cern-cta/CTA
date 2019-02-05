@@ -116,8 +116,6 @@ private:
   static std::string createUniqueClientId();
   /** This function will lock or die (actually throw, that is) */
   void lock(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
-  void lockWithIoContext(std::string name, uint64_t timeout_us, LockType lockType, const std::string& clientId, 
-    librados::IoCtx & radosCtx);
   inline void lockBackoff(std::string name, uint64_t timeout_us, LockType lockType, 
     const std::string & clientId, librados::IoCtx & radosCtx);
   inline void lockNotify(std::string name, uint64_t timeout_us, LockType lockType, 

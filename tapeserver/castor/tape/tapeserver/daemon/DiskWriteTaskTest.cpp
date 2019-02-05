@@ -47,7 +47,7 @@ namespace unitTests{
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override { throw std::runtime_error("Not implemented"); }
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
     std::set<cta::SchedulerDatabase::RetrieveJob*> finishSettingJobsBatchSuccessful(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
-
+    std::set<cta::SchedulerDatabase::RetrieveJob*> batchSucceedRetrieveForRepack(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
   };
   
   class TestingRetrieveMount: public cta::RetrieveMount {
@@ -58,7 +58,7 @@ namespace unitTests{
   
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
-    TestingRetrieveJob(cta::RetrieveMount & rm): cta::RetrieveJob(rm,
+    TestingRetrieveJob(cta::RetrieveMount & rm): cta::RetrieveJob(&rm,
     cta::common::dataStructures::RetrieveRequest(), 
     cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByBlock) {}

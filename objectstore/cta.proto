@@ -31,6 +31,9 @@ enum ObjectType {
   ArchiveQueueShard_t = 90;
   RetrieveQueue_t = 10;
   RetrieveQueueShard_t = 100;
+  RepackRequest_t = 11;
+  RepackIndex_t = 12;
+  RepackQueue_t = 13;
   GenericObject_t = 1000;
 }
 
@@ -79,6 +82,15 @@ message AgentRegisterPointer {
   required EntryLog log = 101;
 }
 
+message RepackIndexPointer {
+  required string address = 105;
+}
+
+message RepackQueuePointer {
+  required string address = 107;
+}
+
+
 // Pointer to the scheduler global lock
 message SchedulerGlobalLockPointer {
   required string address = 110;
@@ -102,11 +114,17 @@ message RetrieveQueuePointer {
 message RootEntry {
   repeated ArchiveQueuePointer livearchivejobsqueuepointers = 1050;
   repeated RetrieveQueuePointer liveretrievejobsqueuepointers = 1060;
+  repeated ArchiveQueuePointer archivefailurestoreportqueuepointers = 1061;
   repeated ArchiveQueuePointer failedarchivejobsqueuepointers = 1062;
+  repeated RetrieveQueuePointer retrievefailurestoreportqueuepointers = 1063;
   repeated RetrieveQueuePointer failedretrievejobsqueuepointers = 1065;
+  repeated RetrieveQueuePointer retrieve_queue_to_report_to_repack_for_success_pointers = 1066;
   repeated ArchiveQueuePointer archivejobstoreportqueuepointers = 1068;
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
+  optional RepackIndexPointer repackindexpointer = 1085;
+  optional RepackQueuePointer repackrequestspendingqueuepointer = 1086;
+  optional RepackQueuePointer repackrequeststoexpandqueuepointer = 1088;
   optional string agentregisterintent = 1090;
   optional SchedulerGlobalLockPointer schedulerlockpointer = 1100;
 }
@@ -181,57 +199,7 @@ message ArchiveFile {
   required string storageclass = 4361;
 }
 
-// ------------- Archive Jobs --------------------------------------------------
-
-// The status of the individual archive jobs. The jobs are materialised 
-// by table entries in the ArchiveRequest.
-// This life cycle represented by the following enum
-
-enum ArchiveJobStatus {
-  AJS_LinkingToArchiveQueue = 1;
-  AJS_PendingMount = 2;
-  AJS_Selected = 3;
-  AJS_Complete = 4;
-  AJS_Failed = 999;
-}
-
-message FilePathAndStatus {
-  required string path = 4450;
-  required uint64 mode = 4451;
-  required uint64 size = 4452;
-  required UserIdentity owner = 4453;
-}
-
-// ------------- Retrieve Jobs -------------------------------------------------
-
-// The status of the individual retrieve jobs. The jobs are materialised 
-// by table entries in the RetrieveRequest.
-// This life cycle represented by the following enum
-
-enum RetrieveJobStatus {
-  RJS_LinkingToTape = 0;
-  RJS_Pending = 1;
-  RJS_Selected = 2;
-  RJS_Complete = 3;
-  RJS_Failed = 99;
-}
-
-message RetrieveJobEntry {
-  required uint32 copynb = 4700;
-  required string tape = 4701;
-  required string tapeaddress = 4702;
-  required uint64 fseq = 4703;
-  required uint64 blockid = 4704;
-  required RetrieveJobStatus status = 4705;
-  required uint32 totalretries = 4706;
-  required uint32 retrieswithinmount = 4707;
-  required uint64 compressedsize = 4708;
-  required uint64 creationtime = 4709;
-}
-
 // ------------- Drives handling  ----------------------------------------------
-
-
 
 message DriveState {
   required string drivename = 5000;
@@ -280,8 +248,6 @@ message SchedulerGlobalLock {
   required uint64 nextmountid = 8000;
 }
 
-// ------------- New interface  ------------------------------------------------
-
 message User {
   required string name = 8800;
   required string group = 8810;
@@ -305,6 +271,21 @@ message MountPolicy {
   required string comment = 8988;
 }
 
+// ------------- Archive Jobs --------------------------------------------------
+
+// The status of the individual archive jobs. The jobs are materialised 
+// by table entries in the ArchiveRequest.
+// This life cycle represented by the following enum
+
+enum ArchiveJobStatus {
+  AJS_ToTransfer = 1;
+  AJS_ToReportForTransfer = 2;
+  AJS_Complete = 3;
+  AJS_ToReportForFailure = 997;
+  AJS_Failed = 998;
+  AJS_Abandoned = 999;
+}
+
 message ArchiveJob {
   required uint32 copynb = 4400;
   required string tapepool = 4401;
@@ -317,10 +298,13 @@ message ArchiveJob {
   required uint32 maxtotalretries = 4408;
   required uint32 maxretrieswithinmount = 4409;
   repeated string failurelogs = 4410;
+  required uint32 maxreportretries = 4411;
+  required uint32 totalreportretries = 4412;
+  repeated string reportfailurelogs = 4413;
 }
 
 message ArchiveRequest {
-  required uint64 archiveFileID = 8990;
+  required uint64 archivefileid = 8990;
   required MountPolicy mountpolicy = 8995;
   required string checksumtype = 9000;
   required string checksumvalue = 9010;
@@ -337,6 +321,23 @@ message ArchiveRequest {
   required string storageclass = 9090;
   required EntryLog creationlog = 9091;
   repeated ArchiveJob jobs = 9092;
+  required bool reportdecided = 9093;
+}
+
+// ------------- Retrieve Jobs -------------------------------------------------
+
+// The status of the individual retrieve jobs. The jobs are materialised 
+// by table entries in the RetrieveRequest.
+// This life cycle represented by the following enum
+// There is no complete state as the completion of one jobs implies the 
+// completion of the whole requests, and leads to the immediate deletion
+// of the request.
+
+enum RetrieveJobStatus {
+  RJS_ToTransfer = 1;
+  RJS_ToReportForFailure = 997;
+  RJS_Failed = 998;
+  RJS_Succeeded = 1002; //For Retrieve request created by a Repack request
 }
 
 message SchedulerRetrieveRequest {
@@ -357,6 +358,9 @@ message RetrieveJob {
   required RetrieveJobStatus status = 9205;
   required uint64 lastmountwithfailure = 9206;
   repeated string failurelogs = 9207;
+  required uint32 maxreportretries = 9208;
+  required uint32 totalreportretries = 9209;
+  repeated string reportfailurelogs = 9210;
 }
 
 message RetrieveRequest {
@@ -365,6 +369,9 @@ message RetrieveRequest {
   required ArchiveFile archivefile = 9152;
   required uint32 activecopynb = 9153;
   repeated RetrieveJob jobs = 9154;
+  required string failurereporturl = 9155;
+  required string failurereportlog = 9156;
+  required bool isrepack = 9157; //In protobuf, default values for bool is false
 }
 
 message ValueCountPair {
@@ -441,4 +448,82 @@ message RetrieveQueue {
   required uint64 oldestjobcreationtime = 10150;
   required uint64 mapsrebuildcount = 10160;
   required uint64 maxshardsize = 10170;
+}
+
+// ------------- Repack data strcutures ----------------------------------------
+
+enum RepackRequestStatus {
+  // those value are matching the dataStructures/RepackInfo.hpp: RepackInfo::Status values.
+  RRS_Pending = 1;
+  RRS_ToExpand = 2;
+  RRS_Starting = 3;
+  RRS_Running = 4;
+  RRS_Aborting = 5;
+  RRS_Aborted = 6;
+  RRS_Complete = 7;
+  RRS_Failed = 8;
+}
+
+enum RepackSubRequestStatus {
+  // In order to handle all failure modes and accompanying  races, we have to record whether
+  // a sub request is expected to be present or not. The process deleting the sub request will
+  // first mark it as delete with this status and then actually delete it. In case of crash in this
+  // process, the switch of this status will be re-done and the sub request deleted on retry.
+  // On the opposite side, this information will allow the creation process to know if a reference to the
+  // sub request should be interpreted as an unfulfilled creation intent (RSRS_Present) and create the
+  // missing sub request or the completion of the request (which can happen anytime after sub request
+  // creation). The two delete flavors allow reconstruction of the sub request counters if need
+  RSRS_Present = 1;
+  RSRS_DeletedAfterSuccess = 2;
+  RSRS_DeletedAfterFailure = 3;
+}
+
+message RepackSubRequestPointer {
+  required string address = 10500;
+  required uint64 fseq = 10510;
+  required uint64 archivefileid = 10520;
+  required bool retrieveaccounted = 10530;
+  required uint32 archivecopynb = 10540;
+  required RepackSubRequestStatus status = 10550;
+}
+
+message RepackRequest {
+  required string vid = 11000;
+  required RepackRequestStatus status = 11010;
+  required bool expandmode = 11400;
+  required bool repackmode = 11410;
+  required uint64 totalfilestoretrieve = 11420;
+  required uint64 totalbytestoretrieve = 11430;
+  // We can have more files to archive than we have to retrieve if we plan to also archive a missing
+  // copy of a multi copy file.
+  required uint64 totalfilestoarchive = 11440;
+  required uint64 totalbytestoarchive = 11450;
+  required uint64 userprovidedfiles = 11460;
+  required uint64 userprovidedbytes = 11470;
+  required uint64 retrievedfiles = 11480;
+  required uint64 retrievedbytes = 11490;
+  required uint64 archivedfiles = 11500;
+  required uint64 archivedbytes = 11510;
+  required uint64 failedtoretievefiles = 11520;
+  required uint64 failedtoretrievebytes = 11530;
+  required uint64 failedtoarchivefiles = 11540;
+  required uint64 failedtoarchivebytes = 11550;
+  required uint64 lastexpandedfseq = 11560;
+}
+
+message RepackRequestIndexPointer {
+  required string vid = 12000;
+  required string address = 12010;
+}
+
+message RepackIndex {
+  repeated RepackRequestIndexPointer repackrequestpointers = 12100;
+}
+
+message RepackRequestQueuePointer {
+  required string address = 12101;
+}
+
+message RepackQueue {
+  repeated RepackRequestQueuePointer repackrequestpointers = 12200;
 }

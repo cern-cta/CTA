@@ -15,7 +15,7 @@ add_library(ctatapedaemon
   CommandLineParams.cpp
   DriveHandler.cpp
   DriveHandlerProxy.cpp
-  GarbageCollectorHandler.cpp
+  MaintenanceHandler.cpp
   SignalHandler.cpp
   SubprocessHandler.cpp
   ProcessManager.cpp

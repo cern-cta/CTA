@@ -72,7 +72,7 @@ void MemQueue<objectstore::ArchiveRequest,objectstore::ArchiveQueue>::specialize
 template<>
 void MemQueue<objectstore::RetrieveRequest,objectstore::RetrieveQueue>::specializedUpdateCachedQueueStats(objectstore::RetrieveQueue &queue) {
   auto summary = queue.getJobsSummary();
-  objectstore::Helpers::updateRetrieveQueueStatisticsCache(queue.getVid(), summary.files, summary.bytes, summary.priority);
+  objectstore::Helpers::updateRetrieveQueueStatisticsCache(queue.getVid(), summary.jobs, summary.bytes, summary.priority);
 }
 
 }} // namespac ecta::ostoredb

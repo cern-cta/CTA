@@ -419,7 +419,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       
       // Write the file to tape
       cta::MockArchiveMount mam(catalogue);
-      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(mam, catalogue));
+      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
@@ -596,7 +596,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       const uint64_t archiveFileSize = 1000;
       cta::MockArchiveMount mam(catalogue);
       cta::MockRetrieveMount mrm;
-      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(mam, catalogue));
+      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = 1000 + fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
@@ -695,7 +695,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
 
   // 8) Run the data transfer session
-  ASSERT_NO_THROW(sess.execute());
+  sess.execute();
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());
@@ -803,7 +803,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       
       // Write the file to tape
       cta::MockArchiveMount mam(catalogue);
-      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(mam, catalogue));
+      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
@@ -1014,7 +1014,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       
       // Write the file to tape
       cta::MockArchiveMount mam(catalogue);
-      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(mam, catalogue));
+      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
@@ -1162,7 +1162,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       
       // Write the file to tape
       cta::MockArchiveMount mam(catalogue);
-      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(mam, catalogue));
+      std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
       castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);

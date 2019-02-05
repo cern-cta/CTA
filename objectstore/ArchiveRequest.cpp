@@ -29,13 +29,22 @@
 
 namespace cta { namespace objectstore {
 
-cta::objectstore::ArchiveRequest::ArchiveRequest(const std::string& address, Backend& os): 
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+ArchiveRequest::ArchiveRequest(const std::string& address, Backend& os): 
   ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>(os, address){ }
 
-cta::objectstore::ArchiveRequest::ArchiveRequest(Backend& os): 
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+ArchiveRequest::ArchiveRequest(Backend& os): 
   ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>(os) { }
 
-cta::objectstore::ArchiveRequest::ArchiveRequest(GenericObject& go):
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+ArchiveRequest::ArchiveRequest(GenericObject& go):
   ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
@@ -43,52 +52,75 @@ cta::objectstore::ArchiveRequest::ArchiveRequest(GenericObject& go):
   getPayloadFromHeader();
 }
 
-void cta::objectstore::ArchiveRequest::initialize() {
+//------------------------------------------------------------------------------
+// ArchiveRequest::initialize()
+//------------------------------------------------------------------------------
+void ArchiveRequest::initialize() {
   // Setup underlying object
   ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>::initialize();
+  // Setup the fields in the payload
+  m_payload.set_reportdecided(false);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::ArchiveRequest::addJob(uint16_t copyNumber,
-  const std::string& tapepool, const std::string& archivequeueaddress, 
-    uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
+//------------------------------------------------------------------------------
+// ArchiveRequest::addJob()
+//------------------------------------------------------------------------------
+void ArchiveRequest::addJob(uint16_t copyNumber,
+  const std::string& tapepool, const std::string& initialOwner, 
+    uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
   j->set_copynb(copyNumber);
-  j->set_status(serializers::ArchiveJobStatus::AJS_LinkingToArchiveQueue);
+  j->set_status(serializers::ArchiveJobStatus::AJS_ToTransfer);
   j->set_tapepool(tapepool);
-  j->set_owner(archivequeueaddress);
+  j->set_owner(initialOwner);
   j->set_archivequeueaddress("");
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
   j->set_lastmountwithfailure(0);
-  j->set_maxretrieswithinmount(maxRetiesWithinMount);
+  j->set_maxretrieswithinmount(maxRetriesWithinMount);
   j->set_maxtotalretries(maxTotalRetries);
+  j->set_totalreportretries(0);
+  j->set_maxreportretries(maxReportRetries);
 }
 
-bool cta::objectstore::ArchiveRequest::setJobSuccessful(uint16_t copyNumber) {
-  checkPayloadWritable();
-  auto * jl = m_payload.mutable_jobs();
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    if (j->copynb() == copyNumber) {
-      j->set_status(serializers::ArchiveJobStatus::AJS_Complete);
-      for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
-        if (j2->status()!= serializers::ArchiveJobStatus::AJS_Complete && 
-            j2->status()!= serializers::ArchiveJobStatus::AJS_Failed)
-          return false;
+//------------------------------------------------------------------------------
+// ArchiveRequest::getJobQueueType()
+//------------------------------------------------------------------------------
+JobQueueType ArchiveRequest::getJobQueueType(uint16_t copyNumber) {
+  checkPayloadReadable();
+  for (auto &j: m_payload.jobs()) {
+    if (j.copynb() == copyNumber) {
+      switch (j.status()) {
+      case serializers::ArchiveJobStatus::AJS_ToTransfer:
+        return JobQueueType::JobsToTransfer;
+      case serializers::ArchiveJobStatus::AJS_Complete:
+        throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Complete jobs are not queueable. They are finished and pend siblings completion.");
+      case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
+        // We should report a success...
+        return JobQueueType::JobsToReportToUser;
+      case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
+        // We should report a failure. The report queue can be shared.
+        return JobQueueType::JobsToReportToUser;
+      case serializers::ArchiveJobStatus::AJS_Failed:
+        return JobQueueType::FailedJobs;
+      case serializers::ArchiveJobStatus::AJS_Abandoned:
+        throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Abandoned jobs are not queueable. They are finished and pend siblings completion.");
       }
-      return true;
     }
   }
-  throw NoSuchJob("In ArchiveRequest::setJobSuccessful(): job not found");
+  throw exception::Exception("In ArchiveRequest::getJobQueueType(): Copy number not found.");
 }
 
-bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
-    uint64_t mountId, const std::string & failureReason, log::LogContext & lc) {
+//------------------------------------------------------------------------------
+// ArchiveRequest::addTransferFailure()
+//------------------------------------------------------------------------------
+auto ArchiveRequest::addTransferFailure(uint16_t copyNumber,
+    uint64_t mountId, const std::string & failureReason, log::LogContext & lc) -> EnqueueingNextStep {
   checkPayloadWritable();
-  // Find the job and update the number of failures 
-  // (and return the job status: failed (true) or to be retried (false))
+  // Find the job and update the number of failures
   for (size_t i=0; i<(size_t)m_payload.jobs_size(); i++) {
     auto &j=*m_payload.mutable_jobs(i);
     if (j.copynb() == copyNumber) {
@@ -102,18 +134,54 @@ bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
       * j.mutable_failurelogs()->Add() = failureReason;
     }
     if (j.totalretries() >= j.maxtotalretries()) {
-      j.set_status(serializers::AJS_Failed);
-      if (!finishIfNecessary(lc)) commit();
-      return true;
+      // We have to determine if this was the last copy to fail/succeed.
+      return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
     } else {
-      j.set_status(serializers::AJS_PendingMount);
-      commit();
-      return false;
+      EnqueueingNextStep ret;
+      ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToTransfer;
+      // Decide if we want the job to have a chance to come back to this mount (requeue) or not. In the latter
+      // case, the job will remain owned by this session and get garbage collected.
+      if (j.retrieswithinmount() >= j.maxretrieswithinmount())
+        ret.nextStep = EnqueueingNextStep::NextStep::Nothing;
+      else
+        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransfer;
+      return ret;
     }
   }
   throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::addReportFailure()
+//------------------------------------------------------------------------------
+auto ArchiveRequest::addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string& failureReason,
+    log::LogContext& lc) -> EnqueueingNextStep {
+  checkPayloadWritable();
+  // Find the job and update the number of failures
+  for (size_t i=0; i<(size_t)m_payload.jobs_size(); i++) {
+    auto &j=*m_payload.mutable_jobs(i);
+    if (j.copynb() == copyNumber) {
+      j.set_totalreportretries(j.totalreportretries() + 1);
+      * j.mutable_reportfailurelogs()->Add() = failureReason;
+    }
+    EnqueueingNextStep ret;
+    if (j.totalreportretries() >= j.maxreportretries()) {
+      // Status is now failed
+      ret.nextStatus = serializers::ArchiveJobStatus::AJS_Failed;
+      ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
+    } else {
+      // Status is unchanged
+      ret.nextStatus = j.status();
+      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
+    }
+    return ret;
+  }
+  throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::getRetryStatus()
+//------------------------------------------------------------------------------
 ArchiveRequest::RetryStatus ArchiveRequest::getRetryStatus(const uint16_t copyNumber) {
   checkPayloadReadable();
   for (auto &j: m_payload.jobs()) {
@@ -129,22 +197,9 @@ ArchiveRequest::RetryStatus ArchiveRequest::getRetryStatus(const uint16_t copyNu
   throw cta::exception::Exception("In ArchiveRequest::getRetryStatus(): job not found()");
 }
 
-void cta::objectstore::ArchiveRequest::setAllJobsLinkingToArchiveQueue() {
-  checkPayloadWritable();
-  auto * jl=m_payload.mutable_jobs();
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    j->set_status(serializers::AJS_LinkingToArchiveQueue);
-  }
-}
-
-void cta::objectstore::ArchiveRequest::setAllJobsFailed() {
-  checkPayloadWritable();
-  auto * jl=m_payload.mutable_jobs();
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    j->set_status(serializers::AJS_Failed);
-  }
-}
-
+//------------------------------------------------------------------------------
+// ArchiveRequest::setArchiveFile()
+//------------------------------------------------------------------------------
 void ArchiveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile) {
   checkPayloadWritable();
   // TODO: factor out the archivefile structure from the flat ArchiveRequest.
@@ -163,6 +218,9 @@ void ArchiveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFi
   m_payload.set_storageclass(archiveFile.storageClass);
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::getArchiveFile()
+//------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
   checkPayloadReadable();
   cta::common::dataStructures::ArchiveFile ret;
@@ -183,7 +241,7 @@ cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
 }
 
 //------------------------------------------------------------------------------
-// setArchiveReportURL
+// ArchiveRequest::setArchiveReportURL()
 //------------------------------------------------------------------------------
 void ArchiveRequest::setArchiveReportURL(const std::string& URL) {
   checkPayloadWritable();
@@ -191,7 +249,7 @@ void ArchiveRequest::setArchiveReportURL(const std::string& URL) {
 }
 
 //------------------------------------------------------------------------------
-// getArviveReportURL
+// ArchiveRequest::getArchiveReportURL()
 //------------------------------------------------------------------------------
 std::string ArchiveRequest::getArchiveReportURL() {
   checkPayloadReadable();
@@ -199,7 +257,7 @@ std::string ArchiveRequest::getArchiveReportURL() {
 }
 
 //------------------------------------------------------------------------------
-// setArchiveErrorReportURL
+// ArchiveRequest::setArchiveErrorReportURL()
 //------------------------------------------------------------------------------
 void ArchiveRequest::setArchiveErrorReportURL(const std::string& URL) {
   checkPayloadWritable();
@@ -207,7 +265,7 @@ void ArchiveRequest::setArchiveErrorReportURL(const std::string& URL) {
 }
 
 //------------------------------------------------------------------------------
-// getArchiveErrorReportURL
+// ArchiveRequest::getArchiveErrorReportURL()
 //------------------------------------------------------------------------------
 std::string ArchiveRequest::getArchiveErrorReportURL() {
   checkPayloadReadable();
@@ -215,17 +273,17 @@ std::string ArchiveRequest::getArchiveErrorReportURL() {
 }
 
 //------------------------------------------------------------------------------
-// setMountPolicy
+// ArchiveRequest::setMountPolicy()
 //------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {
+void ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {
   checkPayloadWritable();
   MountPolicySerDeser(mountPolicy).serialize(*m_payload.mutable_mountpolicy());
 }
 
 //------------------------------------------------------------------------------
-// getMountPolicy
+// ArchiveRequest::getMountPolicy()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMountPolicy() {
+cta::common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() {
   checkPayloadReadable();
   MountPolicySerDeser mp;
   mp.deserialize(m_payload.mountpolicy());
@@ -233,7 +291,7 @@ cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMo
 }
 
 //------------------------------------------------------------------------------
-// setRequester
+// ArchiveRequest::setRequester()
 //------------------------------------------------------------------------------
 void ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
   checkPayloadWritable();
@@ -243,7 +301,7 @@ void ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentit
 }
 
 //------------------------------------------------------------------------------
-// getRequester
+// ArchiveRequest::getRequester()
 //------------------------------------------------------------------------------
 cta::common::dataStructures::UserIdentity ArchiveRequest::getRequester() {
   checkPayloadReadable();
@@ -255,7 +313,7 @@ cta::common::dataStructures::UserIdentity ArchiveRequest::getRequester() {
 }
 
 //------------------------------------------------------------------------------
-// setSrcURL
+// ArchiveRequest::setSrcURL()
 //------------------------------------------------------------------------------
 void ArchiveRequest::setSrcURL(const std::string &srcURL) {
   checkPayloadWritable();
@@ -263,7 +321,7 @@ void ArchiveRequest::setSrcURL(const std::string &srcURL) {
 }
 
 //------------------------------------------------------------------------------
-// getSrcURL
+// ArchiveRequest::getSrcURL()
 //------------------------------------------------------------------------------
 std::string ArchiveRequest::getSrcURL() {
   checkPayloadReadable();
@@ -271,7 +329,7 @@ std::string ArchiveRequest::getSrcURL() {
 }
 
 //------------------------------------------------------------------------------
-// setCreationLog
+// ArchiveRequest::setEntryLog()
 //------------------------------------------------------------------------------
 void ArchiveRequest::setEntryLog(const cta::common::dataStructures::EntryLog &creationLog) {
   checkPayloadWritable();
@@ -282,7 +340,7 @@ void ArchiveRequest::setEntryLog(const cta::common::dataStructures::EntryLog &cr
 }
 
 //------------------------------------------------------------------------------
-// getCreationLog
+// ArchiveRequest::getEntryLog()
 //------------------------------------------------------------------------------
 cta::common::dataStructures::EntryLog ArchiveRequest::getEntryLog() {
   checkPayloadReadable();
@@ -291,6 +349,9 @@ cta::common::dataStructures::EntryLog ArchiveRequest::getEntryLog() {
   return el;
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::dumpJobs()
+//------------------------------------------------------------------------------
 auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
@@ -306,29 +367,23 @@ auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
 }
 
 //------------------------------------------------------------------------------
-// garbageCollect
+// ArchiveRequest::garbageCollect()
 //------------------------------------------------------------------------------
 void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
-  // The behavior here depends on which job the agent is supposed to own.
-  // We should first find this job (if any). This is for covering the case
-  // of a selected job. The Request could also still being connected to tape
-  // pools. In this case we will finish the connection to tape pools unconditionally.
+  // We need to find which job(s) we should actually work on. The job(s) will be
+  // requeued to the relevant queues depending on their statuses.
   auto * jl = m_payload.mutable_jobs();
   bool anythingGarbageCollected=false;
+  using serializers::ArchiveJobStatus;
+  std::set<ArchiveJobStatus> statusesImplyingQueueing ({ArchiveJobStatus::AJS_ToTransfer, ArchiveJobStatus::AJS_ToReportForTransfer,
+      ArchiveJobStatus::AJS_ToReportForFailure, ArchiveJobStatus::AJS_Failed});
   for (auto j=jl->begin(); j!=jl->end(); j++) {
     auto owner=j->owner();
     auto status=j->status();
-    if (status==serializers::AJS_LinkingToArchiveQueue ||
-        ( (status==serializers::AJS_Selected || status==serializers::AJS_PendingMount)
-             && owner==presumedOwner)) {
-        // If the job was being connected to the tape pool or was selected
-        // by the dead agent, then we have to ensure it is indeed connected to
-        // the tape pool and set its status to pending.
-        // (Re)connect the job to the tape pool and make it pending.
-        // If we fail to reconnect, we have to fail the job and potentially
-        // finish the request.
+    if ( statusesImplyingQueueing.count(status) && owner==presumedOwner) {
+      // The job is in a state which implies queuing.
       std::string queueObject="Not defined yet";
       anythingGarbageCollected=true;
       try {
@@ -337,7 +392,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
         ScopedExclusiveLock aql;
-        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), QueueType::LiveJobs, lc);
+        Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), getQueueType(status), lc);
         queueObject=aq.getAddressIfSet();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
@@ -350,7 +405,6 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         aq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
         auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
         j->set_owner(aq.getAddressIfSet());
-        j->set_status(serializers::AJS_PendingMount);
         commit();
         aql.release();
         auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
@@ -405,21 +459,11 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         } catch (...) {
           params.add("exceptionType", "unknown");
         }        
-        // This could be the end of the request, with various consequences.
-        // This is handled here:
-        if (finishIfNecessary(lc)) {
-          std::string message="In ArchiveRequest::garbageCollect(): failed to requeue the job. Failed it and removed the request as a consequence.";
-          if (backtrace.size()) message += " Backtrace follows.";
-          lc.log(log::ERR, message);
-          if (backtrace.size()) lc.logBacktrace(log::ERR, backtrace);
-          return;
-        } else {
           commit();
-          lc.log(log::ERR, "In ArchiveRequest::garbageCollect(): failed to requeue the job and failed it.");
+        lc.log(log::ERR, "In ArchiveRequest::garbageCollect(): failed to requeue the job and failed it. Internal error: the job is now orphaned.");
         }
       }
     }
-  }
   if (!anythingGarbageCollected) {
     log::ScopedParamContainer params(lc);
     params.add("jobObject", getAddressIfSet())
@@ -428,6 +472,9 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
   }
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::setJobOwner()
+//------------------------------------------------------------------------------
 void ArchiveRequest::setJobOwner(
   uint16_t copyNumber, const std::string& owner) {
   checkPayloadWritable();
@@ -442,13 +489,16 @@ void ArchiveRequest::setJobOwner(
   throw NoSuchJob("In ArchiveRequest::setJobOwner: no such job");
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::asyncUpdateJobOwner()
+//------------------------------------------------------------------------------
 ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16_t copyNumber,
-  const std::string& owner, const std::string& previousOwner) {
+  const std::string& owner, const std::string& previousOwner, const cta::optional<serializers::ArchiveJobStatus>& newStatus) {
   std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
-  // Passing a reference to the unique pointer led to strange behaviors.
+  // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto & retRef = *ret;
   ret->m_updaterCallback=
-      [this, copyNumber, owner, previousOwner, &retRef](const std::string &in)->std::string {
+      [this, copyNumber, owner, previousOwner, &retRef, newStatus](const std::string &in)->std::string {
         // We have a locked and fetched object, so we just need to work on its representation.
         retRef.m_timingReport.lockFetchTime = retRef.m_timer.secs(utils::Timer::resetCounter);
         serializers::ObjectHeader oh;
@@ -474,10 +524,15 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
         auto *jl=payload.mutable_jobs();
         for (auto j=jl->begin(); j!=jl->end(); j++) {
           if (j->copynb() == copyNumber) {
-            if (j->owner() != previousOwner) {
-              throw Backend::WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): Job not owned.");
+            // The owner might already be the right one (in garbage collection cases), in which case, it's job done.
+            if (j->owner() != owner) {
+              if (j->owner() != previousOwner) {
+                throw Backend::WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): Job not owned.");
+              }
+              j->set_owner(owner);
             }
-            j->set_owner(owner);
+            // If a status change was requested, do it.
+            if (newStatus) j->set_status(*newStatus);
             // We also need to gather all the job content for the user to get in-memory
             // representation.
             // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequest.
@@ -498,6 +553,10 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
             retRef.m_archiveReportURL = payload.archivereporturl();
             retRef.m_archiveErrorReportURL = payload.archiveerrorreporturl();
             retRef.m_srcURL = payload.srcurl();
+            if (j->failurelogs_size()) {
+              retRef.m_latestError = j->failurelogs(j->failurelogs_size()-1);
+            }
+            retRef.m_jobStatus = j->status();
             oh.set_payload(payload.SerializePartialAsString());
             retRef.m_timingReport.processTime = retRef.m_timer.secs(utils::Timer::resetCounter);
             return oh.SerializeAsString();
@@ -510,35 +569,62 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
   return ret.release();
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncJobOwnerUpdater::wait()
+//------------------------------------------------------------------------------
 void ArchiveRequest::AsyncJobOwnerUpdater::wait() {
   m_backendUpdater->wait();
   m_timingReport.commitUnlockTime = m_timer.secs();
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncJobOwnerUpdater::getTimeingsReport()
+//------------------------------------------------------------------------------
 ArchiveRequest::AsyncJobOwnerUpdater::TimingsReport ArchiveRequest::AsyncJobOwnerUpdater::getTimeingsReport() {
   return m_timingReport;
 }
 
-
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile()
+//------------------------------------------------------------------------------
 const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
   return m_archiveFile;
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL()
+//------------------------------------------------------------------------------
 const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL() {
   return m_archiveReportURL;
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncJobOwnerUpdater::getArchiveErrorReportURL()
+//------------------------------------------------------------------------------
 const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveErrorReportURL() {
   return m_archiveErrorReportURL;
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL()
+//------------------------------------------------------------------------------
 const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() {
   return m_srcURL;
 }
 
-ArchiveRequest::AsyncJobSuccessfulUpdater * ArchiveRequest::asyncUpdateJobSuccessful(const uint16_t copyNumber ) { 
-  std::unique_ptr<AsyncJobSuccessfulUpdater> ret(new AsyncJobSuccessfulUpdater);  
-  // Passing a reference to the unique pointer led to strange behaviors.
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncJobOwnerUpdater::getJobStatus()
+//------------------------------------------------------------------------------
+objectstore::serializers::ArchiveJobStatus ArchiveRequest::AsyncJobOwnerUpdater::getJobStatus() {
+  return m_jobStatus;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::asyncUpdateTransferSuccessful()
+//------------------------------------------------------------------------------
+ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTransferSuccessful(const uint16_t copyNumber ) {
+  std::unique_ptr<AsyncTransferSuccessfulUpdater> ret(new AsyncTransferSuccessfulUpdater);  
+  // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto & retRef = *ret;
   ret->m_updaterCallback=
     [this,copyNumber, &retRef](const std::string &in)->std::string { 
@@ -553,20 +639,27 @@ ArchiveRequest::AsyncJobSuccessfulUpdater * ArchiveRequest::asyncUpdateJobSucces
       serializers::ArchiveRequest payload;
       payload.ParseFromString(oh.payload());
       auto * jl = payload.mutable_jobs();
+      bool otherJobsToTransfer = false;
+      for (auto j=jl->begin(); j!=jl->end(); j++) {
+        if (j->copynb() != copyNumber && j->status() == serializers::ArchiveJobStatus::AJS_ToTransfer)
+          otherJobsToTransfer = true;
+      }
       for (auto j=jl->begin(); j!=jl->end(); j++) {
         if (j->copynb() == copyNumber) {
-          j->set_status(serializers::ArchiveJobStatus::AJS_Complete);
-          for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
-            if (j2->status()!= serializers::ArchiveJobStatus::AJS_Complete && 
-                j2->status()!= serializers::ArchiveJobStatus::AJS_Failed) {
-                retRef.m_isLastJob = false;
-                oh.set_payload(payload.SerializePartialAsString());
-                return oh.SerializeAsString();
-            }
+          if (otherJobsToTransfer || m_payload.reportdecided()) {
+            // There are still other jobs to report or another failed and will
+            // report. No next step for this job.
+            j->set_status(serializers::ArchiveJobStatus::AJS_Complete);
+            j->set_owner("");
+            retRef.m_doReportTransferSuccess = false;
+          } else {
+            // We will report success with this job as it is the last to transfer and no report (for failure)
+            // happened.
+            j->set_status(serializers::ArchiveJobStatus::AJS_ToReportForTransfer);
+            retRef.m_doReportTransferSuccess = true;
           }
-          retRef.m_isLastJob = true;
           oh.set_payload(payload.SerializePartialAsString());
-          throw cta::objectstore::Backend::AsyncUpdateWithDelete(oh.SerializeAsString());
+          return oh.SerializeAsString();
         }
       }
       std::stringstream err;
@@ -577,10 +670,32 @@ ArchiveRequest::AsyncJobSuccessfulUpdater * ArchiveRequest::asyncUpdateJobSucces
   return ret.release();
 }
 
-void ArchiveRequest::AsyncJobSuccessfulUpdater::wait() {
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncTransferSuccessfulUpdater::wait()
+//------------------------------------------------------------------------------
+void ArchiveRequest::AsyncTransferSuccessfulUpdater::wait() {
   m_backendUpdater->wait();
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::asyncDeleteRequest()
+//------------------------------------------------------------------------------
+ArchiveRequest::AsyncRequestDeleter* ArchiveRequest::asyncDeleteRequest() {
+  std::unique_ptr<AsyncRequestDeleter> ret(new AsyncRequestDeleter);
+  ret->m_backendDeleter.reset(m_objectStore.asyncDelete(getAddressIfSet()));
+  return ret.release();
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncRequestDeleter::wait()
+//------------------------------------------------------------------------------
+void ArchiveRequest::AsyncRequestDeleter::wait() {
+  m_backendDeleter->wait();
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::getJobOwner()
+//------------------------------------------------------------------------------
 std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
   checkPayloadReadable();
   auto jl = m_payload.jobs();
@@ -590,48 +705,137 @@ std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
   return j->owner();
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::getQueueType()
+//------------------------------------------------------------------------------
+JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& status) {
+  using serializers::ArchiveJobStatus;
+  switch(status) {
+  case ArchiveJobStatus::AJS_ToTransfer:
+    return JobQueueType::JobsToTransfer;
+  case ArchiveJobStatus::AJS_ToReportForTransfer:
+  case ArchiveJobStatus::AJS_ToReportForFailure:
+    return JobQueueType::JobsToReportToUser;
+  case ArchiveJobStatus::AJS_Failed:
+    return JobQueueType::FailedJobs;
+  default:
+    throw cta::exception::Exception("In ArchiveRequest::getQueueType(): invalid status for queueing.");
+  }
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::statusToString()
+//------------------------------------------------------------------------------
 std::string ArchiveRequest::statusToString(const serializers::ArchiveJobStatus& status) {
   switch(status) {
+  case serializers::ArchiveJobStatus::AJS_ToTransfer:
+    return "ToTransfer";
+  case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
+    return "ToReportForTransfer";
+  case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
+    return "ToReportForFailure";
   case serializers::ArchiveJobStatus::AJS_Complete:
     return "Complete";
   case serializers::ArchiveJobStatus::AJS_Failed:
     return "Failed";
-  case serializers::ArchiveJobStatus::AJS_LinkingToArchiveQueue:
-    return "LinkingToArchiveQueue";
-  case serializers::ArchiveJobStatus::AJS_PendingMount:
-    return "PendingMount";
+  case serializers::ArchiveJobStatus::AJS_Abandoned:
+    return "Abandoned";
   default:
     return std::string("Unknown (")+std::to_string((uint64_t) status)+")";
   }
 }
 
-
-bool ArchiveRequest::finishIfNecessary(log::LogContext & lc) {
-  checkPayloadWritable();
-  // This function is typically called after changing the status of one job
-  // in memory. If the request is complete, we will just remove it.
-  // If all the jobs are either complete or failed, we can remove the request.
-  auto & jl=m_payload.jobs();
-  using serializers::ArchiveJobStatus;
-  std::set<serializers::ArchiveJobStatus> finishedStatuses(
-    {ArchiveJobStatus::AJS_Complete, ArchiveJobStatus::AJS_Failed});
-  for (auto & j: jl)
-    if (!finishedStatuses.count(j.status()))
-      return false;
-  log::ScopedParamContainer params(lc);
-  size_t failureNumber = 0;
-  for (auto failure: getFailures()) {
-    params.add(std::string("failure")+std::to_string(failureNumber++), failure);
+//------------------------------------------------------------------------------
+// ArchiveRequest::eventToString()
+//------------------------------------------------------------------------------
+std::string ArchiveRequest::eventToString(JobEvent jobEvent) {
+  switch(jobEvent) {
+  case JobEvent::ReportFailed:
+    return "ReportFailed";
+  case JobEvent::TransferFailed:
+    return "EventFailed";
+  default:
+    return std::string("Unknown (")+std::to_string((uint64_t) jobEvent)+")";
   }
-  remove();
-  params.add("archiveRequestObject", getAddressIfSet());
-  for (auto & j: jl) {
-    params.add(std::string("statusForCopyNb")+std::to_string(j.copynb()), statusToString(j.status()));
-  }
-  lc.log(log::INFO, "In ArchiveRequest::finishIfNecessary(): Removed completed request.");
-  return true;
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::determineNextStep()
+//------------------------------------------------------------------------------
+auto ArchiveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent jobEvent, 
+    log::LogContext& lc) -> EnqueueingNextStep {
+  checkPayloadWritable();
+  // We have to determine which next step should be taken.
+  // - When transfer succeeds or fails:
+  //   - If the job got transferred and is not the last (other(s) remain to transfer), it becomes complete.
+  //   - If the job failed and is not the last, we will queue it as "failed" in the failed jobs queue.
+  //   - If the job is the last and all jobs succeeded, this jobs becomes ToReportForTransfer
+  //   - If the job is the last and any (including this one) failed, this job becomes ToReportForFailure.
+  
+  // - When report completes of fails:
+  //   - If the report was for a failure, the job is 
+  auto & jl=m_payload.jobs();
+  using serializers::ArchiveJobStatus;
+  // Validate the current status.
+  // Get status
+  cta::optional<ArchiveJobStatus> currentStatus;
+  for (auto &j:jl) { if (j.copynb() == copyNumberUpdated) currentStatus = j.status(); }
+  if (!currentStatus) {
+    std::stringstream err;
+    err << "In ArchiveRequest::updateJobStatus(): copynb not found : " << copyNumberUpdated
+        << "exiing ones: ";
+    for (auto &j: jl) err << j.copynb() << "  ";
+    throw cta::exception::Exception(err.str());
+  }
+  // Check status compatibility with event.
+  switch (jobEvent) {
+  case JobEvent::TransferFailed:
+    if (*currentStatus != ArchiveJobStatus::AJS_ToTransfer) {
+      // Wrong status, but the context leaves no ambiguity. Just warn.
+      log::ScopedParamContainer params(lc);
+      params.add("event", eventToString(jobEvent))
+            .add("status", statusToString(*currentStatus))
+            .add("fileId", m_payload.archivefileid());
+      lc.log(log::WARNING, "In ArchiveRequest::updateJobStatus(): unexpected status. Assuming ToTransfer.");
+    }
+    break;
+  case JobEvent::ReportFailed:
+    if (*currentStatus != ArchiveJobStatus::AJS_ToReportForFailure && *currentStatus != ArchiveJobStatus::AJS_ToReportForTransfer) {
+      // Wrong status, but end status will be the same anyway.
+      log::ScopedParamContainer params(lc);
+      params.add("event", eventToString(jobEvent))
+              .add("status", statusToString(*currentStatus))
+            .add("fileId", m_payload.archivefileid());
+      lc.log(log::WARNING, "In ArchiveRequest::updateJobStatus(): unexpected status. Failing the job.");
+    }
+  }
+  // We are in the normal cases now.
+  EnqueueingNextStep ret;
+  switch (jobEvent) {  
+  case JobEvent::TransferFailed:
+  {
+    if (!m_payload.reportdecided()) {
+      m_payload.set_reportdecided(true);
+      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
+      ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToReportForFailure;
+    } else {
+      ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
+      ret.nextStatus = serializers::ArchiveJobStatus::AJS_Failed;
+    }
+  }
+  break;
+  case JobEvent::ReportFailed:
+  {
+    ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
+    ret.nextStatus = serializers::ArchiveJobStatus::AJS_Failed;
+  }
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::dump()
+//------------------------------------------------------------------------------
 std::string ArchiveRequest::dump() {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
@@ -642,6 +846,9 @@ std::string ArchiveRequest::dump() {
   return headerDump;
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::getFailures()
+//------------------------------------------------------------------------------
 std::list<std::string> ArchiveRequest::getFailures() {
   checkPayloadReadable();
   std::list<std::string> ret;
@@ -652,6 +859,31 @@ std::list<std::string> ArchiveRequest::getFailures() {
   }
   return ret;
 }
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::setJobStatus()
+//------------------------------------------------------------------------------
+void ArchiveRequest::setJobStatus(uint16_t copyNumber, const serializers::ArchiveJobStatus& status) {
+  checkPayloadWritable();
+  for (auto j=m_payload.mutable_jobs()->begin(); j!=m_payload.mutable_jobs()->end(); j++) {
+    if (j->copynb() == copyNumber) {
+      j->set_status(status);
+      return;
+    }
+  }
+  throw exception::Exception("In ArchiveRequest::setJobStatus(): job not found.");
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::getTapePoolForJob()
+//------------------------------------------------------------------------------
+std::string ArchiveRequest::getTapePoolForJob(uint16_t copyNumber) {
+  checkPayloadReadable();
+  for (auto j:m_payload.jobs()) if (j.copynb() == copyNumber) return j.tapepool();
+  throw exception::Exception("In ArchiveRequest::getTapePoolForJob(): job not found.");
+}
+
+
 
 
 }} // namespace cta::objectstore
