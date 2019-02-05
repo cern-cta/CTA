@@ -34,6 +34,17 @@ protected:
   }
 };
 
+TEST_F(cta_rdbms_LoginTest, default_constructor) {
+  using namespace cta::rdbms;
+
+  const Login login;
+
+  ASSERT_EQ(Login::DBTYPE_NONE, login.dbType);
+  ASSERT_TRUE(login.username.empty());
+  ASSERT_TRUE(login.password.empty());
+  ASSERT_TRUE(login.database.empty());
+}
+
 TEST_F(cta_rdbms_LoginTest, constructor) {
   using namespace cta::rdbms;
 
