@@ -53,18 +53,19 @@ if (OCCI_SUPPORT)
   set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OCCI_SUPPORT)
 
-add_executable(cta-catalogueUnitTests
-  CatalogueUnitTestsCmdLineArgs.cpp
-  catalogueUnitTests.cpp
+add_executable(cta-rdbmsUnitTests
+  GlobalCatalogueFactoryForUnitTests.cpp
+  RdbmsUnitTestsCmdLineArgs.cpp
+  rdbmsUnitTests.cpp
   ${GMOCK_SRC})
 
-target_link_libraries(cta-catalogueUnitTests
+target_link_libraries(cta-rdbmsUnitTests
   ctacatalogueunittests
   gtest
   pthread)
 
 if (OCCI_SUPPORT)
-  set_property (TARGET cta-catalogueUnitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_property (TARGET cta-rdbmsUnitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OCCI_SUPPORT)
 
 add_executable(cta-unitTests-multiProcess
@@ -105,7 +106,7 @@ target_link_libraries(cta-systemTests
   gtest
   pthread)
 
-install(TARGETS cta-catalogueUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
+install(TARGETS cta-rdbmsUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
 
 install(TARGETS systemTestHelperTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

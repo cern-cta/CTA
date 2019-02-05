@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/PollDatabaseCmd.hpp"
 #include "catalogue/PollDatabaseCmdLineArgs.hpp"
 #include "rdbms/ConnPool.hpp"

@@ -16,32 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include "catalogue/Catalogue.hpp"
-
-#include <memory>
-
-namespace cta {
-namespace catalogue {
+#include "tests/RdbmsUnitTestsCmdLineArgs.hpp"
 
 /**
- * Specifies the interface to a factory Catalogue objects.
+ * Global variable used to store the command-line arguments so that they are
+ * visible to the tests.
  */
-class CatalogueFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  virtual ~CatalogueFactory();
-
-  /**
-   * Returns a newly created CTA catalogue object.
-   */
-  virtual std::unique_ptr<Catalogue> create() = 0;
-
-}; // class CatalogueFactory
-
-} // namespace catalogue
-} // namespace cta
+RdbmsUnitTestsCmdLineArgs g_cmdLineArgs;

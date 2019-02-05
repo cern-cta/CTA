@@ -17,7 +17,6 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueTest.hpp"
 #include "catalogue/ChecksumTypeMismatch.hpp"
 #include "catalogue/ChecksumValueMismatch.hpp"
@@ -40,6 +39,8 @@
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
+#include "rdbms/Conn.hpp"
+#include "rdbms/ConnPool.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -71,13 +72,17 @@ void cta_catalogue_CatalogueTest::SetUp() {
   using namespace cta::catalogue;
 
   try {
-    const rdbms::Login &login = GetParam()->create();
-    auto connFactory = rdbms::wrapper::ConnFactoryFactory::create(login);
-    const uint64_t nbConns = 2;
-    const uint64_t nbArchiveFileListingConns = 2;
+    CatalogueFactory *const *const catalogueFactoryPtrPtr = GetParam();
 
-    m_catalogue = CatalogueFactory::create(m_dummyLog, login, nbConns, nbArchiveFileListingConns);
-    m_conn = connFactory->create();
+    if(nullptr == catalogueFactoryPtrPtr) {
+      throw exception::Exception("Global pointer to the catalogue factory pointer for unit-tests in null");
+    }
+
+    if(nullptr == (*catalogueFactoryPtrPtr)) {
+      throw exception::Exception("Global pointer to the catalogue factoryfor unit-tests in null");
+    }
+
+    m_catalogue = (*catalogueFactoryPtrPtr)->create();
 
     {
       const std::list<common::dataStructures::AdminUser> adminUsers = m_catalogue->getAdminUsers();
@@ -10371,31 +10376,6 @@ TEST_P(cta_catalogue_CatalogueTest, ping) {
   using namespace cta;
 
   m_catalogue->ping();
-}
-
-TEST_P(cta_catalogue_CatalogueTest, schemaTables) {
-  const auto tableNameList = m_conn->getTableNames();
-  std::set<std::string> tableNameSet;
-
-  std::map<std::string, uint32_t> tableNameToListPos;
-  uint32_t listPos = 0;
-  for(auto &tableName: tableNameList) {
-    ASSERT_EQ(tableNameToListPos.end(), tableNameToListPos.find(tableName));
-    tableNameToListPos[tableName] = listPos++;
-  }
-
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ADMIN_USER"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ARCHIVE_FILE"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ARCHIVE_ROUTE"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("CTA_CATALOGUE"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("LOGICAL_LIBRARY"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("MOUNT_POLICY"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("REQUESTER_GROUP_MOUNT_RULE"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("REQUESTER_MOUNT_RULE"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("STORAGE_CLASS"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE_FILE"));
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE_POOL"));
 }
 
 } // namespace unitTests

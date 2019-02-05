@@ -16,8 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CatalogueTest.hpp"
-#include "tests/CatalogueUnitTestsCmdLineArgs.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "rdbms/Login.hpp"
+#include "tests/GlobalCatalogueFactoryForUnitTests.hpp"
+#include "tests/RdbmsUnitTestsCmdLineArgs.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -29,7 +32,7 @@
 static void printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    '\t' << "cta-catalogueUnitTests [Google test options] databaseConnectionFile" << std::endl;
+    '\t' << "cta-rdbmsUnitTests [Google test options] databaseConnectionFile" << std::endl;
 }
 
 /**
@@ -37,14 +40,14 @@ static void printUsage(std::ostream &os) {
  * Google test has consumed all of its command-line options from the
  * command-line.
  */
-static CatalogueUnitTestsCmdLineArgs parseCmdLine(const int argc, char ** argv) {
+static RdbmsUnitTestsCmdLineArgs parseCmdLine(const int argc, char ** argv) {
   if(argc != 2) {
     std::cerr << "Invalid number of command-line arguments";
     printUsage(std::cerr);
     exit(1);
   }
 
-  CatalogueUnitTestsCmdLineArgs cmdLineArgs;
+  RdbmsUnitTestsCmdLineArgs cmdLineArgs;
   cmdLineArgs.dbConfigPath = argv[1];
 
   return cmdLineArgs;
@@ -57,6 +60,15 @@ int main(int argc, char** argv) {
 
   // Google test will consume its options from the command-line and leave everything else
   g_cmdLineArgs = parseCmdLine(argc, argv);
+
+  cta::log::DummyLogger dummyLogger("dummy", "dummy");
+  const auto login = cta::rdbms::Login::parseFile(g_cmdLineArgs.dbConfigPath);
+  const uint64_t nbConns = 1;
+  const uint64_t nbArchiveFileListingConns = 1;
+  const uint64_t maxTriesToConnect = 1;
+  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(dummyLogger, login, nbConns,
+    nbArchiveFileListingConns, maxTriesToConnect);
+  g_catalogueFactoryForUnitTests = catalogueFactory.get();
 
   const int ret = RUN_ALL_TESTS();
 

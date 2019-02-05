@@ -16,6 +16,7 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "cta_frontend.pb.h"
 #include "common/make_unique.hpp"
 #include "common/log/SyslogLogger.hpp"
@@ -23,7 +24,6 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
-#include "catalogue/CatalogueFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "rdbms/Login.hpp"
 #include "version.h"
@@ -119,7 +119,11 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    }
    const uint64_t nbArchiveFileListingConns = 2;
 
-   m_catalogue = catalogue::CatalogueFactory::create(*m_log, catalogueLogin, catalogue_numberofconnections.second, nbArchiveFileListingConns);
+   {
+     auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(*m_log, catalogueLogin,
+       catalogue_numberofconnections.second, nbArchiveFileListingConns);
+     m_catalogue = catalogueFactory->create();
+   }
 
    // Initialise the Backend
    auto objectstore_backendpath = config.getOptionValueStr("cta.objectstore.backendpath");

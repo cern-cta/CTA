@@ -16,32 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include "catalogue/Catalogue.hpp"
-
-#include <memory>
-
-namespace cta {
-namespace catalogue {
+#include <string>
 
 /**
- * Specifies the interface to a factory Catalogue objects.
+ * Structure to store the command-line arguments of cta-rdbmsUnitTests.
  */
-class CatalogueFactory {
-public:
-
+struct RdbmsUnitTestsCmdLineArgs {
   /**
-   * Destructor.
+   * Absolute path to the file containing the database connection details.
    */
-  virtual ~CatalogueFactory();
+  std::string dbConfigPath;
+};
 
-  /**
-   * Returns a newly created CTA catalogue object.
-   */
-  virtual std::unique_ptr<Catalogue> create() = 0;
-
-}; // class CatalogueFactory
-
-} // namespace catalogue
-} // namespace cta
+/**
+ * Declaration of the global variable used to store the command-line arguments
+ * so that they are visible to the tests.
+ */
+extern RdbmsUnitTestsCmdLineArgs g_cmdLineArgs;

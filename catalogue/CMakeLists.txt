@@ -26,12 +26,19 @@ set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileItorImpl.cpp
   Catalogue.cpp
   CatalogueFactory.cpp
+  CatalogueFactoryFactory.cpp
   ChecksumTypeMismatch.cpp
   ChecksumValueMismatch.cpp
   CmdLineTool.cpp
   FileSizeMismatch.cpp
   InMemoryCatalogue.cpp
+  InMemoryCatalogueFactory.cpp
+  MysqlCatalogue.cpp
+  MysqlCatalogueFactory.cpp
+  MysqlCatalogueSchema.cpp
   OracleCatalogue.cpp
+  OracleCatalogueFactory.cpp
+  PostgresqlCatalogueFactory.cpp
   SqliteCatalogueSchema.cpp
   TapeFileWritten.cpp
   TapeItemImplementation.cpp
@@ -40,8 +47,7 @@ set (CATALOGUE_LIB_SRC_FILES
   RdbmsCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
-  MysqlCatalogue.cpp
-  MysqlCatalogueSchema.cpp
+  SqliteCatalogueFactory.cpp
   TapeForWriting.cpp
   UserSpecifiedANonEmptyTape.cpp
   UserSpecifiedANonExistentTape.cpp
@@ -123,7 +129,6 @@ add_custom_command(OUTPUT MysqlCatalogueSchema.cpp
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
-  CatalogueFactoryTest.cpp
   InMemoryCatalogueTest.cpp
   InMemoryVersionOfCatalogueTest.cpp)
 

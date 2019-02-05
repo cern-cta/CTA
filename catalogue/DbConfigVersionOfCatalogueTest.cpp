@@ -17,41 +17,10 @@
  */
 
 #include "catalogue/CatalogueTest.hpp"
-#include "tests/CatalogueUnitTestsCmdLineArgs.hpp"
-
-namespace {
-
-/**
- * Creates Login objects for the test catalogue database whose database login
- * details are specified in a database configuration file passed on the
- * command-line to the catalogue unit-tests program.
- */
-class DbConfigFileLoginFactory: public cta::rdbms::LoginFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  virtual ~DbConfigFileLoginFactory() {
-  }
-
-  /**
-   * Returns a newly created Login object.
-   *
-   * @return A newly created Login object.
-   */
-  virtual cta::rdbms::Login create() {
-    return cta::rdbms::Login::parseFile(g_cmdLineArgs.dbConfigPath);
-  }
-}; // class OracleLoginFactory
-
-DbConfigFileLoginFactory g_dbConfigLoginFactory;
-
-} // anonymous namespace
+#include "tests/GlobalCatalogueFactoryForUnitTests.hpp"
 
 namespace unitTests {
 
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_CatalogueTest,
-  ::testing::Values(dynamic_cast<cta::rdbms::LoginFactory*>(&g_dbConfigLoginFactory)));
+INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_CatalogueTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 
 } // namespace unitTests

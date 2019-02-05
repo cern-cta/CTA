@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/processCap/ProcessCap.hpp"
@@ -908,7 +908,9 @@ int DriveHandler::runChild() {
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 0;
     lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to catalogue.");
-    catalogue=cta::catalogue::CatalogueFactory::create(m_sessionEndContext.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
+    auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_sessionEndContext.logger(),
+      catalogueLogin, nbConns, nbArchiveFileListingConns);
+    catalogue=catalogueFactory->create();
     osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, lc.logger()));
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(lc);
