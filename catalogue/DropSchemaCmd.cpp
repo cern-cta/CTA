@@ -185,7 +185,7 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "TAPE_FILE_COPY_NB_GT_ZERO_BEFORE_UPDATE"
     };
     for (auto triggerToDrop: triggersToDrop) {
-      conn.executeNonQuery(std::string("DROP TRIGGER IF EXISTS ") + triggerToDrop, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+      conn.executeNonQuery(std::string("DROP TRIGGER IF EXISTS ") + triggerToDrop);
       m_out << "Dropped Trigger " << triggerToDrop << std::endl;
     }
   } catch(exception::Exception &ex) {
@@ -203,7 +203,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn, const std::list<std::s
     for(auto tableToDrop : tablesToDrop) {
       const bool tableToDropIsInDb = tablesInDb.end() != std::find(tablesInDb.begin(), tablesInDb.end(), tableToDrop);
       if(tableToDropIsInDb) {
-        conn.executeNonQuery(std::string("DROP TABLE ") + tableToDrop, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+        conn.executeNonQuery(std::string("DROP TABLE ") + tableToDrop);
         m_out << "Dropped table " << tableToDrop << std::endl;
       }
     }
@@ -254,7 +254,7 @@ void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn, const std::list<std
       const bool sequenceToDropIsInDb = sequencesInDb.end() != std::find(sequencesInDb.begin(), sequencesInDb.end(),
         sequenceToDrop);
       if(sequenceToDropIsInDb) {
-        conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequenceToDrop, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+        conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequenceToDrop);
         m_out << "Dropped sequence " << sequenceToDrop << std::endl;
       }
     }
