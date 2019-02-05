@@ -43,6 +43,28 @@ struct Login {
   };
 
   /**
+   * Returns the string representation of the specified database type.
+   *
+   * @return The string representation of the specified database type.
+   */
+  static std::string dbTypeToString(const DbType &dbType) {
+    switch(dbType) {
+    case DBTYPE_IN_MEMORY: return "DBTYPE_IN_MEMORY";
+    case DBTYPE_ORACLE: return "DBTYPE_ORACLE";
+    case DBTYPE_SQLITE: return "DBTYPE_SQLITE";
+    case DBTYPE_MYSQL: return "DBTYPE_MYSQL";
+    case DBTYPE_POSTGRESQL: return "DBTYPE_POSTGRESQL";
+    case DBTYPE_NONE: return "DBTYPE_NONE";
+    default: return "UNKNOWN";
+    }
+  }
+
+  /**
+   * Constructor.
+   */
+  Login();
+
+  /**
    * Constructor.
    *
    * @param type The type of the database.
