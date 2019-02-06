@@ -1044,13 +1044,17 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
       throw cta::exception::UserError("--log and --summary are mutually exclusive");
    }
 
-   std::string tapepool = has_flag(OptionBoolean::JUSTRETRIEVE) ? "" : "INVALID_TAPEPOOL";
-   std::string vid      = has_flag(OptionBoolean::JUSTARCHIVE)  ? "" : "INVALID_VID";
+   // These could be added as command options to allow filtering of results to a single queue
+   std::string tapepool = "";
+   std::string vid      = "";
+
+   OStoreDB::ArchiveQueueItor_t *archiveQueueItorPtr =
+      has_flag(OptionBoolean::JUSTRETRIEVE) ? nullptr : m_scheddb.getArchiveJobItorPtr(tapepool);
+   OStoreDB::RetrieveQueueItor_t *retrieveQueueItorPtr =
+      has_flag(OptionBoolean::JUSTARCHIVE)  ? nullptr : m_scheddb.getRetrieveJobItorPtr(vid);
 
    // Create a XrdSsi stream object to return the results
-   stream = new FailedRequestLsStream(m_scheduler,
-      m_scheddb.getArchiveJobItor(tapepool), m_scheddb.getRetrieveJobItor(vid),
-      has_flag(OptionBoolean::SHOW_LOG_ENTRIES), has_flag(OptionBoolean::SUMMARY), m_lc);
+   stream = new FailedRequestLsStream(m_scheduler, archiveQueueItorPtr, retrieveQueueItorPtr, has_flag(OptionBoolean::SUMMARY), has_flag(OptionBoolean::SHOW_LOG_ENTRIES), m_lc);
 
    // Should the client display column headers?
    if(has_flag(OptionBoolean::SHOW_HEADER)) {

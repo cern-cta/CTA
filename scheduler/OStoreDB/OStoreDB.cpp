@@ -654,6 +654,13 @@ OStoreDB::ArchiveQueueItor_t OStoreDB::getArchiveJobItor(const std::string &tape
 {
   return ArchiveQueueItor_t(m_objectStore, queueType, tapePoolName);
 }
+//------------------------------------------------------------------------------
+// OStoreDB::getArchiveJobItorPtr()
+//------------------------------------------------------------------------------
+OStoreDB::ArchiveQueueItor_t* OStoreDB::getArchiveJobItorPtr(const std::string &tapePoolName, QueueType queueType) const
+{
+  return new ArchiveQueueItor_t(m_objectStore, queueType, tapePoolName);
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::getNextArchiveJobsToReportBatch()
@@ -1104,6 +1111,14 @@ OStoreDB::getRetrieveJobs() const
 OStoreDB::RetrieveQueueItor_t OStoreDB::getRetrieveJobItor(const std::string &vid, QueueType queueType) const
 {
   return RetrieveQueueItor_t(m_objectStore, queueType, vid);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getRetrieveJobItorPtr()
+//------------------------------------------------------------------------------
+OStoreDB::RetrieveQueueItor_t* OStoreDB::getRetrieveJobItorPtr(const std::string &vid, QueueType queueType) const
+{
+  return new RetrieveQueueItor_t(m_objectStore, queueType, vid);
 }
 
 //------------------------------------------------------------------------------

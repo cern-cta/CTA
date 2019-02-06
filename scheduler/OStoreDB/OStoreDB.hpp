@@ -254,6 +254,9 @@ public:
   ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName,
     objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
 
+  ArchiveQueueItor_t* getArchiveJobItorPtr(const std::string &tapePoolName,
+    objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
+
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, 
      log::LogContext & logContext) override;
 
@@ -286,6 +289,9 @@ public:
   typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
 
   RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid,
+    objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
+
+  RetrieveQueueItor_t* getRetrieveJobItorPtr(const std::string &vid,
     objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
