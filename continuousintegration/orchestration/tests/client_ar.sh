@@ -4,14 +4,28 @@ EOSINSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
 DATA_SOURCE=/dev/urandom
+ARCHIVEONLY=0 # Only archive files or do the full test?
+DONOTARCHIVE=0 # files were already archived in a previous run NEED TARGETDIR
+TARGETDIR=''
+
+COMMENT=''
+# id of the test so that we can track it
+TESTID="$(date +%y%m%d%H%M)"
 
 NB_PROCS=1
 NB_FILES=1
+NB_DIRS=1
 FILE_KB_SIZE=1
 VERBOSE=0
 REMOVE=0
 TAILPID=''
+TAPEAWAREGC=0
 
+NB_BATCH_PROCS=500  # number of parallel batch processes
+BATCH_SIZE=20    # number of files per batch process
+GC_MINFREEBYTES=2000000000000000000 # value for space.tapeawaregc.minfreebytes initially (for default space). Set if TAPEAWAREGC=1
+
+SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
 die() {
   echo "$@" 1>&2
@@ -21,14 +35,28 @@ die() {
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>] [-r]
+Usage: $0 [-n <nb_files_perdir>] [-N <nb_dir>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>] [-r]
   -v		Verbose mode: displays live logs of rmcd to see tapes being mounted/dismounted in real time
   -r		Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
+  -a		Archiveonly mode: exits after file archival
+  -g		Tape aware GC?
 EOF
 exit 1
 }
 
-while getopts "d:e:n:s:p:vS:r" o; do
+
+# Send annotations to Influxdb
+annotate() {
+  TITLE=$1
+  TEXT=$2
+  TAGS=$3
+  LINE="ctapps_tests title=\"${TITLE}\",text=\"${TEXT}\",tags=\"${TAGS}\" $(date +%s)"
+  curlcmd="curl --connect-timeout 2 -X POST 'https://ctapps-influx02.cern.ch:8086/write?db=annotations&u=annotations&p=annotations&precision=s' --data-binary '${LINE}'"
+  eval ${curlcmd}
+}
+
+
+while getopts "d:e:n:N:s:p:vS:rAPGt:m:" o; do
     case "${o}" in
         e)
             EOSINSTANCE=${OPTARG}
@@ -38,6 +66,9 @@ while getopts "d:e:n:s:p:vS:r" o; do
             ;;
         n)
             NB_FILES=${OPTARG}
+            ;;
+        N)
+            NB_DIRS=${OPTARG}
             ;;
         s)
             FILE_KB_SIZE=${OPTARG}
@@ -54,6 +85,21 @@ while getopts "d:e:n:s:p:vS:r" o; do
         r)
             REMOVE=1
             ;;
+        A)
+            ARCHIVEONLY=1
+            ;;
+        P)
+            DONOTARCHIVE=1
+            ;;
+        G)
+            TAPEAWAREGC=1
+            ;;
+        t)
+            TARGETDIR=${OPTARG}
+            ;;
+        m)
+            COMMENT=${OPTARG}
+            ;;
         *)
             usage
             ;;
@@ -66,7 +112,38 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+if [ "x${COMMENT}" = "x" ]; then
+    echo "No annotation will be pushed to Influxdb"
+fi
+
+if [[ $DONOTARCHIVE == 1 ]]; then
+    if [[ "x${TARGETDIR}" = "x" ]]; then
+      echo "You must provide a target directory to run a test and skip archival"
+      exit 1
+    fi
+    eos root://${EOSINSTANCE} ls -d ${EOS_BASEDIR}/${TARGETDIR} || die "target directory does not exist and there is no archive phase to create it."
+fi
+
+if [[ $TAPEAWAREGC == 1 ]]; then
+    echo "Enabling tape aware garbage collector"
+    ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.tapeawaregc.minfreebytes=${GC_MINFREEBYTES} || die "Could not set space.tapeawaregc.minfreebytes to ${GC_MINFREEBYTES}"
+    ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=off || die "Could not disable filearchivedgc"
+else
+    echo "Enabling file archived garbage collector"
+    # no ssh for CI
+    #ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.tapeawaregc.minfreebytes=0 || die "Could not set space.tapeawaregc.minfreebytes to 0"
+    #ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=on || die "Could not enable filearchivedgc"
+fi
+
+EOS_DIR=''
+if [[ "x${TARGETDIR}" = "x" ]]; then
+    EOS_DIR="${EOS_BASEDIR}/$(uuidgen)"
+else
+    EOS_DIR="${EOS_BASEDIR}/${TARGETDIR}"
+fi
+
 STATUS_FILE=$(mktemp)
+ERROR_FILE=$(mktemp)
 EOS_BATCHFILE=$(mktemp --suffix=.eosh)
 
 dd if=/dev/urandom of=/tmp/testfile bs=1k count=${FILE_KB_SIZE} || exit 1
@@ -79,65 +156,97 @@ fi
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
+# Get kerberos credentials for user1
+user_kinit
+klist -s || die "Cannot get kerberos credentials for user ${USER}"
+
 # Get kerberos credentials for poweruser1
 eospower_kdestroy
 eospower_kinit
 
+echo "Starting test ${TESTID}: ${COMMENT}"
 
-EOS_DIR="${EOS_BASEDIR}/$(uuidgen)"
-echo "Creating test dir in eos: ${EOS_DIR}"
+#echo "$(date +%s): Dumping objectstore list"
+#ssh root@ctappsfrontend cta-objectstore-list
+
+test -z ${COMMENT} || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/>files: $((${NB_DIRS}*${NB_FILES}))<br/>filesize: ${FILE_KB_SIZE}kB" 'test,start'
+
+
+if [[ $DONOTARCHIVE == 0 ]]; then
+
+echo "$(date +%s): Creating test dir in eos: ${EOS_DIR}"
 # uuid should be unique no need to remove dir before...
 # XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR}
-eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR} || die "Cannot create directory ${EOS_DIR} in eos instance ${EOSINSTANCE}." 
-
-echo -n "Copying files to ${EOS_DIR} using ${NB_PROCS} processes..."
-for ((i=0;i<${NB_FILES};i++)); do
-  echo ${TEST_FILE_NAME_BASE}$(printf %.4d $i)
-done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdcp --silent /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/TEST_FILE_NAME
-echo Done.
 
 
-eos root://${EOSINSTANCE} ls ${EOS_DIR} | egrep "${TEST_FILE_NAME_BASE}[0-9]+" | sed -e 's/$/ copied/' > ${STATUS_FILE}
+eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR} || die "Cannot create directory ${EOS_DIR} in eos instance ${EOSINSTANCE}."
 
-echo "Waiting for files to be on tape:"
+# Create directory for xrootd error reports
+ERROR_DIR="/dev/shm/$(basename ${EOS_DIR})"
+mkdir ${ERROR_DIR}
+# not more than 100k files per directory so that we can rm and find as a standard user
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOSINSTANCE}."
+  echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
+  for ((i=0;i<${NB_FILES};i++)); do
+    echo ${TEST_FILE_NAME_BASE}$(printf %.2d ${subdir})$(printf %.6d $i)
+done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump xrdcp /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/TEST_FILE_NAME 2>${ERROR_DIR}/TEST_FILE_NAME && rm ${ERROR_DIR}/TEST_FILE_NAME || echo ERROR with xrootd transfer for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/TEST_FILE_NAME"
+#done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdcp --silent /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/TEST_FILE_NAME
+#  done | xargs -n ${BATCH_SIZE} --max-procs=${NB_BATCH_PROCS} ./batch_xrdcp /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${subdir}
+  echo Done.
+done
+
+COPIED=0
+COPIED_EMPTY=0
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  COPIED=$(( ${COPIED} + $(eos root://${EOSINSTANCE} find -f ${EOS_DIR}/${subdir} | wc -l) ))
+  COPIED_EMPTY=$(( ${COPIED_EMPTY} + $(eos root://${EOSINSTANCE} find -0 ${EOS_DIR}/${subdir} | wc -l) ))
+done
+
+# Only not empty files are archived by CTA
+TO_BE_ARCHIVED=$((${COPIED} - ${COPIED_EMPTY}))
+
+ARCHIVING=${TO_BE_ARCHIVED}
+ARCHIVED=0
+echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
-while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
-  echo "Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
-  sleep 1
+while test 0 != ${ARCHIVING}; do
+  echo "$(date +%s): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
+  sleep 3
   let SECONDS_PASSED=SECONDS_PASSED+1
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
-    echo "Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be archived to tape"
+    echo "$(date +%s): Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be archived to tape"
     break
   fi
 
-  echo "$(egrep -c 'archived$|tapeonly' ${STATUS_FILE})/${NB_FILES} archived"
+  ARCHIVED=0
+  for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+    ARCHIVED=$(( ${ARCHIVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | wc -l) ))
+    sleep 1 # do not hammer eos too hard
+  done
 
-  # generating EOS batch script
-  grep copied$ ${STATUS_FILE} | sed -e 's/ .*$//' | sed -e "s;^;file info ${EOS_DIR}/;" > ${EOS_BATCHFILE}
+  echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
 
-  # Updating all files statuses
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\+\)$/\2 \1/;s/d[^0]::t[^0]/archived/;s/d[^0]::t0/copied/;s/d0::t0/error/;s/d0::t[^0]/tapeonly/' > ${STATUS_FILE}
-
+  ARCHIVING=$((${TO_BE_ARCHIVED} - ${ARCHIVED}))
 done
-
-ARCHIVED=$(egrep -c 'archived$|tapeonly' ${STATUS_FILE})
 
 
 echo "###"
-echo "${ARCHIVED}/${NB_FILES} archived"
+echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
 echo "###"
 
-grep -q 'archived$' ${STATUS_FILE} && echo "Removing disk replica of $(grep -c 'archived$' ${STATUS_FILE}) archived files" || echo "$(grep -c 'tapeonly$' ${STATUS_FILE}) files are on tape with no disk replica"
-for TEST_FILE_NAME in $(grep archived$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
-    XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} file drop ${EOS_DIR}/${TEST_FILE_NAME} 1 &> /dev/null || echo "Could not remove disk replica for ${EOS_DIR}/${TEST_FILE_NAME}"
-done
-# Updating all files statuses
-eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\+\)$/\2 \1/;s/d[^0]::t[^0]/archived/;s/d[^0]::t0/copied/;s/d0::t0/error/;s/d0::t[^0]/tapeonly/' > ${STATUS_FILE}
+fi # DONOTARCHIVE
 
+#echo "$(date +%s): Dumping objectstore list"
+#ssh root@ctappsfrontend cta-objectstore-list
 
-TAPEONLY=$(grep -c tapeonly$ ${STATUS_FILE})
+if [[ $ARCHIVEONLY == 1 ]]; then
+  echo "Archiveonly mode: exiting"
+  exit 0
+fi
+
 
 echo "###"
 echo "${TAPEONLY}/${ARCHIVED} on tape only"
@@ -146,15 +255,36 @@ echo "Sleeping 400 seconds to allow MGM-FST communication to settle after disk c
 sleep 400
 echo "###"
 
-echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
-#for TEST_FILE_NAME in $(grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
-#  XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s "${EOS_DIR}/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200" || echo "Could not trigger retrieve for ${EOS_DIR}/${TEST_FILE_NAME}"
-#done
+
+if [[ $TAPEAWAREGC == 1 ]]; then
+    echo "Disabling file tape aware garbage collector"
+    ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.tapeawaregc.minfreebytes=0 || die "Could not set space.tapeawaregc.minfreebytes to 0"
+    # we do not need it for retrieves
+    # ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=on || die "Could not enable filearchivedgc"
+fi
+
+
+echo "$(date +%s): Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
+
+rm -f ${STATUS_FILE}
+touch ${STATUS_FILE}
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep 'd0::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+  # sleep 3 # do not hammer eos too hard
+done
 
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/TEST_FILE_NAME
+# cat ${STATUS_FILE} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/TEST_FILE_NAME 2>&1 | tee ${ERROR_FILE}
+# CAREFULL HERE: ${STATUS_FILE} contains lines like: 99/test9900001
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  echo -n "Recalling files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
+  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd transfer for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME"
+  echo Done.
+done
 
-TO_BE_RETRIEVED=${ARCHIVED}
+
+ARCHIVED=$(cat ${STATUS_FILE} | wc -l)
+TO_BE_RETRIEVED=$(( ${ARCHIVED} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
 # Wait for the copy to appear on disk
@@ -163,7 +293,7 @@ SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
 while test 0 != ${RETRIEVING}; do
   echo "$(date +%s): Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
-  sleep 1
+  sleep 3
   let SECONDS_PASSED=SECONDS_PASSED+1
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
@@ -172,7 +302,10 @@ while test 0 != ${RETRIEVING}; do
   fi
 
   RETRIEVED=0
-  RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))  
+  for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+    RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+    sleep 1 # do not hammer eos too hard
+  done
 
   RETRIEVING=$((${TO_BE_RETRIEVED} - ${RETRIEVED}))
 
@@ -180,10 +313,41 @@ while test 0 != ${RETRIEVING}; do
 done
 
 echo "###"
-echo "${RETRIEVED}/${TAPEONLY} retrieved files"
+echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved files"
 echo "###"
 
-LASTCOUNT=${RETRIEVED}
+
+#echo "$(date +%s): Dumping objectstore list"
+#ssh root@ctappsfrontend cta-objectstore-list
+
+
+# Build the list of files with more than 1 disk copy that have been archived before (ie d>=1::t1)
+rm -f ${STATUS_FILE}
+touch ${STATUS_FILE}
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+done
+
+TO_STAGERRM=$(cat ${STATUS_FILE} | wc -l)
+
+echo "$(date +%s): $TO_STAGERRM files to be stagerrm'ed from EOS"
+# We need the -s as we are staging the files from tape (see xrootd prepare definition)
+cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 eos root://${EOSINSTANCE} stagerrm   > /dev/null
+
+
+LEFTOVER=0
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+done
+
+STAGERRMED=$((${TO_STAGERRM}-${LEFTOVER}))
+echo "$(date +%s): $STAGERRMED files stagerrmed from EOS"
+
+LASTCOUNT=${STAGERRMED}
+
+#echo "$(date +%s): Dumping objectstore list"
+#ssh root@ctappsfrontend cta-objectstore-list
+
 
 # Updating all files statuses
 # Please note that s/d[^0]::t[^0] now maps to 'retrieved' and not 'archived' as
@@ -218,7 +382,7 @@ echo "sys.retrieves HAS BEEN SUCCESSFULLY RESET TO 0 FOR ALL RETRIEVED FILES"
 DELETED=0
 if [[ $REMOVE == 1 ]]; then
   echo "Waiting for files to be removed from EOS and tapes"
-  . /root/client_helper.sh 
+  # . /root/client_helper.sh 
   admin_kdestroy &>/dev/null
   admin_kinit &>/dev/null
   if $(admin_cta admin ls &>/dev/null); then
@@ -231,11 +395,11 @@ if [[ $REMOVE == 1 ]]; then
   # recount the files on tape as the workflows may have gone further...
   INITIALFILESONTAPE=$(admin_cta archivefile ls  --all | grep ${EOS_DIR} | wc -l)
   echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
-  # XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
+  #XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
   KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
   EOSRMPID=$!
   # wait a bit in case eos prematurely fails...
-  sleep 1
+  sleep 0.1
   if test ! -d /proc/${EOSRMPID}; then
     # eos rm process died, get its status
     wait ${EOSRMPID}
@@ -285,15 +449,22 @@ fi
 
 
 echo "###"
-echo Results:
-echo "REMOVED/RETRIEVED/TAPEONLY/ARCHIVED/NB_FILES"
-echo "${DELETED}/${RETRIEVED}/${TAPEONLY}/${ARCHIVED}/${NB_FILES}"
+echo "$(date +%s): Results:"
+echo "REMOVED/STAGERRMED/RETRIEVED/ARCHIVED/NB_FILES"
+echo "${DELETED}/${STAGERRMED}/${RETRIEVED}/${ARCHIVED}/$((${NB_FILES} * ${NB_DIRS}))"
 echo "###"
+
+test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES: $((${NB_FILES} * ${NB_DIRS}))</br>ARCHIVED: ${ARCHIVED}<br/>RETRIEVED: ${RETRIEVED}<br/>STAGERRMED: ${STAGERRMED}</br>DELETED: ${DELETED}" 'test,end'
+
+
+#echo "$(date +%s): Dumping objectstore list"
+#ssh root@ctappsfrontend cta-objectstore-list
+
 
 # stop tail
 test -z $TAILPID || kill ${TAILPID} &> /dev/null
 
-test ${LASTCOUNT} -eq ${NB_FILES} && exit 0
+test ${LASTCOUNT} -eq $((${NB_FILES} * ${NB_DIRS})) && exit 0
 
 echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
 grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
