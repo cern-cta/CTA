@@ -106,13 +106,7 @@ private:
   template<typename QueueType>
   bool pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const std::string &qid, const QueueType &item);
 
-  /*!
-   * Map queue type to RequestType
-   *
-   * @return RequestType for the template specialisation
-   */
-  template<typename QueueType>
-  admin::RequestType getRequestType(const QueueType &item);
+  // Member variables
 
   Scheduler &m_scheduler;                                                   //!< Reference to CTA Scheduler
   std::unique_ptr<OStoreDB::ArchiveQueueItor_t>  m_archiveQueueItorPtr;     //!< Archive Queue Iterator
@@ -123,6 +117,49 @@ private:
 
   static constexpr const char* const LOG_SUFFIX  = "FailedRequestLsStream"; //!< Identifier for SSI log messages
 };
+
+
+
+/*!
+ * pushRecord ArchiveJob specialisation
+ */
+template<> bool FailedRequestLsStream::
+pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const std::string &tapepool,
+  const common::dataStructures::ArchiveJob &item)
+{
+  Data record;
+
+  record.mutable_frls_item()->set_request_type(admin::RequestType::ARCHIVE_REQUEST);
+  record.mutable_frls_item()->set_tapepool(tapepool);
+  record.mutable_frls_item()->set_copy_nb(item.copyNumber);
+  record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
+  record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
+  record.mutable_frls_item()->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
+  //record.mutable_frls()->set_failurelogs(...
+
+  return streambuf->Push(record);
+}
+
+
+
+/*!
+ * pushRecord RetrieveJob specialisation
+ */
+template<> bool FailedRequestLsStream::
+pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const std::string &vid,
+  const common::dataStructures::RetrieveJob &item)
+{
+  Data record;
+
+  record.mutable_frls_item()->set_request_type(admin::RequestType::RETRIEVE_REQUEST);
+  record.mutable_frls_item()->mutable_tf()->set_vid(vid);
+  record.mutable_frls_item()->set_copy_nb(item.tapeCopies.at(vid).first);
+  record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
+  record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
+  record.mutable_frls_item()->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
+
+  return streambuf->Push(record);
+}
 
 
 
@@ -185,8 +222,8 @@ XrdSsiStream::Buffer* FailedRequestLsStream::GetBuff(XrdSsiErrInfo &eInfo, int &
 
 
 
-void FailedRequestLsStream::GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *streambuf,
-  bool isArchiveJobs, bool isRetrieveJobs)
+void FailedRequestLsStream::
+GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *streambuf, bool isArchiveJobs, bool isRetrieveJobs)
 {
   SchedulerDatabase::JobsFailedSummary archive_summary;
   SchedulerDatabase::JobsFailedSummary retrieve_summary;
@@ -217,39 +254,5 @@ void FailedRequestLsStream::GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *stream
 
   m_isSummary = false;
 }
-
-
-
-template<typename QueueType>
-bool FailedRequestLsStream::pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const std::string &qid, const QueueType &item)
-{
-  Data record;
-
-  record.mutable_frls_item()->set_request_type(getRequestType(item));
-#if 0
-  switch(requestType) {
-    case admin::RequestType::ARCHIVE_REQUEST:
-      record.mutable_frls_item()->set_tapepool("tapepool"); break;
-    case admin::RequestType::RETRIEVE_REQUEST:
-      record.mutable_frls_item()->mutable_tf()->set_vid("vid"); break;
-    default:
-      throw exception::Exception("Unrecognised RequestType: " + std::to_string(requestType));
-  }
-  record.mutable_frls_item()->set_copy_nb(1);
-  record.mutable_frls_item()->mutable_requester()->set_username("u");
-  record.mutable_frls_item()->mutable_requester()->set_groupname("g");
-  record.mutable_frls_item()->mutable_af()->mutable_df()->set_path("/path/");
-  //record.mutable_frls()->set_failurelogs(...
-#endif
-  return streambuf->Push(record);
-}
-
-
-
-template<>
-admin::RequestType FailedRequestLsStream::getRequestType(const common::dataStructures::ArchiveJob &item) { return admin::RequestType::ARCHIVE_REQUEST; }
-
-template<>
-admin::RequestType FailedRequestLsStream::getRequestType(const common::dataStructures::RetrieveJob &item) { return admin::RequestType::RETRIEVE_REQUEST; }
 
 }} // namespace cta::xrd
