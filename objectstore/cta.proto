@@ -464,27 +464,25 @@ enum RepackRequestStatus {
   RRS_Failed = 8;
 }
 
-enum RepackSubRequestStatus {
-  // In order to handle all failure modes and accompanying  races, we have to record whether
-  // a sub request is expected to be present or not. The process deleting the sub request will
-  // first mark it as delete with this status and then actually delete it. In case of crash in this
-  // process, the switch of this status will be re-done and the sub request deleted on retry.
-  // On the opposite side, this information will allow the creation process to know if a reference to the
-  // sub request should be interpreted as an unfulfilled creation intent (RSRS_Present) and create the
-  // missing sub request or the completion of the request (which can happen anytime after sub request
-  // creation). The two delete flavors allow reconstruction of the sub request counters if need
-  RSRS_Present = 1;
-  RSRS_DeletedAfterSuccess = 2;
-  RSRS_DeletedAfterFailure = 3;
-}
-
+// In order to properly handle retries in case of failure during reporting, we hold
+// a series of booleans tracking the status of the statistics recording and deletion of the
+// sub requests. Subrequest deleted records whether a sub request is expected to be present or not.
+// The process deleting the sub request will
+// first mark it as delete with this status and then actually delete it. In case of crash in this
+// process, the switch of this status will be re-done and the sub request deleted on retry.
+// On the opposite side, this information will allow the creation process to know if a reference to the
+// sub request should be interpreted as an unfulfilled creation intent (deleted=false) and create the
+// missing sub request or the completion of the request (which can happen anytime after sub request
+// creation).
+// Likewise, the "accounted" booleans will prevent double counting in case a report (for success or failure)
+// need to be retried after a process failure.
 message RepackSubRequestPointer {
   required string address = 10500;
   required uint64 fseq = 10510;
-  required uint64 archivefileid = 10520;
   required bool retrieveaccounted = 10530;
-  required uint32 archivecopynb = 10540;
-  required RepackSubRequestStatus status = 10550;
+  required bool archiveaccounted = 10534;
+  required bool failureaccounted = 10537;
+  required bool subrequestdeleted = 10540;
 }
 
 message RepackRequest {
@@ -509,6 +507,7 @@ message RepackRequest {
   required uint64 failedtoarchivefiles = 11540;
   required uint64 failedtoarchivebytes = 11550;
   required uint64 lastexpandedfseq = 11560;
+  repeated RepackSubRequestPointer subrequests = 11570;
 }
 
 message RepackRequestIndexPointer {

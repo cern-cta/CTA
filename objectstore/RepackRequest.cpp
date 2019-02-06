@@ -18,6 +18,7 @@
 
 #include "RepackRequest.hpp"
 #include "GenericObject.hpp"
+#include "AgentReference.hpp"
 #include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
@@ -118,6 +119,223 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
     throw exception::Exception("In RepackRequest::getInfo(): unexpcted mode: neither expand nor repack.");
   }
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::RepackSubRequestPointer::serialize()
+//------------------------------------------------------------------------------
+void RepackRequest::RepackSubRequestPointer::serialize(serializers::RepackSubRequestPointer& rsrp) {
+  rsrp.set_address(address);
+  rsrp.set_fseq(fSeq);
+  rsrp.set_retrieveaccounted(retrieveAccounted);
+  rsrp.set_archiveaccounted(archiveAccounted);
+  rsrp.set_failureaccounted(failureAccounted);
+  rsrp.set_subrequestdeleted(subrequestDeleted);
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::RepackSubRequestPointer::deserialize()
+//------------------------------------------------------------------------------
+void RepackRequest::RepackSubRequestPointer::deserialize(const serializers::RepackSubRequestPointer& rsrp) {
+  address = rsrp.address();
+  fSeq = rsrp.fseq();
+  retrieveAccounted = rsrp.retrieveaccounted();
+  archiveAccounted = rsrp.archiveaccounted();
+  failureAccounted = rsrp.failureaccounted();
+  subrequestDeleted = rsrp.subrequestdeleted();
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::getOrPrepareSubrequestInfo()
+//------------------------------------------------------------------------------
+auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint32_t> fSeqs, AgentReference& agentRef) 
+-> SubrequestInfo::set {
+  checkPayloadWritable();
+  RepackSubRequestPointer::Map pointerMap;
+  // Read the map
+  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  SubrequestInfo::set ret;
+  bool newElementCreated = false;
+  // Prepare to return existing or created address.
+  for (auto &fs: fSeqs) {
+    SubrequestInfo retInfo;
+    try {
+      auto & srp = pointerMap.at(fs);
+      retInfo.address = srp.address;
+      retInfo.fSeq = srp.fSeq;
+      retInfo.subrequestDeleted = srp.subrequestDeleted;
+    } catch (std::out_of_range &) {
+      retInfo.address = agentRef.nextId("repackSubRequest");
+      retInfo.fSeq = fs;
+      retInfo.subrequestDeleted = false;
+      auto & p = pointerMap[fs];
+      p.address = retInfo.address;
+      p.fSeq = fs;
+      p.archiveAccounted = p.retrieveAccounted = p.failureAccounted = p.subrequestDeleted = false;
+      newElementCreated = true;
+    }
+    ret.emplace(retInfo);
+  }
+  // Record changes, if any.
+  if (newElementCreated) {
+    m_payload.mutable_subrequests()->Clear();
+    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::setLastExpandedFSeq()
+//------------------------------------------------------------------------------
+void RepackRequest::setLastExpandedFSeq(uint64_t lastExpandedFSeq) {
+  checkWritable();
+  m_payload.set_lastexpandedfseq(lastExpandedFSeq);
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::getLastExpandedFSeq()
+//------------------------------------------------------------------------------
+uint64_t RepackRequest::getLastExpandedFSeq() {
+  checkPayloadReadable();
+  return m_payload.lastexpandedfseq();
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::reportRetriveSuccesses()
+//------------------------------------------------------------------------------
+void RepackRequest::reportRetriveSuccesses(SubrequestStatistics::List& retrieveSuccesses) {
+  checkPayloadWritable();
+  RepackSubRequestPointer::Map pointerMap;
+  // Read the map
+  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  bool didUpdate = false;
+  for (auto & rs: retrieveSuccesses) {
+    try {
+      auto & p = pointerMap.at(rs.fSeq);
+      if (!p.retrieveAccounted) {
+        p.retrieveAccounted = true;
+        m_payload.set_retrievedbytes(m_payload.retrievedbytes() + rs.bytes);
+        m_payload.set_retrievedfiles(m_payload.retrievedfiles() + rs.files);
+        didUpdate = true;
+      }
+    } catch (std::out_of_range &) {
+      throw exception::Exception("In RepackRequest::reportRetriveSuccesses(): got a report for unknown fSeq");
+    }
+  }
+  if (didUpdate) {
+    m_payload.mutable_subrequests()->Clear();
+    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+  }
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::reportRetriveFailures()
+//------------------------------------------------------------------------------
+void RepackRequest::reportRetriveFailures(SubrequestStatistics::List& retrieveFailures) {
+  checkPayloadWritable();
+  RepackSubRequestPointer::Map pointerMap;
+  // Read the map
+  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  bool didUpdate = false;
+  for (auto & rs: retrieveFailures) {
+    try {
+      auto & p = pointerMap.at(rs.fSeq);
+      if (!p.failureAccounted) {
+        p.failureAccounted = true;
+        m_payload.set_failedtoretrievebytes(m_payload.failedtoretrievebytes() + rs.bytes);
+        m_payload.set_failedtoretievefiles(m_payload.failedtoretievefiles() + rs.files);
+        didUpdate = true;
+      }
+    } catch (std::out_of_range &) {
+      throw exception::Exception("In RepackRequest::reportRetriveFailures(): got a report for unknown fSeq");
+    }
+  }
+  if (didUpdate) {
+    m_payload.mutable_subrequests()->Clear();
+    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+  }
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::reportArchiveSuccesses()
+//------------------------------------------------------------------------------
+void RepackRequest::reportArchiveSuccesses(SubrequestStatistics::List& archiveSuccesses) {
+  checkPayloadWritable();
+  RepackSubRequestPointer::Map pointerMap;
+  // Read the map
+  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  bool didUpdate = false;
+  for (auto & as: archiveSuccesses) {
+    try {
+      auto & p = pointerMap.at(as.fSeq);
+      if (!p.archiveAccounted) {
+        p.archiveAccounted = true;
+        m_payload.set_archivedbytes(m_payload.archivedbytes() + as.bytes);
+        m_payload.set_archivedfiles(m_payload.archivedfiles() + as.files);
+        didUpdate = true;
+      }
+    } catch (std::out_of_range &) {
+      throw exception::Exception("In RepackRequest::reportArchiveSuccesses(): got a report for unknown fSeq");
+    }
+  }
+  if (didUpdate) {
+    m_payload.mutable_subrequests()->Clear();
+    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+  }
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::reportArchiveFailures()
+//------------------------------------------------------------------------------
+void RepackRequest::reportArchiveFailures(SubrequestStatistics::List& archiveFailures) {
+  checkPayloadWritable();
+  RepackSubRequestPointer::Map pointerMap;
+  // Read the map
+  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  bool didUpdate = false;
+  for (auto & rs: archiveFailures) {
+    try {
+      auto & p = pointerMap.at(rs.fSeq);
+      if (!p.failureAccounted) {
+        p.failureAccounted = true;
+        m_payload.set_failedtoarchivebytes(m_payload.failedtoarchivebytes() + rs.bytes);
+        m_payload.set_failedtoarchivefiles(m_payload.failedtoarchivefiles() + rs.files);
+        didUpdate = true;
+      }
+    } catch (std::out_of_range &) {
+      throw exception::Exception("In RepackRequest::reportRetriveFailures(): got a report for unknown fSeq");
+    }
+  }
+  if (didUpdate) {
+    m_payload.mutable_subrequests()->Clear();
+    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+  }
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::reportSubRequestsForDeletion()
+//------------------------------------------------------------------------------
+void RepackRequest::reportSubRequestsForDeletion(std::list<uint64_t>& fSeqs) {
+  checkPayloadWritable();
+  RepackSubRequestPointer::Map pointerMap;
+  // Read the map
+  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  bool didUpdate = false;
+  for (auto & fs: fSeqs) {
+    try {
+      auto & p = pointerMap.at(fs);
+      if (!p.subrequestDeleted) {
+        p.subrequestDeleted = true;
+        didUpdate = true;
+      }
+    } catch (std::out_of_range &) {
+      throw exception::Exception("In RepackRequest::reportSubRequestsForDeletion(): got a report for unknown fSeq");
+    }
+  }
+  if (didUpdate) {
+    m_payload.mutable_subrequests()->Clear();
+    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+  }
 }
 
 //------------------------------------------------------------------------------
