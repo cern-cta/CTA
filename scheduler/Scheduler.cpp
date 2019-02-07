@@ -410,6 +410,16 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   uint64_t fseq = c_defaultFseqForRepack;
   std::list<common::dataStructures::ArchiveFile> files;
   auto vid = repackRequest->getRepackInfo().vid;
+  //We need to get the ArchiveRoutes to allow the retrieval of the tapePool in which the
+  //tape where the file is is located
+  std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue.getArchiveRoutes();
+  //To identify the routes, we need to have both the dist instance name and the storage class name
+  //thus, the key of the map is a pair of string
+  std::map<std::pair<std::string, std::string>,common::dataStructures::ArchiveRoute> mapRoutes;
+  for(auto route: routes){
+    //insert the route into the map to allow a quick retrieval
+    mapRoutes[std::make_pair(route.storageClassName,route.diskInstanceName)] = route;
+  }
   while(true) {
     files = m_catalogue.getFilesForRepack(vid,fseq,c_defaultMaxNbFilesForRepack);
     for(auto &archiveFile : files)
@@ -419,6 +429,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
       retrieveRequest.dstURL = generateRetrieveDstURL(archiveFile.diskFileInfo);
       retrieveRequest.isRepack = true;
+      retrieveRequest.tapePool = mapRoutes[std::make_pair(archiveFile.storageClass,archiveFile.diskInstance)].tapePoolName;
       queueRetrieve(archiveFile.diskInstance,retrieveRequest,lc);
     }
     if (files.size()) {
@@ -1246,21 +1257,6 @@ getNextFailedRetrieveJobsBatch(uint64_t filesRequested, log::LogContext &logCont
   return ret;
 }
 
-//------------------------------------------------------------------------------
-// getNextSucceededRetrieveRequestForRepackBatch
-//------------------------------------------------------------------------------
-std::list<std::unique_ptr<RetrieveJob>> Scheduler::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
-{
-  std::list<std::unique_ptr<RetrieveJob>> ret;
-  //We need to go through the queues of SucceededRetrieveJobs
-  auto dbRet = m_db.getNextSucceededRetrieveRequestForRepackBatch(filesRequested,lc);
-  for(auto &j : dbRet)
-  {
-    ret.emplace_back(new RetrieveJob(nullptr, j->retrieveRequest,j->archiveFile, j->selectedCopyNb, PositioningMethod::ByFSeq));
-    ret.back()->m_dbJob.reset(j.release());
-  }  
-  return ret;
-}
 //------------------------------------------------------------------------------
 // reportArchiveJobsBatch
 //------------------------------------------------------------------------------

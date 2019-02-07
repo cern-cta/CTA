@@ -248,11 +248,6 @@ message SchedulerGlobalLock {
   required uint64 nextmountid = 8000;
 }
 
-message User {
-  required string name = 8800;
-  required string group = 8810;
-}
-
 message EntryLog {
   required string username = 8950;
   required string host = 8960;
@@ -316,7 +311,7 @@ message ArchiveRequest {
   required string archivereporturl = 9057;
   required string archiveerrorreporturl = 9058;
   required uint64 filesize = 9060;
-  required User requester = 9070;
+  required UserIdentity requester = 9070;
   required string srcurl = 9080;
   required string storageclass = 9090;
   required EntryLog creationlog = 9091;
@@ -372,6 +367,7 @@ message RetrieveRequest {
   required string failurereporturl = 9155;
   required string failurereportlog = 9156;
   required bool isrepack = 9157; //In protobuf, default values for bool is false
+  optional string tapepool = 9158;
 }
 
 message ValueCountPair {

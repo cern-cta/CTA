@@ -198,14 +198,6 @@ public:
   std::list<cta::common::dataStructures::RepackInfo> getRepacks();
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
 
-  /**
-   * Return the list of all RetrieveRequests that are in the RetrieveQueueToReportToRepackForSuccess
-   * @param nbRequests : The number of request we would like to return 
-   * @param lc
-   * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
-   */
-  std::list<std::unique_ptr<RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t nbRequests, log::LogContext& lc);
-
   void shrink(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool); 
     // removes extra tape copies from a specific pool(usually an "_2" pool)
 

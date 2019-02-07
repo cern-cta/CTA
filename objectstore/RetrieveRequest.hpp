@@ -30,6 +30,7 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
+#include "AgentReference.hpp"
 
 namespace cta { 
   namespace objectstore {
@@ -81,14 +82,36 @@ public:
   };
   
   /**
+   * This class allows to hold the asynchronous updater and the callback
+   * that will be executed for the transformation of a RetrieveRequest into an ArchiveRequest 
+   */
+  class AsyncRetrieveToArchiveTransformer{
+    friend class RetrieveRequest;
+  public:
+    void wait();  
+  private:
+    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    //Callback to be executed by the AsyncUpdater
+    std::function<std::string(const std::string &)> m_updaterCallback;
+  };
+  
+  /**
    * Asynchronously report the RetrieveJob corresponding to the copyNb parameter
    * as RJS_Success
    * @param copyNb the copyNb corresponding to the RetrieveJob we want to report as
    * RJS_Succeeded
-   * @return the class that is Reponsible to save the updater callback
+   * @return the class that is Responsible to save the updater callback
    * and the backend async updater (responsible for executing asynchronously the updater callback
    */
   AsyncJobSucceedForRepackReporter * asyncReportSucceedForRepack(uint64_t copyNb);
+  
+  /**
+   * Asynchronously transform the current RetrieveRequest into an ArchiveRequest
+   * @param processAgent : The agent of the process that will transform the RetrieveRequest into an ArchiveRequest
+   * @return the class that is Responsible to save the updater callback and the backend async updater.
+   */
+  AsyncRetrieveToArchiveTransformer * asyncTransformToArchiveRequest(AgentReference& processAgent);
   
   JobDump getJob(uint16_t copyNb);
   std::list<JobDump> getJobs();
@@ -122,6 +145,8 @@ public:
   };
   bool isRepack();
   void setIsRepack(bool isRepack);
+  std::string getTapePool();
+  void setTapePool(const std::string tapePool);
   
 private:
   /*!

@@ -843,6 +843,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   rReq->initialize();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
+  rReq->setTapePool(rqst.tapePool);
   // Find the job corresponding to the vid (and check we indeed have one).
   auto jobs = rReq->getJobs();
   objectstore::RetrieveRequest::JobDump job;
@@ -869,6 +870,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
     // "Select" an arbitrary copy number. This is needed to serialize the object.
     rReq->setActiveCopyNumber(criteria.archiveFile.tapeFiles.begin()->second.copyNb);
     rReq->setIsRepack(rqst.isRepack);
+    rReq->setTapePool(rqst.tapePool);
     rReq->insert();
     double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     m_taskQueueSize++;
@@ -3155,9 +3157,9 @@ void OStoreDB::RetrieveJob::checkReportSucceedForRepack(){
   m_jobSucceedForRepackReporter->wait();
 }
 
-std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> OStoreDB::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
+std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> OStoreDB::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
 {
-  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> ret;
+  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> ret;
   typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> Carqtrtrfs;
   Carqtrtrfs algo(this->m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
@@ -3174,12 +3176,8 @@ std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> OStoreDB::getNex
     if(jobs.elements.empty()) continue;
     for(auto &j : jobs.elements)
     {
-      std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this, nullptr));
-      rj->archiveFile = j.archiveFile;
-      rj->retrieveRequest = j.rr;
-      rj->selectedCopyNb = j.copyNb;
-      rj->setJobOwned();
-      ret.emplace_back(std::move(rj));
+      //TODO : If the retrieve request has more than one job, it will be inserted. Should we filter it ?
+      ret.emplace_back(std::move(j.retrieveRequest));
     }
     return ret;
   }

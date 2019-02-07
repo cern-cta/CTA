@@ -210,6 +210,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
         job.tapeCopies[tf.second.vid].second = tf.second;
         job.request.dstURL                   = osrr.first.getSchedulerRequest().dstURL;
         job.request.archiveFileID            = osrr.first.getArchiveFile().archiveFileID;
+        job.request.tapePool                 = osrr.first.getTapePool();
         job.fileSize                         = osrr.first.getArchiveFile().fileSize;
 
         m_jobCache.push_back(job);

@@ -58,6 +58,7 @@ void RetrieveRequest::initialize() {
   m_payload.set_failurereportlog("");
   m_payload.set_failurereporturl("");
   m_payload.set_isrepack(false);
+  m_payload.set_tapepool("");
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -401,6 +402,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.dstURL = m_payload.schedulerrequest().dsturl();
   ret.isRepack = m_payload.isrepack();
+  ret.tapePool = m_payload.tapepool();
   ret.errorReportURL = m_payload.schedulerrequest().retrieveerrorreporturl();
   objectstore::DiskFileInfoSerDeser dfisd;
   dfisd.deserialize(m_payload.schedulerrequest().diskfileinfo());
@@ -713,6 +715,7 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint16_t copyNumber, const std::string
             retRef.m_retrieveRequest.diskFileInfo = dfi;
             retRef.m_retrieveRequest.dstURL = payload.schedulerrequest().dsturl();
             retRef.m_retrieveRequest.isRepack = payload.isrepack();
+            retRef.m_retrieveRequest.tapePool = payload.tapepool();
             retRef.m_retrieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
             retRef.m_retrieveRequest.requester.name = payload.schedulerrequest().requester().name();
             retRef.m_retrieveRequest.requester.group = payload.schedulerrequest().requester().group();
@@ -822,7 +825,7 @@ void RetrieveRequest::AsyncJobDeleter::wait() {
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::AsyncJobSucceedForRepackReporter::asyncReportSucceedForRepack()
+// RetrieveRequest::asyncReportSucceedForRepack()
 //------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReportSucceedForRepack(uint64_t copyNb)
 {
@@ -874,6 +877,107 @@ void RetrieveRequest::AsyncJobSucceedForRepackReporter::wait(){
 }
 
 //------------------------------------------------------------------------------
+// RetrieveRequest::asyncTransformToArchiveRequest()
+//------------------------------------------------------------------------------
+RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTransformToArchiveRequest(AgentReference& processAgent){
+  std::unique_ptr<AsyncRetrieveToArchiveTransformer> ret(new AsyncRetrieveToArchiveTransformer);
+  std::string processAgentAddress = processAgent.getAgentAddress();
+  ret->m_updaterCallback = [processAgentAddress](const std::string &in)->std::string{
+    // We have a locked and fetched object, so we just need to work on its representation.
+    cta::objectstore::serializers::ObjectHeader oh;
+    if (!oh.ParseFromString(in)) {
+      // Use a the tolerant parser to assess the situation.
+      oh.ParsePartialFromString(in);
+      throw cta::exception::Exception(std::string("In RetrieveRequest::asyncTransformToArchiveRequest(): could not parse header: ")+
+        oh.InitializationErrorString());
+    }
+    if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
+      std::stringstream err;
+      err << "In RetrieveRequest::asyncTransformToArchiveRequest()::lambda(): wrong object type: " << oh.type();
+      throw cta::exception::Exception(err.str());
+    }
+    serializers::RetrieveRequest retrieveRequestPayload;
+
+    if (!retrieveRequestPayload.ParseFromString(oh.payload())) {
+      // Use a the tolerant parser to assess the situation.
+      retrieveRequestPayload.ParsePartialFromString(oh.payload());
+      throw cta::exception::Exception(std::string("In RetrieveRequest::asyncTransformToArchiveRequest(): could not parse payload: ")+
+        retrieveRequestPayload.InitializationErrorString());
+    }
+    
+    // Create the archive request from the RetrieveRequest
+    serializers::ArchiveRequest archiveRequestPayload;
+    const cta::objectstore::serializers::ArchiveFile& archiveFile = retrieveRequestPayload.archivefile();
+    archiveRequestPayload.set_archivefileid(archiveFile.archivefileid());
+    archiveRequestPayload.set_checksumtype(archiveFile.checksumtype());
+    archiveRequestPayload.set_checksumvalue(archiveFile.checksumvalue());
+    archiveRequestPayload.set_creationtime(archiveFile.creationtime()); //TODO : should the creation time be the same as the archiveFile creation time ?
+    archiveRequestPayload.set_diskfileid(archiveFile.diskfileid());
+    archiveRequestPayload.set_diskinstance(archiveFile.diskinstance());
+    archiveRequestPayload.set_filesize(archiveFile.filesize());
+    archiveRequestPayload.set_reconcilationtime(archiveFile.reconciliationtime());
+    archiveRequestPayload.set_storageclass(archiveFile.storageclass());
+    archiveRequestPayload.set_archiveerrorreporturl("");//No archive error report URL
+    archiveRequestPayload.set_archivereporturl("");//No archive report URL
+    archiveRequestPayload.set_reportdecided(false);//TODO : should we put it as false ?
+    
+    // Copy disk file informations into the new ArchiveRequest
+    cta::objectstore::serializers::DiskFileInfo *archiveRequestDFI = archiveRequestPayload.mutable_diskfileinfo();
+    archiveRequestDFI->CopyFrom(archiveFile.diskfileinfo());
+   
+    //ArchiveRequest source url is the same as the retrieveRequest destination URL
+    const cta::objectstore::serializers::SchedulerRetrieveRequest schedulerRetrieveRequest = retrieveRequestPayload.schedulerrequest();
+    archiveRequestPayload.set_srcurl(schedulerRetrieveRequest.dsturl());
+    cta::objectstore::serializers::UserIdentity *archiveRequestUser = archiveRequestPayload.mutable_requester();
+    archiveRequestUser->CopyFrom(schedulerRetrieveRequest.requester());
+    
+    //Copy the RetrieveRequest MountPolicy into the new ArchiveRequest
+    cta::objectstore::serializers::MountPolicy *archiveRequestMP = archiveRequestPayload.mutable_mountpolicy();
+    const cta::objectstore::serializers::MountPolicy& retrieveRequestMP = retrieveRequestPayload.mountpolicy();
+    archiveRequestMP->CopyFrom(retrieveRequestMP);
+    
+    //TODO : Should creation log just be initialized or should it be copied from the retrieveRequest ?
+    cta::objectstore::serializers::EntryLog *archiveRequestCL = archiveRequestPayload.mutable_creationlog();
+    archiveRequestCL->CopyFrom(retrieveRequestMP.creationlog());
+    //Add the jobs of the old RetrieveRequest to the new ArchiveRequest
+    for(auto retrieveJob: retrieveRequestPayload.jobs()){
+      auto *archiveJob = archiveRequestPayload.add_jobs();
+      archiveJob->set_status(cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransfer);
+      archiveJob->set_copynb(retrieveJob.copynb());
+      archiveJob->set_archivequeueaddress("");
+      archiveJob->set_totalreportretries(0);
+      archiveJob->set_lastmountwithfailure(0);
+      archiveJob->set_totalretries(0);
+      archiveJob->set_retrieswithinmount(0);
+      archiveJob->set_maxretrieswithinmount(retrieveJob.maxretrieswithinmount()); //TODO : should we put the same value as the retrieveJob ?
+      archiveJob->set_totalreportretries(0);
+      archiveJob->set_maxtotalretries(retrieveJob.maxtotalretries()); //TODO : should we put the same value as the retrieveJob ?
+      archiveJob->set_maxreportretries(retrieveJob.maxreportretries()); //TODO : should we put the same value as the retrieveJob ?
+      archiveJob->set_tapepool(retrieveRequestPayload.tapepool());
+      archiveJob->set_owner(processAgentAddress);
+    }
+    
+    //Serialize the new ArchiveRequest so that it replaces the RetrieveRequest
+    oh.set_payload(archiveRequestPayload.SerializeAsString());
+    //Change the type of the RetrieveRequest to ArchiveRequest
+    oh.set_type(serializers::ObjectType::ArchiveRequest_t);
+    //the new ArchiveRequest is now owned by the old RetrieveRequest owner (The Repack Request)
+    oh.set_owner(oh.owner());
+    
+    return oh.SerializeAsString();
+  };
+  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(),ret->m_updaterCallback));
+  return ret.release();
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncRetrieveToArchiveTransformer::wait()
+//------------------------------------------------------------------------------
+void RetrieveRequest::AsyncRetrieveToArchiveTransformer::wait(){
+  m_backendUpdater->wait();
+}
+
+//------------------------------------------------------------------------------
 // RetrieveRequest::getFailures()
 //------------------------------------------------------------------------------
 std::list<std::string> RetrieveRequest::getFailures() {
@@ -919,4 +1023,14 @@ void RetrieveRequest::setIsRepack(bool isRepack){
   m_payload.set_isrepack(isRepack);
 }
 
+std::string RetrieveRequest::getTapePool(){
+  checkPayloadReadable();
+  return m_payload.tapepool();
+}
+
+void RetrieveRequest::setTapePool(const std::string tapePool)
+{
+  checkPayloadWritable();
+  m_payload.set_tapepool(tapePool);
+}
 }} // namespace cta::objectstore

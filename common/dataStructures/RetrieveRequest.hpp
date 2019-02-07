@@ -49,7 +49,7 @@ struct RetrieveRequest {
   DiskFileInfo diskFileInfo;
   EntryLog creationLog;
   bool isRepack;
-
+  std::string tapePool;
 }; // struct RetrieveRequest
 
 std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj);

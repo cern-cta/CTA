@@ -74,11 +74,12 @@ class TapeMount;
 class TapeSession;
 class UserIdentity;
 class RepackRequest;
+namespace objectstore{
+  class RetrieveRequest;
+}
 } // cta
 
 namespace cta {
-
-class ArchiveRequest;
 
 /**
  * Abstract class defining the interface to the database of a tape resource
@@ -433,7 +434,13 @@ public:
    */
   virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
   virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
-  virtual std::list<std::unique_ptr<RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& logContext) = 0;
+   /**
+   * Return the list of all RetrieveRequests that are in the RetrieveQueueToReportToRepackForSuccess
+   * @param filesRequested : The number of files we would like to return 
+   * @param lc
+   * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
+   */
+  virtual std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& logContext) = 0;
 
   /*============ Label management: user side =================================*/
   // TODO
