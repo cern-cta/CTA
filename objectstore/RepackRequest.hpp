@@ -42,6 +42,55 @@ public:
   void setStatus(common::dataStructures::RepackInfo::Status repackStatus);
   common::dataStructures::RepackInfo getInfo();
   
+  // Sub request management
+  struct SubrequestInfo {
+    std::string address;
+    uint64_t fSeq;
+    bool subrequestDeleted;  ///< A boolean set to true before deleting a request. Covers the race between request creation recording and request
+    typedef std::set<SubrequestInfo> set;
+    bool operator< (const SubrequestInfo & o) const { return fSeq < o.fSeq; }
+  };
+  /** 
+   * Provide a list of addresses for a set or fSeqs. For expansion of repack requests.
+   * The addresses could be provided from the repack request if previously recorded, or
+   * generated if not. The repack request should then be committed (not done here) before the
+   * sub requests are actually created. Sub requests could also be already present, and this
+   * would not be an error case (the previous process doing the expansion managed to create them),
+   * yet not update the object to reflect the last fSeq created.
+   * This function implicitly records the information it generates (commit up t the caller);
+   */
+  SubrequestInfo::set getOrPrepareSubrequestInfo (std::set<uint32_t> fSeqs, AgentReference & agentRef);
+private:
+  struct RepackSubRequestPointer {
+    std::string address;
+    uint64_t fSeq;
+    bool retrieveAccounted;
+    bool archiveAccounted;
+    bool failureAccounted;
+    bool subrequestDeleted;
+    typedef std::map<uint64_t, RepackSubRequestPointer> Map;
+    void serialize (serializers::RepackSubRequestPointer & rsrp);
+    void deserialize (const serializers::RepackSubRequestPointer & rsrp);
+  };
+  
+public:
+  /// Set the last fully created sub-requests address
+  void setLastExpandedFSeq(uint64_t lastExpandedFSeq);
+  uint64_t getLastExpandedFSeq();
+  
+  struct SubrequestStatistics {
+    uint64_t fSeq;
+    uint64_t files = 1;
+    uint64_t bytes;
+    typedef std::list<SubrequestStatistics> List;
+    bool operator< (const SubrequestStatistics & o) const { return fSeq < o.fSeq; }
+  };
+  void reportRetriveSuccesses (SubrequestStatistics::List & retrieveSuccesses);
+  void reportRetriveFailures (SubrequestStatistics::List & retrieveFailures);
+  void reportArchiveSuccesses (SubrequestStatistics::List & archiveSuccesses);
+  void reportArchiveFailures (SubrequestStatistics::List & archiveFailures);
+  void reportSubRequestsForDeletion (std::list<uint64_t>& fSeqs);
+  
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
     
