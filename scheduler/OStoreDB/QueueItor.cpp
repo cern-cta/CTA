@@ -119,6 +119,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
         job.request.srcURL           = osar.first.getSrcURL();
         job.request.archiveReportURL = osar.first.getArchiveReportURL();
         job.request.storageClass     = osar.first.getArchiveFile().storageClass;
+        job.failurelogs              = osar.first.getFailures();
 
         m_jobCache.push_back(job);
       }
@@ -209,6 +210,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
         job.request                   = osrr.first.getSchedulerRequest();
         job.fileSize                  = osrr.first.getArchiveFile().fileSize;
         job.tapeCopies[tf.second.vid] = std::make_pair(tf.second.copyNb, tf.second);
+        job.failurelogs               = osrr.first.getFailures();
 
         m_jobCache.push_back(job);
       }

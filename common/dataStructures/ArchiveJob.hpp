@@ -20,7 +20,6 @@
 
 #include <list>
 #include <map>
-#include <stdint.h>
 #include <string>
 
 #include "common/dataStructures/ArchiveRequest.hpp"
@@ -46,6 +45,7 @@ struct ArchiveJob {
   std::string instanceName;
   uint64_t copyNumber;
   uint64_t archiveFileID;
+  std::list<std::string> failurelogs;
 
 }; // struct ArchiveJob
 

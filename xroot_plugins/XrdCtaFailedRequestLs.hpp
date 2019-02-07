@@ -136,13 +136,8 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
   record.mutable_frls_item()->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
 
   if(m_isLogEntries) {
-#if 0
-    for(auto &errLogMsg : item.failurelogs) {
-      record.mutable_frls_item()->mutable_failurelogs()->Add(errLogMsg);
-    }
-#endif
+    *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
   }
-
   return streambuf->Push(record);
 }
 
@@ -165,6 +160,9 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
   record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
   record.mutable_frls_item()->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
 
+  if(m_isLogEntries) {
+    *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
+  }
   return streambuf->Push(record);
 }
 

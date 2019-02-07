@@ -784,8 +784,4 @@ std::string ArchiveRequest::getTapePoolForJob(uint16_t copyNumber) {
   throw exception::Exception("In ArchiveRequest::getTapePoolForJob(): job not found.");
 }
 
-
-
-
 }} // namespace cta::objectstore
-
