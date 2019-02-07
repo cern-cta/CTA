@@ -485,6 +485,10 @@ void CtaAdminCmd::print(const cta::admin::FailedRequestLsItem &frls_item)
              << std::setfill(' ') << std::setw(6)  << std::right << frls_item.requester().groupname() << ' '
                                                                  << frls_item.af().df().path()
              << std::endl;
+
+   for(auto &errLogMsg : frls_item.failurelogs()) {
+     std::cout << errLogMsg << std::endl;
+   }
 }
 
 void CtaAdminCmd::printFrLsSummaryHeader()

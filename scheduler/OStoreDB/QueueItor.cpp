@@ -206,11 +206,9 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
       if(tf.second.vid == m_jobQueuesQueueIt->vid) {
         auto job = cta::common::dataStructures::RetrieveJob();
 
-        job.tapeCopies[tf.second.vid].first  = tf.second.copyNb;
-        job.tapeCopies[tf.second.vid].second = tf.second;
-        job.request.dstURL                   = osrr.first.getSchedulerRequest().dstURL;
-        job.request.archiveFileID            = osrr.first.getArchiveFile().archiveFileID;
-        job.fileSize                         = osrr.first.getArchiveFile().fileSize;
+        job.request                   = osrr.first.getSchedulerRequest();
+        job.fileSize                  = osrr.first.getArchiveFile().fileSize;
+        job.tapeCopies[tf.second.vid] = std::make_pair(tf.second.copyNb, tf.second);
 
         m_jobCache.push_back(job);
       }

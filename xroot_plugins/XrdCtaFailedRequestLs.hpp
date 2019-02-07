@@ -98,13 +98,13 @@ private:
    * Add a record to the stream
    *
    * @param[in]    streambuf      XRootD SSI stream object to push records to
-   * @param[in]    requestType    The type of failed request (archive or retrieve)
+   * @param[in]    item           Archive or Retrieve Job (used for template specialisation)
    *
    * @retval    true     Stream buffer is full and ready to send
    * @retval    false    Stream buffer is not full
    */
   template<typename QueueType>
-  bool pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const std::string &qid, const QueueType &item);
+  bool pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const QueueType &item);
 
   // Member variables
 
@@ -124,18 +124,24 @@ private:
  * pushRecord ArchiveJob specialisation
  */
 template<> bool FailedRequestLsStream::
-pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const std::string &tapepool,
-  const common::dataStructures::ArchiveJob &item)
+pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructures::ArchiveJob &item)
 {
   Data record;
 
   record.mutable_frls_item()->set_request_type(admin::RequestType::ARCHIVE_REQUEST);
-  record.mutable_frls_item()->set_tapepool(tapepool);
+  record.mutable_frls_item()->set_tapepool(m_archiveQueueItorPtr->qid());
   record.mutable_frls_item()->set_copy_nb(item.copyNumber);
   record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
   record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
   record.mutable_frls_item()->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
-  //record.mutable_frls()->set_failurelogs(...
+
+  if(m_isLogEntries) {
+#if 0
+    for(auto &errLogMsg : item.failurelogs) {
+      record.mutable_frls_item()->mutable_failurelogs()->Add(errLogMsg);
+    }
+#endif
+  }
 
   return streambuf->Push(record);
 }
@@ -146,9 +152,10 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const std::string &tapepool
  * pushRecord RetrieveJob specialisation
  */
 template<> bool FailedRequestLsStream::
-pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const std::string &vid,
-  const common::dataStructures::RetrieveJob &item)
+pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructures::RetrieveJob &item)
 {
+  auto &vid = m_retrieveQueueItorPtr->qid();
+
   Data record;
 
   record.mutable_frls_item()->set_request_type(admin::RequestType::RETRIEVE_REQUEST);
@@ -190,13 +197,13 @@ XrdSsiStream::Buffer* FailedRequestLsStream::GetBuff(XrdSsiErrInfo &eInfo, int &
       // List failed archive requests
       if(isArchiveJobs) {
         for(bool is_buffer_full = false; !m_archiveQueueItorPtr->end() && !is_buffer_full; ++*m_archiveQueueItorPtr) {
-          is_buffer_full = pushRecord(streambuf, m_archiveQueueItorPtr->qid(), **m_archiveQueueItorPtr);
+          is_buffer_full = pushRecord(streambuf, **m_archiveQueueItorPtr);
         }
       }
       // List failed retrieve requests
       if(isRetrieveJobs) {
         for(bool is_buffer_full = false; !m_retrieveQueueItorPtr->end() && !is_buffer_full; ++*m_retrieveQueueItorPtr) {
-          is_buffer_full = pushRecord(streambuf, m_retrieveQueueItorPtr->qid(), **m_retrieveQueueItorPtr);
+          is_buffer_full = pushRecord(streambuf, **m_retrieveQueueItorPtr);
         }
       }
     }
