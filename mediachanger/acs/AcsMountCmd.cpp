@@ -43,7 +43,7 @@ int cta::mediachanger::acs::AcsMountCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {
   try {
     m_cmdLine = AcsMountCmdLine(argc, argv);
-  } catch(cta::exception::Exception ex) {
+  } catch(cta::exception::Exception &ex) {
     m_err << ex.getMessage().str() << std::endl;
     m_err << std::endl;
     m_err << m_cmdLine.getUsage() << std::endl;
