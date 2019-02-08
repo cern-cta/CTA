@@ -2307,6 +2307,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
     }
   case NextStep::EnqueueForReport: {
       m_archiveRequest.commit();
+      auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
@@ -2314,7 +2315,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapeFile.vid, QueueType::JobsToReport, insertedElements, lc);
+      caAqtr.referenceAndSwitchOwnership(tapepool, QueueType::JobsToReport, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2354,6 +2355,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
     }
   case NextStep::StoreInFailedJobsContainer: {
       m_archiveRequest.commit();
+      auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
@@ -2361,7 +2363,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapeFile.vid, QueueType::FailedJobs, insertedElements, lc);
+      caAqtr.referenceAndSwitchOwnership(tapepool, QueueType::FailedJobs, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2400,6 +2402,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
     // We have a reduced set of supported next steps as some are not compatible with this event (see default).
   case NextStep::EnqueueForReport: {
       m_archiveRequest.commit();
+      auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
@@ -2407,7 +2410,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapeFile.vid, QueueType::JobsToReport, insertedElements, lc);
+      caAqtr.referenceAndSwitchOwnership(tapepool, QueueType::JobsToReport, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2420,6 +2423,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
     }
   default: {
       m_archiveRequest.commit();
+      auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
@@ -2427,7 +2431,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapeFile.vid, QueueType::FailedJobs, insertedElements, lc);
+      caAqtr.referenceAndSwitchOwnership(tapepool, QueueType::FailedJobs, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
