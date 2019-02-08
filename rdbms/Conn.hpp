@@ -107,7 +107,7 @@ public:
    *
    * @return The autocommit mode of the connection.
    */
-  AutocommitMode getAutocommitMode() const noexcept;
+  AutocommitMode getAutocommitMode() const;
 
   /**
    * Creates a prepared statement.
