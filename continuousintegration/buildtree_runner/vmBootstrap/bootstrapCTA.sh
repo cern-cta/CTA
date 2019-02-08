@@ -37,3 +37,7 @@ echo Building CTA
 mkdir -p ~/CTA-build
 (cd ~/CTA-build && cmake ../CTA; make -j 4)
 
+echo Tuning the system for EOS
+sudo bash -c "echo net.ipv4.tcp_tw_reuse = 1 >> /etc/sysctl.d/00-eos.conf"
+sudo sysctl -p
+
