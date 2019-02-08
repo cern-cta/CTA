@@ -1221,7 +1221,7 @@ void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabas
       (*fet)->wait();
       try {
         stats.at(req.getInfo().status)++;
-      } catch (std::out_of_range) {
+      } catch (std::out_of_range&) {
         stats[req.getInfo().status] = 1;
       }
     } catch (...) {}
