@@ -163,7 +163,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
   // Check there was no error.
   try {
     exception::Errnum::throwOnMinusOne(rc);
-  } catch (exception::Exception ex) {
+  } catch (exception::Exception &ex) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("pid", m_pid)
           .add("Message", ex.getMessageValue());
