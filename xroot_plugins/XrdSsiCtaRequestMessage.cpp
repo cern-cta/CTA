@@ -1049,9 +1049,9 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
    std::string vid      = "";
 
    OStoreDB::ArchiveQueueItor_t *archiveQueueItorPtr =
-      has_flag(OptionBoolean::JUSTRETRIEVE) ? nullptr : m_scheddb.getArchiveJobItorPtr(tapepool);
+      has_flag(OptionBoolean::JUSTRETRIEVE) ? nullptr : m_scheddb.getArchiveJobItorPtr(tapepool, objectstore::QueueType::FailedJobs);
    OStoreDB::RetrieveQueueItor_t *retrieveQueueItorPtr =
-      has_flag(OptionBoolean::JUSTARCHIVE)  ? nullptr : m_scheddb.getRetrieveJobItorPtr(vid);
+      has_flag(OptionBoolean::JUSTARCHIVE)  ? nullptr : m_scheddb.getRetrieveJobItorPtr(vid,     objectstore::QueueType::FailedJobs);
 
    // Create a XrdSsi stream object to return the results
    stream = new FailedRequestLsStream(m_scheduler, archiveQueueItorPtr, retrieveQueueItorPtr, has_flag(OptionBoolean::SUMMARY), has_flag(OptionBoolean::SHOW_LOG_ENTRIES), m_lc);
