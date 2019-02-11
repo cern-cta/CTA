@@ -110,7 +110,10 @@ public:
       dlen = streambuf->Size();
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
     } catch(cta::exception::Exception &ex) {
-      throw std::runtime_error(ex.getMessage().str());
+      std::ostringstream errMsg;
+      errMsg << __FUNCTION__ << " failed: Caught CTA exception: " << ex.what();
+      eInfo.Set(errMsg.str().c_str(), ECANCELED);
+      delete streambuf;
     } catch(std::exception &ex) {
       std::ostringstream errMsg;
       errMsg << __FUNCTION__ << " failed: " << ex.what();

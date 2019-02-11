@@ -17,8 +17,13 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/Errnum.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/threading/RWLockRdLocker.hpp"
+#include "common/threading/RWLockWrLocker.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/wrapper/OcciConn.hpp"
 #include "rdbms/wrapper/OcciEnv.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
@@ -35,7 +40,8 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 OcciConn::OcciConn(oracle::occi::Environment *const env, oracle::occi::Connection *const conn):
   m_env(env),
-  m_occiConn(conn) {
+  m_occiConn(conn),
+  m_autocommitMode(AutocommitMode::AUTOCOMMIT_ON) {
   if(nullptr == conn) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed"
       ": The OCCI connection is a nullptr pointer");
@@ -66,9 +72,37 @@ void OcciConn::close() {
 }
 
 //------------------------------------------------------------------------------
+// setAutocommitMode
+//------------------------------------------------------------------------------
+void OcciConn::setAutocommitMode(const AutocommitMode autocommitMode) {
+  threading::RWLockWrLocker wrLocker(m_autocommitModeRWLock);
+  m_autocommitMode = autocommitMode;
+}
+
+//------------------------------------------------------------------------------
+// getAutocommitMode
+//------------------------------------------------------------------------------
+AutocommitMode OcciConn::getAutocommitMode() const noexcept{
+  threading::RWLockRdLocker rdLocker(m_autocommitModeRWLock);
+  return m_autocommitMode;
+}
+
+//------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void OcciConn::executeNonQuery(const std::string &sql) {
+  try {
+    auto stmt = createStmt(sql);
+    stmt->executeNonQuery();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, AutocommitMode autocommitMode) {
+std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql) {
   try {
     threading::MutexLocker locker(m_mutex);
 
@@ -80,7 +114,7 @@ std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, AutocommitMod
     if (nullptr == stmt) {
       throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
     }
-    return cta::make_unique<OcciStmt>(autocommitMode, sql, *this, stmt);
+    return cta::make_unique<OcciStmt>(sql, *this, stmt);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());
@@ -140,7 +174,7 @@ std::list<std::string> OcciConn::getTableNames() {
         "USER_TABLES "
       "ORDER BY "
         "TABLE_NAME";
-    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("TABLE_NAME");
@@ -168,7 +202,7 @@ std::list<std::string> OcciConn::getSequenceNames() {
         "USER_SEQUENCES "
       "ORDER BY "
         "SEQUENCE_NAME";
-    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("SEQUENCE_NAME");

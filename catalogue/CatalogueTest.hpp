@@ -22,8 +22,6 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "rdbms/wrapper/Conn.hpp"
-#include "rdbms/LoginFactory.hpp"
 
 #include <gtest/gtest.h>
 #include <map>
@@ -32,7 +30,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_CatalogueTest : public ::testing::TestWithParam<cta::rdbms::LoginFactory*> {
+class cta_catalogue_CatalogueTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
 public:
 
   cta_catalogue_CatalogueTest();
@@ -43,12 +41,6 @@ protected:
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   cta::common::dataStructures::SecurityIdentity m_localAdmin;
   cta::common::dataStructures::SecurityIdentity m_admin;
-
-  /**
-   * A general purpose database connection outside of the m_catalogue object to
-   * be used to run tests directly on the underlying "raw" catalogue database.
-   */
-  std::unique_ptr<cta::rdbms::wrapper::Conn> m_conn;
 
   virtual void SetUp();
 
@@ -72,6 +64,17 @@ protected:
    */
   std::map<uint64_t, cta::common::dataStructures::ArchiveFile> archiveFileItorToMap(
     cta::catalogue::ArchiveFileItor &itor);
+
+  /**
+   * Creates a map from archive file ID to archive file from the specified
+   * list of archive files.
+   *
+   * @param listOfArchiveFiles The list of archive files from which the map
+   * shall be created.
+   * @return Map from archive file ID to archive file.
+   */
+  std::map<uint64_t, cta::common::dataStructures::ArchiveFile> archiveFileListToMap(
+    const std::list<cta::common::dataStructures::ArchiveFile> &listOfArchiveFiles);
 
   /**
    * Creates a map from admin username to admin user from the specified list of

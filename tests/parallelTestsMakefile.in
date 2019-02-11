@@ -1,50 +1,53 @@
 .phony: all
 
-all: valgrind valgrindMultiprocess helgrindBase helgrindScheduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue helgrindMultiprocess
+all: baretests valgrind valgrindMultiprocess helgrindBase helgrindScheduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue helgrindMultiprocess
 	
-	
-valgrind: valgrindMultiprocess helgrindMultiprocess
+baretests:
+	MALLOC_CHECK_=3 /usr/bin/cta-unitTests | ts "bt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	MALLOC_CHECK_=3 /usr/bin/cta-unitTests-multiProcess | ts "btmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+
+valgrind: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q @VALGRIND_OPTS_STR@                                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
-	/usr/bin/cta-unitTests | ts "vg: %b %d %H:%M:%S"
+	/usr/bin/cta-unitTests 2>&1 | ts "vg: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-valgrindMultiprocess:
+valgrindMultiprocess: baretests
 	valgrind -q @VALGRIND_OPTS_STR@ --child-silent-after-fork=yes                 \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
-	/usr/bin/cta-unitTests-multiProcess | ts "vgmp: %b %d %H:%M:%S"
+	/usr/bin/cta-unitTests-multiProcess 2>&1 | ts "vgmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindBase: valgrindMultiprocess helgrindMultiprocess
+helgrindBase: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
 	--gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory* \
-	| ts "hgb: %b %d %H:%M:%S"
+	2>&1 | ts "hgb: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindScheduler: valgrindMultiprocess helgrindMultiprocess
+helgrindScheduler: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler* | ts "hgs: %b %d %H:%M:%S"
+	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler* 2>&1 | ts "hgs: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindOStoreDB: valgrindMultiprocess helgrindMultiprocess
+helgrindOStoreDB: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter=OStoreTestVFS* | ts "hgosdb: %b %d %H:%M:%S"
+	--gtest_filter=OStoreTestVFS* 2>&1 | ts "hgosdb: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindDataTransfer: valgrindMultiprocess helgrindMultiprocess
+helgrindDataTransfer: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest* | ts "hgdt: %b %d %H:%M:%S"
+	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest* 2>&1 | ts "hgdt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindInMemoryCatalogue: valgrindMultiprocess helgrindMultiprocess
+helgrindInMemoryCatalogue: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter=InMemory/* | ts "hgimc: %b %d %H:%M:%S"
+	--gtest_filter=InMemory/* 2>&1 | ts "hgimc: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindMultiprocess: valgrindMultiprocess
+helgrindMultiprocess: valgrindMultiprocess baretests
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
-	/usr/bin/cta-unitTests-multiProcess | ts "hgmp: %b %d %H:%M:%S"
+	/usr/bin/cta-unitTests-multiProcess 2>&1 | ts "hgmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})

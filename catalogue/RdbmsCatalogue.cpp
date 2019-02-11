@@ -26,9 +26,11 @@
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringDiskInstanceName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringMediaType.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringStorageClassName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringVendor.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
 #include "catalogue/UserSpecifiedAZeroCapacity.hpp"
@@ -57,12 +59,10 @@ RdbmsCatalogue::RdbmsCatalogue(
   log::Logger &log,
   const rdbms::Login &login,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect):
+  const uint64_t nbArchiveFileListingConns):
   m_log(log),
   m_connPool(login, nbConns),
   m_archiveFileListingConnPool(login, nbArchiveFileListingConns),
-  m_maxTriesToConnect(maxTriesToConnect),
   m_tapeCopyToPoolCache(10),
   m_groupMountPolicyCache(10),
   m_userMountPolicyCache(10),
@@ -123,7 +123,7 @@ void RdbmsCatalogue::createAdminUser(
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":ADMIN_USER_NAME", username);
 
@@ -158,7 +158,7 @@ bool RdbmsCatalogue::adminUserExists(rdbms::Conn &conn, const std::string adminU
         "ADMIN_USER "
       "WHERE "
         "ADMIN_USER_NAME = :ADMIN_USER_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":ADMIN_USER_NAME", adminUsername);
     auto rset = stmt.executeQuery();
     return rset.next();
@@ -177,7 +177,7 @@ void RdbmsCatalogue::deleteAdminUser(const std::string &username) {
   try {
     const char *const sql = "DELETE FROM ADMIN_USER WHERE ADMIN_USER_NAME = :ADMIN_USER_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":ADMIN_USER_NAME", username);
     stmt.executeNonQuery();
 
@@ -216,7 +216,7 @@ std::list<common::dataStructures::AdminUser> RdbmsCatalogue::getAdminUsers() con
       "ORDER BY "
         "ADMIN_USER_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       common::dataStructures::AdminUser admin;
@@ -266,7 +266,7 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
       "WHERE "
         "ADMIN_USER_NAME = :ADMIN_USER_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -344,7 +344,7 @@ void RdbmsCatalogue::createStorageClass(
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindUint64(":STORAGE_CLASS_ID", storageClassId);
     stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstance);
@@ -385,7 +385,7 @@ bool RdbmsCatalogue::storageClassExists(rdbms::Conn &conn, const std::string &di
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     auto rset = stmt.executeQuery();
@@ -410,7 +410,7 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &diskInstanceName, con
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql,rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
@@ -454,7 +454,7 @@ std::list<common::dataStructures::StorageClass> RdbmsCatalogue::getStorageClasse
       "ORDER BY "
         "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       common::dataStructures::StorageClass storageClass;
@@ -499,7 +499,7 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":NB_COPIES", nbCopies);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -537,7 +537,7 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -619,7 +619,7 @@ void RdbmsCatalogue::createTapePool(
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":TAPE_POOL_NAME", name);
     stmt.bindString(":VO", vo);
@@ -672,7 +672,7 @@ bool RdbmsCatalogue::tapePoolExists(rdbms::Conn &conn, const std::string &tapePo
         "TAPE_POOL "
       "WHERE "
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     auto rset = stmt.executeQuery();
     return rset.next();
@@ -696,7 +696,7 @@ bool RdbmsCatalogue::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archi
         "ARCHIVE_FILE "
       "WHERE "
         "ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     auto rset = stmt.executeQuery();
     return rset.next();
@@ -723,7 +723,7 @@ bool RdbmsCatalogue::diskFileIdExists(rdbms::Conn &conn, const std::string &disk
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "DISK_FILE_ID = :DISK_FILE_ID";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":DISK_FILE_ID", diskFileId);
     auto rset = stmt.executeQuery();
@@ -751,7 +751,7 @@ bool RdbmsCatalogue::diskFilePathExists(rdbms::Conn &conn, const std::string &di
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "DISK_FILE_PATH = :DISK_FILE_PATH";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":DISK_FILE_PATH", diskFilePath);
     auto rset = stmt.executeQuery();
@@ -779,7 +779,7 @@ bool RdbmsCatalogue::diskFileUserExists(rdbms::Conn &conn, const std::string &di
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "DISK_FILE_USER = :DISK_FILE_USER";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":DISK_FILE_USER", diskFileUser);
     auto rset = stmt.executeQuery();
@@ -807,7 +807,7 @@ bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &d
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "DISK_FILE_GROUP = :DISK_FILE_GROUP";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":DISK_FILE_GROUP", diskFileGroup);
     auto rset = stmt.executeQuery();
@@ -838,7 +838,7 @@ bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &di
         "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
         "ARCHIVE_ROUTE.COPY_NB = :COPY_NB";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindUint64(":COPY_NB", copyNb);
@@ -859,7 +859,7 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
   try {
     const char *const sql = "DELETE FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", name);
     stmt.executeNonQuery();
 
@@ -921,7 +921,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "TAPE_POOL_NAME";
 
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       TapePool pool;
@@ -979,7 +979,7 @@ void RdbmsCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIden
       "WHERE "
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VO", vo);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -1019,7 +1019,7 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
       "WHERE "
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -1063,7 +1063,7 @@ void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::Securit
       "WHERE "
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -1098,7 +1098,7 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
       "WHERE "
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -1203,7 +1203,7 @@ void RdbmsCatalogue::createArchiveRoute(
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
@@ -1249,7 +1249,7 @@ void RdbmsCatalogue::deleteArchiveRoute(const std::string &diskInstanceName, con
             "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindUint64(":COPY_NB", copyNb);
@@ -1298,7 +1298,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
       "ORDER BY "
         "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME, COPY_NB";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       common::dataStructures::ArchiveRoute route;
@@ -1352,7 +1352,7 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
             "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -1401,7 +1401,7 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
             "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -1464,7 +1464,7 @@ void RdbmsCatalogue::createLogicalLibrary(
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
 
@@ -1499,7 +1499,7 @@ bool RdbmsCatalogue::logicalLibraryExists(rdbms::Conn &conn, const std::string &
         "LOGICAL_LIBRARY "
       "WHERE "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     auto rset = stmt.executeQuery();
     return rset.next();
@@ -1518,7 +1518,7 @@ void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
   try {
     const char *const sql = "DELETE FROM LOGICAL_LIBRARY WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
     stmt.executeNonQuery();
 
@@ -1557,7 +1557,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibr
       "ORDER BY "
         "LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       common::dataStructures::LogicalLibrary lib;
@@ -1599,7 +1599,7 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
       "WHERE "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -1624,6 +1624,8 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
 void RdbmsCatalogue::createTape(
   const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid,
+  const std::string &mediaType,
+  const std::string &vendor,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
@@ -1633,6 +1635,14 @@ void RdbmsCatalogue::createTape(
   try {
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
+    }
+
+    if(mediaType.empty()) {
+      throw UserSpecifiedAnEmptyStringMediaType("Cannot create tape because the media type is an empty string");
+    }
+
+    if(vendor.empty()) {
+      throw UserSpecifiedAnEmptyStringVendor("Cannot create tape because the vendor is an empty string");
     }
 
     if(logicalLibraryName.empty()) {
@@ -1669,6 +1679,8 @@ void RdbmsCatalogue::createTape(
     const char *const sql =
       "INSERT INTO TAPE("
         "VID,"
+        "MEDIA_TYPE,"
+        "VENDOR,"
         "LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL_NAME,"
         "CAPACITY_IN_BYTES,"
@@ -1688,6 +1700,8 @@ void RdbmsCatalogue::createTape(
         "LAST_UPDATE_TIME)"
       "VALUES("
         ":VID,"
+        ":MEDIA_TYPE,"
+        ":VENDOR,"
         ":LOGICAL_LIBRARY_NAME,"
         ":TAPE_POOL_NAME,"
         ":CAPACITY_IN_BYTES,"
@@ -1705,9 +1719,11 @@ void RdbmsCatalogue::createTape(
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":VID", vid);
+    stmt.bindString(":MEDIA_TYPE", mediaType);
+    stmt.bindString(":VENDOR", vendor);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     stmt.bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
@@ -1762,7 +1778,7 @@ bool RdbmsCatalogue::tapeExists(rdbms::Conn &conn, const std::string &vid) const
         "TAPE "
       "WHERE "
         "VID = :VID";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     auto rset = stmt.executeQuery();
     return rset.next();
@@ -1787,7 +1803,7 @@ void RdbmsCatalogue::deleteTape(const std::string &vid) {
         "VID = :DELETE_VID AND "
         "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID)";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(delete_sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(delete_sql);
     stmt.bindString(":DELETE_VID", vid);
     stmt.bindString(":SELECT_VID", vid);
     stmt.executeNonQuery();
@@ -1833,44 +1849,52 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     std::list<common::dataStructures::Tape> tapes;
     std::string sql =
       "SELECT "
-        "VID AS VID,"
-        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ,"
-        "IS_DISABLED AS IS_DISABLED,"
-        "IS_FULL AS IS_FULL,"
-        "LBP_IS_ON AS LBP_IS_ON,"
+        "TAPE.VID AS VID,"
+        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "TAPE.VENDOR AS VENDOR,"
+        "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.VO AS VO,"
+        "TAPE.ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "TAPE.LAST_FSEQ AS LAST_FSEQ,"
+        "TAPE.IS_DISABLED AS IS_DISABLED,"
+        "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.LBP_IS_ON AS LBP_IS_ON,"
 
-        "LABEL_DRIVE AS LABEL_DRIVE,"
-        "LABEL_TIME AS LABEL_TIME,"
+        "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
+        "TAPE.LABEL_TIME AS LABEL_TIME,"
 
-        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "LAST_READ_TIME AS LAST_READ_TIME,"
+        "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+        "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
 
-        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+        "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+        "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "TAPE.USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE";
+        "TAPE "
+      "INNER JOIN TAPE_POOL ON "
+        "TAPE.TAPE_POOL_NAME = TAPE_POOL.TAPE_POOL_NAME";
 
-    if(searchCriteria.vid||
-       searchCriteria.logicalLibrary||
-       searchCriteria.tapePool||
-       searchCriteria.capacityInBytes||
-       searchCriteria.disabled||
-       searchCriteria.full||
+    if(searchCriteria.vid ||
+       searchCriteria.mediaType ||
+       searchCriteria.vendor ||
+       searchCriteria.logicalLibrary ||
+       searchCriteria.tapePool ||
+       searchCriteria.vo ||
+       searchCriteria.capacityInBytes ||
+       searchCriteria.disabled ||
+       searchCriteria.full ||
        searchCriteria.lbp) {
       sql += " WHERE ";
     }
@@ -1878,46 +1902,64 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     bool addedAWhereConstraint = false;
 
     if(searchCriteria.vid) {
-      sql += " VID = :VID";
+      sql += " TAPE.VID = :VID";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.mediaType) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE.MEDIA_TYPE = :MEDIA_TYPE";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.vendor) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE.VENDOR = :VENDOR";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.logicalLibrary) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+      sql += " TAPE.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.tapePool) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " TAPE_POOL_NAME = :TAPE_POOL_NAME";
+      sql += " TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.vo) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE_POOL.VO = :VO";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.capacityInBytes) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
+      sql += " TAPE.CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.disabled) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " IS_DISABLED = :IS_DISABLED";
+      sql += " TAPE.IS_DISABLED = :IS_DISABLED";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.full) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " IS_FULL = :IS_FULL";
+      sql += " TAPE.IS_FULL = :IS_FULL";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.lbp) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " LBP_IS_ON = :LBP_IS_ON";
+      sql += " TAPE.LBP_IS_ON = :LBP_IS_ON";
     }
 
-    sql += " ORDER BY VID";
+    sql += " ORDER BY TAPE.VID";
 
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
 
     if(searchCriteria.vid) stmt.bindString(":VID", searchCriteria.vid.value());
+    if(searchCriteria.mediaType) stmt.bindString(":MEDIA_TYPE", searchCriteria.mediaType.value());
+    if(searchCriteria.vendor) stmt.bindString(":VENDOR", searchCriteria.vendor.value());
     if(searchCriteria.logicalLibrary) stmt.bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
     if(searchCriteria.tapePool) stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
+    if(searchCriteria.vo) stmt.bindString(":VO", searchCriteria.vo.value());
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.disabled) stmt.bindBool(":IS_DISABLED", searchCriteria.disabled.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
@@ -1928,8 +1970,11 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       common::dataStructures::Tape tape;
 
       tape.vid = rset.columnString("VID");
+      tape.mediaType = rset.columnString("MEDIA_TYPE");
+      tape.vendor = rset.columnString("VENDOR");
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      tape.vo = rset.columnString("VO");
       tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
@@ -1970,37 +2015,42 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
     common::dataStructures::VidToTapeMap vidToTapeMap;
     std::string sql =
       "SELECT "
-        "VID AS VID,"
-        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ,"
-        "IS_DISABLED AS IS_DISABLED,"
-        "IS_FULL AS IS_FULL,"
-        "LBP_IS_ON AS LBP_IS_ON,"
+        "TAPE.VID AS VID,"
+        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "TAPE.VENDOR AS VENDOR,"
+        "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.VO AS VO,"
+        "TAPE.ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "TAPE.LAST_FSEQ AS LAST_FSEQ,"
+        "TAPE.IS_DISABLED AS IS_DISABLED,"
+        "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.LBP_IS_ON AS LBP_IS_ON,"
 
-        "LABEL_DRIVE AS LABEL_DRIVE,"
-        "LABEL_TIME AS LABEL_TIME,"
+        "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
+        "TAPE.LABEL_TIME AS LABEL_TIME,"
 
-        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "LAST_READ_TIME AS LAST_READ_TIME,"
+        "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+        "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
 
-        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+        "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+        "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "TAPE.USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE";
+        "TAPE "
+      "INNER JOIN TAPE_POOL ON "
+        "TAPE.TAPE_POOL_NAME = TAPE_POOL.TAPE_POOL_NAME";
 
     if(!vids.empty()) {
       sql += " WHERE ";
@@ -2011,13 +2061,16 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         if(1 < vidNb) {
           sql += " OR ";
         }
-        sql += "VID = :VID" + std::to_string(vidNb);
+        sql += "TAPE.VID = :VID" + std::to_string(vidNb);
       }
     }
 
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
 
+    // The following should be replaced by an insert into a temporrary table
+    // because this code can create many different prepared statements when
+    // there should only be one
     {
       uint64_t vidNb = 1;
       for(auto &vid : vids) {
@@ -2031,8 +2084,11 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       common::dataStructures::Tape tape;
 
       tape.vid = rset.columnString("VID");
+      tape.mediaType = rset.columnString("MEDIA_TYPE");
+      tape.vendor = rset.columnString("VENDOR");
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      tape.vo = rset.columnString("VO");
       tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
@@ -2077,48 +2133,56 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
     common::dataStructures::VidToTapeMap vidToTapeMap;
     std::string sql =
       "SELECT "
-        "VID AS VID,"
-        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ,"
-        "IS_DISABLED AS IS_DISABLED,"
-        "IS_FULL AS IS_FULL,"
-        "LBP_IS_ON AS LBP_IS_ON,"
+        "TAPE.VID AS VID,"
+        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "TAPE.VENDOR AS VENDOR,"
+        "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.VO AS VO,"
+        "TAPE.ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "TAPE.LAST_FSEQ AS LAST_FSEQ,"
+        "TAPE.IS_DISABLED AS IS_DISABLED,"
+        "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.LBP_IS_ON AS LBP_IS_ON,"
 
-        "LABEL_DRIVE AS LABEL_DRIVE,"
-        "LABEL_TIME AS LABEL_TIME,"
+        "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
+        "TAPE.LABEL_TIME AS LABEL_TIME,"
 
-        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "LAST_READ_TIME AS LAST_READ_TIME,"
+        "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+        "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
 
-        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+        "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+        "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "TAPE.USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE";
+        "TAPE "
+      "INNER JOIN TAPE_POOL ON "
+        "TAPE.TAPE_POOL_NAME = TAPE_POOL.TAPE_POOL_NAME";
 
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
 
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       common::dataStructures::Tape tape;
 
       tape.vid = rset.columnString("VID");
+      tape.mediaType = rset.columnString("MEDIA_TYPE");
+      tape.vendor = rset.columnString("VENDOR");
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      tape.vo = rset.columnString("VO");
       tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
@@ -2170,7 +2234,7 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
         "IS_FULL != 0 AND "
         "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID)";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -2200,8 +2264,6 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
         }
       }
     }
-
-    conn.commit();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2247,6 +2309,76 @@ optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(con
 }
 
 //------------------------------------------------------------------------------
+// modifyTapeMediaType
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &mediaType) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "MEDIA_TYPE = :MEDIA_TYPE,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":MEDIA_TYPE", mediaType);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// modifyTapeVendor
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &vendor) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "VENDOR = :VENDOR,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VENDOR", vendor);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // modifyTapeLogicalLibraryName
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
@@ -2262,7 +2394,7 @@ void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2297,7 +2429,7 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2332,7 +2464,7 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2367,7 +2499,7 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":ENCRYPTION_KEY", encryptionKey);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2399,7 +2531,7 @@ void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::st
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":LAST_WRITE_DRIVE", drive);
     stmt.bindUint64(":LAST_WRITE_TIME", now);
     stmt.bindString(":VID", vid);
@@ -2429,7 +2561,7 @@ void RdbmsCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::s
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":LAST_READ_DRIVE", drive);
     stmt.bindUint64(":LAST_READ_TIME", now);
     stmt.bindString(":VID", vid);
@@ -2462,7 +2594,7 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindBool(":IS_FULL", fullValue);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2492,7 +2624,7 @@ void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.executeNonQuery();
 
@@ -2523,7 +2655,7 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindBool(":IS_DISABLED", disabledValue);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2558,7 +2690,7 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2594,7 +2726,7 @@ void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_NAME = :REQUESTER_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":MOUNT_POLICY_NAME", mountPolicy);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2632,7 +2764,7 @@ void RdbmsCatalogue::modifyRequesteMountRuleComment(const common::dataStructures
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_NAME = :REQUESTER_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2670,7 +2802,7 @@ void RdbmsCatalogue::modifyRequesterGroupMountRulePolicy(const common::dataStruc
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":MOUNT_POLICY_NAME", mountPolicy);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2708,7 +2840,7 @@ void RdbmsCatalogue::modifyRequesterGroupMountRuleComment(const common::dataStru
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -2789,7 +2921,7 @@ void RdbmsCatalogue::createMountPolicy(
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":MOUNT_POLICY_NAME", name);
 
@@ -2873,7 +3005,7 @@ void RdbmsCatalogue::createRequesterMountRule(
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":REQUESTER_NAME", requesterName);
@@ -2924,7 +3056,7 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequest
       "ORDER BY "
         "DISK_INSTANCE_NAME, REQUESTER_NAME, MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while(rset.next()) {
       common::dataStructures::RequesterMountRule rule;
@@ -2964,7 +3096,7 @@ void RdbmsCatalogue::deleteRequesterMountRule(const std::string &diskInstanceNam
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_NAME = :REQUESTER_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":REQUESTER_NAME", requesterName);
     stmt.executeNonQuery();
@@ -3036,7 +3168,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
@@ -3116,7 +3248,7 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupM
       "WHERE "
         "REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", group.diskInstanceName);
     stmt.bindString(":REQUESTER_GROUP_NAME", group.groupName);
     auto rset = stmt.executeQuery();
@@ -3179,7 +3311,7 @@ std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRe
       "ORDER BY "
         "DISK_INSTANCE_NAME, REQUESTER_GROUP_NAME, MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while(rset.next()) {
       common::dataStructures::RequesterGroupMountRule rule;
@@ -3221,7 +3353,7 @@ void RdbmsCatalogue::deleteRequesterGroupMountRule(const std::string &diskInstan
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     stmt.executeNonQuery();
@@ -3250,7 +3382,7 @@ bool RdbmsCatalogue::mountPolicyExists(rdbms::Conn &conn, const std::string &mou
         "MOUNT_POLICY "
       "WHERE "
         "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
     auto rset = stmt.executeQuery();
     return rset.next();
@@ -3276,7 +3408,7 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_NAME = :REQUESTER_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":REQUESTER_NAME", requesterName);
     auto rset = stmt.executeQuery();
@@ -3343,7 +3475,7 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountP
       "WHERE "
         "REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", user.diskInstanceName);
     stmt.bindString(":REQUESTER_NAME", user.username);
     auto rset = stmt.executeQuery();
@@ -3398,7 +3530,7 @@ bool RdbmsCatalogue::requesterGroupMountRuleExists(rdbms::Conn &conn, const std:
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     auto rset = stmt.executeQuery();
@@ -3418,7 +3550,7 @@ void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
   try {
     const char *const sql = "DELETE FROM MOUNT_POLICY WHERE MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":MOUNT_POLICY_NAME", name);
     stmt.executeNonQuery();
 
@@ -3465,7 +3597,7 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
       "ORDER BY "
         "MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       common::dataStructures::MountPolicy policy;
@@ -3518,7 +3650,7 @@ void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructur
       "WHERE "
         "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":ARCHIVE_PRIORITY", archivePriority);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -3553,7 +3685,7 @@ void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStr
       "WHERE "
         "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":ARCHIVE_MIN_REQUEST_AGE", minArchiveRequestAge);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -3588,7 +3720,7 @@ void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructu
       "WHERE "
         "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":RETRIEVE_PRIORITY", retrievePriority);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -3623,7 +3755,7 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
       "WHERE "
         "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":RETRIEVE_MIN_REQUEST_AGE", minRetrieveRequestAge);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -3658,7 +3790,7 @@ void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructu
       "WHERE "
         "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":MAX_DRIVES_ALLOWED", maxDrivesAllowed);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -3693,7 +3825,7 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
       "WHERE "
         "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -3715,8 +3847,7 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 //------------------------------------------------------------------------------
 // insertArchiveFile
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
-  const ArchiveFileRow &row) {
+void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row) {
   try {
     if(!storageClassExists(conn, row.diskInstance, row.storageClassName)) {
       throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
@@ -3758,7 +3889,7 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const rdbms::Autocommi
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-    auto stmt = conn.createStmt(sql, autocommitMode);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
     stmt.bindString(":DISK_INSTANCE_NAME", row.diskInstance);
@@ -3889,6 +4020,98 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &se
 }
 
 //------------------------------------------------------------------------------
+// getFilesForRepack
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack(
+  const std::string &vid,
+  const uint64_t startFSeq,
+  const uint64_t maxNbFiles) const {
+  try {
+    std::string sql =
+      "SELECT "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
+        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
+        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
+        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
+        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+        "TAPE_FILE.VID AS VID,"
+        "TAPE_FILE.FSEQ AS FSEQ,"
+        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.COPY_NB AS COPY_NB,"
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
+      "FROM "
+        "ARCHIVE_FILE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
+      "INNER JOIN TAPE_FILE ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "INNER JOIN TAPE ON "
+        "TAPE_FILE.VID = TAPE.VID "
+       "WHERE "
+         "TAPE_FILE.VID = :VID AND "
+         "TAPE_FILE.FSEQ >= :START_FSEQ "
+       "ORDER BY FSEQ";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID", vid);
+    stmt.bindUint64(":START_FSEQ", startFSeq);
+    auto rset = stmt.executeQuery();
+
+    std::list<common::dataStructures::ArchiveFile> archiveFiles;
+    while(rset.next()) {
+      common::dataStructures::ArchiveFile archiveFile;
+
+      archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+      archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+      archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
+      archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
+      archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
+      archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+      archiveFile.diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
+      archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+      archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
+      archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
+      archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
+      archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+      archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
+
+      common::dataStructures::TapeFile tapeFile;
+      tapeFile.vid = rset.columnString("VID");
+      tapeFile.fSeq = rset.columnUint64("FSEQ");
+      tapeFile.blockId = rset.columnUint64("BLOCK_ID");
+      tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+      tapeFile.copyNb = rset.columnUint64("COPY_NB");
+      tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
+      tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
+      tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
+
+      archiveFile.tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
+
+      archiveFiles.push_back(archiveFile);
+
+      if(maxNbFiles == archiveFiles.size()) break;
+    }
+    return archiveFiles;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getTapeFileSummary
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
@@ -3974,7 +4197,7 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     }
 
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     if(searchCriteria.archiveFileId) {
       stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
@@ -4061,7 +4284,7 @@ void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &dri
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":LABEL_DRIVE", drive);
     stmt.bindUint64(":LABEL_TIME", now);
     stmt.bindBool(":LBP_IS_ON", lbpIsOn);
@@ -4215,7 +4438,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
       "WHERE "
         "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
     auto rset = stmt.executeQuery();
@@ -4269,7 +4492,7 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const Sto
       "WHERE "
         "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
     auto rset = stmt.executeQuery();
@@ -4290,7 +4513,6 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const Sto
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::updateTape(
   rdbms::Conn &conn,
-  const rdbms::AutocommitMode autocommitMode,
   const std::string &vid,
   const uint64_t lastFSeq,
   const uint64_t compressedBytesWritten,
@@ -4305,7 +4527,7 @@ void RdbmsCatalogue::updateTape(
         "LAST_WRITE_TIME = :LAST_WRITE_TIME "
       "WHERE "
         "VID = :VID";
-    auto stmt = conn.createStmt(sql, autocommitMode);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.bindUint64(":LAST_FSEQ", lastFSeq);
     stmt.bindUint64(":DATA_IN_BYTES", compressedBytesWritten);
@@ -4449,7 +4671,7 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
         "REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :GROUP_DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
 
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":REQUESTER_DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":GROUP_DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":REQUESTER_NAME", requesterName);
@@ -4482,199 +4704,6 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
     }
 
     return policies;
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// deleteArchiveFile
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
-  log::LogContext &lc) {
-  try {
-    const char *selectSql =
-      "SELECT "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
-      "FROM "
-        "ARCHIVE_FILE "
-      "INNER JOIN STORAGE_CLASS ON "
-        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-      "LEFT OUTER JOIN TAPE_FILE ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-      "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
-      "FOR UPDATE";
-    utils::Timer t;
-    auto conn = m_connPool.getConn();
-    rdbms::AutoRollback autoRollback(conn);
-    const auto getConnTime = t.secs(utils::Timer::resetCounter);
-    auto selectStmt = conn.createStmt(selectSql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-    const auto createStmtTime = t.secs();
-    selectStmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-    t.reset();
-    rdbms::Rset selectRset = selectStmt.executeQuery();
-    const auto selectFromArchiveFileTime = t.secs();
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
-    while(selectRset.next()) {
-      if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
-
-        archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
-        archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = selectRset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = selectRset.columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = selectRset.columnString("DISK_FILE_RECOVERY_BLOB");
-        archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");
-        archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
-        archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");
-      }
-
-      // If there is a tape file
-      if(!selectRset.columnIsNull("VID")) {
-        // Add the tape file to the archive file's in-memory structure
-        common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = selectRset.columnString("VID");
-        tapeFile.fSeq = selectRset.columnUint64("FSEQ");
-        tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
-        tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
-        tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
-
-        archiveFile->tapeFiles[selectRset.columnUint64("COPY_NB")] = tapeFile;
-      }
-    }
-
-    if(nullptr == archiveFile.get()) {
-      log::ScopedParamContainer spc(lc);
-      spc.add("fileId", archiveFileId);
-      lc.log(log::WARNING, "Ignoring request to delete archive file because it does not exist in the catalogue");
-      return;
-    }
-
-    if(diskInstanceName != archiveFile->diskInstance) {
-      log::ScopedParamContainer spc(lc);
-      spc.add("fileId", std::to_string(archiveFile->archiveFileID))
-         .add("diskInstance", archiveFile->diskInstance)
-         .add("requestDiskInstance", diskInstanceName)
-         .add("diskFileId", archiveFile->diskFileId)
-         .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-         .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-         .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
-         .add("fileSize", std::to_string(archiveFile->fileSize))
-         .add("checksumType", archiveFile->checksumType)
-         .add("checksumValue", archiveFile->checksumValue)
-         .add("creationTime", std::to_string(archiveFile->creationTime))
-         .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
-         .add("storageClass", archiveFile->storageClass)
-         .add("getConnTime", getConnTime)
-         .add("createStmtTime", createStmtTime)
-         .add("selectFromArchiveFileTime", selectFromArchiveFileTime);
-      for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
-        std::stringstream tapeCopyLogStream;
-        tapeCopyLogStream << "copy number: " << it->first
-          << " vid: " << it->second.vid
-          << " fSeq: " << it->second.fSeq
-          << " blockId: " << it->second.blockId
-          << " creationTime: " << it->second.creationTime
-          << " compressedSize: " << it->second.compressedSize
-          << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-          << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-          << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-        spc.add("TAPE FILE", tapeCopyLogStream.str());
-      }
-      lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
-        "of the archived file");
-
-      exception::UserError ue;
-      ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
-        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
-        archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
-        archiveFile->diskInstance;
-      throw ue;
-    }
-
-    t.reset();
-    {
-      const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt.executeNonQuery();
-    }
-    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
-
-    {
-      const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt.executeNonQuery();
-    }
-    const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
-
-    conn.commit();
-    const auto commitTime = t.secs();
-
-    log::ScopedParamContainer spc(lc);
-    spc.add("fileId", std::to_string(archiveFile->archiveFileID))
-       .add("diskInstance", archiveFile->diskInstance)
-       .add("diskFileId", archiveFile->diskFileId)
-       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
-       .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumType", archiveFile->checksumType)
-       .add("checksumValue", archiveFile->checksumValue)
-       .add("creationTime", std::to_string(archiveFile->creationTime))
-       .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
-       .add("storageClass", archiveFile->storageClass)
-       .add("getConnTime", getConnTime)
-       .add("createStmtTime", createStmtTime)
-       .add("selectFromArchiveFileTime", selectFromArchiveFileTime)
-       .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
-       .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
-       .add("commitTime", commitTime);
-    for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
-      std::stringstream tapeCopyLogStream;
-      tapeCopyLogStream << "copy number: " << it->first
-        << " vid: " << it->second.vid
-        << " fSeq: " << it->second.fSeq
-        << " blockId: " << it->second.blockId
-        << " creationTime: " << it->second.creationTime
-        << " compressedSize: " << it->second.compressedSize
-        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-      spc.add("TAPE FILE", tapeCopyLogStream.str());
-    }
-    lc.log(log::INFO, "Archive file deleted from CTA catalogue");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -4728,7 +4757,7 @@ bool RdbmsCatalogue::isNonCachedAdmin(const common::dataStructures::SecurityIden
       "WHERE "
         "ADMIN_USER_NAME = :ADMIN_USER_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":ADMIN_USER_NAME", admin.username);
     auto rset = stmt.executeQuery();
     return rset.next();
@@ -4748,14 +4777,19 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     std::list<TapeForWriting> tapes;
     const char *const sql =
       "SELECT "
-        "VID AS VID,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ "
-        "FROM "
+        "TAPE.VID AS VID,"
+        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "TAPE.VENDOR AS VENDOR,"
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.VO AS VO,"
+        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "TAPE.LAST_FSEQ AS LAST_FSEQ "
+      "FROM "
         "TAPE "
-        "WHERE "
+      "INNER JOIN TAPE_POOL ON "
+        "TAPE.TAPE_POOL_NAME = TAPE_POOL.TAPE_POOL_NAME "
+      "WHERE "
 //      "LBP_IS_ON IS NOT NULL AND "   // Set when the tape has been labelled
 //      "LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
 //      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
@@ -4764,13 +4798,16 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
 
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       TapeForWriting tape;
       tape.vid = rset.columnString("VID");
+      tape.mediaType = rset.columnString("MEDIA_TYPE");
+      tape.vendor = rset.columnString("VENDOR");
       tape.tapePool = rset.columnString("TAPE_POOL_NAME");
+      tape.vo = rset.columnString("VO");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
@@ -4791,7 +4828,6 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertTapeFile(
   rdbms::Conn &conn,
-  const rdbms::AutocommitMode autocommitMode,
   const common::dataStructures::TapeFile &tapeFile,
   const uint64_t archiveFileId) {
   try {
@@ -4813,7 +4849,7 @@ void RdbmsCatalogue::insertTapeFile(
         ":COPY_NB,"
         ":CREATION_TIME,"
         ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql, autocommitMode);
+    auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":VID", tapeFile.vid);
     stmt.bindUint64(":FSEQ", tapeFile.fSeq);
@@ -4851,7 +4887,7 @@ void RdbmsCatalogue::setTapeLastFSeq(rdbms::Conn &conn, const std::string &vid, 
         "LAST_FSEQ = :LAST_FSEQ "
       "WHERE "
         "VID=:VID";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.bindUint64(":LAST_FSEQ", lastFSeq);
     stmt.executeNonQuery();
@@ -4875,7 +4911,7 @@ uint64_t RdbmsCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &v
         "TAPE "
       "WHERE "
         "VID = :VID";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     auto rset = stmt.executeQuery();
     if(rset.next()) {
@@ -4929,7 +4965,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     auto rset = stmt.executeQuery();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
@@ -5018,7 +5054,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE.IS_DISABLED = 0 "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     auto rset = stmt.executeQuery();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
@@ -5107,7 +5143,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":DISK_FILE_ID", diskFileId);
     auto rset = stmt.executeQuery();
@@ -5200,7 +5236,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE.IS_DISABLED = 0 "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":DISK_FILE_ID", diskFileId);
     auto rset = stmt.executeQuery();
@@ -5257,7 +5293,7 @@ void RdbmsCatalogue::ping() {
   try {
     const char *const sql = "SELECT COUNT(*) FROM CTA_CATALOGUE";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
   } catch(exception::UserError &) {
     throw;
@@ -5265,6 +5301,14 @@ void RdbmsCatalogue::ping() {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+}
+
+//------------------------------------------------------------------------------
+// getTableNames
+//------------------------------------------------------------------------------
+std::list<std::string> RdbmsCatalogue::getTableNames() const {
+  auto conn = m_connPool.getConn();
+  return conn.getTableNames();
 }
 
 //------------------------------------------------------------------------------

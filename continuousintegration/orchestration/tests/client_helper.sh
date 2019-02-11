@@ -19,6 +19,11 @@ die() {
   exit 1
 }
 
+user_kinit() {
+  kinit -kt /root/${USER}.keytab ${USER}@TEST.CTA
+  klist
+}
+
 admin_cta() {
   KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin $@ 2>/dev/null
 }

@@ -30,8 +30,10 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "scheduler/TapeMount.hpp"
@@ -71,6 +73,7 @@ class Tape;
 class TapeMount;
 class TapeSession;
 class UserIdentity;
+class RepackRequest;
 } // cta
 
 namespace cta {
@@ -143,9 +146,13 @@ public:
       std::string vid;
       std::string logicalLibrary;
       std::string tapePool;
+      std::string vo;
+      std::string mediaType;
+      std::string vendor;
       std::string drive;
       std::string host;
       uint64_t mountId;
+      uint64_t capacityInBytes;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
@@ -332,8 +339,12 @@ public:
       std::string vid;
       std::string logicalLibrary;
       std::string tapePool;
+      std::string vo;
+      std::string mediaType;
+      std::string vendor;
       std::string drive;
       std::string host;
+      uint64_t capacityInBytes;
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
@@ -344,6 +355,8 @@ public:
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     virtual std::set<cta::SchedulerDatabase::RetrieveJob *> finishSettingJobsBatchSuccessful(
       std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc) = 0;
+    virtual std::set<cta::SchedulerDatabase::RetrieveJob *> batchSucceedRetrieveForRepack(
+      std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, cta::log::LogContext & lc) = 0;
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -363,11 +376,69 @@ public:
     uint64_t selectedCopyNb;
     virtual void asyncSucceed() = 0;
     virtual void checkSucceed() = 0;
+    virtual void asyncReportSucceedForRepack() = 0;
+    virtual void checkReportSucceedForRepack() = 0;
     virtual void failTransfer(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual void failReport(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual ~RetrieveJob() {}
   };
 
+  /*============ Repack management: user side ================================*/
+  virtual void queueRepack(const std::string & vid, const std::string & bufferURL,
+      common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) = 0;
+  virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
+  virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
+  virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;
+  
+  /**
+   * A class containing all the information needed for pending repack requests promotion.
+   * We need to promote repack requests from "Pending" to "ToExpand" in a controlled
+   * manner. This will ensure the presence of a sufficient amount of repack subrequests 
+   * in the system in order to keep things going without clogging the system with too many
+   * requests in the case of a massive repack.
+   * The mechanism is the same as for TapeMountDecision info. Polling functions (implemented
+   * in the Scheduler) get a lock free version of the requests summary, and if a promotion seems
+   * required does so after re-taking a locked version of the statistics and re-ensuring that the
+   * conditions are still valid, avoiding a race condition system wide.
+   */
+  class RepackRequestStatistics: public std::map<common::dataStructures::RepackInfo::Status, size_t> {
+  public:
+    RepackRequestStatistics();
+    struct PromotionToToExpandResult {
+      size_t pendingBefore;
+      size_t toEnpandBefore;
+      size_t pendingAfter;
+      size_t toExpandAfter;
+      size_t promotedRequests;
+    };
+    virtual PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount,
+            log::LogContext &lc) = 0;
+    virtual ~RepackRequestStatistics() {}
+    // The pending request queue could be absent. This is not a big problem as 
+    // there will be nothing to schedule anyway. This exception is thrown by the 
+    // locking version only.
+    CTA_GENERATE_EXCEPTION_CLASS(NoPendingRequestQueue);
+  };
+  CTA_GENERATE_EXCEPTION_CLASS(SchedulingLockNotHeld);
+  virtual std::unique_ptr<RepackRequestStatistics> getRepackStatistics() = 0;
+  virtual std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() = 0;
+  
+  /**
+   * A class providing the per repack request interface. It is also used to create the per file
+   * requests in the object store.
+   */
+  class RepackRequest {
+  public:
+    cta::common::dataStructures::RepackInfo repackInfo;
+    uint64_t getLastExpandedFseq();
+    void addFileRequestsBatch();
+  };
+  
+  /***/
+  virtual std::unique_ptr<RepackRequest> getNextRepackJobToExpand() = 0;
+  
+  /*============ Repack management: maintenance process side =========================*/
+  
   /*!
    * Get a a set of failed jobs to report to the client.
    *
@@ -376,17 +447,16 @@ public:
    *
    * @returns    A list of process-owned jobs to report
    */
-  virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
+  virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
+  virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
+  virtual std::list<std::unique_ptr<RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& logContext) = 0;
 
   /**
    * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
    * @param jobsBatch
    * @param lc
    */
-  virtual void setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch,
-    log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
-  
-  virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
+  virtual void setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch, log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
 
   virtual JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) = 0;
 
@@ -406,6 +476,11 @@ public:
     std::string vid;              /**< The tape VID (for a retieve) */
     std::string tapePool;         /**< The name of the tape pool for both archive 
                                    * and retrieve */
+    std::string vo;               // Virtual organization of the tape
+    std::string mediaType;        // Media type of the tape
+    std::string vendor;           // Vendor of the tape
+    uint64_t capacityInBytes;     // Capacity in bytes of the tape
+    
     uint64_t priority;            /**< The priority for the mount, defined as the highest 
                                    * priority of all queued jobs */
     uint64_t maxDrivesAllowed;    /**< The maximum number of drives allowed for this 
@@ -432,6 +507,19 @@ public:
         return true;
       if (ratioOfMountQuotaUsed < other.ratioOfMountQuotaUsed)
         return true;
+      if(minRequestAge < other.minRequestAge)
+	return true;
+      if(minRequestAge > other.minRequestAge)
+	return false;
+      /**
+       * For the tests, we try to have the priority by 
+       * alphabetical order : vid1 should be treated before vid2,
+       * so if this->vid < other.vid : then this > other.vid, so return false
+       */
+      if(vid < other.vid)
+	return false;
+      if(vid > other.vid)
+	return true;
       return false;
     }
   };
@@ -477,7 +565,10 @@ public:
      */
     virtual std::unique_ptr<ArchiveMount> createArchiveMount(
       const catalogue::TapeForWriting & tape, const std::string driveName, 
-      const std::string & logicalLibrary, const std::string & hostName, 
+      const std::string & logicalLibrary, const std::string & hostName,
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,
+      const uint64_t capacityInBytes,
       time_t startTime) = 0;
     /**
      * Create a new retrieve mount. This implicitly releases the global scheduling
@@ -486,6 +577,9 @@ public:
     virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const std::string & vid,
       const std::string & tapePool, const std::string driveName, 
       const std::string& logicalLibrary, const std::string& hostName,
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,
+      const uint64_t capacityInBytes,
       time_t startTime) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};

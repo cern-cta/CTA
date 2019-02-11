@@ -66,7 +66,7 @@ MHVTL should then be setup by running:
 
 ```
 cd ~/CTA/continuousintegration/buildtree_runner
-./recreate_buildtree_running_environment.sh
+sudo ./recreate_buildtree_running_environment.sh
 ```
 
 ### Preparing the test instance
@@ -75,7 +75,7 @@ The test instance can then be created by running (typically):
 
 ```
 cd ~/CTA/continuousintegration/orchestration
-./create_instance.sh -n ctatest -b /home/eric -B CTA-build -D -O
+sudo ./create_instance.sh -n ctatest -b /home/eric -B CTA-build -D -O
 ```
 
 and the tests will run like in the continuous integration environment.

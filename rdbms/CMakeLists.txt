@@ -54,6 +54,34 @@ set_property(TARGET ctardbmsunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmsunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctardbmsunittests
-  ctacatalogue)
+  ctardbms)
 
 install(TARGETS ctardbmsunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+set(IN_MEMORY_CONN_UNIT_TESTS_LIB_SRC_FILES
+  ConnTest.cpp
+  InMemoryVersionOfConnTest.cpp)
+
+add_library (ctainmemoryconnunittests SHARED
+  ${IN_MEMORY_CONN_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctainmemoryconnunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctainmemoryconnunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_link_libraries (ctainmemoryconnunittests
+  ctardbms)
+
+install (TARGETS ctainmemoryconnunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+set (DBCONFIG_CONN_UNIT_TESTS_LIB_SRC_FILES
+  ConnTest.cpp
+  DbConfigVersionOfConnTest.cpp)
+
+add_library (ctadbconfigconnunittests SHARED
+  ${DBCONFIG_CONN_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctadbconfigconnunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctadbconfigconnunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_link_libraries (ctadbconfigconnunittests
+  ctardbms)
+
+install (TARGETS ctadbconfigconnunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

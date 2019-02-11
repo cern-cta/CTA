@@ -25,11 +25,12 @@
 #include "objectstore/GarbageCollector.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "rdbms/Login.hpp"
 #include "common/make_unique.hpp"
 #include "scheduler/DiskReportRunner.hpp"
+#include "scheduler/RepackRequestManager.hpp"
 
 #include <signal.h>
 #include <sys/wait.h>
@@ -162,7 +163,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
   // Check there was no error.
   try {
     exception::Errnum::throwOnMinusOne(rc);
-  } catch (exception::Exception ex) {
+  } catch (exception::Exception &ex) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("pid", m_pid)
           .add("Message", ex.getMessageValue());
@@ -248,7 +249,7 @@ int MaintenanceHandler::runChild() {
   // collect them like any other crashed agent.
   
   // Set the thread name for process ID:
-  prctl(PR_SET_NAME, "cta-taped-gc");
+  prctl(PR_SET_NAME, "cta-tpd-maint");
   
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to
@@ -273,7 +274,9 @@ int MaintenanceHandler::runChild() {
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 0;
-    catalogue=cta::catalogue::CatalogueFactory::create(m_processManager.logContext().logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
+    auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_processManager.logContext().logger(),
+      catalogueLogin, nbConns, nbArchiveFileListingConns);
+    catalogue=catalogueFactory->create();
     scheduler=make_unique<cta::Scheduler>(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
   // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping(m_processManager.logContext());
@@ -300,6 +303,7 @@ int MaintenanceHandler::runChild() {
   // Create the garbage collector and the disk reporter
   objectstore::GarbageCollector gc(*backend, backendPopulator->getAgentReference(), *catalogue);
   DiskReportRunner diskReportRunner(*scheduler);
+  RepackRequestManager repackRequestManager(*scheduler);
   
   // Run the maintenance in a loop: garbage collector and disk reporter
   try {
@@ -312,6 +316,7 @@ int MaintenanceHandler::runChild() {
           "In MaintenanceHandler::runChild(): About to run a GC pass.");
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
+      repackRequestManager.runOnePass(m_processManager.logContext());
       try {
         server::SocketPair::poll(pollList, s_pollInterval - t.secs(), server::SocketPair::Side::parent);
         receivedMessage=true;

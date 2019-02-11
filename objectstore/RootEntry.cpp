@@ -25,6 +25,8 @@
 #include "DriveRegister.hpp"
 #include "GenericObject.hpp"
 #include "SchedulerGlobalLock.hpp"
+#include "RepackIndex.hpp"
+#include "RepackQueue.hpp"
 #include <cxxabi.h>
 #include "ProtocolBuffersAlgorithms.hpp"
 #include <google/protobuf/util/json_util.h>
@@ -67,11 +69,11 @@ bool RootEntry::isEmpty() {
   if (m_payload.has_schedulerlockpointer() &&
       m_payload.schedulerlockpointer().address().size())
     return false;
-  for (auto &qt: {QueueType::JobsToTransfer, QueueType::JobsToReport, QueueType::FailedJobs}) {
+  for (auto &qt: {JobQueueType::JobsToTransfer, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs}) {
     if (archiveQueuePointers(qt).size())
       return false;
   }
-  for (auto &qt: {QueueType::JobsToTransfer, QueueType::JobsToReport, QueueType::FailedJobs}) {
+  for (auto &qt: {JobQueueType::JobsToTransfer, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs, JobQueueType::JobsToReportToRepackForSuccess}) {
     if (retrieveQueuePointers(qt).size())
       return false;
   }
@@ -99,53 +101,57 @@ void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference 
 // ========== Queue types and helper functions =================================
 // =============================================================================
 
-const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>& RootEntry::archiveQueuePointers(QueueType queueType) {
+const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>& RootEntry::archiveQueuePointers(JobQueueType queueType) {
   switch(queueType) {
-  case QueueType::JobsToTransfer:
+  case JobQueueType::JobsToTransfer:
     return m_payload.livearchivejobsqueuepointers();
-  case QueueType::JobsToReport:
+  case JobQueueType::JobsToReportToUser:
     return m_payload.archivejobstoreportqueuepointers();
-  case QueueType::FailedJobs:
+  case JobQueueType::FailedJobs:
     return m_payload.failedarchivejobsqueuepointers();
   default:
     throw cta::exception::Exception("In RootEntry::archiveQueuePointers(): unknown queue type.");
   }
 }
 
-::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>* RootEntry::mutableArchiveQueuePointers(QueueType queueType) {
+::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>* RootEntry::mutableArchiveQueuePointers(JobQueueType queueType) {
   switch(queueType) {
-  case QueueType::JobsToTransfer:
+  case JobQueueType::JobsToTransfer:
     return m_payload.mutable_livearchivejobsqueuepointers();
-  case QueueType::JobsToReport:
+  case JobQueueType::JobsToReportToUser:
     return m_payload.mutable_archivejobstoreportqueuepointers();
-  case QueueType::FailedJobs:
+  case JobQueueType::FailedJobs:
     return m_payload.mutable_failedarchivejobsqueuepointers();
   default:
     throw cta::exception::Exception("In RootEntry::mutableArchiveQueuePointers(): unknown queue type.");
   }
 }
 
-const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>& RootEntry::retrieveQueuePointers(QueueType queueType) {
+const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>& RootEntry::retrieveQueuePointers(JobQueueType queueType) {
   switch(queueType) {
-  case QueueType::JobsToTransfer:
+  case JobQueueType::JobsToTransfer:
     return m_payload.liveretrievejobsqueuepointers();
-  case QueueType::JobsToReport:
+  case JobQueueType::JobsToReportToUser:
     return m_payload.retrievefailurestoreportqueuepointers();
-  case QueueType::FailedJobs:
+  case JobQueueType::FailedJobs:
     return m_payload.failedretrievejobsqueuepointers();
+  case JobQueueType::JobsToReportToRepackForSuccess:
+     return m_payload.retrieve_queue_to_report_to_repack_for_success_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::retrieveQueuePointers(): unknown queue type.");
   }
 }
 
-::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>* RootEntry::mutableRetrieveQueuePointers(QueueType queueType) {
+::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>* RootEntry::mutableRetrieveQueuePointers(JobQueueType queueType) {
   switch(queueType) {
-  case QueueType::JobsToTransfer:
+  case JobQueueType::JobsToTransfer:
     return m_payload.mutable_liveretrievejobsqueuepointers();
-  case QueueType::JobsToReport:
+  case JobQueueType::JobsToReportToUser:
     return m_payload.mutable_retrievefailurestoreportqueuepointers();
-  case QueueType::FailedJobs:
+  case JobQueueType::FailedJobs:
     return m_payload.mutable_failedretrievejobsqueuepointers();
+  case JobQueueType::JobsToReportToRepackForSuccess:
+    return m_payload.mutable_retrieve_queue_to_report_to_repack_for_success_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::mutableRetrieveQueuePointers(): unknown queue type.");
   }
@@ -165,8 +171,7 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef, 
-    QueueType queueType, log::LogContext & lc) {
+std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef, JobQueueType queueType) {
   checkPayloadWritable();
   // Check the archive queue does not already exist
   try {
@@ -175,9 +180,9 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string archiveQueueNameHeader = "ArchiveQueue";
   switch(queueType) {
-  case QueueType::JobsToTransfer: archiveQueueNameHeader+="ToTransfer"; break;
-  case QueueType::JobsToReport: archiveQueueNameHeader+="ToReport"; break;
-  case QueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
+  case JobQueueType::JobsToTransfer: archiveQueueNameHeader+="ToTransfer"; break;
+  case JobQueueType::JobsToReportToUser: archiveQueueNameHeader+="ToReport"; break;
+  case JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
   default: break;
   }
   std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+tapePool);
@@ -196,7 +201,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   return archiveQueueAddress;
 }
 
-void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, QueueType queueType, log::LogContext & lc) {
+void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, JobQueueType queueType, log::LogContext & lc) {
   checkPayloadWritable();
   // find the address of the archive queue object
   try {
@@ -245,7 +250,8 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, QueueTy
     commit();
     {
       log::ScopedParamContainer params(lc);
-      params.add("tapePool", tapePool);
+      params.add("tapePool", tapePool)
+            .add("queueType", toString(queueType));
       lc.log(log::INFO, "In RootEntry::removeArchiveQueueAndCommit(): removed archive queue reference.");
     }
   } catch (serializers::NotFound &) {
@@ -254,11 +260,11 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, QueueTy
   }
 }
 
-void RootEntry::removeMissingArchiveQueueReference(const std::string& tapePool, QueueType queueType) {
+void RootEntry::removeMissingArchiveQueueReference(const std::string& tapePool, JobQueueType queueType) {
   serializers::removeOccurences(mutableArchiveQueuePointers(queueType), tapePool);
 }
 
-std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, QueueType queueType) {
+std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, JobQueueType queueType) {
   checkPayloadReadable();
   try {
     auto & tpp = serializers::findElement(archiveQueuePointers(queueType), tapePool);
@@ -268,7 +274,7 @@ std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, Queue
   }
 }
 
-auto RootEntry::dumpArchiveQueues(QueueType queueType) -> std::list<ArchiveQueueDump> {
+auto RootEntry::dumpArchiveQueues(JobQueueType queueType) -> std::list<ArchiveQueueDump> {
   checkPayloadReadable();
   std::list<ArchiveQueueDump> ret;
   auto & tpl = archiveQueuePointers(queueType);
@@ -293,8 +299,7 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, AgentReference& agentRef,
-    QueueType queueType, log::LogContext & lc) {
+std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, AgentReference& agentRef, JobQueueType queueType) {
   checkPayloadWritable();
   // Check the retrieve queue does not already exist
   try {
@@ -305,9 +310,10 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // The make of the vid in the object name will be handy.
   std::string retrieveQueueNameHeader = "RetrieveQueue";
   switch(queueType) {
-  case QueueType::JobsToTransfer: retrieveQueueNameHeader+="ToTransfer"; break;
-  case QueueType::JobsToReport: retrieveQueueNameHeader+="ToReport"; break;
-  case QueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
+  case JobQueueType::JobsToTransfer: retrieveQueueNameHeader+="ToTransfer"; break;
+  case JobQueueType::JobsToReportToUser: retrieveQueueNameHeader+="ToReport"; break;
+  case JobQueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
+  case JobQueueType::JobsToReportToRepackForSuccess: retrieveQueueNameHeader+="ToReportToRepackForSuccess"; break;
   default: break;
   }
   std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+vid);
@@ -326,11 +332,11 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   return retrieveQueueAddress;
 }
 
-void RootEntry::removeMissingRetrieveQueueReference(const std::string& vid, QueueType queueType) {
+void RootEntry::removeMissingRetrieveQueueReference(const std::string& vid, JobQueueType queueType) {
   serializers::removeOccurences(mutableRetrieveQueuePointers(queueType), vid);
 }
 
-void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, QueueType queueType, log::LogContext & lc) {
+void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, JobQueueType queueType, log::LogContext & lc) {
   checkPayloadWritable();
   // find the address of the retrieve queue object
   try {
@@ -358,7 +364,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, QueueType q
       std::stringstream err;
       err << "Unexpected vid found in retrieve queue pointed to for vid: "
           << vid << " found: " << rq.getVid();
-      throw WrongArchiveQueue(err.str());
+      throw WrongRetrieveQueue(err.str());
     }
     // Check the retrieve queue is empty
     if (!rq.isEmpty()) {
@@ -379,17 +385,18 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, QueueType q
     commit();
     {
       log::ScopedParamContainer params(lc);
-      params.add("vid", vid);
+      params.add("tapeVid", vid)
+            .add("queueType", toString(queueType));
       lc.log(log::INFO, "In RootEntry::removeRetrieveQueueAndCommit(): removed retrieve queue reference.");
     }
   } catch (serializers::NotFound &) {
     // No such tape pool. Nothing to to.
-    throw NoSuchRetrieveQueue("In RootEntry::addOrGetRetrieveQueueAndCommit: trying to remove non-existing retrieve queue");
+    throw NoSuchRetrieveQueue("In RootEntry::removeRetrieveQueueAndCommit: trying to remove non-existing retrieve queue");
   }
 }
 
 
-std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, QueueType queueType) {
+std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, JobQueueType queueType) {
   checkPayloadReadable();
   try {
     auto & rqp = serializers::findElement(retrieveQueuePointers(queueType), vid);
@@ -399,7 +406,7 @@ std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, QueueType
   }
 }
 
-auto RootEntry::dumpRetrieveQueues(QueueType queueType) -> std::list<RetrieveQueueDump> {
+auto RootEntry::dumpRetrieveQueues(JobQueueType queueType) -> std::list<RetrieveQueueDump> {
   checkPayloadReadable();
   std::list<RetrieveQueueDump> ret;
   auto & tpl = retrieveQueuePointers(queueType);
@@ -693,6 +700,224 @@ void RootEntry::removeSchedulerGlobalLockAndCommit(log::LogContext & lc) {
   commit();
 }
 
+// =============================================================================
+// ================ Repack index manipulation ==================================
+// =============================================================================
+
+std::string RootEntry::getRepackIndexAddress() {
+  checkPayloadReadable();
+  if (m_payload.has_repackindexpointer() &&
+      m_payload.repackindexpointer().address().size()) {
+    return m_payload.repackindexpointer().address();
+  }
+  throw NotAllocated("In RootEntry::getRepackIndexAddress: repack tape register not yet allocated");
+}
+
+std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef) {
+  checkPayloadWritable();
+  // Check if the repack tape register exists
+  try {
+    return getRepackIndexAddress();
+  } catch (NotAllocated &) {
+    // TODO: this insertion method is much simpler than the ones used for other objects.
+    // It implies the only dangling pointer situation we can get is the one where
+    // the object does not exist.
+    // As the object never changes ownership, the garbage collection can be left
+    // empty. There should never be garbage collection for this object type.
+    //
+    // decide on the object's name.
+    std::string rtrAddress (agentRef.nextId("RepackIndex"));
+    // Then prepare the repack tape register object
+    RepackIndex ri(rtrAddress, m_objectStore);
+    ri.initialize();
+    ri.setOwner(getAddressIfSet());
+    ri.setBackupOwner(getAddressIfSet());
+    // Reference the registry in the root entry
+    auto * rtrp = m_payload.mutable_repackindexpointer();
+    rtrp->set_address(rtrAddress);
+    commit();
+    // Create the repack tape register
+    ri.insert();
+    // done.
+    return rtrAddress;
+  } 
+}
+
+void RootEntry::removeRepackIndexAndCommit(log::LogContext& lc) {
+  checkPayloadWritable();
+  // Get the address of the scheduler lock (nothing to do if there is none)
+  if (!m_payload.has_repackindexpointer() ||
+      !m_payload.repackindexpointer().address().size())
+    return;
+  std::string rtrAddress = m_payload.repackindexpointer().address();
+  RepackIndex ri(rtrAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  ScopedExclusiveLock rtrl(ri);
+  ri.fetch();
+  // Check the drive register is empty
+  if (!ri.isEmpty()) {
+    throw DriveRegisterNotEmpty("In RootEntry::removeRepackIndexAndCommit(): "
+      "trying to remove a non-empty repack tape register");
+  }
+  // we can delete the drive register
+  ri.remove();
+  log::ScopedParamContainer params(lc);
+  params.add("repackIndex", ri.getAddressIfSet());
+  lc.log(log::INFO, "In RootEntry::removeRepackIndexAndCommit(): removed repack tape register object.");
+  // And update the root entry
+  m_payload.mutable_schedulerlockpointer()->set_address("");
+  // We commit for safety and symmetry with the add operation
+  commit();
+}
+
+// =============================================================================
+// ================ Repack index manipulation ==================================
+// =============================================================================
+
+std::string RootEntry::getRepackQueueAddress(RepackQueueType queueType) {
+  checkPayloadReadable();
+  switch (queueType) {
+  case RepackQueueType::Pending:
+    if (!m_payload.has_repackrequestspendingqueuepointer())
+      throw NoSuchRepackQueue("In RootEntry::getRepackQueueAddress: pending queue no set.");
+    return m_payload.repackrequestspendingqueuepointer().address();
+  case RepackQueueType::ToExpand:
+    if (!m_payload.has_repackrequeststoexpandqueuepointer())
+      throw NoSuchRepackQueue("In RootEntry::getRepackQueueAddress: toExpand queue not set.");
+    return m_payload.repackrequeststoexpandqueuepointer().address();
+  }
+  throw cta::exception::Exception("In RootEntry::getRepackQueueAddress(): unexptected queue type.");
+}
+
+void RootEntry::clearRepackQueueAddress(RepackQueueType queueType) {
+  checkPayloadWritable();
+  switch (queueType) {
+  case RepackQueueType::Pending:
+    if (!m_payload.has_repackrequestspendingqueuepointer())
+      throw NoSuchRepackQueue("In RootEntry::clearRepackQueueAddress: pending queue no set.");
+    m_payload.mutable_repackrequestspendingqueuepointer()->Clear();
+  case RepackQueueType::ToExpand:
+    if (!m_payload.has_repackrequeststoexpandqueuepointer())
+      throw NoSuchRepackQueue("In RootEntry::clearRepackQueueAddress: toExpand queue not set.");
+    return m_payload.mutable_repackrequeststoexpandqueuepointer()->Clear();
+  }
+  throw cta::exception::Exception("In RootEntry::clearRepackQueueAddress(): unexptected queue type.");
+}
+
+void RootEntry::removeRepackQueueAndCommit(RepackQueueType queueType, log::LogContext& lc) {
+  checkPayloadWritable();
+  // find the address of the repack queue object
+  try {
+    bool hasQueue;
+    switch (queueType) {
+    case RepackQueueType::Pending:
+      hasQueue = m_payload.has_repackrequestspendingqueuepointer();
+      break;
+    case RepackQueueType::ToExpand:
+      hasQueue = m_payload.has_repackrequeststoexpandqueuepointer();
+    }
+    if (!hasQueue) {
+      throw NoSuchRepackQueue("In RootEntry::removeRepackQueueAndCommit: trying to remove non-existing repack queue");
+    }
+    std::string queueAddress;
+    switch (queueType) {
+    case RepackQueueType::Pending:
+      queueAddress = m_payload.repackrequestspendingqueuepointer().address();
+      break;
+    case RepackQueueType::ToExpand:
+      queueAddress = m_payload.repackrequeststoexpandqueuepointer().address();
+    }
+    // Open the repack queue object
+    RepackQueue rq(queueAddress, m_objectStore);
+    ScopedExclusiveLock rql;
+    try {
+      rql.lock(rq);
+      rq.fetch();
+    } catch (cta::exception::Exception & ex) {
+      // The repack queue seems to not be there. Make sure this is the case:
+      if (rq.exists()) {
+        // We failed to access the queue, yet it is present. This is an error.
+        // Let the exception pass through.
+        throw;
+      } else {
+        // The queue object is already gone. We can skip to removing the 
+        // reference from the RootEntry
+        goto deleteFromRootEntry;
+      }
+    }
+    // Check the repack queue is empty
+    if (!rq.isEmpty()) {
+      throw RepackQueueNotEmpty("In RootEntry::removeRepackQueueAndCommit: trying to "
+          "remove a non-empty tape pool");
+    }
+    // We can now delete the queue
+    rq.remove();
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("repackQueueObject", rq.getAddressIfSet())
+            .add("queueType", toString(queueType));
+      lc.log(log::INFO, "In, RootEntry::removeRepackQueueAndCommit(): removed retrieve queue.");
+    }
+  deleteFromRootEntry:
+    // ... and remove it from our entry
+    switch (queueType) {
+    case RepackQueueType::Pending:
+      m_payload.clear_repackrequestspendingqueuepointer();
+      break;
+    case RepackQueueType::ToExpand:
+      m_payload.clear_repackrequeststoexpandqueuepointer();
+    }
+    commit();
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("queueType", toString(queueType));
+      lc.log(log::INFO, "In RootEntry::removeRetrieveQueueAndCommit(): removed retrieve queue reference.");
+    }
+  } catch (serializers::NotFound &) {
+    // No such tape pool. Nothing to to.
+    throw NoSuchRetrieveQueue("In RootEntry::addOrGetRetrieveQueueAndCommit: trying to remove non-existing retrieve queue");
+  }
+}
+
+std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, RepackQueueType queueType) {
+  checkPayloadWritable();
+  // Check the repack queue does not already exist
+  try {
+    return getRepackQueueAddress(queueType);
+  } catch (NoSuchRepackQueue &) {}
+  // The queue is not there yet. Create it.
+  // Insert the archive queue pointer in the root entry, then the queue.
+  std::string repackQueueNameHeader = "RepackQueue";
+  switch(queueType) {
+  case RepackQueueType::Pending: repackQueueNameHeader+="Pending"; break;
+  case RepackQueueType::ToExpand: repackQueueNameHeader+="ToExpand"; break;
+  default: break;
+  }
+  std::string repackQueueAddress = agentRef.nextId(repackQueueNameHeader);
+  // Now move create a reference in the root entry
+  switch(queueType) {
+  case RepackQueueType::Pending:
+    m_payload.mutable_repackrequestspendingqueuepointer()->set_address(repackQueueAddress); 
+    break;
+  case RepackQueueType::ToExpand:
+    m_payload.mutable_repackrequeststoexpandqueuepointer()->set_address(repackQueueAddress);
+    break;
+  }
+  // We must commit here to ensure the repack queue is referenced.
+  commit();
+  // Then insert the queue object
+  RepackQueue rq(repackQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  rq.initialize();
+  rq.setOwner(getAddressIfSet());
+  rq.setBackupOwner(getAddressIfSet());
+  rq.insert();
+  return repackQueueAddress;
+}
+
+
+
+// =============================================================================
+// ================ Dump =======================================================
+// =============================================================================
 
 // Dump the root entry
 std::string RootEntry::dump () {

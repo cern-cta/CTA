@@ -52,7 +52,7 @@ public:
   // In memory initialiser
   void initialize(const std::string & name);
   
-  // Commit with sanity checks (override from ObjectOps
+  // Commit with sanity checks (overload from ObjectOps)
   void commit();
 private:
   // Validates all summaries are in accordance with each other.
@@ -142,18 +142,15 @@ public:
 };
 
 class ArchiveQueueToTransfer: public ArchiveQueue {
-public:
-  template<typename...Ts> ArchiveQueueToTransfer(Ts&...args): ArchiveQueue(args...) {}
+  using ArchiveQueue::ArchiveQueue;
 };
 
 class ArchiveQueueToReport: public ArchiveQueue {
-public:
-  template<typename...Ts> ArchiveQueueToReport(Ts&...args): ArchiveQueue(args...) {}
+  using ArchiveQueue::ArchiveQueue;
 };
 
 class ArchiveQueueFailed: public ArchiveQueue {
-public:
-  template<typename...Ts> ArchiveQueueFailed(Ts&...args): ArchiveQueue(args...) {}
+  using ArchiveQueue::ArchiveQueue;
 };
   
 }}

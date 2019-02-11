@@ -45,7 +45,6 @@ class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
   Agent(GenericObject & go);
-  
   Agent(const std::string & name, Backend & os);
 
   void initialize();

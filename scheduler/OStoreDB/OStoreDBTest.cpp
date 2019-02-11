@@ -141,7 +141,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
     RootEntry re(osdbi.getBackend());
     ScopedSharedLock rel(re);
     re.fetch();
-    aqAddr = re.getArchiveQueueAddress("Tapepool1", cta::objectstore::QueueType::JobsToTransfer);
+    aqAddr = re.getArchiveQueueAddress("Tapepool1", cta::objectstore::JobQueueType::JobsToTransfer);
     rel.release();
     ArchiveQueue aq(aqAddr, osdbi.getBackend());
     ScopedSharedLock aql(aq);
@@ -166,7 +166,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   tape.lastFSeq = 1;
   tape.tapePool = "Tapepool1";
   tape.vid = "tape";
-  auto mount = mountInfo->createArchiveMount(tape, "drive", "library", "host", ::time(nullptr));
+  auto mount = mountInfo->createArchiveMount(tape, "drive", "library", "host", "vo","mediaType","vendor",123456789,::time(nullptr));
   auto giveAll = std::numeric_limits<uint64_t>::max();
   auto jobs = mount->getNextJobBatch(giveAll, giveAll, lc);
   ASSERT_EQ(8, jobs.size());

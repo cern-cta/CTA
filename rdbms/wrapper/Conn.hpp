@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "rdbms/AutocommitMode.hpp"
 #include "rdbms/wrapper/Stmt.hpp"
 
 #include <atomic>
@@ -46,13 +47,35 @@ public:
   virtual void close() = 0;
 
   /**
+   * Sets the autocommit mode of the connection.
+   *
+   * @param autocommitMode The autocommit mode of the connection.
+   * @throw AutocommitModeNotSupported If the specified autocommit mode is not
+   * supported.
+   */
+  virtual void setAutocommitMode(const AutocommitMode autocommitMode) = 0;
+
+  /**
+   * Returns the autocommit mode of the connection.
+   *
+   * @return The autocommit mode of the connection.
+   */
+  virtual AutocommitMode getAutocommitMode() const noexcept = 0;
+
+  /**
+   * Executes the statement.
+   *
+   * @param sql The SQL statement.
+   */
+  virtual void executeNonQuery(const std::string &sql) = 0;
+
+  /**
    * Creates a prepared statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql, const AutocommitMode autocommitMode) = 0;
+  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql) = 0;
 
   /**
    * Commits the current transaction.

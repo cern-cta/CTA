@@ -26,9 +26,13 @@ namespace cta {
 
 struct nullopt_t {
     nullopt_t() {}
+    friend std::ostream& operator<<(std::ostream& os, const nullopt_t &nopt)
+    {
+        return os;
+    }
 };
 
-extern nullopt_t nullopt;
+extern const nullopt_t nullopt;
 
 template <class T> class optional
 {
@@ -331,5 +335,4 @@ template<class T> bool operator>=(const T& value, const optional<T>& opt) {
 template<class T> void swap(optional<T>& lhs, optional<T>& rhs) {
   lhs.swap(rhs);
 }
-
 }

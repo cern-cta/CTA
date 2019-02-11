@@ -57,11 +57,20 @@ cat ${tempdir}/library-rc.sh
 
 ctacliIP=`kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -E 's/IP:[[:space:]]+//'`
 
+# Get list of tape drives that have a tape server
+TAPEDRIVES_IN_USE=()
+for tapeserver in $(kubectl --namespace ${NAMESPACE} get pods | grep tpsrv | awk '{print $1}'); do
+  TAPEDRIVES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${tapeserver} -c taped -- cat /etc/cta/TPCONFIG | awk '{print $1}'))
+done
+NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
+
 echo "Preparing CTA configuration for tests"
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
-     --name ${LIBRARYNAME}                                            \
-     --comment "ctasystest"                                           
+  for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
+    kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
+      --name ${TAPEDRIVES_IN_USE[${i}]}                                            \
+      --comment "ctasystest library mapped to drive ${TAPEDRIVES_IN_USE[${i}]}"
+  done
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add       \
     --name ctasystest                                                 \
     --vo vo                                                           \
@@ -71,14 +80,16 @@ echo "Preparing CTA configuration for tests"
   # add all tapes
   for ((i=0; i<${#TAPES[@]}; i++)); do
     VID=${TAPES[${i}]}
-    kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add         \
-      --logicallibrary ${LIBRARYNAME}                                 \
-      --tapepool ctasystest                                           \
-      --capacity 1000000000                                           \
-      --comment "ctasystest"                                          \
-      --vid ${VID}                                                    \
-      --disabled false                                                \
-      --full false                                                    \
+    kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add     \
+      --mediatype mediatype                                                \
+      --vendor vendor                                                      \
+      --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}  \
+      --tapepool ctasystest                                                \
+      --capacity 1000000000                                                \
+      --comment "ctasystest"                                               \
+      --vid ${VID}                                                         \
+      --disabled false                                                     \
+      --full false                                                         \
       --comment "ctasystest"
   done
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add   \
@@ -134,3 +145,20 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username c
 
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/poweruser1.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/poweruser1.keytab; mkdir -p /tmp/poweruser1"
+
+###
+# Filling services in DNS on all pods
+###
+# Generate hosts file for all defined services
+TMP_HOSTS=$(mktemp)
+KUBERNETES_DOMAIN_NAME='svc.cluster.local'
+KUBEDNS_IP=$(kubectl -n kube-system get service kube-dns -o json | jq -r '.spec.clusterIP')
+for service in $(kubectl --namespace=${NAMESPACE} get service -o json | jq -r '.items[].metadata.name'); do
+  service_IP=$(nslookup -timeout=1 ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${KUBEDNS_IP} | grep -A1 ${service}.${NAMESPACE} | grep Address | awk '{print $2}')
+  echo "${service_IP} ${service}.${NAMESPACE}.${KUBERNETES_DOMAIN_NAME} ${service}"
+done > ${TMP_HOSTS}
+
+# push to all Running containers removing already generated entries
+kubectl -n ${NAMESPACE} get pods -o json | jq -r '.items[] | select(.status.phase=="Running") | {name: .metadata.name, containers: .spec.containers[].name} | {command: (.name + " -c " + .containers)}|to_entries[]|(.value)' | while read container; do
+  cat ${TMP_HOSTS} | grep -v $(echo ${container} | awk '{print $1}')| kubectl -n ${NAMESPACE} exec ${container} -i -- bash -c "cat >> /etc/hosts"
+done

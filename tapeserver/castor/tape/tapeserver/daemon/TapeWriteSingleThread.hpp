@@ -69,7 +69,8 @@ public:
     MigrationReportPacker & repPacker,
     cta::server::ProcessCap &capUtils,
     uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush, const bool useLbp,
-    const std::string & externalEncryptionKeyScript);
+    const std::string & externalEncryptionKeyScript,
+    const cta::ArchiveMount & archiveMount);
   
   /**
    * 
@@ -188,6 +189,13 @@ private:
    * Reference to the watchdog, used in run()
    */
   MigrationWatchDog & m_watchdog;
+  
+  /**
+   * Reference to the archive mount object that
+   * stores the virtual organization (vo) of the tape, the tape pool in which the tape is
+   * and the density of the tape
+   */
+  const cta::ArchiveMount & m_archiveMount;
   
 protected:
   /***

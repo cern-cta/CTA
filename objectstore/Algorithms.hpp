@@ -40,21 +40,24 @@ public:
   typedef typename ContainerTraits<Q,C>::InsertedElement InsertedElement;
   typedef typename ContainerTraits<Q,C>::PopCriteria PopCriteria;
   typedef typename ContainerTraits<Q,C>::OwnershipSwitchFailure OwnershipSwitchFailure;
+  typedef typename ContainerTraits<Q,C>::PoppedElementsBatch PoppedElementsBatch;
+  typedef typename ContainerTraits<Q,C>::QueueType JobQueueType;
     
-  /** Reference objects in the container and then switch their ownership. Objects 
+  /** 
+   * Reference objects in the container and then switch their ownership. Objects 
    * are provided existing and owned by algorithm's agent.
    */
   void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId,
-      QueueType queueType, const typename ContainerTraits<Q,C>::ContainerIdentifier & prevContId,
+      const typename ContainerTraits<Q,C>::ContainerAddress & prevContAddress,
       typename ContainerTraits<Q,C>::InsertedElement::list & elements, log::LogContext & lc) {
     C cont(m_backend);
     ScopedExclusiveLock contLock;
     log::TimingList timingList;
     utils::Timer t;
-    ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, queueType, lc);
+    ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
     ContainerTraits<Q,C>::addReferencesAndCommit(cont, elements, m_agentReference, lc);
     auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
-        prevContId, timingList, t, lc);
+        prevContAddress, timingList, t, lc);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
       ContainerTraits<Q,C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);
@@ -92,19 +95,19 @@ public:
    * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
    * (most cases except garbage collection).
    */
-  void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier &contId, QueueType queueType,
+  void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier &contId,
       typename ContainerTraits<Q,C>::InsertedElement::list &elements, log::LogContext &lc) {
-    referenceAndSwitchOwnership(contId, queueType, m_agentReference.getAgentAddress(), elements, lc);
+    referenceAndSwitchOwnership(contId, m_agentReference.getAgentAddress(), elements, lc);
   }
 
   /**
-   * Reference objects in the container if needed and then switch their ownership (if needed).
+   * Reference objects in the container and then switch their ownership (if needed).
    *
    * Objects are expected to be owned by an agent and not listed in the container, but situations
    * might vary. This function is typically used by the garbage collector. We do not take care of
    * dereferencing the object from the caller.
    */
-  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId, QueueType queueType,
+  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId, 
       typename ContainerTraits<Q,C>::ContainerAddress & previousOwnerAddress,
       typename ContainerTraits<Q,C>::ContainerAddress & contAddress,
       typename ContainerTraits<Q,C>::InsertedElement::list & elements, log::LogContext & lc) {
@@ -112,7 +115,7 @@ public:
     ScopedExclusiveLock contLock;
     log::TimingList timingList;
     utils::Timer t;
-    ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, queueType, lc);
+    ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId,  lc);
     contAddress = cont.getAddressIfSet();
     auto contSummaryBefore = ContainerTraits<Q,C>::getContainerSummary(cont);
     timingList.insertAndReset("queueLockFetchTime", t);
@@ -152,21 +155,161 @@ public:
     }
   }
 
-  typename ContainerTraits<Q,C>::PoppedElementsBatch popNextBatch(
+  /**
+   * Do a single round of popping from the pre-locked container.
+   * @param cont
+   * @param contLock
+   * @param popCriteria
+   * @param newStatus: optional new status, for pop-and-switch-status combined operation.
+   * @param lc
+   * @return 
+   */
+  PoppedElementsBatch popNextBatchFromContainerAndSwitchStatus(
+      C &cont,
+      ScopedExclusiveLock & contLock,
+      PopCriteria &popCriteria,
+      cta::optional<typename ContainerTraits<Q,C>::ElementStatus> &newStatus,
+      log::LogContext &lc) {
+    PoppedElementsBatch ret;
+    auto previousSummary = ret.summary;
+    log::TimingList timingList;
+    utils::Timer t, totalTime;
+    typename ContainerTraits<Q,C>::ContainerSummary contSummaryBefore, contSummaryAfter;
+    try {
+      cont.fetch();
+    } catch (exception::Exception &) {
+      timingList.insertAndReset("fetchQueueTime", t);
+      // Failing to access the container will be logged
+      goto logAndReturn;
+    }
+    timingList.insertAndReset("fetchQueueTime", t);
+    contSummaryBefore = ContainerTraits<Q,C>::getContainerSummary(cont);
+    {
+      // We have a container. Get candidate element list from it.
+      typename ContainerTraits<Q,C>::ElementsToSkipSet emptyElementsToSkip;
+      PoppedElementsBatch candidateElements = 
+          ContainerTraits<Q,C>::getPoppingElementsCandidates(cont, popCriteria,
+          emptyElementsToSkip, lc);
+      timingList.insertAndReset("jobSelectionTime", t);
+      // Reference the candidates to our agent
+      std::list<typename ContainerTraits<Q,C>::ElementAddress> candidateElementsAddresses;
+      for (auto & e: candidateElements.elements) {
+        candidateElementsAddresses.emplace_back(ContainerTraits<Q,C>::getElementAddress(e));
+      }
+      timingList.insertAndReset("ownershipAdditionTime", t);
+      m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
+      // We can now attempt to switch ownership of elements
+      auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnershipAndStatus(candidateElements, 
+          m_agentReference.getAgentAddress(), 
+          cont.getAddressIfSet(), timingList, t, lc, newStatus);
+      if (failedOwnershipSwitchElements.empty()) {
+        timingList.insertAndReset("updateResultProcessingTime", t);
+        // This is the easy case (and most common case). Everything went through fine.
+        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, candidateElementsAddresses);
+        timingList.insertAndReset("containerUpdateTime", t);
+        contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
+        // We skip the container trimming as we do not have the contId.
+        // trimming might release the lock
+        if (contLock.isLocked()) contLock.release();
+        timingList.insertAndReset("containerUnlockTime", t);
+        // All jobs are validated
+        ret.summary += candidateElements.summary;
+        ret.elements.insertBack(std::move(candidateElements.elements));
+        timingList.insertAndReset("structureProcessingTime", t);
+      } else {
+        // For the failed files, we have to differentiate the not owned or not existing ones from other error cases.
+        // For the not owned, not existing and those successfully switched, we have to de reference them form the container.
+        // For other cases, we will leave the elements referenced in the container, as we cannot ensure de-referencing is safe.
+        std::set<typename ContainerTraits<Q,C>::ElementAddress> elementsNotToDereferenceFromContainer;
+        std::set<typename ContainerTraits<Q,C>::ElementAddress> elementsNotToReport;
+        std::list<typename ContainerTraits<Q,C>::ElementAddress> elementsToDereferenceFromAgent;
+        for (auto &e: failedOwnershipSwitchElements) {
+          try {
+            std::rethrow_exception(e.failure);
+          } catch (Backend::NoSuchObject &) {
+            elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
+            elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
+          } catch (Backend::WrongPreviousOwner &) {
+            elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
+            elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
+          } catch (Backend::CouldNotUnlock&) {
+            // Do nothing, this element was indeed OK.
+          }
+          catch (...) {
+            // This is a different error, so we will leave the reference to the element in the container
+            elementsNotToDereferenceFromContainer.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
+            elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
+            elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
+          }
+        }
+        // We are done with the sorting. Apply the decisions...
+        std::list<typename ContainerTraits<Q,C>::ElementAddress> elementsToDereferenceFromContainer;
+        for (auto & e: candidateElements.elements) {
+          if (!elementsNotToDereferenceFromContainer.count(ContainerTraits<Q,C>::getElementAddress(e))) {
+            elementsToDereferenceFromContainer.push_back(ContainerTraits<Q,C>::getElementAddress(e));
+          }
+        }
+        timingList.insertAndReset("updateResultProcessingTime", t);
+        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer);
+        timingList.insertAndReset("containerUpdateTime", t);
+        contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
+        if (contLock.isLocked()) contLock.release();
+        timingList.insertAndReset("containerUnlockTime", t);
+        m_agentReference.removeBatchFromOwnership(elementsToDereferenceFromAgent, m_backend);
+        for (auto & e: candidateElements.elements) {
+          if (!elementsNotToReport.count(ContainerTraits<Q,C>::getElementAddress(e))) {
+            ret.summary += ContainerTraits<Q,C>::getElementSummary(e);
+            ret.elements.insertBack(std::move(e));
+          }
+        }
+        timingList.insertAndReset("structureProcessingTime", t);
+      }
+    }
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("C", ContainerTraits<Q,C>::c_containerTypeName)
+            .add("containerAddress", cont.getAddressIfSet());
+      ret.summary.addDeltaToLog(previousSummary, params);
+      contSummaryAfter.addDeltaToLog(contSummaryBefore, params);
+      timingList.addToLog(params);
+      lc.log(log::INFO, "In ContainerTraits<Q,C>::popNextBatchFromContainer(): did one round of elements retrieval.");
+    }
+  logAndReturn:
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("C", ContainerTraits<Q,C>::c_containerTypeName);
+      ret.addToLog(params);
+      timingList.addToLog(params);
+      params.add("schedulerDbTime", totalTime.secs());
+      lc.log(log::INFO, "In ContainerTraits<Q,C>::popNextBatchFromContainer(): elements retrieval complete.");
+    }
+    return ret;
+  }
+  
+  /**
+   * Loop popping from a container until coming empty handed or fulfilling the criteria.
+   * The popping can take several iterations. The container is re-found on each round.
+   * @param contId container identifier (typically a string like vid, tape pool...)
+   * @param queueType container type (usually represents the steps in the requests lifecycle (ToTranfer, FailedToReport, Failed...)
+   * @param popCriteria
+   * @param lc
+   * @return 
+   */
+  PoppedElementsBatch popNextBatch(
     const typename ContainerTraits<Q,C>::ContainerIdentifier &contId,
-    QueueType queueType,
     typename ContainerTraits<Q,C>::PopCriteria &popCriteria,
     log::LogContext &lc)
   {
     // Prepare the return value
-    typename ContainerTraits<Q,C>::PoppedElementsBatch ret;
+    PoppedElementsBatch ret;
     typename ContainerTraits<Q,C>::PopCriteria unfulfilledCriteria = popCriteria;
     size_t iterationCount=0;
     typename ContainerTraits<Q,C>::ElementsToSkipSet elementsToSkip;
     log::TimingList timingList;
     utils::Timer t, totalTime;
     bool unexpectedException = false;
-    while (!unexpectedException && ret.summary < popCriteria) {
+    bool didTrim = false;
+    while (!unexpectedException && ret.summary < popCriteria && !didTrim) {
       typename ContainerTraits<Q,C>::PoppedElementsSummary previousSummary = ret.summary;
       log::TimingList localTimingList;
       // Get a container if it exists
@@ -174,7 +317,7 @@ public:
       iterationCount++;
       ScopedExclusiveLock contLock;
       try {
-        ContainerTraits<Q,C>::getLockedAndFetchedNoCreate(cont, contLock, contId, queueType, lc);
+        ContainerTraits<Q,C>::getLockedAndFetchedNoCreate(cont, contLock, contId, lc);
       } catch (typename ContainerTraits<Q,C>::NoSuchContainer &) {
         localTimingList.insertAndReset("findLockFetchQueueTime", t);
         timingList+=localTimingList;
@@ -185,7 +328,7 @@ public:
       typename ContainerTraits<Q,C>::ContainerSummary contSummaryBefore, contSummaryAfter;
       contSummaryBefore = ContainerTraits<Q,C>::getContainerSummary(cont);
       // We have a container. Get candidate element list from it.
-      typename ContainerTraits<Q,C>::PoppedElementsBatch candidateElements = 
+      PoppedElementsBatch candidateElements = 
           ContainerTraits<Q,C>::getPoppingElementsCandidates(cont, unfulfilledCriteria, elementsToSkip, lc);
       localTimingList.insertAndReset("jobSelectionTime", t);
       // Reference the candidates to our agent
@@ -196,7 +339,8 @@ public:
       localTimingList.insertAndReset("ownershipAdditionTime", t);
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
-      auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnership(candidateElements, m_agentReference.getAgentAddress(), cont.getAddressIfSet(), localTimingList, t, lc);
+      auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnership(candidateElements, m_agentReference.getAgentAddress(), 
+          cont.getAddressIfSet(), localTimingList, t, lc);
       if (failedOwnershipSwitchElements.empty()) {
         localTimingList.insertAndReset("updateResultProcessingTime", t);
         // This is the easy case (and most common case). Everything went through fine.
@@ -204,7 +348,7 @@ public:
         localTimingList.insertAndReset("containerUpdateTime", t);
         contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
         // If we emptied the container, we have to trim it.
-        ContainerTraits<Q,C>::trimContainerIfNeeded(cont, contLock, contId, lc);
+        didTrim = ContainerTraits<Q,C>::trimContainerIfNeeded(cont, contLock, contId, lc);
         localTimingList.insertAndReset("containerTrimmingTime", t);
         // trimming might release the lock
         if (contLock.isLocked()) contLock.release();
@@ -277,7 +421,7 @@ public:
       ret.summary.addDeltaToLog(previousSummary, params);
       contSummaryAfter.addDeltaToLog(contSummaryBefore, params);
       localTimingList.addToLog(params);
-      lc.log(log::INFO, "In ContainerTraits<Q,C>::PoppedElementsBatch(): did one round of elements retrieval.");
+      lc.log(log::INFO, "In Algorithms::popNextBatch(): did one round of elements retrieval.");
       timingList+=localTimingList;
     }
   logAndReturn:
@@ -289,7 +433,7 @@ public:
       timingList.addToLog(params);
       params.add("schedulerDbTime", totalTime.secs());
       params.add("iterationCount", iterationCount);
-      lc.log(log::INFO, "In ContainerTraits<Q,C>::PoppedElementsBatch(): elements retrieval complete.");
+      lc.log(log::INFO, "In Algorithms::popNextBatch(): elements retrieval complete.");
     }
     return ret;
   }

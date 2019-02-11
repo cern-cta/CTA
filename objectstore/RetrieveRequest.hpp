@@ -21,7 +21,7 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include "TapeFileSerDeser.hpp"
-#include "QueueType.hpp"
+#include "JobQueueType.hpp"
 #include <list>
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -31,7 +31,8 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta { 
+  namespace objectstore {
   
 class Backend;
 class Agent;
@@ -63,6 +64,32 @@ public:
     std::unique_ptr<Backend::AsyncDeleter> m_backendDeleter;
   };
   AsyncJobDeleter * asyncDeleteJob();
+  
+  
+  class AsyncJobSucceedForRepackReporter{
+    friend class RetrieveRequest;
+  public:
+    /**
+     * Wait for the end of the execution of the updater callback
+     */
+    void wait();
+  private:
+    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    //Callback to be executed by the AsyncUpdater
+    std::function<std::string(const std::string &)> m_updaterCallback;
+  };
+  
+  /**
+   * Asynchronously report the RetrieveJob corresponding to the copyNb parameter
+   * as RJS_Success
+   * @param copyNb the copyNb corresponding to the RetrieveJob we want to report as
+   * RJS_Succeeded
+   * @return the class that is Reponsible to save the updater callback
+   * and the backend async updater (responsible for executing asynchronously the updater callback
+   */
+  AsyncJobSucceedForRepackReporter * asyncReportSucceedForRepack(uint64_t copyNb);
+  
   JobDump getJob(uint16_t copyNb);
   std::list<JobDump> getJobs();
   bool addJobFailure(uint16_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc); 
@@ -93,6 +120,9 @@ public:
     //! The copy number to enqueue. It could be different from the updated one in mixed success/failure scenario.
     serializers::RetrieveJobStatus nextStatus;
   };
+  bool isRepack();
+  void setIsRepack(bool isRepack);
+  
 private:
   /*!
    * Determine and set the new status of the job.
@@ -114,7 +144,7 @@ public:
   //! Returns next step to take with the job
   EnqueueingNextStep addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
   //! Returns queue type depending on the compound statuses of all retrieve requests
-  QueueType getQueueType();
+  JobQueueType getQueueType();
   std::list<std::string> getFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);

@@ -30,7 +30,6 @@
 #include "common/dataStructures/ListStorageClassRequest.hpp"
 #include "common/dataStructures/ReadTestResult.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
-#include "common/dataStructures/RepackType.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -48,6 +47,8 @@
 #include "common/log/TimingList.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/RepackRequest.hpp"
+#include "objectstore/RetrieveRequest.hpp"
 
 #include "eos/DiskReporter.hpp"
 #include "eos/DiskReporterFactory.hpp"
@@ -191,13 +192,19 @@ public:
   void queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
     const bool force, const bool lbp);
 
-  void queueRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
-    const cta::common::dataStructures::RepackType);
-  void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
-  std::list<cta::common::dataStructures::RepackInfo> getRepacks(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  cta::common::dataStructures::RepackInfo getRepack(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
+  void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
+    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc);
+  void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc);
+  std::list<cta::common::dataStructures::RepackInfo> getRepacks();
+  cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
+
+  /**
+   * Return the list of all RetrieveRequests that are in the RetrieveQueueToReportToRepackForSuccess
+   * @param nbRequests : The number of request we would like to return 
+   * @param lc
+   * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
+   */
+  std::list<std::unique_ptr<RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t nbRequests, log::LogContext& lc);
 
   void shrink(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool); 
     // removes extra tape copies from a specific pool(usually an "_2" pool)
@@ -283,6 +290,9 @@ public:
 
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
+  const uint64_t c_defaultFseqForRepack = 1;
+  const size_t c_defaultMaxNbFilesForRepack = 500;
+  
   typedef std::pair<std::string, common::dataStructures::MountType> tpType;
   /**
    * Common part to getNextMountDryRun() and getNextMount() to populate mount decision info.
@@ -292,6 +302,8 @@ private:
     const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer, 
     std::map<tpType, uint32_t> & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
+  
+  const std::string generateRetrieveDstURL(const cta::common::dataStructures::DiskFileInfo dfi) const;
   
 public:
   /**
@@ -333,6 +345,13 @@ public:
   
   void reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>> & archiveJobsBatch,
       eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer &, log::LogContext &);
+  
+  /*============== Repack support ===========================================*/
+  // Promotion of requests
+  void promoteRepackRequestsToToExpand(log::LogContext & lc);
+  // Expansion support
+  std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
+  void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
 
   /*======================= Failed archive jobs support ======================*/
   SchedulerDatabase::JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &lc);

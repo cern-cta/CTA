@@ -15,18 +15,43 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 
-#include "common/dataStructures/RepackType.hpp"
+namespace cta { 
+namespace threading {
 
-std::string cta::common::dataStructures::toString(cta::common::dataStructures::RepackType type) {
-  switch(type) {
-    case cta::common::dataStructures::RepackType::expandandrepack:
-      return "expandandrepack";
-    case cta::common::dataStructures::RepackType::justexpand:
-      return "justexpand";
-    case cta::common::dataStructures::RepackType::justrepack:
-      return "justrepack";
-    default:
-      return "UNKNOWN";
-  }
-}
+class RWLock;
+
+/**
+ * A scoped read lock on an RWLock.
+ */
+class RWLockWrLocker {
+public:
+
+  /**
+   * Constructor.
+   *
+   * Takes a write lock on the specified read-write lock.
+   *
+   * @param lock The read-write lock on which to take a read-lock.
+   */
+  RWLockWrLocker(RWLock &lock);
+  
+  /**
+   * Destructor.
+   *
+   * Releases the write lock.
+   */
+  ~RWLockWrLocker();
+
+private:
+
+  /**
+   * The read-write lock.
+   */
+  RWLock &m_lock;
+
+}; // class RWLockWrLocker
+  
+} // namespace threading
+} // namespace cta

@@ -164,6 +164,10 @@ public:
     m_OStoreDB.setRetrieveJobBatchReported(jobsBatch, timingList, t, lc);
   }
 
+  std::list<std::unique_ptr<RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc) override {
+    return m_OStoreDB.getNextSucceededRetrieveRequestForRepackBatch(filesRequested,lc);
+  }
+
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {
     return m_OStoreDB.getRetrieveRequestsByVid(vid);
   }
@@ -195,10 +199,38 @@ public:
     return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
   }
   
+
+  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, log::LogContext& lc) override {
+    m_OStoreDB.queueRepack(vid, bufferURL, repackType, lc);
+  }
+  
+  std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
+    return m_OStoreDB.getRepackInfo();
+  }
+  
+  common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override {
+    return m_OStoreDB.getRepackInfo(vid);
+  }
+  
+  void cancelRepack(const std::string& vid, log::LogContext & lc) override {
+    m_OStoreDB.cancelRepack(vid, lc);
+  }
+  
+  std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override {
+    return m_OStoreDB.getRepackStatistics();
+  }
+  
+  std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override {
+    return m_OStoreDB.getRepackStatisticsNoLock();
+  }
+  
+  std::unique_ptr<RepackRequest> getNextRepackJobToExpand() override {
+    return m_OStoreDB.getNextRepackJobToExpand();
+  }
+
   std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
     return m_OStoreDB.getDriveStates(lc);
   }
-  
   
   void setDesiredDriveState(const std::string& drive, const cta::common::dataStructures::DesiredDriveState& state, log::LogContext& lc) override {
     return m_OStoreDB.setDesiredDriveState(drive, state, lc);

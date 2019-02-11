@@ -18,9 +18,26 @@
 
 #pragma once
 
-#include <string>
+#include <pthread.h>
 
-namespace cta { namespace objectstore {
-enum class QueueType { JobsToTransfer, FailedJobs, JobsToReport };
-std::string toString(QueueType queueType);
-}} // namespace cta::objectstore
+namespace cta {
+namespace threading {
+
+/**
+ * A C++ wrapper around a pthdead read-write lock.
+ * variable.
+ */
+class RWLock {
+public:
+  RWLock();
+  ~RWLock();
+  void rdlock();
+  void wrlock();
+  void unlock();
+
+private:
+  pthread_rwlock_t m_lock;
+};
+  
+} // namespace threading
+} // namespace cta

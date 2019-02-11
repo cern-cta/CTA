@@ -45,7 +45,7 @@ TEST_F(cta_rdbms_StmtPoolTest, getStmt) {
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
-    auto stmt = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = pool.getStmt(*conn, sql);
     ASSERT_EQ(0, pool.getNbStmts());
   }
   ASSERT_EQ(1, pool.getNbStmts());
@@ -61,7 +61,7 @@ TEST_F(cta_rdbms_StmtPoolTest, moveAssignment) {
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
-    Stmt stmt1 = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
+    Stmt stmt1 = pool.getStmt(*conn, sql);
     Stmt stmt2;
     stmt2 = std::move(stmt1);
     ASSERT_EQ(0, pool.getNbStmts());
@@ -79,7 +79,7 @@ TEST_F(cta_rdbms_StmtPoolTest, moveConstructor) {
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
-    Stmt stmt1 = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
+    Stmt stmt1 = pool.getStmt(*conn, sql);
     Stmt stmt2(std::move(stmt1));
     ASSERT_EQ(0, pool.getNbStmts());
   }
@@ -109,7 +109,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
     StmtPool pool;
 
     {
-      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::AUTOCOMMIT_ON);
+      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
       while(rset.next()) {
@@ -119,12 +119,12 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
     }
 
     {
-      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::AUTOCOMMIT_ON);
+      Stmt stmt = pool.getStmt(*conn, createTableSql);
       stmt.executeNonQuery();
     }
 
     {
-      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::AUTOCOMMIT_ON);
+      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
       while(rset.next()) {
@@ -143,7 +143,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
 
     StmtPool pool;
     {
-      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::AUTOCOMMIT_ON);
+      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
       while(rset.next()) {
@@ -153,12 +153,12 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
     }
 
     {
-      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::AUTOCOMMIT_ON);
+      Stmt stmt = pool.getStmt(*conn, createTableSql);
       stmt.executeNonQuery();
     }
 
     {
-      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::AUTOCOMMIT_ON);
+      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
       while(rset.next()) {
@@ -186,7 +186,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
     ASSERT_TRUE(conn->getTableNames().empty());
 
     {
-      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::AUTOCOMMIT_ON);
+      Stmt stmt = pool.getStmt(*conn, createTableSql);
       stmt.executeNonQuery();
     }
 
@@ -204,7 +204,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
     ASSERT_TRUE(conn->getTableNames().empty());
 
     {
-      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::AUTOCOMMIT_ON);
+      Stmt stmt = pool.getStmt(*conn, createTableSql);
       stmt.executeNonQuery();
     }
 
@@ -222,8 +222,8 @@ TEST_F(cta_rdbms_StmtPoolTest, sameSqlTwoCachedStmts) {
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
-    Stmt stmt1 = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
-    Stmt stmt2 = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
+    Stmt stmt1 = pool.getStmt(*conn, sql);
+    Stmt stmt2 = pool.getStmt(*conn, sql);
     ASSERT_EQ(0, pool.getNbStmts());
   }
   ASSERT_EQ(2, pool.getNbStmts());

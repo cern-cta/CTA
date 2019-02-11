@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "common/exception/Exception.hpp"
+#include "rdbms/AutocommitMode.hpp"
 #include "rdbms/ConnAndStmts.hpp"
 #include "rdbms/Stmt.hpp"
 
@@ -35,6 +37,11 @@ class ConnPool;
  */
 class Conn {
 public:
+
+  /**
+   * Constructor.
+   */
+  Conn();
 
   /**
    * Constructor.
@@ -79,35 +86,54 @@ public:
   Conn &operator=(Conn &&rhs);
 
   /**
+   * Thrown when a requested autocommit mode is not supported.
+   */
+  struct AutocommitModeNotSupported: public exception::Exception {
+    AutocommitModeNotSupported(const std::string &context = "", const bool embedBacktrace = true):
+      Exception(context, embedBacktrace) {}
+  };
+
+  /**
+   * Sets the autocommit mode of the connection.
+   *
+   * @param autocommitMode The autocommit mode of the connection.
+   * @throw AutocommitModeNotSupported If the specified autocommit mode is not
+   * supported.
+   */
+  void setAutocommitMode(const AutocommitMode autocommitMode);
+
+  /**
+   * Returns the autocommit mode of the connection.
+   *
+   * @return The autocommit mode of the connection.
+   */
+  AutocommitMode getAutocommitMode() const;
+
+  /**
    * Creates a prepared statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  Stmt createStmt(const std::string &sql, const AutocommitMode autocommitMode);
+  Stmt createStmt(const std::string &sql);
 
   /**
    * Convenience method that parses the specified string of multiple SQL
    * statements and calls executeNonQuery() for each individual statement found.
    *
    * Please note that each statement should be a non-query terminated by a
-   * semicolon and that each individual statement will be executed with
-   * autocommit ON.
+   * semicolon.
    *
    * @param sqlStmts The SQL statements to be executed.
-   * @param autocommitMode The autocommit mode of the statement.
    */
   void executeNonQueries(const std::string &sqlStmts);
 
   /**
-   * Convenience method that wraps Conn::createStmt() followed by
-   * Stmt::executeNonQuery().
+   * Executes the statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode);
+  void executeNonQuery(const std::string &sql);
 
   /**
    * Commits the current transaction.
@@ -126,7 +152,7 @@ public:
    * @return The names of all the tables in the database schema in alphabetical
    * order.
    */
-  std::list<std::string> getTableNames();
+  std::list<std::string> getTableNames() const;
 
   /**
    * Closes the underlying cached database statements and their connection.

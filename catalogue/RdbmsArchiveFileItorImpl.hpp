@@ -95,6 +95,11 @@ private:
   bool m_hasMoreHasBeenCalled;
 
   /**
+   * The database connection.
+   */
+  rdbms::Conn m_conn;
+
+  /**
    * The database statement.
    */
   rdbms::Stmt m_stmt;

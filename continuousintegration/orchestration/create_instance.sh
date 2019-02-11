@@ -9,6 +9,8 @@ config_objectstore="./objectstore-file.yaml"
 config_database="./database-sqlite.yaml"
 # default library model
 model="mhvtl"
+# defaults MGM namespace to inMemory
+config_eos="./eos-config-inmemory.yaml"
 
 # EOS short instance name
 EOSINSTANCE=ctaeos
@@ -23,6 +25,7 @@ keepobjectstore=1
 
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
+      [-e <eos_configmap>] \
       [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ]  \
       [-S] [-D] [-O] [-m [mhvtl|ibm]]
 
@@ -39,7 +42,7 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:p:b:B:SDOm:" o; do
+while getopts "n:o:d:e:p:b:B:SDOm:" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -48,6 +51,10 @@ while getopts "n:o:d:p:b:B:SDOm:" o; do
         d)
             config_database=${OPTARG}
             test -f ${config_database} || error="${error}Database configmap file ${config_database} does not exist\n"
+            ;;
+        e)
+            config_eos=${OPTARG}
+            test -f ${config_eos} || error="${error}EOS configmap file ${config_eos} does not exist\n"
             ;;
         m)
             model=${OPTARG}
@@ -141,7 +148,7 @@ fi
 
 if [ $usesystemd == 1 ] ; then
     echo "Using systemd to start services on some pods"
-    for podname in ctafrontend tpsrv ctaeos; do
+    for podname in ctafrontend tpsrv ctaeos client; do
         sed -i "/^\ *command:/d" ${poddir}/pod-${podname}*.yaml
     done
 fi
@@ -178,6 +185,7 @@ echo "creating configmaps in instance"
 
 kubectl create -f ${config_objectstore} --namespace=${instance}
 kubectl create -f ${config_database} --namespace=${instance}
+kubectl create -f ${config_eos} --namespace=${instance}
 
 
 echo -n "Requesting an unused ${model} library"
@@ -331,7 +339,7 @@ CTA_ENDPOINT=ctafrontend:10955
 
 echo "Setting workflows in namespace ${instance} pod ctaeos:"
 CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
-for WORKFLOW in sync::create.default sync::closew.default archived.default archive_failed.default sync::prepare.default closew.retrieve_written retrieve_failed.default sync::delete.default
+for WORKFLOW in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default sync::closew.retrieve_written sync::retrieve_failed.default sync::delete.default
 do
   echo "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
   kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
@@ -341,6 +349,16 @@ done
 echo -n "Copying eos SSS on ctacli and client pods to allow recalls"
 kubectl --namespace=${instance} exec ctaeos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
 kubectl --namespace=${instance} exec ctaeos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
+echo OK
+
+
+echo -n "Waiting for cta-frontend to be Ready"
+for ((i=0; i<300; i++)); do
+  echo -n "."
+  kubectl --namespace=${instance} exec ctafrontend -- bash -c 'test -f /var/log/cta/cta-frontend.log && grep -q "cta-frontend started" /var/log/cta/cta-frontend.log' && break
+  sleep 1
+done
+kubectl --namespace=${instance} exec ctafrontend -- bash -c 'grep -q "cta-frontend started" /var/log/cta/cta-frontend.log' || die "TIMED OUT"
 echo OK
 
 

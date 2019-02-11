@@ -42,16 +42,8 @@ public:
    * Constructor.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    */
-  Stmt(const std::string &sql, const AutocommitMode autocommitMode);
-
-  /**
-   * Returns the autocommit mode of teh statement.
-   *
-   * @return The autocommit mode of teh statement.
-   */
-  AutocommitMode getAutocommitMode() const noexcept;
+  Stmt(const std::string &sql);
 
   /**
    * Destructor.
@@ -199,11 +191,6 @@ private:
    * The SQL statement.
    */
   std::string m_sql;
-
-  /**
-   * The autocommit mode of the statement.
-   */
-  AutocommitMode m_autocommitMode;
 
   /**
    * Map from SQL parameter name to parameter index.

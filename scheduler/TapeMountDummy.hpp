@@ -41,6 +41,18 @@ class TapeMountDummy: public TapeMount {
   std::string getVid() const override {
     throw exception::Exception("In DummyTapeMount::getNbFiles() : not implemented");
   }
+  std::string getVo() const override{
+      throw exception::Exception("In DummyTapeMount::getVo() : not implemented");
+  }
+  
+  std::string getMediaType() const override {
+      throw exception::Exception("In DummyTapeMount::getMediaType() : not implemented");
+  }
+  
+  std::string getVendor() const override{
+      throw exception::Exception("In DummyTapeMount::getVendor() : not implemented");
+  }
+
   void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {}
   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
 };

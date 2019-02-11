@@ -63,13 +63,35 @@ public:
   void close() override;
 
   /**
+   * Sets the autocommit mode of the connection.
+   *
+   * @param autocommitMode The autocommit mode of the connection.
+   * @throw AutocommitModeNotSupported If the specified autocommit mode is not
+   * supported.
+   */
+  void setAutocommitMode(const AutocommitMode autocommitMode) override;
+
+  /**
+   * Returns the autocommit mode of the connection.
+   *
+   * @return The autocommit mode of the connection.
+   */
+  AutocommitMode getAutocommitMode() const noexcept override;
+
+  /**
+   * Executes the statement.
+   *
+   * @param sql The SQL statement.
+   */
+  void executeNonQuery(const std::string &sql) override;
+
+  /**
    * Creates a prepared statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<Stmt> createStmt(const std::string &sql, const AutocommitMode autocommitMode) override;
+  std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
 
   /**
    * Commits the current transaction.
@@ -129,11 +151,6 @@ private:
    * The database connection.
    */
   sqlite3 *m_sqliteConn;
-
-  /**
-   * True of there is an on-going transaction.
-   */
-  bool m_transactionInProgress;
 
 }; // class SqliteConn
 

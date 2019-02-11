@@ -19,6 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "rdbms/Conn.hpp"
 #include "rdbms/wrapper/Sqlite.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
@@ -26,6 +27,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <string.h>
 
 namespace cta {
 namespace rdbms {
@@ -34,8 +36,7 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteConn::SqliteConn(const std::string &filename):
-  m_transactionInProgress(false) {
+SqliteConn::SqliteConn(const std::string &filename) {
   try {
     m_sqliteConn = nullptr;
     if(sqlite3_open_v2(filename.c_str(), &m_sqliteConn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, nullptr)) {
@@ -97,9 +98,38 @@ void SqliteConn::close() {
 }
 
 //------------------------------------------------------------------------------
+// setAutocommitMode
+//------------------------------------------------------------------------------
+void SqliteConn::setAutocommitMode(const AutocommitMode autocommitMode) {
+  if(AutocommitMode::AUTOCOMMIT_OFF == autocommitMode) {
+    throw rdbms::Conn::AutocommitModeNotSupported("Failed to set autocommit mode to AUTOCOMMIT_OFF: SqliteConn only"
+      " supports AUTOCOMMIT_ON");
+  }
+}
+
+//------------------------------------------------------------------------------
+// getAutocommitMode
+//------------------------------------------------------------------------------
+AutocommitMode SqliteConn::getAutocommitMode() const noexcept{
+  return AutocommitMode::AUTOCOMMIT_ON;
+}
+
+//------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void SqliteConn::executeNonQuery(const std::string &sql) {
+  try {
+    auto stmt = createStmt(sql);
+    stmt->executeNonQuery();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const AutocommitMode autocommitMode) {
+std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql) {
   try {
     threading::MutexLocker locker(m_mutex);
 
@@ -107,7 +137,7 @@ std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const Autoc
       throw exception::Exception("Connection is closed");
     }
 
-    return cta::make_unique<SqliteStmt>(autocommitMode , *this, sql);
+    return cta::make_unique<SqliteStmt>(*this, sql);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -124,18 +154,18 @@ void SqliteConn::commit() {
       throw exception::Exception("Connection is closed");
     }
 
-    if(m_transactionInProgress) {
-      char *errMsg = nullptr;
-      if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "COMMIT", nullptr, nullptr, &errMsg)) {
+    char *errMsg = nullptr;
+    if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "COMMIT", nullptr, nullptr, &errMsg)) {
+      if(nullptr == errMsg) {
+        throw exception::Exception("sqlite3_exec failed");
+      } else if(strcmp("cannot commit - no transaction is active", errMsg)) {
         exception::Exception ex;
-        ex.getMessage() << "sqlite3_exec failed";
-        if(nullptr != errMsg) {
-          ex.getMessage() << ": " << errMsg;
-          sqlite3_free(errMsg);
-        }
+        ex.getMessage() << "sqlite3_exec failed: " << errMsg;
+        sqlite3_free(errMsg);
         throw ex;
+      } else {
+        sqlite3_free(errMsg);
       }
-      m_transactionInProgress = false;
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -153,18 +183,15 @@ void SqliteConn::rollback() {
       throw exception::Exception("Connection is closed");
     }
 
-    if(m_transactionInProgress) {
-      char *errMsg = nullptr;
-      if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "ROLLBACK", nullptr, nullptr, &errMsg)) {
-        exception::Exception ex;
-        ex.getMessage() << "sqlite3_exec failed";
-        if(nullptr != errMsg) {
-          ex.getMessage() << ": " << errMsg;
-          sqlite3_free(errMsg);
-        }
-        throw ex;
+    char *errMsg = nullptr;
+    if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "ROLLBACK", nullptr, nullptr, &errMsg)) {
+      exception::Exception ex;
+      ex.getMessage() << "sqlite3_exec failed";
+      if(nullptr != errMsg) {
+        ex.getMessage() << ": " << errMsg;
+        sqlite3_free(errMsg);
       }
-      m_transactionInProgress = false;
+      throw ex;
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -185,7 +212,7 @@ void SqliteConn::printSchema(std::ostream &os) {
       "ORDER BY "
         "TYPE, "
         "NAME;";
-    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     os << "NAME, TYPE" << std::endl;
     os << "==========" << std::endl;
@@ -213,7 +240,7 @@ std::list<std::string> SqliteConn::getTableNames() {
         "TYPE = 'table' "
       "ORDER BY "
         "NAME;";
-    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     std::list<std::string> names;
     while (rset->next()) {

@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/threading/MutexLocker.hpp"
+#include "common/threading/RWLock.hpp"
 #include "rdbms/wrapper/Conn.hpp"
 
 #include <occi.h>
@@ -61,13 +62,35 @@ public:
   void close() override;
 
   /**
+   * Sets the autocommit mode of the connection.
+   *
+   * @param autocommitMode The autocommit mode of the connection.
+   * @throw AutocommitModeNotSupported If the specified autocommit mode is not
+   * supported.
+   */
+  void setAutocommitMode(const AutocommitMode autocommitMode) override;
+
+  /**
+   * Returns the autocommit mode of the connection.
+   *
+   * @return The autocommit mode of the connection.
+   */
+  AutocommitMode getAutocommitMode() const noexcept override;
+
+  /**
+   * Executes the statement.
+   *
+   * @param sql The SQL statement.
+   */
+  void executeNonQuery(const std::string &sql) override;
+
+  /**
    * Creates a prepared statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<Stmt> createStmt(const std::string &sql, const AutocommitMode autocommitMode) override;
+  std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
 
   /**
    * Commits the current transaction.
@@ -123,6 +146,16 @@ private:
    * The OCCI connection.
    */
   oracle::occi::Connection *m_occiConn;
+
+  /**
+   * Read-write lock to protect m_autocommitMode.
+   */
+  mutable threading::RWLock m_autocommitModeRWLock;
+
+  /**
+   * The autocommit mode of the connection.
+   */
+  AutocommitMode m_autocommitMode;
 
   /**
    * Closes the specified OCCI statement.

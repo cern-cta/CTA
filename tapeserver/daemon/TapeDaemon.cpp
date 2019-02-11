@@ -92,7 +92,7 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   setProcessCapabilities("cap_sys_rawio+p");
   
   // Set the name of the (unique) thread for easy process identification.
-  prctl(PR_SET_NAME, "cta-taped-main");
+  prctl(PR_SET_NAME, "cta-tpd-master");
   mainEventLoop();
 }
 

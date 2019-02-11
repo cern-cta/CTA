@@ -115,7 +115,9 @@ void RecallReportPacker::reportTestGoingToEnd(){
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
-  m_successfulRetrieveJob->asyncComplete();
+  if(!m_successfulRetrieveJob->retrieveRequest.isRepack){
+    m_successfulRetrieveJob->asyncComplete();
+  }
   parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
 }
 

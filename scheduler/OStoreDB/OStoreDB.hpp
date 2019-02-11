@@ -29,6 +29,8 @@
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RepackQueue.hpp"
+#include "objectstore/RepackRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
@@ -94,11 +96,17 @@ public:
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
       const catalogue::TapeForWriting & tape,
       const std::string driveName, const std::string& logicalLibrary, 
-      const std::string & hostName, time_t startTime) override;
+      const std::string & hostName, 
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,uint64_t capacityInBytes,
+      time_t startTime) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
       const std::string & vid, const std::string & tapePool,
       const std::string driveName,
       const std::string& logicalLibrary, const std::string& hostName, 
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,
+      const uint64_t capacityInBytes,
       time_t startTime) override;
     virtual ~TapeMountDecisionInfo();
   private:
@@ -115,11 +123,16 @@ public:
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
       const catalogue::TapeForWriting & tape,
       const std::string driveName, const std::string& logicalLibrary, 
-      const std::string & hostName, time_t startTime) override;
+      const std::string & hostName, const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,uint64_t capacityInBytes,
+      time_t startTime) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
       const std::string & vid, const std::string & tapePool,
       const std::string driveName,
       const std::string& logicalLibrary, const std::string& hostName, 
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,
+      const uint64_t capacityInBytes,
       time_t startTime) override;
     virtual ~TapeMountDecisionInfoNoLock();
   };
@@ -204,6 +217,7 @@ public:
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   public:
     std::set<cta::SchedulerDatabase::RetrieveJob*> finishSettingJobsBatchSuccessful(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
+    std::set<cta::SchedulerDatabase::RetrieveJob*> batchSucceedRetrieveForRepack(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override;
   };
   friend class RetrieveMount;
   
@@ -216,6 +230,13 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void asyncSucceed() override;
     virtual void checkSucceed() override;
+    /**
+     * Allows to asynchronously report this RetrieveJob as success
+     * for repack. It will call the retrieveRequest.asyncReportSucceedForRepack(this->selectedCopyNb) method
+     * that will set the status of the Job as RJS_Succeeded
+     */
+    virtual void asyncReportSucceedForRepack() override;
+    virtual void checkReportSucceedForRepack() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     virtual ~RetrieveJob() override;
@@ -234,6 +255,7 @@ public:
     objectstore::RetrieveRequest m_retrieveRequest;
     OStoreDB::RetrieveMount *m_retrieveMount;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
+    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
   };
   static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
 
@@ -252,10 +274,10 @@ public:
   typedef QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> ArchiveQueueItor_t;
 
   ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName,
-    objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
+    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransfer) const;
 
   ArchiveQueueItor_t* getArchiveJobItorPtr(const std::string &tapePoolName,
-    objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
+    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransfer) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, 
      log::LogContext & logContext) override;
@@ -289,10 +311,10 @@ public:
   typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
 
   RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid,
-    objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
+    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransfer) const;
 
   RetrieveQueueItor_t* getRetrieveJobItorPtr(const std::string &vid,
-    objectstore::QueueType queueType = objectstore::QueueType::JobsToTransfer) const;
+    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransfer) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
 
@@ -303,6 +325,74 @@ public:
 
   JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) override;
 
+  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc) override;
+  
+  /* === Repack requests handling =========================================== */
+  void queueRepack(const std::string& vid, const std::string& bufferURL, 
+    common::dataStructures::RepackInfo::Type repackType, log::LogContext &logContext) override;
+  
+  std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchRepackRequest);
+  common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;
+  void cancelRepack(const std::string& vid, log::LogContext & lc) override;
+  
+  class RepackRequest: public SchedulerDatabase::RepackRequest
+  {
+    friend class OStoreDB;
+    public:
+      RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB) :
+      m_jobOwned(false), m_oStoreDB(oStoreDB),
+      m_repackRequest(jobAddress, m_oStoreDB.m_objectStore){}
+    void setJobOwned(bool b = true) { m_jobOwned = b; }
+
+  private:
+    bool m_jobOwned;
+    uint64_t m_mountId;
+    OStoreDB & m_oStoreDB;
+    objectstore::RepackRequest m_repackRequest;
+  };
+  
+  /**
+   * A class holding a lock on the pending repack request queue. This is the first
+   * container we will have to lock if we decide to pop a/some request(s)
+   */
+  class RepackRequestPromotionStatistics: public SchedulerDatabase::RepackRequestStatistics {
+    friend class OStoreDB;
+  public:
+    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override;
+    virtual ~RepackRequestPromotionStatistics() {};
+  private:
+    RepackRequestPromotionStatistics(objectstore::Backend & backend,
+              objectstore::AgentReference & agentReference);
+    objectstore::Backend & m_backend;
+    objectstore::AgentReference &m_agentReference;
+    objectstore::RepackQueuePending m_pendingRepackRequestQueue;
+    objectstore::ScopedExclusiveLock m_lockOnPendingRepackRequestsQueue;
+  };
+  
+  class RepackRequestPromotionStatisticsNoLock: public SchedulerDatabase::RepackRequestStatistics {
+    friend class OStoreDB;
+  public:
+    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override {
+      throw (SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion"));
+    }
+    virtual ~RepackRequestPromotionStatisticsNoLock() {}
+  };
+  
+private:
+  void populateRepackRequestsStatistics (objectstore::RootEntry & re, SchedulerDatabase::RepackRequestStatistics &stats);
+public:
+  
+  std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override;
+  std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override;
+  
+  /**
+   * Returns the Object Store representation of a RepackRequest that is in
+   * the RepackQueueToExpand queue (the repack request has Status "ToExpand"
+   * @return a unique_ptr holding the RepackRequest
+   */
+  std::unique_ptr<SchedulerDatabase::RepackRequest> getNextRepackJobToExpand() override;
+  
   /* === Drive state handling  ============================================== */
   /**
    * Get states of all drives.

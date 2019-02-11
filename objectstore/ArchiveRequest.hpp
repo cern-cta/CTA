@@ -24,7 +24,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
-#include "QueueType.hpp"
+#include "JobQueueType.hpp"
 #include "common/Timer.hpp"
 #include "common/optional.hpp"
 #include "ObjectOps.hpp"
@@ -98,7 +98,7 @@ public:
   EnqueueingNextStep addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string & failureReason,
       log::LogContext &lc); //< returns next step to take with the job
   CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
-  QueueType getJobQueueType(uint16_t copyNumber);
+  JobQueueType getJobQueueType(uint16_t copyNumber);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // Set a job ownership
   void setJobOwner(uint16_t copyNumber, const std::string & owner);
@@ -162,7 +162,7 @@ public:
   std::string getJobOwner(uint16_t copyNumber);
 
   // Utility to convert status to queue type
-  static QueueType getQueueType(const serializers::ArchiveJobStatus &status);
+  static JobQueueType getQueueType(const serializers::ArchiveJobStatus &status);
 
   // ===========================================================================
   // TODO: ArchiveFile comes with extraneous information. 

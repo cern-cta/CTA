@@ -129,7 +129,6 @@ public:
     m_db = param.dbFactory.create();
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
-    const uint32_t maxTriesToConnect = 1;
 #ifdef USE_ORACLE_CATALOGUE
     cta::rdbms::Login login=cta::rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
     
@@ -147,8 +146,7 @@ public:
     } catch (std::bad_cast &) {}
 #else
     //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
-    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns,
-      maxTriesToConnect);
+    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
 #endif
     m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
     
@@ -328,6 +326,8 @@ protected:
   const std::string s_tapePoolName = "TestTapePool";
   const std::string s_libraryName = "TestLogicalLibrary";
   const std::string s_vid = "TstVid"; // We really need size <= 6 characters due to tape label format.
+  const std::string s_mediaType = "TestMediaType";
+  const std::string s_vendor = "TestVendor";
   //TempFile m_tempSqliteFile;
   /**
    * Temporary directory created with mkdtemp that will be used to contain the
@@ -385,7 +385,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -503,6 +503,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 10) Check logs
   std::string logToCheck = logger.getLog();
   logToCheck += "";
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
+                                              "mountId=\"1\" vo=\"vo\" mediaType=\"TestMediaType\" tapePool=\"TestTapePool\" "
+                                              "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" vendor=\"TestVendor\" "
+                                              "capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
@@ -562,7 +566,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -758,7 +762,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
   int MAX_RECALLS = 50;
@@ -976,7 +980,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -1124,7 +1128,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -1282,7 +1286,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1425,7 +1429,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1584,7 +1588,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1662,10 +1666,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
+  size_t archiveFileCount = 0;
   for(auto & sf: sourceFiles) {
     auto afi = *(afiiter++);
+    archiveFileCount++;
     // Only the first files made it through.
-    if (afi <= 4) {
+    if (archiveFileCount <= 3) {
       auto afs = catalogue.getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
       ASSERT_EQ(sf->adler32(), afs.checksumValue);
@@ -1684,6 +1690,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started\" thread=\"TapeWrite\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
+                                              "mountId=\"1\" vo=\"vo\" mediaType=\"TestMediaType\" tapePool=\"TestTapePool\" logicalLibrary=\"TestLogicalLibrary\" "
+                                              "mountType=\"Archive\" vendor=\"TestVendor\" capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" " 
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
@@ -1736,7 +1745,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1815,10 +1824,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
+  size_t archiveFileCount = 0;
   for(auto & sf: sourceFiles) {
     auto afi = *(afiiter++);
+    archiveFileCount++;
     // Only the first files made it through.
-    if (afi <= 4) {
+    if (archiveFileCount <= 3) {
       auto afs = catalogue.getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
       ASSERT_EQ(sf->adler32(), afs.checksumValue);

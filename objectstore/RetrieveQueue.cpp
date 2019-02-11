@@ -559,9 +559,9 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
   checkPayloadReadable();
   JobsSummary ret;
   ret.bytes = m_payload.retrievejobstotalsize();
-  ret.files = m_payload.retrievejobscount();
+  ret.jobs = m_payload.retrievejobscount();
   ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
-  if (ret.files) {
+  if (ret.jobs) {
     ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
     ret.maxDrivesAllowed = maxDriveAllowedMap.maxValue();
     ValueCountMap priorityMap(m_payload.mutable_prioritymap());

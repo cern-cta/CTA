@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright © 2018 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,21 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "QueueType.hpp"
+#include "RepackQueueAlgorithms.hpp"
 
 namespace cta { namespace objectstore {
 
-std::string toString(QueueType queueType) {
-  switch (queueType) {
-  case QueueType::FailedJobs:
-    return "failedJobs";
-  case QueueType::JobsToReport:
-    return "jobsToReport";
-  case QueueType::JobsToTransfer:
-    return "jobsToTranfer";
-  default:
-    return "Unknown queue type.";
-  }
+template<>
+const std::string ContainerTraits<RepackQueue,RepackQueuePending>::c_containerTypeName = "RepackQueuePending";
+
+template<>
+const std::string ContainerTraits<RepackQueue,RepackQueuePending>::c_identifierType = "uniqueQueue";
+
+template<>
+auto ContainerTraits<RepackQueue,RepackQueuePending>::getContainerSummary(Container &cont) -> ContainerSummary
+{
+  ContainerSummary ret;
+  ret.requests = cont.getRequestsSummary().requests;
+  return ret;
 }
 
-}} //namespace cta::objectstore
+
+}} // namespace cta::objectstore

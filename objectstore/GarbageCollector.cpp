@@ -40,6 +40,14 @@ GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference
   m_agentRegister.fetch();
 }
 
+GarbageCollector::~GarbageCollector(){
+  //Normally, the Garbage collector is never destroyed in production
+  //this destructor is here to avoid memory leaks on unit tests
+  for(auto &kv : m_watchedAgents){
+    delete kv.second;
+  }
+}
+
 void GarbageCollector::runOnePass(log::LogContext & lc) {
   trimGoneTargets(lc);
   acquireTargets(lc);
@@ -298,7 +306,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
             try {
               archiveQueuesAndRequests[std::make_tuple(j.tapePool, ar->getJobQueueType(j.copyNb))].emplace_back(ar);
               log::ScopedParamContainer params3(lc);
-              params3.add("tapepool", j.tapePool)
+              params3.add("tapePool", j.tapePool)
                      .add("copynb", j.copyNb)
                      .add("fileId", ar->getArchiveFile().archiveFileID);
               lc.log(log::INFO, "Selected archive request for requeueing to tape pool");
@@ -350,7 +358,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
           otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
           break;
         }
-        retrieveQueuesAndRequests[std::make_tuple(vid, QueueType::JobsToTransfer)].emplace_back(rr);
+        retrieveQueuesAndRequests[std::make_tuple(vid, JobQueueType::JobsToTransfer)].emplace_back(rr);
         log::ScopedParamContainer params3(lc);
         // Find copyNb for logging
         size_t copyNb = std::numeric_limits<size_t>::max();
@@ -358,7 +366,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         for (auto & tc: rr->getArchiveFile().tapeFiles) { if (tc.second.vid==vid) { copyNb=tc.first; fSeq=tc.second.fSeq; } }
         params3.add("fileId", rr->getArchiveFile().archiveFileID)
                .add("copyNb", copyNb)
-               .add("vid", vid)
+               .add("tapeVid", vid)
                .add("fSeq", fSeq);
         lc.log(log::INFO, "Selected vid to be requeued for retrieve request.");
         break;
@@ -388,7 +396,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
     // individual requeue operations, we limit the number of concurrently requeued objects to an 
     // arbitrary 500.
     std::string tapepool;
-    QueueType queueType;
+    JobQueueType queueType;
     std::tie(tapepool, queueType) = archiveQueueIdAndReqs.first;
     auto & requestsList = archiveQueueIdAndReqs.second;
     while (requestsList.size()) {
@@ -413,7 +421,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
       std::set<std::string> jobsNotRequeued;
       std::string queueAddress;
       try {
-        aqcl.referenceAndSwitchOwnershipIfNecessary(tapepool, queueType, agent.getAddressIfSet(), queueAddress, jobsToAdd, lc);
+        aqcl.referenceAndSwitchOwnershipIfNecessary(tapepool, agent.getAddressIfSet(), queueAddress, jobsToAdd, lc);
       } catch (AqAlgos::OwnershipSwitchFailure & failure) {
         for (auto &failedAR: failure.failedElements) {
           try {
@@ -460,7 +468,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
             params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
                   .add("copyNb", arup.copyNb)
                   .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-                  .add("tapepool", tapepool)
+                  .add("tapePool", tapepool)
                   .add("archiveQueueObject", queueAddress)
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
             lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): requeued archive job.");
@@ -507,7 +515,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
   // Then should hence not have changes since we pre-fetched them.
   for (auto & retriveQueueIdAndReqs: retrieveQueuesAndRequests) {
     std::string vid;
-    QueueType queueType;
+    JobQueueType queueType;
     std::tie(vid, queueType) = retriveQueueIdAndReqs.first;
     auto & requestsList = retriveQueueIdAndReqs.second;
     while (requestsList.size()) {
@@ -531,10 +539,10 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       // Get the retrieve queue and add references to the jobs to it.
       RetrieveQueue rq(objectStore);
       ScopedExclusiveLock rql;
-      Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq,rql, agentReference, vid, queueType, lc);
+      Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,rql, agentReference, vid, queueType, lc);
       queueLockFetchTime = t.secs(utils::Timer::resetCounter);
       auto jobsSummary=rq.getJobsSummary();
-      filesBefore=jobsSummary.files;
+      filesBefore=jobsSummary.jobs;
       bytesBefore=jobsSummary.bytes;
       // Prepare the list of requests to add to the queue (if needed).
       std::list<RetrieveQueue::JobToAdd> jta;
@@ -589,7 +597,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
             params.add("retrieveRequestObject", rrup.retrieveRequest->getAddressIfSet())
                   .add("copyNb", rrup.copyNb)
                   .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
-                  .add("vid", vid)
+                  .add("tapeVid", vid)
                   .add("retreveQueueObject", rq.getAddressIfSet())
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
             lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): requeued retrieve job.");
@@ -641,7 +649,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       {
         log::ScopedParamContainer params(lc);
         auto jobsSummary = rq.getJobsSummary();
-        params.add("vid", vid)
+        params.add("tapeVid", vid)
               .add("retrieveQueueObject", rq.getAddressIfSet())
               .add("filesAdded", filesQueued - filesDequeued)
               .add("bytesAdded", bytesQueued - bytesDequeued)
@@ -651,7 +659,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
               .add("bytesDequeuedAfterErrors", bytesDequeued)
               .add("filesBefore", filesBefore)
               .add("bytesBefore", bytesBefore)
-              .add("filesAfter", jobsSummary.files)
+              .add("filesAfter", jobsSummary.jobs)
               .add("bytesAfter", jobsSummary.bytes)
               .add("queueLockFetchTime", queueLockFetchTime)
               .add("queuePreparationTime", queueProcessAndCommitTime)

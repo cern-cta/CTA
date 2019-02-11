@@ -16,22 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include <string>
 
-/**
- * Structure to store the command-line arguments of the CTA-catalogue unit-tests
- * program.
- */
-struct CatalogueUnitTestsCmdLineArgs {
-  /**
-   * Absolute path to the file containing the connection details of a test CTA
-   * catalogue database.
-   */
-  std::string dbConfigPath;
-};
-
-/**
- * Declaration of the global variable used to store the command-line arguments
- * so that they are visible to the tests.
- */
-extern CatalogueUnitTestsCmdLineArgs g_cmdLineArgs;
+namespace cta { namespace objectstore {
+enum class JobQueueType { JobsToTransfer, FailedJobs, JobsToReportToUser, JobsToReportToRepackForSuccess, JobsToReportToRepackForFailure };
+std::string toString(JobQueueType queueType);
+}} // namespace cta::objectstore

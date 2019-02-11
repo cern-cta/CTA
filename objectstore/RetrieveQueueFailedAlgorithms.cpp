@@ -23,6 +23,7 @@ namespace cta { namespace objectstore {
 template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::c_containerTypeName = "RetrieveQueueFailed";
 
+#if 0
 template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::c_identifierType = "vid";
 
@@ -56,5 +57,6 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
 {
   trimContainerIfNeeded(cont, QueueType::FailedJobs, contLock, cId, lc);
 }
+#endif
 
 }} // namespace cta::objectstore

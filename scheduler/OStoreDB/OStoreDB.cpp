@@ -22,8 +22,12 @@
 #include "MemQueues.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
 #include "objectstore/RetrieveQueueAlgorithms.hpp"
+#include "objectstore/RepackQueueAlgorithms.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/DriveState.hpp"
+#include "objectstore/RepackRequest.hpp"
+#include "objectstore/RepackIndex.hpp"
+#include "objectstore/RepackQueue.hpp"
 #include "objectstore/Helpers.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
@@ -31,6 +35,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/make_unique.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "Scheduler.hpp"
 #include <algorithm>
 #include <cmath>
 #include <stdlib.h>     /* srand, rand */
@@ -38,6 +43,7 @@
 #include <stdexcept>
 #include <set>
 #include <iostream>
+#include <bits/unique_ptr.h>
 
 namespace cta {  
 using namespace objectstore;
@@ -179,7 +185,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     log::LogContext & logContext) {
   utils::Timer t, t2;
   // Walk the archive queues for statistics
-  for (auto & aqp: re.dumpArchiveQueues(QueueType::JobsToTransfer)) {
+  for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransfer)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) poolName = aqp.tapePool;
@@ -192,7 +198,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params (logContext);
       params.add("queueObject", aqp.address)
-            .add("tapepool", aqp.tapePool)
+            .add("tapePool", aqp.tapePool)
             .add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue. Skipping it.");
       continue;
@@ -217,14 +223,14 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params (logContext);
     params.add("queueObject", aqp.address)
-          .add("tapepool", aqp.tapePool)
+          .add("tapePool", aqp.tapePool)
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
     logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive queue.");
   }
   // Walk the retrieve queues for statistics
-  for (auto & rqp: re.dumpRetrieveQueues(QueueType::JobsToTransfer)) {
+  for (auto & rqp: re.dumpRetrieveQueues(JobQueueType::JobsToTransfer)) {
     RetrieveQueue rqueue(rqp.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) vid = rqp.vid;
@@ -238,20 +244,20 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       log::LogContext lc(m_logger);
       log::ScopedParamContainer params (lc);
       params.add("queueObject", rqp.address)
-            .add("vid", rqp.vid)
+            .add("tapeVid", rqp.vid)
             .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch a retrieve queue. Skipping it.");
       continue;
     }
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
-    if (rqueue.getJobsSummary().files) {
+    if (rqueue.getJobsSummary().jobs) {
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
       m.vid = rqp.vid;
       m.type = cta::common::dataStructures::MountType::Retrieve;
       m.bytesQueued = rqueue.getJobsSummary().bytes;
-      m.filesQueued = rqueue.getJobsSummary().files;      
+      m.filesQueued = rqueue.getJobsSummary().jobs;      
       m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
       m.priority = rqueue.getJobsSummary().priority;
       m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
@@ -263,7 +269,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params (logContext);
     params.add("queueObject", rqp.address)
-          .add("vid", rqp.vid)
+          .add("tapeVid", rqp.vid)
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
@@ -389,7 +395,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  for (auto & queueType: { QueueType::JobsToTransfer, QueueType::JobsToReport, QueueType::FailedJobs} ) {
+  for (auto & queueType: { JobQueueType::JobsToTransfer, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs} ) {
     try {
       auto archiveQueueList = re.dumpArchiveQueues(queueType);
       for (auto & a: archiveQueueList) {
@@ -411,11 +417,11 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
         RetrieveQueue rq(r.address, m_objectStore);
         ScopedSharedLock rql(rq);
         rq.fetch();
-        if (!rq.getJobsSummary().files) {
+        if (!rq.getJobsSummary().jobs) {
           rql.release();
           re.removeRetrieveQueueAndCommit(r.vid, queueType, lc);
           log::ScopedParamContainer params(lc);
-          params.add("vid", r.vid)
+          params.add("tapeVid", r.vid)
                 .add("queueType", toString(queueType))
                 .add("queueObject", r.address);
           lc.log(log::INFO, "In OStoreDB::trimEmptyQueues(): deleted empty retrieve queue.");
@@ -433,14 +439,32 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(const catalogue::TapeForWriting& tape, const std::string driveName, const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(
+        const catalogue::TapeForWriting& tape,
+        const std::string driveName,
+        const std::string& logicalLibrary,
+        const std::string& hostName,
+        const std::string& vo,
+        const std::string& mediaType,
+        const std::string& vendor,
+        const uint64_t capacityInBytes,
+        time_t startTime) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(const std::string& vid, const std::string& tapePool, const std::string driveName, const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(const std::string& vid,
+        const std::string& tapePool,
+        const std::string driveName,
+        const std::string& logicalLibrary,
+        const std::string& hostName,
+        const std::string& vo,
+        const std::string& mediaType,
+        const std::string& vendor,
+        const uint64_t capacityInBytes,
+        time_t startTime) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
@@ -556,7 +580,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
         arTotalQueueUnlockTime += qUnlockTime;
         linkedTapePools.push_back(j.owner);
         log::ScopedParamContainer params(logContext);
-        params.add("tapepool", j.tapePool)
+        params.add("tapePool", j.tapePool)
               .add("queueObject", j.owner)
               .add("jobObject", aReq->getAddressIfSet())
               .add("queueingTime", qTime)
@@ -574,7 +598,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       }
       aReq->remove();
       log::ScopedParamContainer params(logContext);
-      params.add("tapepool", currentTapepool)
+      params.add("tapePool", currentTapepool)
             .add("archiveRequestObject", aReq->getAddressIfSet())
             .add("exceptionMessage", ex.getMessageValue())
             .add("jobObject", aReq->getAddressIfSet());
@@ -625,7 +649,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
 {
   std::list<cta::common::dataStructures::ArchiveJob> ret;
 
-  for(ArchiveQueueItor_t q_it(m_objectStore, QueueType::JobsToTransfer, tapePoolName); !q_it.end() ; ++q_it) {
+  for(ArchiveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransfer, tapePoolName); !q_it.end() ; ++q_it) {
     ret.push_back(*q_it);
   }
 
@@ -640,7 +664,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>>
 {
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
 
-  for(ArchiveQueueItor_t q_it(m_objectStore, QueueType::JobsToTransfer); !q_it.end(); ++q_it) {
+  for(ArchiveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransfer); !q_it.end(); ++q_it) {
     ret[q_it.qid()].push_back(*q_it);
   }
 
@@ -650,14 +674,14 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>>
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobItor()
 //------------------------------------------------------------------------------
-OStoreDB::ArchiveQueueItor_t OStoreDB::getArchiveJobItor(const std::string &tapePoolName, QueueType queueType) const
+OStoreDB::ArchiveQueueItor_t OStoreDB::getArchiveJobItor(const std::string &tapePoolName, JobQueueType queueType) const
 {
   return ArchiveQueueItor_t(m_objectStore, queueType, tapePoolName);
 }
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobItorPtr()
 //------------------------------------------------------------------------------
-OStoreDB::ArchiveQueueItor_t* OStoreDB::getArchiveJobItorPtr(const std::string &tapePoolName, QueueType queueType) const
+OStoreDB::ArchiveQueueItor_t* OStoreDB::getArchiveJobItorPtr(const std::string &tapePoolName, JobQueueType queueType) const
 {
   return new ArchiveQueueItor_t(m_objectStore, queueType, tapePoolName);
 }
@@ -672,32 +696,32 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArch
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
   re.fetchNoLock();
-  while (true) {
-    auto queueList = re.dumpArchiveQueues(QueueType::JobsToReport);
-    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
-    if (queueList.empty()) return ret;
-    // Try to get jobs from the first queue. If it is empty, it will be trimmed,
-    // so we can got for another round.
-    AQTRAlgo::PopCriteria criteria;
-    criteria.files = filesRequested;
-    auto jobs = aqtrAlgo.popNextBatch(queueList.front().tapePool, QueueType::JobsToReport, criteria, logContext);
-    if (jobs.elements.empty()) continue;
-    for (auto & j: jobs.elements) {
-      std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), *this));
-      aj->tapeFile.copyNb = j.copyNb;
-      aj->archiveFile = j.archiveFile;
-      aj->srcURL = j.srcURL;
-      aj->archiveReportURL = j.archiveReportURL;
-      aj->errorReportURL = j.errorReportURL;
-      aj->latestError = j.latestError;
-      aj->reportType = j.reportType;
-      // We leave the tape file not set. It does not exist in all cases (not in case of failure).
-      aj->m_jobOwned = true;
-      aj->m_mountId = 0;
-      ret.emplace_back(std::move(aj));
-    }
-    return ret;
+  auto queueList = re.dumpArchiveQueues(JobQueueType::JobsToReportToUser);
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
+  if (queueList.empty()) return ret;
+  // Try to get jobs from the first non-empty queue.
+  AQTRAlgo::PopCriteria criteria;
+  criteria.files = filesRequested;
+  AQTRAlgo::PoppedElementsBatch jobs;
+  for (auto & q: queueList) {
+    jobs = aqtrAlgo.popNextBatch(q.tapePool, criteria, logContext);
+    if (!jobs.elements.empty()) break;
   }
+  for (auto & j: jobs.elements) {
+    std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), *this));
+    aj->tapeFile.copyNb = j.copyNb;
+    aj->archiveFile = j.archiveFile;
+    aj->srcURL = j.srcURL;
+    aj->archiveReportURL = j.archiveReportURL;
+    aj->errorReportURL = j.errorReportURL;
+    aj->latestError = j.latestError;
+    aj->reportType = j.reportType;
+    // We leave the tape file not set. It does not exist in all cases (not in case of failure).
+    aj->m_jobOwned = true;
+    aj->m_mountId = 0;
+    ret.emplace_back(std::move(aj));
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -708,7 +732,7 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getArchiveJobsFailedSummary(log::
   re.fetchNoLock();
 
   SchedulerDatabase::JobsFailedSummary ret;
-  auto queueList = re.dumpArchiveQueues(QueueType::FailedJobs);
+  auto queueList = re.dumpArchiveQueues(JobQueueType::FailedJobs);
   for(auto &aj : queueList) {
     ArchiveQueue aq(aj.address, m_objectStore);
     try {
@@ -761,6 +785,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
     }
   }
   if (completeJobsToDelete.size()) {
+    std::list<std::string> jobsToUnown;
     // Launch deletion.
     for (auto &j: completeJobsToDelete) {
       j->asyncDeleteRequest();
@@ -773,15 +798,21 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
         params.add("fileId", j->archiveFile.archiveFileID)
               .add("objectAddress", j->m_archiveRequest.getAddressIfSet());
         lc.log(log::INFO, "In OStoreDB::setArchiveJobBatchReported(): deleted ArchiveRequest after completion and reporting.");
+        // We remove the job from ownership.
+        jobsToUnown.push_back(j->m_archiveRequest.getAddressIfSet());
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", j->archiveFile.archiveFileID)
               .add("objectAddress", j->m_archiveRequest.getAddressIfSet())
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::setArchiveJobBatchReported(): failed to delete ArchiveRequest after completion and reporting.");
+        // We have to remove the job from ownership.
+        jobsToUnown.push_back(j->m_archiveRequest.getAddressIfSet());
       }
     } 
     timingList.insertAndReset("deletionCompletionTime", t);
+    m_agentReference->removeBatchFromOwnership(jobsToUnown, m_objectStore);
+    timingList.insertAndReset("unownDeletedJobsTime", t);
   }
   for (auto & queue: failedQueues) {
     // Put the jobs in the failed queue
@@ -794,8 +825,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
           cta::nullopt, serializers::ArchiveJobStatus::AJS_Failed});
     }
     try {
-      caAQF.referenceAndSwitchOwnership(queue.first, QueueType::FailedJobs, m_agentReference->getAgentAddress(),
-          insertedElements, lc);
+      caAQF.referenceAndSwitchOwnership(queue.first, m_agentReference->getAgentAddress(), insertedElements, lc);
     } catch (exception::Exception & ex) {
       log::ScopedParamContainer params(lc);
       
@@ -853,7 +883,7 @@ void OStoreDB::setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::Ret
       });
     }
     try {
-      caRQF.referenceAndSwitchOwnership(queue.first, QueueType::FailedJobs, m_agentReference->getAgentAddress(), insertedElements, lc);
+      caRQF.referenceAndSwitchOwnership(queue.first, m_agentReference->getAgentAddress(), insertedElements, lc);
     } catch(exception::Exception &ex) {
       log::ScopedParamContainer params(lc);
     }
@@ -931,13 +961,14 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
     rReq->setOwner(m_agentReference->getAgentAddress());
     // "Select" an arbitrary copy number. This is needed to serialize the object.
     rReq->setActiveCopyNumber(criteria.archiveFile.tapeFiles.begin()->second.copyNb);
+    rReq->setIsRepack(rqst.isRepack);
     rReq->insert();
     double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     m_taskQueueSize++;
     uint64_t taskQueueSize = m_taskQueueSize;
     // Prepare the logs to avoid multithread access on the object.
     log::ScopedParamContainer params(logContext);
-    params.add("vid", bestVid)
+    params.add("tapeVid", bestVid)
           .add("jobObject", rReq->getAddressIfSet())
           .add("fileId", rReq->getArchiveFile().archiveFileID)
           .add("diskInstance", rReq->getArchiveFile().diskInstance)
@@ -982,7 +1013,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
       m_agentReference->removeFromOwnership(rReq->getAddressIfSet(), m_objectStore);
       double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       log::ScopedParamContainer params(logContext);
-      params.add("vid", bestVid)
+      params.add("tapeVid", bestVid)
             .add("queueObject", owner)
             .add("jobObject", rReq->getAddressIfSet())
             .add("fileId", rReq->getArchiveFile().archiveFileID)
@@ -1083,7 +1114,7 @@ OStoreDB::getRetrieveJobs(const std::string &vid) const
 {
   std::list<common::dataStructures::RetrieveJob> ret;
 
-  for(RetrieveQueueItor_t q_it(m_objectStore, QueueType::JobsToTransfer, vid); !q_it.end(); ++q_it) {
+  for(RetrieveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransfer, vid); !q_it.end(); ++q_it) {
     ret.push_back(*q_it);
   }
 
@@ -1098,7 +1129,7 @@ OStoreDB::getRetrieveJobs() const
 {
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>> ret;
 
-  for(RetrieveQueueItor_t q_it(m_objectStore, QueueType::JobsToTransfer); !q_it.end(); ++q_it) {
+  for(RetrieveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransfer); !q_it.end(); ++q_it) {
     ret[q_it.qid()].push_back(*q_it);
   }
 
@@ -1108,7 +1139,7 @@ OStoreDB::getRetrieveJobs() const
 //------------------------------------------------------------------------------
 // OStoreDB::getRetrieveJobItor()
 //------------------------------------------------------------------------------
-OStoreDB::RetrieveQueueItor_t OStoreDB::getRetrieveJobItor(const std::string &vid, QueueType queueType) const
+OStoreDB::RetrieveQueueItor_t OStoreDB::getRetrieveJobItor(const std::string &vid, JobQueueType queueType) const
 {
   return RetrieveQueueItor_t(m_objectStore, queueType, vid);
 }
@@ -1116,9 +1147,301 @@ OStoreDB::RetrieveQueueItor_t OStoreDB::getRetrieveJobItor(const std::string &vi
 //------------------------------------------------------------------------------
 // OStoreDB::getRetrieveJobItorPtr()
 //------------------------------------------------------------------------------
-OStoreDB::RetrieveQueueItor_t* OStoreDB::getRetrieveJobItorPtr(const std::string &vid, QueueType queueType) const
+OStoreDB::RetrieveQueueItor_t* OStoreDB::getRetrieveJobItorPtr(const std::string &vid, JobQueueType queueType) const
 {
   return new RetrieveQueueItor_t(m_objectStore, queueType, vid);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::queueRepack()
+//------------------------------------------------------------------------------
+void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
+    common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) {
+  // Prepare the repack request object in memory.
+  assertAgentAddressSet();
+  cta::utils::Timer t;
+  auto rr=cta::make_unique<cta::objectstore::RepackRequest>(m_agentReference->nextId("RepackRequest"), m_objectStore);
+  rr->initialize();
+  // We need to own the request until it is queued in the the pending queue.
+  rr->setOwner(m_agentReference->getAgentAddress());
+  rr->setVid(vid);
+  rr->setType(repackType);
+  // Try to reference the object in the index (will fail if there is already a request with this VID.
+  try {
+    Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
+  } catch (objectstore::RepackIndex::VidAlreadyRegistered &) {
+    throw exception::UserError("A repack request already exists for this VID.");
+  }
+  // We're good to go to create the object. We need to own it.
+  m_agentReference->addToOwnership(rr->getAddressIfSet(), m_objectStore);
+  rr->insert();
+  // If latency needs to the improved, the next steps could be deferred like they are for archive and retrieve requests.
+  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending> RQPAlgo;
+  {
+    RQPAlgo::InsertedElement::list elements;
+    elements.push_back(RQPAlgo::InsertedElement());
+    elements.back().repackRequest=std::move(rr);
+    RQPAlgo rqpAlgo(m_objectStore, *m_agentReference);
+    rqpAlgo.referenceAndSwitchOwnership(nullopt, m_agentReference->getAgentAddress(), elements, lc);
+  }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getRepackInfo()
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(m_objectStore);
+  std::list<common::dataStructures::RepackInfo> ret;
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (RootEntry::NotAllocated &) {
+    return ret;
+  }
+  ri.fetchNoLock();
+  auto rrAddresses = ri.getRepackRequestsAddresses();
+  for (auto & rra: rrAddresses) {
+    try {
+      objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+      rr.fetchNoLock();
+      ret.push_back(rr.getInfo());
+    } catch (cta::exception::Exception &) {}
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getRepackInfo()
+//------------------------------------------------------------------------------
+common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vid) {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(m_objectStore);
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (RootEntry::NotAllocated &) {
+    throw NoSuchRepackRequest("In OStoreDB::getRepackInfo(): No repack request for this VID (index not present).");
+  }
+  ri.fetchNoLock();
+  auto rrAddresses = ri.getRepackRequestsAddresses();
+  for (auto & rra: rrAddresses) {
+    if (rra.vid == vid) {
+      try {
+        objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+        rr.fetchNoLock();
+        if (rr.getInfo().vid != vid)
+          throw exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
+        return rr.getInfo();  
+      } catch (cta::exception::Exception &) {}
+    }
+  }
+  throw NoSuchRepackRequest("In OStoreDB::getRepackInfo(): No repack request for this VID.");
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
+//------------------------------------------------------------------------------
+OStoreDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics(
+  objectstore::Backend& backend, objectstore::AgentReference &agentReference):
+  m_backend(backend), m_agentReference(agentReference),
+  m_pendingRepackRequestQueue(backend) {}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion()
+//------------------------------------------------------------------------------
+auto OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(size_t requestCount,
+        log::LogContext &lc) -> PromotionToToExpandResult {
+  // Check we still hold the lock
+  if (!m_lockOnPendingRepackRequestsQueue.isLocked())
+    throw SchedulingLockNotHeld("In RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(): lock not held anymore.");
+  // We have a write lock on the repack queue. We will pop the requested amount of requests.
+  PromotionToToExpandResult ret;
+  typedef common::dataStructures::RepackInfo::Status Status; 
+  ret.pendingBefore = at(Status::Pending);
+  ret.toEnpandBefore = at(Status::ToExpand);
+  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending> RQPAlgo;
+  RQPAlgo::PoppedElementsBatch poppedElements;
+  {
+    RQPAlgo rqpAlgo(m_backend, m_agentReference);
+    objectstore::ContainerTraits<RepackQueue, RepackQueuePending>::PopCriteria criteria;
+    criteria.requests = requestCount;
+    cta::optional<serializers::RepackRequestStatus> newStatus(serializers::RepackRequestStatus::RRS_ToExpand);
+    poppedElements = rqpAlgo.popNextBatchFromContainerAndSwitchStatus(
+      m_pendingRepackRequestQueue, m_lockOnPendingRepackRequestsQueue, 
+      criteria, newStatus, lc);
+    // We now switched the status of the requests. The state change is permanent and visible. The lock was released by
+    // the previous call.
+  }
+  // And we will push the requests to the TeExpand queue.
+  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand> RQTEAlgo;
+  {
+    RQTEAlgo rqteAlgo(m_backend, m_agentReference);
+    RQTEAlgo::InsertedElement::list insertedElements;
+    for (auto &rr: poppedElements.elements) {
+      insertedElements.push_back(RQTEAlgo::InsertedElement());
+      insertedElements.back().repackRequest = std::move(rr.repackRequest);
+    }
+    rqteAlgo.referenceAndSwitchOwnership(nullopt, m_agentReference.getAgentAddress(), insertedElements, lc);
+  }
+  ret.promotedRequests = poppedElements.summary.requests;
+  ret.pendingAfter = ret.pendingBefore - ret.promotedRequests;
+  ret.toExpandAfter = ret.toEnpandBefore + ret.promotedRequests;
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::populateRepackRequestsStatistics()
+//------------------------------------------------------------------------------
+void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabase::RepackRequestStatistics& stats) {
+  objectstore::RepackIndex ri(m_objectStore);
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (RootEntry::NotAllocated &) {
+    return;
+  }
+  ri.fetchNoLock();
+  std::list<objectstore::RepackRequest> requests;
+  std::list<std::unique_ptr<objectstore::RepackRequest::AsyncLockfreeFetcher>> fetchers;
+  for (auto &rra: ri.getRepackRequestsAddresses()) {
+    requests.emplace_back(objectstore::RepackRequest(rra.repackRequestAddress, m_objectStore));
+    fetchers.emplace_back(requests.back().asyncLockfreeFetch());
+  }
+  // Ensure existence of stats for important statuses
+  typedef common::dataStructures::RepackInfo::Status Status; 
+  for (auto s: {Status::Pending, Status::ToExpand, Status::Starting}) {
+    stats[s] = 0;
+  }
+  auto fet = fetchers.begin();
+  for (auto &req: requests) {
+    try {
+      (*fet)->wait();
+      try {
+        stats.at(req.getInfo().status)++;
+      } catch (std::out_of_range&) {
+        stats[req.getInfo().status] = 1;
+      }
+    } catch (...) {}
+    fet++;
+  }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getRepackStatistics()
+//------------------------------------------------------------------------------
+auto OStoreDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  // We need to take a lock on an object to allow global locking of the repack
+  // requests scheduling.
+  std::unique_ptr<OStoreDB::RepackRequestPromotionStatistics>
+    typedRet(new OStoreDB::RepackRequestPromotionStatistics(m_objectStore, *m_agentReference));
+  // Try to get the lock
+  try {
+    typedRet->m_pendingRepackRequestQueue.setAddress(re.getRepackQueueAddress(RepackQueueType::Pending));
+    typedRet->m_lockOnPendingRepackRequestsQueue.lock(typedRet->m_pendingRepackRequestQueue);
+  } catch (...) {
+    throw SchedulerDatabase::RepackRequestStatistics::NoPendingRequestQueue("In OStoreDB::getRepackStatistics(): could not lock the pending requests queue.");
+  }
+  // In all cases, we get the information from the index and individual requests.
+  populateRepackRequestsStatistics(re, *typedRet);
+  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getRepackStatisticsNoLock()
+//------------------------------------------------------------------------------
+auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
+  auto typedRet = make_unique<OStoreDB::RepackRequestPromotionStatisticsNoLock>();
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  populateRepackRequestsStatistics(re, *typedRet);
+  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getNextRepackJobToExpand()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToExpand() {
+  typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueueToExpand> RQTEAlgo;
+  RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);  
+  log::LogContext lc(m_logger);
+  while(true){
+    RQTEAlgo::PopCriteria criteria;
+    //pop request that is in the RepackQueueToExpandRequest
+    auto jobs = rqteAlgo.popNextBatch(cta::nullopt,criteria,lc);
+    if(jobs.elements.empty()){
+      //If there is no request, return a nullptr
+      return nullptr;
+    }
+    //Get the first one request that is in elements
+    auto repackRequest = jobs.elements.front().repackRequest.get();
+    auto repackInfo = jobs.elements.front().repackInfo;
+    //build the repackRequest with the repack infos
+    std::unique_ptr<OStoreDB::RepackRequest> ret;
+    ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(),*this));
+    ret->repackInfo.vid = repackInfo.vid;
+    ret->repackInfo.type = repackInfo.type;
+    ret->repackInfo.status = repackInfo.status;
+    return std::move(ret);
+  }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::cancelRepack()
+//------------------------------------------------------------------------------
+void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
+  // Find the request
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(m_objectStore);
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (RootEntry::NotAllocated &) {
+    throw NoSuchRepackRequest("In OStoreDB::cancelRepack(): No repack request for this VID (index not present).");
+  }
+  ri.fetchNoLock();
+  auto rrAddresses = ri.getRepackRequestsAddresses();
+  for (auto & rra: rrAddresses) {
+    if (rra.vid == vid) {
+      try {
+        objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+        ScopedExclusiveLock rrl(rr);
+        rr.fetch();
+        if (rr.getInfo().vid != vid)
+          throw  exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
+        // We now have a hold of the repack request.
+        // We should delete all the file level subrequests.
+        // TODO
+        // And then delete the request
+        std::string repackRequestOwner = rr.getOwner();
+        rr.remove();
+        // We now need to dereference, from a queue if needed and from the index for sure.
+        Helpers::removeRepackRequestToIndex(vid, m_objectStore, lc);
+        if (repackRequestOwner.size()) {
+          // Find the queue into which the request was queued. If the request was not owned by a queue (i.e., another type
+          // of object), we do not care as the garbage collection will remove the reference.
+          objectstore::RepackQueue rq(repackRequestOwner, m_objectStore);
+          objectstore::ScopedExclusiveLock rql;
+          try {
+            rql.lock(rq);
+            rq.fetch();
+          } 
+          catch (objectstore::Backend::NoSuchObject &) { return; }
+          catch (objectstore::ObjectOpsBase::WrongType &) { return; }
+          std::list<std::string> reqs{rr.getAddressIfSet()};
+          rq.removeRequestsAndCommit(reqs);
+        }
+        return;
+      } catch (cta::exception::Exception &) {}
+    }
+  }
+  throw NoSuchRepackRequest("In OStoreDB::cancelRepack(): No repack request for this VID.");
 }
 
 //------------------------------------------------------------------------------
@@ -1133,14 +1456,14 @@ getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logCo
   RootEntry re(m_objectStore);
   re.fetchNoLock();
   while(true) {
-    auto queueList = re.dumpRetrieveQueues(QueueType::JobsToReport);
+    auto queueList = re.dumpRetrieveQueues(JobQueueType::JobsToReportToUser);
     std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
     if (queueList.empty()) return ret;
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     RQTRAlgo::PopCriteria criteria;
     criteria.files = filesRequested;
-    auto jobs = rqtrAlgo.popNextBatch(queueList.front().vid, QueueType::JobsToReport, criteria, logContext);
+    auto jobs = rqtrAlgo.popNextBatch(queueList.front().vid, criteria, logContext);
     if(jobs.elements.empty()) continue;
     for(auto &j : jobs.elements)
     {
@@ -1165,7 +1488,7 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getRetrieveJobsFailedSummary(log:
   re.fetchNoLock();
 
   SchedulerDatabase::JobsFailedSummary ret;
-  auto queueList = re.dumpRetrieveQueues(QueueType::FailedJobs);
+  auto queueList = re.dumpRetrieveQueues(JobQueueType::FailedJobs);
   for(auto &rj : queueList) {
     RetrieveQueue rq(rj.address, m_objectStore);
     try {
@@ -1196,14 +1519,14 @@ getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logCont
   RootEntry re(m_objectStore);
   re.fetchNoLock();
   while(true) {
-    auto queueList = re.dumpRetrieveQueues(QueueType::FailedJobs);
+    auto queueList = re.dumpRetrieveQueues(JobQueueType::FailedJobs);
     std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
     if (queueList.empty()) return ret;
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     RQTRAlgo::PopCriteria criteria;
     criteria.files = filesRequested;
-    auto jobs = rqtrAlgo.popNextBatch(queueList.front().vid, QueueType::FailedJobs, criteria, logContext);
+    auto jobs = rqtrAlgo.popNextBatch(queueList.front().vid, criteria, logContext);
     if(jobs.elements.empty()) continue;
     for(auto &j : jobs.elements)
     {
@@ -1788,7 +2111,8 @@ void OStoreDB::setDriveShutdown(common::dataStructures::DriveState & driveState,
 std::unique_ptr<SchedulerDatabase::ArchiveMount> 
   OStoreDB::TapeMountDecisionInfo::createArchiveMount(
     const catalogue::TapeForWriting & tape, const std::string driveName,
-    const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+    const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,uint64_t capacityInBytes, time_t startTime) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
@@ -1807,7 +2131,11 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   // Fill up the mount info
   am.mountInfo.drive = driveName;
   am.mountInfo.host = hostName;
+  am.mountInfo.vo = vo;
+  am.mountInfo.mediaType = mediaType;
+  am.mountInfo.vendor = vendor;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
+  am.mountInfo.capacityInBytes = capacityInBytes;
   m_schedulerGlobalLock->commit();
   am.mountInfo.tapePool = tape.tapePool;
   am.mountInfo.logicalLibrary = logicalLibrary;
@@ -1852,7 +2180,8 @@ OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStoreDb): m_l
 std::unique_ptr<SchedulerDatabase::RetrieveMount> 
   OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
     const std::string& vid, const std::string & tapePool, const std::string driveName, 
-    const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+    const std::string& logicalLibrary, const std::string& hostName,const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,const uint64_t capacityInBytes, time_t startTime) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to 
@@ -1880,6 +2209,10 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   m_schedulerGlobalLock->commit();
   rm.mountInfo.tapePool = tapePool;
   rm.mountInfo.logicalLibrary = logicalLibrary;
+  rm.mountInfo.vo = vo;
+  rm.mountInfo.mediaType = mediaType;
+  rm.mountInfo.vendor = vendor;
+  rm.mountInfo.capacityInBytes = capacityInBytes;
   // Update the status of the drive in the registry
   {
     // Get hold of the drive registry
@@ -1940,7 +2273,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
   typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> AQAlgos;
   AQAlgos aqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   AQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
-  auto jobs = aqAlgos.popNextBatch(mountInfo.tapePool, QueueType::JobsToTransfer, popCriteria, logContext);
+  auto jobs = aqAlgos.popNextBatch(mountInfo.tapePool, popCriteria, logContext);
   // We can construct the return value.
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
   for (auto & j: jobs.elements) {
@@ -2020,7 +2353,7 @@ getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContex
   typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
-  auto jobs = rqAlgos.popNextBatch(mountInfo.vid, QueueType::JobsToTransfer, popCriteria, logContext);
+  auto jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
   // We can construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   for(auto &j : jobs.elements)
@@ -2137,6 +2470,29 @@ std::set<cta::SchedulerDatabase::RetrieveJob*> OStoreDB::RetrieveMount::finishSe
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::batchSucceedRetrieveForRepack()
+//------------------------------------------------------------------------------
+std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSucceedRetrieveForRepack(
+    std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, cta::log::LogContext & lc)
+{
+  std::set<cta::SchedulerDatabase::RetrieveJob *> ret;
+  typedef objectstore::ContainerAlgorithms<objectstore::RetrieveQueue,objectstore::RetrieveQueueToReportToRepackForSuccess> AqtrtrfsCa;
+  AqtrtrfsCa aqtrtrfsCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+  AqtrtrfsCa::InsertedElement::list insertedElementsLists;
+  std::string vid;
+  for(auto & retrieveJob : jobsBatch){
+    auto osdbJob = castFromSchedDBJob(retrieveJob);
+    ret.insert(retrieveJob);
+    osdbJob->asyncReportSucceedForRepack();
+    osdbJob->checkReportSucceedForRepack();
+    auto & tapeFile = osdbJob->archiveFile.tapeFiles[osdbJob->selectedCopyNb];
+    vid = osdbJob->m_retrieveMount->mountInfo.vid;
+    insertedElementsLists.push_back(AqtrtrfsCa::InsertedElement{&osdbJob->m_retrieveRequest, (uint16_t)osdbJob->selectedCopyNb, tapeFile.fSeq,osdbJob->archiveFile.fileSize,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,serializers::RetrieveJobStatus::RJS_Succeeded});
+  }
+  aqtrtrfsCa.referenceAndSwitchOwnership(vid,insertedElementsLists,lc);
+  return ret;
+}
+//------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::setDriveStatus()
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) {
@@ -2217,7 +2573,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
       insertedElementsLists[j->tapeFile.vid].emplace_back(AqtrCa::InsertedElement{&j->m_archiveRequest, j->tapeFile.copyNb, 
           j->archiveFile, cta::nullopt, cta::nullopt});
       log::ScopedParamContainer params (lc);
-      params.add("VID", j->tapeFile.vid)
+      params.add("tapeVid", j->tapeFile.vid)
             .add("fileId", j->archiveFile.archiveFileID)
             .add("requestObject", j->m_archiveRequest.getAddressIfSet());
       lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): will queue request for reporting.");
@@ -2225,18 +2581,18 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
     for (auto &list: insertedElementsLists) {
       try {
         utils::Timer tLocal;
-        aqtrCa.referenceAndSwitchOwnership(list.first, QueueType::JobsToReport, m_oStoreDB.m_agentReference->getAgentAddress(),
-            list.second, lc);
+        aqtrCa.referenceAndSwitchOwnership(list.first, m_oStoreDB.m_agentReference->getAgentAddress(), list.second, lc);
         log::ScopedParamContainer params(lc);
-        params.add("VID", list.first)
+        params.add("tapeVid", list.first)
               .add("jobs", list.second.size())
               .add("enqueueTime", t.secs());
         lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for reporting.");
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
-        params.add("VID", list.first)
+        params.add("tapeVid", list.first)
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting.");
+        lc.logBacktrace(log::ERR, ex.backtrace());
       }
     }
     timingList.insertAndReset("queueingToReportTime", t);
@@ -2315,7 +2671,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapepool, QueueType::JobsToReport, insertedElements, lc);
+      caAqtr.referenceAndSwitchOwnership(tapepool, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2338,8 +2694,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapepool, QueueType::JobsToTransfer,
-          insertedElements, lc);
+      caAqtr.referenceAndSwitchOwnership(tapepool, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2363,7 +2718,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapepool, QueueType::FailedJobs, insertedElements, lc);
+      caAqtr.referenceAndSwitchOwnership(tapepool, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2410,7 +2765,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapepool, QueueType::JobsToReport, insertedElements, lc);
+      caAqtr.referenceAndSwitchOwnership(tapepool, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2431,7 +2786,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapepool, QueueType::FailedJobs, insertedElements, lc);
+      caAqtr.referenceAndSwitchOwnership(tapepool, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tapeFile.copyNb)
@@ -2507,7 +2862,6 @@ void OStoreDB::ArchiveJob::waitAsyncDelete() {
   // We no more own the job (which could be gone)
   m_jobOwned = false;
 }
-
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::~ArchiveJob()
@@ -2623,7 +2977,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       rel.release();
 
       CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-      caRqtr.referenceAndSwitchOwnership(tf.vid, QueueType::JobsToReport, insertedElements, lc);
+      caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", selectedCopyNb)
@@ -2678,7 +3032,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       });
 
       CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-      caRqtr.referenceAndSwitchOwnership(bestVid, QueueType::JobsToTransfer, insertedElements, lc);
+      caRqtr.referenceAndSwitchOwnership(bestVid, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", selectedCopyNb)
@@ -2741,7 +3095,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         insertedElements.push_back(CaRqtr::InsertedElement{
           &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToReportForFailure
         });
-        caRqtr.referenceAndSwitchOwnership(tf.vid, QueueType::JobsToReport, insertedElements, lc);
+        caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);
         params.add("fileId", archiveFile.archiveFileID)
               .add("copyNb", tf.copyNb)
@@ -2759,7 +3113,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         insertedElements.push_back(CaRqtr::InsertedElement{
           &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
         });
-        caRqtr.referenceAndSwitchOwnership(tf.vid, QueueType::FailedJobs, insertedElements, lc);
+        caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);
         params.add("fileId", archiveFile.archiveFileID)
               .add("copyNb", tf.copyNb)
@@ -2812,5 +3166,49 @@ void OStoreDB::RetrieveJob::checkSucceed() {
   // Ownership will be removed from agent by caller through retrieve mount object.
 }
 
-} // namespace cta
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::asyncReportSucceedForRepack()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveJob::asyncReportSucceedForRepack()
+{
+  m_jobSucceedForRepackReporter.reset(m_retrieveRequest.asyncReportSucceedForRepack(this->selectedCopyNb));
+}
 
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::checkReportSucceedForRepack()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveJob::checkReportSucceedForRepack(){
+  m_jobSucceedForRepackReporter->wait();
+}
+
+std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> OStoreDB::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
+{
+  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> ret;
+  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> Carqtrtrfs;
+  Carqtrtrfs algo(this->m_objectStore, *m_agentReference);
+  // Decide from which queue we are going to pop.
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  while(true) {
+    auto queueList = re.dumpRetrieveQueues(JobQueueType::JobsToReportToRepackForSuccess);
+    if (queueList.empty()) return ret;
+
+    // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
+    Carqtrtrfs::PopCriteria criteria;
+    criteria.files = filesRequested;
+    auto jobs = algo.popNextBatch(queueList.front().vid, criteria, lc);
+    if(jobs.elements.empty()) continue;
+    for(auto &j : jobs.elements)
+    {
+      std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this, nullptr));
+      rj->archiveFile = j.archiveFile;
+      rj->retrieveRequest = j.rr;
+      rj->selectedCopyNb = j.copyNb;
+      rj->setJobOwned();
+      ret.emplace_back(std::move(rj));
+    }
+    return ret;
+  }
+}
+
+} // namespace cta

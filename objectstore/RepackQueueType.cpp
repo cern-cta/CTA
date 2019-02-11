@@ -16,20 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mediachanger/acs/Acs.hpp"
+#include "RepackQueueType.hpp"
+#include "common/exception/Exception.hpp"
 
-#include <gtest/gtest.h>
+namespace cta { namespace objectstore {
 
-namespace unitTests {
-
-class cta_mediachanger_acs_AcsTest: public ::testing::Test {
-protected:
-
-  virtual void SetUp() {
+std::string toString(RepackQueueType queueType) {
+  switch(queueType) {
+  case RepackQueueType::Pending:
+    return "Pending";
+  case RepackQueueType::ToExpand:
+    return "ToExpand";
   }
+  throw exception::Exception("In toString(RepackQueueType): unexpected queue type.");
+}
 
-  virtual void TearDown() {
-  }
-};
-
-} // namespace unitTests
+}} // namespace cta::objectstore

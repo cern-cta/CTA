@@ -72,6 +72,14 @@ endif (NOT DEFINED SKIP_UNIT_TESTS)
 #Load version information in all cases.
 include(cmake/CTAVersions.cmake)
 
+if (DEFINED NoACS)
+  message (STATUS "Running CMake without support for ACS")
+  set (use_manually_specified_variable ${NoACS})
+else (DEFINED NoACS)
+  message (STATUS "Running CMake with support for ACS")
+  message (STATUS "Override with -DNoACS:Bool=true")
+endif (DEFINED NoACS)
+
 IF(DEFINED PackageOnly)
   message (STATUS "Running CMake in package-only mode")
    set(COMPILE_PACKAGING "1") 
@@ -113,7 +121,6 @@ ELSE(DEFINED PackageOnly)
   # OCCI support is on by default
   set (OCCI_SUPPORT ON)
 
-  find_package(stk REQUIRED)
   # Switch OCCI support off if using gcc 5.1 or higher
   #if (CMAKE_COMPILER_IS_GNUCC)
   #  if (GCC_VERSION VERSION_GREATER 5.0)

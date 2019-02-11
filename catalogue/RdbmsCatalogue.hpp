@@ -71,16 +71,12 @@ protected:
    * @param nbArchiveFileListingConns The maximum number of concurrent
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
-   * @param maxTriesToConnext The maximum number of times a single method should
-   * try to connect to the database in the event of LostDatabaseConnection
-   * exceptions being thrown.
    */
   RdbmsCatalogue(
     log::Logger &log,
     const rdbms::Login &login,
     const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns,
-    const uint32_t maxTriesToConnect);
+    const uint64_t nbArchiveFileListingConns);
 
 public:
 
@@ -284,6 +280,8 @@ public:
   void createTape(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
+    const std::string &mediaType,
+    const std::string &vendor,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
@@ -334,6 +332,8 @@ public:
    */
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override;
 
+  void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) override;
+  void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) override;
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override;
   void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) override;
   void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const uint64_t capacityInBytes) override;
@@ -492,6 +492,20 @@ public:
   ArchiveFileItor getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
+   * Returns the specified files in tape file sequence order.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param startFSeq The file sequence number of the first file.  Please note
+   * that there might not be a file with this exact file sequence number.
+   * @param maxNbFiles The maximum number of files to be returned.
+   * @return The specified files in tape file sequence order.
+   */
+  std::list<common::dataStructures::ArchiveFile> getFilesForRepack(
+    const std::string &vid,
+    const uint64_t startFSeq,
+    const uint64_t maxNbFiles) const override;
+
+  /**
    * Returns a summary of the tape files that meet the specified search
    * criteria.
    *
@@ -513,27 +527,6 @@ public:
   common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) override;
 
   /**
-   * Deletes the specified archive file and its associated tape copies from the
-   * catalogue.
-   *
-   * Please note that the name of the disk instance is specified in order to
-   * prevent a disk instance deleting an archive file that belongs to another
-   * disk instance.
-   *
-   * Please note that this method is idempotent.  If the file to be deleted does
-   * not exist in the CTA catalogue then this method returns without error.
-   *
-   * @param instanceName The name of the instance from where the deletion request
-   * originated
-   * @param archiveFileId The unique identifier of the archive file.
-   * @param lc The log context.
-   * @return The metadata of the deleted archive file including the metadata of
-   * the associated and also deleted tape copies.
-   */
-  void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId,
-    log::LogContext &lc) override;
-
-  /**
    * Returns true if the specified user has administrator privileges.
    *
    * @param admin The administrator.
@@ -548,6 +541,15 @@ public:
    * @return True if the query went through.
    */
   void ping() override;
+
+  /**
+   * Returns the names of all the tables in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the tables in the database schema in alphabetical
+   * order.
+   */
+  std::list<std::string> getTableNames() const;
 
 protected:
 
@@ -573,12 +575,6 @@ protected:
    * for the sole purpose of listing archive files.
    */
   mutable rdbms::ConnPool m_archiveFileListingConnPool;
-
-  /**
-   * The maximum number of times a single method should try to connect to the
-   * database in the event of LostDatabaseConnection exceptions being thrown.
-   */
-  uint32_t m_maxTriesToConnect;
 
   /**
    * Returns true if the specified admin user exists.
@@ -896,11 +892,9 @@ protected:
    * ArchiveFile table.
    *
    * @param conn The database connection.
-   * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param row The row to be inserted.
    */
-  void insertArchiveFile(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
-    const ArchiveFileRow &row);
+  void insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row);
 
   /**
    * Creates the database schema.
@@ -977,14 +971,12 @@ protected:
    * Inserts the specified tape file into the Tape table.
    *
    * @param conn The database connection.
-   * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param tapeFile The tape file.
    * @param archiveFileId The identifier of the archive file of which the tape
    * file is a copy.
    */
   void insertTapeFile(
     rdbms::Conn &conn,
-    const rdbms::AutocommitMode autocommitMode,
     const common::dataStructures::TapeFile &tapeFile,
     const uint64_t archiveFileId);
 
@@ -1010,7 +1002,6 @@ protected:
    * Updates the specified tape with the specified information.
    *
    * @param conn The database connection.
-   * @param autocommitMode The autocommit mode of the update statement.
    * @param vid The volume identifier of the tape.
    * @param lastFSeq The sequence number of the last tape file written to the
    * tape.
@@ -1020,7 +1011,6 @@ protected:
    */
   void updateTape(
     rdbms::Conn &conn,
-    const rdbms::AutocommitMode autocommitMode,
     const std::string &vid,
     const uint64_t lastFSeq,
     const uint64_t compressedBytesWritten,

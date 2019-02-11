@@ -45,11 +45,10 @@ public:
    * This method is called by the SqliteStmt::createStmt() method and assumes
    * that a lock has already been taken on SqliteStmt::m_mutex;
    *
-   * @param autocommitMode The autocommit mode of the statement.
    * @param conn The database connection.
    * @param sql The SQL statement.
    */
-  SqliteStmt(const AutocommitMode autocommitMode, SqliteConn &conn, const std::string &sql);
+  SqliteStmt(SqliteConn &conn, const std::string &sql);
 
   /**
    * Destructor.
@@ -119,6 +118,7 @@ public:
   /**
    * Executes the statement and returns the result set.
    *
+   * @param autocommitMode The autocommit mode of the statement.
    * @return The result set.
    */
   std::unique_ptr<Rset> executeQuery() override;
@@ -159,13 +159,14 @@ private:
   uint64_t m_nbAffectedRows;
 
   /**
-   * Begins an SQLite deferred transaction.
+   * @param autocommitMode The autocommit mode of the statement.
    *
-   * This method is called by the constructor which in turn was called by the
-   * SqliteStmt::createStmt() method and assumes that a lock has already been
-   * taken on SqliteStmt::m_mutex;
+   * @return true if autocommitMode is AUTOCOMMIT_ON, false if autocommitMode
+   * is AUTOCOMMIT_OFF, else throws an exception.
+   * @throw exception::Exception if autocommitMode is neither AUTOCOMMIT_ON
+   * nor AUTOCOMMIT_OFF.
    */
-  void beginDeferredTransaction();
+  static bool autocommitModeToBool(const AutocommitMode autocommitMode);
 
 }; // class SqlLiteStmt
 

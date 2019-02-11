@@ -6,6 +6,7 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
+  RepackRequest.cpp
   TapeMount.cpp
   LogicalLibrary.cpp
   MountType.cpp
@@ -21,7 +22,8 @@ set (CTA_SCHEDULER_SRC_FILES
   OStoreDB/OStoreDB.cpp
   OStoreDB/OStoreDBWithAgent.cpp
   LabelMount.cpp
-  DiskReportRunner.cpp)
+  DiskReportRunner.cpp
+  RepackRequestManager.cpp)
 
 find_package(Protobuf3 REQUIRED)
 include_directories (${PROTOBUF3_INCLUDE_DIRS})

@@ -18,6 +18,7 @@
 
 #include "scheduler/RetrieveMount.hpp"
 #include "common/Timer.hpp"
+#include "common/log/TimingList.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -67,6 +68,59 @@ std::string cta::RetrieveMount::getMountTransactionId() const{
 }
 
 //------------------------------------------------------------------------------
+// getMountTapePool()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getPoolName() const{
+  std::stringstream sTapePool;
+  if (!m_dbMount.get())
+    throw exception::Exception("In cta::RetrieveMount::getPoolName(): got NULL dbMount");
+  sTapePool << m_dbMount->mountInfo.tapePool;
+  return sTapePool.str();
+}
+
+//------------------------------------------------------------------------------
+// getVo()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getVo() const
+{
+    std::stringstream sVo;
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getVo(): got NULL dbMount");
+    sVo<<m_dbMount->mountInfo.vo;
+    return sVo.str();
+}
+
+//------------------------------------------------------------------------------
+// getMediaType()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getMediaType() const
+{
+    std::stringstream sMediaType;
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getMediaType(): got NULL dbMount");
+    sMediaType<<m_dbMount->mountInfo.mediaType;
+    return sMediaType.str();
+}
+
+//------------------------------------------------------------------------------
+// getVo()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getVendor() const
+{
+    std::stringstream sVendor;
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getVendor(): got NULL dbMount");
+    sVendor<<m_dbMount->mountInfo.vendor;
+    return sVendor.str();
+}
+
+uint64_t cta::RetrieveMount::getCapacityInBytes() const {
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getVendor(): got NULL dbMount");
+    return m_dbMount->mountInfo.capacityInBytes;
+}
+
+//------------------------------------------------------------------------------
 // getNextJobBatch()
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
@@ -91,8 +145,9 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
 // waitAndFinishSettingJobsBatchRetrieved()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) {
-  std::list<std::unique_ptr<cta::RetrieveJob> > validatedSuccessfulRetrieveJobs;
+  std::list<std::unique_ptr<cta::RetrieveJob> > validatedSuccessfulRetrieveJobs; //List to ensure the destruction of the retrieve jobs at the end of this method
   std::list<cta::SchedulerDatabase::RetrieveJob *> validatedSuccessfulDBRetrieveJobs;
+  std::list<cta::SchedulerDatabase::RetrieveJob *> retrieveRepackJobs;
   std::unique_ptr<cta::RetrieveJob> job;
   double waitUpdateCompletionTime=0;
   double jobBatchFinishingTime=0;
@@ -100,6 +155,7 @@ void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::
   uint64_t files=0;
   uint64_t bytes=0;
   utils::Timer t;
+  log::TimingList tl;
   try {
     while (!successfulRetrieveJobs.empty()) {
       job = std::move(successfulRetrieveJobs.front());
@@ -107,24 +163,32 @@ void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::
       if (!job.get()) continue;
       files++;
       bytes+=job->archiveFile.fileSize;
-      job->checkComplete();
-      validatedSuccessfulDBRetrieveJobs.emplace_back(job->m_dbJob.get());
+      bool isRepack = job->m_dbJob->retrieveRequest.isRepack;
+      if(!isRepack){
+        job->checkComplete();
+        validatedSuccessfulDBRetrieveJobs.emplace_back(job->m_dbJob.get());
+      } else {
+        retrieveRepackJobs.emplace_back(job->m_dbJob.get());
+      }
       validatedSuccessfulRetrieveJobs.emplace_back(std::move(job));
       job.reset();
     }
     waitUpdateCompletionTime=t.secs(utils::Timer::resetCounter);
+    tl.insertAndReset("waitUpdateCompletionTime",t);
     // Complete the cleaning up of the jobs in the mount
     m_dbMount->finishSettingJobsBatchSuccessful(validatedSuccessfulDBRetrieveJobs, logContext);
+    m_dbMount->batchSucceedRetrieveForRepack(retrieveRepackJobs,logContext);
     jobBatchFinishingTime=t.secs();
+    tl.insertOrIncrement("jobBatchFinishingTime",jobBatchFinishingTime);
     schedulerDbTime=jobBatchFinishingTime + waitUpdateCompletionTime;
+    tl.insertOrIncrement("schedulerDbTime",schedulerDbTime);
     {
       cta::log::ScopedParamContainer params(logContext);
       params.add("successfulRetrieveJobs", successfulRetrieveJobs.size())
             .add("files", files)
-            .add("bytes", bytes)
-            .add("waitUpdateCompletionTime", waitUpdateCompletionTime)
-            .add("jobBatchFinishingTime", jobBatchFinishingTime)
-            .add("schedulerDbTime", schedulerDbTime);
+            .add("bytes", bytes);
+      tl.addToLog(params);
+      //TODO : if repack, add log to say that the jobs were marked as RJS_Succeeded
       logContext.log(cta::log::DEBUG,"In RetrieveMout::waitAndFinishSettingJobsBatchRetrieved(): deleted complete retrieve jobs.");
     }
   } catch(const cta::exception::Exception& e){
@@ -138,6 +202,7 @@ void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::
     }
     const std::string msg_error="In RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
+    logContext.logBacktrace(cta::log::ERR, e.backtrace());
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
     // will be retried.
   } catch(const std::exception& e){

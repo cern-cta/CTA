@@ -201,8 +201,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyLogicalLibraryComment(admin, name, comment);}, m_maxTriesToConnect);
   }
 
-  void createTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, const bool disabled, const bool full, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->createTape(admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabled, full, comment);}, m_maxTriesToConnect);
+  void createTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType, const std::string &vendor, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, const bool disabled, const bool full, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createTape(admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes, disabled, full, comment);}, m_maxTriesToConnect);
   }
 
   void deleteTape(const std::string &vid) override {
@@ -223,6 +223,14 @@ public:
 
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->reclaimTape(admin, vid);}, m_maxTriesToConnect);
+  }
+
+  void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeMediaType(admin, vid, mediaType);}, m_maxTriesToConnect);
+  }
+
+  void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeVendor(admin, vid, vendor);}, m_maxTriesToConnect);
   }
 
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override {
@@ -331,6 +339,10 @@ public:
 
   ArchiveFileItor getArchiveFiles(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFiles(searchCriteria);}, m_maxTriesToConnect);
+  }
+
+  std::list<common::dataStructures::ArchiveFile> getFilesForRepack(const std::string &vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getFilesForRepack(vid, startFSeq, maxNbFiles);}, m_maxTriesToConnect);
   }
 
   common::dataStructures::ArchiveFileSummary getTapeFileSummary(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {

@@ -36,6 +36,9 @@ set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/DriveState.hpp
   objectstore/GenericObject.hpp
   objectstore/ObjectOps.hpp
+  objectstore/RepackIndex.hpp
+  objectstore/RepackRequest.hpp
+  objectstore/RepackQueue.hpp
   objectstore/RetrieveRequest.hpp
   objectstore/RootEntry.hpp
   objectstore/SchedulerGlobalLock.hpp
@@ -68,11 +71,18 @@ add_library (ctaobjectstore SHARED
   RetrieveQueueToTransferAlgorithms.cpp
   RetrieveQueueToReportAlgorithms.cpp
   RetrieveQueueFailedAlgorithms.cpp
-  QueueType.cpp
+  JobQueueType.cpp
   ArchiveRequest.cpp
   RetrieveRequest.cpp
   DriveRegister.cpp
   DriveState.cpp
+  RepackIndex.cpp
+  RepackRequest.cpp
+  RepackQueue.cpp
+  RepackQueuePendingAlgorithms.cpp
+  RetrieveQueueToReportToRepackForSuccessAlgorithms.cpp
+  RepackQueueToExpandAlgorithms.cpp
+  RepackQueueType.cpp
   BackendVFS.cpp
   BackendRados.cpp
   BackendPopulator.cpp

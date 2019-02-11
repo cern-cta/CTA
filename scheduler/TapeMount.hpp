@@ -59,6 +59,18 @@ namespace cta {
      * @return The mount transaction id.
      */
     virtual uint32_t getNbFiles() const = 0;
+    
+    virtual std::string getVo() const = 0;
+    
+    virtual std::string getMediaType() const = 0;
+    
+    virtual std::string getVendor() const = 0;
+    
+    /**
+    * Returns the capacity in bytes of the tape
+    * @return the capacity in bytes of the tape
+    */
+    uint64_t getCapacityInBytes() const;
 
     /**
      * Indicates that the mount was aborted.

@@ -28,7 +28,7 @@ namespace cta {
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
-QueueItor(objectstore::Backend &objectStore, objectstore::QueueType queueType, const std::string &queue_id) :
+QueueItor(objectstore::Backend &objectStore, objectstore::JobQueueType queueType, const std::string &queue_id) :
   m_objectStore(objectStore),
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)
@@ -132,7 +132,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
-QueueItor(objectstore::Backend &objectStore, objectstore::QueueType queueType, const std::string &queue_id) :
+QueueItor(objectstore::Backend &objectStore, objectstore::JobQueueType queueType, const std::string &queue_id) :
   m_objectStore(objectStore),
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)

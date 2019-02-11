@@ -16,20 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "JobQueueType.hpp"
 
-#include <string>
+namespace cta { namespace objectstore {
 
-namespace cta {
-namespace common {
-namespace dataStructures {
-enum RepackType {
-  expandandrepack,
-  justexpand,
-  justrepack
-};
+std::string toString(JobQueueType queueType) {
+  switch (queueType) {
+  case JobQueueType::FailedJobs:
+    return "failedJobs";
+  case JobQueueType::JobsToReportToUser:
+    return "JobsToReportToUser";
+  case JobQueueType::JobsToTransfer:
+    return "jobsToTranfer";
+  case JobQueueType::JobsToReportToRepackForSuccess:
+    return "JobsToReportToRepackForSuccess";
+  case JobQueueType::JobsToReportToRepackForFailure:
+    return "JobsToReportToRepackForFailure";
+  default:
+    return "Unknown queue type.";
+  }
+}
 
-std::string toString(RepackType type);
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}} //namespace cta::objectstore

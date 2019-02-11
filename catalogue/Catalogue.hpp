@@ -41,8 +41,6 @@
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/ReadTestResult.hpp"
-#include "common/dataStructures/RepackInfo.hpp"
-#include "common/dataStructures/RepackType.hpp"
 #include "common/dataStructures/RequesterGroupMountRule.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
@@ -287,12 +285,15 @@ public:
   virtual void createTape(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
+    const std::string &mediaType,
+    const std::string &vendor,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
     const bool disabled,
     const bool full,
     const std::string &comment) = 0;
+
   virtual void deleteTape(const std::string &vid) = 0;
 
   /**
@@ -337,6 +338,8 @@ public:
    */
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) = 0;
 
+  virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) = 0;
+  virtual void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) = 0;
   virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) = 0;
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) = 0;
   virtual void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const uint64_t capacityInBytes) = 0;
@@ -486,6 +489,20 @@ public:
    */
   virtual ArchiveFileItor getArchiveFiles(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
+
+  /**
+   * Returns the specified files in tape file sequence order.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param startFSeq The file sequence number of the first file.  Please note
+   * that there might not be a file with this exact file sequence number.
+   * @param maxNbFiles The maximum number of files to be returned.
+   * @return The specified files in tape file sequence order.
+   */
+  virtual std::list<common::dataStructures::ArchiveFile> getFilesForRepack(
+    const std::string &vid,
+    const uint64_t startFSeq,
+    const uint64_t maxNbFiles) const = 0;
 
   /**
    * Returns a summary of the tape files that meet the specified search

@@ -17,39 +17,25 @@
  */
 
 #include "catalogue/CatalogueTest.hpp"
+#include "catalogue/InMemoryCatalogueFactory.hpp"
+#include "common/log/DummyLogger.hpp"
 
 namespace unitTests {
 
 namespace {
 
-/**
- * Creates Login objects for in-memory catalogue databases.
- */
-class InMemoryLoginFactory: public cta::rdbms::LoginFactory {
-public:
+const uint64_t g_in_memory_CatalogueTest_nbConn = 1;
+const uint64_t g_in_memory_nbArchiveFileListingConns = 1;
+const uint64_t g_in_memory_maxTriesToConnect = 1;
+cta::log::DummyLogger g_in_memory_CatalogueTest_dummyLogger("dummy", "dummy");
 
-  /**
-   * Destructor.
-   */
-  virtual ~InMemoryLoginFactory() {
-  }
+cta::catalogue::InMemoryCatalogueFactory g_inMemoryCatalogueFactory(g_in_memory_CatalogueTest_dummyLogger,
+  g_in_memory_CatalogueTest_nbConn, g_in_memory_nbArchiveFileListingConns, g_in_memory_maxTriesToConnect);
 
-  /**
-   * Returns a newly created Login object.
-   *
-   * @return A newly created Login object.
-   */
-  virtual cta::rdbms::Login create() {
-    using namespace cta::catalogue;
-    return cta::rdbms::Login(cta::rdbms::Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
-  }
-}; // class InMemoryLoginFactory
-
-InMemoryLoginFactory g_inMemoryLoginFactory;
+cta::catalogue::CatalogueFactory *g_inMemoryCatalogueFactoryPtr = &g_inMemoryCatalogueFactory;
 
 } // anonymous namespace
 
-INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_CatalogueTest,
-  ::testing::Values(dynamic_cast<cta::rdbms::LoginFactory*>(&g_inMemoryLoginFactory)));
+INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_CatalogueTest, ::testing::Values(&g_inMemoryCatalogueFactoryPtr));
 
 } // namespace unitTests

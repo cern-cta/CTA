@@ -76,7 +76,7 @@ public:
   AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
     AgentReference & agentReference, log::LogContext & lc);
   struct JobsSummary {
-    uint64_t files;
+    uint64_t jobs;
     uint64_t bytes;
     time_t oldestJobStartTime;
     uint64_t priority;
@@ -163,4 +163,8 @@ public:
   template<typename...Ts> RetrieveQueueFailed(Ts&...args): RetrieveQueue(args...) {}
 };
   
+class RetrieveQueueToReportToRepackForSuccess : public RetrieveQueue {
+public:
+  template<typename...Ts> RetrieveQueueToReportToRepackForSuccess(Ts&...args): RetrieveQueue(args...) {}
+};
 }}

@@ -23,7 +23,8 @@
 #include "common/threading/MutexLocker.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
-#include "QueueType.hpp"
+#include "JobQueueType.hpp"
+#include "RepackQueueType.hpp"
 #include <string>
 #include <set>
 #include <future>
@@ -37,6 +38,7 @@ namespace cta { namespace objectstore {
 class ScopedExclusiveLock;
 class AgentReference;
 class DriveState;
+class RepackQueue;
 
 /**
  * A class with static functions allowing multi-object operations
@@ -52,9 +54,20 @@ public:
    * @param tapePool or vid the name of the needed tape pool
    */
   template <class Queue>
-  static void getLockedAndFetchedQueue(Queue & queue, 
+  static void getLockedAndFetchedJobQueue(Queue & queue, 
     ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
-    const std::string & tapePoolOrVid, QueueType queueType, log::LogContext & lc);
+    const cta::optional<std::string> & tapePoolOrVid, JobQueueType queueType, log::LogContext & lc);
+  
+  /**
+   * Find or create a repack queue, and return it locked and fetched to the caller
+   * (Queue and ScopedExclusiveLock objects are provided empty)
+   * @param queue the queue object, empty
+   * @param queueLock the lock, not initialized
+   * @param agentReference the agent reference that will be needed in case of object creation
+   */
+  static void getLockedAndFetchedRepackQueue(RepackQueue & queue, 
+    ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
+    RepackQueueType queueType, log::LogContext & lc);
   
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
   /**
@@ -120,6 +133,18 @@ public:
    * Helper to fetch in parallel all the drive statuses.
    */
   static std::list<cta::common::dataStructures::DriveState> getAllDriveStates(Backend & backend, log::LogContext & lc);
+  
+  /**
+   * Helper to register a repack request in the repack index. 
+   * As this structure was developed late, we potentially have to create it on the fly.
+   */
+  static void registerRepackRequestToIndex(const std::string & vid, const std::string & requestAddress,
+      AgentReference & agentReference, Backend & backend, log::LogContext & lc);
+  
+  /**
+   * Helper to remove an entry form the repack index.
+   */
+  static void removeRepackRequestToIndex(const std::string & vid, Backend & backend, log::LogContext & lc);
 };
 
 }} // namespace cta::objectstore

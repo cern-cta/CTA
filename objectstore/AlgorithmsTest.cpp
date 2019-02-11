@@ -36,6 +36,7 @@ namespace unitTests {
 
 void fillRetrieveRequests(
   typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list &requests,
+  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> >& requestPtrs, //List to avoid memory leak on ArchiveQueueAlgorithms test
   cta::objectstore::BackendVFS &be,
   cta::objectstore::AgentReference &agentRef)
 {
@@ -71,8 +72,9 @@ void fillRetrieveRequests(
     rqc.mountPolicy.maxDrivesAllowed = 1;
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
+    requestPtrs.emplace_back(new cta::objectstore::RetrieveRequest(rrAddr, be));
     requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement{
-      new RetrieveRequest(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
+      requestPtrs.back().get(), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
     });
     auto &rr = *requests.back().retrieveRequest;
     rr.initialize();
@@ -150,12 +152,12 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     ar.insert();
   }
   ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> archiveAlgos(be, agentRef);
-  archiveAlgos.referenceAndSwitchOwnership("Tapepool", QueueType::JobsToTransfer, requests, lc);
+  archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
   // Now get the requests back
   ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
-  auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", QueueType::JobsToTransfer, popCriteria, lc);
+  auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
   ASSERT_EQ(poppedJobs.summary.files, 10);
 }
 
@@ -185,8 +187,9 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
+  std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs;
   ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests;
-  fillRetrieveRequests(requests, be, agentRef);
+  fillRetrieveRequests(requests, requestsPtrs, be, agentRef); //memory leak here
 
   {
     // Second agent to test referenceAndSwitchOwnershipIfNecessary
@@ -205,12 +208,13 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
     agent2.initialize();
     agent2.insertAndRegisterSelf(lc);
     ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests2;
-    fillRetrieveRequests(requests2, be2, agentRef2);
+    std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs2;
+    fillRetrieveRequests(requests2, requestsPtrs2,be2, agentRef2);
 
     auto a1 = agentRef2.getAgentAddress();
     auto a2 = agentRef2.getAgentAddress();
     ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> retrieveAlgos2(be2, agentRef2);
-    retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID", QueueType::JobsToTransfer,
+    retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID",
       a2, a1, requests2, lc);
   }
 
@@ -218,14 +222,14 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   try {
     ASSERT_EQ(requests.size(), 10);
 
-    retrieveAlgos.referenceAndSwitchOwnership("VID", QueueType::JobsToTransfer,
+    retrieveAlgos.referenceAndSwitchOwnership("VID", 
       agentRef.getAgentAddress(), requests, lc);
 
     // Now get the requests back
     ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria popCriteria;
     popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
     popCriteria.files = 100;
-    auto poppedJobs = retrieveAlgos.popNextBatch("VID", QueueType::JobsToTransfer, popCriteria, lc);
+    auto poppedJobs = retrieveAlgos.popNextBatch("VID", popCriteria, lc);
     ASSERT_EQ(poppedJobs.summary.files, 10);
 
     // Validate that the summary has the same information as the popped elements

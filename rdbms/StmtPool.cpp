@@ -27,16 +27,14 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // getStmt
 //------------------------------------------------------------------------------
-Stmt StmtPool::getStmt(wrapper::Conn &conn, const std::string &sql, const AutocommitMode autocommitMode) {
-  const CachedStmtKey key(sql, autocommitMode);
-
+Stmt StmtPool::getStmt(wrapper::Conn &conn, const std::string &sql) {
   threading::MutexLocker locker(m_stmtsMutex);
 
-  auto itor = m_stmts.find(key);
+  auto itor = m_stmts.find(sql);
 
   // If there is no prepared statement in the cache
   if(itor == m_stmts.end()) {
-    auto stmt = conn.createStmt(sql, autocommitMode);
+    auto stmt = conn.createStmt(sql);
     return Stmt(std::move(stmt), *this);
   } else {
     auto &stmtList = itor->second;
@@ -75,11 +73,9 @@ uint64_t StmtPool::getNbStmts() const {
 void StmtPool::returnStmt(std::unique_ptr<wrapper::Stmt> stmt) {
   threading::MutexLocker locker(m_stmtsMutex);
 
-  const CachedStmtKey key(stmt->getSql(), stmt->getAutocommitMode());
-
   stmt->clear();
 
-  m_stmts[key].push_back(std::move(stmt));
+  m_stmts[stmt->getSql()].push_back(std::move(stmt));
 }
 
 //------------------------------------------------------------------------------

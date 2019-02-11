@@ -24,44 +24,49 @@ add_executable(cta-unitTests
   ${GMOCK_SRC})
 
 target_link_libraries(cta-unitTests
-  ctainmemorycatalogueunittests
+  ctacataloguecmdlineunittests
+  ctacommon
+  ctacommonunittests
+  ctadaemonunittests
   ctaexceptionunittests
+  ctamediachangerunittests
+  ctainmemorycatalogueunittests
+  ctainmemoryconnunittests
+  ctaobjectstore
+  ctaobjectstoreunittests
+  ctardbmswrapperunittests
+  ctaschedulerunittests
   ctatapeserverdaemonunittests
   ctatapeserverdriveunittests
   ctatapeserverfileunittests
   ctatapeserverscsiunittests
-  ctacataloguecmdlineunittests
-  ctacommon
-  ctacommonunittests
-  ctaobjectstore
-  ctaobjectstoreunittests
-  ctardbmsunittests
-  ctardbmswrapperunittests
-  ctaschedulerunittests
-  ctadaemonunittests
-  ctamediachangerunittests
-  ctamediachangeracsdaemonunittests
-  ctamediachangeracsunittests
   gtest
   pthread)
+
+if (NOT DEFINED NoACS)
+  target_link_libraries(cta-unitTests
+    ctamediachangeracsdaemonunittests)
+endif (NOT DEFINED NoACS)
 
 set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
   set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OCCI_SUPPORT)
 
-add_executable(cta-catalogueUnitTests
-  CatalogueUnitTestsCmdLineArgs.cpp
-  catalogueUnitTests.cpp
+add_executable(cta-rdbmsUnitTests
+  GlobalCatalogueFactoryForUnitTests.cpp
+  RdbmsUnitTestsCmdLineArgs.cpp
+  rdbmsUnitTests.cpp
   ${GMOCK_SRC})
 
-target_link_libraries(cta-catalogueUnitTests
-  ctacatalogueunittests
+target_link_libraries(cta-rdbmsUnitTests
+  ctadbconfigcatalogueunittests
+  ctadbconfigconnunittests
   gtest
   pthread)
 
 if (OCCI_SUPPORT)
-  set_property (TARGET cta-catalogueUnitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_property (TARGET cta-rdbmsUnitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OCCI_SUPPORT)
 
 add_executable(cta-unitTests-multiProcess
@@ -102,12 +107,13 @@ target_link_libraries(cta-systemTests
   gtest
   pthread)
 
-install(TARGETS cta-catalogueUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
+install(TARGETS cta-rdbmsUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
 
 install(TARGETS systemTestHelperTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 configure_file(cta-valgrindUnitTests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh)
-configure_file(parallelTestsMakefile.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile)
+configure_file(parallelTestsMakefile.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile @ONLY)
+configure_file(parallelTestsMakefile.local.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile.local @ONLY)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh cta-unitPlusSystemTests.sh DESTINATION usr/bin)
 install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION usr/share/cta-${CTA_VERSION}/unittest/)

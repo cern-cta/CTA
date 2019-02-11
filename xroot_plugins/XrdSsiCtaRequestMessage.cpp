@@ -1049,9 +1049,9 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
    std::string vid      = "";
 
    OStoreDB::ArchiveQueueItor_t *archiveQueueItorPtr =
-      has_flag(OptionBoolean::JUSTRETRIEVE) ? nullptr : m_scheddb.getArchiveJobItorPtr(tapepool, objectstore::QueueType::FailedJobs);
+      has_flag(OptionBoolean::JUSTRETRIEVE) ? nullptr : m_scheddb.getArchiveJobItorPtr(tapepool, objectstore::JobQueueType::FailedJobs);
    OStoreDB::RetrieveQueueItor_t *retrieveQueueItorPtr =
-      has_flag(OptionBoolean::JUSTARCHIVE)  ? nullptr : m_scheddb.getRetrieveJobItorPtr(vid,     objectstore::QueueType::FailedJobs);
+      has_flag(OptionBoolean::JUSTARCHIVE)  ? nullptr : m_scheddb.getRetrieveJobItorPtr(vid,     objectstore::JobQueueType::FailedJobs);
 
    // Create a XrdSsi stream object to return the results
    stream = new FailedRequestLsStream(m_scheduler, archiveQueueItorPtr, retrieveQueueItorPtr, has_flag(OptionBoolean::SUMMARY), has_flag(OptionBoolean::SHOW_LOG_ENTRIES), m_lc);
@@ -1382,6 +1382,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
 
    // VIDs can be provided as a single option or as a list
    std::vector<std::string> vid_list;
+   std::string bufferURL;
 
    auto vidl = getOptional(OptionStrList::VID);
    if(vidl) vid_list = vidl.value();
@@ -1391,23 +1392,29 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
    if(vid_list.empty()) {
       throw cta::exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
    }
+   
+   auto buff = getOptional(OptionString::BUFFERURL);
+   if (buff)
+     bufferURL = buff.value();
+   else
+     throw cta::exception::UserError("Must specify the buffer URL using --bufferurl option.");
 
    // Expand, repack, or both ?
-   cta::common::dataStructures::RepackType type;
+   cta::common::dataStructures::RepackInfo::Type type;
 
    if(has_flag(OptionBoolean::JUSTEXPAND) && has_flag(OptionBoolean::JUSTREPACK)) {
       throw cta::exception::UserError("--justexpand and --justrepack are mutually exclusive");
    } else if(has_flag(OptionBoolean::JUSTEXPAND)) {
-      type = cta::common::dataStructures::RepackType::justexpand;
+      type = cta::common::dataStructures::RepackInfo::Type::ExpandOnly;
    } else if(has_flag(OptionBoolean::JUSTREPACK)) {
-      type = cta::common::dataStructures::RepackType::justrepack;
+      type = cta::common::dataStructures::RepackInfo::Type::RepackOnly;
    } else {
-      type = cta::common::dataStructures::RepackType::expandandrepack;
+      type = cta::common::dataStructures::RepackInfo::Type::ExpandAndRepack;
    }
 
    // Process each item in the list
    for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-      m_scheduler.queueRepack(m_cliIdentity, *it, type);
+      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL,  type, m_lc);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1421,7 +1428,7 @@ void RequestMessage::processRepack_Rm(const cta::admin::AdminCmd &admincmd, cta:
 
    auto &vid = getRequired(OptionString::VID);
 
-   m_scheduler.cancelRepack(m_cliIdentity, vid);
+   m_scheduler.cancelRepack(m_cliIdentity, vid, m_lc);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1439,9 +1446,9 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
    std::list<cta::common::dataStructures::RepackInfo> list;
 
    if(!vid) {      
-      list = m_scheduler.getRepacks(m_cliIdentity);
+      list = m_scheduler.getRepacks();
    } else {
-      list.push_back(m_scheduler.getRepack(m_cliIdentity, vid.value()));
+      list.push_back(m_scheduler.getRepack(vid.value()));
    }
 
    if(!list.empty())
@@ -1453,25 +1460,19 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++)
       {
-         const std::map<common::dataStructures::RepackType, std::string> type_s = {
-            { common::dataStructures::RepackType::expandandrepack, "expandandrepack" },
-            { common::dataStructures::RepackType::justexpand,      "justexpand" },
-            { common::dataStructures::RepackType::justrepack,      "justrepack" }
-         };
-
          std::vector<std::string> currentRow;
          currentRow.push_back(it->vid);
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles)));
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize)));
-         currentRow.push_back(type_s.at(it->repackType));
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToRetrieve)));//change names
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToArchive)));
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed)));
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesArchived)));
-         currentRow.push_back(it->repackStatus);
-         currentRow.push_back(it->creationLog.username);
-         currentRow.push_back(it->creationLog.host);        
-         currentRow.push_back(timeToString(it->creationLog.time));
+         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->totalFiles)));
+         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->totalSize)));
+         currentRow.push_back(common::dataStructures::toString(it->type));
+         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->filesToRetrieve)));//change names
+         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->filesToArchive)));
+         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->filesFailed)));
+         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->filesArchived)));
+         currentRow.push_back(common::dataStructures::toString(it->status));
+         currentRow.push_back("-");//it->creationLog.username);
+         currentRow.push_back("-");//it->creationLog.host);
+         currentRow.push_back("-");//timeToString(it->creationLog.time));
          responseTable.push_back(currentRow);
       }
       cmdlineOutput << formatResponse(responseTable);
@@ -1489,23 +1490,23 @@ void RequestMessage::processRepack_Err(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
-   auto &vid = getRequired(OptionString::VID);
-
-   cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(m_cliIdentity, vid);
-
-   if(!info.errors.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = { "fseq","error message" };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
-         currentRow.push_back(it->second);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
+//   auto &vid = getRequired(OptionString::VID);
+//
+//   cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(vid);
+//
+//   if(!info.errors.empty())
+//   {
+//      std::vector<std::vector<std::string>> responseTable;
+//      std::vector<std::string> header = { "fseq","error message" };
+//      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+//      for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
+//         std::vector<std::string> currentRow;
+//         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
+//         currentRow.push_back(it->second);
+//         responseTable.push_back(currentRow);
+//      }
+//      cmdlineOutput << formatResponse(responseTable);
+//   }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1766,6 +1767,8 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
    using namespace cta::admin;
 
    auto &vid            = getRequired(OptionString::VID);
+   auto &mediaType      = getRequired(OptionString::MEDIA_TYPE);
+   auto &vendor         = getRequired(OptionString::VENDOR);
    auto &logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
    auto &tapepool       = getRequired(OptionString::TAPE_POOL);
    auto &capacity       = getRequired(OptionUInt64::CAPACITY);
@@ -1773,7 +1776,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
    auto &full           = getRequired(OptionBoolean::FULL);
    auto  comment        = getOptional(OptionString::COMMENT);
 
-   m_catalogue.createTape(m_cliIdentity, vid, logicallibrary, tapepool, capacity, disabled, full, comment ? comment.value() : "-");
+   m_catalogue.createTape(m_cliIdentity, vid, mediaType, vendor, logicallibrary, tapepool, capacity, disabled, full, comment ? comment.value() : "-");
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1785,6 +1788,8 @@ void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::x
    using namespace cta::admin;
 
    auto &vid            = getRequired(OptionString::VID);
+   auto  mediaType      = getOptional(OptionString::MEDIA_TYPE);
+   auto  vendor         = getOptional(OptionString::VENDOR);
    auto  logicallibrary = getOptional(OptionString::LOGICAL_LIBRARY);
    auto  tapepool       = getOptional(OptionString::TAPE_POOL);
    auto  capacity       = getOptional(OptionUInt64::CAPACITY);
@@ -1793,6 +1798,12 @@ void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::x
    auto  disabled       = getOptional(OptionBoolean::DISABLED);
    auto  full           = getOptional(OptionBoolean::FULL);
 
+   if(mediaType) {
+      m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
+   }
+   if(vendor) {
+      m_catalogue.modifyTapeVendor(m_cliIdentity, vid, vendor.value());
+   }
    if(logicallibrary) {
       m_catalogue.modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary.value());
    }
@@ -1866,7 +1877,10 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
       searchCriteria.capacityInBytes = getOptional(OptionUInt64::CAPACITY,        &has_any);
       searchCriteria.logicalLibrary  = getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
       searchCriteria.tapePool        = getOptional(OptionString::TAPE_POOL,       &has_any);
+      searchCriteria.vo              = getOptional(OptionString::VO,              &has_any);
       searchCriteria.vid             = getOptional(OptionString::VID,             &has_any);
+      searchCriteria.mediaType       = getOptional(OptionString::MEDIA_TYPE,      &has_any);
+      searchCriteria.vendor          = getOptional(OptionString::VENDOR,          &has_any);
 
       if(!has_any) {
          throw cta::exception::UserError("Must specify at least one search option, or --all");
@@ -1879,16 +1893,19 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
-         "vid","logical library","tapepool","encryption key","capacity","occupancy","last fseq",
-         "full","disabled","lbp","label drive","label time","last w drive","last w time",
+         "vid","media type","vendor","logical library","tapepool","vo","encryption key","capacity","occupancy",
+         "last fseq","full","disabled","lbp","label drive","label time","last w drive","last w time",
          "last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
          currentRow.push_back(it->vid);
+         currentRow.push_back(it->mediaType);
+         currentRow.push_back(it->vendor);
          currentRow.push_back(it->logicalLibraryName);
          currentRow.push_back(it->tapePoolName);
+         currentRow.push_back(it->vo);
          currentRow.push_back((bool)it->encryptionKey ? it->encryptionKey.value() : "-");
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->capacityInBytes)));
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->dataOnTapeInBytes)));

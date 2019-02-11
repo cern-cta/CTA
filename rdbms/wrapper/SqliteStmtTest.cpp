@@ -43,7 +43,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
   // Create a connection a memory resident database
   SqliteConn conn(":memory:");
 
-  // Assert that there are currently noi tables in the database
+  // Assert that there are currently no tables in the database
   {
     const char *const sql =
       "SELECT "
@@ -52,7 +52,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
         "SQLITE_MASTER "
       "WHERE "
         "TYPE = 'table';";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
@@ -69,7 +69,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->executeNonQuery();
   }
 
@@ -82,7 +82,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
       "WHERE "
         "NAME = 'TEST1' AND "
         "TYPE = 'table';";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
@@ -100,7 +100,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->executeNonQuery();
   }
 
@@ -113,7 +113,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
       "WHERE "
         "NAME = 'TEST2' AND "
         "TYPE = 'table';";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
@@ -146,7 +146,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, select_from_empty_table) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
@@ -161,7 +161,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, select_from_empty_table) {
         "COL3 "
       "FROM "
         "TEST;";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_FALSE(rset->next());
   }
@@ -182,7 +182,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
@@ -199,7 +199,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
         "'one',"
         "'two',"
         "3);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->executeNonQuery();
   }
 
@@ -212,7 +212,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
         "COL3 AS COL3 "
       "FROM "
         "TEST;";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
@@ -248,7 +248,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
@@ -265,7 +265,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
         ":COL1,"
         ":COL2,"
         ":COL3);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->bindString(":COL1", "one");
     stmt->bindString(":COL2", "two");
     stmt->bindUint64(":COL3", 3);
@@ -281,7 +281,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
         "COL3 AS COL3 "
       "FROM "
         "TEST;";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
@@ -316,7 +316,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-    auto stmt = connForCreate.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = connForCreate.createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, connForCreate.getTableNames().size());
     ASSERT_EQ("TEST", connForCreate.getTableNames().front());
@@ -334,7 +334,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
         "'one',"
         "'two',"
         "3);";
-    auto stmt = connForInsert.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = connForInsert.createStmt(sql);
     stmt->executeNonQuery();
   }
 
@@ -348,7 +348,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
         "COUNT(*) AS NB_ROWS "
       "FROM "
         "TEST;";
-    auto stmt = connForSelect.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = connForSelect.createStmt(sql);
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
 
@@ -375,7 +375,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
       "CREATE TABLE TEST("
         "COL1 INTEGER,"
         "CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1));";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
@@ -388,7 +388,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
         "COL1)"
       "VALUES("
         ":COL1);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
     stmt->executeNonQuery();
   }
@@ -400,7 +400,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
         "COL1)"
       "VALUES("
         ":COL1);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
     ASSERT_THROW(stmt->executeNonQuery(), exception::DatabasePrimaryKeyError);
   }
@@ -421,7 +421,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
       "CREATE TABLE TEST("
         "COL1 INTEGER,"
         "CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1));";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->executeNonQuery();
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST", conn.getTableNames().front());
@@ -434,7 +434,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
         "COL1)"
       "VALUES("
         ":COL1);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
     stmt->executeNonQuery();
   }
@@ -446,7 +446,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
         "COL1)"
       "VALUES("
         ":COL1);";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
     auto rset = stmt->executeQuery();
     ASSERT_THROW(rset->next(), exception::DatabasePrimaryKeyError);

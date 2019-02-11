@@ -28,6 +28,8 @@
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
+#include "objectstore/RepackRequest.hpp"
+#include "RetrieveRequestDump.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -181,8 +183,14 @@ void Scheduler::queueRetrieve(
   using utils::midEllipsis;
   utils::Timer t;
   // Get the queue criteria
-  const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, lc);
+  common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
+  if(!request.isRepack){
+    queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, lc);
+  } else {
+    //Repack does not need policy
+    queueCriteria.archiveFile = m_catalogue.getArchiveFileById(request.archiveFileID);
+    queueCriteria.mountPolicy = common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack;
+  }
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
   auto schedulerDbTime = t.secs();
@@ -218,19 +226,23 @@ void Scheduler::queueRetrieve(
     spc.add(tc.str(), tf.second);
   }
   spc.add("selectedVid", selectedVid)
-     .add("policyName", queueCriteria.mountPolicy.name)
-     .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
-     .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
-     .add("policyPriority", queueCriteria.mountPolicy.retrievePriority)
      .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime);
+  if(!request.isRepack){
+      spc.add("policyName", queueCriteria.mountPolicy.name)
+     .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
+     .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
+     .add("policyPriority", queueCriteria.mountPolicy.retrievePriority);
+  }
   lc.log(log::INFO, "Queued retrieve request");
 }
+
 
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
+void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request, 
+    log::LogContext & lc) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
@@ -292,30 +304,131 @@ void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliId
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
-void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const common::dataStructures::RepackType) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
+    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) {
+  // Check request sanity
+  if (vid.empty()) throw exception::UserError("Empty VID name.");
+  if (bufferURL.empty()) throw exception::UserError("Empty buffer URL.");
+  utils::Timer t;
+  m_db.queueRepack(vid, bufferURL, repackType, lc);
+  log::TimingList tl;
+  tl.insertAndReset("schedulerDbTime", t);
+  log::ScopedParamContainer params(lc);
+  params.add("tapeVid", vid)
+        .add("repackType", toString(repackType));
+  tl.addToLog(params);
+  lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
 }
 
 //------------------------------------------------------------------------------
 // cancelRepack
 //------------------------------------------------------------------------------
-void Scheduler::cancelRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::cancelRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc) {
+  m_db.cancelRepack(vid, lc);
 }
 
 //------------------------------------------------------------------------------
 // getRepacks
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::RepackInfo> Scheduler::getRepacks(const common::dataStructures::SecurityIdentity &cliIdentity) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+std::list<common::dataStructures::RepackInfo> Scheduler::getRepacks() {
+  return m_db.getRepackInfo();
 }
 
 //------------------------------------------------------------------------------
 // getRepack
 //------------------------------------------------------------------------------
-common::dataStructures::RepackInfo Scheduler::getRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__); 
+common::dataStructures::RepackInfo Scheduler::getRepack(const std::string &vid) {
+  return m_db.getRepackInfo(vid);
 }
+
+//------------------------------------------------------------------------------
+// promoteRepackRequestsToToExpand
+//------------------------------------------------------------------------------
+void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
+  // We target 2 fresh requests available for processing (ToExpand or Starting).
+  const size_t targetAvailableRequests = 2;
+  // Dry-run test to check if promotion is needed.
+  auto repackStatsNL = m_db.getRepackStatisticsNoLock();
+  // Statistics are supposed to be initialized for each status value. We only try to
+  // expand if there are requests available in Pending status.
+  typedef common::dataStructures::RepackInfo::Status Status;
+  if (repackStatsNL->at(Status::Pending) &&
+          (targetAvailableRequests > repackStatsNL->at(Status::ToExpand) + repackStatsNL->at(Status::Starting))) {
+    // Let's try to promote a repack request. Take the lock.
+    repackStatsNL.reset();
+    decltype(m_db.getRepackStatistics()) repackStats;
+    try {
+      repackStats = m_db.getRepackStatistics();
+    } catch (SchedulerDatabase::RepackRequestStatistics::NoPendingRequestQueue &) {
+      // Nothing to promote after all.
+      return;
+    }
+    if (repackStats->at(Status::Pending) &&
+            (targetAvailableRequests > repackStats->at(Status::ToExpand) + repackStats->at(Status::Starting))) {
+      auto requestsToPromote = targetAvailableRequests;
+      requestsToPromote -= repackStats->at(Status::ToExpand);
+      requestsToPromote -= repackStats->at(Status::Starting);
+      auto stats = repackStats->promotePendingRequestsForExpansion(requestsToPromote, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("promotedRequests", stats.promotedRequests)
+            .add("pendingBefore", stats.pendingBefore)
+            .add("toEnpandBefore", stats.toEnpandBefore)
+            .add("pendingAfter", stats.pendingAfter)
+            .add("toExpandAfter", stats.toExpandAfter);
+      lc.log(log::INFO,"In Scheduler::promoteRepackRequestsToToExpand(): Promoted repack request to \"to expand\"");
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// getNextRepackRequestToExpand
+//------------------------------------------------------------------------------
+std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
+    std::unique_ptr<cta::SchedulerDatabase::RepackRequest> repackRequest;
+    repackRequest = m_db.getNextRepackJobToExpand();
+    if(repackRequest != nullptr){
+      std::unique_ptr<RepackRequest> ret(new RepackRequest());
+      ret->m_dbReq.reset(repackRequest.release());
+      return std::move(ret);
+    }
+    return nullptr;
+}
+
+//------------------------------------------------------------------------------
+// generateRetrieveDstURL
+//------------------------------------------------------------------------------
+const std::string Scheduler::generateRetrieveDstURL(const cta::common::dataStructures::DiskFileInfo dfi) const{
+  std::ostringstream strStream;
+  strStream<<"repack:/"<<dfi.path;
+  return strStream.str();
+}
+
+//------------------------------------------------------------------------------
+// expandRepackRequest
+//------------------------------------------------------------------------------
+void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) {
+  uint64_t fseq = c_defaultFseqForRepack;
+  std::list<common::dataStructures::ArchiveFile> files;
+  auto vid = repackRequest->getRepackInfo().vid;
+  while(true) {
+    files = m_catalogue.getFilesForRepack(vid,fseq,c_defaultMaxNbFilesForRepack);
+    for(auto &archiveFile : files)
+    {
+      cta::common::dataStructures::RetrieveRequest retrieveRequest;
+      retrieveRequest.archiveFileID = archiveFile.archiveFileID;
+      retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
+      retrieveRequest.dstURL = generateRetrieveDstURL(archiveFile.diskFileInfo);
+      retrieveRequest.isRepack = true;
+      queueRetrieve(archiveFile.diskInstance,retrieveRequest,lc);
+    }
+    if (files.size()) {
+      auto & tf=files.back().tapeFiles;
+      fseq = std::find_if(tf.cbegin(), tf.cend(), [vid](decltype(*(tf.cbegin())) &f){ return f.second.vid == vid; })->second.fSeq + 1;
+    } else break;
+  }
+}
+
+
 
 //------------------------------------------------------------------------------
 // shrink
@@ -532,6 +645,10 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       if (m.type==common::dataStructures::MountType::Retrieve) {
         m.logicalLibrary=tapesInfo[m.vid].logicalLibraryName;
         m.tapePool=tapesInfo[m.vid].tapePoolName;
+        m.vendor = tapesInfo[m.vid].vendor;
+        m.mediaType = tapesInfo[m.vid].mediaType;
+        m.vo = tapesInfo[m.vid].vo;
+        m.capacityInBytes = tapesInfo[m.vid].capacityInBytes;
       }
     }
   }
@@ -561,7 +678,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       if (em.vid.size()) {
         tapesInUse.insert(em.vid);
         log::ScopedParamContainer params(lc);
-        params.add("vid", em.vid)
+        params.add("tapeVid", em.vid)
               .add("mountType", common::dataStructures::toString(em.type))
               .add("drive", em.driveName);
         lc.log(log::DEBUG,"In Scheduler::sortAndGetTapesForMountInfo(): tapeAlreadyInUse found.");
@@ -593,9 +710,9 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       mountPassesACriteria = true;
     if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed) {
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", m->tapePool);
+      params.add("tapePool", m->tapePool);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
-        params.add("VID", m->vid);
+        params.add("tapeVid", m->vid);
       }
       params.add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
@@ -613,9 +730,9 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       // populate the mount with a weight 
       m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->maxDrivesAllowed;
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", m->tapePool);
+      params.add("tapePool", m->tapePool);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
-        params.add("VID", m->vid);
+        params.add("tapeVid", m->vid);
       }
       params.add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
@@ -705,8 +822,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
             existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
           } catch (...) {}
           log::ScopedParamContainer params(lc);
-          params.add("tapepool", m->tapePool)
-                .add("vid", t.vid)
+          params.add("tapePool", m->tapePool)
+                .add("tapeVid", t.vid)
                 .add("mountType", common::dataStructures::toString(m->type))
                 .add("existingMounts", existingMounts)
                 .add("bytesQueued", m->bytesQueued)
@@ -739,8 +856,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
       } catch (...) {}
       schedulerDbTime = getMountInfoTime;
       catalogueTime = getTapeInfoTime + getTapeForWriteTime;
-      params.add("tapepool", m->tapePool)
-            .add("vid", m->vid)
+      params.add("tapePool", m->tapePool)
+            .add("tapeVid", m->vid)
             .add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
             .add("bytesQueued", m->bytesQueued)
@@ -839,7 +956,11 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t,
                 driveName, 
                 logicalLibraryName, 
-                utils::getShortHostname(), 
+                utils::getShortHostname(),
+                t.vo,
+                t.mediaType,
+                t.vendor,
+                t.capacityInBytes,
                 time(NULL)).release());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_sessionRunning = true;
@@ -852,8 +973,12 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             } catch (...) {}
             schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
             catalogueTime = getTapeInfoTime + getTapeForWriteTime;
-            params.add("tapepool", m->tapePool)
-                  .add("vid", t.vid)
+            
+            params.add("tapePool", m->tapePool)
+                  .add("tapeVid", t.vid)
+                  .add("vo",t.vo)
+                  .add("mediaType",t.mediaType)
+                  .add("vendor",t.vendor)
                   .add("mountType", common::dataStructures::toString(m->type))
                   .add("existingMounts", existingMounts)
                   .add("bytesQueued", m->bytesQueued)
@@ -896,6 +1021,10 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             driveName,
             logicalLibraryName, 
             utils::getShortHostname(), 
+            m->vo,
+            m->mediaType,
+            m->vendor,
+            m->capacityInBytes,
             time(NULL))));
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
@@ -910,8 +1039,11 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         } catch (...) {}
         schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
         catalogueTime = getTapeInfoTime + getTapeForWriteTime;
-        params.add("tapepool", m->tapePool)
-              .add("vid", m->vid)
+        params.add("tapePool", m->tapePool)
+              .add("tapeVid", m->vid)
+              .add("vo",m->vo)
+              .add("mediaType",m->mediaType)
+              .add("vendor",m->vendor)
               .add("mountType", common::dataStructures::toString(m->type))
               .add("existingMounts", existingMounts)
               .add("bytesQueued", m->bytesQueued)
@@ -1129,6 +1261,22 @@ SchedulerDatabase::JobsFailedSummary Scheduler::getRetrieveJobsFailedSummary(log
 }
 
 //------------------------------------------------------------------------------
+// getNextSucceededRetrieveRequestForRepackBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<RetrieveJob>> Scheduler::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
+{
+  std::list<std::unique_ptr<RetrieveJob>> ret;
+  //We need to go through the queues of SucceededRetrieveJobs
+  auto dbRet = m_db.getNextSucceededRetrieveRequestForRepackBatch(filesRequested,lc);
+  for(auto &j : dbRet)
+  {
+    ret.emplace_back(new RetrieveJob(nullptr, j->retrieveRequest,j->archiveFile, j->selectedCopyNb, PositioningMethod::ByFSeq));
+    ret.back()->m_dbJob.reset(j.release());
+  }  
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // reportArchiveJobsBatch
 //------------------------------------------------------------------------------
 void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& archiveJobsBatch,
@@ -1195,7 +1343,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
         .add("failedReports", archiveJobsBatch.size() - reportedJobs.size())
         .add("successfulReports", reportedJobs.size());
   timingList.addToLog(params);
-  lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
+  lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
 }
 
 //------------------------------------------------------------------------------

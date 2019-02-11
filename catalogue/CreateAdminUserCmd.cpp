@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/CreateAdminUserCmd.hpp"
 #include "catalogue/CreateAdminUserCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
@@ -57,7 +57,8 @@ int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char *const *const
   const uint64_t nbDbConns = 1;
   const uint64_t nbArchiveFileListingDbConns = 1;
   log::DummyLogger dummyLog("dummy", "dummy");
-  auto catalogue = CatalogueFactory::create(dummyLog, dbLogin, nbDbConns, nbArchiveFileListingDbConns);
+  auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, dbLogin, nbDbConns, nbArchiveFileListingDbConns);
+  auto catalogue = catalogueFactory->create();
   const common::dataStructures::SecurityIdentity adminRunningCommand(getUsername(), getHostname());
 
   catalogue->createAdminUser(adminRunningCommand, cmdLineArgs.adminUsername, cmdLineArgs.comment);

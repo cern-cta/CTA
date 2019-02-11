@@ -62,14 +62,12 @@ private:
     * @param[in]     notification    Notification request message from EOS WFE
     * @param[out]    response        Response message to return to EOS
     */
-   typedef void notification_event_t(const cta::eos::Notification &notification, cta::xrd::Response &response);
-
-   notification_event_t processOPENW;            //!< Ignore OPENW event
-   notification_event_t processCREATE;           //!< New archive file ID event
-   notification_event_t processCLOSEW;           //!< Archive file event
-   notification_event_t processPREPARE;          //!< Retrieve file event
-   notification_event_t processABORT_PREPARE;    //!< Abort retrieve file event
-   notification_event_t processDELETE;           //!< Delete file event
+   void processOPENW        (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Ignore OPENW event
+   void processCREATE       (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< New archive file ID event
+   void processCLOSEW       (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Archive file event
+   void processPREPARE      (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Retrieve file event
+   void processABORT_PREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Abort retrieve file event
+   void processDELETE       (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Delete file event
 
    /*!
     * Process AdminCmd events
@@ -77,62 +75,60 @@ private:
     * @param[in]     admincmd        CTA Admin command request message
     * @param[out]    response        CTA Admin command response message
     */
-   typedef void admincmd_t(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-
-   admincmd_t processAdmin_Add;
-   admincmd_t processAdmin_Ch;
-   admincmd_t processAdmin_Rm;
-   admincmd_t processAdmin_Ls;
-   admincmd_t processArchiveRoute_Add;
-   admincmd_t processArchiveRoute_Ch;
-   admincmd_t processArchiveRoute_Rm;
-   admincmd_t processArchiveRoute_Ls;
-   admincmd_t processDrive_Up;
-   admincmd_t processDrive_Down;
-   admincmd_t processDrive_Ls;
-   admincmd_t processDrive_Rm;
-   admincmd_t processGroupMountRule_Add;
-   admincmd_t processGroupMountRule_Ch;
-   admincmd_t processGroupMountRule_Rm;
-   admincmd_t processGroupMountRule_Ls;
-   admincmd_t processLogicalLibrary_Add;
-   admincmd_t processLogicalLibrary_Ch;
-   admincmd_t processLogicalLibrary_Rm;
-   admincmd_t processLogicalLibrary_Ls;
-   admincmd_t processMountPolicy_Add;
-   admincmd_t processMountPolicy_Ch;
-   admincmd_t processMountPolicy_Rm;
-   admincmd_t processMountPolicy_Ls;
-   admincmd_t processRepack_Add;
-   admincmd_t processRepack_Rm;
-   admincmd_t processRepack_Ls;
-   admincmd_t processRepack_Err;
-   admincmd_t processRequesterMountRule_Add;
-   admincmd_t processRequesterMountRule_Ch;
-   admincmd_t processRequesterMountRule_Rm;
-   admincmd_t processRequesterMountRule_Ls;
-   admincmd_t processShrink;
-   admincmd_t processShowQueues;
-   admincmd_t processStorageClass_Add;
-   admincmd_t processStorageClass_Ch;
-   admincmd_t processStorageClass_Rm;
-   admincmd_t processStorageClass_Ls;
-   admincmd_t processTape_Add;
-   admincmd_t processTape_Ch;
-   admincmd_t processTape_Rm;
-   admincmd_t processTape_Reclaim;
-   admincmd_t processTape_Ls;
-   admincmd_t processTape_Label;
-   admincmd_t processTapePool_Add;
-   admincmd_t processTapePool_Ch;
-   admincmd_t processTapePool_Rm;
-   admincmd_t processTest_Read;
-   admincmd_t processTest_Write;
-   admincmd_t processTest_WriteAuto;
-   admincmd_t processVerify_Add;
-   admincmd_t processVerify_Rm;
-   admincmd_t processVerify_Ls;
-   admincmd_t processVerify_Err;
+   void processAdmin_Add             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processAdmin_Ch              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processAdmin_Rm              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processAdmin_Ls              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processArchiveRoute_Add      (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processArchiveRoute_Ch       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processArchiveRoute_Rm       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processArchiveRoute_Ls       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processDrive_Up              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processDrive_Down            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processDrive_Ls              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processDrive_Rm              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processGroupMountRule_Add    (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processGroupMountRule_Ch     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processGroupMountRule_Rm     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processGroupMountRule_Ls     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processLogicalLibrary_Add    (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processLogicalLibrary_Ch     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processLogicalLibrary_Rm     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processLogicalLibrary_Ls     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processMountPolicy_Add       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processMountPolicy_Ch        (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processMountPolicy_Rm        (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processMountPolicy_Ls        (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processRepack_Add            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processRepack_Rm             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processRepack_Ls             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processRepack_Err            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processRequesterMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processRequesterMountRule_Ch (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processRequesterMountRule_Rm (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processRequesterMountRule_Ls (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processShrink                (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processShowQueues            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processStorageClass_Add      (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processStorageClass_Ch       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processStorageClass_Rm       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processStorageClass_Ls       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTape_Add              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTape_Ch               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTape_Rm               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTape_Reclaim          (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTape_Ls               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTape_Label            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTapePool_Add          (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTapePool_Ch           (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTapePool_Rm           (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTest_Read             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTest_Write            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processTest_WriteAuto        (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processVerify_Add            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processVerify_Rm             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processVerify_Ls             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processVerify_Err            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
 
    /*!
     * Process AdminCmd events which can return a stream response

@@ -42,14 +42,12 @@ SqliteCatalogue::SqliteCatalogue(
   log::Logger &log,
   const std::string &filename,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect):
+  const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
     log,
     rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename, "", 0),
     nbConns,
-    nbArchiveFileListingConns,
-    maxTriesToConnect) {
+    nbArchiveFileListingConns) {
 }
 
 //------------------------------------------------------------------------------
@@ -122,8 +120,13 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 
     t.reset();
     {
+      const char *const sql = "BEGIN DEFERRED;";
+      auto stmt = conn.createStmt(sql);
+      stmt.executeNonQuery();
+    }
+    {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+      auto stmt = conn.createStmt(sql);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt.executeNonQuery();
     }
@@ -131,7 +134,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+      auto stmt = conn.createStmt(sql);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt.executeNonQuery();
     }
@@ -185,31 +188,21 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 //------------------------------------------------------------------------------
 uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
   try {
-    // The SQLite implemenation of getNextArchiveFileId() serializes access to
-    // the SQLite database in order to avoid busy errors
-    threading::MutexLocker locker(m_mutex);
-
-    rdbms::AutoRollback autoRollback(conn);
-
-    conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1", rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    conn.executeNonQuery("INSERT INTO ARCHIVE_FILE_ID VALUES(NULL)");
     uint64_t archiveFileId = 0;
     {
-      const char *const sql =
-        "SELECT "
-           "ID AS ID "
-        "FROM "
-          "ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+      const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
+      auto stmt = conn.createStmt(sql);
       auto rset = stmt.executeQuery();
       if(!rset.next()) {
-        throw exception::Exception("ARCHIVE_FILE_ID table is empty");
+        throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
       }
       archiveFileId = rset.columnUint64("ID");
       if(rset.next()) {
-        throw exception::Exception("Found more than one ID counter in the ARCHIVE_FILE_ID table");
+        throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
       }
     }
-    conn.commit();
+    conn.executeNonQuery("DELETE FROM ARCHIVE_FILE_ID");
 
     return archiveFileId;
   } catch(exception::UserError &) {
@@ -224,40 +217,36 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
 // getNextStorageClassId
 //------------------------------------------------------------------------------
 uint64_t SqliteCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
-  // The SQLite implemenation of getNextStorageClassId() serializes access to
-  // the SQLite database in order to avoid busy errors
-  threading::MutexLocker locker(m_mutex);
-
-  rdbms::AutoRollback autoRollback(conn);
-
-  conn.executeNonQuery("UPDATE STORAGE_CLASS_ID SET ID = ID + 1", rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-  uint64_t storageClassId = 0;
-  {
-    const char *const sql =
-      "SELECT "
-        "ID AS ID "
-      "FROM "
-        "STORAGE_CLASS_ID";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-    auto rset = stmt.executeQuery();
-    if(!rset.next()) {
-      throw exception::Exception("STORAGE_CLASS_ID table is empty");
+  try {
+    conn.executeNonQuery("INSERT INTO STORAGE_CLASS_ID VALUES(NULL)");
+    uint64_t storageClassId = 0;
+    {
+      const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery();
+      if(!rset.next()) {
+        throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
+      }
+      storageClassId = rset.columnUint64("ID");
+      if(rset.next()) {
+        throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
+      }
     }
-    storageClassId = rset.columnUint64("ID");
-    if(rset.next()) {
-      throw exception::Exception("Found more than one ID counter in the STORAGE_CLASS_ID table");
-    }
+    conn.executeNonQuery("DELETE FROM STORAGE_CLASS_ID");
+
+    return storageClassId;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
   }
-  conn.commit();
-
-  return storageClassId;
 }
 
 //------------------------------------------------------------------------------
-// selectTapeForUpdate
+// selectTape
 //------------------------------------------------------------------------------
-common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::AutocommitMode autocommitMode,
-  rdbms::Conn &conn, const std::string &vid) {
+common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, const std::string &vid) {
   try {
     const char *const sql =
       "SELECT "
@@ -295,7 +284,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Autocommit
       "WHERE "
         "VID = :VID;";
 
-    auto stmt = conn.createStmt(sql, autocommitMode);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
@@ -372,7 +361,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     threading::MutexLocker locker(m_mutex);
     auto conn = m_connPool.getConn();
 
-    const auto tape = selectTape(rdbms::AutocommitMode::AUTOCOMMIT_ON, conn, firstEvent.vid);
+    const auto tape = selectTape(conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
     uint64_t totalCompressedBytesWritten = 0;
 
@@ -403,14 +392,13 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, rdbms::AutocommitMode::AUTOCOMMIT_ON, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
-      lastEvent.tapeDrive);
+    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten, lastEvent.tapeDrive);
 
     for(const auto &event : events) {
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(*event); 
-        fileWrittenToTape(rdbms::AutocommitMode::AUTOCOMMIT_ON, conn, fileEvent);
+        fileWrittenToTape(conn, fileEvent);
       } catch (std::bad_cast&) {}
     }
   } catch(exception::UserError &) {
@@ -424,8 +412,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
 //------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMode, rdbms::Conn &conn,
-  const TapeFileWritten &event) {
+void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten &event) {
   try {
     checkTapeFileWrittenFieldsAreSet(__FUNCTION__, event);
 
@@ -444,7 +431,7 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMo
       row.diskFileUser = event.diskFileUser;
       row.diskFileGroup = event.diskFileGroup;
       row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
-      insertArchiveFile(conn, autocommitMode, row);
+      insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error
     } catch(...) {
@@ -494,7 +481,7 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMo
     tapeFile.compressedSize = event.compressedSize;
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
-    insertTapeFile(conn, autocommitMode, tapeFile, event.archiveFileId);
+    insertTapeFile(conn, tapeFile, event.archiveFileId);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

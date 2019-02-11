@@ -32,7 +32,9 @@ struct ContainerTraits<RetrieveQueue,C>
     ContainerSummary(const RetrieveQueue::JobsSummary &c) : RetrieveQueue::JobsSummary() {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
-
+  
+  struct QueueType;
+  
   struct InsertedElement {
     RetrieveRequest *retrieveRequest;
     uint16_t copyNb;
@@ -92,6 +94,7 @@ struct ContainerTraits<RetrieveQueue,C>
   typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
   typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
   typedef std::set<ElementAddress>                    ElementsToSkipSet;
+  typedef serializers::RetrieveJobStatus              ElementStatus;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
@@ -116,12 +119,12 @@ struct ContainerTraits<RetrieveQueue,C>
   }
   
   static ContainerSummary getContainerSummary(Container &cont);
-  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
+  static bool trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
-    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
+    const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
+    const ContainerIdentifier &cId, log::LogContext &lc);
   static void addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
     AgentReference &agentRef, log::LogContext &lc);
   static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
@@ -143,10 +146,6 @@ struct ContainerTraits<RetrieveQueue,C>
 
   static const std::string c_containerTypeName;
   static const std::string c_identifierType;
-
-private:
-  static void trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, log::LogContext &lc);
 };
 
 
@@ -158,9 +157,9 @@ private:
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::ContainerSummary::
 addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &params) const {
-  params.add("queueFilesBefore", previous.files)
+  params.add("queueFilesBefore", previous.jobs)
         .add("queueBytesBefore", previous.bytes)
-        .add("queueFilesAfter", files)
+        .add("queueFilesAfter", jobs)
         .add("queueBytesAfter", bytes);
 }
 
@@ -203,15 +202,16 @@ addToLog(log::ScopedParamContainer &params) const {
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::
 getLockedAndFetched(Container &cont, ScopedExclusiveLock &aqL, AgentReference &agRef,
-  const ContainerIdentifier &contId, QueueType queueType, log::LogContext &lc)
+  const ContainerIdentifier &contId, log::LogContext &lc)
 {
-  Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
+  ContainerTraits<RetrieveQueue,C>::QueueType queueType;
+  Helpers::getLockedAndFetchedJobQueue<Container>(cont, aqL, agRef, contId, queueType.value, lc);
 }
 
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::
 getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
-  const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc)
+  const ContainerIdentifier &cId, log::LogContext &lc)
 {
   // Try and get access to a queue.
   size_t attemptCount = 0;
@@ -220,7 +220,8 @@ retry:
   objectstore::RootEntry re(cont.m_objectStore);
   re.fetchNoLock();
   std::string rqAddress;
-  auto rql = re.dumpRetrieveQueues(queueType);
+  ContainerTraits<RetrieveQueue,C>::QueueType queueType;
+  auto rql = re.dumpRetrieveQueues(queueType.value);
   for (auto &rqp : rql) {
     if (rqp.vid == cId)
       rqAddress = rqp.address;
@@ -240,25 +241,28 @@ retry:
     ScopedExclusiveLock rexl(re);
     re.fetch();
     try {
-      re.removeRetrieveQueueAndCommit(cId, queueType, lc);
+      re.removeRetrieveQueueAndCommit(cId, queueType.value, lc);
       log::ScopedParamContainer params(lc);
-      params.add("vid", cId)
+      params.add("tapeVid", cId)
             .add("queueObject", cont.getAddressIfSet());
       lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): dereferenced missing queue from root entry");
     } catch (RootEntry::RetrieveQueueNotEmpty &ex) {
       log::ScopedParamContainer params(lc);
-      params.add("vid", cId)
+      params.add("tapeVid", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
       lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry");
     } catch (RootEntry::NoSuchRetrieveQueue &ex) {
       // Somebody removed the queue in the meantime. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
-      params.add("vid", cId)
+      params.add("tapeVid", cId)
             .add("queueObject", cont.getAddressIfSet());
       lc.log(log::DEBUG, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry: already done.");
     }
     attemptCount++;
+    // Unlock and reset the address so we can reuse the in-memory object with potentially ane address.
+    if (contLock.isLocked()) contLock.release();
+    cont.resetAddress();
     goto retry;
   }
 }
@@ -395,32 +399,32 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
 }
 
 template<typename C>
-void ContainerTraits<RetrieveQueue,C>::
-trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
+bool ContainerTraits<RetrieveQueue,C>::
+trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc)
 {
-  if(cont.isEmpty())
-  {
-    // The current implementation is done unlocked
-    contLock.release();
-    try {
-      // The queue should be removed as it is empty
-      RootEntry re(cont.m_objectStore);
-      ScopedExclusiveLock rexl(re);
-      re.fetch();
-      re.removeRetrieveQueueAndCommit(cId, queueType, lc);
-      log::ScopedParamContainer params(lc);
-      params.add("vid", cId)
-            .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): deleted empty queue");
-    } catch(cta::exception::Exception &ex) {
-      log::ScopedParamContainer params(lc);
-      params.add("vid", cId)
-            .add("queueObject", cont.getAddressIfSet())
-            .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): could not delete a presumably empty queue");
-    }
+  if(!cont.isEmpty()) return false;
+  // The current implementation is done unlocked
+  contLock.release();
+  try {
+    // The queue should be removed as it is empty
+    ContainerTraits<RetrieveQueue,C>::QueueType queueType;
+    RootEntry re(cont.m_objectStore);
+    ScopedExclusiveLock rexl(re);
+    re.fetch();
+    re.removeRetrieveQueueAndCommit(cId, queueType.value, lc);
+    log::ScopedParamContainer params(lc);
+    params.add("tapeVid", cId)
+          .add("queueObject", cont.getAddressIfSet());
+    lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): deleted empty queue");
+  } catch(cta::exception::Exception &ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("tapeVid", cId)
+          .add("queueObject", cont.getAddressIfSet())
+          .add("Message", ex.getMessageValue());
+    lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): could not delete a presumably empty queue");
   }
+  return true;
 }
 
 
@@ -465,6 +469,51 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSum
           .add("filesAfter", files)
           .add("bytesAfter", bytes);
   }
+};
+
+template<typename C>
+auto ContainerTraits<RetrieveQueue,C>::
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
+  log::LogContext &lc) -> PoppedElementsBatch
+{
+  PoppedElementsBatch ret;
+
+  auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
+  for(auto &cjfq : candidateJobsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement{
+      cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
+      cjfq.copyNb,
+      cjfq.size,
+      common::dataStructures::ArchiveFile(),
+      common::dataStructures::RetrieveRequest(),
+      "", SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired
+    });
+    ret.summary.files++;
+  }
+  return ret;
+}
+
+template<typename C>
+const std::string ContainerTraits<RetrieveQueue,C>::c_identifierType = "tapeVid";
+  
+template<>
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::QueueType{
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransfer;
+};
+
+template<>
+struct ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::QueueType{
+    objectstore::JobQueueType value = objectstore::JobQueueType::FailedJobs;
+};
+
+template<>
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::QueueType{
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToUser;
+};
+
+template<>
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess>::QueueType{
+  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForSuccess;
 };
 
 }} // namespace cta::objectstore

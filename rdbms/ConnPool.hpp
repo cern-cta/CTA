@@ -68,6 +68,10 @@ private:
    * If the specified database connection is open, then this method calls
    * commit on the connection and returns it to the pool.
    *
+   * If the specified database connection is open, then this method sets the
+   * autocommit mode of the connection to AUTOCOMMIT_ON because this is the
+   * default value of a newly created connection.
+   *
    * If the specified database connection is closed, then this method closes all
    * connections within the pool.
    *

@@ -119,6 +119,10 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
         return;
       }
 
+      // Sets the autocommit mode of the connection to AUTOCOMMIT_ON because
+      // this is the default value of a newly created connection
+      connAndStmts->conn->setAutocommitMode(AutocommitMode::AUTOCOMMIT_ON);
+
       threading::MutexLocker locker(m_connsAndStmtsMutex);
       if(0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");

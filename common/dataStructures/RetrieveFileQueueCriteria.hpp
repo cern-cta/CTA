@@ -42,6 +42,8 @@ struct RetrieveFileQueueCriteria {
    * The mount policy.
    */
   MountPolicy mountPolicy;
+  
+  RetrieveFileQueueCriteria &operator=(const RetrieveFileQueueCriteria& other);
 
 }; // struct RetrieveFileQueueCriteria
 

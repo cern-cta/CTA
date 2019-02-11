@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/Thread.hpp"
 #include "common/threading/BlockingQueue.hpp"

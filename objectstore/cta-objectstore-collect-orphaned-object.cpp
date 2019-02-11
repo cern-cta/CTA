@@ -26,7 +26,7 @@
 #include "ArchiveRequest.hpp"
 #include "BackendFactory.hpp"
 #include "BackendVFS.hpp"
-#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/Configuration.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/utils/utils.hpp"
@@ -50,7 +50,9 @@ int main(int argc, char ** argv) {
       const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(argv[2]);
       const uint64_t nbConns = 1;
       const uint64_t nbArchiveFileListingConns = 0;
-      catalogue=std::move(cta::catalogue::CatalogueFactory::create(sl, catalogueLogin, nbConns, nbArchiveFileListingConns));
+      auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(sl, catalogueLogin, nbConns,
+        nbArchiveFileListingConns);
+      catalogue=catalogueFactory->create();
       objectName = argv[3];
     } else if (2 == argc) {
       cta::common::Configuration m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
@@ -58,7 +60,9 @@ int main(int argc, char ** argv) {
       const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
       const uint64_t nbConns = 1;
       const uint64_t nbArchiveFileListingConns = 0;
-      catalogue = std::move(cta::catalogue::CatalogueFactory::create(sl, catalogueLogin, nbConns, nbArchiveFileListingConns));
+      auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(sl, catalogueLogin, nbConns,
+        nbArchiveFileListingConns);
+      catalogue = catalogueFactory->create();
       objectName = argv[1];
     } else {
       throw std::runtime_error("Wrong number of arguments: expected 1 or 3: [objectstoreURL catalogueLoginFile] objectname");

@@ -17,56 +17,14 @@
  */
 
 #include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/CatalogueRetryWrapper.hpp"
-#include "catalogue/InMemoryCatalogue.hpp"
-#include "catalogue/OracleCatalogue.hpp"
-#include "catalogue/SqliteCatalogue.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 
 namespace cta {
 namespace catalogue {
 
 //------------------------------------------------------------------------------
-// create
+// destructor
 //------------------------------------------------------------------------------
-std::unique_ptr<Catalogue> CatalogueFactory::create(
-  log::Logger &log,
-  const rdbms::Login &login,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect) {
-  try {
-    switch(login.dbType) {
-    case rdbms::Login::DBTYPE_IN_MEMORY:
-      {
-        auto c = cta::make_unique<InMemoryCatalogue>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-        return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
-      }
-    case rdbms::Login::DBTYPE_ORACLE:
-      {
-        auto c = cta::make_unique<OracleCatalogue>(log, login.username, login.password, login.database, nbConns,
-          nbArchiveFileListingConns, maxTriesToConnect);
-        return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
-      }
-    case rdbms::Login::DBTYPE_SQLITE:
-      {
-        auto c = cta::make_unique<SqliteCatalogue>(log, login.database, nbConns, nbArchiveFileListingConns,
-          maxTriesToConnect);
-        return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
-      }
-    case rdbms::Login::DBTYPE_NONE:
-      throw exception::Exception("Cannot create a catalogue without a database type");
-    default:
-      {
-        exception::Exception ex;
-        ex.getMessage() << "Unknown database type: value=" << login.dbType;
-        throw ex;
-      }
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+CatalogueFactory:: ~CatalogueFactory() {
 }
 
 } // namespace catalogue

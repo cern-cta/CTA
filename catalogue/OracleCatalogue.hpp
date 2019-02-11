@@ -43,9 +43,6 @@ public:
    * @param nbArchiveFileListingConns The maximum number of concurrent
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
-   * @param maxTriesToConnext The maximum number of times a single method should
-   * try to connect to the database in the event of LostDatabaseConnection
-   * exceptions being thrown.
    */
   OracleCatalogue(
     log::Logger       &log,
@@ -53,8 +50,7 @@ public:
     const std::string &password,
     const std::string &database,
     const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns,
-    const uint32_t maxTriesToConnect = 3);
+    const uint64_t nbArchiveFileListingConns);
 
   /**
    * Destructor.
@@ -96,6 +92,27 @@ public:
    */
   void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &events) override;
 
+  /**
+   * Deletes the specified archive file and its associated tape copies from the
+   * catalogue.
+   *
+   * Please note that the name of the disk instance is specified in order to
+   * prevent a disk instance deleting an archive file that belongs to another
+   * disk instance.
+   *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * @param instanceName The name of the instance from where the deletion request
+   * originated
+   * @param archiveFileId The unique identifier of the archive file.
+   * @param lc The log context.
+   * @return The metadata of the deleted archive file including the metadata of
+   * the associated and also deleted tape copies.
+   */
+  void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId,
+    log::LogContext &lc) override;
+
 private:
 
   /**
@@ -120,11 +137,9 @@ private:
    * rows will be unique.
    *
    * @param conn The database connection.
-   * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param events The tape file written events.
    */
-  void idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
-    const std::set<TapeFileWritten> &events);
+  void idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const std::set<TapeFileWritten> &events);
 
   /**
    * The size and checksum of a file.
@@ -139,23 +154,20 @@ private:
    * Returns the sizes and checksums of the specified archive files.
    *
    * @param conn The database connection.
-   * @param autocommitMode The autocommit mode of the SQL select statement.
    * @param events The tape file written events that identify the archive files.
    * @return A map from the identifier of each archive file to its size and checksum.
    */
   std::map<uint64_t, FileSizeAndChecksum> selectArchiveFileSizesAndChecksums(rdbms::Conn &conn,
-    const rdbms::AutocommitMode autocommitMode, const std::set<TapeFileWritten> &events);
+    const std::set<TapeFileWritten> &events);
 
   /**
    * Batch inserts rows into the TAPE_FILE_BATCH temporary table that correspond
    * to the specified TapeFileWritten events.
    *
    * @param conn The database connection.
-   * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param events The tape file written events.
    */
-  void insertTapeFileBatchIntoTempTable(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
-     const std::set<TapeFileWritten> &events);
+  void insertTapeFileBatchIntoTempTable(rdbms::Conn &conn, const std::set<TapeFileWritten> &events);
 
 }; // class OracleCatalogue
 

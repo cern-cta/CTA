@@ -19,7 +19,12 @@ tar -c . | tar -C ${PV_PATH} -xv
 echo "Mounting logs volume ${PV_PATH} in /var/log"
 mount --bind ${PV_PATH} /var/log
 
-echo -n "Fixing reverse DNS for $(hostname): "
+# all core dumps will go there as all the pods AND kubelet are sharing the same kernel.core_pattern
+mkdir /var/log/tmp
+chmod 1777 /var/log/tmp
+echo '/var/log/tmp/%h-%t-%e-%p-%s.core' > /proc/sys/kernel/core_pattern
+
+echo -n "Fixing reverse DNS for $(hostname) for xrootd: "
 sed -i -c "s/^\($(hostname -i)\)\s\+.*$/\1 $(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2) $(hostname -s)/" /etc/hosts
 echo "DONE"
 
@@ -44,7 +49,7 @@ if [[ -n ${BUILDTREE_BASE} ]]; then
   yum() { echo "Skipping yum $@"; }
   /opt/run/bin/mkSymlinks.sh
 
-  # cta:cta needed for ctafrontend and taped but adding it inconditionally in buildtree
+  # cta:tape needed for ctafrontend and taped but adding it inconditionally in buildtree
   echo "Adding cta user and group"
   /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g tape cta
   ## The following is not working as one cannot refresh groups in current shell...

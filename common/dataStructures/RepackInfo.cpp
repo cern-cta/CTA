@@ -17,66 +17,45 @@
  */
 
 #include "common/dataStructures/RepackInfo.hpp"
-#include "common/dataStructures/utils.hpp"
-#include "common/exception/Exception.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-RepackInfo::RepackInfo():
-  totalFiles(0),
-  totalSize(0),
-  filesToRetrieve(0),
-  filesToArchive(0),
-  filesFailed(0),
-  filesArchived(0) {}
-
-//------------------------------------------------------------------------------
-// operator==
-//------------------------------------------------------------------------------
-bool RepackInfo::operator==(const RepackInfo &rhs) const {
-  return vid==rhs.vid
-      && tag==rhs.tag
-      && totalFiles==rhs.totalFiles
-      && totalSize==rhs.totalSize
-      && filesToRetrieve==rhs.filesToRetrieve
-      && filesToArchive==rhs.filesToArchive
-      && filesFailed==rhs.filesFailed
-      && filesArchived==rhs.filesArchived
-      && repackType==rhs.repackType
-      && repackStatus==rhs.repackStatus
-      && errors==rhs.errors
-      && creationLog==rhs.creationLog;
+std::string toString(RepackInfo::Type type) {
+  switch(type) {
+    case RepackInfo::Type::ExpandAndRepack:
+      return "expand and repack";
+    case RepackInfo::Type::ExpandOnly:
+      return "expand only";
+    case RepackInfo::Type::RepackOnly:
+      return "repack only";
+    default:
+      return "UNKNOWN";
+  }
 }
 
-//------------------------------------------------------------------------------
-// operator!=
-//------------------------------------------------------------------------------
-bool RepackInfo::operator!=(const RepackInfo &rhs) const {
-  return !operator==(rhs);
-}
-
-//------------------------------------------------------------------------------
-// operator<<
-//------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const RepackInfo &obj) {
-  os << "(vid=" << obj.vid
-     << " tag=" << obj.tag
-     << " totalFiles=" << obj.totalFiles
-     << " totalSize=" << obj.totalSize
-     << " filesToRetrieve=" << obj.filesToRetrieve
-     << " filesToArchive=" << obj.filesToArchive
-     << " filesFailed=" << obj.filesFailed
-     << " filesArchived=" << obj.filesArchived
-     << " repackType=" << obj.repackType
-     << " repackStatus=" << obj.repackStatus
-     << " errors=" << obj.errors
-     << " creationLog=" << obj.creationLog << ")";
-  return os;
+std::string toString(RepackInfo::Status status) {
+  switch(status) {
+    case RepackInfo::Status::Aborted:
+      return "Aborted";
+    case RepackInfo::Status::Aborting:
+      return "Aborting";
+    case RepackInfo::Status::Complete:
+      return "Complete";
+    case RepackInfo::Status::Failed:
+      return "Failed";
+     case RepackInfo::Status::Pending:
+      return "Pending";
+    case RepackInfo::Status::Running:
+      return "Running";
+    case RepackInfo::Status::Starting:
+      return "Starting";
+    case RepackInfo::Status::ToExpand:
+      return "ToExpand";
+  default:
+      return "UNKNOWN";
+  }
 }
 
 } // namespace dataStructures

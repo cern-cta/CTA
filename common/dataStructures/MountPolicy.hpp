@@ -35,7 +35,7 @@ namespace dataStructures {
 struct MountPolicy {
 
   MountPolicy();
-
+  
   bool operator==(const MountPolicy &rhs) const;
 
   bool operator!=(const MountPolicy &rhs) const;
@@ -49,6 +49,12 @@ struct MountPolicy {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
+  
+  //As repack request does not have mount policy yet, we need to create a fake one to be able to do a Retrieve mount or Archive mount
+  static struct MountPolicy s_defaultMountPolicyForRepack;
+  
+private:
+  MountPolicy(const std::string name,const uint64_t archivePriority,const uint64_t archiveMinRequestAge, const uint64_t retrievePriority, const uint64_t retrieveMinRequestAge, const uint64_t maxDrivesAllowed);
 
 }; // struct MountPolicy
 

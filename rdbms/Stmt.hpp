@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "rdbms/AutocommitMode.hpp"
 #include "rdbms/Rset.hpp"
 #include "common/optional.hpp"
 

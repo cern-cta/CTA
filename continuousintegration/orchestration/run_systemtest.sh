@@ -23,10 +23,11 @@ CREATEINSTANCE_TIMEOUT=1400
 # default systemtest timeout is 1 hour
 SYSTEMTEST_TIMEOUT=3600
 
+
 die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-k] [-O] [-D] [-S]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-e <eos_configmap>] [-k] [-O] [-D] [-S]
 
 Options:
   -b    The directory containing both the source and the build tree for CTA. It will be mounted RO in the
@@ -49,7 +50,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:s:p:b:B:t:kDOS" o; do
+while getopts "n:s:p:b:e:B:t:kDOS" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -63,6 +64,10 @@ while getopts "n:s:p:b:B:t:kDOS" o; do
             ;;
         b)
             CREATE_OPTS="${CREATE_OPTS} -b ${OPTARG}"
+            ;;
+        e)
+            config_eos=${OPTARG}
+            test -f ${config_eos} || error="${error}EOS configmap file ${config_eos} does not exist\n"
             ;;
         B)
             CREATE_OPTS="${CREATE_OPTS} -B ${OPTARG}"
@@ -121,6 +126,10 @@ if [ $useceph == 1 ] ; then
     else
       CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_configmap}"                                         
     fi
+fi
+
+if [ ! -z "${config_eos}" ]; then
+    CREATE_OPTS="${CREATE_OPTS} -e ${config_eos}"
 fi
 
 if [ $usesystemd == 1 ] ; then

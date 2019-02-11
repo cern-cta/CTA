@@ -54,6 +54,12 @@ EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 echo "mgmofs.protowfendpoint ctafrontend:10955" >> /etc/xrd.cf.mgm
 echo "mgmofs.protowfresource /ctafrontend"  >> /etc/xrd.cf.mgm
 
+# Add configmap based configuration (initially Namespace)
+test -f /etc/config/eos/xrd.cf.mgm && cat /etc/config/eos/xrd.cf.mgm >> /etc/xrd.cf.mgm
+
+# quarkDB only for systemd initially...
+cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/start_quarkdb.sh
+
 # prepare eos startup
   # skip systemd for eos initscripts
     export SYSTEMCTL_SKIP_REDIRECT=1
@@ -66,6 +72,7 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
     chown daemon:daemon /etc/eos.keytab
   mkdir -p /run/lock/subsys
   mkdir -p /var/eos/config/${eoshost}
+    chown daemon:root /var/eos/config
     chown daemon:root /var/eos/config/${eoshost}
   touch   /var/eos/config/${eoshost}/default.eoscf
     chown daemon:daemon /var/eos/config/${eoshost}/default.eoscf
@@ -213,9 +220,17 @@ fi
   # enable eos workflow engine
   eos space config default space.wfe=on
   # set the thread-pool size of concurrently running workflows
-  eos space config default space.wfe.ntx=10
+  # it should not be ridiculous (was 10 and we have 500 in production)
+  eos space config default space.wfe.ntx=200
+  ## Is the following really needed?
   # set interval in which the WFE engine is running
-  eos space config default space.wfe.interval=1
+  # eos space config default space.wfe.interval=1
+
+# prepare EOS garbage collectors
+  # enable the 'file archived' garbage collector
+  eos space config default space.filearchivedgc=on
+  # set the number of free bytes at which the MGM LRU tape aware garabge collector will start deleting redundant disk files
+  eos space config default space.tapeawaregc.minfreebytes=0
 
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
@@ -224,4 +239,8 @@ touch /EOSOK
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   /bin/bash
+else
+  # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
+  yum install -y systemd-resolved
+  systemctl start systemd-resolved
 fi

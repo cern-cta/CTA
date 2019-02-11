@@ -16,10 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tests/CatalogueUnitTestsCmdLineArgs.hpp"
+#pragma once
 
-/**
- * Global variable used to store the command-line arguments so that they are
- * visible to the tests.
- */
-CatalogueUnitTestsCmdLineArgs g_cmdLineArgs;
+#include "rdbms/LoginFactory.hpp"
+
+#include <gtest/gtest.h>
+
+namespace unitTests {
+
+class cta_rdbms_ConnTest : public ::testing::TestWithParam<cta::rdbms::LoginFactory*> {
+protected:
+
+  /**
+   * The login object used to create database connections.
+   */
+  cta::rdbms::Login m_login;
+
+  virtual void SetUp();
+
+  virtual void TearDown();
+
+}; // cta_rdbms_ConnTest
+
+} // namespace unitTests

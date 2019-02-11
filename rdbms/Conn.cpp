@@ -27,6 +27,12 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
+Conn::Conn(): m_pool(nullptr) {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 Conn::Conn(std::unique_ptr<ConnAndStmts> connAndStmts, ConnPool *pool):
   m_connAndStmts(std::move(connAndStmts)),
   m_pool(pool) {
@@ -75,11 +81,33 @@ Conn &Conn::operator=(Conn &&rhs) {
 }
 
 //------------------------------------------------------------------------------
+// setAutocommitMode
+//------------------------------------------------------------------------------
+void Conn::setAutocommitMode(const AutocommitMode autocommitMode) {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    m_connAndStmts->conn->setAutocommitMode(autocommitMode);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// getAutocommitMode
+//------------------------------------------------------------------------------
+AutocommitMode Conn::getAutocommitMode() const {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getAutocommitMode();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-Stmt Conn::createStmt(const std::string &sql, const AutocommitMode autocommitMode) {
+Stmt Conn::createStmt(const std::string &sql) {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
-    return m_connAndStmts->stmtPool->getStmt(*m_connAndStmts->conn, sql, autocommitMode);
+    return m_connAndStmts->stmtPool->getStmt(*m_connAndStmts->conn, sql);
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
   }
@@ -100,7 +128,7 @@ void Conn::executeNonQueries(const std::string &sqlStmts) {
       searchPos = findResult + 1;
 
       if(0 < sqlStmt.size()) { // Ignore empty statements
-        executeNonQuery(sqlStmt, AutocommitMode::AUTOCOMMIT_ON);
+        executeNonQuery(sqlStmt);
       }
     }
 
@@ -112,12 +140,11 @@ void Conn::executeNonQueries(const std::string &sqlStmts) {
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void Conn::executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) {
-  try {
-    auto stmt = createStmt(sql, autocommitMode);
-    stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
+void Conn::executeNonQuery(const std::string &sql) {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    m_connAndStmts->conn->executeNonQuery(sql);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
   }
 }
 
@@ -146,7 +173,7 @@ void Conn::rollback() {
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getTableNames() {
+std::list<std::string> Conn::getTableNames() const {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getTableNames();
   } else {

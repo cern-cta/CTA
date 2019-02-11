@@ -32,6 +32,8 @@ struct ContainerTraits<ArchiveQueue,C>
   struct ContainerSummary : public ArchiveQueue::JobsSummary {
     void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
   };
+  
+  struct QueueType;
 
   struct InsertedElement {
     ArchiveRequest* archiveRequest;
@@ -82,7 +84,7 @@ struct ContainerTraits<ArchiveQueue,C>
     PoppedElementsSummary summary;
     void addToLog(log::ScopedParamContainer&);
   };
-
+  
   typedef ArchiveQueue                                Container;
   typedef std::string                                 ContainerAddress;
   typedef std::string                                 ElementAddress;
@@ -90,6 +92,7 @@ struct ContainerTraits<ArchiveQueue,C>
   typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
   typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
   typedef std::set<ElementAddress>                    ElementsToSkipSet;
+  typedef serializers::ArchiveJobStatus               ElementStatus;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
@@ -114,12 +117,12 @@ struct ContainerTraits<ArchiveQueue,C>
   }
   
   static ContainerSummary getContainerSummary(Container &cont);
-  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
+  static bool trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
-    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
+    const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
+    const ContainerIdentifier &cId, log::LogContext &lc);
   static void addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
     AgentReference &agentRef, log::LogContext &lc);
   static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
@@ -142,9 +145,6 @@ struct ContainerTraits<ArchiveQueue,C>
   static const std::string c_containerTypeName;
   static const std::string c_identifierType;
 
-private:
-  static void trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, log::LogContext &lc);
 };
 
 
@@ -198,46 +198,47 @@ addToLog(log::ScopedParamContainer &params) {
 }
 
 template<typename C>
-void ContainerTraits<ArchiveQueue,C>::
-trimContainerIfNeeded(Container& cont, QueueType queueType, ScopedExclusiveLock & contLock,
+bool ContainerTraits<ArchiveQueue,C>::
+trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock,
   const ContainerIdentifier & cId, log::LogContext& lc)
 {
-  if (cont.isEmpty()) {
-    // The current implementation is done unlocked.
-    contLock.release();
-    try {
-      // The queue should be removed as it is empty.
-      RootEntry re(cont.m_objectStore);
-      ScopedExclusiveLock rexl(re);
-      re.fetch();
-      re.removeArchiveQueueAndCommit(cId, queueType, lc);
-      log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
-            .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
-    } catch (cta::exception::Exception &ex) {
-      log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
-            .add("queueObject", cont.getAddressIfSet())
-            .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
-    }
-    //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
+  if (!cont.isEmpty())  return false;
+  // The current implementation is done unlocked.
+  contLock.release();
+  try {
+    // The queue should be removed as it is empty.
+    ContainerTraits<ArchiveQueue,C>::QueueType queueType;
+    RootEntry re(cont.m_objectStore);
+    ScopedExclusiveLock rexl(re);
+    re.fetch();
+    re.removeArchiveQueueAndCommit(cId, queueType.value, lc);
+    log::ScopedParamContainer params(lc);
+    params.add("tapepool", cId)
+          .add("queueObject", cont.getAddressIfSet());
+    lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
+  } catch (cta::exception::Exception &ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("tapepool", cId)
+          .add("queueObject", cont.getAddressIfSet())
+          .add("Message", ex.getMessageValue());
+    lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
   }
+  //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
+  return true;
 }
 
 template<typename C>
 void ContainerTraits<ArchiveQueue,C>::
 getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
-  const ContainerIdentifier& contId, QueueType queueType, log::LogContext& lc)
+  const ContainerIdentifier& contId, log::LogContext& lc)
 {
-  Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
+  ContainerTraits<ArchiveQueue,C>::QueueType queueType;
+  Helpers::getLockedAndFetchedJobQueue<Container>(cont, aqL, agRef, contId, queueType.value, lc);
 }
 
 template<typename C>
 void ContainerTraits<ArchiveQueue,C>::
-getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, const ContainerIdentifier& cId,
-  QueueType queueType, log::LogContext& lc)
+getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, const ContainerIdentifier& cId, log::LogContext& lc)
 {
   // Try and get access to a queue.
   size_t attemptCount = 0;
@@ -245,7 +246,8 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   objectstore::RootEntry re(cont.m_objectStore);
   re.fetchNoLock();
   std::string aqAddress;
-  auto aql = re.dumpArchiveQueues(queueType);
+  ContainerTraits<ArchiveQueue,C>::QueueType queueType;
+  auto aql = re.dumpArchiveQueues(queueType.value);
   for (auto & aqp : aql) {
     if (aqp.tapePool == cId)
       aqAddress = aqp.address;
@@ -266,26 +268,29 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
     ScopedExclusiveLock rexl(re);
     re.fetch();
     try {
-      re.removeArchiveQueueAndCommit(cId, queueType, lc);
+      re.removeArchiveQueueAndCommit(cId, queueType.value, lc);
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): de-referenced missing queue from root entry");
     } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchArchiveQueue & ex) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::DEBUG, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry: already done.");
+      lc.log(log::DEBUG, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry: already done.");
     }
     //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
     attemptCount++;
+    // Unlock and reset the address so we can reuse the in-memory object with potentially ane address.
+    if (contLock.isLocked()) contLock.release();
+    cont.resetAddress();
     goto retry;
   }
 }
@@ -471,6 +476,21 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PoppedElementsSumma
           .add("filesAfter", files)
           .add("bytesAfter", bytes);
   }
+};
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::QueueType {
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransfer;
+};
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::QueueType {
+    objectstore::JobQueueType value = objectstore::JobQueueType::FailedJobs;
+};
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::QueueType {
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToUser;
 };
 
 }} // namespace cta::objectstore
