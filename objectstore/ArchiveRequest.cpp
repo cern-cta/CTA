@@ -887,4 +887,3 @@ std::string ArchiveRequest::getTapePoolForJob(uint16_t copyNumber) {
 
 
 }} // namespace cta::objectstore
-

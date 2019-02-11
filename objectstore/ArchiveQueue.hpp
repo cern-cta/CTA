@@ -149,5 +149,13 @@ class ArchiveQueueToReport: public ArchiveQueue {
 class ArchiveQueueFailed: public ArchiveQueue {
   using ArchiveQueue::ArchiveQueue;
 };
+
+class ArchiveQueueToTransferForRepack: public ArchiveQueue{
+  using ArchiveQueue::ArchiveQueue;
+};
+
+class ArchiveQueueToReportToRepackForSuccess : public ArchiveQueue{
+  using ArchiveQueue::ArchiveQueue;
+};
   
 }}

@@ -110,6 +110,10 @@ public:
     return m_OStoreDB.queueArchive(instanceName, request, criteria, logContext);
   }
 
+  void queueArchiveForRepack(cta::objectstore::ArchiveRequest& request, log::LogContext& lc) override {
+    return m_OStoreDB.queueArchiveForRepack(request,lc);
+  }
+  
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }

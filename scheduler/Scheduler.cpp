@@ -172,6 +172,30 @@ void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std:
   lc.log(log::INFO, "Queued archive request");
 }
 
+void Scheduler::queueArchiveRequestForRepackBatch(std::list<cta::objectstore::ArchiveRequest> &archiveRequests,log::LogContext &lc)
+{
+  for(auto& archiveRequest : archiveRequests){
+    objectstore::ScopedExclusiveLock rReqL(archiveRequest);
+    archiveRequest.fetch();
+    cta::common::dataStructures::ArchiveFile archiveFile = archiveRequest.getArchiveFile();
+    rReqL.release();
+    this->m_db.queueArchiveForRepack(archiveRequest,lc);
+    
+    cta::log::TimingList tl;
+    utils::Timer t;
+    tl.insOrIncAndReset("schedulerDbTime", t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("instanceName", archiveFile.diskInstance)
+     .add("storageClass", archiveFile.storageClass)
+     .add("diskFileID", archiveFile.diskFileId)
+     .add("fileSize", archiveFile.fileSize)
+     .add("fileId", archiveFile.archiveFileID);
+    tl.insertOrIncrement("schedulerDbTime",t.secs());
+    tl.addToLog(spc);
+    lc.log(log::INFO,"Queued repack archive request");
+  }
+}
+
 //------------------------------------------------------------------------------
 // queueRetrieve
 //------------------------------------------------------------------------------

@@ -1404,29 +1404,34 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       //Now, we will transform the RetrieveRequests into ArchiveRequest
       {
         //Now, we will transform the RetrieveRequests into ArchiveRequest
+        std::list<std::unique_ptr<cta::objectstore::RetrieveRequest::AsyncRetrieveToArchiveTransformer>> transformers;
         for (auto &retrieveRequest: listSucceededRetrieveRequests) {
-          std::unique_ptr<cta::objectstore::RetrieveRequest::AsyncRetrieveToArchiveTransformer> retrieveToArchiveTransformer;
           retrieveRequestsAddresses.push_back(retrieveRequest->getAddressIfSet());
-          retrieveToArchiveTransformer.reset(retrieveRequest->asyncTransformToArchiveRequest(*agentReference));
-          retrieveToArchiveTransformer->wait();
+          transformers.emplace_back(retrieveRequest->asyncTransformToArchiveRequest(*agentReference));
+        }
+        //Wait for all the asynchronous transformations
+        for (auto &transformer: transformers) {
+          transformer->wait();
         }
       }
     }
     //Testing that the RetrieveQueueToReportToRepackForSuccess is empty
-    ASSERT_EQ(schedulerDB.getNextSucceededRetrieveRequestForRepackBatch(10,lc).size(),0);
+    ASSERT_EQ(schedulerDB.getNextSucceededRetrieveRequestForRepackBatch(nbArchiveFilesPerTape,lc).size(),0);
     
     //Testing the new ArchiveRequests contains the same data as the previous RetrieveRequest
     archiveFileId = 1;
     int retrieveRequestAddressIndex = 0;
+    std::map<uint64_t,std::list<cta::objectstore::ArchiveRequest>> archiveRequestsPerTape;
     for(uint64_t i = 1; i<= nbTapesForTest ;++i)
     {
       for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j)
       {
         cta::objectstore::ArchiveRequest archiveRequest(retrieveRequestsAddresses.at(retrieveRequestAddressIndex),schedulerDB.getBackend());
+        archiveRequestsPerTape[i].emplace_back(archiveRequest);
         cta::objectstore::ScopedExclusiveLock arLock(archiveRequest);
         archiveRequest.fetch();
         
-        //initialize variable for the test
+        //Test the ArchiveRequest
         common::dataStructures::ArchiveFile archiveFile = archiveRequest.getArchiveFile();
         ASSERT_EQ(archiveFile.archiveFileID,archiveFileId);
         ASSERT_EQ(archiveFile.checksumType,checksumType);
@@ -1452,7 +1457,12 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ++retrieveRequestAddressIndex;
         ++archiveFileId;
       }
-    }    
+    }
+    //queue all the ArchiveRequests into the ArchiveQueueToTransferForRepack queue.
+    for(uint64_t i = 1; i <= nbTapesForTest; ++i){
+      scheduler.queueArchiveRequestForRepackBatch(archiveRequestsPerTape[i],lc);
+      scheduler.waitSchedulerDbSubthreadsComplete();
+    }
   }
 }
 

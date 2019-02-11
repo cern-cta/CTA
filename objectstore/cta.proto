@@ -120,6 +120,7 @@ message RootEntry {
   repeated RetrieveQueuePointer failedretrievejobsqueuepointers = 1065;
   repeated RetrieveQueuePointer retrieve_queue_to_report_to_repack_for_success_pointers = 1066;
   repeated ArchiveQueuePointer archivejobstoreportqueuepointers = 1068;
+  repeated ArchiveQueuePointer archive_jobs_to_transfer_for_repack_pointers = 1069;
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
   optional RepackIndexPointer repackindexpointer = 1085;

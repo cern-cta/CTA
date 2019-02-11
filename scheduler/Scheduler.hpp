@@ -49,6 +49,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/RepackRequest.hpp"
 #include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/ArchiveRequest.hpp"
 
 #include "eos/DiskReporter.hpp"
 #include "eos/DiskReporterFactory.hpp"
@@ -134,6 +135,13 @@ public:
    */
   void queueArchiveWithGivenId(const uint64_t archiveFileId, const std::string &instanceName,
     const cta::common::dataStructures::ArchiveRequest &request, log::LogContext &lc);
+  
+  /**
+   * Queue the ArchiveRequests that have been transformed from Repack RetrieveRequests 
+   * @param archiveRequests the list of the ArchiveRequests to queue into the ArchiveQueueToTransferForRepack queue.
+   * @param lc a log context allowing logging from within the scheduler routine.
+   */
+  void queueArchiveRequestForRepackBatch(std::list<cta::objectstore::ArchiveRequest> &archiveRequests,log::LogContext &lc);
   
   /**
    * Queue a retrieve request. 

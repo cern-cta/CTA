@@ -639,6 +639,25 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   logContext.log(log::INFO, "In OStoreDB::queueArchive(): recorded request for queueing (enqueueing posted to thread pool).");  
 }
 
+void OStoreDB::queueArchiveForRepack(cta::objectstore::ArchiveRequest& request, log::LogContext& logContext){
+//  objectstore::ScopedExclusiveLock rReqL(request);
+//  request.fetch();
+  auto mutexForHelgrind = cta::make_unique<cta::threading::Mutex>();
+  cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
+  auto * mutexForHelgrindAddr = mutexForHelgrind.release();
+  std::unique_ptr<cta::objectstore::ArchiveRequest> aReqUniqPtr;
+  aReqUniqPtr.reset(&request);
+  cta::objectstore::ArchiveRequest *aReqPtr = aReqUniqPtr.release();
+  auto * et = new EnqueueingTask([aReqPtr, mutexForHelgrindAddr, this]{
+    //TODO : queue the ArchiveRequest
+  });
+  ANNOTATE_HAPPENS_BEFORE(et);
+  mlForHelgrind.unlock();
+  m_enqueueingTasksQueue.push(et);
+  //TODO Time measurement
+  logContext.log(log::INFO, "In OStoreDB::queueArchiveForRepack(): recorded request for queueing (enqueueing posted to thread pool).");  
+}
+
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
@@ -3176,7 +3195,6 @@ std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> OStoreDB::getNextS
     if(jobs.elements.empty()) continue;
     for(auto &j : jobs.elements)
     {
-      //TODO : If the retrieve request has more than one job, it will be inserted. Should we filter it ?
       ret.emplace_back(std::move(j.retrieveRequest));
     }
     return ret;

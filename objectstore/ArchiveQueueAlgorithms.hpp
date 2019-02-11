@@ -493,4 +493,13 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::QueueType {
     objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToUser;
 };
 
+template<>
+struct ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForRepack>::QueueType{
+  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransfer;
+};
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::QueueType{
+  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForSuccess;
+};
 }} // namespace cta::objectstore

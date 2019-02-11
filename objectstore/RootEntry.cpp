@@ -183,6 +183,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   case JobQueueType::JobsToTransfer: archiveQueueNameHeader+="ToTransfer"; break;
   case JobQueueType::JobsToReportToUser: archiveQueueNameHeader+="ToReport"; break;
   case JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
+  case JobQueueType::JobsToReportToRepackForSuccess: archiveQueueNameHeader+="ToReportToRepackForSuccess"; break;
   default: break;
   }
   std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+tapePool);
@@ -794,7 +795,7 @@ void RootEntry::clearRepackQueueAddress(RepackQueueType queueType) {
   case RepackQueueType::Pending:
     if (!m_payload.has_repackrequestspendingqueuepointer())
       throw NoSuchRepackQueue("In RootEntry::clearRepackQueueAddress: pending queue no set.");
-    m_payload.mutable_repackrequestspendingqueuepointer()->Clear();
+    return m_payload.mutable_repackrequestspendingqueuepointer()->Clear();
   case RepackQueueType::ToExpand:
     if (!m_payload.has_repackrequeststoexpandqueuepointer())
       throw NoSuchRepackQueue("In RootEntry::clearRepackQueueAddress: toExpand queue not set.");

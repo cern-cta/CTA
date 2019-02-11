@@ -76,6 +76,7 @@ class UserIdentity;
 class RepackRequest;
 namespace objectstore{
   class RetrieveRequest;
+  class ArchiveRequest;
 }
 } // cta
 
@@ -116,6 +117,8 @@ public:
   virtual void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria,
     log::LogContext &logContext) = 0;
+  
+  virtual void queueArchiveForRepack(cta::objectstore::ArchiveRequest &request,log::LogContext &logContext) = 0;
 
   /**
    * Returns all of the queued archive jobs.  The returned jobs are
