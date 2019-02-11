@@ -1037,21 +1037,29 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
 {
    using namespace cta::admin;
 
-   if(has_flag(OptionBoolean::JUSTARCHIVE) && has_flag(OptionBoolean::JUSTRETRIEVE)) {
-      throw cta::exception::UserError("--justarchive and --justretrieve are mutually exclusive");
-   }
    if(has_flag(OptionBoolean::SHOW_LOG_ENTRIES) && has_flag(OptionBoolean::SUMMARY)) {
       throw cta::exception::UserError("--log and --summary are mutually exclusive");
    }
 
-   // These could be added as command options to allow filtering of results to a single queue
-   std::string tapepool = "";
-   std::string vid      = "";
+   bool justarchive  = has_flag(OptionBoolean::JUSTARCHIVE);
+   bool justretrieve = has_flag(OptionBoolean::JUSTRETRIEVE);
+   auto tapepool     = getOptional(OptionString::TAPE_POOL);
+   auto vid          = getOptional(OptionString::VID);
 
-   OStoreDB::ArchiveQueueItor_t *archiveQueueItorPtr =
-      has_flag(OptionBoolean::JUSTRETRIEVE) ? nullptr : m_scheddb.getArchiveJobItorPtr(tapepool, objectstore::JobQueueType::FailedJobs);
-   OStoreDB::RetrieveQueueItor_t *retrieveQueueItorPtr =
-      has_flag(OptionBoolean::JUSTARCHIVE)  ? nullptr : m_scheddb.getRetrieveJobItorPtr(vid,     objectstore::JobQueueType::FailedJobs);
+   if(justarchive && justretrieve) {
+      throw cta::exception::UserError("--justarchive and --justretrieve are mutually exclusive");
+   }
+   if(justretrieve && tapepool) {
+      throw cta::exception::UserError("--justretrieve and --tapepool are mutually exclusive");
+   }
+   if(justarchive && vid) {
+      throw cta::exception::UserError("--justarchive and --vid are mutually exclusive");
+   }
+
+   OStoreDB::ArchiveQueueItor_t *archiveQueueItorPtr = has_flag(OptionBoolean::JUSTRETRIEVE) ? nullptr :
+      m_scheddb.getArchiveJobItorPtr(tapepool ? *tapepool : "", objectstore::JobQueueType::FailedJobs);
+   OStoreDB::RetrieveQueueItor_t *retrieveQueueItorPtr = has_flag(OptionBoolean::JUSTARCHIVE) ? nullptr :
+      m_scheddb.getRetrieveJobItorPtr(vid ? *vid : "", objectstore::JobQueueType::FailedJobs);
 
    // Create a XrdSsi stream object to return the results
    stream = new FailedRequestLsStream(m_scheduler, archiveQueueItorPtr, retrieveQueueItorPtr, has_flag(OptionBoolean::SUMMARY), has_flag(OptionBoolean::SHOW_LOG_ENTRIES), m_lc);
