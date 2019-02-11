@@ -51,7 +51,7 @@ class ArchiveFileRow;
 /**
  * Forward declaration.
  */
-class RdbmsArchiveFileItorImpl;
+class RdbmsCatalogueGetArchiveFilesItor;
 
 /**
  * CTA catalogue implemented using a relational database backend.

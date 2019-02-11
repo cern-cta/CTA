@@ -30,9 +30,9 @@ namespace cta {
 namespace catalogue {
 
 /**
- * Rdbms implementation of ArchiveFileItorImpl.
+ * RdbmsCatalogue::getArchiveFiles() implementation of ArchiveFileItorImpl.
  */
-class RdbmsArchiveFileItorImpl: public ArchiveFileItorImpl {
+class RdbmsCatalogueGetArchiveFilesItor: public ArchiveFileItorImpl {
 public:
 
   /**
@@ -43,7 +43,7 @@ public:
    * @param searchCriteria The search criteria to be used when listing archive
    * files.
    */
-  RdbmsArchiveFileItorImpl(
+  RdbmsCatalogueGetArchiveFilesItor(
     log::Logger &log,
     rdbms::ConnPool &connPool,
     const TapeFileSearchCriteria &searchCriteria);
@@ -51,7 +51,7 @@ public:
   /**
    * Destructor.
    */
-  ~RdbmsArchiveFileItorImpl() override;
+  ~RdbmsCatalogueGetArchiveFilesItor() override;
 
   /**
    * Returns true if a call to next would return another archive file.
@@ -115,7 +115,7 @@ private:
    */
   ArchiveFileBuilder m_archiveFileBuilder;
 
-}; // class RdbmsArchiveFileItorImpl
+}; // class RdbmsCatalogueGetArchiveFilesItor
 
 } // namespace catalogue
 } // namespace cta
