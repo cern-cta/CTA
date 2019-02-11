@@ -25,7 +25,7 @@ keepobjectstore=1
 
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
-      [-e <eos_configmap>] \
+      [-e <eos_configmap>] [-a <additional_k8_resources>]\
       [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ]  \
       [-S] [-D] [-O] [-m [mhvtl|ibm]]
 
@@ -36,13 +36,14 @@ Options:
   -B    The subdirectory within the -b directory where the build tree is.
   -D	wipe database content during initialization phase (database content is kept by default)
   -O	wipe objectstore content during initialization phase (objectstore content is kept by default)
+  -a    additional kubernetes resources added to the kubernetes namespace
 EOF
 exit 1
 }
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:e:p:b:B:SDOm:" o; do
+while getopts "n:o:d:e:a:p:b:B:SDOm:" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -55,6 +56,10 @@ while getopts "n:o:d:e:p:b:B:SDOm:" o; do
         e)
             config_eos=${OPTARG}
             test -f ${config_eos} || error="${error}EOS configmap file ${config_eos} does not exist\n"
+            ;;
+        a)
+            additional_resources=${OPTARG}
+            test -f ${additional_resources} || error="${error}File ${additional_resources} does not exist\n"
             ;;
         m)
             model=${OPTARG}
@@ -181,12 +186,16 @@ kubectl --namespace ${instance} create configmap init --from-literal=keepdatabas
 
 kubectl --namespace ${instance} create configmap buildtree --from-literal=base=${buildtree} --from-literal=subdir=${buildtreesubdir}
 
+if [ ! -z "${additional_resources}" ]; then
+  kubectl --namespace ${instance} create -f ${additional_resources} || die "Could not create additional resources described in ${additional_resources}"
+  kubectl --namespace ${instance} get pods -a
+fi
+
 echo "creating configmaps in instance"
 
 kubectl create -f ${config_objectstore} --namespace=${instance}
 kubectl create -f ${config_database} --namespace=${instance}
 kubectl create -f ${config_eos} --namespace=${instance}
-
 
 echo -n "Requesting an unused ${model} library"
 kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
