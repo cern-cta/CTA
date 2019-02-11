@@ -194,7 +194,7 @@ std::map<std::string, cta::common::dataStructures::Tape> cta_catalogue_Catalogue
 // archiveFileItorToMap
 //------------------------------------------------------------------------------
 std::map<uint64_t, cta::common::dataStructures::ArchiveFile> cta_catalogue_CatalogueTest::archiveFileItorToMap(
-  cta::catalogue::ArchiveFileItor &itor) {
+  const cta::catalogue::ArchiveFileItor &itor) {
   using namespace cta;
 
   try {
@@ -7265,7 +7265,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const std::string tapeDrive = "tape_drive";
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
-  const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 fo rthis test
+  const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 for this test
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
   const uint64_t compressedFileSize = archiveFileSize;
 
@@ -7431,6 +7431,86 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   {
     auto archiveFileItor = m_catalogue->getArchiveFilesItor();
     std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(archiveFileItor);
+    ASSERT_EQ(nbArchiveFiles, m.size());
+
+    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + i);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_" << i;
+
+      catalogue::TapeFileWritten fileWritten1;
+      fileWritten1.archiveFileId = i;
+      fileWritten1.diskInstance = storageClass.diskInstance;
+      fileWritten1.diskFileId = diskFileId.str();
+      fileWritten1.diskFilePath = diskFilePath.str();
+      fileWritten1.diskFileUser = "public_disk_user";
+      fileWritten1.diskFileGroup = "public_disk_group";
+      fileWritten1.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+      fileWritten1.size = archiveFileSize;
+      fileWritten1.checksumType = checksumType;
+      fileWritten1.checksumValue = checksumValue;
+      fileWritten1.storageClassName = storageClass.name;
+      fileWritten1.vid = vid1;
+      fileWritten1.fSeq = i;
+      fileWritten1.blockId = i * 100;
+      fileWritten1.compressedSize = compressedFileSize;
+      fileWritten1.copyNb = 1;
+
+      catalogue::TapeFileWritten fileWritten2 = fileWritten1;
+      fileWritten2.vid = vid2;
+      fileWritten2.copyNb = 2;
+
+      const auto idAndFile = m.find(i);
+      ASSERT_FALSE(m.end() == idAndFile);
+      const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
+      ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
+      ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
+      ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
+      ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
+      ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
+      ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten1.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
+      ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
+      ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
+      ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten1.storageClassName, archiveFile.storageClass);
+      ASSERT_EQ(storageClass.nbCopies, archiveFile.tapeFiles.size());
+
+      // Tape copy 1
+      {
+        const auto it = archiveFile.tapeFiles.find(1);
+        ASSERT_NE(archiveFile.tapeFiles.end(), it);
+        ASSERT_EQ(fileWritten1.vid, it->second.vid);
+        ASSERT_EQ(fileWritten1.fSeq, it->second.fSeq);
+        ASSERT_EQ(fileWritten1.blockId, it->second.blockId);
+        ASSERT_EQ(fileWritten1.compressedSize, it->second.compressedSize);
+        ASSERT_EQ(fileWritten1.checksumType, it->second.checksumType);
+        ASSERT_EQ(fileWritten1.checksumValue, it->second.checksumValue);
+        ASSERT_EQ(fileWritten1.copyNb, it->second.copyNb);
+        ASSERT_EQ(fileWritten1.copyNb, it->first);
+      }
+
+      // Tape copy 2
+      {
+        const auto it = archiveFile.tapeFiles.find(2);
+        ASSERT_NE(archiveFile.tapeFiles.end(), it);
+        ASSERT_EQ(fileWritten2.vid, it->second.vid);
+        ASSERT_EQ(fileWritten2.fSeq, it->second.fSeq);
+        ASSERT_EQ(fileWritten2.blockId, it->second.blockId);
+        ASSERT_EQ(fileWritten2.compressedSize, it->second.compressedSize);
+        ASSERT_EQ(fileWritten2.checksumType, it->second.checksumType);
+        ASSERT_EQ(fileWritten2.checksumValue, it->second.checksumValue);
+        ASSERT_EQ(fileWritten2.copyNb, it->second.copyNb);
+        ASSERT_EQ(fileWritten2.copyNb, it->first);
+      }
+    }
+  }
+
+  {
+    const uint64_t startFseq = 1;
+    const auto archiveFileItor = m_catalogue->getArchiveFilesForRepackItor(vid1, startFseq);
+    const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
     for(uint64_t i = 1; i <= nbArchiveFiles; i++) {

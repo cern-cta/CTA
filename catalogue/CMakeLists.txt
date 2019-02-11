@@ -44,6 +44,7 @@ set (CATALOGUE_LIB_SRC_FILES
   TapeItemImplementation.cpp
   TapePool.cpp
   RdbmsCatalogue.cpp
+  RdbmsCatalogueGetArchiveFilesForRepackItor.cpp
   RdbmsCatalogueGetArchiveFilesItor.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
