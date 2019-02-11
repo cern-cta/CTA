@@ -489,7 +489,7 @@ public:
    * @param searchCriteria The search criteria.
    * @return The archive files.
    */
-  ArchiveFileItor getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const override;
+  ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
    * Returns the specified files in tape file sequence order.

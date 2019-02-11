@@ -487,7 +487,7 @@ public:
    * @param searchCriteria The search criteria.
    * @return The archive files.
    */
-  virtual ArchiveFileItor getArchiveFiles(
+  virtual ArchiveFileItor getArchiveFilesItor(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**

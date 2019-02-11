@@ -4002,9 +4002,9 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFiles
+// getArchiveFilesItor
 //------------------------------------------------------------------------------
-ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const {
+ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const {
 
   checkTapeFileSearchCriteria(searchCriteria);
 

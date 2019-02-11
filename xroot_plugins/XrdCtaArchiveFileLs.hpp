@@ -40,7 +40,7 @@ public:
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ArchiveFileLsStream() constructor");
 
     if(!m_isSummary) {
-      m_archiveFileItor = m_catalogue.getArchiveFiles(searchCriteria);
+      m_archiveFileItor = m_catalogue.getArchiveFilesItor(searchCriteria);
     }
   }
 
