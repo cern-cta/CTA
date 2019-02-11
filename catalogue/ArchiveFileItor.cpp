@@ -78,7 +78,7 @@ bool ArchiveFileItor::hasMore() const {
 //------------------------------------------------------------------------------
 // next
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile ArchiveFileItor::next() const {
+common::dataStructures::ArchiveFile ArchiveFileItor::next() {
   if(nullptr == m_impl) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: "
       "This iterator is invalid");

@@ -194,7 +194,7 @@ std::map<std::string, cta::common::dataStructures::Tape> cta_catalogue_Catalogue
 // archiveFileItorToMap
 //------------------------------------------------------------------------------
 std::map<uint64_t, cta::common::dataStructures::ArchiveFile> cta_catalogue_CatalogueTest::archiveFileItorToMap(
-  const cta::catalogue::ArchiveFileItor &itor) {
+  cta::catalogue::ArchiveFileItor &itor) {
   using namespace cta;
 
   try {
@@ -7509,7 +7509,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   {
     const uint64_t startFseq = 1;
-    const auto archiveFileItor = m_catalogue->getArchiveFilesForRepackItor(vid1, startFseq);
+    auto archiveFileItor = m_catalogue->getArchiveFilesForRepackItor(vid1, startFseq);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 

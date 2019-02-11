@@ -89,7 +89,7 @@ public:
   /**
    * Returns the next archive or throws an exception if there isn't one.
    */
-  common::dataStructures::ArchiveFile next() const;
+  common::dataStructures::ArchiveFile next();
 
 private:
 
