@@ -17,8 +17,8 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/RdbmsArchiveFileItorImpl.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/RdbmsCatalogueGetArchiveFilesItor.hpp"
 #include "catalogue/retryOnLostConnection.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
@@ -4009,7 +4009,7 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &se
   checkTapeFileSearchCriteria(searchCriteria);
 
   try {
-    auto impl = new RdbmsArchiveFileItorImpl(m_log, m_archiveFileListingConnPool, searchCriteria);
+    auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, m_archiveFileListingConnPool, searchCriteria);
     return ArchiveFileItor(impl);
   } catch(exception::UserError &) {
     throw;
