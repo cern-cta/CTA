@@ -1041,24 +1041,18 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
       throw cta::exception::UserError("--log and --summary are mutually exclusive");
    }
 
-   bool justarchive  = has_flag(OptionBoolean::JUSTARCHIVE);
-   bool justretrieve = has_flag(OptionBoolean::JUSTRETRIEVE);
    auto tapepool     = getOptional(OptionString::TAPE_POOL);
    auto vid          = getOptional(OptionString::VID);
+   bool justarchive  = has_flag(OptionBoolean::JUSTARCHIVE)  || tapepool;
+   bool justretrieve = has_flag(OptionBoolean::JUSTRETRIEVE) || vid;
 
    if(justarchive && justretrieve) {
-      throw cta::exception::UserError("--justarchive and --justretrieve are mutually exclusive");
-   }
-   if(justretrieve && tapepool) {
-      throw cta::exception::UserError("--justretrieve and --tapepool are mutually exclusive");
-   }
-   if(justarchive && vid) {
-      throw cta::exception::UserError("--justarchive and --vid are mutually exclusive");
+      throw cta::exception::UserError("--justarchive/--tapepool and --justretrieve/--vid options are mutually exclusive");
    }
 
-   OStoreDB::ArchiveQueueItor_t *archiveQueueItorPtr = has_flag(OptionBoolean::JUSTRETRIEVE) ? nullptr :
+   OStoreDB::ArchiveQueueItor_t *archiveQueueItorPtr = justretrieve ? nullptr :
       m_scheddb.getArchiveJobItorPtr(tapepool ? *tapepool : "", objectstore::JobQueueType::FailedJobs);
-   OStoreDB::RetrieveQueueItor_t *retrieveQueueItorPtr = has_flag(OptionBoolean::JUSTARCHIVE) ? nullptr :
+   OStoreDB::RetrieveQueueItor_t *retrieveQueueItorPtr = justarchive ? nullptr :
       m_scheddb.getRetrieveJobItorPtr(vid ? *vid : "", objectstore::JobQueueType::FailedJobs);
 
    // Create a XrdSsi stream object to return the results
