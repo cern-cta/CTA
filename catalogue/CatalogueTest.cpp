@@ -5811,17 +5811,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   common::dataStructures::UserIdentity userIdentity;
   userIdentity.name = requesterName;
   userIdentity.group = "group";
-  uint64_t expectedArchiveFileId = 0;
+
+  std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
       m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity);
 
-    if(0 == i) {
-      expectedArchiveFileId = archiveFileId;
-    } else {
-      expectedArchiveFileId++;
-    }
-    ASSERT_EQ(expectedArchiveFileId, archiveFileId);
+    const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
+    ASSERT_TRUE(archiveFileIdIsNew);
   }
 }
 
@@ -5904,17 +5901,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
   common::dataStructures::UserIdentity userIdentity;
   userIdentity.name = "username";
   userIdentity.group = requesterGroupName;
-  uint64_t expectedArchiveFileId = 0;
+
+  std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
       m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity);
 
-    if(0 == i) {
-      expectedArchiveFileId = archiveFileId;
-    } else {
-      expectedArchiveFileId++;
-    }
-    ASSERT_EQ(expectedArchiveFileId, archiveFileId);
+    const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
+    ASSERT_TRUE(archiveFileIdIsNew);
   }
 }
 
@@ -6016,17 +6010,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   common::dataStructures::UserIdentity userIdentity;
   userIdentity.name = requesterName;
   userIdentity.group = "group";
-  uint64_t expectedArchiveFileId = 0;
+
+  std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
       m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity);
 
-    if(0 == i) {
-      expectedArchiveFileId = archiveFileId;
-    } else {
-      expectedArchiveFileId++;
-    }
-    ASSERT_EQ(expectedArchiveFileId, archiveFileId);
+    const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
+    ASSERT_TRUE(archiveFileIdIsNew);
   }
 }
 
