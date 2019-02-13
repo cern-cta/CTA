@@ -203,14 +203,23 @@ public:
    */
   virtual std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested,
     log::LogContext & logContext) = 0;
-  
+
+  /*======================= Failed archive jobs support ======================*/
+  struct JobsFailedSummary {
+     JobsFailedSummary(uint64_t f = 0, uint64_t b = 0) : totalFiles(f), totalBytes(b) {}
+     uint64_t totalFiles;
+     uint64_t totalBytes;
+  };
+
+  virtual JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &logContext) = 0;
+
   /**
    * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
    * @param jobsBatch
    * @param lc
    */
-  virtual void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch, log::TimingList & timingList, 
-    utils::Timer & t, log::LogContext & lc) = 0;
+  virtual void setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch,
+    log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
   
   /*============ Retrieve  management: user side ============================*/
 
@@ -343,7 +352,7 @@ public:
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
-    virtual std::list<std::unique_ptr<RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
+    virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext& logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
@@ -359,8 +368,15 @@ public:
   class RetrieveJob {
     friend class RetrieveMount;
   public:
-    cta::common::dataStructures::RetrieveRequest retrieveRequest;
+    std::string errorReportURL;
+    enum class ReportType: uint8_t {
+      NoReportRequired,
+      //CompletionReport,
+      FailureReport,
+      Report //!< A generic grouped type
+    } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
+    cta::common::dataStructures::RetrieveRequest retrieveRequest;
     uint64_t selectedCopyNb;
     virtual void asyncSucceed() = 0;
     virtual void checkSucceed() = 0;
@@ -444,6 +460,15 @@ public:
    * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
    */
   virtual std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& logContext) = 0;
+
+  /**
+   * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
+   * @param jobsBatch
+   * @param lc
+   */
+  virtual void setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch, log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
+
+  virtual JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) = 0;
 
   /*============ Label management: user side =================================*/
   // TODO

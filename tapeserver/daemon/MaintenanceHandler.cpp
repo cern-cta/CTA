@@ -163,7 +163,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
   // Check there was no error.
   try {
     exception::Errnum::throwOnMinusOne(rc);
-  } catch (exception::Exception ex) {
+  } catch (exception::Exception &ex) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("pid", m_pid)
           .add("Message", ex.getMessageValue());
@@ -324,14 +324,22 @@ int MaintenanceHandler::runChild() {
     } while (!receivedMessage);
     m_processManager.logContext().log(log::INFO,
         "In MaintenanceHandler::runChild(): Received shutdown message. Exiting.");
-  } catch (cta::exception::Exception & ex) {
+  } catch(cta::exception::Exception & ex) {
     {
       log::ScopedParamContainer params(m_processManager.logContext());
       params.add("Message", ex.getMessageValue());
-      m_processManager.logContext().log(log::ERR, 
-          "In MaintenanceHandler::runChild(): received an exception. Backtrace follows.");
+      m_processManager.logContext().log(log::ERR,
+        "In MaintenanceHandler::runChild(): received an exception. Backtrace follows.");
     }
     m_processManager.logContext().logBacktrace(log::ERR, ex.backtrace());
+  } catch(std::exception &ex) {
+    log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("Message", ex.what());
+    m_processManager.logContext().log(log::ERR, 
+        "In MaintenanceHandler::runChild(): received a std::exception.");
+  } catch(...) {
+    m_processManager.logContext().log(log::ERR, 
+        "In MaintenanceHandler::runChild(): received an unknown exception.");
   }
   agentHeartbeat.stopAndWaitThread();
   return EXIT_SUCCESS;

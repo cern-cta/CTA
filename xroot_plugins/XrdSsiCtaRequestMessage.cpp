@@ -26,6 +26,7 @@ using XrdSsiPb::PbException;
 
 #include <cmdline/CtaAdminCmdParse.hpp>
 #include "XrdCtaArchiveFileLs.hpp"
+#include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaListPendingQueue.hpp"
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
@@ -138,6 +139,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM):
                processDrive_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS):
+               processFailedRequest_Ls(request.admincmd(), response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD):
                processGroupMountRule_Add(request.admincmd(), response);
@@ -1024,6 +1028,42 @@ void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::
    }
 
    response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
+{
+   using namespace cta::admin;
+
+   if(has_flag(OptionBoolean::SHOW_LOG_ENTRIES) && has_flag(OptionBoolean::SUMMARY)) {
+      throw cta::exception::UserError("--log and --summary are mutually exclusive");
+   }
+
+   auto tapepool     = getOptional(OptionString::TAPE_POOL);
+   auto vid          = getOptional(OptionString::VID);
+   bool justarchive  = has_flag(OptionBoolean::JUSTARCHIVE)  || tapepool;
+   bool justretrieve = has_flag(OptionBoolean::JUSTRETRIEVE) || vid;
+
+   if(justarchive && justretrieve) {
+      throw cta::exception::UserError("--justarchive/--tapepool and --justretrieve/--vid options are mutually exclusive");
+   }
+
+   OStoreDB::ArchiveQueueItor_t *archiveQueueItorPtr = justretrieve ? nullptr :
+      m_scheddb.getArchiveJobItorPtr(tapepool ? *tapepool : "", objectstore::JobQueueType::FailedJobs);
+   OStoreDB::RetrieveQueueItor_t *retrieveQueueItorPtr = justarchive ? nullptr :
+      m_scheddb.getRetrieveJobItorPtr(vid ? *vid : "", objectstore::JobQueueType::FailedJobs);
+
+   // Create a XrdSsi stream object to return the results
+   stream = new FailedRequestLsStream(m_scheduler, archiveQueueItorPtr, retrieveQueueItorPtr, has_flag(OptionBoolean::SUMMARY), has_flag(OptionBoolean::SHOW_LOG_ENTRIES), m_lc);
+
+   // Should the client display column headers?
+   if(has_flag(OptionBoolean::SHOW_HEADER)) {
+      response.set_show_header(has_flag(OptionBoolean::SUMMARY) ?
+         HeaderType::FAILEDREQUEST_LS_SUMMARY : HeaderType::FAILEDREQUEST_LS);
+   }
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

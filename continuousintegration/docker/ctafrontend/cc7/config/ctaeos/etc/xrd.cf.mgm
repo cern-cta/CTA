@@ -58,7 +58,8 @@ mgmofs.autosaveconfig true
 #-------------------------------------------------------------------------------
 # Set the namespace plugin implementation
 #-------------------------------------------------------------------------------
-mgmofs.nslib /usr/lib64/libEosNsInMemory.so
+# Done in configmap
+# mgmofs.nslib /usr/lib64/libEosNsInMemory.so
 
 # Set the endpoint and resources for EOS/CTA Workflows
 mgmofs.protowfendpoint ctafrontend:10955

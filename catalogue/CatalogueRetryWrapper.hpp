@@ -337,12 +337,16 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMountPolicyComment(admin, name, comment);}, m_maxTriesToConnect);
   }
 
-  ArchiveFileItor getArchiveFiles(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFiles(searchCriteria);}, m_maxTriesToConnect);
+  ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
   }
 
   std::list<common::dataStructures::ArchiveFile> getFilesForRepack(const std::string &vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getFilesForRepack(vid, startFSeq, maxNbFiles);}, m_maxTriesToConnect);
+  }
+
+  ArchiveFileItor getArchiveFilesForRepackItor(const std::string &vid, const uint64_t startFSeq) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesForRepackItor(vid, startFSeq);}, m_maxTriesToConnect);
   }
 
   common::dataStructures::ArchiveFileSummary getTapeFileSummary(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {

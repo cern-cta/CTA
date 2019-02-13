@@ -76,7 +76,7 @@ class RetrieveJob;
 class Scheduler {
   
 public:
-  
+
   /**
    * Constructor.
    */
@@ -231,7 +231,6 @@ public:
     const std::string &driveName, const std::string &vid, const uint64_t numberOfFiles, const uint64_t fileSize, 
     const cta::common::dataStructures::TestSourceType testSourceType) const;
 
-
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(log::LogContext &lc) const;
   std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName, log::LogContext &lc) const;
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(log::LogContext &lc) const;
@@ -331,7 +330,7 @@ public:
    */
   std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext & lc);
   
-  /*============== Archive reporting support =================================*/
+  /*======================== Archive reporting support =======================*/
   /**
    * Batch job factory
    * 
@@ -354,7 +353,10 @@ public:
   std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
   void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
 
-  /* ============================== Retrieve reporting support ============================== */
+  /*======================= Failed archive jobs support ======================*/
+  SchedulerDatabase::JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &lc);
+
+  /*======================= Retrieve reporting support =======================*/
   /*!
    * Batch job factory
    * 
@@ -368,6 +370,9 @@ public:
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested,
     log::LogContext &logContext);
 
+  void reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>> & retrieveJobsBatch,
+      eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer&, log::LogContext&);
+
   /*!
    * Batch job factory
    * 
@@ -378,11 +383,13 @@ public:
    * @returns                 A list of unique_ptr to the next batch of failed retrieve jobs. The list
    *                          is empty when no more jobs can be found.
    */
-  std::list<std::unique_ptr<RetrieveJob>> getNextFailedRetrieveJobsBatch(uint64_t filesRequested,
-    log::LogContext &logContext);
-  
-public:    
-  /*============== Administrator management ==================================*/
+  std::list<std::unique_ptr<RetrieveJob>>
+  getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext);
+
+  /*====================== Failed retrieve jobs support ======================*/
+  SchedulerDatabase::JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &lc);
+
+  /*======================== Administrator management ========================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);
 
 private:

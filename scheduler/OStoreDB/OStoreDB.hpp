@@ -199,8 +199,8 @@ public:
     std::unique_ptr<objectstore::ArchiveRequest::AsyncTransferSuccessfulUpdater> m_succesfulTransferUpdater;
     std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> m_requestDeleter;
   };
-  friend class ArchiveJob;
-  static ArchiveJob* castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
+  //friend class ArchiveJob;
+  static ArchiveJob * castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
   
   /* === Retrieve Mount handling ============================================ */
   class RetrieveJob;
@@ -215,8 +215,6 @@ public:
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
-  private:
-    OStoreDB::RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
   public:
     std::set<cta::SchedulerDatabase::RetrieveJob*> finishSettingJobsBatchSuccessful(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
     std::set<cta::SchedulerDatabase::RetrieveJob*> batchSucceedRetrieveForRepack(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override;
@@ -226,6 +224,7 @@ public:
   /* === Retrieve Job handling ============================================== */
   class RetrieveJob: public SchedulerDatabase::RetrieveJob {
     friend class OStoreDB::RetrieveMount;
+    friend class OStoreDB;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
@@ -241,9 +240,8 @@ public:
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     virtual ~RetrieveJob() override;
-  //private:
-  // This can't be private any more as it has to be instantiated for queues to report as well as queues
-  // to transfer, i.e. it must be possible to instantiate retrieve jobs independent from a mount
+  private:
+    // Can be instantiated from a mount (queue to transfer) or a report queue
     RetrieveJob(const std::string &jobAddress, OStoreDB &oStoreDB, RetrieveMount *rm) :
       m_jobOwned(false), m_oStoreDB(oStoreDB),
       m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore),
@@ -259,6 +257,7 @@ public:
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
   };
+  static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
 
   /* === Archive requests handling  ========================================= */
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
@@ -275,13 +274,20 @@ public:
   std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
 
   typedef QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> ArchiveQueueItor_t;
-  ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName) const;
+
+  ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName,
+    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransfer) const;
+
+  ArchiveQueueItor_t* getArchiveJobItorPtr(const std::string &tapePoolName,
+    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransfer) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, 
      log::LogContext & logContext) override;
+
+  JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &logContext) override;
   
-  void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList, utils::Timer & t,
-     log::LogContext& lc) override;
+  void setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*> & jobsBatch,
+     log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
   
   /* === Retrieve requests handling  ======================================== */
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
@@ -305,9 +311,17 @@ public:
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>> getRetrieveJobs() const override;
 
   typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
-  RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid) const;
+
+  RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid,
+    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransfer) const;
+
+  RetrieveQueueItor_t* getRetrieveJobItorPtr(const std::string &vid,
+    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransfer) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
+
+  void setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch,
+     log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) override;
   
@@ -318,6 +332,8 @@ public:
    * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
    */
   std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc) override;
+
+  JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) override;
   
   /* === Repack requests handling =========================================== */
   void queueRepack(const std::string& vid, const std::string& bufferURL, 

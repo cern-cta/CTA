@@ -59,6 +59,18 @@ void cta::RetrieveJob::checkComplete() {
 }
 
 //------------------------------------------------------------------------------
+// reportType
+//------------------------------------------------------------------------------
+std::string cta::RetrieveJob::reportType() {
+  switch(m_dbJob->reportType) {
+    case SchedulerDatabase::RetrieveJob::ReportType::FailureReport:
+      return "FailureReport";
+    default:
+      throw exception::Exception("In RetrieveJob::reportType(): job status does not require reporting.");
+  }
+}
+
+//------------------------------------------------------------------------------
 // reportFailed
 //------------------------------------------------------------------------------
 void cta::RetrieveJob::reportFailed(const std::string &failureReason, log::LogContext &lc) {
@@ -74,48 +86,6 @@ void cta::RetrieveJob::transferFailed(const std::string &failureReason, log::Log
   // This is fully delegated to the DB, which will handle the queueing for next steps (if any)
   m_dbJob->failTransfer(failureReason, lc);
 }
-
-#if 0
-//------------------------------------------------------------------------------
-// failed
-//------------------------------------------------------------------------------
-void cta::RetrieveJob::failed(const std::string & failureReason, log::LogContext &lc) {
-  if (m_dbJob->fail(failureReason, lc)) {
-    std::string base64ErrorReport;
-    // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
-    const bool noNewLineInBase64Output = false;
-    CryptoPP::StringSource ss1(failureReason, true, 
-        new CryptoPP::Base64Encoder(
-          new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
-    std::string fullReportURL = m_dbJob->retrieveRequest.errorReportURL + base64ErrorReport;
-    // That's all job's already done.
-    std::promise<void> reporterState;
-    utils::Timer t;
-    std::unique_ptr<cta::eos::DiskReporter> reporter(m_mount.createDiskReporter(fullReportURL));
-    reporter->asyncReport();
-    try {
-      reporter->waitReport();
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", m_dbJob->archiveFile.archiveFileID)
-            .add("diskInstance", m_dbJob->archiveFile.diskInstance)
-            .add("diskFileId", m_dbJob->archiveFile.diskFileId)
-            .add("errorReport", failureReason)
-            .add("reportTime", t.secs());
-      lc.log(log::INFO, "In RetrieveJob::failed(): reported error to client.");
-    } catch (cta::exception::Exception & ex) {
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", m_dbJob->archiveFile.archiveFileID)
-            .add("diskInstance", m_dbJob->archiveFile.diskInstance)
-            .add("diskFileId", m_dbJob->archiveFile.diskFileId)
-            .add("errorReport", failureReason)
-            .add("exceptionMsg", ex.getMessageValue())
-            .add("reportTime", t.secs());
-      lc.log(log::ERR, "In RetrieveJob::failed(): failed to report error to client.");
-      lc.logBacktrace(log::ERR, ex.backtrace());
-    }
-  }
-}
-#endif
 
 //------------------------------------------------------------------------------
 // selectedTapeFile

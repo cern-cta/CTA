@@ -487,7 +487,7 @@ public:
    * @param searchCriteria The search criteria.
    * @return The archive files.
    */
-  virtual ArchiveFileItor getArchiveFiles(
+  virtual ArchiveFileItor getArchiveFilesItor(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
@@ -503,6 +503,20 @@ public:
     const std::string &vid,
     const uint64_t startFSeq,
     const uint64_t maxNbFiles) const = 0;
+
+  /**
+   * Returns all the tape copies (no matter their VIDs) of the archive files
+   * associated with the tape files on the specified tape in FSEQ order
+   * starting at the specified startFSeq.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param startFSeq The file sequence number of the first file.  Please note
+   * that there might not be a file with this exact file sequence number.
+   * @return The specified files in FSEQ order.
+   */
+  virtual ArchiveFileItor getArchiveFilesForRepackItor(
+    const std::string &vid,
+    const uint64_t startFSeq) const = 0;
 
   /**
    * Returns a summary of the tape files that meet the specified search

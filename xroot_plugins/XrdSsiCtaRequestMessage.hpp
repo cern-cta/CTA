@@ -141,6 +141,7 @@ private:
    typedef void admincmdstream_t(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream);
 
    admincmdstream_t processArchiveFile_Ls;
+   admincmdstream_t processFailedRequest_Ls;
    admincmdstream_t processListPendingArchives;
    admincmdstream_t processListPendingRetrieves;
    admincmdstream_t processTapePool_Ls;

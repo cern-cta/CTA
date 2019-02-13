@@ -54,6 +54,12 @@ EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 echo "mgmofs.protowfendpoint ctafrontend:10955" >> /etc/xrd.cf.mgm
 echo "mgmofs.protowfresource /ctafrontend"  >> /etc/xrd.cf.mgm
 
+# Add configmap based configuration (initially Namespace)
+test -f /etc/config/eos/xrd.cf.mgm && cat /etc/config/eos/xrd.cf.mgm >> /etc/xrd.cf.mgm
+
+# quarkDB only for systemd initially...
+cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/start_quarkdb.sh
+
 # prepare eos startup
   # skip systemd for eos initscripts
     export SYSTEMCTL_SKIP_REDIRECT=1

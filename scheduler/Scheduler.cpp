@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive(CTA) project
- * Copyright(C) 2015  CERN
+ * Copyright (C) 2018 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1247,6 +1247,13 @@ std::list<std::unique_ptr<ArchiveJob> > Scheduler::getNextArchiveJobsToReportBat
 }
 
 //------------------------------------------------------------------------------
+// getArchiveJobsFailedSummary
+//------------------------------------------------------------------------------
+SchedulerDatabase::JobsFailedSummary Scheduler::getArchiveJobsFailedSummary(log::LogContext &logContext) {
+  return m_db.getArchiveJobsFailedSummary(logContext);
+}
+
+//------------------------------------------------------------------------------
 // getNextRetrieveJobsToReportBatch
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<RetrieveJob>> Scheduler::
@@ -1265,10 +1272,10 @@ getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logCo
 }
 
 //------------------------------------------------------------------------------
-// getNextFailedRetrieveJobsBatch
+// getNextRetrieveJobsFailedBatch
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<RetrieveJob>> Scheduler::
-getNextFailedRetrieveJobsBatch(uint64_t filesRequested, log::LogContext &logContext)
+getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext)
 {
   // We need to go through the queues of failed retrieve jobs
   std::list<std::unique_ptr<RetrieveJob>> ret;
@@ -1279,6 +1286,13 @@ getNextFailedRetrieveJobsBatch(uint64_t filesRequested, log::LogContext &logCont
     ret.back()->m_dbJob.reset(j.release());
   }
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// getRetrieveJobsFailedSummary
+//------------------------------------------------------------------------------
+SchedulerDatabase::JobsFailedSummary Scheduler::getRetrieveJobsFailedSummary(log::LogContext &logContext) {
+  return m_db.getRetrieveJobsFailedSummary(logContext);
 }
 
 //------------------------------------------------------------------------------
@@ -1334,7 +1348,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
   timingList.insertAndReset("reportCompletionTime", t);
   std::list<SchedulerDatabase::ArchiveJob *> reportedDbJobs;
   for (auto &j: reportedJobs) reportedDbJobs.push_back(j->m_dbJob.get());
-  m_db.setJobBatchReported(reportedDbJobs, timingList, t, lc);
+  m_db.setArchiveJobBatchReported(reportedDbJobs, timingList, t, lc);
   // Log the successful reports.
   for (auto & j: reportedJobs) {
     log::ScopedParamContainer params(lc);
@@ -1349,6 +1363,77 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
         .add("successfulReports", reportedJobs.size());
   timingList.addToLog(params);
   lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
+}
+
+//------------------------------------------------------------------------------
+// reportRetrieveJobsBatch
+//------------------------------------------------------------------------------
+void Scheduler::
+reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>> & retrieveJobsBatch,
+  eos::DiskReporterFactory & reporterFactory, log::TimingList & timingList, utils::Timer & t, log::LogContext & lc)
+{
+  // Create the reporters
+  struct JobAndReporter {
+    std::unique_ptr<eos::DiskReporter> reporter;
+    RetrieveJob * retrieveJob;
+  };
+  std::list<JobAndReporter> pendingReports;
+  std::list<RetrieveJob*> reportedJobs;
+  for(auto &j: retrieveJobsBatch) {
+    pendingReports.push_back(JobAndReporter());
+    auto & current = pendingReports.back();
+    // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
+    try {
+      current.reporter.reset(reporterFactory.createDiskReporter(j->retrieveRequest.errorReportURL));
+      current.reporter->asyncReport();
+      current.retrieveJob = j.get();
+    } catch (cta::exception::Exception & ex) {
+      // Whether creation or launching of reporter failed, the promise will not receive result, so we can safely delete it.
+      // we will first determine if we need to clean up the reporter as well or not.
+      pendingReports.pop_back();
+      // We are ready to carry on for other files without interactions.
+      // Log the error, update the request.
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", j->archiveFile.archiveFileID)
+            .add("reportType", j->reportType())
+            .add("exceptionMSG", ex.getMessageValue());
+      lc.log(log::ERR, "In Scheduler::reportRetrieveJobsBatch(): failed to launch reporter.");
+      j->reportFailed(ex.getMessageValue(), lc);
+    }
+  }
+  timingList.insertAndReset("asyncReportLaunchTime", t);
+  for(auto &current: pendingReports) {
+    try {
+      current.reporter->waitReport();
+      reportedJobs.push_back(current.retrieveJob);
+    } catch (cta::exception::Exception & ex) {
+      // Log the error, update the request.
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", current.retrieveJob->archiveFile.archiveFileID)
+            .add("reportType", current.retrieveJob->reportType())
+            .add("exceptionMSG", ex.getMessageValue());
+      lc.log(log::ERR, "In Scheduler::reportRetrieveJobsBatch(): failed to report.");
+      current.retrieveJob->reportFailed(ex.getMessageValue(), lc);
+    }
+  }
+  timingList.insertAndReset("reportCompletionTime", t);
+  std::list<SchedulerDatabase::RetrieveJob *> reportedDbJobs;
+  for(auto &j: reportedJobs) reportedDbJobs.push_back(j->m_dbJob.get());
+  m_db.setRetrieveJobBatchReported(reportedDbJobs, timingList, t, lc);
+  // Log the successful reports.
+  for(auto & j: reportedJobs) {
+    log::ScopedParamContainer params(lc);
+    params.add("fileId", j->archiveFile.archiveFileID)
+          .add("reportType", j->reportType());
+    lc.log(log::INFO, "In Scheduler::reportRetrieveJobsBatch(): report successful.");
+  }
+  timingList.insertAndReset("reportRecordingInSchedDbTime", t);
+  log::ScopedParamContainer params(lc);
+  params.add("totalReports", retrieveJobsBatch.size())
+        .add("failedReports", retrieveJobsBatch.size() - reportedJobs.size())
+        .add("successfulReports", reportedJobs.size());
+  timingList.addToLog(params);
+  lc.log(log::ERR, "In Scheduler::reportRetrieveJobsBatch(): reported a batch of retrieve jobs.");
 }
 
 } // namespace cta

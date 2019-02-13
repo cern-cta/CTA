@@ -84,7 +84,7 @@ public:
   /**
    * Returns true if a call to next would return another archive file.
    */
-  bool hasMore();
+  bool hasMore() const;
 
   /**
    * Returns the next archive or throws an exception if there isn't one.

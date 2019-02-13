@@ -102,7 +102,7 @@ void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
     }
     // Prepare exception to be thrown.
     std::stringstream exSs;
-    exSs << "In Agent::deleteAndUnregisterSelf: agent still owns objects. Here's the first few:";
+    exSs << "In Agent::removeAndUnregisterSelf: agent still owns objects. Here's the first few:";
     size_t count=0;
     for(auto i=ownershipList.begin(); i!=ownershipList.end(); i++) {
       exSs << " " << *i;

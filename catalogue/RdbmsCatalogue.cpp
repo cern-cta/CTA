@@ -17,8 +17,9 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/RdbmsArchiveFileItorImpl.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/RdbmsCatalogueGetArchiveFilesItor.hpp"
+#include "catalogue/RdbmsCatalogueGetArchiveFilesForRepackItor.hpp"
 #include "catalogue/retryOnLostConnection.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
@@ -4002,14 +4003,14 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFiles
+// getArchiveFilesItor
 //------------------------------------------------------------------------------
-ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const {
+ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const {
 
   checkTapeFileSearchCriteria(searchCriteria);
 
   try {
-    auto impl = new RdbmsArchiveFileItorImpl(m_log, m_archiveFileListingConnPool, searchCriteria);
+    auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, m_archiveFileListingConnPool, searchCriteria);
     return ArchiveFileItor(impl);
   } catch(exception::UserError &) {
     throw;
@@ -4103,6 +4104,21 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       if(maxNbFiles == archiveFiles.size()) break;
     }
     return archiveFiles;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getArchiveFileItorForRepack
+//------------------------------------------------------------------------------
+ArchiveFileItor RdbmsCatalogue::getArchiveFilesForRepackItor(const std::string &vid, const uint64_t startFSeq) const {
+  try {
+    auto impl = new RdbmsCatalogueGetArchiveFilesForRepackItor(m_log, m_archiveFileListingConnPool, vid, startFSeq);
+    return ArchiveFileItor(impl);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

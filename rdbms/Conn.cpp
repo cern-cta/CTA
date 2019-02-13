@@ -94,7 +94,7 @@ void Conn::setAutocommitMode(const AutocommitMode autocommitMode) {
 //------------------------------------------------------------------------------
 // getAutocommitMode
 //------------------------------------------------------------------------------
-AutocommitMode Conn::getAutocommitMode() const noexcept {
+AutocommitMode Conn::getAutocommitMode() const {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getAutocommitMode();
   } else {

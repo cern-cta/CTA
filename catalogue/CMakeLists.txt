@@ -43,8 +43,9 @@ set (CATALOGUE_LIB_SRC_FILES
   TapeFileWritten.cpp
   TapeItemImplementation.cpp
   TapePool.cpp
-  RdbmsArchiveFileItorImpl.cpp
   RdbmsCatalogue.cpp
+  RdbmsCatalogueGetArchiveFilesForRepackItor.cpp
+  RdbmsCatalogueGetArchiveFilesItor.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
   SqliteCatalogueFactory.cpp

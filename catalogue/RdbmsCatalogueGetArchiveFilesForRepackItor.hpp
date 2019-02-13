@@ -30,9 +30,10 @@ namespace cta {
 namespace catalogue {
 
 /**
- * Rdbms implementation of ArchiveFileItorImpl.
+ * RdbmsCatalogue::getArchiveFilesForRepack() implementation of
+ * ArchiveFileItorImpl.
  */
-class RdbmsArchiveFileItorImpl: public ArchiveFileItorImpl {
+class RdbmsCatalogueGetArchiveFilesForRepackItor: public ArchiveFileItorImpl {
 public:
 
   /**
@@ -40,18 +41,21 @@ public:
    *
    * @param log Object representing the API to the CTA logging system.
    * @param connPool The database connection pool.
-   * @param searchCriteria The search criteria to be used when listing archive
-   * files.
+   * @param vid The volume identifier of the tape.
+   * @param startFSeq The file sequence number of the first file.  Please note
+   * that there might not be a file with this exact file sequence number.
+   * @return The specified files in tape file sequence order.
    */
-  RdbmsArchiveFileItorImpl(
+  RdbmsCatalogueGetArchiveFilesForRepackItor(
     log::Logger &log,
     rdbms::ConnPool &connPool,
-    const TapeFileSearchCriteria &searchCriteria);
+    const std::string &vid,
+    const uint64_t startFSeq);
 
   /**
    * Destructor.
    */
-  ~RdbmsArchiveFileItorImpl() override;
+  ~RdbmsCatalogueGetArchiveFilesForRepackItor() override;
 
   /**
    * Returns true if a call to next would return another archive file.
@@ -74,11 +78,6 @@ private:
    * The database connection pool.
    */
   rdbms::ConnPool &m_connPool;
-
-  /**
-   * The search criteria to be used when listing archive files.
-   */
-  TapeFileSearchCriteria m_searchCriteria;
 
   /**
    * True if the result set is empty.
@@ -115,7 +114,7 @@ private:
    */
   ArchiveFileBuilder m_archiveFileBuilder;
 
-}; // class RdbmsArchiveFileItorImpl
+}; // class RdbmsCatalogueGetArchiveFilesForRepackItor
 
 } // namespace catalogue
 } // namespace cta

@@ -20,6 +20,7 @@
 
 #include <objectstore/Backend.hpp>
 #include <objectstore/ObjectOps.hpp>
+#include <objectstore/JobQueueType.hpp>
 
 namespace cta {
 
@@ -36,7 +37,7 @@ public:
   /*!
    * Default constructor
    */
-  QueueItor(objectstore::Backend &objectStore, const std::string &queue_id = "");
+  QueueItor(objectstore::Backend &objectStore, objectstore::JobQueueType queueType, const std::string &queue_id = "");
 
   /*!
    * No assignment constructor

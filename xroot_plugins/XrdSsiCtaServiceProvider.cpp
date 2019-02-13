@@ -178,4 +178,3 @@ XrdSsiProvider::rStat XrdSsiCtaServiceProvider::QueryResource(const char *rName,
 
    return resourcePresence;
 }
-

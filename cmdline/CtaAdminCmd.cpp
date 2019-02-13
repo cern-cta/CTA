@@ -62,6 +62,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
       switch(record.data_case()) {
          case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
          case Data::kAflsSummary:   std::cout << Log::DumpProtobuf(&record.afls_summary()); break;
+         case Data::kFrlsItem:      std::cout << Log::DumpProtobuf(&record.frls_item());    break;
+         case Data::kFrlsSummary:   std::cout << Log::DumpProtobuf(&record.frls_summary()); break;
          case Data::kLpaItem:       std::cout << Log::DumpProtobuf(&record.lpa_item());     break;
          case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
          case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
@@ -75,6 +77,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    else switch(record.data_case()) {
          case Data::kAflsItem:      CtaAdminCmd::print(record.afls_item());    break;
          case Data::kAflsSummary:   CtaAdminCmd::print(record.afls_summary()); break;
+         case Data::kFrlsItem:      CtaAdminCmd::print(record.frls_item());    break;
+         case Data::kFrlsSummary:   CtaAdminCmd::print(record.frls_summary()); break;
          case Data::kLpaItem:       CtaAdminCmd::print(record.lpa_item());     break;
          case Data::kLpaSummary:    CtaAdminCmd::print(record.lpa_summary());  break;
          case Data::kLprItem:       CtaAdminCmd::print(record.lpr_item());     break;
@@ -215,6 +219,8 @@ void CtaAdminCmd::send() const
          if(!isJson()) switch(response.show_header()) {
             case HeaderType::ARCHIVEFILE_LS:               printAfLsHeader(); break;
             case HeaderType::ARCHIVEFILE_LS_SUMMARY:       printAfLsSummaryHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS:             printFrLsHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS_SUMMARY:     printFrLsSummaryHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES:          printLpaHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  printLpaSummaryHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES:         printLprHeader(); break;
@@ -439,6 +445,70 @@ void CtaAdminCmd::print(const cta::admin::ArchiveFileLsSummary &afls_summary)
 {
    std::cout << std::setfill(' ') << std::setw(13) << std::right << afls_summary.total_files() << ' '
              << std::setfill(' ') << std::setw(12) << std::right << afls_summary.total_size()  << ' '
+             << std::endl;
+}
+
+void CtaAdminCmd::printFrLsHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(12) << std::right << "request type"   << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "copy no"        << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "tapepool/vid"   << ' '
+             << std::setfill(' ') << std::setw(10) << std::right << "requester"      << ' '
+             << std::setfill(' ') << std::setw(6)  << std::right << "group"          << ' '
+                                                                 << "path"
+             << TEXT_NORMAL << std::endl;
+}
+
+void CtaAdminCmd::print(const cta::admin::FailedRequestLsItem &frls_item)
+{
+   std::string request_type;
+   std::string tapepool_vid;
+
+   switch(frls_item.request_type()) {
+      case admin::RequestType::ARCHIVE_REQUEST:
+         request_type = "archive";
+         tapepool_vid = frls_item.tapepool();
+         break;
+      case admin::RequestType::RETRIEVE_REQUEST:
+         request_type = "retrieve";
+         tapepool_vid = frls_item.tf().vid();
+         break;
+      default:
+         throw std::runtime_error("Unrecognised request type: " + std::to_string(frls_item.request_type()));
+   }
+
+   std::cout << std::setfill(' ') << std::setw(11) << std::right << request_type                      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << frls_item.copy_nb()               << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << tapepool_vid                      << ' '
+             << std::setfill(' ') << std::setw(10) << std::right << frls_item.requester().username()  << ' '
+             << std::setfill(' ') << std::setw(6)  << std::right << frls_item.requester().groupname() << ' '
+                                                                 << frls_item.af().df().path()
+             << std::endl;
+
+   for(auto &errLogMsg : frls_item.failurelogs()) {
+     std::cout << errLogMsg << std::endl;
+   }
+}
+
+void CtaAdminCmd::printFrLsSummaryHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(12) << std::right << "request type"        << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "total files"         << ' '
+             << std::setfill(' ') << std::setw(20) << std::right << "total size (bytes)"  << ' '
+             << TEXT_NORMAL << std::endl;
+}
+
+void CtaAdminCmd::print(const cta::admin::FailedRequestLsSummary &frls_summary)
+{
+   std::string request_type =
+      frls_summary.request_type() == cta::admin::RequestType::ARCHIVE_REQUEST  ? "archive" :
+      frls_summary.request_type() == cta::admin::RequestType::RETRIEVE_REQUEST ? "retrieve" : "total";
+
+   std::cout << std::setfill(' ') << std::setw(11) << std::right << request_type               << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << frls_summary.total_files() << ' '
+             << std::setfill(' ') << std::setw(20) << std::right << frls_summary.total_size()  << ' '
              << std::endl;
 }
 

@@ -142,4 +142,3 @@ private:
 
    static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";    //!< Identifier for log messages
 };
-

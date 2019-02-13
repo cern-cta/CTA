@@ -17,7 +17,7 @@
  */
 
 #include "catalogue/ArchiveFileItor.hpp"
-#include "catalogue/RdbmsArchiveFileItorImpl.hpp"
+#include "catalogue/RdbmsCatalogueGetArchiveFilesItor.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
@@ -76,7 +76,7 @@ namespace {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
+RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   log::Logger &log,
   rdbms::ConnPool &connPool,
   const TapeFileSearchCriteria &searchCriteria):
@@ -239,13 +239,13 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-RdbmsArchiveFileItorImpl::~RdbmsArchiveFileItorImpl() {
+RdbmsCatalogueGetArchiveFilesItor::~RdbmsCatalogueGetArchiveFilesItor() {
 }
 
 //------------------------------------------------------------------------------
 // hasMore
 //------------------------------------------------------------------------------
-bool RdbmsArchiveFileItorImpl::hasMore() {
+bool RdbmsCatalogueGetArchiveFilesItor::hasMore() {
   m_hasMoreHasBeenCalled = true;
 
   if(m_rsetIsEmpty) {
@@ -263,7 +263,7 @@ bool RdbmsArchiveFileItorImpl::hasMore() {
 //------------------------------------------------------------------------------
 // next
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile RdbmsArchiveFileItorImpl::next() {
+common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
   try {
     if(!m_hasMoreHasBeenCalled) {
       throw exception::Exception("hasMore() must be called before next()");

@@ -51,7 +51,7 @@ class ArchiveFileRow;
 /**
  * Forward declaration.
  */
-class RdbmsArchiveFileItorImpl;
+class RdbmsCatalogueGetArchiveFilesItor;
 
 /**
  * CTA catalogue implemented using a relational database backend.
@@ -489,7 +489,7 @@ public:
    * @param searchCriteria The search criteria.
    * @return The archive files.
    */
-  ArchiveFileItor getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const override;
+  ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
    * Returns the specified files in tape file sequence order.
@@ -504,6 +504,20 @@ public:
     const std::string &vid,
     const uint64_t startFSeq,
     const uint64_t maxNbFiles) const override;
+
+  /**
+   * Returns all the tape copies (no matter their VIDs) of the archive files
+   * associated with the tape files on the specified tape in FSEQ order
+   * starting at the specified startFSeq.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param startFSeq The file sequence number of the first file.  Please note
+   * that there might not be a file with this exact file sequence number.
+   * @return The specified files in FSEQ order.
+   */
+  ArchiveFileItor getArchiveFilesForRepackItor(
+    const std::string &vid,
+    const uint64_t startFSeq) const override;
 
   /**
    * Returns a summary of the tape files that meet the specified search

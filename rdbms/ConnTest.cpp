@@ -70,19 +70,13 @@ TEST_P(cta_rdbms_ConnTest, setAutocommitMode_AUTOCOMMIT_OFF) {
   ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
 
   switch(m_login.dbType) {
-  case Login::DBTYPE_IN_MEMORY:
-    ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
-    break;
   case Login::DBTYPE_ORACLE:
     conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF);
     ASSERT_EQ(AutocommitMode::AUTOCOMMIT_OFF, conn.getAutocommitMode());
     break;
+  case Login::DBTYPE_IN_MEMORY:
   case Login::DBTYPE_SQLITE:
-    ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
-    break;
   case Login::DBTYPE_MYSQL:
-    ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
-    break;
   case Login::DBTYPE_POSTGRESQL:
     ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
     break;
@@ -101,17 +95,6 @@ TEST_P(cta_rdbms_ConnTest, loan_return_loan_conn_setAutocommitMode_AUTOCOMMIT_OF
   ConnPool connPool(m_login, maxNbConn);
 
   switch(m_login.dbType) {
-  case Login::DBTYPE_IN_MEMORY:
-    {
-      auto conn = connPool.getConn();
-      ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
-      ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
-    }
-    {
-      auto conn = connPool.getConn();
-      ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
-    }
-    break;
   case Login::DBTYPE_ORACLE:
     {
       auto conn = connPool.getConn();
@@ -124,28 +107,9 @@ TEST_P(cta_rdbms_ConnTest, loan_return_loan_conn_setAutocommitMode_AUTOCOMMIT_OF
       ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
     }
     break;
+  case Login::DBTYPE_IN_MEMORY:
   case Login::DBTYPE_SQLITE:
-    {
-      auto conn = connPool.getConn();
-      ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
-      ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
-    }
-    {
-      auto conn = connPool.getConn();
-      ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
-    }
-    break;
   case Login::DBTYPE_MYSQL:
-    {
-      auto conn = connPool.getConn();
-      ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
-      ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
-    }
-    {
-      auto conn = connPool.getConn();
-      ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
-    }
-    break;
   case Login::DBTYPE_POSTGRESQL:
     {
       auto conn = connPool.getConn();

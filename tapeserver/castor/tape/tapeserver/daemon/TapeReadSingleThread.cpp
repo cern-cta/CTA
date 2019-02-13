@@ -276,7 +276,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         }
         m_stats.encryptionControlTime += timer.secs(cta::utils::Timer::resetCounter);
       }
-      catch (cta::exception::Exception ex) {
+      catch (cta::exception::Exception &ex) {
         cta::log::ScopedParamContainer params(m_logContext);
         params.add("ErrorMessage", ex.getMessage().str());
         m_logContext.log(cta::log::ERR, "Drive encryption could not be enabled for this mount.");

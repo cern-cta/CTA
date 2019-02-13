@@ -28,7 +28,7 @@ namespace cta {
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
-QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
+QueueItor(objectstore::Backend &objectStore, objectstore::JobQueueType queueType, const std::string &queue_id) :
   m_objectStore(objectStore),
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)
@@ -38,7 +38,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
     objectstore::RootEntry re(m_objectStore);
     objectstore::ScopedSharedLock rel(re);
     re.fetch();
-    m_jobQueuesQueue = re.dumpArchiveQueues(objectstore::JobQueueType::JobsToTransfer);
+    m_jobQueuesQueue = re.dumpArchiveQueues(queueType);
   }
 
   // Set queue iterator to the first queue in the list
@@ -119,6 +119,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
         job.request.srcURL           = osar.first.getSrcURL();
         job.request.archiveReportURL = osar.first.getArchiveReportURL();
         job.request.storageClass     = osar.first.getArchiveFile().storageClass;
+        job.failurelogs              = osar.first.getFailures();
 
         m_jobCache.push_back(job);
       }
@@ -131,7 +132,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
-QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
+QueueItor(objectstore::Backend &objectStore, objectstore::JobQueueType queueType, const std::string &queue_id) :
   m_objectStore(objectStore),
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)
@@ -141,7 +142,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
     objectstore::RootEntry re(m_objectStore);
     objectstore::ScopedSharedLock rel(re);
     re.fetch();
-    m_jobQueuesQueue = re.dumpRetrieveQueues(objectstore::JobQueueType::JobsToTransfer);
+    m_jobQueuesQueue = re.dumpRetrieveQueues(queueType);
   }
 
   // Find the first queue
@@ -206,12 +207,10 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
       if(tf.second.vid == m_jobQueuesQueueIt->vid) {
         auto job = cta::common::dataStructures::RetrieveJob();
 
-        job.tapeCopies[tf.second.vid].first  = tf.second.copyNb;
-        job.tapeCopies[tf.second.vid].second = tf.second;
-        job.request.dstURL                   = osrr.first.getSchedulerRequest().dstURL;
-        job.request.archiveFileID            = osrr.first.getArchiveFile().archiveFileID;
-        job.request.tapePool                 = osrr.first.getTapePool();
-        job.fileSize                         = osrr.first.getArchiveFile().fileSize;
+        job.request                   = osrr.first.getSchedulerRequest();
+        job.fileSize                  = osrr.first.getArchiveFile().fileSize;
+        job.tapeCopies[tf.second.vid] = std::make_pair(tf.second.copyNb, tf.second);
+        job.failurelogs               = osrr.first.getFailures();
 
         m_jobCache.push_back(job);
       }
