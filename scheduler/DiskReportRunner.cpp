@@ -57,7 +57,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
       params.add("jobsToReport", retrieveJobsToReport.size());
       lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): ready to process retrieve reports.");
     }
-    is_done = retrieveJobsToReport.empty();
+    is_done = is_done && retrieveJobsToReport.empty();
     if(!retrieveJobsToReport.empty()) {
       timings.insertAndReset("getRetrieveJobsToReportTime", t2);
       m_scheduler.reportRetrieveJobsBatch(retrieveJobsToReport, m_reporterFactory, timings, t2, lc);
