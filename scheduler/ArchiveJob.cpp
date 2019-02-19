@@ -66,7 +66,6 @@ cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWr
   fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
   fileReport.diskFileGroup = archiveFile.diskFileInfo.group;
   fileReport.diskFilePath = archiveFile.diskFileInfo.path;
-  fileReport.diskFileRecoveryBlob = archiveFile.diskFileInfo.recoveryBlob;
   fileReport.diskInstance = archiveFile.diskInstance;
   fileReport.fSeq = tapeFile.fSeq;
   fileReport.size = archiveFile.fileSize;

@@ -257,7 +257,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   creationLog.time=0;
   creationLog.username="admin1";
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob="blob";
   diskFileInfo.group="group2";
   diskFileInfo.owner="cms_user";
   diskFileInfo.path="path/to/file";
@@ -319,7 +318,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 //  creationLog.time=0;
 //  creationLog.username="admin1";
 //  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-//  diskFileInfo.recoveryBlob="blob";
 //  diskFileInfo.group="group2";
 //  diskFileInfo.owner="cms_user";
 //  diskFileInfo.path="path/to/file";
@@ -394,7 +392,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -505,7 +502,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -594,7 +590,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -705,7 +700,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -847,7 +841,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -958,7 +951,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -1106,7 +1098,6 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -1190,7 +1181,6 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -1223,7 +1213,6 @@ TEST_P(SchedulerTest, showqueues) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -1410,7 +1399,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         fileWritten.diskFilePath = diskFilePath.str();
         fileWritten.diskFileUser = "public_disk_user";
         fileWritten.diskFileGroup = "public_disk_group";
-        fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
         fileWritten.size = archiveFileSize;
         fileWritten.checksumType = checksumType;
         fileWritten.checksumValue = checksumValue;

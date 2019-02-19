@@ -3864,7 +3864,6 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
         "DISK_FILE_PATH,"
         "DISK_FILE_USER,"
         "DISK_FILE_GROUP,"
-        "DISK_FILE_RECOVERY_BLOB,"
         "SIZE_IN_BYTES,"
         "CHECKSUM_TYPE,"
         "CHECKSUM_VALUE,"
@@ -3878,7 +3877,6 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
         ":DISK_FILE_PATH,"
         ":DISK_FILE_USER,"
         ":DISK_FILE_GROUP,"
-        ":DISK_FILE_RECOVERY_BLOB,"
         ":SIZE_IN_BYTES,"
         ":CHECKSUM_TYPE,"
         ":CHECKSUM_VALUE,"
@@ -3898,7 +3896,6 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
     stmt.bindString(":DISK_FILE_PATH", row.diskFilePath);
     stmt.bindString(":DISK_FILE_USER", row.diskFileUser);
     stmt.bindString(":DISK_FILE_GROUP", row.diskFileGroup);
-    stmt.bindString(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
     stmt.bindUint64(":SIZE_IN_BYTES", row.size);
     stmt.bindString(":CHECKSUM_TYPE", row.checksumType);
     stmt.bindString(":CHECKSUM_VALUE", row.checksumValue);
@@ -4036,7 +4033,6 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
         "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -4079,7 +4075,6 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
       archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
       archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
-      archiveFile.diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
       archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
       archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
       archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -4958,7 +4953,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
         "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -4995,7 +4989,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
         archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -5044,7 +5037,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
         "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -5084,7 +5076,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
         archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -5135,7 +5126,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
         "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -5174,7 +5164,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
         archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -5225,7 +5214,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
         "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -5267,7 +5255,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
         archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -5328,7 +5315,7 @@ std::list<std::string> RdbmsCatalogue::getTableNames() const {
 }
 
 //------------------------------------------------------------------------------
-// checkTapeWrittenFilesAreSet
+// checkTapeFileWrittenFieldsAreSet
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc, const TapeFileWritten &event)
   const {
@@ -5338,7 +5325,6 @@ void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &calling
     if(event.diskFilePath.empty()) throw exception::Exception("diskFilePath is an empty string");
     if(event.diskFileUser.empty()) throw exception::Exception("diskFileUser is an empty string");
     if(event.diskFileGroup.empty()) throw exception::Exception("diskFileGroup is an empty string");
-    if(event.diskFileRecoveryBlob.empty()) throw exception::Exception("diskFileRecoveryBlob is an empty string");
     if(0 == event.size) throw exception::Exception("size is 0");
     if(event.checksumType.empty()) throw exception::Exception("checksumType is an empty string");
     if(event.checksumValue.empty()) throw exception::Exception("checksumValue is an empty string");

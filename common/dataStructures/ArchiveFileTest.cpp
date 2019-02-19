@@ -48,7 +48,6 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   archiveFile1.diskFileInfo.path = "recovery_path";
   archiveFile1.diskFileInfo.owner = "recovery_owner";
   archiveFile1.diskFileInfo.group = "recovery_group";
-  archiveFile1.diskFileInfo.recoveryBlob = "recovery_blob";
 
   TapeFile tapeFile1;
   tapeFile1.vid = "VID1";
@@ -85,7 +84,6 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   ASSERT_EQ(archiveFile1.diskFileInfo.path, archiveFile2.diskFileInfo.path);
   ASSERT_EQ(archiveFile1.diskFileInfo.owner, archiveFile2.diskFileInfo.owner);
   ASSERT_EQ(archiveFile1.diskFileInfo.group, archiveFile2.diskFileInfo.group);
-  ASSERT_EQ(archiveFile1.diskFileInfo.recoveryBlob, archiveFile2.diskFileInfo.recoveryBlob);
 
   ASSERT_EQ(2, archiveFile2.tapeFiles.size());
 

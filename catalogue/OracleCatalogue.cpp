@@ -82,7 +82,6 @@ namespace {
     rdbms::wrapper::OcciColumn diskFilePath;
     rdbms::wrapper::OcciColumn diskFileUser;
     rdbms::wrapper::OcciColumn diskFileGroup;
-    rdbms::wrapper::OcciColumn diskFileRecoveryBlob;
     rdbms::wrapper::OcciColumn size;
     rdbms::wrapper::OcciColumn checksumType;
     rdbms::wrapper::OcciColumn checksumValue;
@@ -103,7 +102,6 @@ namespace {
       diskFilePath("DISK_FILE_PATH", nbRows),
       diskFileUser("DISK_FILE_USER", nbRows),
       diskFileGroup("DISK_FILE_GROUP", nbRows),
-      diskFileRecoveryBlob("DISK_FILE_RECOVERY_BLOB", nbRows),
       size("SIZE_IN_BYTES", nbRows),
       checksumType("CHECKSUM_TYPE", nbRows),
       checksumValue("CHECKSUM_VALUE", nbRows),
@@ -525,7 +523,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskFilePath.setFieldLenToValueLen(i, event.diskFilePath);
       archiveFileBatch.diskFileUser.setFieldLenToValueLen(i, event.diskFileUser);
       archiveFileBatch.diskFileGroup.setFieldLenToValueLen(i, event.diskFileGroup);
-      archiveFileBatch.diskFileRecoveryBlob.setFieldLenToValueLen(i, event.diskFileRecoveryBlob);
       archiveFileBatch.size.setFieldLenToValueLen(i, event.size);
       archiveFileBatch.checksumType.setFieldLenToValueLen(i, event.checksumType);
       archiveFileBatch.checksumValue.setFieldLenToValueLen(i, event.checksumValue);
@@ -544,7 +541,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskFilePath.setFieldValue(i, event.diskFilePath);
       archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileUser);
       archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGroup);
-      archiveFileBatch.diskFileRecoveryBlob.setFieldValue(i, event.diskFileRecoveryBlob);
       archiveFileBatch.size.setFieldValue(i, event.size);
       archiveFileBatch.checksumType.setFieldValue(i, event.checksumType);
       archiveFileBatch.checksumValue.setFieldValue(i, event.checksumValue);
@@ -562,7 +558,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
         "DISK_FILE_PATH,"
         "DISK_FILE_USER,"
         "DISK_FILE_GROUP,"
-        "DISK_FILE_RECOVERY_BLOB,"
         "SIZE_IN_BYTES,"
         "CHECKSUM_TYPE,"
         "CHECKSUM_VALUE,"
@@ -576,7 +571,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
         ":DISK_FILE_PATH,"
         ":DISK_FILE_USER,"
         ":DISK_FILE_GROUP,"
-        ":DISK_FILE_RECOVERY_BLOB,"
         ":SIZE_IN_BYTES,"
         ":CHECKSUM_TYPE,"
         ":CHECKSUM_VALUE,"
@@ -598,7 +592,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
     occiStmt.setColumn(archiveFileBatch.diskFilePath);
     occiStmt.setColumn(archiveFileBatch.diskFileUser);
     occiStmt.setColumn(archiveFileBatch.diskFileGroup);
-    occiStmt.setColumn(archiveFileBatch.diskFileRecoveryBlob);
     occiStmt.setColumn(archiveFileBatch.size);
     occiStmt.setColumn(archiveFileBatch.checksumType);
     occiStmt.setColumn(archiveFileBatch.checksumValue);
@@ -770,7 +763,6 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
         "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -817,7 +809,6 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner = selectRset.columnString("DISK_FILE_USER");
         archiveFile->diskFileInfo.group = selectRset.columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = selectRset.columnString("DISK_FILE_RECOVERY_BLOB");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");

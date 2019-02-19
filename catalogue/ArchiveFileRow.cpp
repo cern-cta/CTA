@@ -40,7 +40,6 @@ bool ArchiveFileRow::operator==(const ArchiveFileRow &rhs) const {
     diskFilePath == rhs.diskFilePath &&
     diskFileUser == rhs.diskFileUser &&
     diskFileGroup == rhs.diskFileGroup &&
-    diskFileRecoveryBlob == rhs.diskFileRecoveryBlob &&
     size == rhs.size &&
     checksumType == rhs.checksumType &&
     checksumValue == rhs.checksumValue &&
@@ -59,7 +58,6 @@ std::ostream &operator<<(std::ostream &os, const ArchiveFileRow &obj) {
   "diskFilePath=" << obj.diskFilePath <<
   "diskFileUser=" << obj.diskFileUser <<
   "diskFileGroup=" << obj.diskFileGroup <<
-  "diskFileRecoveryBlob=" << obj.diskFileRecoveryBlob <<
   "size=" << obj.size <<
   "checksumType=" << obj.checksumType << "checksumValue=" << obj.checksumValue <<
   "storageClassName=" << obj.storageClassName <<

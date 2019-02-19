@@ -35,8 +35,7 @@ DiskFileInfo::DiskFileInfo() {}
 bool DiskFileInfo::operator==(const DiskFileInfo &rhs) const {
   return path==rhs.path
       && owner==rhs.owner
-      && group==rhs.group
-      && recoveryBlob==rhs.recoveryBlob;
+      && group==rhs.group;
 }
 
 //------------------------------------------------------------------------------
@@ -52,8 +51,7 @@ bool DiskFileInfo::operator!=(const DiskFileInfo &rhs) const {
 std::ostream &operator<<(std::ostream &os, const DiskFileInfo &obj) {
   os << "(path=" << obj.path
      << " owner=" << obj.owner
-     << " group=" << obj.group
-     << " recoveryBlob=" << obj.recoveryBlob << ")";
+     << " group=" << obj.group << ")";
   return os;
 }
 

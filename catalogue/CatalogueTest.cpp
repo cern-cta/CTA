@@ -2927,7 +2927,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.diskFilePath         = "/public_dir/public_file";
     file1Written.diskFileUser         = "public_disk_user";
     file1Written.diskFileGroup        = "public_disk_group";
-    file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
     file1Written.size                 = fileSize;
     file1Written.checksumType         = "checksum_type";
     file1Written.checksumValue        = "checksum_value";
@@ -3130,7 +3129,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     file1Written.diskFilePath         = "/public_dir/public_file";
     file1Written.diskFileUser         = "public_disk_user";
     file1Written.diskFileGroup        = "public_disk_group";
-    file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
     file1Written.size                 = fileSize;
     file1Written.checksumType         = "checksum_type";
     file1Written.checksumValue        = "checksum_value";
@@ -6457,7 +6455,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -6484,7 +6481,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -6509,7 +6505,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -6536,7 +6531,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -6720,7 +6714,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -6747,7 +6740,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -6772,7 +6764,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -6799,7 +6790,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -7279,7 +7269,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskFilePath = diskFilePath.str();
     fileWritten.diskFileUser = "public_disk_user";
     fileWritten.diskFileGroup = "public_disk_group";
-    fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
     fileWritten.size = archiveFileSize;
     fileWritten.checksumType = checksumType;
     fileWritten.checksumValue = checksumValue;
@@ -7343,7 +7332,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskFilePath = diskFilePath.str();
     fileWritten.diskFileUser = "public_disk_user";
     fileWritten.diskFileGroup = "public_disk_group";
-    fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
     fileWritten.size = archiveFileSize;
     fileWritten.checksumType = checksumType;
     fileWritten.checksumValue = checksumValue;
@@ -7440,7 +7428,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.diskFilePath = diskFilePath.str();
       fileWritten1.diskFileUser = "public_disk_user";
       fileWritten1.diskFileGroup = "public_disk_group";
-      fileWritten1.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumType = checksumType;
       fileWritten1.checksumValue = checksumValue;
@@ -7464,7 +7451,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten1.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
@@ -7520,7 +7506,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.diskFilePath = diskFilePath.str();
       fileWritten1.diskFileUser = "public_disk_user";
       fileWritten1.diskFileGroup = "public_disk_group";
-      fileWritten1.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumType = checksumType;
       fileWritten1.checksumValue = checksumValue;
@@ -7544,7 +7529,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten1.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
@@ -7602,7 +7586,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileUser = "public_disk_user";
       fileWritten.diskFileGroup = "public_disk_group";
-      fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -7622,7 +7605,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -7668,7 +7650,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileUser = "public_disk_user";
       fileWritten.diskFileGroup = "public_disk_group";
-      fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -7688,7 +7669,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -7734,7 +7714,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileUser = "public_disk_user";
       fileWritten.diskFileGroup = "public_disk_group";
-      fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -7754,7 +7733,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -8046,7 +8024,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
           fileWritten.diskFilePath = diskFilePath.str();
           fileWritten.diskFileUser = "public_disk_user";
           fileWritten.diskFileGroup = "public_disk_group";
-          fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
           fileWritten.size = m_archiveFileSize;
           fileWritten.checksumType = m_checksumType;
           fileWritten.checksumValue = m_checksumValue;
@@ -8415,7 +8392,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskFilePath = diskFilePath.str();
       fileWritten1.diskFileUser = "public_disk_user";
       fileWritten1.diskFileGroup = "public_disk_group";
-      fileWritten1.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumType = checksumType;
       fileWritten1.checksumValue = checksumValue;
@@ -8441,7 +8417,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten1.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
@@ -8499,7 +8474,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskFilePath = diskFilePath.str();
       fileWritten1.diskFileUser = "public_disk_user";
       fileWritten1.diskFileGroup = "public_disk_group";
-      fileWritten1.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumType = checksumType;
       fileWritten1.checksumValue = checksumValue;
@@ -8525,7 +8499,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten1.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
@@ -8586,7 +8559,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileUser = "public_disk_user";
       fileWritten.diskFileGroup = "public_disk_group";
-      fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -8606,7 +8578,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -8655,7 +8626,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileUser = "public_disk_user";
       fileWritten.diskFileGroup = "public_disk_group";
-      fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -8675,7 +8645,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -8724,7 +8693,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileUser = "public_disk_user";
       fileWritten.diskFileGroup = "public_disk_group";
-      fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -8744,7 +8712,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(fileWritten.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -9054,7 +9021,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -9090,7 +9056,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -9115,7 +9080,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -9152,7 +9116,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -9289,7 +9252,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -9325,7 +9287,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -9350,7 +9311,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -9387,7 +9347,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     // If there are two or more tape copies with the same copy number then
     // only the last one read out by the database is returned by
@@ -9492,7 +9451,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -9528,7 +9486,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -9553,7 +9510,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -9590,7 +9546,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     // If there are two or more tape copies with the same copy number then
     // only the last one read out by the database is returned by
@@ -9724,7 +9679,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize1;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -9760,7 +9714,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -9787,7 +9740,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize2;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -9911,7 +9863,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType1;
   file1Written.checksumValue        = checksumValue;
@@ -9947,7 +9898,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -9974,7 +9924,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType2;
   file2Written.checksumValue        = checksumValue;
@@ -10098,7 +10047,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue1;
@@ -10134,7 +10082,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10161,7 +10108,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue2;
@@ -10285,7 +10231,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -10327,7 +10272,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10356,7 +10300,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10381,7 +10324,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -10426,7 +10368,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
       ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -10468,7 +10409,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -10610,7 +10550,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -10652,7 +10591,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10681,7 +10619,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10706,7 +10643,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file2Written.diskFilePath         = file1Written.diskFilePath;
   file2Written.diskFileUser         = file1Written.diskFileUser;
   file2Written.diskFileGroup        = file1Written.diskFileGroup;
-  file2Written.diskFileRecoveryBlob = file1Written.diskFileRecoveryBlob;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -10751,7 +10687,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
       ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
       ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-      ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
       ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -10793,7 +10728,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -11127,7 +11061,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -11154,7 +11087,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -11356,7 +11288,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileUser         = "public_disk_user";
   file1Written.diskFileGroup        = "public_disk_group";
-  file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -11383,7 +11314,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
     ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
     ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file1Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);

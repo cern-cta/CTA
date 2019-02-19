@@ -79,13 +79,6 @@ struct ArchiveFileRow {
   std::string diskFileGroup;
 
   /**
-   * Opaque blob containing the metadata of the source disk file within its host
-   * disk system.  This blob can be used in a disaster recovery scenario to
-   * contribute to reconstructing the namespace of the host disk system.
-   */
-  std::string diskFileRecoveryBlob;
-
-  /**
    * The uncompressed size of the tape file in bytes.
    */
   uint64_t size;

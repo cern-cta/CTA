@@ -443,7 +443,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       tapeFileWritten.diskFilePath = remoteFilePath.str();
       tapeFileWritten.diskFileUser = s_userName;
       tapeFileWritten.diskFileGroup = "someGroup";
-      tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -625,7 +624,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.diskFilePath = "/somefile";
         tapeFileWritten.diskFileUser = s_userName;
         tapeFileWritten.diskFileGroup = "someGroup";
-        tapeFileWritten.diskFileRecoveryBlob = "B106";
         tapeFileWritten.storageClassName = s_storageClassName;
         tapeFileWritten.tapeDrive = "drive0";
         catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -651,7 +649,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.diskFilePath = remoteFilePath.str();
         tapeFileWritten.diskFileUser = s_userName;
         tapeFileWritten.diskFileGroup = "someGroup";
-        tapeFileWritten.diskFileRecoveryBlob = "B106";
         tapeFileWritten.storageClassName = s_storageClassName;
         tapeFileWritten.tapeDrive = "drive0";
         catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -827,7 +824,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       tapeFileWritten.diskFilePath = remoteFilePath.str();
       tapeFileWritten.diskFileUser = s_userName;
       tapeFileWritten.diskFileGroup = "someGroup";
-      tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -1038,7 +1034,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       tapeFileWritten.diskFilePath = remoteFilePath.str();
       tapeFileWritten.diskFileUser = s_userName;
       tapeFileWritten.diskFileGroup = "someGroup";
-      tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -1186,7 +1181,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       tapeFileWritten.diskFilePath = remoteFilePath.str();
       tapeFileWritten.diskFileUser = s_userName;
       tapeFileWritten.diskFileGroup = "someGroup";
-      tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -1327,7 +1321,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
-      ar.diskFileInfo.recoveryBlob = "b";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1471,7 +1464,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
-      ar.diskFileInfo.recoveryBlob = "b";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1630,7 +1622,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
-      ar.diskFileInfo.recoveryBlob = "b";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1788,7 +1779,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
-      ar.diskFileInfo.recoveryBlob = "b";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);

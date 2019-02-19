@@ -417,10 +417,6 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    diskFileInfo.group = notification.file().owner().groupname();
    diskFileInfo.path  = notification.file().lpath();
 
-   // Recovery blob is deprecated. EOS will fill in metadata fields in the protocol buffer
-   // and we need to decide what will be stored in the database.
-   diskFileInfo.recoveryBlob = "deprecated";
-
    std::string checksumtype(notification.file().cks().type());
    if(checksumtype == "adler") checksumtype = "ADLER32";   // replace this with an enum!
 
@@ -496,10 +492,6 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    diskFileInfo.owner           = notification.file().owner().username();
    diskFileInfo.group           = notification.file().owner().groupname();
    diskFileInfo.path            = notification.file().lpath();
-
-   // Recovery blob is deprecated. EOS will fill in metadata fields in the protocol buffer
-   // and we need to decide what will be stored in the database.
-   diskFileInfo.recoveryBlob = "deprecated";
 
    cta::common::dataStructures::RetrieveRequest request;
    request.requester            = originator;

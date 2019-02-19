@@ -324,7 +324,6 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
       row.diskFilePath = event.diskFilePath;
       row.diskFileUser = event.diskFileUser;
       row.diskFileGroup = event.diskFileGroup;
-      row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
       insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error
@@ -398,7 +397,6 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
         "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -441,7 +439,6 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner = selectRset.columnString("DISK_FILE_USER");
         archiveFile->diskFileInfo.group = selectRset.columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = selectRset.columnString("DISK_FILE_RECOVERY_BLOB");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");

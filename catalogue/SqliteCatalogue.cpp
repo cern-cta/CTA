@@ -430,7 +430,6 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
       row.diskFilePath = event.diskFilePath;
       row.diskFileUser = event.diskFileUser;
       row.diskFileGroup = event.diskFileGroup;
-      row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
       insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error
