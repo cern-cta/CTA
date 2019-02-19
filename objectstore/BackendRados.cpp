@@ -199,7 +199,7 @@ void BackendRados::create(std::string name, std::string content) {
           int ret = -getRadosCtx().operate(name, &wop);
           return ret;
         },
-        std::string("In BackendRados::create, failed to create exclusively or write: ")
+        std::string("In BackendRados::create(), failed to create exclusively or write: ")
         + name);
     } catch (cta::exception::Errnum & en) {
       if (en.errorNumber() == EEXIST) {
@@ -209,20 +209,20 @@ void BackendRados::create(std::string name, std::string content) {
         // The lock function will delete it immediately, but we could have attempted to create the object in this very moment.
         // We will stat-poll the object and retry the create as soon as it's gone.
         uint64_t size;
-        time_t date;
+        time_t time;
         cta::utils::Timer t;
         restat:;
-        int statRet = getRadosCtx().stat(name, &size, &date);
+        int statRet = getRadosCtx().stat(name, &size, &time);
         if (-ENOENT == statRet) {
           // Object is gone already, let's retry.
           goto retry;
         } else if (!statRet) {
           // If the size of the object is not zero, this is another problem.
           if (size) {
-            en.getMessage() << " After statRet=" << statRet << " size=" << size << " date=" << date;
+            en.getMessage() << " After statRet=" << statRet << " size=" << size << " time=" << time;
             throw en;
           } else if (t.secs() > 10) {
-            en.getMessage() << " Object is still here after 10s. statRet=" << statRet << " size=" << size << " date=" << date;
+            en.getMessage() << " Object is still here after 10s. statRet=" << statRet << " size=" << size << " time=" << time;
             throw en;
           } else goto restat;
         } else {
@@ -825,6 +825,147 @@ void BackendRados::RadosWorkerThreadAndContext::run() {
   }
 }
 
+Backend::AsyncCreator* BackendRados::asyncCreate(const std::string& name, const std::string& value) {
+  return new AsyncCreator(*this, name, value);
+}
+
+BackendRados::AsyncCreator::AsyncCreator(BackendRados& be, const std::string& name, const std::string& value):
+m_backend(be), m_name(name), m_value(value), m_job(), m_jobFuture(m_job.get_future()) {
+  try {
+    librados::ObjectWriteOperation wop;
+    const bool createExclusive = true;
+    wop.create(createExclusive);
+    m_radosBufferList.clear();
+    m_radosBufferList.append(value.c_str(), value.size());
+    wop.write_full(m_radosBufferList);
+    librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, createExclusiveCallback, nullptr);
+    m_radosTimeoutLogger.reset();
+    RadosTimeoutLogger rtl;
+    int rc;
+    cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() {
+      rc=m_backend.getRadosCtx().aio_operate(m_name, aioc, &wop);
+      return 0;
+    }, "In BackendRados::AsyncCreator::AsyncCreator(): failed m_backend.getRadosCtx().aio_operate()");
+    rtl.logIfNeeded("In BackendRados::AsyncCreator::AsyncCreator(): m_radosCtx.aio_operate() call", m_name);
+    aioc->release();
+    if (rc) {
+      cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncCreator::AsyncCreator(): failed to launch aio_operate(): ")+m_name);
+      throw Backend::CouldNotCreate(errnum.getMessageValue());
+    }
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&m_job);
+    m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncCreator::createExclusiveCallback(librados::completion_t completion, void* pThis) {
+  AsyncCreator & ac = *((AsyncCreator *) pThis);
+  ac.m_radosTimeoutLogger.logIfNeeded("In BackendRados::AsyncCreator::createExclusiveCallback(): aio_operate callback", ac.m_name);
+  try {
+    // Check that the object could be created.
+    if (rados_aio_get_return_value(completion)) {
+      if (EEXIST == -rados_aio_get_return_value(completion)) {
+        // We can race with locking in some situations: attempting to lock a non-existing object creates it, of size
+        // zero.
+        // The lock function will delete it immediately, but we could have attempted to create the object in this very moment.
+        // We will stat-poll the object and retry the create as soon as it's gone.
+        // Prepare the retry timer (it will be used in the stat step).
+        if (!ac.m_retryTimer) ac.m_retryTimer.reset(new utils::Timer());
+        RadosTimeoutLogger rtl;
+        int rc;
+        librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, statCallback, nullptr);
+        cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() {
+          rc=ac.m_backend.getRadosCtx().aio_stat(ac.m_name, aioc, &ac.m_size, &ac.m_time);
+          return 0;
+        }, "In BackendRados::AsyncCreator::createExclusiveCallback(): failed m_backend.getRadosCtx().aio_operate()");
+        rtl.logIfNeeded("In BackendRados::AsyncCreator::createExclusiveCallback(): m_radosCtx.aio_operate() call", ac.m_name);
+      } else {
+        cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+            std::string("In BackendRados::AsyncCreator::createExclusiveCallback(): could not create object: ") + ac.m_name);
+        throw Backend::CouldNotCreate(errnum.getMessageValue());
+      }
+    }
+    // Done!
+    ANNOTATE_HAPPENS_BEFORE(&ac.m_job);
+    ac.m_job.set_value();
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&ac.m_job);
+    ac.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncCreator::statCallback(librados::completion_t completion, void* pThis) {
+  AsyncCreator & ac = *((AsyncCreator *) pThis);
+  ac.m_radosTimeoutLogger.logIfNeeded("In BackendRados::AsyncCreator::statCallback(): aio_stat callback", ac.m_name);
+  try {
+    if (rados_aio_get_return_value(completion)) {
+      if (ENOENT == -rados_aio_get_return_value(completion)) {
+        // The object is gone while we tried to stat it. Fine. Let's retry the write.
+        librados::ObjectWriteOperation wop;
+        const bool createExclusive = true;
+        wop.create(createExclusive);
+        ac.m_radosBufferList.clear();
+        ac.m_radosBufferList.append(ac.m_value.c_str(), ac.m_value.size());
+        wop.write_full(ac.m_radosBufferList);
+        librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, createExclusiveCallback, nullptr);
+        ac.m_radosTimeoutLogger.reset();
+        RadosTimeoutLogger rtl;
+        int rc;
+        cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() {
+          rc=ac.m_backend.getRadosCtx().aio_operate(ac.m_name, aioc, &wop);
+          return 0;
+        }, "In BackendRados::AsyncCreator::statCallback(): failed m_backend.getRadosCtx().aio_operate()");
+        rtl.logIfNeeded("In BackendRados::AsyncCreator::statCallback(): m_radosCtx.aio_operate() call", ac.m_name);
+        aioc->release();
+        if (rc) {
+          cta::exception::Errnum errnum (-rc, 
+              std::string("In BackendRados::AsyncCreator::statCallback(): failed to launch aio_operate(): ")+ ac.m_name);
+          throw Backend::CouldNotCreate(errnum.getMessageValue());
+        }
+      } else {
+        // We had some other error. This is a failure.
+        cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+            std::string("In BackendRados::AsyncCreator::statCallback(): could not stat object: ") + ac.m_name);
+        throw Backend::CouldNotCreate(errnum.getMessageValue());
+      }
+    } else {
+      // We got our stat result: let's see if the object is zero sized.
+      if (ac.m_size) {
+        // We have a non-zero sized object. This is not just a race.
+        exception::Errnum en(EEXIST, "In BackendRados::AsyncCreator::statCallback: object already exists: ");
+        en.getMessage() << ac.m_name << "After statRet=" << -rados_aio_get_return_value(completion) 
+            << " size=" << ac.m_size << " time=" << ac.m_time;
+        throw en;
+      } else {
+        // The object is indeed zero-sized. We can just retry stat (for 10s max)
+        if (ac.m_retryTimer && (ac.m_retryTimer->secs() > 10)) {
+          exception::Errnum en(EEXIST, "In BackendRados::AsyncCreator::statCallback: Object is still here after 10s: ");
+          en.getMessage() << ac.m_name << "After statRet=" << -rados_aio_get_return_value(completion) 
+              << " size=" << ac.m_size << " time=" << ac.m_time;
+          throw en;
+        }
+        RadosTimeoutLogger rtl;
+        int rc;
+        librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, statCallback, nullptr);
+        cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() {
+          rc=ac.m_backend.getRadosCtx().aio_stat(ac.m_name, aioc, &ac.m_size, &ac.m_time);
+          return 0;
+        }, "In BackendRados::AsyncCreator::statCallback(): failed m_backend.getRadosCtx().aio_operate()");
+        rtl.logIfNeeded("In BackendRados::AsyncCreator::statCallback(): m_radosCtx.aio_operate() call", ac.m_name);
+      }
+    }
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&ac.m_job);
+    ac.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncCreator::wait() {
+  m_jobFuture.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+}
+
 Backend::AsyncUpdater* BackendRados::asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update)
 {
   return new AsyncUpdater(*this, name, update);
@@ -1067,7 +1208,7 @@ BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& na
             rtl.logIfNeeded("In BackendRados::AsyncDeleter::AsyncDeleter(): m_radosCtx.aio_remove() call", m_name);
             aioc->release();
             if (rc) {
-              cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_remove(): ")+m_name);
+              cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncDeleter::AsyncDeleter(): failed to launch aio_remove(): ")+m_name);
               throw Backend::CouldNotDelete(errnum.getMessageValue());
             }
           } catch (...) {

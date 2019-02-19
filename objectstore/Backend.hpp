@@ -105,6 +105,7 @@ public:
   /// A collection of exceptions allowing the user to find out which step failed.
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchObject);
   CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);
+  CTA_GENERATE_EXCEPTION_CLASS(CouldNotCreate);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotLock);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotFetch);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotUpdateValue);
@@ -113,13 +114,36 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotUnlock);
   CTA_GENERATE_EXCEPTION_CLASS(AsyncUpdateWithDelete);
   
+  /** 
+   * A base class handling asynchronous creation of objects.
+   */
+  class AsyncCreator {
+  public:
+    /**
+     * Waits for completion (success) of throws exception (failure).
+     */
+    virtual void wait() = 0;
+    
+    /**
+     * Destructor
+     */
+    virtual ~AsyncCreator() {}
+  };
+  
+  /**
+   * Triggers the asynchronous object creator.
+   * 
+   * @return pointer to a newly created AsyncUpdater (for RAII)
+   */
+  virtual AsyncCreator * asyncCreate(const std::string & name, const std::string & value) = 0;
+  
   /**
    * A base class handling asynchronous sequence of lock exclusive, fetch, call user 
    * operation, commit, unlock. Each operation will be asynchronous, and the result
    * (success or exception) will be returned via the wait() function call.
    */
   class AsyncUpdater { 
- public:
+  public:
     /**
      * Waits for completion (success) of throws exception (failure).
      */
@@ -158,6 +182,15 @@ public:
      */
     virtual ~AsyncDeleter() {}
   };
+
+  /**
+   * Triggers the asynchronous object delete sequence, as described in 
+   * AsyncDeleter class description.
+   * 
+   * @param name The name of the object to be deleted.
+   * @return pointer to a newly created AsyncDeleter
+   */
+  virtual AsyncDeleter * asyncDelete(const std::string & name) = 0;
   
   /**
    * A base class handling asynchronous fetch (lockfree).
@@ -186,15 +219,6 @@ public:
    * @return pointer to a newly created AsyncDeleter
    */
   virtual AsyncLockfreeFetcher * asyncLockfreeFetch(const std::string & name) = 0;
-  
-  /**
-   * Triggers the asynchronous object delete sequence, as described in 
-   * AsyncDeleter class description.
-   * 
-   * @param name The name of the object to be deleted.
-   * @return pointer to a newly created AsyncDeleter
-   */
-  virtual AsyncDeleter * asyncDelete(const std::string & name) = 0;
   
   /**
    * Base class for the representation of the parameters of the BackendStore.

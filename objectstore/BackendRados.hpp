@@ -267,6 +267,42 @@ private:
   
 public:
   /**
+   * A class following up the async creation. Constructor implicitly starts the creation.
+   */
+  class AsyncCreator: public Backend::AsyncCreator {
+  public:
+    AsyncCreator(BackendRados & be, const std::string & name, const std::string & value);
+    void wait() override;
+  private:
+    /** A reference to the backend */
+    BackendRados &m_backend;
+    /** The object name */
+    const std::string m_name;
+    /** The content of object */
+    std::string m_value;
+    /** Storage for stat operation (date) in case of EEXIST (we retry on zero sized objects, others are a genuine error). */
+    time_t m_time;
+    /** Storage for stat operation (size) in case of EEXIST (we retry on zero sized objects, others are a genuine error). */
+    uint64_t m_size;
+    /** The promise that will both do the job and allow synchronization with the caller. */
+    std::promise<void> m_job;
+    /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
+    std::future<void> m_jobFuture;
+    /** The rados bufferlist used to hold the object data (read+write) */
+    ::librados::bufferlist m_radosBufferList;
+    /** Callback for the write operation */
+    static void createExclusiveCallback(librados::completion_t completion, void *pThis);
+    /** Callback for stat operation, handling potential retries after EEXIST */
+    static void statCallback(librados::completion_t completion, void *pThis);
+    /** Instrumentation for rados calls timing */
+    RadosTimeoutLogger m_radosTimeoutLogger;
+    /** Timer for retries (created only when needed */
+    std::unique_ptr<cta::utils::Timer> m_retryTimer;
+  };
+  
+  Backend::AsyncCreator* asyncCreate(const std::string& name, const std::string& value) override;
+  
+  /**
    * A class following up the lock-fetch-update-write-unlock. Constructor implicitly
    * starts the lock step.
    */
@@ -281,8 +317,6 @@ public:
     const std::string m_name;
     /** The operation on the object */
     std::function <std::string(const std::string &)> & m_update;
-    /** Storage for stat operation (date) */
-    time_t date;
     /** The promise that will both do the job and allow synchronization with the caller. */
     std::promise<void> m_job;
     /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
@@ -331,8 +365,6 @@ public:
     BackendRados &m_backend;
     /** The object name */
     const std::string m_name;
-    /** Storage for stat operation (date) */
-    time_t date;
     /** The promise that will both do the job and allow synchronization with the caller. */
     std::promise<void> m_job;
     /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */

@@ -90,6 +90,24 @@ public:
   ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
 
   ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) override;
+
+  /**
+   * A class mimicking AIO using C++ async tasks
+   */
+  class AsyncCreator: public Backend::AsyncCreator {
+  public:
+    AsyncCreator(BackendVFS & be, const std::string & name, const std::string & value);
+    void wait() override;
+  private:
+    /** A reference to the backend */
+    BackendVFS &m_backend;
+    /** The object name */
+    const std::string m_name;
+    /** The object value */
+    std::string m_value;
+     /** The future that will both do the job and allow synchronization with the caller. */
+    std::future<void> m_job;
+  };
   
   /**
    * A class mimicking AIO using C++ async tasks
@@ -146,6 +164,8 @@ public:
     /** The thread that will both do the job and allow synchronization with the caller. */
     void run() override;
   };
+  
+  Backend::AsyncCreator* asyncCreate(const std::string& name, const std::string& value) override;
   
   Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
   

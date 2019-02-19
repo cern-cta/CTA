@@ -331,6 +331,56 @@ BackendVFS::ScopedLock * BackendVFS::lockShared(std::string name, uint64_t timeo
   return ret.release();
 }
 
+BackendVFS::AsyncCreator::AsyncCreator(BackendVFS& be, const std::string& name, const std::string& value):
+  m_backend(be), m_name(name), m_value(value),
+  m_job(std::async(std::launch::async, 
+    [&](){
+      std::string path = m_backend.m_root + "/" + m_name;
+      std::string lockPath = m_backend.m_root + "/." + m_name + ".lock";
+      bool fileCreated = false;
+      bool lockCreated = false;
+      try {
+        // TODO: lax permissions to get prototype going. Should be revisited
+        int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
+        // Create and fill up the path
+        cta::exception::Errnum::throwOnMinusOne(fd,
+            "In AsyncCreator::AsyncCreator::lambda, failed to open the file");
+        fileCreated = true;
+        #ifdef LOW_LEVEL_TRACING
+          ::printf("In BackendVFS::create(): created object %s, tid=%li\n", name.c_str(), ::syscall(SYS_gettid));
+        #endif
+        cta::exception::Errnum::throwOnMinusOne(
+            ::write(fd, m_value.c_str(), m_value.size()),
+            "In AsyncCreator::AsyncCreator::lambda, failed to write to file");
+        cta::exception::Errnum::throwOnMinusOne(::close(fd),
+            "In AsyncCreator::AsyncCreator::lambda, failed to close the file");
+        // Create the lock file
+        // TODO: lax permissions to get prototype going. Should be revisited
+        int fdLock = ::open(lockPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRWXU | S_IRWXG | S_IRWXO);
+        lockCreated = true;
+        cta::exception::Errnum::throwOnMinusOne(fdLock,
+            std::string("In AsyncCreator::AsyncCreator::lambda, failed to create the lock file: ") + name);
+        cta::exception::Errnum::throwOnMinusOne(::close(fdLock),
+            std::string("In AsyncCreator::AsyncCreator::lambda, failed to close the lock file: ") + name);
+      } catch (...) {
+        if (fileCreated) unlink(path.c_str());
+        if (lockCreated) unlink(lockPath.c_str());
+        throw;
+      }
+    })) 
+{}
+
+Backend::AsyncCreator* BackendVFS::asyncCreate(const std::string& name, const std::string& value) {
+  // Create the object. Done.
+  return new AsyncCreator(*this, name, value);
+}
+
+void BackendVFS::AsyncCreator::wait() {
+  m_job.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+}
+
 BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name, std::function<std::string(const std::string&)>& update):
   m_backend(be), m_name(name), m_update(update),
   m_job(std::async(std::launch::async, 
