@@ -460,7 +460,6 @@ public:
   private:
     ObjectOps & m_obj;
     std::unique_ptr<Backend::AsyncLockfreeFetcher> m_asyncLockfreeFetcher;
-    
   };
   friend AsyncLockfreeFetcher;
   
@@ -471,6 +470,38 @@ public:
     return ret.release();
   }
   
+  class AsyncInserter {
+    friend class ObjectOps;
+    AsyncInserter(ObjectOps & obj): m_obj(obj) {}
+  public:
+    void wait() {
+      m_asyncCreator->wait();
+      m_obj.m_existingObject = true;
+    }
+  private:
+    ObjectOps & m_obj;
+    std::unique_ptr<Backend::AsyncCreator> m_asyncCreator;
+  };
+  friend AsyncInserter;
+  
+  AsyncInserter * asyncInsert() {
+    std::unique_ptr<AsyncInserter> ret;
+    // Current simplification: the parsing of the header/payload is synchronous.
+    // This could be delegated to the backend.
+    // Check that we are not dealing with an existing object
+    if (m_existingObject)
+      throw NotNewObject("In ObjectOps::asyncInsert: trying to insert an already exitsting object");
+    // Check that the object is ready in memory
+    if (!m_headerInterpreted || !m_payloadInterpreted)
+      throw NotInitialized("In ObjectOps::insert: trying to insert an uninitialized object");
+    // Push the payload into the header and write the object
+    // We don't require locking here, as the object does not exist
+    // yet in the object store (and this is ensured by the )
+    m_header.set_payload(m_payload.SerializeAsString());
+    ret->m_asyncCreator.reset(m_objectStore.asyncCreate(getAddressIfSet(), m_header.SerializeAsString()));
+    return ret.release();
+  }
+ 
   void commit() {
     checkPayloadWritable();
     if (!m_existingObject) 
