@@ -1862,7 +1862,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
-        "TAPE.LBP_IS_ON AS LBP_IS_ON,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -1895,8 +1894,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.vo ||
        searchCriteria.capacityInBytes ||
        searchCriteria.disabled ||
-       searchCriteria.full ||
-       searchCriteria.lbp) {
+       searchCriteria.full) {
       sql += " WHERE ";
     }
 
@@ -1946,10 +1944,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " TAPE.IS_FULL = :IS_FULL";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.lbp) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += " TAPE.LBP_IS_ON = :LBP_IS_ON";
-    }
 
     sql += " ORDER BY TAPE.VID";
 
@@ -1964,7 +1958,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.disabled) stmt.bindBool(":IS_DISABLED", searchCriteria.disabled.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
-    if(searchCriteria.lbp) stmt.bindBool(":LBP_IS_ON", searchCriteria.lbp.value());
 
     auto rset = stmt.executeQuery();
     while (rset.next()) {
@@ -1982,7 +1975,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.disabled = rset.columnBool("IS_DISABLED");
       tape.full = rset.columnBool("IS_FULL");
-      tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -2028,7 +2020,6 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
-        "TAPE.LBP_IS_ON AS LBP_IS_ON,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2096,7 +2087,6 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.disabled = rset.columnBool("IS_DISABLED");
       tape.full = rset.columnBool("IS_FULL");
-      tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -2146,7 +2136,6 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
-        "TAPE.LBP_IS_ON AS LBP_IS_ON,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2190,7 +2179,6 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.disabled = rset.columnBool("IS_DISABLED");
       tape.full = rset.columnBool("IS_FULL");
-      tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -4284,21 +4272,19 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uin
 //------------------------------------------------------------------------------
 // tapeLabelled
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) {
+void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &drive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
         "LABEL_DRIVE = :LABEL_DRIVE,"
-        "LABEL_TIME = :LABEL_TIME,"
-        "LBP_IS_ON = :LBP_IS_ON "
+        "LABEL_TIME = :LABEL_TIME "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":LABEL_DRIVE", drive);
     stmt.bindUint64(":LABEL_TIME", now);
-    stmt.bindBool(":LBP_IS_ON", lbpIsOn);
     stmt.bindString(":VID", vid);
     stmt.executeNonQuery();
 
@@ -4801,7 +4787,6 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_NAME = TAPE_POOL.TAPE_POOL_NAME "
       "WHERE "
-//      "LBP_IS_ON IS NOT NULL AND "   // Set when the tape has been labelled
 //      "LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
 //      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
         "IS_DISABLED = '0' AND "

@@ -443,10 +443,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
-  const bool lbpIsOn = true;
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
+  catalogue.tapeLabelled(s_vid, "tape_drive");
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -641,10 +640,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
-  const bool lbpIsOn = true;
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
+  catalogue.tapeLabelled(s_vid, "tape_drive");
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -892,10 +890,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, "mediatype", "vendor", s_libraryName, s_tapePoolName,
     capacityInBytes, notDisabled, notFull, tapeComment);
 
-  const bool lbpIsOn = true;
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
+  catalogue.tapeLabelled(s_vid, "tape_drive");
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -1137,8 +1134,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
-  const bool lbpIsOn = true;
-  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
+  catalogue.tapeLabelled(s_vid, "tape_drive");
 
   {
     // Emulate a tape server by asking for a mount and then a file

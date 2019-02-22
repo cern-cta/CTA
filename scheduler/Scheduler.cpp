@@ -294,7 +294,7 @@ std::list<common::dataStructures::StorageClass> Scheduler::listStorageClass(cons
 //------------------------------------------------------------------------------
 // labelTape
 //------------------------------------------------------------------------------
-void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp) {
+void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force) {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 

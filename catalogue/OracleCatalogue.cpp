@@ -220,7 +220,6 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
         "LAST_FSEQ AS LAST_FSEQ,"
         "IS_DISABLED AS IS_DISABLED,"
         "IS_FULL AS IS_FULL,"
-        "LBP_IS_ON AS LBP_IS_ON,"
 
         "LABEL_DRIVE AS LABEL_DRIVE,"
         "LABEL_TIME AS LABEL_TIME,"
@@ -263,7 +262,6 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
     tape.disabled = rset.columnBool("IS_DISABLED");
     tape.full = rset.columnBool("IS_FULL");
-    tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
     tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
     tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");

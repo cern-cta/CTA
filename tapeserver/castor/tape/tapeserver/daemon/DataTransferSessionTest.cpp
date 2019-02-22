@@ -1299,7 +1299,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   {    
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116", true);
+    catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     
     // Create the files and schedule the archivals
@@ -1441,7 +1441,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   {    
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116", true);
+    catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     
     // Create the files and schedule the archivals
@@ -1600,7 +1600,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   {    
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116", true);
+    catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     
     // Create the files and schedule the archivals
@@ -1757,7 +1757,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   {    
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116", true);
+    catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     
     // Create the files and schedule the archivals

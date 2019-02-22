@@ -190,7 +190,7 @@ public:
    * accomplish it will dequeue it.
    */
   void queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
-    const bool force, const bool lbp);
+    const bool force);
 
   void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
     const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc);

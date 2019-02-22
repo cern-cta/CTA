@@ -1867,7 +1867,6 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
 
       searchCriteria.disabled        = getOptional(OptionBoolean::DISABLED,       &has_any);
       searchCriteria.full            = getOptional(OptionBoolean::FULL,           &has_any);
-      searchCriteria.lbp             = getOptional(OptionBoolean::LBP,            &has_any);
       searchCriteria.capacityInBytes = getOptional(OptionUInt64::CAPACITY,        &has_any);
       searchCriteria.logicalLibrary  = getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
       searchCriteria.tapePool        = getOptional(OptionString::TAPE_POOL,       &has_any);
@@ -1888,7 +1887,7 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
          "vid","media type","vendor","logical library","tapepool","vo","encryption key","capacity","occupancy",
-         "last fseq","full","disabled","lbp","label drive","label time","last w drive","last w time",
+         "last fseq","full","disabled","label drive","label time","last w drive","last w time",
          "last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
@@ -1906,11 +1905,6 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastFSeq)));
          if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
          if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
-         if(it->lbp) {
-           if(it->lbp.value()) currentRow.push_back("true"); else currentRow.push_back("false");
-         } else {
-           currentRow.push_back("null");
-         }
 
          if(it->labelLog) {
             currentRow.push_back(it->labelLog.value().drive);
@@ -1955,11 +1949,8 @@ void RequestMessage::processTape_Label(const cta::admin::AdminCmd &admincmd, cta
 
    auto &vid   = getRequired(OptionString::VID);
    auto  force = getOptional(OptionBoolean::FORCE);
-   auto  lbp   = getOptional(OptionBoolean::LBP);
 
-   m_scheduler.queueLabel(m_cliIdentity, vid,
-                          force ? force.value() : false,
-                          lbp ? lbp.value() : true);
+   m_scheduler.queueLabel(m_cliIdentity, vid, force ? force.value() : false);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

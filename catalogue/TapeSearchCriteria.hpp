@@ -81,11 +81,6 @@ struct TapeSearchCriteria {
    */
   optional<bool> full;
 
-  /**
-   * Set to true if searching for tapes with logical block protection enabled.
-   */
-  optional<bool> lbp;
-
 }; // struct TapeSearchCriteria
 
 } // namespace catalogue
