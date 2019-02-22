@@ -1588,7 +1588,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           ASSERT_EQ(retrieveRequest.getQueueType(),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
           ASSERT_EQ(retrieveRequest.getRetrieveFileQueueCriteria().mountPolicy,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
           ASSERT_EQ(retrieveRequest.getActiveCopyNumber(),1);
-          ASSERT_EQ(retrieveRequest.getJobStatus(job.copyNb),cta::objectstore::serializers::RetrieveJobStatus::RJS_Succeeded);
+          ASSERT_EQ(retrieveRequest.getJobStatus(job.copyNb),cta::objectstore::serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
           ASSERT_EQ(retrieveRequest.getJobs().size(),1);
 
           //Testing the archive file associated to the retrieve request
@@ -1715,8 +1715,22 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     //queue all the ArchiveRequests into the ArchiveQueueToTransferForRepack queue.
     for(uint64_t i = 1; i <= nbTapesForTest; ++i){
       scheduler.queueArchiveRequestForRepackBatch(archiveRequestsPerTape[i],lc);
-      scheduler.waitSchedulerDbSubthreadsComplete();
     }
+    scheduler.waitSchedulerDbSubthreadsComplete();
+    
+    //Test that the ArchiveRequests are in the ArchiveQueueToTransferForRepack queue
+    /*cta::objectstore::RootEntry re(schedulerDB.getBackend());
+    cta::objectstore::ScopedExclusiveLock sel(re);
+    re.fetch();
+
+    //Get the retrieveQueueToReportToRepackForSuccess
+    std::string archiveQueueToTransferForRepack = re.getArchiveQueueAddress(s_tapePoolName,cta::objectstore::JobQueueType::JobsToTransfer);
+    cta::objectstore::ArchiveQueue aq(archiveQueueToTransferForRepack,schedulerDB.getBackend());
+
+    //Fetch the queue so that we can get the retrieveRequests from it
+    cta::objectstore::ScopedExclusiveLock rql(aq);
+    aq.fetch();*/
+
   }
 }
 

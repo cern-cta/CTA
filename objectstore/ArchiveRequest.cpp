@@ -96,6 +96,8 @@ JobQueueType ArchiveRequest::getJobQueueType(uint16_t copyNumber) {
       switch (j.status()) {
       case serializers::ArchiveJobStatus::AJS_ToTransfer:
         return JobQueueType::JobsToTransfer;
+      case serializers::ArchiveJobStatus::AJS_ToTransferForRepack:
+        return JobQueueType::JobsToTransferForRepack;
       case serializers::ArchiveJobStatus::AJS_Complete:
         throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Complete jobs are not queueable. They are finished and pend siblings completion.");
       case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
@@ -534,8 +536,8 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
             // If a status change was requested, do it.
             if (newStatus) j->set_status(*newStatus);
             // We also need to gather all the job content for the user to get in-memory
-            // representation.
-            // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequest.
+            // representation.getLockedAndFetchedJobQueue
+            // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequesgetLockedAndFetchedJobQueuet.
             // We could try and refactor this.
             retRef.m_archiveFile.archiveFileID = payload.archivefileid();
             retRef.m_archiveFile.checksumType = payload.checksumtype();

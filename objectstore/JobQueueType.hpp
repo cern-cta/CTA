@@ -21,6 +21,6 @@
 #include <string>
 
 namespace cta { namespace objectstore {
-enum class JobQueueType { JobsToTransfer, FailedJobs, JobsToReportToUser, JobsToReportToRepackForSuccess, JobsToReportToRepackForFailure };
+enum class JobQueueType { JobsToTransfer, FailedJobs, JobsToReportToUser, JobsToReportToRepackForSuccess, JobsToReportToRepackForFailure, JobsToTransferForRepack };
 std::string toString(JobQueueType queueType);
 }} // namespace cta::objectstore

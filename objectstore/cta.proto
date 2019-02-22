@@ -280,6 +280,7 @@ enum ArchiveJobStatus {
   AJS_ToReportForFailure = 997;
   AJS_Failed = 998;
   AJS_Abandoned = 999;
+  AJS_ToTransferForRepack = 1001;
 }
 
 message ArchiveJob {
@@ -333,7 +334,7 @@ enum RetrieveJobStatus {
   RJS_ToTransfer = 1;
   RJS_ToReportForFailure = 997;
   RJS_Failed = 998;
-  RJS_Succeeded = 1002; //For Retrieve request created by a Repack request
+  RJS_ToReportToRepackForSuccess = 1002; //For Retrieve request created by a Repack request
 }
 
 message SchedulerRetrieveRequest {

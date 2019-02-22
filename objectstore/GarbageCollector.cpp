@@ -385,6 +385,8 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
   fetchedObjects.clear();
 }
 
+//TODO : We should record the VID in the ArchiveRequest object to allow the requeueing in the proper report queue (currently, the report queue is selected
+//by tapepool, which works but is not the most efficient way to report the request (contention problem)
 void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& agent, AgentReference& agentReference, Backend & objectStore,
     log::LogContext & lc) {
   // We can now start updating the objects efficiently. We still need to re-fetch them locked 

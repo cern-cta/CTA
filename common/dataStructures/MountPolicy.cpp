@@ -19,6 +19,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "MountPolicy.hpp"
 
 namespace cta {
 namespace common {
@@ -60,6 +61,20 @@ bool MountPolicy::operator!=(const MountPolicy &rhs) const {
   return !operator==(rhs);
 }
 
+MountPolicy MountPolicy::operator=(const MountPolicy& other){
+  if(this != &other){
+    this->archiveMinRequestAge = other.archiveMinRequestAge;
+    this->archivePriority = other.archivePriority;
+    this->comment = other.comment;
+    this->creationLog = other.creationLog;
+    this->lastModificationLog = other.lastModificationLog;
+    this->maxDrivesAllowed = other.maxDrivesAllowed;
+    this->name = other.name;
+    this->retrieveMinRequestAge = other.retrieveMinRequestAge;
+    this->retrievePriority = other.retrievePriority;
+  }
+  return *this;
+}
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------

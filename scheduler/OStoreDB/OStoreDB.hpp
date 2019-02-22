@@ -267,7 +267,7 @@ public:
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) override;
   
-  void queueArchiveForRepack(cta::objectstore::ArchiveRequest& request, log::LogContext& logContext) override;
+  void queueArchiveForRepack(std::unique_ptr<cta::objectstore::ArchiveRequest> request, log::LogContext& logContext) override;
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>> getArchiveJobs() const override;
   

@@ -183,6 +183,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   case JobQueueType::JobsToTransfer: archiveQueueNameHeader+="ToTransfer"; break;
   case JobQueueType::JobsToReportToUser: archiveQueueNameHeader+="ToReport"; break;
   case JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
+  case JobQueueType::JobsToTransferForRepack: archiveQueueNameHeader+="ToTransferForRepack"; break;
   case JobQueueType::JobsToReportToRepackForSuccess: archiveQueueNameHeader+="ToReportToRepackForSuccess"; break;
   default: break;
   }

@@ -29,6 +29,7 @@ namespace cta { namespace objectstore {
 class GenericObject;
 class AgentReference;
 class GarbageCollector;
+class Sorter;
 
 /**
  * Class containing agent information and managing the update of the 
@@ -42,6 +43,7 @@ class GarbageCollector;
 class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
   friend class AgentReference;
   friend class GarbageCollector;
+  friend class Sorter;
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
   Agent(GenericObject & go);

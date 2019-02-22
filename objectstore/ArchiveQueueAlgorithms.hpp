@@ -495,7 +495,7 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::QueueType {
 
 template<>
 struct ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForRepack>::QueueType{
-  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransfer;
+  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForRepack;
 };
 
 template<>

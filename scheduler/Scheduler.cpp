@@ -179,8 +179,8 @@ void Scheduler::queueArchiveRequestForRepackBatch(std::list<cta::objectstore::Ar
     archiveRequest.fetch();
     cta::common::dataStructures::ArchiveFile archiveFile = archiveRequest.getArchiveFile();
     rReqL.release();
-    this->m_db.queueArchiveForRepack(archiveRequest,lc);
-    
+    std::unique_ptr<cta::objectstore::ArchiveRequest>  arUniqPtr = cta::make_unique<cta::objectstore::ArchiveRequest>(archiveRequest);
+    this->m_db.queueArchiveForRepack(std::move(arUniqPtr),lc);
     cta::log::TimingList tl;
     utils::Timer t;
     tl.insOrIncAndReset("schedulerDbTime", t);

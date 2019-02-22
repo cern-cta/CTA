@@ -41,6 +41,7 @@
 #include <iostream>
 #endif
 #include <valgrind/helgrind.h>
+#include <iostream>
 
 namespace cta { namespace objectstore {
 

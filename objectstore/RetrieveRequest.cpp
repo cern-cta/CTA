@@ -548,7 +548,7 @@ JobQueueType RetrieveRequest::getQueueType() {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return JobQueueType::JobsToTransfer;
       break;
-    case serializers::RetrieveJobStatus::RJS_Succeeded:
+    case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
       return JobQueueType::JobsToReportToRepackForSuccess;
       break;
     case serializers::RetrieveJobStatus::RJS_ToReportForFailure:
@@ -860,7 +860,7 @@ RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReport
           if(job.copynb() == copyNb)
           {
             //Change the status to RJS_Succeed
-            job.set_status(serializers::RetrieveJobStatus::RJS_Succeeded);
+            job.set_status(serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
             oh.set_payload(payload.SerializePartialAsString());
             return oh.SerializeAsString();
           }

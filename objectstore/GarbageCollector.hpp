@@ -24,6 +24,7 @@
 #include "AgentRegister.hpp"
 #include "JobQueueType.hpp"
 #include "common/log/LogContext.hpp"
+#include "Sorter.hpp"
 
 /**
  * Plan => Garbage collector keeps track of the agents.
@@ -58,6 +59,7 @@ public:
     std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
     std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
     std::list<std::shared_ptr<GenericObject>> otherObjects;
+    //Sorter m_sorter;
     /// Fill up the fetchedObjects with objects of interest.
     void fetchOwnedObjects(Agent & agent, std::list<std::shared_ptr<GenericObject>> & fetchedObjects, Backend & objectStore,
         log::LogContext & lc);
@@ -71,13 +73,16 @@ public:
     // Lock, fetch and update other objects
     void lockFetchAndUpdateOtherObjects(Agent & agent, AgentReference & agentReference, Backend & objectStore,
         cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
+    //Sorter& getSorter();
   };
+  
 private:
   Backend & m_objectStore;
   catalogue::Catalogue & m_catalogue;
   AgentReference & m_ourAgentReference;
   AgentRegister m_agentRegister;
   std::map<std::string, AgentWatchdog * > m_watchedAgents;
+  //void garbageCollectArchiveRequests(Agent& agent, OwnedObjectSorter &ownedObjectSorter,log::LogContext & lc);
 };
   
 }}

@@ -39,6 +39,8 @@ struct MountPolicy {
   bool operator==(const MountPolicy &rhs) const;
 
   bool operator!=(const MountPolicy &rhs) const;
+  
+  MountPolicy operator=(const MountPolicy& other);
 
   std::string name;
   uint64_t archivePriority;

@@ -118,7 +118,7 @@ public:
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria,
     log::LogContext &logContext) = 0;
   
-  virtual void queueArchiveForRepack(cta::objectstore::ArchiveRequest &request,log::LogContext &logContext) = 0;
+  virtual void queueArchiveForRepack(std::unique_ptr<cta::objectstore::ArchiveRequest> request,log::LogContext &logContext) = 0;
 
   /**
    * Returns all of the queued archive jobs.  The returned jobs are

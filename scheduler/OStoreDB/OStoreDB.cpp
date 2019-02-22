@@ -95,7 +95,7 @@ void OStoreDB::waitSubthreadsComplete() {
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::waitSubthreadsComplete()
+// OStoreDB::setThreadNumber()
 //------------------------------------------------------------------------------
 void OStoreDB::setThreadNumber(uint64_t threadNumber) {
   // Clear all threads.
@@ -641,23 +641,130 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   logContext.log(log::INFO, "In OStoreDB::queueArchive(): recorded request for queueing (enqueueing posted to thread pool).");  
 }
 
-void OStoreDB::queueArchiveForRepack(cta::objectstore::ArchiveRequest& request, log::LogContext& logContext){
-//  objectstore::ScopedExclusiveLock rReqL(request);
-//  request.fetch();
+void OStoreDB::queueArchiveForRepack(std::unique_ptr<cta::objectstore::ArchiveRequest> request, log::LogContext& logContext){
+  assertAgentAddressSet();
   auto mutexForHelgrind = cta::make_unique<cta::threading::Mutex>();
   cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
   auto * mutexForHelgrindAddr = mutexForHelgrind.release();
-  std::unique_ptr<cta::objectstore::ArchiveRequest> aReqUniqPtr;
-  aReqUniqPtr.reset(&request);
+  std::unique_ptr<cta::objectstore::ArchiveRequest> aReqUniqPtr(request.release());
+  objectstore::ScopedExclusiveLock rReqL(*aReqUniqPtr);
+  aReqUniqPtr->fetch();
+  uint64_t taskQueueSize = m_taskQueueSize;
+  // We create the object here
+  //m_agentReference->addToOwnership(aReqUniqPtr->getAddressIfSet(), m_objectStore);
+  utils::Timer timer;
+  double agentReferencingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+  // Prepare the logs to avoid multithread access on the object.
+  log::ScopedParamContainer params(logContext);
+  cta::common::dataStructures::ArchiveFile aFile = aReqUniqPtr->getArchiveFile();
+  params.add("jobObject", aReqUniqPtr->getAddressIfSet())
+        .add("fileId", aFile.archiveFileID)
+        .add("diskInstance", aFile.diskInstance)
+        .add("diskFilePath", aFile.diskFileInfo.path)
+        .add("diskFileId", aFile.diskFileId)
+        .add("agentReferencingTime", agentReferencingTime);
+  delayIfNecessary(logContext);
   cta::objectstore::ArchiveRequest *aReqPtr = aReqUniqPtr.release();
+  
+  m_taskQueueSize++;
+
   auto * et = new EnqueueingTask([aReqPtr, mutexForHelgrindAddr, this]{
-    //TODO : queue the ArchiveRequest
+    std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
+    std::unique_ptr<cta::objectstore::ArchiveRequest> aReq(aReqPtr);
+    // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
+    auto scopedCounterDecrement = [this](void *){ 
+      m_taskQueueSize--;
+      m_taskPostingSemaphore.release();
+    };
+    // A bit ugly, but we need a non-null pointer for the "deleter" to be called at the end of the thread execution
+    std::unique_ptr<void, decltype(scopedCounterDecrement)> scopedCounterDecrementerInstance((void *)1, scopedCounterDecrement);
+    
+    log::LogContext logContext(m_logger);
+    utils::Timer timer;
+    ScopedExclusiveLock arl(*aReq);
+    aReq->fetch();
+    timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    double arTotalQueueUnlockTime = 0;
+    double arTotalQueueingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    // We can now enqueue the requests
+    std::list<std::string> linkedTapePools;
+    std::string currentTapepool;
+    try {
+      for (auto &j: aReq->dumpJobs()) {
+        //Queue each job into the ArchiveQueue
+        double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+        currentTapepool = j.tapePool;
+        linkedTapePools.push_back(j.owner);
+        auto shareLock = ostoredb::MemArchiveQueue::sharedAddToQueue(j, j.tapePool, *aReq, *this, logContext);
+        arTotalQueueingTime += qTime;
+        aReq->commit();
+        // Now we can let go off the queue.
+        shareLock.reset();
+        double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+        arTotalQueueUnlockTime += qUnlockTime;
+        linkedTapePools.push_back(j.owner);
+        log::ScopedParamContainer params(logContext);
+        params.add("tapePool", j.tapePool)
+              .add("queueObject", j.owner)
+              .add("jobObject", aReq->getAddressIfSet())
+              .add("queueingTime", qTime)
+              .add("queueUnlockTime", qUnlockTime);
+        logContext.log(log::INFO, "In OStoreDB::queueArchiveForRepack(): added job to queue.");
+      }
+    } catch (NoSuchArchiveQueue &ex) {
+      // Unlink the request from already connected tape pools
+      for (auto tpa=linkedTapePools.begin(); tpa!=linkedTapePools.end(); tpa++) {
+        objectstore::ArchiveQueue aq(*tpa, m_objectStore);
+        ScopedExclusiveLock aql(aq);
+        aq.fetch();
+        aq.removeJobsAndCommit({aReq->getAddressIfSet()});
+      }
+      aReq->remove();
+      log::ScopedParamContainer params(logContext);
+      params.add("tapePool", currentTapepool)
+            .add("archiveRequestObject", aReq->getAddressIfSet())
+            .add("exceptionMessage", ex.getMessageValue())
+            .add("jobObject", aReq->getAddressIfSet());
+      logContext.log(log::ERR, "In OStoreDB::queueArchiveForRepack(): failed to enqueue job");
+      return;
+    }
+    // The request is now fully set.
+    double arOwnerResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    
+    double arLockRelease = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    
+    // And remove reference from the agent
+    m_agentReference->removeFromOwnership(aReq->getAddressIfSet(), m_objectStore);
+    double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+
+    auto archiveFile = aReq->getArchiveFile();
+    log::ScopedParamContainer params(logContext);
+    params.add("jobObject", aReq->getAddressIfSet())
+          .add("fileId", archiveFile.archiveFileID)
+          .add("diskInstance", archiveFile.diskInstance)
+          .add("diskFilePath", archiveFile.diskFileInfo.path)
+          .add("diskFileId", archiveFile.diskFileId)
+          .add("totalQueueingTime", arTotalQueueingTime)
+          .add("totalQueueUnlockTime", arTotalQueueUnlockTime)
+          .add("ownerResetTime", arOwnerResetTime)
+          .add("lockReleaseTime", arLockRelease)
+          .add("agentOwnershipResetTime", agOwnershipResetTime)
+          .add("totalTime", arTotalQueueingTime
+             + arTotalQueueUnlockTime + arOwnerResetTime + arLockRelease 
+             + agOwnershipResetTime);
+    
+    logContext.log(log::INFO, "In OStoreDB::queueArchiveForRepack(): Finished enqueueing request.");
   });
   ANNOTATE_HAPPENS_BEFORE(et);
   mlForHelgrind.unlock();
+  rReqL.release();
   m_enqueueingTasksQueue.push(et);
   //TODO Time measurement
-  logContext.log(log::INFO, "In OStoreDB::queueArchiveForRepack(): recorded request for queueing (enqueueing posted to thread pool).");  
+  double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+  params.add("taskPostingTime", taskPostingTime)
+        .add("taskQueueSize", taskQueueSize)
+        .add("totalTime", agentReferencingTime + taskPostingTime);
+  logContext.log(log::INFO, "In OStoreDB::queueArchiveForRepack(): recorded request for queueing (enqueueing posted to thread pool).");
 }
 
 //------------------------------------------------------------------------------
@@ -2508,7 +2615,7 @@ std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSu
     osdbJob->checkReportSucceedForRepack();
     auto & tapeFile = osdbJob->archiveFile.tapeFiles[osdbJob->selectedCopyNb];
     vid = osdbJob->m_retrieveMount->mountInfo.vid;
-    insertedElementsLists.push_back(AqtrtrfsCa::InsertedElement{&osdbJob->m_retrieveRequest, (uint16_t)osdbJob->selectedCopyNb, tapeFile.fSeq,osdbJob->archiveFile.fileSize,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,serializers::RetrieveJobStatus::RJS_Succeeded});
+    insertedElementsLists.push_back(AqtrtrfsCa::InsertedElement{&osdbJob->m_retrieveRequest, (uint16_t)osdbJob->selectedCopyNb, tapeFile.fSeq,osdbJob->archiveFile.fileSize,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess});
   }
   aqtrtrfsCa.referenceAndSwitchOwnership(vid,insertedElementsLists,lc);
   return ret;

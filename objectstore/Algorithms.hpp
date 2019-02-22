@@ -116,7 +116,7 @@ public:
     log::TimingList timingList;
     utils::Timer t;
     ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId,  lc);
-    contAddress = cont.getAddressIfSet();
+    contAddress = cont.getAddressIfSet();//TODO : It would be better to return this value
     auto contSummaryBefore = ContainerTraits<Q,C>::getContainerSummary(cont);
     timingList.insertAndReset("queueLockFetchTime", t);
     ContainerTraits<Q,C>::addReferencesIfNecessaryAndCommit(cont, elements, m_agentReference, lc);

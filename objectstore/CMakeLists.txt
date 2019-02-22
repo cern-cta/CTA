@@ -75,6 +75,7 @@ add_library (ctaobjectstore SHARED
   RetrieveQueueFailedAlgorithms.cpp
   RetrieveQueueToReportToRepackForSuccessAlgorithms.cpp
   JobQueueType.cpp
+  Sorter.cpp
   ArchiveRequest.cpp
   RetrieveRequest.cpp
   DriveRegister.cpp
@@ -108,6 +109,7 @@ set(ObjectStoreUnitTests
   RetrieveQueueTest.cpp
   GarbageCollectorTest.cpp
   AlgorithmsTest.cpp
+  SorterTest.cpp
 )
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
