@@ -233,7 +233,7 @@ struct Login {
    * postgresql:postgresql://user:secret@localhost/mydb
    *
    * an example configuraiton using connect info
-   * postgresql:user=user password=secret host=localhost db=mydb
+   * postgresql:user=user password=secret host=localhost dbname=mydb
    *
    * @param connectionDetails The database connection details.
    */
