@@ -80,9 +80,15 @@ void PostgresStmt::bindOptionalString(const std::string &paramName, const option
     }
 
     const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
+
+    if (paramIdx==0 || paramIdx>m_paramValues.size()) {
+      throw exception::Exception(std::string("Bad index for paramName ") + paramName);
+    }
+
     const unsigned int idx = paramIdx - 1;
 
     if (paramValue) {
+      // we must not cause the vector m_paramValues to resize, otherwise the c-pointers can be invalidated
       m_paramValues[idx] = paramValue.value();
       m_paramValuesPtrs[idx] = m_paramValues[idx].c_str();
     } else {
@@ -111,6 +117,7 @@ void PostgresStmt::bindOptionalUint64(const std::string &paramName, const option
 
     const unsigned int idx = paramIdx - 1;
     if (paramValue) {
+      // we must not cause the vector m_paramValues to resize, otherwise the c-pointers can be invalidated
       m_paramValues[idx] = std::to_string(paramValue.value());
       m_paramValuesPtrs[idx] = m_paramValues[idx].c_str();
     } else {
