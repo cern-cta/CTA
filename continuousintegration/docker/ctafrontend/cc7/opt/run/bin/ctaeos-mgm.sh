@@ -9,7 +9,7 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable eos-citrine
 
   # Install missing RPMs
-  yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo
+  yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate
 fi
 
 # create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure
