@@ -2226,13 +2226,13 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
       "UPDATE TAPE SET "
         "DATA_IN_BYTES = 0,"
         "LAST_FSEQ = 0,"
-        "IS_FULL = 0,"
+        "IS_FULL = '0',"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
       "WHERE "
         "VID = :UPDATE_VID AND "
-        "IS_FULL != 0 AND "
+        "IS_FULL != '0' AND "
         "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID)";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
@@ -2621,7 +2621,7 @@ void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
   try {
     const char *const sql =
       "UPDATE TAPE SET "
-        "IS_FULL = 1 "
+        "IS_FULL = '1' "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
@@ -4804,8 +4804,8 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
 //      "LBP_IS_ON IS NOT NULL AND "   // Set when the tape has been labelled
 //      "LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
 //      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
-        "IS_DISABLED = 0 AND "
-        "IS_FULL = 0 AND "
+        "IS_DISABLED = '0' AND "
+        "IS_FULL = '0' AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
 
     auto conn = m_connPool.getConn();
@@ -5059,7 +5059,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.VID = TAPE.VID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND "
-        "TAPE.IS_DISABLED = 0 "
+        "TAPE.IS_DISABLED = '0' "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql);
@@ -5237,7 +5237,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
       "WHERE "
         "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID AND "
-        "TAPE.IS_DISABLED = 0 "
+        "TAPE.IS_DISABLED = '0' "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql);
