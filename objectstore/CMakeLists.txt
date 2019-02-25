@@ -59,6 +59,8 @@ add_library (ctaobjectstore SHARED
   Agent.cpp
   AgentHeartbeatThread.cpp
   AgentReference.cpp
+  AgentReferenceInterface.cpp
+  AgentWrapper.cpp
   AgentRegister.cpp
   AgentWatchdog.cpp
   ArchiveQueue.cpp

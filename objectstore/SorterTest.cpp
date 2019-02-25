@@ -92,7 +92,9 @@ namespace unitTests {
     ar.setArchiveFile(aFile);
     ar.addJob(1, "TapePool0", agentRef.getAgentAddress(), 1, 1, 1);
     ar.addJob(2, "TapePool1", agentRef.getAgentAddress(), 1, 1, 1);
+    ar.addJob(3,"TapePool0",agentRef.getAgentAddress(),1,1,1);
     ar.setJobStatus(1,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportForTransfer);
+    ar.setJobStatus(3,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportForTransfer);
     cta::common::dataStructures::MountPolicy mp;
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
@@ -107,7 +109,7 @@ namespace unitTests {
     cta::objectstore::Sorter sorter(agentRefSorter,be,catalogue);
     std::shared_ptr<cta::objectstore::ArchiveRequest> arPtr = std::make_shared<cta::objectstore::ArchiveRequest>(ar);
     for(auto& j: jobs){
-      sorter.insertArchiveJob(arPtr,j,lc);
+      sorter.insertArchiveJob(arPtr,agentRef,j,lc);
     }
     atfrl.release();
     //Get the future
@@ -135,10 +137,9 @@ namespace unitTests {
       //Fetch the queue so that we can get the archiveRequests from it
       cta::objectstore::ScopedExclusiveLock aql(aq);
       aq.fetch();
-      ASSERT_EQ(aq.dumpJobs().size(),1);
-      ASSERT_EQ(aq.getTapePool(),"TapePool0");
+      ASSERT_EQ(aq.dumpJobs().size(),2);
       for(auto &job: aq.dumpJobs()){
-        ASSERT_EQ(job.copyNb,1);
+        ASSERT_TRUE(job.copyNb == 1 || job.copyNb == 3);
         ASSERT_EQ(job.size,667);
         cta::objectstore::ArchiveRequest archiveRequest(job.address,be);
         archiveRequest.fetchNoLock();

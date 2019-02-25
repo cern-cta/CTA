@@ -27,16 +27,60 @@ Sorter::Sorter(AgentReference& agentReference, Backend& objectstore, catalogue::
 Sorter::~Sorter() {
 }
 
-void Sorter::insertArchiveJob(std::shared_ptr<ArchiveRequest> archiveRequest, ArchiveRequest::JobDump& jobToInsert, log::LogContext & lc){
-  std::shared_ptr<ArchiveJobQueueInfo> ajqi = std::make_shared<ArchiveJobQueueInfo>(ArchiveJobQueueInfo());
+template <typename SpecificQueue>
+void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext& lc){
+  typedef ContainerAlgorithms<ArchiveQueue,SpecificQueue> Algo;
+  Algo algo(m_objectstore,m_agentReference);
+  typename Algo::InsertedElement::list jobsToAdd;
+  std::map<uint64_t,std::shared_ptr<ArchiveJobQueueInfo>> succeededJobs;
+  std::string previousOwner;
+  for(auto& jobToAdd: jobs){
+    Sorter::ArchiveJob job = std::get<0>(jobToAdd->jobToQueue);
+    succeededJobs[job.jobDump.copyNb] = jobToAdd;
+    //TODO, change the ownership by passing the previousOwner to this sorter
+    previousOwner = job.previousOwner->getAgentAddress();
+    jobsToAdd.push_back({ jobToAdd->archiveRequest.get(),job.jobDump.copyNb,job.archiveFile, job.mountPolicy,cta::nullopt });
+  }
+  try{
+      algo.referenceAndSwitchOwnershipIfNecessary(tapePool,previousOwner,queueAddress,jobsToAdd,lc);
+  } catch (typename Algo::OwnershipSwitchFailure &failure){
+    for(auto &failedAR: failure.failedElements){
+      try{
+        std::rethrow_exception(failedAR.failure);
+      } catch(cta::exception::Exception &e){
+        uint16_t copyNb = failedAR.element->copyNb;
+        std::get<1>(succeededJobs[copyNb]->jobToQueue).set_exception(std::current_exception());
+        succeededJobs.erase(copyNb);
+      }
+    }
+  }
+  for(auto& succeededJob: succeededJobs){
+    std::get<1>(succeededJob.second->jobToQueue).set_value();
+  }
+}
+
+void Sorter::dispatchArchiveAlgorithm(const std::string tapePool, const JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext &lc){
+  switch(jobQueueType){
+    case JobQueueType::JobsToReportToUser:
+      executeArchiveAlgorithm<ArchiveQueueToReport>(tapePool,queueAddress,jobs,lc);
+      break;
+    default:
+      executeArchiveAlgorithm<ArchiveQueueToTransfer>(tapePool,queueAddress,jobs,lc);
+      break;
+  }
+}
+
+void Sorter::insertArchiveJob(std::shared_ptr<ArchiveRequest> archiveRequest, AgentReferenceInterface &previousOwner, ArchiveRequest::JobDump& jobToInsert, log::LogContext & lc){
+  auto ajqi = std::make_shared<ArchiveJobQueueInfo>();
   ajqi->archiveRequest = archiveRequest;
   Sorter::ArchiveJob jobToAdd;
   jobToAdd.archiveRequest = archiveRequest;
+  jobToAdd.archiveFile = archiveRequest->getArchiveFile();
   jobToAdd.archiveFileId = archiveRequest->getArchiveFile().archiveFileID;
   jobToAdd.jobDump.copyNb = jobToInsert.copyNb;
   jobToAdd.fileSize = archiveRequest->getArchiveFile().fileSize;
   jobToAdd.mountPolicy = archiveRequest->getMountPolicy();
-  jobToAdd.jobDump.owner = jobToInsert.owner;//TODO : Maybe should be passed in parameter of this method
+  jobToAdd.previousOwner = &previousOwner;
   jobToAdd.startTime = archiveRequest->getEntryLog().time;
   jobToAdd.jobDump.tapePool = jobToInsert.tapePool;
   ajqi->jobToQueue = std::make_tuple(jobToAdd,std::promise<void>());
@@ -48,7 +92,7 @@ void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequ
   std::set<std::string> candidateVids = getCandidateVids(*retrieveRequest);
   //We need to select the best VID to queue the RetrieveJob in the best queue
   if(candidateVids.empty()){
-    std::shared_ptr<RetrieveJobQueueInfo> rjqi = std::make_shared<RetrieveJobQueueInfo>(RetrieveJobQueueInfo());
+    auto rjqi = std::make_shared<RetrieveJobQueueInfo>();
     rjqi->retrieveRequest = retrieveRequest;
     //The first copy of the ArchiveFile will be queued
     cta::common::dataStructures::TapeFile jobTapeFile = retrieveRequest->getArchiveFile().tapeFiles.begin()->second;
@@ -158,16 +202,16 @@ Sorter::MapRetrieve Sorter::getAllRetrieve(){
 }
 
 void Sorter::queueArchiveRequests(const std::string tapePool, const JobQueueType jobQueueType, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& archiveJobInfos, log::LogContext &lc){
-  for(auto& archiveJobInfo: archiveJobInfos){
-    double queueLockFetchTime=0;
+
+   /* double queueLockFetchTime=0;
     double queueProcessAndCommitTime=0;
     double requestsUpdatePreparationTime=0;
     double requestsUpdatingTime = 0;
-    utils::Timer t;
-    uint64_t filesBefore=0;
-    uint64_t bytesBefore=0;
+    utils::Timer t;*/
+    /*uint64_t filesBefore=0;
+    uint64_t bytesBefore=0;*/
     
-    ArchiveQueue aq(m_objectstore);
+    /*ArchiveQueue aq(m_objectstore);
     ScopedExclusiveLock rql;
     Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(aq,rql, m_agentReference, tapePool, jobQueueType, lc);
     queueLockFetchTime = t.secs(utils::Timer::resetCounter);
@@ -223,19 +267,25 @@ void Sorter::queueArchiveRequests(const std::string tapePool, const JobQueueType
       jobPromise.set_exception(std::current_exception());
       continue;
     }
-    
-    requestsUpdatingTime = t.secs(utils::Timer::resetCounter);
+    */
+    std::string queueAddress;
+    this->dispatchArchiveAlgorithm(tapePool,jobQueueType,queueAddress,archiveJobInfos,lc);
+    archiveJobInfos.clear();
+    /*requestsUpdatingTime = t.secs(utils::Timer::resetCounter);
     {
       log::ScopedParamContainer params(lc);
+      ArchiveQueue aq(queueAddress,m_objectstore);
+      ScopedExclusiveLock aql(aq);
+      aq.fetch();
       auto jobsSummary = aq.getJobsSummary();
       params.add("tapePool", tapePool)
             .add("archiveQueueObject", aq.getAddressIfSet())
-            /*.add("filesAdded", filesQueued)
+            .add("filesAdded", filesQueued)
             .add("bytesAdded", bytesQueued)
             .add("filesAddedInitially", filesQueued)
-            .add("bytesAddedInitially", bytesQueued)*/
-            /*.add("filesDequeuedAfterErrors", filesDequeued)
-            .add("bytesDequeuedAfterErrors", bytesDequeued)*/
+            .add("bytesAddedInitially", bytesQueued)
+            .add("filesDequeuedAfterErrors", filesDequeued)
+            .add("bytesDequeuedAfterErrors", bytesDequeued)
             .add("filesBefore", filesBefore)
             .add("bytesBefore", bytesBefore)
             .add("filesAfter", jobsSummary.jobs)
@@ -247,9 +297,7 @@ void Sorter::queueArchiveRequests(const std::string tapePool, const JobQueueType
             //.add("queueRecommitTime", queueRecommitTime);
       lc.log(log::INFO, "In Sorter::queueArchiveRequests(): "
           "Queued an archiveRequest");
-    }
-  }
-  archiveJobInfos.clear();
+    }*/
 }
 
 void Sorter::queueRetrieveRequests(const std::string vid, const JobQueueType jobQueueType, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& retrieveJobsInfo, log::LogContext &lc){

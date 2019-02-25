@@ -24,6 +24,7 @@
 #include "common/threading/MutexLocker.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
+#include "AgentReferenceInterface.hpp"
 #include <atomic>
 #include <string>
 #include <future>
@@ -41,7 +42,7 @@ class Agent;
  * Agent object in the object store).
  * A process 
  */
-class AgentReference {
+class AgentReference: public AgentReferenceInterface{
 public:
   /**
    * Constructor will implicitly generate the address of the Agent object.
@@ -64,14 +65,14 @@ public:
    * @param objectAddress
    * @param backend reference to the backend to use.
    */
-  void addToOwnership(const std::string &objectAddress, objectstore::Backend& backend);
+  void addToOwnership(const std::string &objectAddress, objectstore::Backend& backend) override;
   
   /**
    * Adds a list of object addresses to the referenced agent. The addition is immediate.
    * @param objectAdresses
    * @param backend reference to the backend to use.
    */
-  void addBatchToOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend);
+  void addBatchToOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend) override;
   
   /**
    * Removes an object address from the referenced agent. The additions and removals
@@ -79,14 +80,14 @@ public:
    * The execution order is guaranteed.
    * @param objectAddress
    */
-  void removeFromOwnership(const std::string &objectAddress, objectstore::Backend& backend);
+  void removeFromOwnership(const std::string &objectAddress, objectstore::Backend& backend) override;
   
   /**
    * Removes a list of object addresses to the referenced agent. The removal is immediate.
    * @param objectAdresses
    * @param backend reference to the backend to use.
    */
-  void removeBatchFromOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend);
+  void removeBatchFromOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend) override;
   
   /**
    * Bumps up the heart beat of the agent. This action is queued in memory like the
@@ -98,7 +99,7 @@ public:
    * Gets the address of the Agent object generated on construction.
    * @return the agent object address.
    */
-  std::string getAgentAddress();
+  std::string getAgentAddress() override;
 private:
   static std::atomic<uint64_t> g_nextAgentId;
   std::atomic<uint64_t> m_nextId;

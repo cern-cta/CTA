@@ -33,18 +33,20 @@
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "RetrieveQueue.hpp"
 #include "ArchiveQueue.hpp"
+#include "Algorithms.hpp"
+#include "ArchiveQueueAlgorithms.hpp"
 
 namespace cta { namespace objectstore {  
   
- struct ArchiveJobQueueInfo;
- struct RetrieveJobQueueInfo;
- 
+struct ArchiveJobQueueInfo;
+struct RetrieveJobQueueInfo;
+  
 class Sorter {
 public:  
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   Sorter(AgentReference& agentReference,Backend &objectstore, catalogue::Catalogue& catalogue);
   virtual ~Sorter();
-  void insertArchiveJob(std::shared_ptr<ArchiveRequest> archiveRequest, ArchiveRequest::JobDump& jobToInsert,log::LogContext & lc); 
+  void insertArchiveJob(std::shared_ptr<ArchiveRequest> archiveRequest, AgentReferenceInterface &previousOwner, ArchiveRequest::JobDump& jobToInsert,log::LogContext & lc); 
   /**
    * 
    * @param retrieveRequest
@@ -62,6 +64,8 @@ public:
   struct ArchiveJob{
     std::shared_ptr<ArchiveRequest> archiveRequest;
     ArchiveRequest::JobDump jobDump;
+    common::dataStructures::ArchiveFile archiveFile;
+    AgentReferenceInterface * previousOwner;
     uint64_t archiveFileId;
     time_t startTime;
     uint64_t fileSize;
@@ -90,6 +94,9 @@ private:
   std::string getBestVidForQueueingRetrieveRequest(RetrieveRequest& retrieveRequest, std::set<std::string>& candidateVids, log::LogContext &lc);
   void queueArchiveRequests(const std::string tapePool, const JobQueueType jobQueueType, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& requests, log::LogContext &lc);
   void queueRetrieveRequests(const std::string vid, const JobQueueType jobQueueType, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& archiveJobInfos, log::LogContext &lc);
+  void dispatchArchiveAlgorithm(const std::string tapePool, const JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& archiveJobInfos, log::LogContext &lc);
+  template<typename SpecificQueue>
+  void executeArchiveAlgorithm(const std::string tapePool, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext& lc);
 };
 
 struct ArchiveJobQueueInfo{
@@ -106,4 +113,3 @@ struct RetrieveJobQueueInfo{
 
 }}
 #endif /* SORTER_HPP */
-
