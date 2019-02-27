@@ -173,7 +173,7 @@ message TapeFile {
   required uint64 fseq = 9121;
   required uint64 blockid = 9122;
   required uint64 compressedsize = 9123;
-  required uint64 copynb = 9124;
+  required uint32 copynb = 9124;
   required uint64 creationtime = 9125;
   required string checksumtype = 9126;
   required string checksumvalue = 9127;
@@ -347,7 +347,7 @@ message SchedulerRetrieveRequest {
 }
 
 message RetrieveJob {
-  required uint64 copynb = 9200;
+  required uint32 copynb = 9200;
   required uint32 maxtotalretries = 9201;
   required uint32 maxretrieswithinmount = 9202;
   required uint32 retrieswithinmount = 9203;

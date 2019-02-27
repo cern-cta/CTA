@@ -55,7 +55,7 @@ struct ArchiveRoute {
   /**
    * The cipy number of the tape file.
    */
-  uint64_t copyNb;
+  uint32_t copyNb;
 
   std::string tapePoolName;
   EntryLog creationLog;

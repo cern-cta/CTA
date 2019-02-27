@@ -573,7 +573,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       struct RRUpdatedParams {
         std::unique_ptr<RetrieveRequest::AsyncJobOwnerUpdater> updater;
         std::shared_ptr<RetrieveRequest> retrieveRequest;
-        uint16_t copyNb;
+        uint32_t copyNb;
       };
       {
         std::list<RRUpdatedParams> rrUpdatersParams;
@@ -600,7 +600,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
                   .add("copyNb", rrup.copyNb)
                   .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
                   .add("tapeVid", vid)
-                  .add("retreveQueueObject", rq.getAddressIfSet())
+                  .add("retrieveQueueObject", rq.getAddressIfSet())
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
             lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): requeued retrieve job.");
           } catch (cta::exception::Exception & e) {

@@ -246,7 +246,7 @@ public:
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const uint64_t copyNb,
+    const uint32_t copyNb,
     const std::string &tapePoolName,
     const std::string &comment) override;
 
@@ -263,11 +263,11 @@ public:
   void deleteArchiveRoute(
     const std::string &diskInstanceName,
     const std::string &storageClassName, 
-    const uint64_t copyNb) override;
+    const uint32_t copyNb) override;
 
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
-  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) override;
-  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) override;
+  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) override;
+  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) override;
 
   void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
   void deleteLogicalLibrary(const std::string &name) override;
@@ -696,7 +696,7 @@ protected:
    * @return True if the archive route exists.
    */
   bool archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &storageClassName,
-    const uint64_t copyNb) const;
+    const uint32_t copyNb) const;
 
   /**
    * Returns true if the specified tape exists.

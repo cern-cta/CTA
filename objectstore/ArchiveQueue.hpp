@@ -106,7 +106,7 @@ public:
   struct JobDump {
     uint64_t size;
     std::string address;
-    uint16_t copyNb;
+    uint32_t copyNb;
   };
   std::list<JobDump> dumpJobs();
   struct CandidateJobList {

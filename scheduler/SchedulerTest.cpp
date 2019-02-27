@@ -211,7 +211,7 @@ public:
     const std::string vo = "vo";
     const bool tapePoolEncryption = false;
     catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo, nbPartialTapes, tapePoolEncryption, tapePoolComment);
-    const uint16_t copyNb = 1;
+    const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
     catalogue.createArchiveRoute(s_adminOnAdminHost, s_diskInstance, s_storageClassName, copyNb, s_tapePoolName,
       archiveRouteComment);
@@ -1559,7 +1559,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           //Create the retrieve request from the address of the job and the current backend
           cta::objectstore::RetrieveRequest retrieveRequest(job.address,schedulerDB.getBackend());
           retrieveRequest.fetchNoLock();
-          uint64_t copyNb = job.copyNb;
+          uint32_t copyNb = job.copyNb;
           common::dataStructures::TapeFile tapeFile = retrieveRequest.getArchiveFile().tapeFiles[copyNb];
           common::dataStructures::RetrieveRequest schedulerRetrieveRequest = retrieveRequest.getSchedulerRequest();
           common::dataStructures::ArchiveFile archiveFile = retrieveRequest.getArchiveFile();
@@ -1615,7 +1615,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           retrieveRequest->fetch();
           
           //initialize variable for the test
-          uint64_t copyNb = retrieveRequest->getActiveCopyNumber();
+          uint32_t copyNb = retrieveRequest->getActiveCopyNumber();
           common::dataStructures::ArchiveFile archiveFile = retrieveRequest->getArchiveFile();
           common::dataStructures::TapeFile tapeFile = archiveFile.tapeFiles[copyNb];
           std::string currentVid = allVid.at(i-1);

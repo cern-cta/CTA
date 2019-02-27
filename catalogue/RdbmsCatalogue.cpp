@@ -825,7 +825,7 @@ bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &d
 // archiveRouteExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  const std::string &storageClassName, const uint64_t copyNb) const {
+  const std::string &storageClassName, const uint32_t copyNb) const {
   try {
     const char *const sql =
       "SELECT "
@@ -1125,7 +1125,7 @@ void RdbmsCatalogue::createArchiveRoute(
   const common::dataStructures::SecurityIdentity &admin,
   const std::string &diskInstanceName,
   const std::string &storageClassName,
-  const uint64_t copyNb,
+  const uint32_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
   try {
@@ -1234,7 +1234,7 @@ void RdbmsCatalogue::createArchiveRoute(
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteArchiveRoute(const std::string &diskInstanceName, const std::string &storageClassName,
-  const uint64_t copyNb) {
+  const uint32_t copyNb) {
   try {
     const char *const sql =
       "DELETE FROM "
@@ -1332,7 +1332,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb,
+  const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb,
   const std::string &tapePoolName) {
   try {
     const time_t now = time(nullptr);
@@ -1381,7 +1381,7 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb,
+  const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb,
   const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -4459,7 +4459,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
-      const uint64_t copyNb = rset.columnUint64("COPY_NB");
+      const uint32_t copyNb = rset.columnUint64("COPY_NB");
       const std::string tapePoolName = rset.columnString("TAPE_POOL_NAME");
       copyToPoolMap[copyNb] = tapePoolName;
     }

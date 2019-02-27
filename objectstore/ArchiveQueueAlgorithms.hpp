@@ -37,7 +37,7 @@ struct ContainerTraits<ArchiveQueue,C>
 
   struct InsertedElement {
     ArchiveRequest* archiveRequest;
-    uint16_t copyNb;
+    uint32_t copyNb;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::optional<cta::common::dataStructures::MountPolicy> mountPolicy;
     cta::optional<serializers::ArchiveJobStatus> newStatus;
@@ -48,7 +48,7 @@ struct ContainerTraits<ArchiveQueue,C>
 
   struct PoppedElement {
     std::unique_ptr<ArchiveRequest> archiveRequest;
-    uint16_t copyNb;
+    uint32_t copyNb;
     uint64_t bytes;
     common::dataStructures::ArchiveFile archiveFile;
     std::string srcURL;

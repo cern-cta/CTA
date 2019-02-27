@@ -271,7 +271,7 @@ queueForTransfer:;
 //------------------------------------------------------------------------------
 // RetrieveRequest::addJob()
 //------------------------------------------------------------------------------
-void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
+void RetrieveRequest::addJob(uint32_t copyNb, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
   uint16_t maxReportRetries)
 {
   checkPayloadWritable();
@@ -290,7 +290,7 @@ void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetriesWithinMount, ui
 //------------------------------------------------------------------------------
 // addTransferFailure()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::addTransferFailure(uint16_t copyNumber, uint64_t mountId, const std::string &failureReason,
+auto RetrieveRequest::addTransferFailure(uint32_t copyNumber, uint64_t mountId, const std::string &failureReason,
   log::LogContext &lc) -> EnqueueingNextStep
 {
   checkPayloadWritable();
@@ -331,7 +331,7 @@ auto RetrieveRequest::addTransferFailure(uint16_t copyNumber, uint64_t mountId, 
 //------------------------------------------------------------------------------
 // addReportFailure()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason,
+auto RetrieveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string &failureReason,
   log::LogContext &lc) -> EnqueueingNextStep
 {
   checkPayloadWritable();
@@ -454,7 +454,7 @@ auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getJob()
 //------------------------------------------------------------------------------
-auto  RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
+auto  RetrieveRequest::getJob(uint32_t copyNb) -> JobDump {
   checkPayloadReadable();
   // find the job
   for (auto & j: m_payload.jobs()) {
@@ -485,7 +485,7 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
 //------------------------------------------------------------------------------
 // RetrieveRequest::addJobFailure()
 //------------------------------------------------------------------------------
-bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId, 
+bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId, 
     const std::string & failureReason, log::LogContext & lc) {
   checkPayloadWritable();
   // Find the job and update the number of failures
@@ -519,7 +519,7 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId,
 //------------------------------------------------------------------------------
 // RetrieveRequest::getRetryStatus()
 //------------------------------------------------------------------------------
-RetrieveRequest::RetryStatus RetrieveRequest::getRetryStatus(const uint16_t copyNumber) {
+RetrieveRequest::RetryStatus RetrieveRequest::getRetryStatus(const uint32_t copyNumber) {
   checkPayloadReadable();
   for (auto &j: m_payload.jobs()) {
     if (copyNumber == j.copynb()) {
@@ -562,6 +562,27 @@ JobQueueType RetrieveRequest::getQueueType() {
   return JobQueueType::FailedJobs;
 }
 
+JobQueueType RetrieveRequest::getQueueType(uint32_t copyNb){
+  checkPayloadReadable();
+  for(auto &j: m_payload.jobs()){
+    if(j.copynb() == copyNb){
+      switch(j.status()){
+        case serializers::RetrieveJobStatus::RJS_ToTransfer:
+          return JobQueueType::JobsToTransfer;
+        case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
+          return JobQueueType::JobsToReportToRepackForSuccess;
+        case serializers::RetrieveJobStatus::RJS_ToReportForFailure:
+          return JobQueueType::JobsToReportToUser;
+        case serializers::RetrieveJobStatus::RJS_Failed:
+          return JobQueueType::FailedJobs;
+        default:
+          return JobQueueType::FailedJobs;
+      }
+    }
+  }
+  throw cta::exception::Exception("In RetrieveRequest::getJobQueueType(): Copy number not found.");
+}
+
 //------------------------------------------------------------------------------
 // RetrieveRequest::statusToString()
 //------------------------------------------------------------------------------
@@ -591,7 +612,7 @@ std::string RetrieveRequest::eventToString(JobEvent jobEvent) {
 //------------------------------------------------------------------------------
 // RetrieveRequest::determineNextStep()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent jobEvent, 
+auto RetrieveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobEvent, 
     log::LogContext& lc) -> EnqueueingNextStep
 {
   checkPayloadWritable();
@@ -653,7 +674,7 @@ auto RetrieveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent job
 //------------------------------------------------------------------------------
 // RetrieveRequest::getJobStatus()
 //------------------------------------------------------------------------------
-serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber) {
+serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint32_t copyNumber) {
   checkPayloadReadable();
   for (auto & j: m_payload.jobs())
     if (j.copynb() == copyNumber)
@@ -666,7 +687,7 @@ serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber
 //------------------------------------------------------------------------------
 // RetrieveRequest::asyncUpdateJobOwner()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::asyncUpdateJobOwner(uint16_t copyNumber, const std::string &owner,
+auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string &owner,
   const std::string &previousOwner) -> AsyncJobOwnerUpdater*
 {
   std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
@@ -829,7 +850,7 @@ void RetrieveRequest::AsyncJobDeleter::wait() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::asyncReportSucceedForRepack()
 //------------------------------------------------------------------------------
-RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReportSucceedForRepack(uint64_t copyNb)
+RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReportSucceedForRepack(uint32_t copyNb)
 {
   std::unique_ptr<AsyncJobSucceedForRepackReporter> ret(new AsyncJobSucceedForRepackReporter);
   ret->m_updaterCallback = [copyNb](const std::string &in)->std::string{ 
@@ -1004,7 +1025,7 @@ void RetrieveRequest::setFailureReason(const std::string& reason) {
 //------------------------------------------------------------------------------
 // RetrieveRequest::setJobStatus()
 //------------------------------------------------------------------------------
-void RetrieveRequest::setJobStatus(uint64_t copyNumber, const serializers::RetrieveJobStatus& status) {
+void RetrieveRequest::setJobStatus(uint32_t copyNumber, const serializers::RetrieveJobStatus& status) {
   checkPayloadWritable();
   for (auto j = m_payload.mutable_jobs()->begin(); j != m_payload.mutable_jobs()->end(); j++) {
     if (j->copynb() == copyNumber) {

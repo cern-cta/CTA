@@ -29,7 +29,7 @@ struct ContainerTraits<RetrieveQueue,C>
 {
   struct ContainerSummary : public RetrieveQueue::JobsSummary {
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
-    ContainerSummary(const RetrieveQueue::JobsSummary &c) : RetrieveQueue::JobsSummary() {}
+    ContainerSummary(const RetrieveQueue::JobsSummary &c) : RetrieveQueue::JobsSummary({c.jobs,c.bytes,c.oldestJobStartTime,c.priority,c.minRetrieveRequestAge,c.maxDrivesAllowed}) {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
   
@@ -37,7 +37,7 @@ struct ContainerTraits<RetrieveQueue,C>
   
   struct InsertedElement {
     RetrieveRequest *retrieveRequest;
-    uint16_t copyNb;
+    uint32_t copyNb;
     uint64_t fSeq;
     uint64_t filesize;
     cta::common::dataStructures::MountPolicy policy;
@@ -49,7 +49,7 @@ struct ContainerTraits<RetrieveQueue,C>
 
   struct PoppedElement {
     std::unique_ptr<RetrieveRequest> retrieveRequest;
-    uint16_t copyNb;
+    uint32_t copyNb;
     uint64_t bytes;
     common::dataStructures::ArchiveFile archiveFile;
     common::dataStructures::RetrieveRequest rr;

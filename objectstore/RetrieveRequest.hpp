@@ -48,12 +48,12 @@ public:
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   // Job management ============================================================
-  void addJob(uint64_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
+  void addJob(uint32_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();
   void setFailureReason(const std::string & reason);
   class JobDump {
   public:
-    uint64_t copyNb;
+    uint32_t copyNb;
     serializers::RetrieveJobStatus status;
   };
   // An asynchronous job ownership updating class.
@@ -104,7 +104,7 @@ public:
    * @return the class that is Responsible to save the updater callback
    * and the backend async updater (responsible for executing asynchronously the updater callback
    */
-  AsyncJobSucceedForRepackReporter * asyncReportSucceedForRepack(uint64_t copyNb);
+  AsyncJobSucceedForRepackReporter * asyncReportSucceedForRepack(uint32_t copyNb);
   
   /**
    * Asynchronously transform the current RetrieveRequest into an ArchiveRequest
@@ -113,9 +113,9 @@ public:
    */
   AsyncRetrieveToArchiveTransformer * asyncTransformToArchiveRequest(AgentReference& processAgent);
   
-  JobDump getJob(uint16_t copyNb);
+  JobDump getJob(uint32_t copyNb);
   std::list<JobDump> getJobs();
-  bool addJobFailure(uint16_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc); 
+  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc); 
                                                                   /**< Returns true is the request is completely failed 
                                                                    (telling wheather we should requeue or not). */
   struct RetryStatus {
@@ -126,7 +126,7 @@ public:
     uint64_t totalReportRetries = 0;
     uint64_t maxReportRetries = 0;
   };
-  RetryStatus getRetryStatus(uint16_t copyNumber);
+  RetryStatus getRetryStatus(uint32_t copyNumber);
   enum class JobEvent {
     TransferFailed,
     ReportFailed
@@ -162,18 +162,20 @@ private:
    * @returns    The next step to be taken by the caller (OStoreDB), which is in charge of the queueing
    *             and status setting
    */
-  EnqueueingNextStep determineNextStep(uint16_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext &lc);
+  EnqueueingNextStep determineNextStep(uint32_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext &lc);
 public:
   //! Returns next step to take with the job
-  EnqueueingNextStep addTransferFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
+  EnqueueingNextStep addTransferFailure(uint32_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
   //! Returns next step to take with the job
-  EnqueueingNextStep addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
+  EnqueueingNextStep addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
   //! Returns queue type depending on the compound statuses of all retrieve requests
   JobQueueType getQueueType();
+  CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
+  JobQueueType getQueueType(uint32_t copyNumber);
   std::list<std::string> getFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
-  serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
-  void setJobStatus(uint64_t copyNumber, const serializers::RetrieveJobStatus &status);
+  serializers::RetrieveJobStatus getJobStatus(uint32_t copyNumber);
+  void setJobStatus(uint32_t copyNumber, const serializers::RetrieveJobStatus &status);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // An asynchronous job ownership updating class.
   class AsyncJobOwnerUpdater {
@@ -191,7 +193,7 @@ public:
     serializers::RetrieveJobStatus m_jobStatus;
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
-  AsyncJobOwnerUpdater *asyncUpdateJobOwner(uint16_t copyNumber, const std::string &owner, const std::string &previousOwner);
+  AsyncJobOwnerUpdater *asyncUpdateJobOwner(uint32_t copyNumber, const std::string &owner, const std::string &previousOwner);
   // ===========================================================================
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
   cta::common::dataStructures::RetrieveRequest getSchedulerRequest();

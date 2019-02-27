@@ -251,7 +251,7 @@ public:
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const uint64_t copyNb,
+    const uint32_t copyNb,
     const std::string &tapePoolName,
     const std::string &comment) = 0;
 
@@ -267,11 +267,11 @@ public:
   virtual void deleteArchiveRoute(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const uint64_t copyNb) = 0;
+    const uint32_t copyNb) = 0;
 
   virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const = 0;
-  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &tapePoolName) = 0;
-  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint64_t copyNb, const std::string &comment) = 0;
+  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) = 0;
+  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) = 0;
 
   virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
   virtual void deleteLogicalLibrary(const std::string &name) = 0;

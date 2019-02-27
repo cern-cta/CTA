@@ -67,7 +67,7 @@ void ArchiveRequest::initialize() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::addJob()
 //------------------------------------------------------------------------------
-void ArchiveRequest::addJob(uint16_t copyNumber,
+void ArchiveRequest::addJob(uint32_t copyNumber,
   const std::string& tapepool, const std::string& initialOwner, 
     uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
   checkPayloadWritable();
@@ -89,7 +89,7 @@ void ArchiveRequest::addJob(uint16_t copyNumber,
 //------------------------------------------------------------------------------
 // ArchiveRequest::getJobQueueType()
 //------------------------------------------------------------------------------
-JobQueueType ArchiveRequest::getJobQueueType(uint16_t copyNumber) {
+JobQueueType ArchiveRequest::getJobQueueType(uint32_t copyNumber) {
   checkPayloadReadable();
   for (auto &j: m_payload.jobs()) {
     if (j.copynb() == copyNumber) {
@@ -119,7 +119,7 @@ JobQueueType ArchiveRequest::getJobQueueType(uint16_t copyNumber) {
 //------------------------------------------------------------------------------
 // ArchiveRequest::addTransferFailure()
 //------------------------------------------------------------------------------
-auto ArchiveRequest::addTransferFailure(uint16_t copyNumber,
+auto ArchiveRequest::addTransferFailure(uint32_t copyNumber,
     uint64_t mountId, const std::string & failureReason, log::LogContext & lc) -> EnqueueingNextStep {
   checkPayloadWritable();
   // Find the job and update the number of failures
@@ -156,7 +156,7 @@ auto ArchiveRequest::addTransferFailure(uint16_t copyNumber,
 //------------------------------------------------------------------------------
 // ArchiveRequest::addReportFailure()
 //------------------------------------------------------------------------------
-auto ArchiveRequest::addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string& failureReason,
+auto ArchiveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string& failureReason,
     log::LogContext& lc) -> EnqueueingNextStep {
   checkPayloadWritable();
   // Find the job and update the number of failures
@@ -184,7 +184,7 @@ auto ArchiveRequest::addReportFailure(uint16_t copyNumber, uint64_t sessionId, c
 //------------------------------------------------------------------------------
 // ArchiveRequest::getRetryStatus()
 //------------------------------------------------------------------------------
-ArchiveRequest::RetryStatus ArchiveRequest::getRetryStatus(const uint16_t copyNumber) {
+ArchiveRequest::RetryStatus ArchiveRequest::getRetryStatus(const uint32_t copyNumber) {
   checkPayloadReadable();
   for (auto &j: m_payload.jobs()) {
     if (copyNumber == j.copynb()) {
@@ -478,7 +478,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
 // ArchiveRequest::setJobOwner()
 //------------------------------------------------------------------------------
 void ArchiveRequest::setJobOwner(
-  uint16_t copyNumber, const std::string& owner) {
+  uint32_t copyNumber, const std::string& owner) {
   checkPayloadWritable();
   // Find the right job
   auto mutJobs = m_payload.mutable_jobs();
@@ -494,7 +494,7 @@ void ArchiveRequest::setJobOwner(
 //------------------------------------------------------------------------------
 // ArchiveRequest::asyncUpdateJobOwner()
 //------------------------------------------------------------------------------
-ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16_t copyNumber,
+ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32_t copyNumber,
   const std::string& owner, const std::string& previousOwner, const cta::optional<serializers::ArchiveJobStatus>& newStatus) {
   std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
   // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
@@ -624,7 +624,7 @@ objectstore::serializers::ArchiveJobStatus ArchiveRequest::AsyncJobOwnerUpdater:
 //------------------------------------------------------------------------------
 // ArchiveRequest::asyncUpdateTransferSuccessful()
 //------------------------------------------------------------------------------
-ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTransferSuccessful(const uint16_t copyNumber ) {
+ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTransferSuccessful(const uint32_t copyNumber ) {
   std::unique_ptr<AsyncTransferSuccessfulUpdater> ret(new AsyncTransferSuccessfulUpdater);  
   // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto & retRef = *ret;
@@ -698,7 +698,7 @@ void ArchiveRequest::AsyncRequestDeleter::wait() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::getJobOwner()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
+std::string ArchiveRequest::getJobOwner(uint32_t copyNumber) {
   checkPayloadReadable();
   auto jl = m_payload.jobs();
   auto j=std::find_if(jl.begin(), jl.end(), [&](decltype(*jl.begin())& j2){ return j2.copynb() == copyNumber; });
@@ -764,7 +764,7 @@ std::string ArchiveRequest::eventToString(JobEvent jobEvent) {
 //------------------------------------------------------------------------------
 // ArchiveRequest::determineNextStep()
 //------------------------------------------------------------------------------
-auto ArchiveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent jobEvent, 
+auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobEvent, 
     log::LogContext& lc) -> EnqueueingNextStep {
   checkPayloadWritable();
   // We have to determine which next step should be taken.
@@ -865,7 +865,7 @@ std::list<std::string> ArchiveRequest::getFailures() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::setJobStatus()
 //------------------------------------------------------------------------------
-void ArchiveRequest::setJobStatus(uint16_t copyNumber, const serializers::ArchiveJobStatus& status) {
+void ArchiveRequest::setJobStatus(uint32_t copyNumber, const serializers::ArchiveJobStatus& status) {
   checkPayloadWritable();
   for (auto j=m_payload.mutable_jobs()->begin(); j!=m_payload.mutable_jobs()->end(); j++) {
     if (j->copynb() == copyNumber) {
@@ -879,7 +879,7 @@ void ArchiveRequest::setJobStatus(uint16_t copyNumber, const serializers::Archiv
 //------------------------------------------------------------------------------
 // ArchiveRequest::getTapePoolForJob()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::getTapePoolForJob(uint16_t copyNumber) {
+std::string ArchiveRequest::getTapePoolForJob(uint32_t copyNumber) {
   checkPayloadReadable();
   for (auto j:m_payload.jobs()) if (j.copynb() == copyNumber) return j.tapepool();
   throw exception::Exception("In ArchiveRequest::getTapePoolForJob(): job not found.");

@@ -59,7 +59,7 @@ public:
   
   // Retrieve jobs management ==================================================
   struct JobToAdd {
-    uint64_t copyNb;
+    uint32_t copyNb;
     uint64_t fSeq;
     std::string retrieveRequestAddress;
     uint64_t fileSize;
@@ -86,7 +86,7 @@ public:
   JobsSummary getJobsSummary();
   struct JobDump {
     std::string address;
-    uint16_t copyNb;
+    uint32_t copyNb;
     uint64_t size;
   };
   std::list<JobDump> dumpJobs();

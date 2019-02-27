@@ -69,7 +69,7 @@ struct ArchiveFile {
    * for a single tape, the map will contain only one element. 
    */
   std::map<uint64_t,TapeFile> tapeFiles;
-  time_t creationTime;
+  time_t creationTime; 
   time_t reconciliationTime;
 
 }; // struct ArchiveFile

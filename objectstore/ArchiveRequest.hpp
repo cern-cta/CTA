@@ -48,7 +48,7 @@ public:
   std::string getOwner() = delete;
   void setOwner(const std::string &) = delete;
   // Job management ============================================================
-  void addJob(uint16_t copyNumber, const std::string & tapepool,
+  void addJob(uint32_t copyNumber, const std::string & tapepool,
     const std::string & initialOwner, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   struct RetryStatus {
     uint64_t retriesWithinMount = 0;
@@ -58,11 +58,11 @@ public:
     uint64_t reportRetries = 0;
     uint64_t maxReportRetries = 0;
   };
-  RetryStatus getRetryStatus(uint16_t copyNumber);
+  RetryStatus getRetryStatus(uint32_t copyNumber);
   std::list<std::string> getFailures();
-  serializers::ArchiveJobStatus getJobStatus(uint16_t copyNumber);
-  void setJobStatus(uint16_t copyNumber, const serializers::ArchiveJobStatus & status);
-  std::string getTapePoolForJob(uint16_t copyNumber);
+  serializers::ArchiveJobStatus getJobStatus(uint32_t copyNumber);
+  void setJobStatus(uint32_t copyNumber, const serializers::ArchiveJobStatus & status);
+  std::string getTapePoolForJob(uint32_t copyNumber);
   std::string statusToString(const serializers::ArchiveJobStatus & status);
   enum class JobEvent {
     TransferFailed,
@@ -91,17 +91,17 @@ private:
    * @param lc
    * @return The next step to be taken by the caller (OStoreDB), which is in charge of the queueing and status setting.
    */
-  EnqueueingNextStep determineNextStep(uint16_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext & lc);
+  EnqueueingNextStep determineNextStep(uint32_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext & lc);
 public:
-  EnqueueingNextStep addTransferFailure(uint16_t copyNumber, uint64_t sessionId, const std::string & failureReason,
+  EnqueueingNextStep addTransferFailure(uint32_t copyNumber, uint64_t sessionId, const std::string & failureReason,
       log::LogContext &lc); //< returns next step to take with the job
-  EnqueueingNextStep addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string & failureReason,
+  EnqueueingNextStep addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string & failureReason,
       log::LogContext &lc); //< returns next step to take with the job
   CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
-  JobQueueType getJobQueueType(uint16_t copyNumber);
+  JobQueueType getJobQueueType(uint32_t copyNumber);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // Set a job ownership
-  void setJobOwner(uint16_t copyNumber, const std::string & owner);
+  void setJobOwner(uint32_t copyNumber, const std::string & owner);
   // An asynchronous job ownership updating class.
   class AsyncJobOwnerUpdater {
     friend class ArchiveRequest;
@@ -134,7 +134,7 @@ public:
   };
   // An job owner updater factory. The owner MUST be previousOwner for the update to be executed. If the owner is already the targeted
   // one, the request will do nothing and not fail.
-  AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint16_t copyNumber, const std::string & owner, const std::string &previousOwner,
+  AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint32_t copyNumber, const std::string & owner, const std::string &previousOwner,
       const cta::optional<serializers::ArchiveJobStatus>& newStatus);
 
   // An asynchronous job updating class for transfer success.
@@ -147,7 +147,7 @@ public:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
-  AsyncTransferSuccessfulUpdater * asyncUpdateTransferSuccessful(uint16_t copyNumber);
+  AsyncTransferSuccessfulUpdater * asyncUpdateTransferSuccessful(uint32_t copyNumber);
   
   // An asynchronous request deleter class after report of success.
   class AsyncRequestDeleter {
@@ -159,7 +159,7 @@ public:
   };
   AsyncRequestDeleter * asyncDeleteRequest();
   // Get a job owner
-  std::string getJobOwner(uint16_t copyNumber);
+  std::string getJobOwner(uint32_t copyNumber);
 
   // Utility to convert status to queue type
   static JobQueueType getQueueType(const serializers::ArchiveJobStatus &status);
@@ -189,7 +189,7 @@ public:
   
   class JobDump {
   public:
-    uint16_t copyNb;
+    uint32_t copyNb;
     std::string tapePool;
     std::string owner;
     serializers::ArchiveJobStatus status;
