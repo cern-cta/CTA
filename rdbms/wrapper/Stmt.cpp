@@ -70,9 +70,9 @@ void Stmt::bindBool(const std::string &paramName, const bool paramValue) {
 //------------------------------------------------------------------------------
 void Stmt::bindOptionalBool(const std::string &paramName, const optional<bool> &paramValue) {
   if(paramValue) {
-    bindOptionalUint64(paramName, paramValue.value() ? 1 : 0);
+    bindOptionalString(paramName, std::string(paramValue.value() ? "1" : "0"));
   } else {
-    bindOptionalUint64(paramName, nullopt);
+    bindOptionalString(paramName, nullopt);
   }
 }
 
