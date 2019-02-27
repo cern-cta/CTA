@@ -70,7 +70,7 @@ uint64_t StmtPool::getNbStmts() const {
 //------------------------------------------------------------------------------
 // returnStmt
 //------------------------------------------------------------------------------
-void StmtPool::returnStmt(std::unique_ptr<wrapper::Stmt> stmt) {
+void StmtPool::returnStmt(std::unique_ptr<wrapper::StmtWrapper> stmt) {
   threading::MutexLocker locker(m_stmtsMutex);
 
   stmt->clear();

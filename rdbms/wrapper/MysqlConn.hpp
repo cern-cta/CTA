@@ -96,7 +96,7 @@ public:
    * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
+  std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) override;
 
   /**
    * Execute a SQL statement directly, used for non prepared statement.

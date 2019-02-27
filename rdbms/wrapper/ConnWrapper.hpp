@@ -19,7 +19,7 @@
 #pragma once
 
 #include "rdbms/AutocommitMode.hpp"
-#include "rdbms/wrapper/Stmt.hpp"
+#include "rdbms/wrapper/StmtWrapper.hpp"
 
 #include <atomic>
 #include <list>
@@ -75,7 +75,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql) = 0;
+  virtual std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) = 0;
 
   /**
    * Commits the current transaction.

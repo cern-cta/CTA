@@ -35,7 +35,7 @@ namespace wrapper {
 /**
  * Abstract class specifying the interface to a database statement.
  */
-class Stmt {
+class StmtWrapper {
 public:
 
   /**
@@ -43,32 +43,32 @@ public:
    *
    * @param sql The SQL statement.
    */
-  Stmt(const std::string &sql);
+  StmtWrapper(const std::string &sql);
 
   /**
    * Destructor.
    */
-  virtual ~Stmt() = 0;
+  virtual ~StmtWrapper() = 0;
 
   /**
    * Deletion of the copy constructor.
    */
-  Stmt(Stmt &) = delete;
+  StmtWrapper(StmtWrapper &) = delete;
 
   /**
    * Deletion of the move constructor.
    */
-  Stmt(Stmt &&) = delete;
+  StmtWrapper(StmtWrapper &&) = delete;
 
   /**
    * Deletion of the copy assignment operator.
    */
-  Stmt &operator=(const Stmt &) = delete;
+  StmtWrapper &operator=(const StmtWrapper &) = delete;
 
   /**
    * Deletion of the move assignment operator.
    */
-  Stmt &operator=(Stmt &&) = delete;
+  StmtWrapper &operator=(StmtWrapper &&) = delete;
 
   /**
    * Clears the prepared statement so that it is ready to be reused.
@@ -197,7 +197,7 @@ private:
    */
   ParamNameToIdx m_paramNameToIdx;
 
-}; // class Stmt
+}; // class StmtWrapper
 
 } // namespace wrapper
 } // namespace rdbms

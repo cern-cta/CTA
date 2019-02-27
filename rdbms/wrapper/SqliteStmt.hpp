@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/threading/Mutex.hpp"
-#include "rdbms/wrapper/Stmt.hpp"
+#include "rdbms/wrapper/StmtWrapper.hpp"
 
 #include <map>
 #include <memory>
@@ -36,7 +36,7 @@ class SqliteRset;
 /**
  * A convenience wrapper around an SQLite prepared statement.
  */
-class SqliteStmt: public Stmt {
+class SqliteStmt: public StmtWrapper {
 public:
 
   /**

@@ -34,7 +34,7 @@ namespace rdbms {
 
 namespace wrapper {
   class ConnWrapper;
-  class Stmt;
+  class StmtWrapper;
 }
 
 /**
@@ -75,7 +75,7 @@ private:
    *
    * @param stmt The database statement to be returned to the pool.
    */
-  void returnStmt(std::unique_ptr<wrapper::Stmt> stmt);
+  void returnStmt(std::unique_ptr<wrapper::StmtWrapper> stmt);
 
   /**
    * Mutex used to serialize access to the database statements within the pool.
@@ -88,7 +88,7 @@ private:
    * Please note that for a single key there maybe more than one cached
    * statement, hence the map to list of statements.
    */
-  std::map<std::string, std::list< std::unique_ptr<wrapper::Stmt> > > m_stmts;
+  std::map<std::string, std::list< std::unique_ptr<wrapper::StmtWrapper> > > m_stmts;
 
 }; // class StmtPool
 

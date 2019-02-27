@@ -43,7 +43,7 @@ namespace wrapper {
 PostgresStmt::PostgresStmt(
   PostgresConn &conn,
   const std::string &sql):
-  Stmt(sql),
+  StmtWrapper(sql),
   m_conn(conn),
   m_nParams(0),
   m_nbAffectedRows(0) {

@@ -73,7 +73,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
+  std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) override;
 
   /**
    * Executes the sql string, without returning any result set.

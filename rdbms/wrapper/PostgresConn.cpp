@@ -114,7 +114,7 @@ void PostgresConn::commit()
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> PostgresConn::createStmt(const std::string &sql) {
+std::unique_ptr<StmtWrapper> PostgresConn::createStmt(const std::string &sql) {
 
   threading::RWLockRdLocker locker(m_lock);
 

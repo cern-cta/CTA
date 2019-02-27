@@ -17,7 +17,7 @@
  */
 
 #include "rdbms/rdbms.hpp"
-#include "rdbms/wrapper/Stmt.hpp"
+#include "rdbms/wrapper/StmtWrapper.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -26,7 +26,7 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Stmt::Stmt(const std::string &sql):
+StmtWrapper::StmtWrapper(const std::string &sql):
   m_sql(sql),
   m_paramNameToIdx(sql) {
 }
@@ -34,41 +34,41 @@ Stmt::Stmt(const std::string &sql):
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-Stmt::~Stmt() {
+StmtWrapper::~StmtWrapper() {
 }
 
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &Stmt::getSql() const {
+const std::string &StmtWrapper::getSql() const {
   return m_sql;
 }
 
 //------------------------------------------------------------------------------
 // getParamIdx
 //------------------------------------------------------------------------------
-uint32_t Stmt::getParamIdx(const std::string &paramName) const {
+uint32_t StmtWrapper::getParamIdx(const std::string &paramName) const {
   return m_paramNameToIdx.getIdx(paramName);
 }
 
 //------------------------------------------------------------------------------
 // getSqlForException
 //------------------------------------------------------------------------------
-std::string Stmt::getSqlForException(const std::string::size_type maxSqlLenInExceptions) const {
+std::string StmtWrapper::getSqlForException(const std::string::size_type maxSqlLenInExceptions) const {
   return rdbms::getSqlForException(m_sql, maxSqlLenInExceptions);
 }
 
 //------------------------------------------------------------------------------
 // bindBool
 //------------------------------------------------------------------------------
-void Stmt::bindBool(const std::string &paramName, const bool paramValue) {
+void StmtWrapper::bindBool(const std::string &paramName, const bool paramValue) {
   bindOptionalBool(paramName, paramValue);
 }
 
 //------------------------------------------------------------------------------
 // bindOptionalBool
 //------------------------------------------------------------------------------
-void Stmt::bindOptionalBool(const std::string &paramName, const optional<bool> &paramValue) {
+void StmtWrapper::bindOptionalBool(const std::string &paramName, const optional<bool> &paramValue) {
   if(paramValue) {
     bindOptionalString(paramName, std::string(paramValue.value() ? "1" : "0"));
   } else {

@@ -90,7 +90,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
+  std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) override;
 
   /**
    * Commits the current transaction.

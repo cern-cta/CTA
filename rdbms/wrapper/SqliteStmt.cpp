@@ -44,7 +44,7 @@ namespace wrapper {
 SqliteStmt::SqliteStmt(
   SqliteConn &conn,
   const std::string &sql):
-  Stmt(sql),
+  StmtWrapper(sql),
   m_conn(conn),
   m_nbAffectedRows(0) {
   m_stmt = nullptr;

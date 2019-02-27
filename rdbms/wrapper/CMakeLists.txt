@@ -31,7 +31,7 @@ set (RDBMS_WRAPPER_LIB_SRC_FILES
         ConnWrapper.cpp
   ConnFactory.cpp
   Rset.cpp
-  Stmt.cpp
+        StmtWrapper.cpp
   ParamNameToIdx.cpp
   Sqlite.cpp
   SqliteConn.cpp

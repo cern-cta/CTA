@@ -20,7 +20,7 @@
 
 #include "common/optional.hpp"
 #include "common/threading/RWLock.hpp"
-#include "rdbms/wrapper/Stmt.hpp"
+#include "rdbms/wrapper/StmtWrapper.hpp"
 #include "rdbms/wrapper/Postgres.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresColumn.hpp"
@@ -39,7 +39,7 @@ class PostgresRset;
 /**
  * A convenience wrapper around a postgres prepared statement.
  */
-class PostgresStmt: public Stmt {
+class PostgresStmt: public StmtWrapper {
 public:
 
   /**

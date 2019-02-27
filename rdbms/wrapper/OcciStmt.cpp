@@ -41,7 +41,7 @@ OcciStmt::OcciStmt(
   const std::string &sql,
   OcciConn &conn,
   oracle::occi::Statement *const stmt) :
-  Stmt(sql),
+  StmtWrapper(sql),
   m_conn(conn),
   m_stmt(stmt) {
 }

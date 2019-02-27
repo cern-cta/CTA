@@ -140,7 +140,7 @@ void MysqlConn::executeNonQuery(const std::string &sql) {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> MysqlConn::createStmt(const std::string &sql) {
+std::unique_ptr<StmtWrapper> MysqlConn::createStmt(const std::string &sql) {
 
   try {
     threading::MutexLocker locker(m_mutex);
