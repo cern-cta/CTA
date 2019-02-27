@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/threading/RWLock.hpp"
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/wrapper/Postgres.hpp"
 
 #include <list>
@@ -34,7 +34,7 @@ namespace wrapper {
 class PostgresStmt;
 class PostgresRset;
 
-class PostgresConn: public Conn {
+class PostgresConn: public ConnWrapper {
 public:
 
   /**

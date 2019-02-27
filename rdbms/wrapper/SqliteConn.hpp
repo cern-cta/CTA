@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/threading/Mutex.hpp"
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <sqlite3.h>
 
@@ -36,7 +36,7 @@ class SqliteStmt;
 /**
  * A convenience wrapper around a connection to an SQLite database.
  */
-class SqliteConn: public Conn {
+class SqliteConn: public ConnWrapper {
 public:
 
   /**

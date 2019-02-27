@@ -22,7 +22,7 @@
 #include "common/threading/Mutex.hpp"
 #include "rdbms/ConnAndStmts.hpp"
 #include "rdbms/Conn.hpp"
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/wrapper/ConnFactory.hpp"
 
 #include <list>

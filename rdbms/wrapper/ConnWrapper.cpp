@@ -18,7 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -27,7 +27,7 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-Conn::~Conn() {
+ConnWrapper::~ConnWrapper() {
 }
 
 } // namespace wrapper

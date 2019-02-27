@@ -18,7 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/threading/MutexLocker.hpp"
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/StmtPool.hpp"
 
 namespace cta {
@@ -27,7 +27,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // getStmt
 //------------------------------------------------------------------------------
-Stmt StmtPool::getStmt(wrapper::Conn &conn, const std::string &sql) {
+Stmt StmtPool::getStmt(wrapper::ConnWrapper &conn, const std::string &sql) {
   threading::MutexLocker locker(m_stmtsMutex);
 
   auto itor = m_stmts.find(sql);

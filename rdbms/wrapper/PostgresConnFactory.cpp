@@ -43,7 +43,7 @@ PostgresConnFactory::~PostgresConnFactory() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::unique_ptr<Conn> PostgresConnFactory::create() {
+std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
   try {
     return cta::make_unique<PostgresConn>(m_conninfo);
   } catch(exception::Exception &ex) {

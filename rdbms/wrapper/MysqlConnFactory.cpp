@@ -45,7 +45,7 @@ MysqlConnFactory::~MysqlConnFactory() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::unique_ptr<Conn> MysqlConnFactory::create() {
+std::unique_ptr<ConnWrapper> MysqlConnFactory::create() {
   try {
     return cta::make_unique<MysqlConn>(m_host, m_user, m_passwd, m_db, m_port);
   } catch(exception::Exception &ex) {

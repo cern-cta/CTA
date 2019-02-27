@@ -28,7 +28,7 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 set (RDBMS_WRAPPER_LIB_SRC_FILES
   ColumnNameToIdx.cpp
   ColumnNameToIdxAndType.cpp
-  Conn.cpp
+        ConnWrapper.cpp
   ConnFactory.cpp
   Rset.cpp
   Stmt.cpp

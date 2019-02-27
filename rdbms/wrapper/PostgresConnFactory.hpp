@@ -50,7 +50,7 @@ public:
    *
    * @return A newly created database connection.
    */
-  std::unique_ptr<Conn> create() override;
+  std::unique_ptr<ConnWrapper> create() override;
 
 private:
 

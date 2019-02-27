@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <memory>
 #include <occi.h>
@@ -58,7 +58,7 @@ public:
    * @param database The name of the database.
    * @return The newly created OCCI connection.
    */
-  std::unique_ptr<Conn> createConn(
+  std::unique_ptr<ConnWrapper> createConn(
     const std::string &username,
     const std::string &password,
     const std::string &database);

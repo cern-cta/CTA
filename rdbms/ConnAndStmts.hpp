@@ -19,7 +19,7 @@
 #pragma once
 
 #include "rdbms/StmtPool.hpp"
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <iostream>
 #include <memory>
@@ -81,7 +81,7 @@ struct ConnAndStmts {
    * prepared statements.  This means the conn member-variable must be declared
    * before the stmtPool member-variable.
    */
-  std::unique_ptr<wrapper::Conn> conn;
+  std::unique_ptr<wrapper::ConnWrapper> conn;
 
   /**
    * Pool of prepared statements.

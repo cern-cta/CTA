@@ -33,13 +33,13 @@ namespace wrapper {
 /**
  * Abstract class that specifies the interface to a database connection.
  */
-class Conn {
+class ConnWrapper {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~Conn() = 0;
+  virtual ~ConnWrapper() = 0;
 
   /**
    * Idempotent close() method.  The destructor calls this method.
@@ -113,7 +113,7 @@ public:
    */
   virtual std::list<std::string> getSequenceNames()  = 0;
 
-}; // class Conn
+}; // class ConnWrapper
 
 } // namespace wrapper
 } // namespace rdbms

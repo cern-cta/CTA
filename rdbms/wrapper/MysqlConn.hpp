@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/threading/Mutex.hpp"
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 struct st_mysql;
 typedef st_mysql MYSQL;
@@ -30,7 +30,7 @@ namespace wrapper {
 
 class MysqlStmt;
 
-class MysqlConn: public Conn {
+class MysqlConn: public ConnWrapper {
 public:
 
   /**

@@ -33,7 +33,7 @@ namespace cta {
 namespace rdbms {
 
 namespace wrapper {
-  class Conn;
+  class ConnWrapper;
   class Stmt;
 }
 
@@ -51,7 +51,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  Stmt getStmt(wrapper::Conn &conn, const std::string &sql);
+  Stmt getStmt(wrapper::ConnWrapper &conn, const std::string &sql);
 
   /**
    * Returns the number of cached statements currently in the pool.
