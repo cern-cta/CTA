@@ -22,7 +22,7 @@
 #include "rdbms/AutocommitMode.hpp"
 #include "rdbms/Constants.hpp"
 #include "rdbms/wrapper/ParamNameToIdx.hpp"
-#include "rdbms/wrapper/Rset.hpp"
+#include "rdbms/wrapper/RsetWrapper.hpp"
 
 #include <memory>
 #include <stdint.h>
@@ -156,7 +156,7 @@ public:
    *
    *  @return The result set.
    */
-  virtual std::unique_ptr<Rset> executeQuery() = 0;
+  virtual std::unique_ptr<RsetWrapper> executeQuery() = 0;
 
   /**
    * Executes the statement.

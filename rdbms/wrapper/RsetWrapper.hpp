@@ -31,13 +31,13 @@ namespace wrapper {
  * Abstract class specifying the interface to an implementation of the result
  * set of an sql query.
  */
-class Rset {
+class RsetWrapper {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~Rset() = 0;
+  virtual ~RsetWrapper() = 0;
 
   /**
    * Returns the SQL statement.
@@ -82,7 +82,7 @@ public:
    */
   virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const = 0;
 
-}; // class Rset
+}; // class RsetWrapper
 
 } // namespace wrapper
 } // namespace rdbms

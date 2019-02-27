@@ -320,7 +320,7 @@ void PostgresStmt::executeNonQuery() {
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> PostgresStmt::executeQuery() {
+std::unique_ptr<RsetWrapper> PostgresStmt::executeQuery() {
 
   // always take statement lock first
   threading::RWLockWrLocker locker2(m_lock);

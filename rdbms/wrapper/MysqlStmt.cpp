@@ -282,7 +282,7 @@ void MysqlStmt::bindOptionalString(const std::string &paramName, const optional<
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> MysqlStmt::executeQuery() {
+std::unique_ptr<RsetWrapper> MysqlStmt::executeQuery() {
   // bind values before execute
   do_bind();
 

@@ -121,7 +121,7 @@ public:
    * @param autocommitMode The autocommit mode of the statement.
    * @return The result set.
    */
-  std::unique_ptr<Rset> executeQuery() override;
+  std::unique_ptr<RsetWrapper> executeQuery() override;
 
   /**
    * Executes the statement.

@@ -28,7 +28,7 @@ namespace cta {
 namespace rdbms {
 
 namespace wrapper {
-  class Rset;
+  class RsetWrapper;
 }
 
 /**
@@ -50,7 +50,7 @@ public:
    *
    * @param impl The object actually implementing this result set.
    */
-  Rset(std::unique_ptr<wrapper::Rset> impl);
+  Rset(std::unique_ptr<wrapper::RsetWrapper> impl);
 
   /**
    * Deletion of copy constructor.
@@ -171,7 +171,7 @@ private:
   /**
    * The object actually implementing this result set.
    */
-  std::unique_ptr<wrapper::Rset> m_impl;
+  std::unique_ptr<wrapper::RsetWrapper> m_impl;
 
 }; // class Rset
 

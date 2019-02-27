@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/optional.hpp"
-#include "rdbms/wrapper/Rset.hpp"
+#include "rdbms/wrapper/RsetWrapper.hpp"
 #include "rdbms/wrapper/Postgres.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
@@ -35,7 +35,7 @@ namespace wrapper {
 /**
  * The result set of an sql query.
  */
-class PostgresRset: public Rset {
+class PostgresRset: public RsetWrapper {
 public:
 
   /**

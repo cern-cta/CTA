@@ -131,7 +131,7 @@ public:
    *
    * @return The result set.
    */
-  std::unique_ptr<Rset> executeQuery() override;
+  std::unique_ptr<RsetWrapper> executeQuery() override;
 
   /**
    * Returns the number of rows affected by the last execution of this

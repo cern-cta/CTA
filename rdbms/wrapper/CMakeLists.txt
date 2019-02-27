@@ -30,7 +30,7 @@ set (RDBMS_WRAPPER_LIB_SRC_FILES
   ColumnNameToIdxAndType.cpp
         ConnWrapper.cpp
   ConnFactory.cpp
-  Rset.cpp
+        RsetWrapper.cpp
         StmtWrapper.cpp
   ParamNameToIdx.cpp
   Sqlite.cpp

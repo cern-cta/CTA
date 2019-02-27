@@ -223,7 +223,7 @@ void SqliteStmt::bindOptionalString(const std::string &paramName, const optional
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> SqliteStmt::executeQuery() {
+std::unique_ptr<RsetWrapper> SqliteStmt::executeQuery() {
   threading::MutexLocker connLocker(m_conn.m_mutex);
 
   return cta::make_unique<SqliteRset>(*this);

@@ -18,7 +18,7 @@
 
 #include "rdbms/NullDbValue.hpp"
 #include "rdbms/Rset.hpp"
-#include "rdbms/wrapper/Rset.hpp"
+#include "rdbms/wrapper/RsetWrapper.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -33,7 +33,7 @@ Rset::Rset():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Rset::Rset(std::unique_ptr<wrapper::Rset> impl):
+Rset::Rset(std::unique_ptr<wrapper::RsetWrapper> impl):
   m_impl(std::move(impl)) {
   if(nullptr == m_impl.get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");

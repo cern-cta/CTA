@@ -19,7 +19,7 @@
 #pragma once
 
 #include "rdbms/wrapper/ColumnNameToIdxAndType.hpp"
-#include "rdbms/wrapper/Rset.hpp"
+#include "rdbms/wrapper/RsetWrapper.hpp"
 
 #include <memory>
 #include <stdint.h>
@@ -37,7 +37,7 @@ class SqliteStmt;
 /**
  * The result set of an sql query.
  */
-class SqliteRset: public Rset {
+class SqliteRset: public RsetWrapper {
 public:
 
   /**

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "rdbms/wrapper/Rset.hpp"
+#include "rdbms/wrapper/RsetWrapper.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -25,7 +25,7 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-Rset::~Rset() {
+RsetWrapper::~RsetWrapper() {
 }
 
 } // namespace wrapper
