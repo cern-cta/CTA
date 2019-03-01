@@ -25,19 +25,19 @@ namespace cta { namespace objectstore {
 // ArchiveQueueToReport full specialisations for ContainerTraits.
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::c_containerTypeName = "ArchiveQueueToReport";
+const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::c_containerTypeName = "ArchiveQueueToReportForUser";
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::c_identifierType = "tapepool";
+const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::c_identifierType = "tapepool";
 
 template<>
-void ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::PoppedElementsBatch::
+void ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) {
   params.add("files", summary.files);
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::
 getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria, ElementsToSkipSet& elemtsToSkip,
   log::LogContext& lc) -> PoppedElementsBatch
 {
@@ -61,14 +61,14 @@ getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria, 
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::PopCriteria::
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::PopCriteria::
 operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
   files -= pes.files;
   return *this;
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::
 getContainerSummary(Container& cont) -> ContainerSummary {
   ContainerSummary ret;
   ret.JobsSummary::operator=(cont.getJobsSummary());

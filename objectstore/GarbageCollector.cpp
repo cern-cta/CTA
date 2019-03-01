@@ -329,7 +329,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         // Get the list of vids for non failed tape files.
         std::set<std::string> candidateVids;
         for (auto & j: rr->dumpJobs()) {
-          if(j.status==RetrieveJobStatus::RJS_ToTransfer) {
+          if(j.status==RetrieveJobStatus::RJS_ToTransferForUser) {
             candidateVids.insert(rr->getArchiveFile().tapeFiles.at(j.copyNb).vid);
           }
         }
@@ -358,7 +358,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
           otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
           break;
         }
-        retrieveQueuesAndRequests[std::make_tuple(vid, JobQueueType::JobsToTransfer)].emplace_back(rr);
+        retrieveQueuesAndRequests[std::make_tuple(vid, JobQueueType::JobsToTransferForUser)].emplace_back(rr);
         log::ScopedParamContainer params3(lc);
         // Find copyNb for logging
         size_t copyNb = std::numeric_limits<size_t>::max();
@@ -408,7 +408,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
         requestsList.pop_front();
       }
       utils::Timer t;
-      typedef ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> AqAlgos;
+      typedef ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> AqAlgos;
       AqAlgos aqcl(objectStore, agentReference);
       decltype(aqcl)::InsertedElement::list jobsToAdd;
       for (auto & ar: currentJobBatch) {

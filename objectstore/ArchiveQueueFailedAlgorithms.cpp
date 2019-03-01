@@ -30,4 +30,12 @@ const std::string ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::c_containerT
 template<>
 const std::string ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::c_identifierType = "tapepool";
 
+  template<>
+  auto ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::
+  getContainerSummary(Container& cont) -> ContainerSummary {
+    ContainerSummary ret;
+    ret.JobsSummary::operator=(cont.getJobsSummary());
+    return ret;
+  }
+
 }} // namespace cta::objectstore

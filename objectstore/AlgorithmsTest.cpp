@@ -35,7 +35,7 @@
 namespace unitTests {
 
 void fillRetrieveRequests(
-  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list &requests,
+  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,cta::objectstore::RetrieveQueueToTransferForUser>::InsertedElement::list &requests,
   std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> >& requestPtrs, //List to avoid memory leak on ArchiveQueueAlgorithms test
   cta::objectstore::BackendVFS &be,
   cta::objectstore::AgentReference &agentRef)
@@ -73,8 +73,8 @@ void fillRetrieveRequests(
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     requestPtrs.emplace_back(new cta::objectstore::RetrieveRequest(rrAddr, be));
-    requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement{
-      requestPtrs.back().get(), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
+    requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser>::InsertedElement{
+      requestPtrs.back().get(), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransferForUser
     });
     auto &rr = *requests.back().retrieveRequest;
     rr.initialize();
@@ -117,7 +117,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
-  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer>::InsertedElement::list requests;
+  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement::list requests;
   std::list<std::unique_ptr<cta::objectstore::ArchiveRequest>> archiveRequests;
   for (size_t i=0; i<10; i++) {
     std::string arAddr = agentRef.nextId("ArchiveRequest");
@@ -136,7 +136,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
-    requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
         cta::nullopt});
     auto & ar=*requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
@@ -151,10 +151,10 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
   }
-  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> archiveAlgos(be, agentRef);
+  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
   archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
   // Now get the requests back
-  ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PopCriteria popCriteria;
+  ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
   auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
@@ -188,7 +188,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
   std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs;
-  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests;
+  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser>::InsertedElement::list requests;
   fillRetrieveRequests(requests, requestsPtrs, be, agentRef); //memory leak here
 
   {
@@ -207,18 +207,18 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
     rel2.release();
     agent2.initialize();
     agent2.insertAndRegisterSelf(lc);
-    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests2;
+    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser>::InsertedElement::list requests2;
     std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs2;
     fillRetrieveRequests(requests2, requestsPtrs2,be2, agentRef2);
 
     auto a1 = agentRef2.getAgentAddress();
     auto a2 = agentRef2.getAgentAddress();
-    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> retrieveAlgos2(be2, agentRef2);
+    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> retrieveAlgos2(be2, agentRef2);
     retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID",
       a2, a1, requests2, lc);
   }
 
-  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> retrieveAlgos(be, agentRef);
+  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> retrieveAlgos(be, agentRef);
   try {
     ASSERT_EQ(requests.size(), 10);
 
@@ -226,19 +226,19 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
       agentRef.getAgentAddress(), requests, lc);
 
     // Now get the requests back
-    ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria popCriteria;
+    ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PopCriteria popCriteria;
     popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
     popCriteria.files = 100;
     auto poppedJobs = retrieveAlgos.popNextBatch("VID", popCriteria, lc);
     ASSERT_EQ(poppedJobs.summary.files, 10);
 
     // Validate that the summary has the same information as the popped elements
-    ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSummary s;
+    ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PoppedElementsSummary s;
     for(auto &e: poppedJobs.elements) {
-      s += ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getElementSummary(e);
+      s += ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::getElementSummary(e);
     }
     ASSERT_EQ(s, poppedJobs.summary);
-  } catch (ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::OwnershipSwitchFailure & ex) {
+  } catch (ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::OwnershipSwitchFailure & ex) {
     for (auto & e: ex.failedElements) {
       try {
         throw e.failure;

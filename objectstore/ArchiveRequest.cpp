@@ -73,7 +73,7 @@ void ArchiveRequest::addJob(uint32_t copyNumber,
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
   j->set_copynb(copyNumber);
-  j->set_status(serializers::ArchiveJobStatus::AJS_ToTransfer);
+  j->set_status(serializers::ArchiveJobStatus::AJS_ToTransferForUser);
   j->set_tapepool(tapepool);
   j->set_owner(initialOwner);
   j->set_archivequeueaddress("");
@@ -94,22 +94,26 @@ JobQueueType ArchiveRequest::getJobQueueType(uint32_t copyNumber) {
   for (auto &j: m_payload.jobs()) {
     if (j.copynb() == copyNumber) {
       switch (j.status()) {
-      case serializers::ArchiveJobStatus::AJS_ToTransfer:
-        return JobQueueType::JobsToTransfer;
+      case serializers::ArchiveJobStatus::AJS_ToTransferForUser:
+        return JobQueueType::JobsToTransferForUser;
       case serializers::ArchiveJobStatus::AJS_ToTransferForRepack:
         return JobQueueType::JobsToTransferForRepack;
       case serializers::ArchiveJobStatus::AJS_Complete:
         throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Complete jobs are not queueable. They are finished and pend siblings completion.");
-      case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
+      case serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer:
         // We should report a success...
         return JobQueueType::JobsToReportToUser;
-      case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
+      case serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure:
         // We should report a failure. The report queue can be shared.
         return JobQueueType::JobsToReportToUser;
       case serializers::ArchiveJobStatus::AJS_Failed:
         return JobQueueType::FailedJobs;
       case serializers::ArchiveJobStatus::AJS_Abandoned:
         throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Abandoned jobs are not queueable. They are finished and pend siblings completion.");
+      case serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess:
+        return JobQueueType::JobsToReportToRepackForSuccess;
+      case serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure:
+        return JobQueueType::JobsToReportToRepackForFailure;
       }
     }
   }
@@ -140,7 +144,7 @@ auto ArchiveRequest::addTransferFailure(uint32_t copyNumber,
       return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
     } else {
       EnqueueingNextStep ret;
-      ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToTransfer;
+      ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToTransferForUser;
       // Decide if we want the job to have a chance to come back to this mount (requeue) or not. In the latter
       // case, the job will remain owned by this session and get garbage collected.
       if (j.retrieswithinmount() >= j.maxretrieswithinmount())
@@ -379,8 +383,8 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
   auto * jl = m_payload.mutable_jobs();
   bool anythingGarbageCollected=false;
   using serializers::ArchiveJobStatus;
-  std::set<ArchiveJobStatus> statusesImplyingQueueing ({ArchiveJobStatus::AJS_ToTransfer, ArchiveJobStatus::AJS_ToReportForTransfer,
-      ArchiveJobStatus::AJS_ToReportForFailure, ArchiveJobStatus::AJS_Failed});
+  std::set<ArchiveJobStatus> statusesImplyingQueueing ({ArchiveJobStatus::AJS_ToTransferForUser, ArchiveJobStatus::AJS_ToReportToUserForTransfer,
+      ArchiveJobStatus::AJS_ToReportToUserForFailure, ArchiveJobStatus::AJS_Failed});
   for (auto j=jl->begin(); j!=jl->end(); j++) {
     auto owner=j->owner();
     auto status=j->status();
@@ -643,7 +647,7 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
       auto * jl = payload.mutable_jobs();
       bool otherJobsToTransfer = false;
       for (auto j=jl->begin(); j!=jl->end(); j++) {
-        if (j->copynb() != copyNumber && j->status() == serializers::ArchiveJobStatus::AJS_ToTransfer)
+        if (j->copynb() != copyNumber && j->status() == serializers::ArchiveJobStatus::AJS_ToTransferForUser)
           otherJobsToTransfer = true;
       }
       for (auto j=jl->begin(); j!=jl->end(); j++) {
@@ -657,7 +661,7 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
           } else {
             // We will report success with this job as it is the last to transfer and no report (for failure)
             // happened.
-            j->set_status(serializers::ArchiveJobStatus::AJS_ToReportForTransfer);
+            j->set_status(serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
             retRef.m_doReportTransferSuccess = true;
           }
           oh.set_payload(payload.SerializePartialAsString());
@@ -713,10 +717,10 @@ std::string ArchiveRequest::getJobOwner(uint32_t copyNumber) {
 JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& status) {
   using serializers::ArchiveJobStatus;
   switch(status) {
-  case ArchiveJobStatus::AJS_ToTransfer:
-    return JobQueueType::JobsToTransfer;
-  case ArchiveJobStatus::AJS_ToReportForTransfer:
-  case ArchiveJobStatus::AJS_ToReportForFailure:
+  case ArchiveJobStatus::AJS_ToTransferForUser:
+    return JobQueueType::JobsToTransferForUser;
+  case ArchiveJobStatus::AJS_ToReportToUserForTransfer:
+  case ArchiveJobStatus::AJS_ToReportToUserForFailure:
     return JobQueueType::JobsToReportToUser;
   case ArchiveJobStatus::AJS_Failed:
     return JobQueueType::FailedJobs;
@@ -730,11 +734,11 @@ JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& s
 //------------------------------------------------------------------------------
 std::string ArchiveRequest::statusToString(const serializers::ArchiveJobStatus& status) {
   switch(status) {
-  case serializers::ArchiveJobStatus::AJS_ToTransfer:
+  case serializers::ArchiveJobStatus::AJS_ToTransferForUser:
     return "ToTransfer";
-  case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
+  case serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer:
     return "ToReportForTransfer";
-  case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
+  case serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure:
     return "ToReportForFailure";
   case serializers::ArchiveJobStatus::AJS_Complete:
     return "Complete";
@@ -792,7 +796,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   // Check status compatibility with event.
   switch (jobEvent) {
   case JobEvent::TransferFailed:
-    if (*currentStatus != ArchiveJobStatus::AJS_ToTransfer) {
+    if (*currentStatus != ArchiveJobStatus::AJS_ToTransferForUser) {
       // Wrong status, but the context leaves no ambiguity. Just warn.
       log::ScopedParamContainer params(lc);
       params.add("event", eventToString(jobEvent))
@@ -802,7 +806,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
     }
     break;
   case JobEvent::ReportFailed:
-    if (*currentStatus != ArchiveJobStatus::AJS_ToReportForFailure && *currentStatus != ArchiveJobStatus::AJS_ToReportForTransfer) {
+    if (*currentStatus != ArchiveJobStatus::AJS_ToReportToUserForFailure && *currentStatus != ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
       // Wrong status, but end status will be the same anyway.
       log::ScopedParamContainer params(lc);
       params.add("event", eventToString(jobEvent))
@@ -819,7 +823,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
     if (!m_payload.reportdecided()) {
       m_payload.set_reportdecided(true);
       ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
-      ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToReportForFailure;
+      ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure;
     } else {
       ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
       ret.nextStatus = serializers::ArchiveJobStatus::AJS_Failed;

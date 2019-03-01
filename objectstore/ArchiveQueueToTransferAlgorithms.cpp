@@ -24,13 +24,13 @@ namespace cta { namespace objectstore {
 // ArchiveQueue full specialisations for ContainerTraits.
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::c_containerTypeName = "ArchiveQueueToTransfer";
+const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::c_containerTypeName = "ArchiveQueueToTransferForUser";
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::c_identifierType = "tapepool";
+const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::c_identifierType = "tapepool";
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::
 getContainerSummary(Container& cont) -> ContainerSummary {
   ContainerSummary ret;
   ret.JobsSummary::operator=(cont.getJobsSummary());
@@ -38,7 +38,7 @@ getContainerSummary(Container& cont) -> ContainerSummary {
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::
 getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
   log::LogContext& lc) -> PoppedElementsBatch
 {
@@ -54,7 +54,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::
 getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
   ret.bytes = poppedElement.bytes;
@@ -63,7 +63,7 @@ getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
 }
 
 template<>
-void ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PoppedElementsBatch::
+void ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) {
   params.add("bytes", summary.bytes)
         .add("files", summary.files);

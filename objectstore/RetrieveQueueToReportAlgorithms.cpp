@@ -21,14 +21,14 @@
 namespace cta { namespace objectstore {
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_containerTypeName = "RetrieveQueueToReport";
+const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReportForUser>::c_containerTypeName = "RetrieveQueueToReportForUser";
 
 #if 0
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_identifierType = "vid";
+const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReportForUser>::c_identifierType = "vid";
 
 template<>
-auto ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::
+auto ContainerTraits<RetrieveQueue,RetrieveQueueToReportForUser>::
 getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
   log::LogContext &lc) -> PoppedElementsBatch
 {
@@ -51,7 +51,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 }
 
 template<>
-void ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::
+void ContainerTraits<RetrieveQueue,RetrieveQueueToReportForUser>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {

@@ -1705,7 +1705,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ss<<"repack://public_dir/public_file_"<<i<<"_"<<j;
         ASSERT_EQ(archiveRequest.getSrcURL(),ss.str());
         for(auto archiveJob : archiveRequest.dumpJobs()){
-          ASSERT_EQ(archiveJob.status,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransfer);
+          ASSERT_EQ(archiveJob.status,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransferForUser);
           ASSERT_TRUE(archiveJob.owner.find(agentReferenceName) != std::string::npos);
         }
         ++retrieveRequestAddressIndex;

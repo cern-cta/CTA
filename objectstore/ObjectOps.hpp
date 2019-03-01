@@ -36,15 +36,19 @@ template<typename Q,typename C> struct ContainerTraits;
 
 // Defined queue types
 struct ArchiveQueue;
-struct ArchiveQueueToTransfer;
-struct ArchiveQueueToReport;
+struct ArchiveQueueToTransferForUser;
+struct ArchiveQueueToReportForUser;
+struct ArchiveQueueToReportToRepackForFailure;
+struct ArchiveQueueToReportToRepackForSuccess;
 struct ArchiveQueueFailed;
 struct ArchiveQueueToTransferForRepack;
 struct RetrieveQueue;
-struct RetrieveQueueToTransfer;
-struct RetrieveQueueToReport;
+struct RetrieveQueueToTransferForUser;
+struct RetrieveQueueToReportForUser;
 struct RetrieveQueueFailed;
 struct RetrieveQueueToReportToRepackForSuccess;
+struct RetrieveQueueToReportToRepackForFailure;
+struct RetrieveQueueToTransferForRepack;
 struct RepackQueue;
 struct RepackQueuePending;
 struct RepackQueueToExpand;
@@ -54,14 +58,18 @@ class ObjectOpsBase {
   friend class ScopedExclusiveLock;
   friend class GenericObject;
   friend class Helpers;
-  friend ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>;
-  friend ContainerTraits<ArchiveQueue,ArchiveQueueToReport>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueFailed>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>;
-  friend ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>;
-  friend ContainerTraits<RetrieveQueue,RetrieveQueueToReport>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForFailure>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>; 
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToReportForUser>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueFailed>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForFailure>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForRepack>;
   friend ContainerTraits<RepackQueue,RepackQueuePending>;
   friend ContainerTraits<RepackQueue,RepackQueueToExpand>;
 protected:

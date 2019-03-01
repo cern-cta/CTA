@@ -63,15 +63,25 @@ void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& qu
 void Sorter::dispatchArchiveAlgorithm(const std::string tapePool, const JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext &lc){
   switch(jobQueueType){
     case JobQueueType::JobsToReportToUser:
-      executeArchiveAlgorithm<ArchiveQueueToReport>(tapePool,queueAddress,jobs,lc);
+      executeArchiveAlgorithm<ArchiveQueueToReportForUser>(tapePool,queueAddress,jobs,lc);
       break;
     case JobQueueType::JobsToTransferForRepack:
       executeArchiveAlgorithm<ArchiveQueueToTransferForRepack>(tapePool,queueAddress,jobs,lc);
       break;
-    default:
-      //TODO manage all queues
-      executeArchiveAlgorithm<ArchiveQueueToTransfer>(tapePool,queueAddress,jobs,lc);
+    case JobQueueType::JobsToReportToRepackForSuccess:
+      executeArchiveAlgorithm<ArchiveQueueToReportToRepackForSuccess>(tapePool,queueAddress,jobs,lc); 
       break;
+    case JobQueueType::JobsToReportToRepackForFailure:
+      executeArchiveAlgorithm<ArchiveQueueToReportToRepackForFailure>(tapePool,queueAddress,jobs,lc);
+      break;
+    case JobQueueType::JobsToTransferForUser:
+      executeArchiveAlgorithm<ArchiveQueueToTransferForUser>(tapePool,queueAddress,jobs,lc);
+      break;
+    case JobQueueType::FailedJobs:
+      executeArchiveAlgorithm<ArchiveQueueFailed>(tapePool,queueAddress,jobs,lc);
+      break;
+    default:
+      throw cta::exception::Exception("In Sorter::dispatchArchiveAlgorithm(), unknown JobQueueType");
   }
 }
 
@@ -162,13 +172,21 @@ void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueA
 void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<RetrieveJobQueueInfo> >& jobs, log::LogContext& lc){
   switch(jobQueueType){
     case JobQueueType::JobsToReportToUser:
-      this->executeRetrieveAlgorithm<RetrieveQueueToReport>(vid,queueAddress,jobs,lc);
+      this->executeRetrieveAlgorithm<RetrieveQueueToReportForUser>(vid,queueAddress,jobs,lc);
     break;
-    case JobQueueType::JobsToTransfer:
-      this->executeRetrieveAlgorithm<RetrieveQueueToTransfer>(vid,queueAddress,jobs,lc);
+    case JobQueueType::JobsToTransferForUser:
+      this->executeRetrieveAlgorithm<RetrieveQueueToTransferForUser>(vid,queueAddress,jobs,lc);
       break;
     case JobQueueType::JobsToReportToRepackForSuccess:
       this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForSuccess>(vid,queueAddress,jobs,lc);
+      break;
+    case JobQueueType::JobsToReportToRepackForFailure:
+      this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForFailure>(vid,queueAddress,jobs,lc);
+      break;
+    case JobQueueType::JobsToTransferForRepack:
+      this->executeRetrieveAlgorithm<RetrieveQueueToTransferForRepack>(vid, queueAddress,jobs,lc);
+      break;
+    case JobQueueType::FailedJobs:
       break;
     default:
       throw cta::exception::Exception("In Sorter::dispatchRetrieveAlgorithm(), unknown JobQueueType");
@@ -221,7 +239,7 @@ void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequ
         //We are sure that we want to queue a ToTransfer Job
         rjqi->jobToQueue = std::make_tuple(jobToAdd,std::promise<void>());
         threading::MutexLocker mapLocker(m_mutex);
-        m_retrieveQueuesAndRequests[std::make_tuple(bestVid,JobQueueType::JobsToTransfer)].emplace_back(rjqi);
+        m_retrieveQueuesAndRequests[std::make_tuple(bestVid,JobQueueType::JobsToTransferForUser)].emplace_back(rjqi);
         params.add("fileId", retrieveRequest->getArchiveFile().archiveFileID)
                .add("copyNb", copyNb)
                .add("tapeVid", bestVid)
@@ -261,7 +279,7 @@ std::set<std::string> Sorter::getCandidateVidsToTransfer(RetrieveRequest &reques
   using serializers::RetrieveJobStatus;
   std::set<std::string> candidateVids;
   for (auto & j: request.dumpJobs()) {
-    if(j.status == RetrieveJobStatus::RJS_ToTransfer) {
+    if(j.status == RetrieveJobStatus::RJS_ToTransferForUser) {
       candidateVids.insert(request.getArchiveFile().tapeFiles.at(j.copyNb).vid);
     }
   }

@@ -148,14 +148,14 @@ private:
   uint64_t m_maxShardSize = c_defaultMaxShardSize;
 };
 
-class RetrieveQueueToTransfer : public RetrieveQueue {
+class RetrieveQueueToTransferForUser : public RetrieveQueue {
 public:
-  template<typename...Ts> RetrieveQueueToTransfer(Ts&...args): RetrieveQueue(args...) {}
+  template<typename...Ts> RetrieveQueueToTransferForUser(Ts&...args): RetrieveQueue(args...) {}
 };
 
-class RetrieveQueueToReport : public RetrieveQueue {
+class RetrieveQueueToReportForUser : public RetrieveQueue {
 public:
-  template<typename...Ts> RetrieveQueueToReport(Ts&...args): RetrieveQueue(args...) {}
+  template<typename...Ts> RetrieveQueueToReportForUser(Ts&...args): RetrieveQueue(args...) {}
 };
 
 class RetrieveQueueFailed : public RetrieveQueue {
@@ -167,4 +167,17 @@ class RetrieveQueueToReportToRepackForSuccess : public RetrieveQueue {
 public:
   template<typename...Ts> RetrieveQueueToReportToRepackForSuccess(Ts&...args): RetrieveQueue(args...) {}
 };
+
+class RetrieveQueueToReportToRepackForFailure: public RetrieveQueue{
+public:
+  template<typename...Ts> RetrieveQueueToReportToRepackForFailure(Ts&...args): RetrieveQueue(args...) {}
+};
+
+class RetrieveQueueToTransferForRepack : public RetrieveQueue {
+public:
+  template<typename...Ts> RetrieveQueueToTransferForRepack(Ts&...args): RetrieveQueue(args...) {}
+};
+
+
 }}
+

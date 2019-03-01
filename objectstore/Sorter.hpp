@@ -69,7 +69,8 @@ public:
    * This method allows to insert the ArchiveRequest passed in parameter into the sorter.
    * It will put all the ArchiveRequest's jobs in the correct list so that they will be queued in the correct
    * queue after a flush*() call
-   * @param archiveRequest the ArchiveRequest containing the jobs to queue. This request should be locked and fetched before calling this method.
+   * @param archiveRequest the ArchiveRequest containing the jobs to queue. This request should be locked and fetched before calling this method. You will have to unlock this
+   * request after the execution of this method
    * @param previousOwner the previous Owner of the jobs of the ArchiveRequest. The new owner will be the agent of the sorter.
    * @param lc the log context for logging
    * @throws a cta::exception::Exception if the QueueType could not have been determined according to the status of the job
@@ -112,7 +113,8 @@ public:
    * will be selected amongst the jobs of the RetrieveRequest. The job corresponding to the tapeFile will be inserted.
    * 2. if copyNb corresponds to a tapeFile, the corresponding job will be inserted according to its status (e.g : if jobStatus = ToReportToUser, the job will be inserted in
    * the list associated to the vid of the job and the ToReportToUser queueType.
-   * @param retrieveRequest the RetrieveRequest that needs to be queued. This request should be locked and fetched before calling this method.
+   * @param retrieveRequest the RetrieveRequest that needs to be queued. This request should be locked and fetched before calling this method. You have to unlock the request 
+   * after this method
    * @param previousOwner the previous owner of the RetrieveRequest. The new owner will be the agent of the Sorter.
    * @param copyNb : if copyNb is nullopt, then the job we want to queue is supposed to be a ToTransfer job (if no job ToTransfer are present in the RetrieveJobs, an exception
    * will be thrown). If not, this method will select the queueType according 

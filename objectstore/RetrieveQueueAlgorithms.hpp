@@ -383,7 +383,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       e.archiveFile = u.get()->getArchiveFile();
       e.rr = u.get()->getRetrieveRequest();
       switch(u.get()->getJobStatus()) {
-        case serializers::RetrieveJobStatus::RJS_ToReportForFailure:
+        case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:
           e.reportType = SchedulerDatabase::RetrieveJob::ReportType::FailureReport;
           break;
         default:
@@ -432,7 +432,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
 // RetrieveQueue full specialisations for ContainerTraits.
 
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria {
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PopCriteria {
   uint64_t files;
   uint64_t bytes;
   PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
@@ -445,7 +445,7 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria {
 };
 
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSummary {
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PoppedElementsSummary {
   uint64_t files;
   uint64_t bytes;
   PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
@@ -497,8 +497,8 @@ template<typename C>
 const std::string ContainerTraits<RetrieveQueue,C>::c_identifierType = "tapeVid";
   
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::QueueType{
-    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransfer;
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::QueueType{
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForUser;
 };
 
 template<>
@@ -507,13 +507,23 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::QueueType{
 };
 
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::QueueType{
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToReportForUser>::QueueType{
     objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToUser;
 };
 
 template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess>::QueueType{
   objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForSuccess;
+};
+
+template<>
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForFailure>::QueueType{
+  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForFailure;
+};
+
+template<>
+struct ContainerTraits<RetrieveQueue, RetrieveQueueToTransferForRepack>::QueueType{
+  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForRepack;
 };
 
 }} // namespace cta::objectstore

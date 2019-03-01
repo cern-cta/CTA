@@ -92,8 +92,8 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
   ar.addJob(1, "TapePool0", agentRef.getAgentAddress(), 1, 1, 1);
   ar.addJob(2, "TapePool1", agentRef.getAgentAddress(), 1, 1, 1);
   ar.addJob(3,"TapePool0",agentRef.getAgentAddress(),1,1,1);
-  ar.setJobStatus(1,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportForTransfer);
-  ar.setJobStatus(3,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportForTransfer);
+  ar.setJobStatus(1,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
+  ar.setJobStatus(3,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
   cta::common::dataStructures::MountPolicy mp;
   ar.setMountPolicy(mp);
   ar.setArchiveReportURL("");
@@ -157,7 +157,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
 
   {
     //Get the archiveQueueToTransfer
-    std::string archiveQueueToTransfer = re.getArchiveQueueAddress("TapePool1",cta::objectstore::JobQueueType::JobsToTransfer);
+    std::string archiveQueueToTransfer = re.getArchiveQueueAddress("TapePool1",cta::objectstore::JobQueueType::JobsToTransferForUser);
     cta::objectstore::ArchiveQueue aq(archiveQueueToTransfer,be);
 
     //Fetch the queue so that we can get the archiveRequests from it
@@ -262,7 +262,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
   
-  rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
+  rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransferForRepack);
   
   cta::common::dataStructures::RetrieveRequest sReq;
   sReq.archiveFileID = rqc.archiveFile.archiveFileID;
@@ -296,7 +296,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
 
     allFutures.clear();
 
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
+    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> Algo;
     Algo algo(be,agentRef);
 
     typename Algo::PopCriteria criteria;
@@ -344,7 +344,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     }
     
     ASSERT_EQ(sorter.getAllRetrieve().size(),0);
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> Algo;
+    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForRepack> Algo;
     Algo algo(be,agentRef);
     
     typename Algo::PopCriteria criteria;
@@ -381,7 +381,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   }
 }
 
-TEST(ObjectStore,SorterInsertAllTypesOfRequests){
+TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   
   using namespace cta::objectstore;
 
@@ -580,7 +580,7 @@ TEST(ObjectStore,SorterInsertAllTypesOfRequests){
   ar2.setArchiveFile(aFile2);
   ar2.addJob(2, "TapePool0", agentRef.getAgentAddress(), 1, 1, 1);
   ar2.addJob(3,"TapePool0", agentRef.getAgentAddress(), 1, 1, 1);
-  ar2.setJobStatus(3,serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
+  ar2.setJobStatus(3,serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess);
   ar2.setMountPolicy(mp);
   ar2.setArchiveReportURL("");
   ar2.setArchiveErrorReportURL("");
@@ -616,7 +616,11 @@ TEST(ObjectStore,SorterInsertAllTypesOfRequests){
     }
   }
   
-  ASSERT_NO_THROW(sorter.flushAll(lc));
+  try{
+    sorter.flushAll(lc);
+  } catch (cta::exception::Exception &e){
+    std::cout<<e.what()<<std::endl;
+  }
   
   for(auto& future: allFuturesRetrieve){
     ASSERT_NO_THROW(std::get<1>(future).get());
@@ -628,7 +632,7 @@ TEST(ObjectStore,SorterInsertAllTypesOfRequests){
   
   {
     //Test the Retrieve Jobs
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
+    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> Algo;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
@@ -650,7 +654,7 @@ TEST(ObjectStore,SorterInsertAllTypesOfRequests){
   }
   {
     //Test the Archive Jobs
-    typedef ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransfer> Algo;
+    typedef ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser> Algo;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
@@ -670,7 +674,7 @@ TEST(ObjectStore,SorterInsertAllTypesOfRequests){
   }
   {
     //Test ArchiveJobToTransferForRepack
-    typedef ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForRepack> Algo;
+    typedef ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess> Algo;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 1;

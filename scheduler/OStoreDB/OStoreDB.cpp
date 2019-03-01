@@ -185,7 +185,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     log::LogContext & logContext) {
   utils::Timer t, t2;
   // Walk the archive queues for statistics
-  for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransfer)) {
+  for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) poolName = aqp.tapePool;
@@ -230,7 +230,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive queue.");
   }
   // Walk the retrieve queues for statistics
-  for (auto & rqp: re.dumpRetrieveQueues(JobQueueType::JobsToTransfer)) {
+  for (auto & rqp: re.dumpRetrieveQueues(JobQueueType::JobsToTransferForUser)) {
     RetrieveQueue rqueue(rqp.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) vid = rqp.vid;
@@ -395,7 +395,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  for (auto & queueType: { JobQueueType::JobsToTransfer, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs} ) {
+  for (auto & queueType: { JobQueueType::JobsToTransferForUser, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs} ) {
     try {
       auto archiveQueueList = re.dumpArchiveQueues(queueType);
       for (auto & a: archiveQueueList) {
@@ -775,7 +775,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
 {
   std::list<cta::common::dataStructures::ArchiveJob> ret;
 
-  for(ArchiveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransfer, tapePoolName); !q_it.end() ; ++q_it) {
+  for(ArchiveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransferForUser, tapePoolName); !q_it.end() ; ++q_it) {
     ret.push_back(*q_it);
   }
 
@@ -790,7 +790,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>>
 {
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
 
-  for(ArchiveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransfer); !q_it.end(); ++q_it) {
+  for(ArchiveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransferForUser); !q_it.end(); ++q_it) {
     ret[q_it.qid()].push_back(*q_it);
   }
 
@@ -817,7 +817,7 @@ OStoreDB::ArchiveQueueItor_t* OStoreDB::getArchiveJobItorPtr(const std::string &
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArchiveJobsToReportBatch(
     uint64_t filesRequested, log::LogContext& logContext) {
-  typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReport> AQTRAlgo;
+  typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReportForUser> AQTRAlgo;
   AQTRAlgo aqtrAlgo(m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
@@ -1242,7 +1242,7 @@ OStoreDB::getRetrieveJobs(const std::string &vid) const
 {
   std::list<common::dataStructures::RetrieveJob> ret;
 
-  for(RetrieveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransfer, vid); !q_it.end(); ++q_it) {
+  for(RetrieveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransferForUser, vid); !q_it.end(); ++q_it) {
     ret.push_back(*q_it);
   }
 
@@ -1257,7 +1257,7 @@ OStoreDB::getRetrieveJobs() const
 {
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>> ret;
 
-  for(RetrieveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransfer); !q_it.end(); ++q_it) {
+  for(RetrieveQueueItor_t q_it(m_objectStore, JobQueueType::JobsToTransferForUser); !q_it.end(); ++q_it) {
     ret[q_it.qid()].push_back(*q_it);
   }
 
@@ -1578,7 +1578,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::
 getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext)
 {
-  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> RQTRAlgo;
+  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportForUser> RQTRAlgo;
   RQTRAlgo rqtrAlgo(m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop
   RootEntry re(m_objectStore);
@@ -2398,7 +2398,7 @@ const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMou
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested,
     uint64_t bytesRequested, log::LogContext& logContext) {
-  typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> AQAlgos;
+  typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> AQAlgos;
   AQAlgos aqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   AQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
   auto jobs = aqAlgos.popNextBatch(mountInfo.tapePool, popCriteria, logContext);
@@ -2478,7 +2478,7 @@ const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo(
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMount::
 getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext &logContext)
 {
-  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> RQAlgos;
+  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
   auto jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
@@ -2694,7 +2694,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
   }
   timingList.insertAndReset("asyncSucceedCompletionTime", t);
   if (jobsToQueueForReporting.size()) {
-    typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,objectstore::ArchiveQueueToReport> AqtrCa;
+    typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,objectstore::ArchiveQueueToReportForUser> AqtrCa;
     AqtrCa aqtrCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     std::map<std::string, AqtrCa::InsertedElement::list> insertedElementsLists;
     for (auto & j: jobsToQueueForReporting) {
@@ -2795,7 +2795,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReport> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReportForUser> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
@@ -2818,7 +2818,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
@@ -2889,7 +2889,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReport> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReportForUser> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
@@ -3065,7 +3065,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
     }
 
     case NextStep::EnqueueForReport: {
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaRqtr;
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportForUser> CaRqtr;
 
       // Algorithms suppose the objects are not locked
       auto  retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
@@ -3074,7 +3074,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       std::set<std::string> candidateVids;
       for(auto &tf: af.tapeFiles) {
-        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportForFailure)
+        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure)
           candidateVids.insert(tf.second.vid);
       }
       if(candidateVids.empty()) {
@@ -3120,7 +3120,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
     }
 
     case NextStep::EnqueueForTransfer: {
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> CaRqtr;
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> CaRqtr;
 
       // Algorithms suppose the objects are not locked
       auto  retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
@@ -3129,7 +3129,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       std::set<std::string> candidateVids;
       for(auto &tf : af.tapeFiles) {
-        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransfer)
+        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransferForUser)
           candidateVids.insert(tf.second.vid);
       }
       if(candidateVids.empty()) {
@@ -3156,7 +3156,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
-        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToTransfer
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToTransferForUser
       });
 
       CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -3217,11 +3217,11 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
     switch (enQueueingNextStep.nextStep) {
       // We have a reduced set of supported next steps as some are not compatible with this event
       case NextStep::EnqueueForReport: {
-        typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaRqtr;
+        typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportForUser> CaRqtr;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement{
-          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToReportForFailure
+          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure
         });
         caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);

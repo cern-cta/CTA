@@ -407,10 +407,10 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       e->errorReportURL = u->get()->getArchiveErrorReportURL();
       e->srcURL = u->get()->getSrcURL();
       switch(u->get()->getJobStatus()) {
-        case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
+        case serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer:
           e->reportType = SchedulerDatabase::ArchiveJob::ReportType::CompletionReport;
           break;
-        case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
+        case serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure:
           e->reportType = SchedulerDatabase::ArchiveJob::ReportType::FailureReport;
           break;
         default:
@@ -442,7 +442,7 @@ getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
 // ArchiveQueue full specialisations for ContainerTraits.
 
 template<>
-struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PopCriteria {
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria {
   uint64_t files;
   uint64_t bytes;
   PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
@@ -455,7 +455,7 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PopCriteria {
 };
 
 template<>
-struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PoppedElementsSummary {
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElementsSummary {
   uint64_t files;
   uint64_t bytes;
   PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
@@ -479,8 +479,8 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PoppedElementsSumma
 };
 
 template<>
-struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::QueueType {
-    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransfer;
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::QueueType {
+    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForUser;
 };
 
 template<>
@@ -489,7 +489,7 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::QueueType {
 };
 
 template<>
-struct ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::QueueType {
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::QueueType {
     objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToUser;
 };
 
@@ -502,4 +502,10 @@ template<>
 struct ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::QueueType{
   objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForSuccess;
 };
+
+template<>
+struct ContainerTraits<ArchiveQueue, ArchiveQueueToReportToRepackForFailure>::QueueType{
+  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForFailure;
+};
+
 }} // namespace cta::objectstore

@@ -506,7 +506,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       continue;
     std::string rqAddr;
     try {
-      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, JobQueueType::JobsToTransfer);
+      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, JobQueueType::JobsToTransferForUser);
     } catch (cta::exception::Exception &) {
       ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
       ret.back().vid=tf.second.vid;

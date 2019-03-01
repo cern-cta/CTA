@@ -301,7 +301,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     auto & queue = *ret->m_queue;
     auto & aql = *ret->m_lock;
     objectstore::Helpers::getLockedAndFetchedJobQueue<Queue>(queue, aql, 
-            *oStoreDB.m_agentReference, queueIndex, objectstore::JobQueueType::JobsToTransfer, logContext);
+            *oStoreDB.m_agentReference, queueIndex, objectstore::JobQueueType::JobsToTransferForUser, logContext);
     double getFetchedQueueTime = timer.secs(utils::Timer::resetCounter);
     auto summaryBefore=queue.getJobsSummary();
     size_t addedJobs=1;

@@ -112,15 +112,18 @@ message RetrieveQueuePointer {
 // The root entry. This entry contains all the most static information, i.e.
 // the admin handled configuration information
 message RootEntry {
-  repeated ArchiveQueuePointer livearchivejobsqueuepointers = 1050;
-  repeated RetrieveQueuePointer liveretrievejobsqueuepointers = 1060;
-  repeated ArchiveQueuePointer archivefailurestoreportqueuepointers = 1061;
-  repeated ArchiveQueuePointer failedarchivejobsqueuepointers = 1062;
-  repeated RetrieveQueuePointer retrievefailurestoreportqueuepointers = 1063;
-  repeated RetrieveQueuePointer failedretrievejobsqueuepointers = 1065;
+  repeated ArchiveQueuePointer archive_queue_to_transfer_for_user_pointers = 1050;
+  repeated ArchiveQueuePointer archive_queue_failed_pointers = 1062;
+  repeated ArchiveQueuePointer archive_queue_to_report_for_user_pointers = 1068;
+  repeated ArchiveQueuePointer archive_queue_to_transfer_for_repack_pointers = 1069;
+  repeated ArchiveQueuePointer archive_queue_to_report_to_repack_for_success_pointers = 1072;
+  repeated ArchiveQueuePointer archive_queue_to_report_to_repack_for_failure_pointers = 1073;
+  repeated RetrieveQueuePointer retrieve_queue_to_transfer_for_user_pointers = 1060;
+  repeated RetrieveQueuePointer retrieve_queue_to_report_for_user_pointers = 1063;
+  repeated RetrieveQueuePointer retrieve_queue_failed_pointers = 1065;
   repeated RetrieveQueuePointer retrieve_queue_to_report_to_repack_for_success_pointers = 1066;
-  repeated ArchiveQueuePointer archivejobstoreportqueuepointers = 1068;
-  repeated ArchiveQueuePointer archive_jobs_to_transfer_for_repack_pointers = 1069;
+  repeated RetrieveQueuePointer retrieve_queue_to_report_to_repack_for_failure_pointers = 1067;
+  repeated RetrieveQueuePointer retrieve_queue_to_transfer_for_repack_pointers = 1071;
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
   optional RepackIndexPointer repackindexpointer = 1085;
@@ -274,13 +277,15 @@ message MountPolicy {
 // This life cycle represented by the following enum
 
 enum ArchiveJobStatus {
-  AJS_ToTransfer = 1;
-  AJS_ToReportForTransfer = 2;
+  AJS_ToTransferForUser = 1;
+  AJS_ToReportToUserForTransfer = 2;
   AJS_Complete = 3;
-  AJS_ToReportForFailure = 997;
+  AJS_ToReportToUserForFailure = 997;
   AJS_Failed = 998;
   AJS_Abandoned = 999;
   AJS_ToTransferForRepack = 1001;
+  AJS_ToReportToRepackForSuccess = 1005;
+  AJS_ToReportToRepackForFailure = 1006;
 }
 
 message ArchiveJob {
@@ -331,10 +336,12 @@ message ArchiveRequest {
 // of the request.
 
 enum RetrieveJobStatus {
-  RJS_ToTransfer = 1;
-  RJS_ToReportForFailure = 997;
+  RJS_ToTransferForUser = 1;
+  RJS_ToReportToUserForFailure = 997;
   RJS_Failed = 998;
   RJS_ToReportToRepackForSuccess = 1002; //For Retrieve request created by a Repack request
+  RJS_ToReportToRepackForFailure = 1003;
+  RJS_ToTransferForRepack = 1004;
 }
 
 message SchedulerRetrieveRequest {
