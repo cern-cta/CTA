@@ -109,6 +109,8 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Arch
     return m_payload.archivejobstoreportqueuepointers();
   case JobQueueType::FailedJobs:
     return m_payload.failedarchivejobsqueuepointers();
+  case JobQueueType::JobsToTransferForRepack:
+    return m_payload.archive_jobs_to_transfer_for_repack_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::archiveQueuePointers(): unknown queue type.");
   }
@@ -122,6 +124,8 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Arch
     return m_payload.mutable_archivejobstoreportqueuepointers();
   case JobQueueType::FailedJobs:
     return m_payload.mutable_failedarchivejobsqueuepointers();
+  case JobQueueType::JobsToTransferForRepack:
+    return m_payload.mutable_archive_jobs_to_transfer_for_repack_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::mutableArchiveQueuePointers(): unknown queue type.");
   }

@@ -40,7 +40,7 @@ void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& qu
     Sorter::ArchiveJob job = std::get<0>(jobToAdd->jobToQueue);
     succeededJobs[job.jobDump.copyNb] = jobToAdd;
     previousOwner = job.previousOwner->getAgentAddress();
-    jobsToAdd.push_back({ jobToAdd->archiveRequest.get(),job.jobDump.copyNb,job.archiveFile, job.mountPolicy,cta::nullopt });
+    jobsToAdd.push_back({ job.archiveRequest.get() ,job.jobDump.copyNb,job.archiveFile, job.mountPolicy,cta::nullopt });
   }
   try{
       algo.referenceAndSwitchOwnershipIfNecessary(tapePool,previousOwner,queueAddress,jobsToAdd,lc);
@@ -65,7 +65,11 @@ void Sorter::dispatchArchiveAlgorithm(const std::string tapePool, const JobQueue
     case JobQueueType::JobsToReportToUser:
       executeArchiveAlgorithm<ArchiveQueueToReport>(tapePool,queueAddress,jobs,lc);
       break;
+    case JobQueueType::JobsToTransferForRepack:
+      executeArchiveAlgorithm<ArchiveQueueToTransferForRepack>(tapePool,queueAddress,jobs,lc);
+      break;
     default:
+      //TODO manage all queues
       executeArchiveAlgorithm<ArchiveQueueToTransfer>(tapePool,queueAddress,jobs,lc);
       break;
   }
@@ -79,7 +83,6 @@ void Sorter::insertArchiveRequest(std::shared_ptr<ArchiveRequest> archiveRequest
 
 void Sorter::insertArchiveJob(std::shared_ptr<ArchiveRequest> archiveRequest, AgentReferenceInterface &previousOwner, ArchiveRequest::JobDump& jobToInsert, log::LogContext & lc){
   auto ajqi = std::make_shared<ArchiveJobQueueInfo>();
-  ajqi->archiveRequest = archiveRequest;
   Sorter::ArchiveJob jobToAdd;
   jobToAdd.archiveRequest = archiveRequest;
   jobToAdd.archiveFile = archiveRequest->getArchiveFile();
@@ -209,7 +212,6 @@ void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequ
       }
       vidFound:
         std::shared_ptr<RetrieveJobQueueInfo> rjqi = std::make_shared<RetrieveJobQueueInfo>(RetrieveJobQueueInfo());
-        rjqi->retrieveRequest = retrieveRequest;
         log::ScopedParamContainer params(lc);
         size_t copyNb = std::numeric_limits<size_t>::max();
         uint64_t fSeq = std::numeric_limits<uint64_t>::max();
@@ -233,7 +235,6 @@ void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequ
     //We want to queue a specific job identified by its copyNb
     log::ScopedParamContainer params(lc);
     auto rjqi = std::make_shared<RetrieveJobQueueInfo>();
-    rjqi->retrieveRequest = retrieveRequest;
     cta::common::dataStructures::ArchiveFile archiveFile = retrieveRequest->getArchiveFile();
     cta::common::dataStructures::TapeFile jobTapeFile = archiveFile.tapeFiles[copyNb.value()];
     Sorter::RetrieveJob jobToAdd = createRetrieveJob(retrieveRequest,archiveFile,jobTapeFile.copyNb,jobTapeFile.fSeq,&previousOwner);
@@ -303,5 +304,10 @@ void Sorter::queueRetrieveRequests(const std::string vid, const JobQueueType job
 }
 
 /* End of Retrieve related algorithms */
+
+void Sorter::flushAll(log::LogContext& lc){
+  while(flushOneRetrieve(lc)){}
+  while(flushOneArchive(lc)){}
+}
 
 }}

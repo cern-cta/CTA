@@ -39,6 +39,7 @@ struct ArchiveQueue;
 struct ArchiveQueueToTransfer;
 struct ArchiveQueueToReport;
 struct ArchiveQueueFailed;
+struct ArchiveQueueToTransferForRepack;
 struct RetrieveQueue;
 struct RetrieveQueueToTransfer;
 struct RetrieveQueueToReport;
@@ -56,6 +57,7 @@ class ObjectOpsBase {
   friend ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueToReport>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueFailed>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueToReport>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueFailed>;
