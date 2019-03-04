@@ -41,4 +41,20 @@ ADD ${BASEDIR}/opt /opt
 # Docker image run setup
 ADD ${BASEDIR}/run.sh /
 
-ENTRYPOINT ["/run.sh"]
+# Add custom rc.local to massage kubernetes resources for
+# the taget docker container
+ADD ${BASEDIR}/rc.local /etc/rc.d
+
+# Make sure it can be executed by root
+RUN chmod 744 /etc/rc.local
+
+# disable selinux so that systemd works if the container is booted
+# with an image that already contains selinux
+ADD ${BASEDIR}/etc_selinux_config /etc/selinux/config
+
+# One more thing so that we can use systemd
+VOLUME [ "/sys/fs/cgroup" ]
+
+# And finally run systemd if the entrypoint is not overriden by docker
+ENTRYPOINT ["/usr/sbin/init"]
+
