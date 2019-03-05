@@ -643,6 +643,7 @@
 {
    AgentReferenceInterface::Vtable race false positive
    Helgrind:Race
+   ...
    fun:_ZN3cta11objectstore14AgentReferenceD1Ev
    fun:_ZN3cta11objectstore14AgentReferenceD0Ev
    fun:_ZNKSt14default_deleteIN3cta11objectstore14AgentReferenceEEclEPS2_
