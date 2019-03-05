@@ -639,3 +639,15 @@
    fun:_ZNSt10shared_ptrIN3cta11objectstore14AgentReference11ActionQueueEED1Ev
    ...
 }
+
+{
+   AgentReferenceInterface::Vtable race false positive
+   Helgrind:Race
+   fun:_ZN3cta11objectstore14AgentReferenceD1Ev
+   fun:_ZN3cta11objectstore14AgentReferenceD0Ev
+   fun:_ZNKSt14default_deleteIN3cta11objectstore14AgentReferenceEEclEPS2_
+   fun:_ZNSt10unique_ptrIN3cta11objectstore14AgentReferenceESt14default_deleteIS2_EED1Ev
+   fun:_ZN3cta12_GLOBAL__N_115OStoreDBWrapperINS_11objectstore10BackendVFSEED1Ev
+   fun:_ZN3cta12_GLOBAL__N_115OStoreDBWrapperINS_11objectstore10BackendVFSEED0Ev
+   ...
+}
