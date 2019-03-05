@@ -428,7 +428,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   std::list<common::dataStructures::ArchiveFile> files;
   auto repackInfo = repackRequest->getRepackInfo();
   typedef cta::common::dataStructures::RepackInfo::Type RepackType;
-  if (repackInfo.type != RepackType::RepackOnly) {
+  if (repackInfo.type != RepackType::MoveOnly) {
     log::ScopedParamContainer params(lc);
     params.add("tapeVid", repackInfo.vid);
     lc.log(log::ERR, "In Scheduler::expandRepackRequest(): failing repack request with unsupported (yet) type.");
@@ -461,7 +461,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       rsr.archiveFile = archiveFile;
       rsr.fSeq = std::numeric_limits<decltype(rsr.fSeq)>::max();
       // We have to determine which copynbs we want to rearchive, and under which fSeq we record this file.
-      if (repackInfo.type == RepackType::ExpandAndRepack || repackInfo.type == RepackType::RepackOnly) {
+      if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::MoveOnly) {
         // determine which fSeq(s) (normally only one) lives on this tape.
         for (auto & tc: archiveFile.tapeFiles) if (tc.second.vid == repackInfo.vid) {
           rsr.copyNbsToRearchive.insert(tc.second.copyNb);
@@ -473,7 +473,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
           maxAddedFSeq = std::max(maxAddedFSeq, rsr.fSeq);
         }
       }
-      if (repackInfo.type == RepackType::ExpandAndRepack || repackInfo.type == RepackType::ExpandOnly) {
+      if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::AddCopiesOnly) {
         // We should not get here are the type is filtered at the beginning of the function.
         // TODO: add support for expand.
         throw cta::exception::Exception("In Scheduler::expandRepackRequest(): expand not yet supported.");

@@ -32,9 +32,9 @@ struct RepackInfo {
   std::string vid;
   std::string repackBufferBaseURL;
   enum class Type {
-    ExpandAndRepack,
-    ExpandOnly,
-    RepackOnly,
+    MoveAndAddCopies,
+    AddCopiesOnly,
+    MoveOnly,
     Undefined
   } type;
   enum class Status {

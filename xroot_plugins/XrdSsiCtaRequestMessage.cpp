@@ -1404,14 +1404,14 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
    // Expand, repack, or both ?
    cta::common::dataStructures::RepackInfo::Type type;
 
-   if(has_flag(OptionBoolean::JUSTEXPAND) && has_flag(OptionBoolean::JUSTREPACK)) {
-      throw cta::exception::UserError("--justexpand and --justrepack are mutually exclusive");
-   } else if(has_flag(OptionBoolean::JUSTEXPAND)) {
-      type = cta::common::dataStructures::RepackInfo::Type::ExpandOnly;
-   } else if(has_flag(OptionBoolean::JUSTREPACK)) {
-      type = cta::common::dataStructures::RepackInfo::Type::RepackOnly;
+   if(has_flag(OptionBoolean::JUSTADDCOPIES) && has_flag(OptionBoolean::JUSTMOVE)) {
+      throw cta::exception::UserError("--justaddcopies and --justmove are mutually exclusive");
+   } else if(has_flag(OptionBoolean::JUSTADDCOPIES)) {
+      type = cta::common::dataStructures::RepackInfo::Type::AddCopiesOnly;
+   } else if(has_flag(OptionBoolean::JUSTMOVE)) {
+      type = cta::common::dataStructures::RepackInfo::Type::MoveOnly;
    } else {
-      type = cta::common::dataStructures::RepackInfo::Type::ExpandAndRepack;
+      type = cta::common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
    }
 
    // Process each item in the list

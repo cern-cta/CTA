@@ -24,12 +24,12 @@ namespace dataStructures {
 
 std::string toString(RepackInfo::Type type) {
   switch(type) {
-    case RepackInfo::Type::ExpandAndRepack:
-      return "expand and repack";
-    case RepackInfo::Type::ExpandOnly:
-      return "expand only";
-    case RepackInfo::Type::RepackOnly:
-      return "repack only";
+    case RepackInfo::Type::MoveAndAddCopies:
+      return "move and add copies";
+    case RepackInfo::Type::AddCopiesOnly:
+      return "add copies only";
+    case RepackInfo::Type::MoveOnly:
+      return "move only";
     default:
       return "UNKNOWN";
   }

@@ -1269,7 +1269,7 @@ TEST_P(SchedulerTest, repack) {
   // Create and then cancel repack
   common::dataStructures::SecurityIdentity cliId;
   std::string tape1 = "Tape";
-  scheduler.queueRepack(cliId, tape1, "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
+  scheduler.queueRepack(cliId, tape1, "root://server/repackDir", common::dataStructures::RepackInfo::Type::MoveOnly, lc);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, repacks.size());
@@ -1279,7 +1279,7 @@ TEST_P(SchedulerTest, repack) {
   scheduler.cancelRepack(cliId, tape1, lc);
   ASSERT_EQ(0, scheduler.getRepacks().size());
   // Recreate a repack and get it moved to ToExpand
-  scheduler.queueRepack(cliId, "Tape2", "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
+  scheduler.queueRepack(cliId, "Tape2", "root://server/repackDir", common::dataStructures::RepackInfo::Type::MoveOnly, lc);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, repacks.size());
@@ -1307,10 +1307,10 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   // Create a repack request
   common::dataStructures::SecurityIdentity cliId;
   std::string tape1 = "Tape";
-  scheduler.queueRepack(cliId, tape1, "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
+  scheduler.queueRepack(cliId, tape1, "root://server/repackDir", common::dataStructures::RepackInfo::Type::MoveOnly, lc);
   
   std::string tape2 = "Tape2";
-  scheduler.queueRepack(cliId,tape2,"root://server/repackDir",common::dataStructures::RepackInfo::Type::ExpandOnly,lc);
+  scheduler.queueRepack(cliId,tape2,"root://server/repackDir",common::dataStructures::RepackInfo::Type::AddCopiesOnly,lc);
   
   //Test the repack request queued has status Pending
   ASSERT_EQ(scheduler.getRepack(tape1).status,common::dataStructures::RepackInfo::Status::Pending);
@@ -1325,7 +1325,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   ASSERT_EQ(repackRequestToExpand1.get()->getRepackInfo().vid,tape1);
   //Check status changed from Pending to ToExpand
   ASSERT_EQ(repackRequestToExpand1.get()->getRepackInfo().status,common::dataStructures::RepackInfo::Status::ToExpand);
-  ASSERT_EQ(repackRequestToExpand1.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::RepackOnly);
+  ASSERT_EQ(repackRequestToExpand1.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::MoveOnly);
   
   //Test the getNextRepackRequestToExpand method that is supposed to retrieve the previously second inserted request
   auto repackRequestToExpand2 = scheduler.getNextRepackRequestToExpand();
@@ -1334,7 +1334,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().vid,tape2);
   //Check status changed from Pending to ToExpand
   ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().status,common::dataStructures::RepackInfo::Status::ToExpand);
-  ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::ExpandOnly);
+  ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::AddCopiesOnly);
   
   auto nullRepackRequest = scheduler.getNextRepackRequestToExpand();
   ASSERT_EQ(nullRepackRequest,nullptr);
@@ -1446,7 +1446,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
     for(uint64_t i = 0; i < nbTapesToRepack ; ++i) {
-      scheduler.queueRepack(admin,allVid.at(i),"root://repackData/buffer",common::dataStructures::RepackInfo::Type::RepackOnly,lc);
+      scheduler.queueRepack(admin,allVid.at(i),"root://repackData/buffer",common::dataStructures::RepackInfo::Type::MoveOnly,lc);
     }
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();

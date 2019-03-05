@@ -47,8 +47,8 @@ void RepackRequest::initialize() {
   // Setup underlying object
   ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t>::initialize();
   m_payload.set_status(serializers::RepackRequestStatus::RRS_Pending);
-  m_payload.set_expandmode(true);
-  m_payload.set_repackmode(true);
+  m_payload.set_add_copies_mode(true);
+  m_payload.set_move_mode(true);
   m_payload.set_totalfilestoretrieve(0);
   m_payload.set_totalbytestoretrieve(0);
   m_payload.set_totalfilestoarchive(0);
@@ -84,14 +84,14 @@ void RepackRequest::setType(common::dataStructures::RepackInfo::Type repackType)
   checkPayloadWritable();
   typedef common::dataStructures::RepackInfo::Type RepackType;
   switch (repackType) {
-  case RepackType::ExpandAndRepack:
+  case RepackType::MoveAndAddCopies:
     // Nothing to do, this is the default case.
     break;
-  case RepackType::ExpandOnly:
-    m_payload.set_repackmode(false);
+  case RepackType::AddCopiesOnly:
+    m_payload.set_move_mode(false);
     break;
-  case RepackType::RepackOnly:
-    m_payload.set_expandmode(false);
+  case RepackType::MoveOnly:
+    m_payload.set_add_copies_mode(false);
     break;
   default:
     throw exception::Exception("In RepackRequest::setRepackType(): unexpected type.");
@@ -118,14 +118,14 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.vid = m_payload.vid();
   ret.status = (RepackInfo::Status) m_payload.status();
   ret.repackBufferBaseURL = m_payload.buffer_url();
-  if (m_payload.repackmode()) {
-    if (m_payload.expandmode()) {
-      ret.type = RepackInfo::Type::ExpandAndRepack;
+  if (m_payload.move_mode()) {
+    if (m_payload.add_copies_mode()) {
+      ret.type = RepackInfo::Type::MoveAndAddCopies;
     } else {
-      ret.type = RepackInfo::Type::RepackOnly;
+      ret.type = RepackInfo::Type::MoveOnly;
     }
-  } else if (m_payload.expandmode()) {
-    ret.type = RepackInfo::Type::ExpandOnly;
+  } else if (m_payload.add_copies_mode()) {
+    ret.type = RepackInfo::Type::AddCopiesOnly;
   } else {
     throw exception::Exception("In RepackRequest::getInfo(): unexpcted mode: neither expand nor repack.");
   }
@@ -431,14 +431,14 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       retRef.m_repackInfo.status = (RepackInfo::Status) payload.status();
       retRef.m_repackInfo.vid = payload.vid();
       retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
-      if (payload.repackmode()) {
-        if (payload.expandmode()) {
-          retRef.m_repackInfo.type = RepackInfo::Type::ExpandAndRepack;
+      if (payload.move_mode()) {
+        if (payload.add_copies_mode()) {
+          retRef.m_repackInfo.type = RepackInfo::Type::MoveAndAddCopies;
         } else {
-          retRef.m_repackInfo.type = RepackInfo::Type::RepackOnly;
+          retRef.m_repackInfo.type = RepackInfo::Type::MoveOnly;
         }
-      } else if (payload.expandmode()) {
-        retRef.m_repackInfo.type = RepackInfo::Type::ExpandOnly;
+      } else if (payload.add_copies_mode()) {
+        retRef.m_repackInfo.type = RepackInfo::Type::AddCopiesOnly;
       } else {
         throw exception::Exception("In RepackRequest::asyncUpdateOwner()::lambda(): unexpcted mode: neither expand nor repack.");
       }

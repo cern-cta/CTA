@@ -260,8 +260,8 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--extended",              OptionBoolean::EXTENDED },
    { "--header",                OptionBoolean::SHOW_HEADER },
    { "--justarchive",           OptionBoolean::JUSTARCHIVE },
-   { "--justrepack",            OptionBoolean::JUSTREPACK },
-   { "--justexpand",            OptionBoolean::JUSTEXPAND },
+   { "--justmove",              OptionBoolean::JUSTMOVE },
+   { "--justaddcopies",         OptionBoolean::JUSTADDCOPIES },
    { "--justretrieve",          OptionBoolean::JUSTRETRIEVE },
    { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
    { "--summary",               OptionBoolean::SUMMARY }

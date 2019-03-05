@@ -506,8 +506,8 @@ message RepackRequest {
   required string vid = 11000;
   required string buffer_url = 11005;
   required RepackRequestStatus status = 11010;
-  required bool expandmode = 11400;
-  required bool repackmode = 11410;
+  required bool add_copies_mode = 11400;
+  required bool move_mode = 11410;
   required uint64 totalfilestoretrieve = 11420;
   required uint64 totalbytestoretrieve = 11430;
   // We can have more files to archive than we have to retrieve if we plan to also archive a missing

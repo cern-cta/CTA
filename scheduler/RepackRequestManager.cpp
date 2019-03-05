@@ -35,7 +35,7 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
   std::unique_ptr<cta::RepackRequest> repackRequest = m_scheduler.getNextRepackRequestToExpand();
   if(repackRequest != nullptr){
     //We have a RepackRequest that has the status ToExpand, expand it
-    timingList.insertAndReset("epxandRepackRequestTime", t);
+    timingList.insertAndReset("expandRepackRequestTime", t);
     m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
     log::ScopedParamContainer params(lc);
     params.add("tapeVid",repackRequest->getRepackInfo().vid);
