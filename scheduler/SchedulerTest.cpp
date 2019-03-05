@@ -1611,9 +1611,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     std::vector<std::string> retrieveRequestsAddresses;
     for(uint64_t i = 1; i<= nbTapesForTest ;++i)
     {
-      //We will now test the getNextSucceededRetrieveRequestForRepackBatch method that
+      //We will now test the getNextRetrieveRequestToReportToRepackForSuccessBatch method that
       //pop all the RetrieveRequest from the RetrieveQueueToReportToRepackForSuccess queue
-      auto listSucceededRetrieveRequests = schedulerDB.getNextSucceededRetrieveRequestForRepackBatch(nbArchiveFilesPerTape,lc);
+      auto listSucceededRetrieveRequests = schedulerDB.getNextRetrieveRequestToReportToRepackForSuccessBatch(nbArchiveFilesPerTape,lc);
       {
         ASSERT_EQ(listSucceededRetrieveRequests.size(),nbArchiveFilesPerTape);
         int j = 1;
@@ -1679,7 +1679,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       }
     }
     //Testing that the RetrieveQueueToReportToRepackForSuccess is empty
-    ASSERT_EQ(schedulerDB.getNextSucceededRetrieveRequestForRepackBatch(nbArchiveFilesPerTape,lc).size(),0);
+    ASSERT_EQ(schedulerDB.getNextRetrieveRequestToReportToRepackForSuccessBatch(nbArchiveFilesPerTape,lc).size(),0);
     
     //Testing the new ArchiveRequests contains the same data as the previous RetrieveRequest
     archiveFileId = 1;
@@ -1733,7 +1733,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     re.fetch();
 
     //Get the retrieveQueueToReportToRepackForSuccess
-    std::string archiveQueueToTransferForRepack = re.getArchiveQueueAddress(s_tapePoolName,cta::objectstore::JobQueueType::JobsToTransfer);
+    std::string archiveQueueToTransferForRepack = re.getArchiveQueueAddress(s_tapePoolName,cta::objectstore::JobQueueType::JobsToTransferForRepack);
     cta::objectstore::ArchiveQueue aq(archiveQueueToTransferForRepack,schedulerDB.getBackend());
 
     //Fetch the queue so that we can get the retrieveRequests from it

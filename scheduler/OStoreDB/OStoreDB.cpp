@@ -3605,7 +3605,7 @@ void OStoreDB::RetrieveJob::asyncSetSuccessful() {
 //------------------------------------------------------------------------------
 // OStoreDB::getNextSucceededRetrieveRequestForRepackBatch()
 //------------------------------------------------------------------------------
-std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> OStoreDB::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
+std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> OStoreDB::getNextRetrieveRequestToReportToRepackForSuccessBatch(uint64_t filesRequested, log::LogContext& lc)
 {
   std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> ret;
   typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> Carqtrtrfs;

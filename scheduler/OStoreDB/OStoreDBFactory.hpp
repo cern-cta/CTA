@@ -154,8 +154,8 @@ public:
     return m_OStoreDB.getNextRetrieveJobsFailedBatch(filesRequested, lc);
   }
   
-  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc) override {
-    return m_OStoreDB.getNextSucceededRetrieveRequestForRepackBatch(filesRequested,lc);
+  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> getNextRetrieveRequestToReportToRepackForSuccessBatch(uint64_t filesRequested, log::LogContext& lc) override {
+    return m_OStoreDB.getNextRetrieveRequestToReportToRepackForSuccessBatch(filesRequested,lc);
   }
 
   JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &lc) override {

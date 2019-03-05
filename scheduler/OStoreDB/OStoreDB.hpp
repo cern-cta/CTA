@@ -326,7 +326,7 @@ public:
    * @param lc
    * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
    */
-  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc) override;
+  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> getNextRetrieveRequestToReportToRepackForSuccessBatch(uint64_t filesRequested, log::LogContext& lc) override;
 
   JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) override;
   
