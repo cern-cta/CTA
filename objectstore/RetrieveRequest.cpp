@@ -58,7 +58,6 @@ void RetrieveRequest::initialize() {
   m_payload.set_failurereportlog("");
   m_payload.set_failurereporturl("");
   m_payload.set_isrepack(false);
-  m_payload.set_tapepool("");
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -372,7 +371,6 @@ std::string RetrieveRequest::getLastActiveVid() {
   return m_payload.archivefile().tapefiles(0).vid();
 }
 
-
 //------------------------------------------------------------------------------
 // RetrieveRequest::setSchedulerRequest()
 //------------------------------------------------------------------------------
@@ -402,8 +400,6 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   objectstore::EntryLogSerDeser el(ret.creationLog);
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.dstURL = m_payload.schedulerrequest().dsturl();
-  ret.isRepack = m_payload.isrepack();
-  ret.tapePool = m_payload.tapepool();
   ret.errorReportURL = m_payload.schedulerrequest().retrieveerrorreporturl();
   objectstore::DiskFileInfoSerDeser dfisd;
   dfisd.deserialize(m_payload.schedulerrequest().diskfileinfo());
@@ -514,6 +510,37 @@ bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId,
     }
   }
   throw NoSuchJob ("In RetrieveRequest::addJobFailure(): could not find job");
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::setRepackInfo()
+//------------------------------------------------------------------------------
+void RetrieveRequest::setRepackInfo(const RepackInfo& repackInfo) {
+  checkPayloadWritable();
+  m_payload.set_isrepack(repackInfo.isRepack);
+  if (repackInfo.isRepack) {
+    for (auto & ar: repackInfo.archiveRouteMap) {
+      auto * plar=m_payload.mutable_repack_info()->mutable_archive_routes()->Add();
+      plar->set_copynb(ar.first);
+      plar->set_tapepool(ar.second);
+    }
+    for (auto cntr: repackInfo.copyNbsToRearchive) {
+      m_payload.mutable_repack_info()->mutable_copy_nbs_to_rearchive()->Add(cntr);
+    }
+    m_payload.mutable_repack_info()->set_file_buffer_url(repackInfo.fileBufferURL);
+    m_payload.mutable_repack_info()->set_repack_request_address(repackInfo.repackRequestAddress);
+  }
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::getRepackInfo()
+//------------------------------------------------------------------------------
+RetrieveRequest::RepackInfo RetrieveRequest::getRepackInfo() {
+  checkPayloadReadable();
+  RepackInfoSerDeser ret;
+  if (m_payload.isrepack())
+    ret.deserialize(m_payload.repack_info());
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -744,8 +771,6 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
             dfi.deserialize(payload.schedulerrequest().diskfileinfo());
             retRef.m_retrieveRequest.diskFileInfo = dfi;
             retRef.m_retrieveRequest.dstURL = payload.schedulerrequest().dsturl();
-            retRef.m_retrieveRequest.isRepack = payload.isrepack();
-            retRef.m_retrieveRequest.tapePool = payload.tapepool();
             retRef.m_retrieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
             retRef.m_retrieveRequest.requester.name = payload.schedulerrequest().requester().name();
             retRef.m_retrieveRequest.requester.group = payload.schedulerrequest().requester().group();
@@ -753,6 +778,18 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
             af.deserialize(payload.archivefile());
             retRef.m_archiveFile = af;
             retRef.m_jobStatus = j.status();
+            if (payload.isrepack()) {
+              RetrieveRequest::RepackInfo & ri = retRef.m_repackInfo;
+              for (auto &ar: payload.repack_info().archive_routes()) {
+                ri.archiveRouteMap[ar.copynb()] = ar.tapepool();
+              }
+              for (auto cntr: payload.repack_info().copy_nbs_to_rearchive()) {
+                ri.copyNbsToRearchive.insert(cntr);
+              }
+              ri.fileBufferURL = payload.repack_info().file_buffer_url();
+              ri.isRepack = true;
+              ri.repackRequestAddress = payload.repack_info().repack_request_address();
+            }
             // TODO serialization of payload maybe not necessary
             oh.set_payload(payload.SerializePartialAsString());
             return oh.SerializeAsString();
@@ -777,6 +814,13 @@ void RetrieveRequest::AsyncJobOwnerUpdater::wait() {
 //------------------------------------------------------------------------------
 const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
   return m_archiveFile;
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncJobOwnerUpdater::getRepackInfo()
+//------------------------------------------------------------------------------
+const RetrieveRequest::RepackInfo& RetrieveRequest::AsyncJobOwnerUpdater::getRepackInfo() {
+  return m_repackInfo;
 }
 
 //------------------------------------------------------------------------------
@@ -970,24 +1014,29 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     //TODO : Should creation log just be initialized or should it be copied from the retrieveRequest ?
     cta::objectstore::serializers::EntryLog *archiveRequestCL = archiveRequestPayload.mutable_creationlog();
     archiveRequestCL->CopyFrom(retrieveRequestMP.creationlog());
-    //Add the jobs of the old RetrieveRequest to the new ArchiveRequest
-    for(auto retrieveJob: retrieveRequestPayload.jobs()){
+    //Create archive jobs for each copyNb ro rearchive
+    RetrieveRequest::RepackInfoSerDeser repackInfoSerDeser;
+    repackInfoSerDeser.deserialize(retrieveRequestPayload.repack_info());
+    // TODO: for the moment we just clone the retrieve request's policy.
+    auto maxRetriesWithinMount = retrieveRequestPayload.jobs(0).maxretrieswithinmount();
+    auto maxTotalRetries = retrieveRequestPayload.jobs(0).maxtotalretries();
+    auto maxReportRetries = retrieveRequestPayload.jobs(0).maxreportretries();
+    for(auto cntr: repackInfoSerDeser.copyNbsToRearchive) {
       auto *archiveJob = archiveRequestPayload.add_jobs();
       archiveJob->set_status(cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransferForUser);
-      archiveJob->set_copynb(retrieveJob.copynb());
+      archiveJob->set_copynb(cntr);
       archiveJob->set_archivequeueaddress("");
       archiveJob->set_totalreportretries(0);
       archiveJob->set_lastmountwithfailure(0);
       archiveJob->set_totalretries(0);
       archiveJob->set_retrieswithinmount(0);
-      archiveJob->set_maxretrieswithinmount(retrieveJob.maxretrieswithinmount()); //TODO : should we put the same value as the retrieveJob ?
+      archiveJob->set_maxretrieswithinmount(maxRetriesWithinMount); //TODO : should we put the same value as the retrieveJob ?
       archiveJob->set_totalreportretries(0);
-      archiveJob->set_maxtotalretries(retrieveJob.maxtotalretries()); //TODO : should we put the same value as the retrieveJob ?
-      archiveJob->set_maxreportretries(retrieveJob.maxreportretries()); //TODO : should we put the same value as the retrieveJob ?
-      archiveJob->set_tapepool(retrieveRequestPayload.tapepool());
+      archiveJob->set_maxtotalretries(maxTotalRetries); //TODO : should we put the same value as the retrieveJob ?
+      archiveJob->set_maxreportretries(maxReportRetries); //TODO : should we put the same value as the retrieveJob ?
+      archiveJob->set_tapepool(repackInfoSerDeser.archiveRouteMap[cntr]);
       archiveJob->set_owner(processAgentAddress);
     }
-    
     //Serialize the new ArchiveRequest so that it replaces the RetrieveRequest
     oh.set_payload(archiveRequestPayload.SerializeAsString());
     //Change the type of the RetrieveRequest to ArchiveRequest
@@ -1044,24 +1093,4 @@ void RetrieveRequest::setJobStatus(uint32_t copyNumber, const serializers::Retri
   throw exception::Exception("In RetrieveRequest::setJobStatus(): job not found.");
 }
 
-bool RetrieveRequest::isRepack(){
-  checkPayloadReadable();
-  return m_payload.isrepack();
-}
-
-void RetrieveRequest::setIsRepack(bool isRepack){
-  checkPayloadWritable();
-  m_payload.set_isrepack(isRepack);
-}
-
-std::string RetrieveRequest::getTapePool(){
-  checkPayloadReadable();
-  return m_payload.tapepool();
-}
-
-void RetrieveRequest::setTapePool(const std::string tapePool)
-{
-  checkPayloadWritable();
-  m_payload.set_tapepool(tapePool);
-}
 }} // namespace cta::objectstore

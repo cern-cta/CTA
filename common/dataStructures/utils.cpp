@@ -22,7 +22,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-std::ostream &operator<<(std::ostream &os, const std::map<uint64_t,TapeFile> &map) {
+std::ostream &operator<<(std::ostream &os, const std::map<uint32_t,TapeFile> &map) {
   os << "(";
   for(auto it = map.begin(); it != map.end(); it++) {
     os << " key=" << it->first << " value=" << it->second << " ";
@@ -54,7 +54,7 @@ std::ostream &operator<<(std::ostream &os, const std::map<uint64_t,std::pair<std
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const std::map<std::string,std::pair<uint64_t,TapeFile>> &map) {
+std::ostream &operator<<(std::ostream &os, const std::map<std::string,std::pair<uint32_t,TapeFile>> &map) {
   os << "(";
   for(auto it = map.begin(); it != map.end(); it++) {
     os << " key=" << it->first << " value.first=" << it->second.first << "  value.second=" << it->second.second;

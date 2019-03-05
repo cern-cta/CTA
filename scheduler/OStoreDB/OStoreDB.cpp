@@ -28,6 +28,7 @@
 #include "objectstore/RepackRequest.hpp"
 #include "objectstore/RepackIndex.hpp"
 #include "objectstore/RepackQueue.hpp"
+#include "objectstore/Sorter.hpp"
 #include "objectstore/Helpers.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
@@ -1062,7 +1063,6 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   rReq->initialize();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
-  rReq->setTapePool(rqst.tapePool);
   // Find the job corresponding to the vid (and check we indeed have one).
   auto jobs = rReq->getJobs();
   objectstore::RetrieveRequest::JobDump job;
@@ -1088,8 +1088,6 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
     rReq->setOwner(m_agentReference->getAgentAddress());
     // "Select" an arbitrary copy number. This is needed to serialize the object.
     rReq->setActiveCopyNumber(criteria.archiveFile.tapeFiles.begin()->second.copyNb);
-    rReq->setIsRepack(rqst.isRepack);
-    rReq->setTapePool(rqst.tapePool);
     rReq->insert();
     double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     m_taskQueueSize++;
@@ -1294,6 +1292,7 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   rr->setOwner(m_agentReference->getAgentAddress());
   rr->setVid(vid);
   rr->setType(repackType);
+  rr->setBufferURL(bufferURL);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
   try {
     Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
@@ -1511,13 +1510,269 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
     auto repackInfo = jobs.elements.front().repackInfo;
     //build the repackRequest with the repack infos
     std::unique_ptr<OStoreDB::RepackRequest> ret;
-    ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(),*this));
+    ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(), *this));
     ret->repackInfo.vid = repackInfo.vid;
     ret->repackInfo.type = repackInfo.type;
     ret->repackInfo.status = repackInfo.status;
+    ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
     return std::move(ret);
   }
 }
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequest::getLastExpandedFSeq()
+//------------------------------------------------------------------------------
+uint64_t OStoreDB::RepackRequest::getLastExpandedFSeq() {
+  // We own the repack request, so we are only users of it.
+  m_repackRequest.fetchNoLock();
+  return m_repackRequest.getLastExpandedFSeq();
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequest::addSubrequests()
+//------------------------------------------------------------------------------
+void OStoreDB::RepackRequest::addSubrequests(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap, uint64_t maxFSeqLowBound, log::LogContext& lc) {
+  // We need to prepare retrieve requests names and reference them, create them, enqueue them.
+  objectstore::ScopedExclusiveLock rrl (m_repackRequest);
+  m_repackRequest.fetch();
+  std::set<uint64_t> fSeqs;
+  for (auto rsr: repackSubrequests) fSeqs.insert(rsr.fSeq);
+  auto subrequestsNames = m_repackRequest.getOrPrepareSubrequestInfo(fSeqs, *m_oStoreDB.m_agentReference);
+  // We make sure the references to subrequests exist persistently before creating them.
+  m_repackRequest.commit();
+  // We keep holding the repack request lock: we need to ensure de deleted boolean of each subrequest does
+  // not change while we attempt creating them (or we would face double creation).
+  // Sort the naming results in a fSeq->requestName map for easier access.
+  std::map<uint64_t, objectstore::RepackRequest::SubrequestInfo> subReqInfoMap;
+  for (auto &rn: subrequestsNames) { subReqInfoMap[rn.fSeq] = rn; }
+  // Try to create the retrieve subrequests (owned by this process, to be queued in a second step)
+  // subrequests can already fail at that point if we cannot find a copy on a valid tape.
+  std::list<uint64_t> failedFSeqs;
+  uint64_t failedFiles = 0;
+  uint64_t failedBytes = 0;
+  // First loop: we will issue the async insertions of the subrequests.
+  struct AsyncInsertionInfo {
+    Subrequest & rsr;
+    std::shared_ptr<RetrieveRequest> request;
+    std::shared_ptr<RetrieveRequest::AsyncInserter> inserter;
+    std::string bestVid;
+    uint32_t activeCopyNb;
+  };
+  std::list<AsyncInsertionInfo> asyncInsertionInfoList;
+  for (auto &rsr: repackSubrequests) {
+    // Requests marked as deleted are guaranteed to have already been created => we will not re-attempt.
+    if (!subReqInfoMap.at(rsr.fSeq).subrequestDeleted) {
+      // We need to try and create the subrequest.
+      // Create the sub request (it's a retrieve request now).
+      auto rr=std::make_shared<objectstore::RetrieveRequest>(subReqInfoMap.at(rsr.fSeq).address, m_oStoreDB.m_objectStore);
+      rr->initialize();
+      // Set the file info
+      common::dataStructures::RetrieveRequest schedReq;
+      schedReq.archiveFileID = rsr.archiveFile.archiveFileID;
+      schedReq.dstURL = rsr.fileBufferURL;
+      schedReq.diskFileInfo = rsr.archiveFile.diskFileInfo;
+      // dsrr.errorReportURL:  We leave this bank as the reporting will be done to the repack request,
+      // stored in the repack info.
+      rr->setSchedulerRequest(schedReq);
+      // Set the repack info.
+      RetrieveRequest::RepackInfo rRRepackInfo;
+      try {
+        for (auto & ar: archiveRoutesMap.at(std::make_tuple(rsr.archiveFile.diskInstance, rsr.archiveFile.storageClass))) {
+          rRRepackInfo.archiveRouteMap[ar.second.copyNb] = ar.second.tapePoolName;
+        }
+      } catch (std::out_of_range &) {
+        failedFSeqs.emplace_back(rsr.fSeq);
+        failedFiles++;
+        failedBytes += rsr.archiveFile.fileSize;
+        log::ScopedParamContainer params(lc);
+        params.add("fileID", rsr.archiveFile.archiveFileID)
+              .add("diskInstance", rsr.archiveFile.diskInstance)
+              .add("storageClass", rsr.archiveFile.storageClass);
+        std::stringstream storageClassList;
+        bool first=true;
+        for (auto & sc: archiveRoutesMap) {
+          std::string diskInstance, storageClass;
+          std::tie(diskInstance, storageClass) = sc.first;
+          storageClassList << (first?"":" ") << "di=" << diskInstance << " sc=" << storageClass << " rc=" << sc.second.size();
+        }
+        params.add("storageClassList", storageClassList.str());
+        lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubrequests(): not such archive route.");
+        continue;
+      }
+      rRRepackInfo.copyNbsToRearchive = rsr.copyNbsToRearchive;
+      rRRepackInfo.fileBufferURL = rsr.fileBufferURL;
+      rRRepackInfo.isRepack = true;
+      rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
+      rr->setRepackInfo(rRRepackInfo);
+      // Set the queueing parameters
+      common::dataStructures::RetrieveFileQueueCriteria fileQueueCriteria;
+      fileQueueCriteria.archiveFile = rsr.archiveFile;
+      fileQueueCriteria.mountPolicy = common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack;
+      rr->setRetrieveFileQueueCriteria(fileQueueCriteria);
+      // Decide of which vid we are going to retrieve from. Here, if we can retrieve from the repack VID, we
+      // will set the initial recall on it. Retries will we requeue to best VID as usual if needed.
+      std::string bestVid;
+      uint32_t activeCopyNumber = 0;
+      // Make sure we have a copy on the vid we intend to repack.
+      for (auto & tc: rsr.archiveFile.tapeFiles) {
+        if (tc.second.vid == repackInfo.vid) {
+          try {
+            // Try to select the repack VID from a one-vid list.
+            Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+            bestVid = repackInfo.vid;
+            activeCopyNumber = tc.second.copyNb;
+          } catch (Helpers::NoTapeAvailableForRetrieve &) {}
+          break;
+        }
+      }
+      // The repack vid was not appropriate, let's try all candidates.
+      if (bestVid.empty()) {
+        std::set<std::string> candidateVids;
+        for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.second.vid);
+        try {
+          bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+        } catch (Helpers::NoTapeAvailableForRetrieve &) {
+          // Count the failure for this subrequest. 
+          failedFSeqs.emplace_back(rsr.fSeq);
+          failedFiles++;
+          failedBytes += rsr.archiveFile.fileSize;
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", rsr.archiveFile.archiveFileID)
+                .add("repackVid", repackInfo.vid);
+          lc.log(log::ERR,
+              "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed.");
+          continue;
+        }
+      }
+      for (auto &tc: rsr.archiveFile.tapeFiles)
+        if (tc.second.vid == bestVid) {
+          activeCopyNumber = tc.second.copyNb;
+          goto copyNbFound;
+        }
+      {
+        // Count the failure for this subrequest. 
+        failedFSeqs.emplace_back(rsr.fSeq);
+        failedFiles++;
+        failedBytes += rsr.archiveFile.fileSize;
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", rsr.archiveFile.archiveFileID)
+              .add("repackVid", repackInfo.vid)
+              .add("bestVid", bestVid);
+        lc.log(log::ERR,
+            "In OStoreDB::RepackRequest::addSubrequests(): could not find the copyNb for the chosen VID. Subrequest failed.");
+        continue;
+      }
+    copyNbFound:;
+      // We have the best VID. The request is ready to be created after comleting its information.
+      rr->setOwner(m_oStoreDB.m_agentReference->getAgentAddress());
+      rr->setActiveCopyNumber(activeCopyNumber);
+      // We can now try to insert the request. It could alredy have been created (in which case it must exist).
+      // We hold the lock to the repack request, no better not waste time, so we async create.
+      try {
+        std::shared_ptr<objectstore::RetrieveRequest::AsyncInserter> rrai(rr->asyncInsert());
+        asyncInsertionInfoList.emplace_back(AsyncInsertionInfo{rsr, rr, rrai, bestVid, activeCopyNumber});
+      } catch (exception::Exception & ex) {
+        // We can fail to serialize here...
+        // Count the failure for this subrequest. 
+        failedFSeqs.emplace_back(rsr.fSeq);
+        failedFiles++;
+        failedBytes += rsr.archiveFile.fileSize;
+        failedFSeqs.emplace_back(rsr.fSeq);
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", rsr.archiveFile)
+              .add("repackVid", repackInfo.vid)
+              .add("bestVid", bestVid)
+              .add("ExceptionMessage", ex.getMessageValue());
+        lc.log(log::ERR,
+            "In OStoreDB::RepackRequest::addSubrequests(): could not asyncInsert the subrequest.");
+      }
+    }
+  }
+  // We can now check the subrequests creations succeeded, and prepare their queueing.
+  struct AsyncInsertedSubrequestInfo {
+    Subrequest & rsr;
+    std::string bestVid;
+    uint32_t activeCopyNb;
+    std::shared_ptr<RetrieveRequest> request;
+  };
+  std::list <AsyncInsertedSubrequestInfo> asyncInsertedSubrequestInfoList;
+  for (auto & aii: asyncInsertionInfoList) {
+    // Check the insertion succeeded.
+    try {
+      aii.inserter->wait();
+      log::ScopedParamContainer params(lc);
+      params.add("fileID", aii.rsr.archiveFile.archiveFileID);
+      std::stringstream copyNbList;
+      bool first = true;
+      for (auto cn: aii.rsr.copyNbsToRearchive) { copyNbList << (first?"":" ") << cn; first = true; }
+      params.add("copyNbsToRearchive", copyNbList.str())
+            .add("subrequestObject", aii.request->getAddressIfSet())
+            .add("fileBufferURL", aii.rsr.fileBufferURL);
+      lc.log(log::INFO, "In OStoreDB::RepackRequest::addSubrequests(): subrequest created.");
+      asyncInsertedSubrequestInfoList.emplace_back(AsyncInsertedSubrequestInfo{aii.rsr, aii.bestVid, aii.activeCopyNb, aii.request});
+    } catch (exception::Exception & ex) {
+      // Count the failure for this subrequest. 
+      failedFSeqs.emplace_back(aii.rsr.fSeq);
+      failedFiles++;
+      failedBytes += aii.rsr.archiveFile.fileSize;
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", aii.rsr.archiveFile)
+            .add("repackVid", repackInfo.vid)
+            .add("bestVid", aii.bestVid)
+            .add("bestCopyNb", aii.activeCopyNb)
+            .add("ExceptionMessage", ex.getMessageValue());
+      lc.log(log::ERR,
+          "In OStoreDB::RepackRequest::addSubrequests(): could not asyncInsert the subrequest.");
+    }
+  }
+  // We now have created the subrequests. Time to enqueue.
+  {
+    objectstore::Sorter sorter(*m_oStoreDB.m_agentReference, m_oStoreDB.m_objectStore, m_oStoreDB.m_catalogue);
+    std::list<std::unique_ptr<objectstore::ScopedExclusiveLock>> locks;
+    for (auto &is: asyncInsertedSubrequestInfoList) {
+      locks.push_back(cta::make_unique<objectstore::ScopedExclusiveLock>(*is.request));
+      is.request->fetch();
+      sorter.insertRetrieveRequest(is.request, *m_oStoreDB.m_agentReference, is.activeCopyNb, lc);
+    }
+    locks.clear();
+    sorter.flushAll(lc);
+  }
+  
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequest::expandDone()
+//------------------------------------------------------------------------------
+void OStoreDB::RepackRequest::expandDone() {
+  // We are now done with the repack request. We can set its status.
+  ScopedSharedLock rrl(m_repackRequest);
+  m_repackRequest.fetch();
+  // After expansion, 2 statuses are possible: starting (nothing reported as done) or running (anything reported as done).
+  // We can find that out from the statistics...
+  typedef objectstore::RepackRequest::StatsType StatsType;
+  bool running=false;
+  auto stats=m_repackRequest.getStats();
+  for (auto t: {StatsType::ArchiveFailure, StatsType::ArchiveSuccess, StatsType::RetrieveSuccess, StatsType::RetrieveFailure}) {
+    if (stats.at(t).files) {
+      running=true;
+      break;
+    }
+  }
+  typedef common::dataStructures::RepackInfo::Status Status;
+  m_repackRequest.setStatus(running? Status::Running: Status::Starting);
+  m_repackRequest.commit();
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequest::fail()
+//------------------------------------------------------------------------------
+void OStoreDB::RepackRequest::fail() {
+  ScopedExclusiveLock rrl(m_repackRequest);
+  m_repackRequest.fetch();
+  m_repackRequest.setStatus(common::dataStructures::RepackInfo::Status::Failed);
+  m_repackRequest.commit();
+}
+
 
 //------------------------------------------------------------------------------
 // OStoreDB::cancelRepack()
@@ -1601,6 +1856,7 @@ getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logCo
       rj->selectedCopyNb = j.copyNb;
       rj->errorReportURL = j.errorReportURL;
       rj->reportType = j.reportType;
+      rj->m_repackInfo = j.repackInfo;
       rj->setJobOwned();
       ret.emplace_back(std::move(rj));
     }
@@ -2490,6 +2746,8 @@ getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContex
     rj->archiveFile = j.archiveFile;
     rj->retrieveRequest = j.rr;
     rj->selectedCopyNb = j.copyNb;
+    rj->isRepack = j.repackInfo.isRepack;
+    rj->m_repackInfo = j.repackInfo;
     rj->m_jobOwned = true;
     rj->m_mountId = mountInfo.mountId;
     ret.emplace_back(std::move(rj));
@@ -2580,46 +2838,101 @@ OStoreDB::RetrieveJob * OStoreDB::castFromSchedDBJob(SchedulerDatabase::Retrieve
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::RetrieveMount::waitAndFinishSettingJobsBatchSuccessful()
+// OStoreDB::RetrieveMount::flushAsyncSuccessReports()
 //------------------------------------------------------------------------------
-std::set<cta::SchedulerDatabase::RetrieveJob*> OStoreDB::RetrieveMount::finishSettingJobsBatchSuccessful(
-  std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) {
-  std::set<cta::SchedulerDatabase::RetrieveJob*> ret;
+void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
+    log::LogContext& lc) {
   std::list<std::string> rjToUnown;
-  // We will wait on the asynchronously started reports of jobs and remove them from
-  // ownership.
+  std::map<std::string, std::list<OStoreDB::RetrieveJob*>> jobsToRequeueForRepackMap;
+  // We will wait on the asynchronously started reports of jobs, queue the retrieve jobs
+  // for report and remove them from ownership.
+  // 1) Check the async update result.
   for (auto & sDBJob: jobsBatch) {
     auto osdbJob = castFromSchedDBJob(sDBJob);
-    rjToUnown.push_back(osdbJob->m_retrieveRequest.getAddressIfSet());
-    ret.insert(sDBJob);
+    if (osdbJob->isRepack) {
+      try {
+        osdbJob->m_jobSucceedForRepackReporter->wait();
+        jobsToRequeueForRepackMap[osdbJob->m_repackInfo.repackRequestAddress].emplace_back(osdbJob);
+      } catch (cta::exception::Exception & ex) {
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", osdbJob->archiveFile.archiveFileID)
+              .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
+              .add("exceptionMessage", ex.getMessageValue());
+        lc.log(log::ERR, 
+            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed. "
+            "Will leave job to garbage collection.");
+      }
+    } else {
+      try {
+        osdbJob->m_jobDelete->wait();
+        rjToUnown.push_back(osdbJob->m_retrieveRequest.getAddressIfSet());
+      } catch (cta::exception::Exception & ex) {
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", osdbJob->archiveFile.archiveFileID)
+              .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
+              .add("exceptionMessage", ex.getMessageValue());
+        lc.log(log::ERR, 
+            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async deletion failed. "
+            "Will leave job to garbage collection.");
+      }
+    }
   }
+  // 2) Queue the repack requests for repack.
+  for (auto & repackRequestQueue: jobsToRequeueForRepackMap) {
+    typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> RQTRTRFSAlgo;
+    RQTRTRFSAlgo::InsertedElement::list insertedRequests;
+    // Keep a map of objectstore request -> sDBJob to handle errors.
+    std::map<objectstore::RetrieveRequest *, OStoreDB::RetrieveJob *> requestToJobMap;
+    for (auto & req: repackRequestQueue.second) {
+      insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb, 
+          req->archiveFile.tapeFiles[req->selectedCopyNb].fSeq, req->archiveFile.fileSize,
+          cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,
+          serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess});
+      requestToJobMap[&req->m_retrieveRequest] = req;
+    }
+    RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+    try {
+      rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.first, insertedRequests, lc);
+      // In case all goes well, we can remove ownership of all requests.
+      for (auto & req: repackRequestQueue.second)  { rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet()); }
+    } catch (RQTRTRFSAlgo::OwnershipSwitchFailure & failure) {
+      // Some requests did not make it to the queue. Log and leave them for GC to sort out (leave them in ownership).
+      std::set<std::string> failedElements;
+      for (auto & fe: failure.failedElements) {
+        // Log error.
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", requestToJobMap.at(fe.element->retrieveRequest)->archiveFile.archiveFileID)
+              .add("copyNb", fe.element->copyNb)
+              .add("requestObject", fe.element->retrieveRequest->getAddressIfSet());
+        try {
+          std::rethrow_exception(fe.failure);
+        } catch (cta::exception::Exception & ex) {
+          params.add("exeptionMessage", ex.getMessageValue());
+        } catch (std::exception & ex) {
+          params.add("exceptionWhat", ex.what())
+                .add("exceptionTypeName", typeid(ex).name());
+        }
+        lc.log(log::ERR, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for repack."
+          "Leaving request to be garbage collected.");
+        // Add the failed request to the set.
+        failedElements.insert(fe.element->retrieveRequest->getAddressIfSet());
+      }
+      for (auto & req: repackRequestQueue.second)  {
+        if (!failedElements.count(req->m_retrieveRequest.getAddressIfSet())) {
+          rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet());
+        }
+      }
+    } catch (exception::Exception & ex) {
+      // Something else happened. We just log the error and let the garbage collector go through all the requests.
+      log::ScopedParamContainer params(lc);
+      params.add("exceptionMessage", ex.getMessageValue());
+      lc.log(log::ERR, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue a batch of requests.");
+    }
+  }
+  // 3) Remove requests from ownership.
   m_oStoreDB.m_agentReference->removeBatchFromOwnership(rjToUnown, m_oStoreDB.m_objectStore);
-  return ret;
 }
 
-//------------------------------------------------------------------------------
-// OStoreDB::RetrieveMount::batchSucceedRetrieveForRepack()
-//------------------------------------------------------------------------------
-std::set<cta::SchedulerDatabase::RetrieveJob *> OStoreDB::RetrieveMount::batchSucceedRetrieveForRepack(
-    std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, cta::log::LogContext & lc)
-{
-  std::set<cta::SchedulerDatabase::RetrieveJob *> ret;
-  typedef objectstore::ContainerAlgorithms<objectstore::RetrieveQueue,objectstore::RetrieveQueueToReportToRepackForSuccess> AqtrtrfsCa;
-  AqtrtrfsCa aqtrtrfsCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-  AqtrtrfsCa::InsertedElement::list insertedElementsLists;
-  std::string vid;
-  for(auto & retrieveJob : jobsBatch){
-    auto osdbJob = castFromSchedDBJob(retrieveJob);
-    ret.insert(retrieveJob);
-    osdbJob->asyncReportSucceedForRepack();
-    osdbJob->checkReportSucceedForRepack();
-    auto & tapeFile = osdbJob->archiveFile.tapeFiles[osdbJob->selectedCopyNb];
-    vid = osdbJob->m_retrieveMount->mountInfo.vid;
-    insertedElementsLists.push_back(AqtrtrfsCa::InsertedElement{&osdbJob->m_retrieveRequest, (uint16_t)osdbJob->selectedCopyNb, tapeFile.fSeq,osdbJob->archiveFile.fileSize,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess});
-  }
-  aqtrtrfsCa.referenceAndSwitchOwnership(vid,insertedElementsLists,lc);
-  return ret;
-}
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::setDriveStatus()
 //------------------------------------------------------------------------------
@@ -3276,39 +3589,22 @@ OStoreDB::RetrieveJob::~RetrieveJob() {
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::RetrieveJob::asyncSucceed()
+// OStoreDB::RetrieveJob::asyncSetSuccessful()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::asyncSucceed() {
-  // set the request as successful (delete it).
-  m_jobDelete.reset(m_retrieveRequest.asyncDeleteJob());
+void OStoreDB::RetrieveJob::asyncSetSuccessful() {
+  if (isRepack) {
+    // If the job is from a repack subrequest, we change its status (to report 
+    // for repack success). Queueing will be done in batch in 
+    m_jobSucceedForRepackReporter.reset(m_retrieveRequest.asyncReportSucceedForRepack(this->selectedCopyNb));
+  } else {
+    // set the user transfer request as successful (delete it).
+    m_jobDelete.reset(m_retrieveRequest.asyncDeleteJob());
+  }
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::RetrieveJob::checkSucceed()
+// OStoreDB::getNextSucceededRetrieveRequestForRepackBatch()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::checkSucceed() {
-  m_jobDelete->wait();
-  m_retrieveRequest.resetValues();
-  // We no more own the job (which could be gone)
-  m_jobOwned = false;
-  // Ownership will be removed from agent by caller through retrieve mount object.
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::RetrieveJob::asyncReportSucceedForRepack()
-//------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::asyncReportSucceedForRepack()
-{
-  m_jobSucceedForRepackReporter.reset(m_retrieveRequest.asyncReportSucceedForRepack(this->selectedCopyNb));
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::RetrieveJob::checkReportSucceedForRepack()
-//------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::checkReportSucceedForRepack(){
-  m_jobSucceedForRepackReporter->wait();
-}
-
 std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> OStoreDB::getNextSucceededRetrieveRequestForRepackBatch(uint64_t filesRequested, log::LogContext& lc)
 {
   std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> ret;

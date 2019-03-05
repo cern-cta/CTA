@@ -36,6 +36,7 @@
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/JobQueueType.hpp"
+#include "objectstore/RepackIndex.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "common/Timer.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
@@ -565,8 +566,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_EQ(1, jobBatch.size());
     retrieveJob.reset(jobBatch.front().release());
     ASSERT_NE(nullptr, retrieveJob.get());
-    retrieveJob->asyncComplete();
-    retrieveJob->checkComplete();
+    retrieveJob->asyncSetSuccessful();
+    std::queue<std::unique_ptr<cta::RetrieveJob> > jobQueue;
+    jobQueue.push(std::move(retrieveJob));
+    retrieveMount->flushAsyncSuccessReports(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
@@ -1347,13 +1350,16 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   setupDefaultCatalogue();
   
     
-  //cta::log::StdoutLogger dummyLogger("dummy","dummy");
-  cta::log::DummyLogger dummyLogger("dummy","dummy");
-  log::LogContext lc(dummyLogger);
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
   
   //Create an agent to represent this test process
   std::string agentReferenceName = "expandRepackRequestTest";
-  std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dummyLogger));
+  std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
   
   
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
@@ -1440,7 +1446,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
     for(uint64_t i = 0; i < nbTapesToRepack ; ++i) {
-      scheduler.queueRepack(admin,allVid.at(i),"bufferURL",common::dataStructures::RepackInfo::Type::ExpandOnly,lc);
+      scheduler.queueRepack(admin,allVid.at(i),"root://repackData/buffer",common::dataStructures::RepackInfo::Type::RepackOnly,lc);
     }
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();
@@ -1473,11 +1479,11 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       int j = 1;
       for(auto retrieveJob : retrieveJobs){
         //Test that the informations are correct for each file
-        ASSERT_EQ(retrieveJob.request.tapePool,s_tapePoolName);
+        //ASSERT_EQ(retrieveJob.request.tapePool,s_tapePoolName);
         ASSERT_EQ(retrieveJob.request.archiveFileID,archiveFileId++);
         ASSERT_EQ(retrieveJob.fileSize,compressedFileSize);
         std::stringstream ss;
-        ss<<"repack://public_dir/public_file_"<<i<<"_"<<j;
+        ss<<"root://repackData/buffer/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
         ASSERT_EQ(retrieveJob.request.dstURL, ss.str());
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.copyNb,1);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumType,checksumType);
@@ -1545,7 +1551,10 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         re.fetch();
 
         //Get the retrieveQueueToReportToRepackForSuccess
-        std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(allVid.at(i-1),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+        // The queue is named after the repack request: we need to query the repack index
+        objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
+        ri.fetchNoLock();
+        std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(allVid.at(i-1)),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
         cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForSuccessAddress,schedulerDB.getBackend());
 
         //Fetch the queue so that we can get the retrieveRequests from it
@@ -1575,16 +1584,16 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           //Testing scheduler retrieve request
           ASSERT_EQ(schedulerRetrieveRequest.archiveFileID,archiveFileId++);
           std::stringstream ss;
-          ss<<"repack://public_dir/public_file_"<<i<<"_"<<j;
+          ss<<"root://repackData/buffer/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
           ASSERT_EQ(schedulerRetrieveRequest.dstURL,ss.str());
-          ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
-          ASSERT_EQ(schedulerRetrieveRequest.tapePool,s_tapePoolName);
+          // TODO ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
+          // TODO ASSERT_EQ(schedulerRetrieveRequest.tapePool,s_tapePoolName);
           std::ostringstream diskFilePath;
           diskFilePath << "/public_dir/public_file_"<<i<<"_"<<j;
           ASSERT_EQ(schedulerRetrieveRequest.diskFileInfo.path,diskFilePath.str());
           //Testing the retrieve request
-          ASSERT_EQ(retrieveRequest.isRepack(),true);
-          ASSERT_EQ(retrieveRequest.getTapePool(),s_tapePoolName);
+          ASSERT_EQ(retrieveRequest.getRepackInfo().isRepack,true);
+          // TODO ASSERT_EQ(retrieveRequest.getTapePool(),s_tapePoolName);
           ASSERT_EQ(retrieveRequest.getQueueType(),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
           ASSERT_EQ(retrieveRequest.getRetrieveFileQueueCriteria().mountPolicy,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
           ASSERT_EQ(retrieveRequest.getActiveCopyNumber(),1);
@@ -1622,7 +1631,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
                   
           //Testing RetrieveRequest
           common::dataStructures::RetrieveRequest schedulerRetrieveRequest = retrieveRequest->getSchedulerRequest();
-          ASSERT_EQ(retrieveRequest->getTapePool(),s_tapePoolName);
+          // TODO ASSERT_EQ(retrieveRequest->getTapePool(),s_tapePoolName);
           ASSERT_EQ(retrieveRequest->getJobs().size(),1);
           ASSERT_EQ(retrieveRequest->getLastActiveVid(),currentVid);
           ASSERT_EQ(retrieveRequest->getQueueType(),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
@@ -1639,15 +1648,15 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           //Testing scheduler retrieve request
           ASSERT_EQ(schedulerRetrieveRequest.archiveFileID,archiveFileId++);
           std::stringstream ss;
-          ss<<"repack://public_dir/public_file_"<<i<<"_"<<j;
+          ss<<"root://repackData/buffer/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
           ASSERT_EQ(schedulerRetrieveRequest.dstURL,ss.str());
-          ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
-          ASSERT_EQ(schedulerRetrieveRequest.tapePool,s_tapePoolName);
+          // TODO ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
+          // TODO ASSERT_EQ(schedulerRetrieveRequest.tapePool,s_tapePoolName);
           std::ostringstream diskFilePath;
           diskFilePath << "/public_dir/public_file_"<<i<<"_"<<j;
           ASSERT_EQ(schedulerRetrieveRequest.diskFileInfo.path,diskFilePath.str());
           //Testing the retrieve request
-          ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
+          // TODO ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
 
           //Testing the archive file associated to the retrieve request
           ASSERT_EQ(archiveFile.storageClass,storageClass.name);
@@ -1702,7 +1711,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ASSERT_EQ(archiveFile.fileSize,archiveFileSize);
         ASSERT_EQ(archiveFile.storageClass,s_storageClassName);
         std::stringstream ss;
-        ss<<"repack://public_dir/public_file_"<<i<<"_"<<j;
+        ss<<"root://repackData/buffer/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
         ASSERT_EQ(archiveRequest.getSrcURL(),ss.str());
         for(auto archiveJob : archiveRequest.dumpJobs()){
           ASSERT_EQ(archiveJob.status,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransferForUser);

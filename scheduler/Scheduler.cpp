@@ -33,6 +33,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -208,13 +209,7 @@ void Scheduler::queueRetrieve(
   utils::Timer t;
   // Get the queue criteria
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
-  if(!request.isRepack){
-    queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, lc);
-  } else {
-    //Repack does not need policy
-    queueCriteria.archiveFile = m_catalogue.getArchiveFileById(request.archiveFileID);
-    queueCriteria.mountPolicy = common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack;
-  }
+  queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, lc);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
   auto schedulerDbTime = t.secs();
@@ -251,13 +246,11 @@ void Scheduler::queueRetrieve(
   }
   spc.add("selectedVid", selectedVid)
      .add("catalogueTime", catalogueTime)
-     .add("schedulerDbTime", schedulerDbTime);
-  if(!request.isRepack){
-      spc.add("policyName", queueCriteria.mountPolicy.name)
+     .add("schedulerDbTime", schedulerDbTime)
+     .add("policyName", queueCriteria.mountPolicy.name)
      .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
      .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
      .add("policyPriority", queueCriteria.mountPolicy.retrievePriority);
-  }
   lc.log(log::INFO, "Queued retrieve request");
 }
 
@@ -339,7 +332,8 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
   tl.insertAndReset("schedulerDbTime", t);
   log::ScopedParamContainer params(lc);
   params.add("tapeVid", vid)
-        .add("repackType", toString(repackType));
+        .add("repackType", toString(repackType))
+        .add("bufferURL", bufferURL);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
 }
@@ -431,35 +425,80 @@ const std::string Scheduler::generateRetrieveDstURL(const cta::common::dataStruc
 // expandRepackRequest
 //------------------------------------------------------------------------------
 void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) {
-  uint64_t fseq = c_defaultFseqForRepack;
   std::list<common::dataStructures::ArchiveFile> files;
-  auto vid = repackRequest->getRepackInfo().vid;
+  auto repackInfo = repackRequest->getRepackInfo();
+  typedef cta::common::dataStructures::RepackInfo::Type RepackType;
+  if (repackInfo.type != RepackType::RepackOnly) {
+    log::ScopedParamContainer params(lc);
+    params.add("tapeVid", repackInfo.vid);
+    lc.log(log::ERR, "In Scheduler::expandRepackRequest(): failing repack request with unsupported (yet) type.");
+    repackRequest->fail();
+    return;
+  }
   //We need to get the ArchiveRoutes to allow the retrieval of the tapePool in which the
   //tape where the file is is located
   std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue.getArchiveRoutes();
   //To identify the routes, we need to have both the dist instance name and the storage class name
   //thus, the key of the map is a pair of string
-  std::map<std::pair<std::string, std::string>,common::dataStructures::ArchiveRoute> mapRoutes;
+  cta::common::dataStructures::ArchiveRoute::FullMap archiveRoutesMap;
   for(auto route: routes){
     //insert the route into the map to allow a quick retrieval
-    mapRoutes[std::make_pair(route.storageClassName,route.diskInstanceName)] = route;
+    archiveRoutesMap[std::make_pair(route.diskInstanceName,route.storageClassName)][route.copyNb] = route;
   }
-  while(true) {
-    files = m_catalogue.getFilesForRepack(vid,fseq,c_defaultMaxNbFilesForRepack);
-    for(auto &archiveFile : files)
+  uint64_t fSeq = repackRequest->m_dbReq->getLastExpandedFSeq() + 1;
+  cta::catalogue::ArchiveFileItor archiveFilesForCatalogue = m_catalogue.getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
+  while(archiveFilesForCatalogue.hasMore()) {
+    size_t filesCount = 0;
+    uint64_t maxAddedFSeq = 0;
+    std::list<SchedulerDatabase::RepackRequest::Subrequest> retrieveSubrequests;
+    while(filesCount < c_defaultMaxNbFilesForRepack && archiveFilesForCatalogue.hasMore())
     {
-      cta::common::dataStructures::RetrieveRequest retrieveRequest;
-      retrieveRequest.archiveFileID = archiveFile.archiveFileID;
-      retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
-      retrieveRequest.dstURL = generateRetrieveDstURL(archiveFile.diskFileInfo);
-      retrieveRequest.isRepack = true;
-      retrieveRequest.tapePool = mapRoutes[std::make_pair(archiveFile.storageClass,archiveFile.diskInstance)].tapePoolName;
-      queueRetrieve(archiveFile.diskInstance,retrieveRequest,lc);
+      auto archiveFile = archiveFilesForCatalogue.next();
+      filesCount++;
+      fSeq++;
+      retrieveSubrequests.push_back(cta::SchedulerDatabase::RepackRequest::Subrequest());
+      auto & rsr = retrieveSubrequests.back();
+      rsr.archiveFile = archiveFile;
+      rsr.fSeq = std::numeric_limits<decltype(rsr.fSeq)>::max();
+      // We have to determine which copynbs we want to rearchive, and under which fSeq we record this file.
+      if (repackInfo.type == RepackType::ExpandAndRepack || repackInfo.type == RepackType::RepackOnly) {
+        // determine which fSeq(s) (normally only one) lives on this tape.
+        for (auto & tc: archiveFile.tapeFiles) if (tc.second.vid == repackInfo.vid) {
+          rsr.copyNbsToRearchive.insert(tc.second.copyNb);
+          // We make the (reasonable) assumption that the archive file only has one copy on this tape.
+          // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
+          // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
+          // restart of expansion.
+          rsr.fSeq = std::min(tc.second.fSeq, rsr.fSeq);
+          maxAddedFSeq = std::max(maxAddedFSeq, rsr.fSeq);
+        }
+      }
+      if (repackInfo.type == RepackType::ExpandAndRepack || repackInfo.type == RepackType::ExpandOnly) {
+        // We should not get here are the type is filtered at the beginning of the function.
+        // TODO: add support for expand.
+        throw cta::exception::Exception("In Scheduler::expandRepackRequest(): expand not yet supported.");
+      }
+      if ((rsr.fSeq == std::numeric_limits<decltype(rsr.fSeq)>::max()) || rsr.copyNbsToRearchive.empty()) {
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", rsr.archiveFile.archiveFileID)
+              .add("repackVid", repackInfo.vid);
+        lc.log(log::ERR, "In Scheduler::expandRepackRequest(): no fSeq found for this file on this tape.");
+        retrieveSubrequests.pop_back();
+      } else {
+        // We found some copies to rearchive. We still have to decide which file path we are going to use.
+        // File path will be base URL + /<VID>/<fSeq>
+        std::stringstream fileBufferURL;
+        fileBufferURL << repackInfo.repackBufferBaseURL << "/" << repackInfo.vid << "/" 
+            << std::setw(9) << std::setfill('0') << rsr.fSeq;
+        rsr.fileBufferURL = fileBufferURL.str();
+      }
     }
-    if (files.size()) {
-      auto & tf=files.back().tapeFiles;
-      fseq = std::find_if(tf.cbegin(), tf.cend(), [vid](decltype(*(tf.cbegin())) &f){ return f.second.vid == vid; })->second.fSeq + 1;
-    } else break;
+    // Note: the highest fSeq will be recorded internally in the following call.
+    // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted). 
+    // We pass this information to the db for recording in the repack request. This will allow restarting from the right
+    // value in case of crash.
+    repackRequest->m_dbReq->addSubrequests(retrieveSubrequests, archiveRoutesMap, fSeq - 1, lc);
+    fSeq = std::max(fSeq, maxAddedFSeq + 1);
   }
 }
 

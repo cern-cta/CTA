@@ -33,8 +33,7 @@ namespace cta {
     cta::PositioningMethod::ByBlock), completes(0), failures(0) {
       archiveFile.tapeFiles[1];
     } 
-    virtual void asyncComplete() override { completes++;  }
-    virtual void checkComplete() override {}
+    virtual void asyncSetSuccessful() override { completes++;  }
     void transferFailed(const std::string &failureReason, cta::log::LogContext&) override { failures++; };
     
     ~MockRetrieveJob() throw() {} 

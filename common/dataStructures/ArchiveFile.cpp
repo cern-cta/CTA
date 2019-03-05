@@ -59,7 +59,7 @@ bool ArchiveFile::operator!=(const ArchiveFile &rhs) const {
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, ArchiveFile &obj) {
+std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj) {
   os <<
     "{"
     "archiveFileID="      << obj.archiveFileID      << ","
@@ -69,8 +69,8 @@ std::ostream &operator<<(std::ostream &os, ArchiveFile &obj) {
     "checksumType="       << obj.checksumType       << ","
     "checksumValue="      << obj.checksumValue      << ","
     "storageClass="       << obj.storageClass       << ","
-    "diskFileInfo="       << obj.diskFileInfo             << ","
-    "tapeFiles="         << obj.tapeFiles         << ","
+    "diskFileInfo="       << obj.diskFileInfo       << ","
+    "tapeFiles="          << obj.tapeFiles          << ","
     "creationTime="       << obj.creationTime       << ","
     "reconciliationTime=" << obj.reconciliationTime <<
     "}";

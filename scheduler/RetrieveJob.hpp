@@ -79,14 +79,9 @@ public:
    * The checksum and the size of the transfer should already stored in the 
    * object beforehand. Result setting and calling complete are done in 2 
    * different threads (disk write and reporter thread, respectively).
+   * Completion will be checked implicitly in RetrieveMount::flushAsyncSuccessReports()
    */
-  virtual void asyncComplete();
-  
-  /**
-   * Check that asynchronous complete is finished and cleanup the job structures
-   * 
-   */
-  virtual void checkComplete();
+  virtual void asyncSetSuccessful();
 
   /**
    * Triggers a scheduler update following the failure of the job. Retry policy will

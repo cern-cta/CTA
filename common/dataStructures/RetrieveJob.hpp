@@ -43,7 +43,7 @@ struct RetrieveJob {
 
   RetrieveRequest request;
   uint64_t fileSize;
-  std::map<std::string,std::pair<uint64_t,TapeFile>> tapeCopies;
+  std::map<std::string,std::pair<uint32_t,TapeFile>> tapeCopies;
   std::list<std::string> failurelogs;
 
 }; // struct RetrieveJob

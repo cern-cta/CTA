@@ -496,6 +496,7 @@ public:
   
   AsyncInserter * asyncInsert() {
     std::unique_ptr<AsyncInserter> ret;
+    ret.reset(new AsyncInserter(*this));
     // Current simplification: the parsing of the header/payload is synchronous.
     // This could be delegated to the backend.
     // Check that we are not dealing with an existing object

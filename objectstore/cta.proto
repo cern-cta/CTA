@@ -367,6 +367,18 @@ message RetrieveJob {
   repeated string reportfailurelogs = 9210;
 }
 
+message RetrieveRequestArchiveRoute {
+  required uint32 copynb = 9400;
+  required string tapepool = 9410;
+}
+
+message RetrieveRequestRepackInfo {
+  repeated RetrieveRequestArchiveRoute archive_routes = 9500;
+  repeated uint32 copy_nbs_to_rearchive = 9510;
+  required string repack_request_address = 9520;
+  required string file_buffer_url = 9530;
+}
+
 message RetrieveRequest {
   required SchedulerRetrieveRequest schedulerrequest = 9150;
   required MountPolicy mountpolicy = 9151;
@@ -375,8 +387,8 @@ message RetrieveRequest {
   repeated RetrieveJob jobs = 9154;
   required string failurereporturl = 9155;
   required string failurereportlog = 9156;
-  required bool isrepack = 9157; //In protobuf, default values for bool is false
-  optional string tapepool = 9158;
+  required bool isrepack = 9157;
+  optional RetrieveRequestRepackInfo repack_info = 9158;
 }
 
 message ValueCountPair {
@@ -492,6 +504,7 @@ message RepackSubRequestPointer {
 
 message RepackRequest {
   required string vid = 11000;
+  required string buffer_url = 11005;
   required RepackRequestStatus status = 11010;
   required bool expandmode = 11400;
   required bool repackmode = 11410;
@@ -507,7 +520,7 @@ message RepackRequest {
   required uint64 retrievedbytes = 11490;
   required uint64 archivedfiles = 11500;
   required uint64 archivedbytes = 11510;
-  required uint64 failedtoretievefiles = 11520;
+  required uint64 failedtoretrievefiles = 11520;
   required uint64 failedtoretrievebytes = 11530;
   required uint64 failedtoarchivefiles = 11540;
   required uint64 failedtoarchivebytes = 11550;

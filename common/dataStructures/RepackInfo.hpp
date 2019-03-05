@@ -30,6 +30,7 @@ namespace dataStructures {
 struct RepackInfo {
 
   std::string vid;
+  std::string repackBufferBaseURL;
   enum class Type {
     ExpandAndRepack,
     ExpandOnly,

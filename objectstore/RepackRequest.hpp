@@ -41,6 +41,7 @@ public:
   void setType(common::dataStructures::RepackInfo::Type repackType);
   void setStatus(common::dataStructures::RepackInfo::Status repackStatus);
   common::dataStructures::RepackInfo getInfo();
+  void setBufferURL(const std::string & bufferURL);
   
   // Sub request management
   struct SubrequestInfo {
@@ -59,7 +60,7 @@ public:
    * yet not update the object to reflect the last fSeq created.
    * This function implicitly records the information it generates (commit up t the caller);
    */
-  SubrequestInfo::set getOrPrepareSubrequestInfo (std::set<uint32_t> fSeqs, AgentReference & agentRef);
+  SubrequestInfo::set getOrPrepareSubrequestInfo (std::set<uint64_t> fSeqs, AgentReference & agentRef);
 private:
   struct RepackSubRequestPointer {
     std::string address;
@@ -90,6 +91,20 @@ public:
   void reportArchiveSuccesses (SubrequestStatistics::List & archiveSuccesses);
   void reportArchiveFailures (SubrequestStatistics::List & archiveFailures);
   void reportSubRequestsForDeletion (std::list<uint64_t>& fSeqs);
+  enum class StatsType: uint8_t {
+    UserProvided,
+    RetrieveSuccess,
+    RetrieveFailure,
+    RetrieveTotal,
+    ArchiveSuccess,
+    ArchiveFailure,
+    ArchiveTotal,
+  };
+  struct StatsValues {
+    uint64_t files = 0;
+    uint64_t bytes = 0;
+  };
+  std::map<StatsType, StatsValues> getStats();
   
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;

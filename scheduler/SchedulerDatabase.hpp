@@ -25,6 +25,7 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
+#include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
@@ -357,10 +358,7 @@ public:
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
-    virtual std::set<cta::SchedulerDatabase::RetrieveJob *> finishSettingJobsBatchSuccessful(
-      std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc) = 0;
-    virtual std::set<cta::SchedulerDatabase::RetrieveJob *> batchSucceedRetrieveForRepack(
-      std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, cta::log::LogContext & lc) = 0;
+    virtual void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc) = 0;
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -377,14 +375,14 @@ public:
     } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::RetrieveRequest retrieveRequest;
-    uint64_t selectedCopyNb;
-    virtual void asyncSucceed() = 0;
-    virtual void checkSucceed() = 0;
-    virtual void asyncReportSucceedForRepack() = 0;
-    virtual void checkReportSucceedForRepack() = 0;
+    uint32_t selectedCopyNb;
+    bool isRepack = false;
+    /** Set the job successful (async). Wait() and end of report happen in RetrieveMount::flushAsyncSuccessReports() */
+    virtual void asyncSetSuccessful() = 0;
     virtual void failTransfer(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual void failReport(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual ~RetrieveJob() {}
+  private:
   };
 
   /*============ Repack management: user side ================================*/
@@ -429,13 +427,23 @@ public:
   
   /**
    * A class providing the per repack request interface. It is also used to create the per file
-   * requests in the object store.
+   * subrequests in the object store.
    */
   class RepackRequest {
   public:
     cta::common::dataStructures::RepackInfo repackInfo;
-    uint64_t getLastExpandedFseq();
-    void addFileRequestsBatch();
+    virtual uint64_t getLastExpandedFSeq() = 0;
+    struct Subrequest {
+      uint64_t fSeq;
+      cta::common::dataStructures::ArchiveFile archiveFile;
+      std::set<uint32_t> copyNbsToRearchive;
+      std::string fileBufferURL;
+    };
+    virtual void addSubrequests(std::list<Subrequest>& repackSubrequests, 
+      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, log::LogContext & lc) = 0;
+    virtual void expandDone() = 0;
+    virtual void fail() = 0;
+    virtual ~RepackRequest() {}
   };
   
   /***/

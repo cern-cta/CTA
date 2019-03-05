@@ -115,9 +115,7 @@ void RecallReportPacker::reportTestGoingToEnd(){
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
-  if(!m_successfulRetrieveJob->retrieveRequest.isRepack){
-    m_successfulRetrieveJob->asyncComplete();
-  }
+  m_successfulRetrieveJob->asyncSetSuccessful();
   parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
 }
 
@@ -366,7 +364,7 @@ bool RecallReportPacker::errorHappened() {
 //fullCheckAndFinishAsyncExecute()
 //------------------------------------------------------------------------------
 void RecallReportPacker::fullCheckAndFinishAsyncExecute() {
-  m_retrieveMount->waitAndFinishSettingJobsBatchRetrieved(m_successfulRetrieveJobs, m_lc);
+  m_retrieveMount->flushAsyncSuccessReports(m_successfulRetrieveJobs, m_lc);
 }
 
 //------------------------------------------------------------------------------

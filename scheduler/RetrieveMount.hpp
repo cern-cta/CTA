@@ -173,7 +173,7 @@ namespace cta {
      * @param successfulRetrieveJobs the jobs to report
      * @param logContext
      */
-    virtual void waitAndFinishSettingJobsBatchRetrieved(std::queue<std::unique_ptr<cta::RetrieveJob> > & successfulRetrieveJobs, cta::log::LogContext &logContext);
+    virtual void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob> > & successfulRetrieveJobs, cta::log::LogContext &logContext);
     
     
     /**

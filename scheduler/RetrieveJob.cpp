@@ -47,15 +47,8 @@ cta::RetrieveJob::RetrieveJob(RetrieveMount *mount,
 //------------------------------------------------------------------------------
 // asyncComplete
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::asyncComplete() {
-  m_dbJob->asyncSucceed();
-}
-
-//------------------------------------------------------------------------------
-// checkComplete
-//------------------------------------------------------------------------------
-void cta::RetrieveJob::checkComplete() {
-  m_dbJob->checkSucceed();
+void cta::RetrieveJob::asyncSetSuccessful() {
+  m_dbJob->asyncSetSuccessful();
 }
 
 //------------------------------------------------------------------------------

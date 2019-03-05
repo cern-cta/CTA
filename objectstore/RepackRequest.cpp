@@ -59,7 +59,7 @@ void RepackRequest::initialize() {
   m_payload.set_retrievedbytes(0);
   m_payload.set_archivedfiles(0);
   m_payload.set_archivedbytes(0);
-  m_payload.set_failedtoretievefiles(0);
+  m_payload.set_failedtoretrievefiles(0);
   m_payload.set_failedtoretrievebytes(0);
   m_payload.set_failedtoarchivefiles(0);
   m_payload.set_failedtoarchivebytes(0);
@@ -99,6 +99,16 @@ void RepackRequest::setType(common::dataStructures::RepackInfo::Type repackType)
 }
 
 //------------------------------------------------------------------------------
+// RepackRequest::setStatus()
+//------------------------------------------------------------------------------
+void RepackRequest::setStatus(common::dataStructures::RepackInfo::Status repackStatus) {
+  checkPayloadWritable();
+  // common::dataStructures::RepackInfo::Status and serializers::RepackRequestStatus are defined using the same values,
+  // hence the cast.
+  m_payload.set_status((serializers::RepackRequestStatus)repackStatus);
+}
+
+//------------------------------------------------------------------------------
 // RepackRequest::getInfo()
 //------------------------------------------------------------------------------
 common::dataStructures::RepackInfo RepackRequest::getInfo() {
@@ -107,6 +117,7 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   RepackInfo ret;
   ret.vid = m_payload.vid();
   ret.status = (RepackInfo::Status) m_payload.status();
+  ret.repackBufferBaseURL = m_payload.buffer_url();
   if (m_payload.repackmode()) {
     if (m_payload.expandmode()) {
       ret.type = RepackInfo::Type::ExpandAndRepack;
@@ -119,6 +130,14 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
     throw exception::Exception("In RepackRequest::getInfo(): unexpcted mode: neither expand nor repack.");
   }
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::setBufferURL()
+//------------------------------------------------------------------------------
+void RepackRequest::setBufferURL(const std::string& bufferURL) {
+  checkPayloadWritable();
+  m_payload.set_buffer_url(bufferURL);
 }
 
 //------------------------------------------------------------------------------
@@ -148,7 +167,7 @@ void RepackRequest::RepackSubRequestPointer::deserialize(const serializers::Repa
 //------------------------------------------------------------------------------
 // RepackRequest::getOrPrepareSubrequestInfo()
 //------------------------------------------------------------------------------
-auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint32_t> fSeqs, AgentReference& agentRef) 
+auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint64_t> fSeqs, AgentReference& agentRef) 
 -> SubrequestInfo::set {
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
@@ -165,7 +184,7 @@ auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint32_t> fSeqs, AgentRe
       retInfo.fSeq = srp.fSeq;
       retInfo.subrequestDeleted = srp.subrequestDeleted;
     } catch (std::out_of_range &) {
-      retInfo.address = agentRef.nextId("repackSubRequest");
+      retInfo.address = agentRef.nextId("RepackSubRequest");
       retInfo.fSeq = fs;
       retInfo.subrequestDeleted = false;
       auto & p = pointerMap[fs];
@@ -179,7 +198,7 @@ auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint32_t> fSeqs, AgentRe
   // Record changes, if any.
   if (newElementCreated) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
   return ret;
 }
@@ -188,7 +207,7 @@ auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint32_t> fSeqs, AgentRe
 // RepackRequest::setLastExpandedFSeq()
 //------------------------------------------------------------------------------
 void RepackRequest::setLastExpandedFSeq(uint64_t lastExpandedFSeq) {
-  checkWritable();
+  checkPayloadWritable();
   m_payload.set_lastexpandedfseq(lastExpandedFSeq);
 }
 
@@ -243,7 +262,7 @@ void RepackRequest::reportRetriveFailures(SubrequestStatistics::List& retrieveFa
       if (!p.failureAccounted) {
         p.failureAccounted = true;
         m_payload.set_failedtoretrievebytes(m_payload.failedtoretrievebytes() + rs.bytes);
-        m_payload.set_failedtoretievefiles(m_payload.failedtoretievefiles() + rs.files);
+        m_payload.set_failedtoretrievefiles(m_payload.failedtoretrievefiles() + rs.files);
         didUpdate = true;
       }
     } catch (std::out_of_range &) {
@@ -339,6 +358,30 @@ void RepackRequest::reportSubRequestsForDeletion(std::list<uint64_t>& fSeqs) {
 }
 
 //------------------------------------------------------------------------------
+// RepackRequest::reportSubRequestsForDeletion()
+//------------------------------------------------------------------------------
+auto RepackRequest::getStats() -> std::map<StatsType, StatsValues> {
+  checkPayloadReadable();
+  std::map<StatsType, StatsValues> ret;
+  ret[StatsType::ArchiveTotal].files = m_payload.totalfilestoarchive();
+  ret[StatsType::ArchiveTotal].bytes = m_payload.totalbytestoarchive();
+  ret[StatsType::RetrieveTotal].files = m_payload.totalfilestoretrieve();
+  ret[StatsType::RetrieveTotal].bytes = m_payload.totalbytestoretrieve();
+  ret[StatsType::UserProvided].files = m_payload.userprovidedfiles();
+  ret[StatsType::UserProvided].bytes = m_payload.userprovidedbytes();
+  ret[StatsType::RetrieveFailure].files = m_payload.failedtoretrievefiles();
+  ret[StatsType::RetrieveFailure].bytes = m_payload.failedtoretrievebytes();
+  ret[StatsType::RetrieveSuccess].files = m_payload.retrievedfiles();
+  ret[StatsType::RetrieveSuccess].bytes = m_payload.retrievedbytes();
+  ret[StatsType::ArchiveFailure].files = m_payload.failedtoarchivefiles();
+  ret[StatsType::ArchiveFailure].bytes = m_payload.failedtoarchivebytes();
+  ret[StatsType::ArchiveSuccess].files = m_payload.archivedfiles();
+  ret[StatsType::ArchiveSuccess].bytes = m_payload.archivedbytes();
+  return ret;
+}
+
+
+//------------------------------------------------------------------------------
 // RepackRequest::garbageCollect()
 //------------------------------------------------------------------------------
 void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, 
@@ -387,6 +430,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       typedef common::dataStructures::RepackInfo RepackInfo;
       retRef.m_repackInfo.status = (RepackInfo::Status) payload.status();
       retRef.m_repackInfo.vid = payload.vid();
+      retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
       if (payload.repackmode()) {
         if (payload.expandmode()) {
           retRef.m_repackInfo.type = RepackInfo::Type::ExpandAndRepack;

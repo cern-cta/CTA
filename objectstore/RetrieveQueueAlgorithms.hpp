@@ -55,6 +55,7 @@ struct ContainerTraits<RetrieveQueue,C>
     common::dataStructures::RetrieveRequest rr;
     std::string errorReportURL;
     SchedulerDatabase::RetrieveJob::ReportType reportType;
+    RetrieveRequest::RepackInfo repackInfo;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
@@ -382,6 +383,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       u.get()->wait();
       e.archiveFile = u.get()->getArchiveFile();
       e.rr = u.get()->getRetrieveRequest();
+      e.repackInfo = u.get()->getRepackInfo();
       switch(u.get()->getJobStatus()) {
         case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:
           e.reportType = SchedulerDatabase::RetrieveJob::ReportType::FailureReport;
@@ -486,7 +488,8 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
       cjfq.size,
       common::dataStructures::ArchiveFile(),
       common::dataStructures::RetrieveRequest(),
-      "", SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired
+      "", SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired,
+      RetrieveRequest::RepackInfo()
     });
     ret.summary.files++;
   }

@@ -216,8 +216,7 @@ public:
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   public:
-    std::set<cta::SchedulerDatabase::RetrieveJob*> finishSettingJobsBatchSuccessful(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
-    std::set<cta::SchedulerDatabase::RetrieveJob*> batchSucceedRetrieveForRepack(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override;
+    void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
   };
   friend class RetrieveMount;
   
@@ -228,15 +227,10 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    virtual void asyncSucceed() override;
-    virtual void checkSucceed() override;
-    /**
-     * Allows to asynchronously report this RetrieveJob as success
-     * for repack. It will call the retrieveRequest.asyncReportSucceedForRepack(this->selectedCopyNb) method
-     * that will set the status of the Job as RJS_Succeeded
+    /** Async set job successful.  Either delete (user transfer) or change status (repack)
+     * Wait will happen in RetrieveMount::flushAsyncSuccessReports().
      */
-    virtual void asyncReportSucceedForRepack() override;
-    virtual void checkReportSucceedForRepack() override;
+    virtual void asyncSetSuccessful() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     virtual ~RetrieveJob() override;
@@ -256,6 +250,7 @@ public:
     OStoreDB::RetrieveMount *m_retrieveMount;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
+    objectstore::RetrieveRequest::RepackInfo m_repackInfo;
   };
   static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
 
@@ -347,18 +342,19 @@ public:
   class RepackRequest: public SchedulerDatabase::RepackRequest
   {
     friend class OStoreDB;
-    public:
-      RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB) :
-      m_jobOwned(false), m_oStoreDB(oStoreDB),
-      m_repackRequest(jobAddress, m_oStoreDB.m_objectStore){}
-    void setJobOwned(bool b = true) { m_jobOwned = b; }
-
+  public:
+    RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB) :
+    m_oStoreDB(oStoreDB), m_repackRequest(jobAddress, m_oStoreDB.m_objectStore){}
+    void addSubrequests(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+      uint64_t maxFSeqLowBound, log::LogContext& lc) override;
+    void expandDone() override;
+    void fail() override;
+    uint64_t getLastExpandedFSeq() override;
   private:
-    bool m_jobOwned;
-    uint64_t m_mountId;
     OStoreDB & m_oStoreDB;
     objectstore::RepackRequest m_repackRequest;
   };
+  friend class RepackRequest;
   
   /**
    * A class holding a lock on the pending repack request queue. This is the first
@@ -378,7 +374,7 @@ public:
     objectstore::ScopedExclusiveLock m_lockOnPendingRepackRequestsQueue;
   };
   
-  class RepackRequestPromotionStatisticsNoLock: public SchedulerDatabase::RepackRequestStatistics {
+  class RepackRequestPromotionStatisticsNoLock: public SchedulerDatabase::RepackRequestStatistics {\
     friend class OStoreDB;
   public:
     PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override {

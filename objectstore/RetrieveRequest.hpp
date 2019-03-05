@@ -143,11 +143,38 @@ public:
     //! The copy number to enqueue. It could be different from the updated one in mixed success/failure scenario.
     serializers::RetrieveJobStatus nextStatus;
   };
-  bool isRepack();
-  void setIsRepack(bool isRepack);
-  std::string getTapePool();
-  void setTapePool(const std::string tapePool);
+  struct RepackInfo {
+    bool isRepack = false;
+    std::map<uint32_t, std::string> archiveRouteMap;
+    std::set<uint32_t> copyNbsToRearchive;
+    std::string repackRequestAddress;
+    std::string fileBufferURL;
+  };
+  void setRepackInfo(const RepackInfo & repackInfo);
+  RepackInfo getRepackInfo();
   
+  struct RepackInfoSerDeser: public RepackInfo {
+    operator RepackInfo() { return RepackInfo(*this); }
+    void serialize(cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
+      if (!isRepack) throw exception::Exception("In RetrieveRequest::RepackInfoSerDeser::serialize(): isRepack is false.");
+      for (auto &route: archiveRouteMap) {
+        auto * ar = rrri.mutable_archive_routes()->Add();
+        ar->set_copynb(route.first);
+        ar->set_tapepool(route.second);
+      }
+      for (auto cntr: copyNbsToRearchive) rrri.mutable_copy_nbs_to_rearchive()->Add(cntr);
+      rrri.set_file_buffer_url(fileBufferURL);
+      rrri.set_repack_request_address(repackRequestAddress);
+    }
+    
+    void deserialize(const cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
+      isRepack = true;
+      for(auto &route: rrri.archive_routes()) { archiveRouteMap[route.copynb()] = route.tapepool(); }
+      for(auto &cntr: rrri.copy_nbs_to_rearchive()) { copyNbsToRearchive.insert(cntr); }
+      fileBufferURL = rrri.file_buffer_url();
+      repackRequestAddress = rrri.repack_request_address();
+    }
+  };
 private:
   /*!
    * Determine and set the new status of the job.
@@ -185,11 +212,13 @@ public:
     serializers::RetrieveJobStatus getJobStatus() { return m_jobStatus; }
     const common::dataStructures::RetrieveRequest &getRetrieveRequest();
     const common::dataStructures::ArchiveFile &getArchiveFile();
+    const RepackInfo &getRepackInfo();
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     common::dataStructures::RetrieveRequest m_retrieveRequest;
     common::dataStructures::ArchiveFile m_archiveFile;
+    RepackInfo m_repackInfo;
     serializers::RetrieveJobStatus m_jobStatus;
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.

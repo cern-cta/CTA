@@ -26,6 +26,7 @@
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/ArchiveRoute.hpp"
 
 namespace cta {
 namespace common {
@@ -48,8 +49,6 @@ struct RetrieveRequest {
   std::string errorReportURL;
   DiskFileInfo diskFileInfo;
   EntryLog creationLog;
-  bool isRepack;
-  std::string tapePool;
 }; // struct RetrieveRequest
 
 std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj);

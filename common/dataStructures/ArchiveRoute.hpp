@@ -61,6 +61,9 @@ struct ArchiveRoute {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
+  
+  typedef std::map<uint32_t, ArchiveRoute> StorageClassMap;
+  typedef std::map<std::tuple<std::string/*disk instance*/, std::string /*storage class*/>, StorageClassMap> FullMap;
 
 }; // struct ArchiveRoute
 

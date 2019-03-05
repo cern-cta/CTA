@@ -290,7 +290,6 @@ public:
 
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
-  const uint64_t c_defaultFseqForRepack = 1;
   const size_t c_defaultMaxNbFilesForRepack = 500;
   
   typedef std::pair<std::string, common::dataStructures::MountType> tpType;

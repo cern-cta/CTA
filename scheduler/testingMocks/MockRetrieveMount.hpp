@@ -68,7 +68,7 @@ namespace cta {
     
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
     
-    void waitAndFinishSettingJobsBatchRetrieved(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) override {};
+    void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) override {};
 
   private:
 

@@ -52,11 +52,9 @@ protected:
     MockRetrieveJobExternalStats(cta::RetrieveMount & rm, int & completes, int &failures):
     MockRetrieveJob(rm), completesRef(completes), failuresRef(failures) {}
 
-    void asyncComplete() override {
+    void asyncSetSuccessful() override {
       completesRef++;
     }
-    
-    void checkComplete() override {}
 
     void transferFailed(const std::string &failureReason, cta::log::LogContext&) override {
       failuresRef++;

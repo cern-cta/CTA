@@ -197,6 +197,8 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
       queueFetchTime = t.secs(utils::Timer::resetCounter);
       log::ScopedParamContainer params(lc);
       params.add("attemptNb", i+1)
+            .add("queueName", vid.value())
+            .add("queueType", toString(queueType))
             .add("queueObject", retrieveQueue.getAddressIfSet())
             .add("rootFetchNoLockTime", rootFetchNoLockTime)
             .add("rootRelockExclusiveTime", rootRelockExclusiveTime)

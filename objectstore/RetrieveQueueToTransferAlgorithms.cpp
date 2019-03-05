@@ -55,7 +55,8 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
       common::dataStructures::ArchiveFile(),
       common::dataStructures::RetrieveRequest(),
       "",
-      SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired
+      SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired,
+      RetrieveRequest::RepackInfo()
     });
     ret.summary.bytes += cjfq.size;
     ret.summary.files++;

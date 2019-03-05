@@ -144,10 +144,9 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
 //------------------------------------------------------------------------------
 // waitAndFinishSettingJobsBatchRetrieved()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) {
+void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) {
   std::list<std::unique_ptr<cta::RetrieveJob> > validatedSuccessfulRetrieveJobs; //List to ensure the destruction of the retrieve jobs at the end of this method
   std::list<cta::SchedulerDatabase::RetrieveJob *> validatedSuccessfulDBRetrieveJobs;
-  std::list<cta::SchedulerDatabase::RetrieveJob *> retrieveRepackJobs;
   std::unique_ptr<cta::RetrieveJob> job;
   double waitUpdateCompletionTime=0;
   double jobBatchFinishingTime=0;
@@ -163,21 +162,14 @@ void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::
       if (!job.get()) continue;
       files++;
       bytes+=job->archiveFile.fileSize;
-      bool isRepack = job->m_dbJob->retrieveRequest.isRepack;
-      if(!isRepack){
-        job->checkComplete();
-        validatedSuccessfulDBRetrieveJobs.emplace_back(job->m_dbJob.get());
-      } else {
-        retrieveRepackJobs.emplace_back(job->m_dbJob.get());
-      }
+      validatedSuccessfulDBRetrieveJobs.emplace_back(job->m_dbJob.get());
       validatedSuccessfulRetrieveJobs.emplace_back(std::move(job));
       job.reset();
     }
     waitUpdateCompletionTime=t.secs(utils::Timer::resetCounter);
     tl.insertAndReset("waitUpdateCompletionTime",t);
     // Complete the cleaning up of the jobs in the mount
-    m_dbMount->finishSettingJobsBatchSuccessful(validatedSuccessfulDBRetrieveJobs, logContext);
-    m_dbMount->batchSucceedRetrieveForRepack(retrieveRepackJobs,logContext);
+    m_dbMount->flushAsyncSuccessReports(validatedSuccessfulDBRetrieveJobs, logContext);
     jobBatchFinishingTime=t.secs();
     tl.insertOrIncrement("jobBatchFinishingTime",jobBatchFinishingTime);
     schedulerDbTime=jobBatchFinishingTime + waitUpdateCompletionTime;

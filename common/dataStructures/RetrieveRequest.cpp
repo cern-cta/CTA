@@ -27,7 +27,7 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RetrieveRequest::RetrieveRequest(): archiveFileID(0),isRepack(false) {}
+RetrieveRequest::RetrieveRequest(): archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -37,8 +37,7 @@ bool RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
       && archiveFileID==rhs.archiveFileID
       && dstURL==rhs.dstURL
       && diskFileInfo==rhs.diskFileInfo
-      && creationLog==rhs.creationLog
-      && isRepack == rhs.isRepack;
+      && creationLog==rhs.creationLog;
 }
 
 //------------------------------------------------------------------------------
@@ -56,8 +55,7 @@ std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj) {
      << " archiveFileID=" << obj.archiveFileID
      << " dstURL=" << obj.dstURL
      << " diskFileInfo=" << obj.diskFileInfo
-     << " creationLog=" << obj.creationLog 
-     << " isRepack=" << obj.isRepack<<")";
+     << " creationLog=" << obj.creationLog <<")";
   return os;
 }
 

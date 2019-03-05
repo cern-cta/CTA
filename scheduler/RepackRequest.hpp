@@ -30,10 +30,9 @@ namespace cta {
 class RepackRequest {
   friend class Scheduler;
 public:
-  RepackRequest();
   void expand();
   const cta::common::dataStructures::RepackInfo getRepackInfo() const;
-  
+  void fail();
 protected:
   std::unique_ptr<cta::SchedulerDatabase::RepackRequest> m_dbReq;
 }; // class RepackRequest
