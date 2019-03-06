@@ -351,7 +351,16 @@ public:
   // Expansion support
   std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
   void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
-
+  // Scheduler level will not distinguish between report types. It will just do a getnext-report cycle.
+  class RepackReportBatch {
+    friend Scheduler;
+  private:
+    std::unique_ptr<SchedulerDatabase::RepackReportBatch> m_DbBatch;
+  public:
+    void report(log::LogContext & lc);
+    bool empty() { return nullptr == m_DbBatch; }
+  };
+  RepackReportBatch getNextRepackReportBatch(log::LogContext & lc);
   /*======================= Failed archive jobs support ======================*/
   SchedulerDatabase::JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &lc);
 

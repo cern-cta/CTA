@@ -502,6 +502,25 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   }
 }
 
+//------------------------------------------------------------------------------
+// Scheduler::getNextRepackReportBatch
+//------------------------------------------------------------------------------
+Scheduler::RepackReportBatch Scheduler::getNextRepackReportBatch(log::LogContext& lc) {
+  RepackReportBatch ret;
+  ret.m_DbBatch = std::move(m_db.getNextRepackReportBatch(lc));
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::RepackReportBatch::report
+//------------------------------------------------------------------------------
+void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
+  if (nullptr == m_DbBatch) {
+    lc.log(log::DEBUG, "In Scheduler::RepackReportBatch::report(): empty batch.");
+  } else {
+    m_DbBatch->report(lc);
+  }
+}
 
 
 //------------------------------------------------------------------------------

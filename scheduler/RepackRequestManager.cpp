@@ -31,17 +31,26 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
   
   //Putting pending repack request into the RepackQueueToExpand queue
   m_scheduler.promoteRepackRequestsToToExpand(lc);
-  //Retrieve the first repack request from the RepackQueueToExpand queue
-  std::unique_ptr<cta::RepackRequest> repackRequest = m_scheduler.getNextRepackRequestToExpand();
-  if(repackRequest != nullptr){
-    //We have a RepackRequest that has the status ToExpand, expand it
-    timingList.insertAndReset("expandRepackRequestTime", t);
-    m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
-    log::ScopedParamContainer params(lc);
-    params.add("tapeVid",repackRequest->getRepackInfo().vid);
-    timingList.addToLog(params);
-    lc.log(log::INFO, "In RepackRequestManager::runOnePass(): Repack Request expanded");
+  
+  {  
+    //Retrieve the first repack request from the RepackQueueToExpand queue
+    std::unique_ptr<cta::RepackRequest> repackRequest = m_scheduler.getNextRepackRequestToExpand();
+    if(repackRequest != nullptr){
+      //We have a RepackRequest that has the status ToExpand, expand it
+      timingList.insertAndReset("expandRepackRequestTime", t);
+      m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
+      log::ScopedParamContainer params(lc);
+      params.add("tapeVid",repackRequest->getRepackInfo().vid);
+      timingList.addToLog(params);
+      lc.log(log::INFO, "In RepackRequestManager::runOnePass(): Repack Request expanded");
+    }
   }
+  
+  {
+    // Do one round of repack subrequest reporting (heavy lifting is done internally).
+    m_scheduler.getNextRepackReportBatch(lc).report(lc);
+  }
+  
 }
 
 } // namespace cta

@@ -468,7 +468,24 @@ public:
    * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
    */
   virtual std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> getNextRetrieveRequestToReportToRepackForSuccessBatch(uint64_t filesRequested, log::LogContext& logContext) = 0;
-
+  
+  
+  /**
+   * A base class handling the various types of reports to repack. Implementation if left to Db implementer.
+   */
+  class RepackReportBatch {
+  public:
+    virtual ~RepackReportBatch() {}
+    virtual void report(log::LogContext & lc) = 0;
+  };
+  
+  /**
+   * Extracts a batch of subrequests from the database to be reported to repack.
+   * @param lc log context
+   * @return Next batch to report.
+   */
+  virtual std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext & lc) = 0;
+  
   /**
    * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
    * @param jobsBatch

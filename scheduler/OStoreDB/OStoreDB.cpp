@@ -1520,6 +1520,13 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::getNextRepackJobToExpand()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextRepackReportBatch(log::LogContext& lc) {
+  return nullptr;
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::RepackRequest::getLastExpandedFSeq()
 //------------------------------------------------------------------------------
 uint64_t OStoreDB::RepackRequest::getLastExpandedFSeq() {

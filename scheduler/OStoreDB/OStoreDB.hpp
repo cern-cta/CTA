@@ -397,6 +397,8 @@ public:
    */
   std::unique_ptr<SchedulerDatabase::RepackRequest> getNextRepackJobToExpand() override;
   
+  std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext& lc) override;
+
   /* === Drive state handling  ============================================== */
   /**
    * Get states of all drives.
