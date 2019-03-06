@@ -966,7 +966,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
 //------------------------------------------------------------------------------
 // OStoreDB::setRetrieveJobBatchReported()
 //------------------------------------------------------------------------------
-void OStoreDB::setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch,
+void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch,
   log::TimingList & timingList, utils::Timer & t, log::LogContext & lc)
 {
   struct FailedJobToQueue {

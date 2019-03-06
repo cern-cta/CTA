@@ -1458,7 +1458,7 @@ reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>> & retrieveJobsBa
   timingList.insertAndReset("reportCompletionTime", t);
   std::list<SchedulerDatabase::RetrieveJob *> reportedDbJobs;
   for(auto &j: reportedJobs) reportedDbJobs.push_back(j->m_dbJob.get());
-  m_db.setRetrieveJobBatchReported(reportedDbJobs, timingList, t, lc);
+  m_db.setRetrieveJobBatchReportedToUser(reportedDbJobs, timingList, t, lc);
   // Log the successful reports.
   for(auto & j: reportedJobs) {
     log::ScopedParamContainer params(lc);

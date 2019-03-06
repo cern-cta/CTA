@@ -167,9 +167,9 @@ public:
     m_OStoreDB.setArchiveJobBatchReported(jobsBatch, timingList, t, lc);
   }
 
-  void setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::TimingList & timingList,
+  void setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::TimingList & timingList,
       utils::Timer & t, log::LogContext& lc) override {
-    m_OStoreDB.setRetrieveJobBatchReported(jobsBatch, timingList, t, lc);
+    m_OStoreDB.setRetrieveJobBatchReportedToUser(jobsBatch, timingList, t, lc);
   }
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {

@@ -474,7 +474,7 @@ public:
    * @param jobsBatch
    * @param lc
    */
-  virtual void setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch, log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
+  virtual void setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch, log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
 
   virtual JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) = 0;
 
