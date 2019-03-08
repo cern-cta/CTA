@@ -66,8 +66,7 @@ private:
     std::string address;
     uint64_t fSeq;
     bool retrieveAccounted;
-    bool archiveAccounted;
-    bool failureAccounted;
+    std::set<uint32_t> archiveCopyNbsAccounted;
     bool subrequestDeleted;
     typedef std::map<uint64_t, RepackSubRequestPointer> Map;
     void serialize (serializers::RepackSubRequestPointer & rsrp);
@@ -83,6 +82,8 @@ public:
     uint64_t fSeq;
     uint64_t files = 1;
     uint64_t bytes;
+    /// CopyNb is needed to record archive jobs statistics (we can have several archive jobs for the same fSeq)
+    uint32_t copyNb = 0;
     typedef std::list<SubrequestStatistics> List;
     bool operator< (const SubrequestStatistics & o) const { return fSeq < o.fSeq; }
   };

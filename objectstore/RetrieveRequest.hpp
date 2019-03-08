@@ -56,7 +56,7 @@ public:
     uint32_t copyNb;
     serializers::RetrieveJobStatus status;
   };
-  // An asynchronous job ownership updating class.
+  // An asynchronous request deleting class.
   class AsyncJobDeleter {
     friend class RetrieveRequest;
   public:
@@ -148,6 +148,7 @@ public:
     std::map<uint32_t, std::string> archiveRouteMap;
     std::set<uint32_t> copyNbsToRearchive;
     std::string repackRequestAddress;
+    uint64_t fSeq;
     std::string fileBufferURL;
   };
   void setRepackInfo(const RepackInfo & repackInfo);
@@ -165,6 +166,7 @@ public:
       for (auto cntr: copyNbsToRearchive) rrri.mutable_copy_nbs_to_rearchive()->Add(cntr);
       rrri.set_file_buffer_url(fileBufferURL);
       rrri.set_repack_request_address(repackRequestAddress);
+      rrri.set_fseq(fSeq);
     }
     
     void deserialize(const cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
@@ -173,6 +175,7 @@ public:
       for(auto &cntr: rrri.copy_nbs_to_rearchive()) { copyNbsToRearchive.insert(cntr); }
       fileBufferURL = rrri.file_buffer_url();
       repackRequestAddress = rrri.repack_request_address();
+      fSeq = rrri.fseq();
     }
   };
 private:

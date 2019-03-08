@@ -377,6 +377,7 @@ message RetrieveRequestRepackInfo {
   repeated uint32 copy_nbs_to_rearchive = 9510;
   required string repack_request_address = 9520;
   required string file_buffer_url = 9530;
+  required uint64 fseq = 9540;
 }
 
 message RetrieveRequest {
@@ -491,15 +492,15 @@ enum RepackRequestStatus {
 // sub request should be interpreted as an unfulfilled creation intent (deleted=false) and create the
 // missing sub request or the completion of the request (which can happen anytime after sub request
 // creation).
-// Likewise, the "accounted" booleans will prevent double counting in case a report (for success or failure)
-// need to be retried after a process failure.
+// Likewise, the "accounted" booleans or copyNbs will prevent double counting in case a report (for success or failure)
+// need to be retried after a process failure. The same flag is used for both success and failure. Archive requires a
+// set of copyNbs as a single repack can lead to several archives (in case we create new copies).
 message RepackSubRequestPointer {
   required string address = 10500;
   required uint64 fseq = 10510;
-  required bool retrieveaccounted = 10530;
-  required bool archiveaccounted = 10534;
-  required bool failureaccounted = 10537;
-  required bool subrequestdeleted = 10540;
+  required bool retrieve_accounted = 10530;
+  repeated uint32 archive_copynb_accounted = 10534;
+  required bool subrequest_deleted = 10540;
 }
 
 message RepackRequest {

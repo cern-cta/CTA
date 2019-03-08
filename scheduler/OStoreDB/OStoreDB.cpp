@@ -1523,7 +1523,225 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
 // OStoreDB::getNextRepackJobToExpand()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextRepackReportBatch(log::LogContext& lc) {
+  try {
+    return getNextSuccessfulRetrieveRepackReportBatch(lc);
+  } catch (NoRepackReportBatchFound &) {}
   return nullptr;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getNextSuccessfulRetrieveRepackReportBatch()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
+  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> Carqtrtrfs;
+  Carqtrtrfs algo(this->m_objectStore, *m_agentReference);
+  // Decide from which queue we are going to pop.
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  while(true) {
+    auto queueList = re.dumpRetrieveQueues(JobQueueType::JobsToReportToRepackForSuccess);
+    if (queueList.empty()) throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): no queue found.");
+
+    // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
+    Carqtrtrfs::PopCriteria criteria;
+    criteria.files = c_repackReportBatchSize;
+    auto jobs = algo.popNextBatch(queueList.front().vid, criteria, lc);
+    if(jobs.elements.empty()) continue;
+    std::unique_ptr<RepackRetrieveSuccessesReportBatch> privateRet;
+    privateRet.reset(new RepackRetrieveSuccessesReportBatch(m_objectStore, *this));
+    std::set<std::string> repackRequestAddresses;
+    for(auto &j : jobs.elements)
+    {
+      privateRet->m_subrequestList.emplace_back(RepackRetrieveSuccessesReportBatch::SubrequestInfo());
+      auto & sr = privateRet->m_subrequestList.back();
+      sr.repackInfo = j.repackInfo;
+      sr.archiveFile = j.archiveFile;
+      sr.subrequest.reset(j.retrieveRequest.release());
+      repackRequestAddresses.insert(j.repackInfo.repackRequestAddress);
+    }
+    // As we are popping from a single report queue, all requests should concern only one repack request.
+    if (repackRequestAddresses.size() != 1) {
+      std::stringstream err;
+      err << "In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): reports for several repack requests in the same queue. ";
+      for (auto & rr: repackRequestAddresses) { err << rr << " "; }
+      throw exception::Exception(err.str());
+    }
+    privateRet->m_repackRequest.setAddress(*repackRequestAddresses.begin());
+    
+    return std::unique_ptr<SchedulerDatabase::RepackReportBatch>(privateRet.release());
+  }
+  throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): no report found.");
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getNextSuccessfulRetrieveRepackReportBatch()
+//------------------------------------------------------------------------------
+void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
+  // We have a batch of popped requests to report. We will first record them in the repack requests (update statistics),
+  // then transform the requests (retrieve to archives) and finally queue the archive jobs in the right queues.
+  // As usual there are many opportunities for failure.
+  utils::Timer t;
+  log::TimingList timingList;
+  
+  // 1) Update statistics. As the repack request is protected against double reporting, we can release its lock
+  // before the next step.
+  {
+    // Prepare the report
+    objectstore::RepackRequest::SubrequestStatistics::List ssl;
+    for (auto &rr: m_subrequestList) {
+      ssl.push_back(objectstore::RepackRequest::SubrequestStatistics());
+      ssl.back().bytes = rr.archiveFile.fileSize;
+      ssl.back().files = 1;
+      ssl.back().fSeq = rr.repackInfo.fSeq;
+    }
+    // Record it.
+    timingList.insertAndReset("successStatsPrepareTime", t);
+    objectstore::ScopedExclusiveLock rrl(m_repackRequest);
+    timingList.insertAndReset("successStatsLockTime", t);
+    m_repackRequest.fetch();
+    timingList.insertAndReset("successStatsFetchTime", t);
+    m_repackRequest.reportRetriveSuccesses(ssl);
+    timingList.insertAndReset("successStatsUpdateTime", t);
+    m_repackRequest.commit();
+    timingList.insertAndReset("successStatsCommitTime", t);
+  }
+  
+  // 2) We should async transform the retrieve requests into archive requests.
+  // From this point on, failing to transform is counted as a failure to archive.
+  {
+    objectstore::RepackRequest::SubrequestStatistics::List failedArchiveSSL;
+    std::list<SubrequestInfo *> failedSubrequests;
+    struct AsyncTransformerAndReq {
+      SubrequestInfo & subrequestInfo;
+      std::unique_ptr<objectstore::RetrieveRequest::AsyncRetrieveToArchiveTransformer> transformer;
+    };
+    std::list<AsyncTransformerAndReq> asyncTransformsAndReqs;
+    for (auto &rr: m_subrequestList) {
+      try {
+        asyncTransformsAndReqs.push_back({
+          rr, 
+          std::unique_ptr<objectstore::RetrieveRequest::AsyncRetrieveToArchiveTransformer>(
+            rr.subrequest->asyncTransformToArchiveRequest(*m_oStoreDb.m_agentReference)
+          )
+        });
+      } catch (exception::Exception & ex) {
+        // We failed to archive the file (to create the request, in fact). So all the copyNbs 
+        // can be counted as failed.
+        for (auto cnbtr: rr.repackInfo.copyNbsToRearchive) {
+          failedArchiveSSL.push_back(objectstore::RepackRequest::SubrequestStatistics());
+          auto & fassl = failedArchiveSSL.back();
+          fassl.bytes = rr.archiveFile.fileSize;
+          fassl.files = 1;
+          fassl.fSeq = rr.repackInfo.fSeq;
+          fassl.copyNb = cnbtr;
+        }
+        // We will need to delete the request too.
+        failedSubrequests.push_back(&rr);
+        // Log the error
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", rr.archiveFile.archiveFileID)
+              .add("subrequestAddress", rr.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::ERR, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): failed to asyncTransformToArchiveRequest().");
+      }
+    }
+    timingList.insertAndReset("asyncTransformLaunchTime", t);
+
+    // 2. b. Deal with transformation results (and log the transformation...
+    for (auto &atar: asyncTransformsAndReqs) {
+      try {
+        atar.transformer->wait();
+        // Log the transformation
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", atar.subrequestInfo.archiveFile.archiveFileID)
+              .add("subrequestAddress", atar.subrequestInfo.subrequest->getAddressIfSet());
+        lc.log(log::INFO, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(), turned successful retrieve request in archive request.");
+      } catch (exception::Exception & ex) {
+        // We failed to archive the file (to create the request, in fact). So all the copyNbs 
+        // can be counted as failed.
+        for (auto cnbtr: atar.subrequestInfo.repackInfo.copyNbsToRearchive) {
+          failedArchiveSSL.push_back(objectstore::RepackRequest::SubrequestStatistics());
+          auto & fassl = failedArchiveSSL.back();
+          fassl.bytes = atar.subrequestInfo.archiveFile.fileSize;
+          fassl.files = 1;
+          fassl.fSeq = atar.subrequestInfo.repackInfo.fSeq;
+          fassl.copyNb = cnbtr;
+        }
+        // We will need to delete the request too.
+        failedSubrequests.push_back(&atar.subrequestInfo);
+        // Log the error
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", atar.subrequestInfo.archiveFile.archiveFileID)
+              .add("subrequestAddress", atar.subrequestInfo.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::ERR, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): async transformation failed on wait().");
+      }
+    }
+    timingList.insertAndReset("asyncTransformCompletionTime", t);
+    
+    // 3) Deal with transformation failures (and delete the requests) : 
+    // - record the deletion intent in + status in repack request results
+    // - async delete
+    // - wait deletions
+    if (failedSubrequests.size()) {
+      // Record the stats (before deleting the requests, otherwise we could leak some counting
+      // in case of failure).
+      objectstore::ScopedExclusiveLock rrl(m_repackRequest);
+      timingList.insertAndReset("failureStatsLockTime", t);
+      m_repackRequest.fetch();
+      timingList.insertAndReset("failureStatsFetchTime", t);
+      m_repackRequest.reportArchiveFailures(failedArchiveSSL);
+      timingList.insertAndReset("failureStatsUpdateTime", t);
+      m_repackRequest.commit();
+      timingList.insertAndReset("failureStatsCommitTime", t);
+      // And now delete the requests
+      struct AsyncDeleteAndReq {
+        SubrequestInfo & subrequestInfo;
+        std::unique_ptr<RetrieveRequest::AsyncJobDeleter> deleter;
+      };
+      std::list<std::string> retrieveRequestsToUnown;
+      std::list<AsyncDeleteAndReq> asyncDeleterAndReqs;
+      for (auto &fs: failedSubrequests) {
+        // This is the end of error handling. If we fail to delete a request, so be it.
+        retrieveRequestsToUnown.push_back(fs->subrequest->getAddressIfSet());
+        try {
+          asyncDeleterAndReqs.push_back({*fs, 
+              std::unique_ptr<RetrieveRequest::AsyncJobDeleter>(fs->subrequest->asyncDeleteJob())});
+        } catch (cta::exception::Exception &ex) {
+          // Log the failure to delete.
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", fs->archiveFile.archiveFileID)
+                .add("subrequestAddress", fs->subrequest->getAddressIfSet())
+                .add("excepitonMsg", ex.getMessageValue());
+          lc.log(log::ERR, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): failed to asyncDelete() retrieve request.");
+        }
+      }
+      timingList.insertAndReset("asyncDeleteRetrieveLaunchTime", t);
+      for (auto &adar: asyncDeleterAndReqs) {
+        try {
+          adar.deleter->wait();
+          // Log the deletion
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", adar.subrequestInfo.archiveFile.archiveFileID)
+                .add("subrequestAddress", adar.subrequestInfo.subrequest->getAddressIfSet());
+          lc.log(log::INFO, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): deleted retrieve request after failure to transform in archive request.");
+        } catch (cta::exception::Exception & ex) {
+          // Log the failure to delete.
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", adar.subrequestInfo.archiveFile.archiveFileID)
+                .add("subrequestAddress", adar.subrequestInfo.subrequest->getAddressIfSet())
+                .add("excepitonMsg", ex.getMessageValue());
+          lc.log(log::ERR, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): async deletion of retrieve request failed on wait().");
+        }
+      }
+      timingList.insertAndReset("asyncDeleteRetrieveWaitTime", t);
+      m_oStoreDb.m_agentReference->removeBatchFromOwnership(retrieveRequestsToUnown, m_oStoreDb.m_objectStore);
+      timingList.insertAndReset("removeDeletedRetrieveFromOwnershipTime", t);
+    }
+  }
+  
+  // 3. We now just need to queue the freshly created archive jobs into their respective queues
+  // XXX: TODO
 }
 
 //------------------------------------------------------------------------------

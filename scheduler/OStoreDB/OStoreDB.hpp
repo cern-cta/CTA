@@ -396,8 +396,56 @@ public:
    * @return a unique_ptr holding the RepackRequest
    */
   std::unique_ptr<SchedulerDatabase::RepackRequest> getNextRepackJobToExpand() override;
+ 
+  class RepackRetrieveSuccessesReportBatch;
+  class RepackRetrieveFailureReportBatch;
+  class RepackArchiveSuccessesReportBatch;
+  class RepackArchiveFailureReportBatch;
+  friend class RepackRetrieveSuccessesReportBatch;
+  friend class RepackRetrieveFailureReportBatch;
+  friend class RepackArchiveSuccessesReportBatch;
+  friend class RepackArchiveFailureReportBatch;
+  /**
+   * Base class handling the commonalities
+   */
+  class RepackReportBatch: public SchedulerDatabase::RepackReportBatch {
+    friend class OStoreDB;
+    friend class RepackRetrieveSuccessesReportBatch;
+    friend class RepackRetrieveFailureReportBatch;
+    friend class RepackArchiveSuccessesReportBatch;
+    friend class RepackArchiveFailureReportBatch;
+    RepackReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb): m_repackRequest(backend), m_oStoreDb(oStoreDb) {}
+  protected:
+    objectstore::RepackRequest m_repackRequest;
+    OStoreDB & m_oStoreDb;
+    template <class SR> 
+    struct SubrequestInfo {
+      /// CopyNb is only useful for archive requests where we want to distinguish several jobs.
+      uint32_t archivedCopyNb = 0;
+      std::shared_ptr<SR> subrequest;
+      common::dataStructures::ArchiveFile archiveFile;
+      objectstore::RetrieveRequest::RepackInfo repackInfo;
+      typedef std::list<SubrequestInfo> List;
+    };
+  };
   
-  std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext& lc) override;
+  class RepackRetrieveSuccessesReportBatch: public RepackReportBatch {
+    friend class OStoreDB;
+    RepackRetrieveSuccessesReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):
+      RepackReportBatch(backend,oStoreDb) {}
+  public:
+    void report(log::LogContext& lc) override;
+  private:
+    typedef RepackReportBatch::SubrequestInfo<objectstore::RetrieveRequest> SubrequestInfo;
+    SubrequestInfo::List m_subrequestList;
+  };
+  
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextRepackReportBatch(log::LogContext& lc) override;
+private:
+  CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
+  const size_t c_repackReportBatchSize = 500;
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc);
+public:
 
   /* === Drive state handling  ============================================== */
   /**

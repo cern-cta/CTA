@@ -529,6 +529,7 @@ void RetrieveRequest::setRepackInfo(const RepackInfo& repackInfo) {
     }
     m_payload.mutable_repack_info()->set_file_buffer_url(repackInfo.fileBufferURL);
     m_payload.mutable_repack_info()->set_repack_request_address(repackInfo.repackRequestAddress);
+    m_payload.mutable_repack_info()->set_fseq(repackInfo.fSeq);
   }
 }
 
@@ -789,6 +790,7 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
               ri.fileBufferURL = payload.repack_info().file_buffer_url();
               ri.isRepack = true;
               ri.repackRequestAddress = payload.repack_info().repack_request_address();
+              ri.fSeq = payload.repack_info().fseq();
             }
             // TODO serialization of payload maybe not necessary
             oh.set_payload(payload.SerializePartialAsString());

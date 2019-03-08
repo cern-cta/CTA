@@ -30,6 +30,13 @@ RepackRequest::RepackRequest(const std::string& address, Backend& os):
   ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t> (os, address) { }
 
 //------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+RepackRequest::RepackRequest(Backend& os):
+  ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t> (os) { }
+
+
+//------------------------------------------------------------------------------
 // RepackRequest::RepackRequest()
 //------------------------------------------------------------------------------
 RepackRequest::RepackRequest(GenericObject& go):
@@ -146,10 +153,10 @@ void RepackRequest::setBufferURL(const std::string& bufferURL) {
 void RepackRequest::RepackSubRequestPointer::serialize(serializers::RepackSubRequestPointer& rsrp) {
   rsrp.set_address(address);
   rsrp.set_fseq(fSeq);
-  rsrp.set_retrieveaccounted(retrieveAccounted);
-  rsrp.set_archiveaccounted(archiveAccounted);
-  rsrp.set_failureaccounted(failureAccounted);
-  rsrp.set_subrequestdeleted(subrequestDeleted);
+  rsrp.set_retrieve_accounted(retrieveAccounted);
+  rsrp.mutable_archive_copynb_accounted()->Clear();
+  for (auto cna: archiveCopyNbsAccounted) { rsrp.mutable_archive_copynb_accounted()->Add(cna); }
+  rsrp.set_subrequest_deleted(subrequestDeleted);
 }
 
 //------------------------------------------------------------------------------
@@ -158,10 +165,10 @@ void RepackRequest::RepackSubRequestPointer::serialize(serializers::RepackSubReq
 void RepackRequest::RepackSubRequestPointer::deserialize(const serializers::RepackSubRequestPointer& rsrp) {
   address = rsrp.address();
   fSeq = rsrp.fseq();
-  retrieveAccounted = rsrp.retrieveaccounted();
-  archiveAccounted = rsrp.archiveaccounted();
-  failureAccounted = rsrp.failureaccounted();
-  subrequestDeleted = rsrp.subrequestdeleted();
+  retrieveAccounted = rsrp.retrieve_accounted();
+  archiveCopyNbsAccounted.clear();
+  for (auto acna: rsrp.archive_copynb_accounted()) { archiveCopyNbsAccounted.insert(acna); }
+  subrequestDeleted = rsrp.subrequest_deleted();
 }
 
 //------------------------------------------------------------------------------
@@ -190,7 +197,8 @@ auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint64_t> fSeqs, AgentRe
       auto & p = pointerMap[fs];
       p.address = retInfo.address;
       p.fSeq = fs;
-      p.archiveAccounted = p.retrieveAccounted = p.failureAccounted = p.subrequestDeleted = false;
+      p.retrieveAccounted = p.subrequestDeleted = false;
+      p.archiveCopyNbsAccounted.clear();
       newElementCreated = true;
     }
     ret.emplace(retInfo);
@@ -256,13 +264,13 @@ void RepackRequest::reportRetriveFailures(SubrequestStatistics::List& retrieveFa
   // Read the map
   for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
   bool didUpdate = false;
-  for (auto & rs: retrieveFailures) {
+  for (auto & rf: retrieveFailures) {
     try {
-      auto & p = pointerMap.at(rs.fSeq);
-      if (!p.failureAccounted) {
-        p.failureAccounted = true;
-        m_payload.set_failedtoretrievebytes(m_payload.failedtoretrievebytes() + rs.bytes);
-        m_payload.set_failedtoretrievefiles(m_payload.failedtoretrievefiles() + rs.files);
+      auto & p = pointerMap.at(rf.fSeq);
+      if (!p.retrieveAccounted) {
+        p.retrieveAccounted = true;
+        m_payload.set_failedtoretrievebytes(m_payload.failedtoretrievebytes() + rf.bytes);
+        m_payload.set_failedtoretrievefiles(m_payload.failedtoretrievefiles() + rf.files);
         didUpdate = true;
       }
     } catch (std::out_of_range &) {
@@ -287,8 +295,8 @@ void RepackRequest::reportArchiveSuccesses(SubrequestStatistics::List& archiveSu
   for (auto & as: archiveSuccesses) {
     try {
       auto & p = pointerMap.at(as.fSeq);
-      if (!p.archiveAccounted) {
-        p.archiveAccounted = true;
+      if (!p.archiveCopyNbsAccounted.count(as.copyNb)) {
+        p.archiveCopyNbsAccounted.insert(as.copyNb);
         m_payload.set_archivedbytes(m_payload.archivedbytes() + as.bytes);
         m_payload.set_archivedfiles(m_payload.archivedfiles() + as.files);
         didUpdate = true;
@@ -312,13 +320,13 @@ void RepackRequest::reportArchiveFailures(SubrequestStatistics::List& archiveFai
   // Read the map
   for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
   bool didUpdate = false;
-  for (auto & rs: archiveFailures) {
+  for (auto & af: archiveFailures) {
     try {
-      auto & p = pointerMap.at(rs.fSeq);
-      if (!p.failureAccounted) {
-        p.failureAccounted = true;
-        m_payload.set_failedtoarchivebytes(m_payload.failedtoarchivebytes() + rs.bytes);
-        m_payload.set_failedtoarchivefiles(m_payload.failedtoarchivefiles() + rs.files);
+      auto & p = pointerMap.at(af.fSeq);
+      if (!p.archiveCopyNbsAccounted.count(af.copyNb)) {
+        p.archiveCopyNbsAccounted.insert(af.copyNb);
+        m_payload.set_failedtoarchivebytes(m_payload.failedtoarchivebytes() + af.bytes);
+        m_payload.set_failedtoarchivefiles(m_payload.failedtoarchivefiles() + af.files);
         didUpdate = true;
       }
     } catch (std::out_of_range &) {
