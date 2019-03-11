@@ -1826,6 +1826,7 @@ void OStoreDB::RepackRequest::addSubrequests(std::list<Subrequest>& repackSubreq
       }
       rRRepackInfo.copyNbsToRearchive = rsr.copyNbsToRearchive;
       rRRepackInfo.fileBufferURL = rsr.fileBufferURL;
+      rRRepackInfo.fSeq = rsr.fSeq;
       rRRepackInfo.isRepack = true;
       rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
       rr->setRepackInfo(rRRepackInfo);
