@@ -1608,6 +1608,11 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
   
   // 2) We should async transform the retrieve requests into archive requests.
   // From this point on, failing to transform is counted as a failure to archive.
+  struct SuccessfullyTranformedRequest {
+    std::shared_ptr<objectstore::ArchiveRequest> archiveRequest;
+    SubrequestInfo & subrequestInfo;
+  };
+  std::list<SuccessfullyTranformedRequest> successfullyTransformedSubrequests;
   {
     objectstore::RepackRequest::SubrequestStatistics::List failedArchiveSSL;
     std::list<SubrequestInfo *> failedSubrequests;
@@ -1656,6 +1661,12 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
         params.add("fileId", atar.subrequestInfo.archiveFile.archiveFileID)
               .add("subrequestAddress", atar.subrequestInfo.subrequest->getAddressIfSet());
         lc.log(log::INFO, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(), turned successful retrieve request in archive request.");
+        successfullyTransformedSubrequests.push_back(SuccessfullyTranformedRequest{
+          std::make_shared<objectstore::ArchiveRequest>(
+              atar.subrequestInfo.subrequest->getAddressIfSet(),
+              m_oStoreDb.m_objectStore), 
+          atar.subrequestInfo
+        });
       } catch (exception::Exception & ex) {
         // We failed to archive the file (to create the request, in fact). So all the copyNbs 
         // can be counted as failed.
@@ -1741,7 +1752,18 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
   }
   
   // 3. We now just need to queue the freshly created archive jobs into their respective queues
-  // XXX: TODO
+  {
+    objectstore::Sorter sorter(*m_oStoreDb.m_agentReference, m_oStoreDb.m_objectStore, m_oStoreDb.m_catalogue);
+    std::list<std::unique_ptr<objectstore::ScopedExclusiveLock>> locks;
+    // TODO: swich to "lockfree" sorter interface.
+    for (auto &sts: successfullyTransformedSubrequests) {
+      locks.push_back(cta::make_unique<objectstore::ScopedExclusiveLock>(*sts.archiveRequest));
+      sts.archiveRequest->fetch();
+      sorter.insertArchiveRequest(sts.archiveRequest, *m_oStoreDb.m_agentReference, lc);
+    }
+    locks.clear();
+    sorter.flushAll(lc);
+  }
 }
 
 //------------------------------------------------------------------------------

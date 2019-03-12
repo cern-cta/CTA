@@ -1025,7 +1025,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     auto maxReportRetries = retrieveRequestPayload.jobs(0).maxreportretries();
     for(auto cntr: repackInfoSerDeser.copyNbsToRearchive) {
       auto *archiveJob = archiveRequestPayload.add_jobs();
-      archiveJob->set_status(cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransferForUser);
+      archiveJob->set_status(cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
       archiveJob->set_copynb(cntr);
       archiveJob->set_archivequeueaddress("");
       archiveJob->set_totalreportretries(0);
