@@ -3850,32 +3850,4 @@ void OStoreDB::RetrieveJob::asyncSetSuccessful() {
   }
 }
 
-//------------------------------------------------------------------------------
-// OStoreDB::getNextSucceededRetrieveRequestForRepackBatch()
-//------------------------------------------------------------------------------
-std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> OStoreDB::getNextRetrieveRequestToReportToRepackForSuccessBatch(uint64_t filesRequested, log::LogContext& lc)
-{
-  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> ret;
-  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> Carqtrtrfs;
-  Carqtrtrfs algo(this->m_objectStore, *m_agentReference);
-  // Decide from which queue we are going to pop.
-  RootEntry re(m_objectStore);
-  re.fetchNoLock();
-  while(true) {
-    auto queueList = re.dumpRetrieveQueues(JobQueueType::JobsToReportToRepackForSuccess);
-    if (queueList.empty()) return ret;
-
-    // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
-    Carqtrtrfs::PopCriteria criteria;
-    criteria.files = filesRequested;
-    auto jobs = algo.popNextBatch(queueList.front().vid, criteria, lc);
-    if(jobs.elements.empty()) continue;
-    for(auto &j : jobs.elements)
-    {
-      ret.emplace_back(std::move(j.retrieveRequest));
-    }
-    return ret;
-  }
-}
-
 } // namespace cta

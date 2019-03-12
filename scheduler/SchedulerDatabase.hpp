@@ -461,14 +461,6 @@ public:
    */
   virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
   virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
-   /**
-   * Return the list of all RetrieveRequests that are in the RetrieveQueueToReportToRepackForSuccess
-   * @param filesRequested : The number of files we would like to return 
-   * @param lc
-   * @return The list of all RetrieveRequests that are queued in the RetrieveQueueToReportToRepackForSuccess
-   */
-  virtual std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> getNextRetrieveRequestToReportToRepackForSuccessBatch(uint64_t filesRequested, log::LogContext& logContext) = 0;
-  
   
   /**
    * A base class handling the various types of reports to repack. Implementation if left to Db implementer.
