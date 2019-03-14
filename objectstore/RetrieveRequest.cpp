@@ -998,6 +998,18 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     archiveRequestPayload.set_archivereporturl("");//No archive report URL
     archiveRequestPayload.set_reportdecided(false);//TODO : should we put it as false ?
     
+    // Convert/transfer the repack info.
+    archiveRequestPayload.set_isrepack(true);
+    ArchiveRequest::RepackInfoSerDeser archiveRepackInfoSerDeser;
+    RetrieveRequest::RepackInfoSerDeser retrieveRepackInfoSerDeser;
+    retrieveRepackInfoSerDeser.deserialize(retrieveRequestPayload.repack_info());
+    archiveRepackInfoSerDeser.fSeq = retrieveRepackInfoSerDeser.fSeq;
+    archiveRepackInfoSerDeser.fileBufferURL = retrieveRepackInfoSerDeser.fileBufferURL;
+    archiveRepackInfoSerDeser.isRepack = true;
+    archiveRepackInfoSerDeser.repackRequestAddress = retrieveRepackInfoSerDeser.repackRequestAddress;
+    archiveRequestPayload.set_isrepack(true);
+    archiveRepackInfoSerDeser.serialize(*archiveRequestPayload.mutable_repack_info());
+    
     // Copy disk file informations into the new ArchiveRequest
     cta::objectstore::serializers::DiskFileInfo *archiveRequestDFI = archiveRequestPayload.mutable_diskfileinfo();
     archiveRequestDFI->CopyFrom(archiveFile.diskfileinfo());

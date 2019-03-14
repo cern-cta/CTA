@@ -133,7 +133,11 @@ std::string cta::ArchiveJob::reportType() {
   case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
     return "CompletionReport";
   case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
-    return "ErrorReport";
+    return "FailureReport";
+  case SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired:
+    return "NoReportRequired";
+  case SchedulerDatabase::ArchiveJob::ReportType::Report:
+    return "Report";
   default:
     { 
       throw exception::Exception("In ArchiveJob::reportType(): job status does not require reporting.");

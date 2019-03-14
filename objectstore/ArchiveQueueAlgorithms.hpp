@@ -56,6 +56,7 @@ struct ContainerTraits<ArchiveQueue,C>
     std::string errorReportURL;
     std::string latestError;
     SchedulerDatabase::ArchiveJob::ReportType reportType;
+    ArchiveRequest::RepackInfo repackInfo;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {

@@ -183,7 +183,9 @@ public:
   private:
     void asyncSucceedTransfer();
     /** Returns true if the jobs was the last one and the request should be queued for report. */
-    bool waitAsyncSucceed();
+    void waitAsyncSucceed();
+    objectstore::ArchiveRequest::RepackInfo getRepackInfoAfterAsyncSuccess();
+    bool isLastAfterAsyncSuccess();
     void asyncDeleteRequest();
     void waitAsyncDelete();
   public:
@@ -416,7 +418,7 @@ public:
       uint32_t archivedCopyNb = 0;
       std::shared_ptr<SR> subrequest;
       common::dataStructures::ArchiveFile archiveFile;
-      objectstore::RetrieveRequest::RepackInfo repackInfo;
+      typename SR::RepackInfo repackInfo;
       typedef std::list<SubrequestInfo> List;
     };
   };
@@ -432,11 +434,23 @@ public:
     SubrequestInfo::List m_subrequestList;
   };
   
+  class RepackArchiveSuccessesReportBatch: public RepackReportBatch {
+    friend class OStoreDB;
+    RepackArchiveSuccessesReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):
+      RepackReportBatch(backend,oStoreDb) {}
+  public:
+    void report(log::LogContext& lc) override;
+  private:
+    typedef RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> SubrequestInfo;
+    SubrequestInfo::List m_subrequestList;
+  };
+  
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextRepackReportBatch(log::LogContext& lc) override;
 private:
   CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
   const size_t c_repackReportBatchSize = 500;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc);
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);
 public:
 
   /* === Drive state handling  ============================================== */

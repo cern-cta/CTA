@@ -1526,6 +1526,9 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextRepackRep
   try {
     return getNextSuccessfulRetrieveRepackReportBatch(lc);
   } catch (NoRepackReportBatchFound &) {}
+  try {
+    return getNextSuccessfulArchiveRepackReportBatch(lc);
+  } catch (NoRepackReportBatchFound &) {}
   return nullptr;
 }
 
@@ -1557,6 +1560,50 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
       sr.repackInfo = j.repackInfo;
       sr.archiveFile = j.archiveFile;
       sr.subrequest.reset(j.retrieveRequest.release());
+      repackRequestAddresses.insert(j.repackInfo.repackRequestAddress);
+    }
+    // As we are popping from a single report queue, all requests should concern only one repack request.
+    if (repackRequestAddresses.size() != 1) {
+      std::stringstream err;
+      err << "In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): reports for several repack requests in the same queue. ";
+      for (auto & rr: repackRequestAddresses) { err << rr << " "; }
+      throw exception::Exception(err.str());
+    }
+    privateRet->m_repackRequest.setAddress(*repackRequestAddresses.begin());
+    
+    return std::unique_ptr<SchedulerDatabase::RepackReportBatch>(privateRet.release());
+  }
+  throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): no report found.");
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getNextSuccessfulArchiveRepackReportBatch()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
+  typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportToRepackForSuccess> Caaqtrtrfs;
+  Caaqtrtrfs algo(this->m_objectStore, *m_agentReference);
+  // Decide from which queue we are going to pop.
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  while(true) {
+    auto queueList = re.dumpArchiveQueues(JobQueueType::JobsToReportToRepackForSuccess);
+    if (queueList.empty()) throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulArchiveRepackReportBatch(): no queue found.");
+
+    // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
+    Caaqtrtrfs::PopCriteria criteria;
+    criteria.files = c_repackReportBatchSize;
+    auto jobs = algo.popNextBatch(queueList.front().tapePool, criteria, lc);
+    if(jobs.elements.empty()) continue;
+    std::unique_ptr<RepackArchiveSuccessesReportBatch> privateRet;
+    privateRet.reset(new RepackArchiveSuccessesReportBatch(m_objectStore, *this));
+    std::set<std::string> repackRequestAddresses;
+    for(auto &j : jobs.elements)
+    {
+      privateRet->m_subrequestList.emplace_back(RepackArchiveSuccessesReportBatch::SubrequestInfo());
+      auto & sr = privateRet->m_subrequestList.back();
+      sr.repackInfo = j.repackInfo;
+      sr.archiveFile = j.archiveFile;
+      sr.subrequest.reset(j.archiveRequest.release());
       repackRequestAddresses.insert(j.repackInfo.repackRequestAddress);
     }
     // As we are popping from a single report queue, all requests should concern only one repack request.
@@ -3231,7 +3278,7 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch,
     log::LogContext & lc) {
-  std::set<cta::OStoreDB::ArchiveJob*> jobsToQueueForReporting;
+  std::set<cta::OStoreDB::ArchiveJob*> jobsToQueueForReportingToUser, jobsToQueueForReportingToRepack;
   std::list<std::string> ajToUnown;
   utils::Timer t;
   log::TimingList timingList;
@@ -3241,31 +3288,37 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
     castFromSchedDBJob(sDBJob.get())->asyncSucceedTransfer();
   }
   timingList.insertAndReset("asyncSucceedLaunchTime", t);
-  // TODO : could be optimized with single copy requests: we know we have to requeue. (minor optimization)
-  // We will only know whether we need to queue the requests for reporting after updating request. So on a first
+  // We will only know whether we need to queue the requests for user for reporting after updating request. So on a first
   // pass we update the request and on the second, we will queue a batch of them to the report queue. Report queues
   // are per VID and not tape pool: this limits contention (one tape written to at a time per mount, so the queuing should
   // be without contention.
   // Jobs that do not require queuing are done from our perspective and we should just remove them from agent ownership.
+  // Jobs for repack always get reported.
   for (auto & sDBJob: jobsBatch) {
-    if (castFromSchedDBJob(sDBJob.get())->waitAsyncSucceed())
-      jobsToQueueForReporting.insert(castFromSchedDBJob(sDBJob.get()));
-    else
-      ajToUnown.push_back(castFromSchedDBJob(sDBJob.get())->m_archiveRequest.getAddressIfSet());
+    castFromSchedDBJob(sDBJob.get())->waitAsyncSucceed();
+    auto repackInfo = castFromSchedDBJob(sDBJob.get())->getRepackInfoAfterAsyncSuccess();
+    if (repackInfo.isRepack) {
+      jobsToQueueForReportingToRepack.insert(castFromSchedDBJob(sDBJob.get()));
+    } else {
+      if (castFromSchedDBJob(sDBJob.get())->isLastAfterAsyncSuccess())
+        jobsToQueueForReportingToUser.insert(castFromSchedDBJob(sDBJob.get()));
+      else
+        ajToUnown.push_back(castFromSchedDBJob(sDBJob.get())->m_archiveRequest.getAddressIfSet());
+    }
   }
   timingList.insertAndReset("asyncSucceedCompletionTime", t);
-  if (jobsToQueueForReporting.size()) {
+  if (jobsToQueueForReportingToUser.size()) {
     typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,objectstore::ArchiveQueueToReportForUser> AqtrCa;
     AqtrCa aqtrCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     std::map<std::string, AqtrCa::InsertedElement::list> insertedElementsLists;
-    for (auto & j: jobsToQueueForReporting) {
+    for (auto & j: jobsToQueueForReportingToUser) {
       insertedElementsLists[j->tapeFile.vid].emplace_back(AqtrCa::InsertedElement{&j->m_archiveRequest, j->tapeFile.copyNb, 
           j->archiveFile, cta::nullopt, cta::nullopt});
       log::ScopedParamContainer params (lc);
       params.add("tapeVid", j->tapeFile.vid)
             .add("fileId", j->archiveFile.archiveFileID)
             .add("requestObject", j->m_archiveRequest.getAddressIfSet());
-      lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): will queue request for reporting.");
+      lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): will queue request for reporting to user.");
     }
     for (auto &list: insertedElementsLists) {
       try {
@@ -3275,16 +3328,48 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
         params.add("tapeVid", list.first)
               .add("jobs", list.second.size())
               .add("enqueueTime", t.secs());
-        lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for reporting.");
+        lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for reporting to user.");
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("tapeVid", list.first)
               .add("exceptionMSG", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting.");
+        lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting to user.");
         lc.logBacktrace(log::ERR, ex.backtrace());
       }
     }
-    timingList.insertAndReset("queueingToReportTime", t);
+    timingList.insertAndReset("queueingToReportToUserTime", t);
+  }
+  if (jobsToQueueForReportingToRepack.size()) {
+    typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,objectstore::ArchiveQueueToReportToRepackForSuccess> AqtrtrCa;
+    AqtrtrCa aqtrtrCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+    std::map<std::string, AqtrtrCa::InsertedElement::list> insertedElementsLists;
+    for (auto & j: jobsToQueueForReportingToRepack) {
+      insertedElementsLists[j->getRepackInfoAfterAsyncSuccess().repackRequestAddress].emplace_back(AqtrtrCa::InsertedElement{&j->m_archiveRequest, j->tapeFile.copyNb, 
+          j->archiveFile, cta::nullopt, cta::nullopt});
+      log::ScopedParamContainer params (lc);
+      params.add("repackRequestAddress", j->getRepackInfoAfterAsyncSuccess().repackRequestAddress)
+            .add("fileId", j->archiveFile.archiveFileID)
+            .add("requestObject", j->m_archiveRequest.getAddressIfSet());
+      lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): will queue request for reporting to repack.");
+    }
+    for (auto &list: insertedElementsLists) {
+      try {
+        utils::Timer tLocal;
+        aqtrtrCa.referenceAndSwitchOwnership(list.first, m_oStoreDB.m_agentReference->getAgentAddress(), list.second, lc);
+        log::ScopedParamContainer params(lc);
+        params.add("repackRequestAddress", list.first)
+              .add("jobs", list.second.size())
+              .add("enqueueTime", t.secs());
+        lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for reporting to repack.");
+      } catch (cta::exception::Exception & ex) {
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid", list.first)
+              .add("exceptionMSG", ex.getMessageValue());
+        lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting to repack.");
+        lc.logBacktrace(log::ERR, ex.backtrace());
+      }
+    }
+    timingList.insertAndReset("queueingToReportToRepackTime", t);
   }
   if (ajToUnown.size()) {
     m_oStoreDB.m_agentReference->removeBatchFromOwnership(ajToUnown, m_oStoreDB.m_objectStore);
@@ -3292,7 +3377,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
   }
   {
     log::ScopedParamContainer params(lc);
-    params.add("QueuedRequests", jobsToQueueForReporting.size())
+    params.add("QueuedRequests", jobsToQueueForReportingToUser.size())
           .add("PartiallyCompleteRequests", ajToUnown.size());
     timingList.addToLog(params);
     lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): set ArchiveRequests successful and queued for reporting.");
@@ -3516,7 +3601,7 @@ void OStoreDB::ArchiveJob::asyncSucceedTransfer() {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::waitAsyncSucceed()
 //------------------------------------------------------------------------------
-bool OStoreDB::ArchiveJob::waitAsyncSucceed() {  
+void OStoreDB::ArchiveJob::waitAsyncSucceed() {  
   m_succesfulTransferUpdater->wait();
   log::LogContext lc(m_oStoreDB.m_logger);
   log::ScopedParamContainer params(lc);
@@ -3525,7 +3610,28 @@ bool OStoreDB::ArchiveJob::waitAsyncSucceed() {
   // We no more own the job (which could be gone)
   m_jobOwned = false;
   // Ownership removal will be done globally by the caller.
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveJob::isLastAfterAsyncSuccess()
+//------------------------------------------------------------------------------
+bool OStoreDB::ArchiveJob::isLastAfterAsyncSuccess() {
   return m_succesfulTransferUpdater->m_doReportTransferSuccess;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveJob::isLastAfterAsyncSuccess()
+//------------------------------------------------------------------------------
+objectstore::ArchiveRequest::RepackInfo OStoreDB::ArchiveJob::getRepackInfoAfterAsyncSuccess() {
+  return m_succesfulTransferUpdater->m_repackInfo;
+}
+
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackArchiveSuccessesReportBatch::report()
+//------------------------------------------------------------------------------
+void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
+  throw 1;
 }
 
 //------------------------------------------------------------------------------

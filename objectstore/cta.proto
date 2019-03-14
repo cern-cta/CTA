@@ -305,6 +305,12 @@ message ArchiveJob {
   repeated string reportfailurelogs = 4413;
 }
 
+message ArchiveRequestRepackInfo {
+  required string repack_request_address = 4450;
+  required string file_buffer_url = 4453;
+  required uint64 fseq = 4455;
+}
+
 message ArchiveRequest {
   required uint64 archivefileid = 8990;
   required MountPolicy mountpolicy = 8995;
@@ -324,6 +330,8 @@ message ArchiveRequest {
   required EntryLog creationlog = 9091;
   repeated ArchiveJob jobs = 9092;
   required bool reportdecided = 9093;
+  required bool isrepack = 9095;
+  optional ArchiveRequestRepackInfo repack_info = 9097;
 }
 
 // ------------- Retrieve Jobs -------------------------------------------------

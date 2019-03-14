@@ -137,12 +137,40 @@ public:
   AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint32_t copyNumber, const std::string & owner, const std::string &previousOwner,
       const cta::optional<serializers::ArchiveJobStatus>& newStatus);
 
+  // Repack information
+  struct RepackInfo {
+    bool isRepack = false;
+    uint64_t fSeq = 0;
+    std::string repackRequestAddress;
+    std::string fileBufferURL;
+  };
+  void setRepackInfo(const RepackInfo & repackInfo);
+  RepackInfo getRepackInfo();
+  
+  struct RepackInfoSerDeser: public RepackInfo {
+    operator RepackInfo() { return RepackInfo(*this); }
+    void serialize(cta::objectstore::serializers::ArchiveRequestRepackInfo & arri) {
+      if (!isRepack) throw exception::Exception("In ArchiveRequest::RepackInfoSerDeser::serialize(): isRepack is false.");
+      arri.set_repack_request_address(repackRequestAddress);
+      arri.set_fseq(fSeq);
+      arri.set_file_buffer_url(fileBufferURL);
+    }
+    
+    void deserialize(const cta::objectstore::serializers::ArchiveRequestRepackInfo & arri) {
+      isRepack = true;
+      fileBufferURL = arri.file_buffer_url();
+      repackRequestAddress = arri.repack_request_address();
+      fSeq = arri.fseq();
+    }
+  };
+  
   // An asynchronous job updating class for transfer success.
   class AsyncTransferSuccessfulUpdater {
     friend class ArchiveRequest;
   public:
     void wait();
     bool m_doReportTransferSuccess;
+    RepackInfo m_repackInfo;
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
