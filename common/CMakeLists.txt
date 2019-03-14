@@ -132,6 +132,7 @@ set (COMMON_LIB_SRC_FILES
   threading/Thread.cpp
   threading/Semaphores.cpp
   threading/SubProcess.cpp
+  threading/Async.cpp
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
   utils/utils.cpp
@@ -183,6 +184,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
 # threading/ThreadingMPTests.cpp is commented out because of errors caused by libust
   threading/ThreadingMTTests.cpp
   threading/ThreadingTests.cpp
+  threading/AsyncTests.cpp
   threading/AtomicCounterTest.cpp
   utils/GetOptThreadSafeTest.cpp
   utils/RegexTest.cpp

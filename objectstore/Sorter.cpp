@@ -21,12 +21,14 @@
 #include <iostream>
 
 namespace cta { namespace objectstore {
-  
-Sorter::Sorter(AgentReference& agentReference, Backend& objectstore, catalogue::Catalogue& catalogue):m_agentReference(agentReference),m_objectstore(objectstore),m_catalogue(catalogue){}  
 
-Sorter::~Sorter() {
+/* SORTER CLASS */  
+
+Sorter::Sorter(AgentReference& agentReference, Backend& objectstore, catalogue::Catalogue& catalogue):m_agentReference(agentReference),m_objectstore(objectstore),m_catalogue(catalogue){
+}  
+
+Sorter::~Sorter(){
 }
-
 /* Archive related algorithms */
 
 template <typename SpecificQueue>
@@ -48,7 +50,7 @@ void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& qu
     for(auto &failedAR: failure.failedElements){
       try{
         std::rethrow_exception(failedAR.failure);
-      } catch(cta::exception::Exception &e){
+      } catch(const cta::exception::Exception &e){
         uint32_t copyNb = failedAR.element->copyNb;
         std::get<1>(succeededJobs[copyNb]->jobToQueue).set_exception(std::current_exception());
         succeededJobs.erase(copyNb);
@@ -87,29 +89,37 @@ void Sorter::dispatchArchiveAlgorithm(const std::string tapePool, const JobQueue
 
 void Sorter::insertArchiveRequest(std::shared_ptr<ArchiveRequest> archiveRequest, AgentReferenceInterface& previousOwner, log::LogContext& lc){
   for(auto& job: archiveRequest->dumpJobs()){
-    insertArchiveJob(archiveRequest,previousOwner,job,lc);
+    ArchiveJob jobToInsert;
+    jobToInsert.archiveRequest = archiveRequest;
+    jobToInsert.archiveFile = archiveRequest->getArchiveFile();
+    jobToInsert.jobDump = job;
+    jobToInsert.mountPolicy = archiveRequest->getMountPolicy();
+    jobToInsert.previousOwner = &previousOwner;
+    try{
+      jobToInsert.jobQueueType = archiveRequest->getJobQueueType(job.copyNb);
+      insertArchiveJob(jobToInsert);
+    } catch(const cta::exception::Exception &ex){
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", archiveRequest->getArchiveFile().archiveFileID)
+            .add("exceptionMessage", ex.getMessageValue());
+      lc.log(log::ERR,"In Sorter::insertArchiveJob() Failed to determine destination queue for Archive Job.");
+    }
   }
 }
 
-void Sorter::insertArchiveJob(std::shared_ptr<ArchiveRequest> archiveRequest, AgentReferenceInterface &previousOwner, ArchiveRequest::JobDump& jobToInsert, log::LogContext & lc){
-  auto ajqi = std::make_shared<ArchiveJobQueueInfo>();
-  Sorter::ArchiveJob jobToAdd;
-  jobToAdd.archiveRequest = archiveRequest;
-  jobToAdd.archiveFile = archiveRequest->getArchiveFile();
-  jobToAdd.jobDump.copyNb = jobToInsert.copyNb;
-  jobToAdd.mountPolicy = archiveRequest->getMountPolicy();
-  jobToAdd.previousOwner = &previousOwner;
-  jobToAdd.jobDump.tapePool = jobToInsert.tapePool;
-  ajqi->jobToQueue = std::make_tuple(jobToAdd,std::promise<void>());
-  try{
-    threading::MutexLocker mapLocker(m_mutex);
-    m_archiveQueuesAndRequests[std::make_tuple(jobToInsert.tapePool, archiveRequest->getJobQueueType(jobToInsert.copyNb))].emplace_back(ajqi);
-  } catch (cta::exception::Exception &ex){
-    log::ScopedParamContainer params(lc);
-    params.add("fileId", archiveRequest->getArchiveFile().archiveFileID)
-          .add("exceptionMessage", ex.getMessageValue());
-    lc.log(log::ERR,"In Sorter::insertArchiveJob() Failed to determine destination queue for Archive Job.");
+void Sorter::insertArchiveRequest(const SorterArchiveRequest& archiveRequest, AgentReferenceInterface& previousOwner, log::LogContext& lc) {
+  for(auto& archiveJob: archiveRequest.archiveJobs){
+    ArchiveJob jobToInsert = archiveJob;
+    jobToInsert.previousOwner = &previousOwner;
+    insertArchiveJob(jobToInsert);
   }
+}
+
+void Sorter::insertArchiveJob(const ArchiveJob& job){
+  auto ajqi = std::make_shared<ArchiveJobQueueInfo>();
+  ajqi->jobToQueue = std::make_tuple(job,std::promise<void>());
+  threading::MutexLocker mapLocker(m_mutex);
+  m_archiveQueuesAndRequests[std::make_tuple(job.jobDump.tapePool, job.jobQueueType)].emplace_back(ajqi);
 }
 
 bool Sorter::flushOneArchive(log::LogContext &lc) {
@@ -157,7 +167,7 @@ void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueA
     for(auto& failedRR: failure.failedElements){
       try{
         std::rethrow_exception(failedRR.failure);
-      } catch (cta::exception::Exception){
+      } catch (const cta::exception::Exception&){
         uint32_t copyNb = failedRR.element->copyNb;
         std::get<1>(succeededJobs[copyNb]->jobToQueue).set_exception(std::current_exception());
         succeededJobs.erase(copyNb);
@@ -205,26 +215,36 @@ Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> r
   jobToAdd.previousOwner = previousOwner;
   jobToAdd.jobDump.status = retrieveRequest->getJobStatus(jobToAdd.jobDump.copyNb);
   jobToAdd.fileSize = archiveFile.fileSize;
+  jobToAdd.jobQueueType = retrieveRequest->getQueueType(copyNb); //May throw an exception
   return jobToAdd;
 }
 
 void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequest, AgentReferenceInterface &previousOwner, cta::optional<uint32_t> copyNb, log::LogContext & lc){
+  OStoreRetrieveRequestAccessor requestAccessor(retrieveRequest);
+  insertRetrieveRequest(requestAccessor, previousOwner, copyNb, lc);
+}
+
+void Sorter::insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface &previousOwner,cta::optional<uint32_t> copyNb, log::LogContext& lc){
+  SorterRetrieveRequestAccessor accessor(retrieveRequest);
+  this->insertRetrieveRequest(accessor,previousOwner,copyNb,lc);
+}
+
+void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& accessor, AgentReferenceInterface &previousOwner, cta::optional<uint32_t> copyNb, log::LogContext & lc){
   if(copyNb == cta::nullopt){
     //The job to queue will be a ToTransfer
-    std::set<std::string> candidateVidsToTransfer = getCandidateVidsToTransfer(*retrieveRequest);
-    
+    std::set<std::string> candidateVidsToTransfer = getCandidateVidsToTransfer(accessor);
     if(!candidateVidsToTransfer.empty()){
 
-      std::string bestVid = getBestVidForQueueingRetrieveRequest(*retrieveRequest, candidateVidsToTransfer ,lc);
+      std::string bestVid = getBestVidForQueueingRetrieveRequest(accessor, candidateVidsToTransfer ,lc);
 
-      for (auto & tf: retrieveRequest->getArchiveFile().tapeFiles) {
+      for (auto & tf: accessor.getArchiveFile().tapeFiles) {
         if (tf.second.vid == bestVid) {
           goto vidFound;
         }
       }
       {
         std::stringstream err;
-        err << "In Sorter::insertRetrieveRequest(): no tape file for requested vid. archiveId=" << retrieveRequest->getArchiveFile().archiveFileID
+        err << "In Sorter::insertRetrieveRequest(): no tape file for requested vid. archiveId=" << accessor.getArchiveFile().archiveFileID
             << " vid=" << bestVid;
         throw RetrieveRequestHasNoCopies(err.str());
       }
@@ -233,19 +253,27 @@ void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequ
         log::ScopedParamContainer params(lc);
         size_t copyNb = std::numeric_limits<size_t>::max();
         uint64_t fSeq = std::numeric_limits<uint64_t>::max();
-        for (auto & tc: retrieveRequest->getArchiveFile().tapeFiles) { if (tc.second.vid==bestVid) { copyNb=tc.first; fSeq=tc.second.fSeq; } }
-        cta::common::dataStructures::ArchiveFile archiveFile = retrieveRequest->getArchiveFile();
-        Sorter::RetrieveJob jobToAdd = createRetrieveJob(retrieveRequest,archiveFile,copyNb,fSeq,&previousOwner);
-        //We are sure that we want to queue a ToTransfer Job
-        rjqi->jobToQueue = std::make_tuple(jobToAdd,std::promise<void>());
-        threading::MutexLocker mapLocker(m_mutex);
-        m_retrieveQueuesAndRequests[std::make_tuple(bestVid,JobQueueType::JobsToTransferForUser)].emplace_back(rjqi);
-        params.add("fileId", retrieveRequest->getArchiveFile().archiveFileID)
-               .add("copyNb", copyNb)
-               .add("tapeVid", bestVid)
-               .add("fSeq", fSeq);
-        lc.log(log::INFO, "Selected vid to be queued for retrieve request.");
-        return;
+        for (auto & tc: accessor.getArchiveFile().tapeFiles) { if (tc.second.vid==bestVid) { copyNb=tc.first; fSeq=tc.second.fSeq; } }
+        cta::common::dataStructures::ArchiveFile archiveFile = accessor.getArchiveFile();
+        try{
+          Sorter::RetrieveJob jobToAdd = accessor.createRetrieveJob(archiveFile,copyNb,fSeq,&previousOwner);
+          //We are sure that we want to queue a ToTransfer Job
+          rjqi->jobToQueue = std::make_tuple(jobToAdd,std::promise<void>());
+          threading::MutexLocker mapLocker(m_mutex);
+          m_retrieveQueuesAndRequests[std::make_tuple(bestVid,JobQueueType::JobsToTransferForUser)].emplace_back(rjqi);
+          params.add("fileId", accessor.getArchiveFile().archiveFileID)
+                 .add("copyNb", copyNb)
+                 .add("tapeVid", bestVid)
+                 .add("fSeq", fSeq);
+          lc.log(log::INFO, "Selected vid to be queued for retrieve request.");
+          return;
+        } catch (const cta::exception::Exception &ex){
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", accessor.getArchiveFile().archiveFileID)
+                 .add("exceptionMessage", ex.getMessageValue());
+          lc.log(log::ERR, "In Sorter::insertRetrieveRequest() Failed to determine destination queue for retrieve request.");
+          throw ex;
+        }
     } else {
       throw cta::exception::Exception("In Sorter::insertRetrieveRequest(), there is no ToTransfer jobs in the RetrieveRequest. Please provide the copyNb of the job you want to queue.");
     }
@@ -253,21 +281,21 @@ void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequ
     //We want to queue a specific job identified by its copyNb
     log::ScopedParamContainer params(lc);
     auto rjqi = std::make_shared<RetrieveJobQueueInfo>();
-    cta::common::dataStructures::ArchiveFile archiveFile = retrieveRequest->getArchiveFile();
+    cta::common::dataStructures::ArchiveFile archiveFile = accessor.getArchiveFile();
     cta::common::dataStructures::TapeFile jobTapeFile = archiveFile.tapeFiles[copyNb.value()];
-    Sorter::RetrieveJob jobToAdd = createRetrieveJob(retrieveRequest,archiveFile,jobTapeFile.copyNb,jobTapeFile.fSeq,&previousOwner);
-    rjqi->jobToQueue = std::make_tuple(jobToAdd,std::promise<void>());
     try{
+      Sorter::RetrieveJob jobToAdd = accessor.createRetrieveJob(archiveFile,jobTapeFile.copyNb,jobTapeFile.fSeq,&previousOwner);
+      rjqi->jobToQueue = std::make_tuple(jobToAdd,std::promise<void>());
       threading::MutexLocker mapLocker(m_mutex);
-      m_retrieveQueuesAndRequests[std::make_tuple(jobTapeFile.vid, retrieveRequest->getQueueType(copyNb.value()))].emplace_back(rjqi);
-      params.add("fileId", retrieveRequest->getArchiveFile().archiveFileID)
+      m_retrieveQueuesAndRequests[std::make_tuple(jobTapeFile.vid, jobToAdd.jobQueueType)].emplace_back(rjqi);
+      params.add("fileId", accessor.getArchiveFile().archiveFileID)
                .add("copyNb", copyNb.value())
                .add("tapeVid", jobTapeFile.vid)
                .add("fSeq", jobTapeFile.fSeq);
       lc.log(log::INFO, "Selected the vid of the job to be queued for retrieve request.");
-    } catch (cta::exception::Exception &ex){
+    } catch (const cta::exception::Exception &ex){
       log::ScopedParamContainer params(lc);
-      params.add("fileId", retrieveRequest->getArchiveFile().archiveFileID)
+      params.add("fileId", accessor.getArchiveFile().archiveFileID)
              .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::ERR, "In Sorter::insertRetrieveRequest() Failed to determine destination queue for retrieve request.");
       throw ex;
@@ -275,12 +303,34 @@ void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequ
   }
 }
 
-std::set<std::string> Sorter::getCandidateVidsToTransfer(RetrieveRequest &request){
+std::set<std::string> Sorter::getCandidateVidsToTransfer(RetrieveRequest& request){
   using serializers::RetrieveJobStatus;
   std::set<std::string> candidateVids;
   for (auto & j: request.dumpJobs()) {
     if(j.status == RetrieveJobStatus::RJS_ToTransferForUser) {
       candidateVids.insert(request.getArchiveFile().tapeFiles.at(j.copyNb).vid);
+    }
+  }
+  return candidateVids;
+}
+
+std::set<std::string> Sorter::getCandidateVidsToTransfer(const SorterRetrieveRequest& request){
+  using serializers::RetrieveJobStatus;
+  std::set<std::string> candidateVids;
+  for (auto & j: request.retrieveJobs) {
+    if(j.second.jobDump.status == RetrieveJobStatus::RJS_ToTransferForUser) {
+      candidateVids.insert(request.archiveFile.tapeFiles.at(j.second.jobDump.copyNb).vid);
+    }
+  }
+  return candidateVids;
+}
+
+std::set<std::string> Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface &requestAccessor){
+  using serializers::RetrieveJobStatus;
+  std::set<std::string> candidateVids;
+  for(auto& j: requestAccessor.getJobs()){
+    if(j.status == RetrieveJobStatus::RJS_ToTransferForUser){
+      candidateVids.insert(requestAccessor.getArchiveFile().tapeFiles.at(j.copyNb).vid);
     }
   }
   return candidateVids;
@@ -293,6 +343,32 @@ std::string Sorter::getBestVidForQueueingRetrieveRequest(RetrieveRequest& retrie
   } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
     log::ScopedParamContainer params(lc);
     params.add("fileId", retrieveRequest.getArchiveFile().archiveFileID);
+    lc.log(log::INFO, "In Sorter::getVidForQueueingRetrieveRequest(): No available tape found.");
+    throw ex;
+  }
+  return vid;
+}
+
+std::string Sorter::getBestVidForQueueingRetrieveRequest(const SorterRetrieveRequest& request, std::set<std::string>& candidateVids, log::LogContext &lc){
+  std::string vid;
+  try{
+    vid = Helpers::selectBestRetrieveQueue(candidateVids,m_catalogue,m_objectstore);
+  } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("fileId", request.archiveFile.archiveFileID);
+    lc.log(log::INFO, "In Sorter::getVidForQueueingRetrieveRequest(): No available tape found.");
+    throw ex;
+  }
+  return vid;
+}
+
+std::string Sorter::getBestVidForQueueingRetrieveRequest(RetrieveRequestInfosAccessorInterface &requestAccessor, std::set<std::string>& candidateVids, log::LogContext &lc){
+  std::string vid;
+  try{
+    vid = Helpers::selectBestRetrieveQueue(candidateVids,m_catalogue,m_objectstore);
+  } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("fileId", requestAccessor.getArchiveFile().archiveFileID);
     lc.log(log::INFO, "In Sorter::getVidForQueueingRetrieveRequest(): No available tape found.");
     throw ex;
   }
@@ -327,5 +403,73 @@ void Sorter::flushAll(log::LogContext& lc){
   while(flushOneRetrieve(lc)){}
   while(flushOneArchive(lc)){}
 }
+
+/* END OF SORTER CLASS */
+
+
+/* RetrieveRequestInfosAccessor CLASS */
+
+RetrieveRequestInfosAccessorInterface::RetrieveRequestInfosAccessorInterface(){}
+
+RetrieveRequestInfosAccessorInterface::~RetrieveRequestInfosAccessorInterface(){}
+
+/* END OF RetrieveRequestInfosAccessor CLASS */
+
+
+/* RetrieveRequestAccessor CLASS */
+
+OStoreRetrieveRequestAccessor::OStoreRetrieveRequestAccessor(std::shared_ptr<RetrieveRequest> retrieveRequest):m_retrieveRequest(retrieveRequest){}
+
+OStoreRetrieveRequestAccessor::~OStoreRetrieveRequestAccessor(){}
+
+std::list<RetrieveRequest::JobDump> OStoreRetrieveRequestAccessor::getJobs(){
+  return m_retrieveRequest->dumpJobs();
+}
+
+common::dataStructures::ArchiveFile OStoreRetrieveRequestAccessor::getArchiveFile(){
+  return m_retrieveRequest->getArchiveFile();
+}
+
+Sorter::RetrieveJob OStoreRetrieveRequestAccessor::createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
+        const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner){
+  Sorter::RetrieveJob ret;
+  ret.jobDump.copyNb = copyNb;
+  ret.fSeq = fSeq;
+  ret.mountPolicy = m_retrieveRequest->getRetrieveFileQueueCriteria().mountPolicy;
+  ret.retrieveRequest = m_retrieveRequest;
+  ret.previousOwner = previousOwner;
+  ret.jobDump.status = m_retrieveRequest->getJobStatus(ret.jobDump.copyNb);
+  ret.jobQueueType = m_retrieveRequest->getQueueType(copyNb);
+  ret.fileSize = archiveFile.fileSize;
+  return ret;
+}
+
+/* END OF RetrieveRequestAccessor CLASS */
+
+
+/* SorterRetrieveRequestAccessor CLASS */
+
+SorterRetrieveRequestAccessor::SorterRetrieveRequestAccessor(Sorter::SorterRetrieveRequest& request):m_retrieveRequest(request){}
+
+SorterRetrieveRequestAccessor::~SorterRetrieveRequestAccessor(){}
+
+std::list<RetrieveRequest::JobDump> SorterRetrieveRequestAccessor::getJobs(){
+  std::list<RetrieveRequest::JobDump> ret;
+  for(auto& kv: m_retrieveRequest.retrieveJobs){
+    ret.push_back(kv.second.jobDump);
+  }
+  return ret;
+}
+
+common::dataStructures::ArchiveFile SorterRetrieveRequestAccessor::getArchiveFile(){
+  return m_retrieveRequest.archiveFile;
+}
+
+Sorter::RetrieveJob SorterRetrieveRequestAccessor::createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
+        const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner){
+  return m_retrieveRequest.retrieveJobs.at(copyNb);
+}
+
+/* END OF SorterRetrieveRequestAccessor CLASS*/
 
 }}
