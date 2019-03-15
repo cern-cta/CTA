@@ -210,7 +210,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
       m.tapePool = aqp.tapePool;
-      m.type = cta::common::dataStructures::MountType::Archive;
+      m.type = cta::common::dataStructures::MountType::ArchiveForUser;
       m.bytesQueued = aqueue.getJobsSummary().bytes;
       m.filesQueued = aqueue.getJobsSummary().jobs;      
       m.oldestJobStartTime = aqueue.getJobsSummary().oldestJobStartTime;
@@ -292,7 +292,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     (int)cta::common::dataStructures::DriveStatus::DrainingToDisk,
     (int)cta::common::dataStructures::DriveStatus::CleaningUp };
   std::set<int> activeMountTypes = {
-    (int)cta::common::dataStructures::MountType::Archive,
+    (int)cta::common::dataStructures::MountType::ArchiveForUser,
     (int)cta::common::dataStructures::MountType::Retrieve,
     (int)cta::common::dataStructures::MountType::Label };
   for (const auto &d : driveStates) {
@@ -2828,7 +2828,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     driveInfo.logicalLibrary=logicalLibrary;
     driveInfo.host=hostName;
     ReportDriveStatusInputs inputs;
-    inputs.mountType = common::dataStructures::MountType::Archive;
+    inputs.mountType = common::dataStructures::MountType::ArchiveForUser;
     inputs.byteTransferred = 0;
     inputs.filesTransferred = 0;
     inputs.latestBandwidth = 0;
@@ -3239,7 +3239,7 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   driveInfo.logicalLibrary=mountInfo.logicalLibrary;
   driveInfo.host=mountInfo.host;
   ReportDriveStatusInputs inputs;
-  inputs.mountType = common::dataStructures::MountType::Archive;
+  inputs.mountType = common::dataStructures::MountType::ArchiveForUser;
   inputs.mountSessionId = mountInfo.mountId;
   inputs.reportTime = completionTime;
   inputs.status = status;

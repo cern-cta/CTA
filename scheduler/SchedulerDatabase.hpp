@@ -528,9 +528,9 @@ public:
         return true;
       if (priority > other.priority)
         return false;
-      if (type == cta::common::dataStructures::MountType::Archive && other.type != cta::common::dataStructures::MountType::Archive)
+      if (type == cta::common::dataStructures::MountType::ArchiveForUser && other.type != cta::common::dataStructures::MountType::ArchiveForUser)
         return false;
-      if (other.type == cta::common::dataStructures::MountType::Archive && type != cta::common::dataStructures::MountType::Archive)
+      if (other.type == cta::common::dataStructures::MountType::ArchiveForUser && type != cta::common::dataStructures::MountType::ArchiveForUser)
         return true;
       if (ratioOfMountQuotaUsed < other.ratioOfMountQuotaUsed)
         return true;

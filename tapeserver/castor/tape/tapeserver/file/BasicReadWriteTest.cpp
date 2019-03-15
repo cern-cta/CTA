@@ -180,7 +180,7 @@ int main (int argc, char *argv[])
                 castor::tape::tapeserver::daemon::VolumeInfo m_volInfo;
                 m_volInfo.vid = label;
                 m_volInfo.nbFiles = 0;
-                m_volInfo.mountType = cta::common::dataStructures::MountType::Archive;
+                m_volInfo.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
 
                 castor::tape::tapeFile::WriteSession *ws;
                 ws = new castor::tape::tapeFile::WriteSession(*drive, m_volInfo, 0, true, true);

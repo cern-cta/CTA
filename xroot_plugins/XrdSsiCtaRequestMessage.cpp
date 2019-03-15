@@ -1642,7 +1642,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
          currentRow.push_back(std::to_string(q.filesQueued));
          currentRow.push_back(bytesToMbString(q.bytesQueued));
          currentRow.push_back(std::to_string(q.oldestJobAge));
-         if (common::dataStructures::MountType::Archive == q.mountType) {
+         if (common::dataStructures::MountType::ArchiveForUser == q.mountType) {
             currentRow.push_back(std::to_string(q.mountPolicy.archivePriority));
             currentRow.push_back(std::to_string(q.mountPolicy.archiveMinRequestAge));
             currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));

@@ -792,7 +792,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       existingMounts = 0;
     } 
     uint32_t effectiveExistingMounts = 0;
-    if (m->type == common::dataStructures::MountType::Archive) effectiveExistingMounts = existingMounts;
+    if (m->type == common::dataStructures::MountType::ArchiveForUser) effectiveExistingMounts = existingMounts;
     bool mountPassesACriteria = false;
     
     if (m->bytesQueued / (1 + effectiveExistingMounts) >= m_minBytesToWarrantAMount)
@@ -855,7 +855,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   // list of tapes from the catalogue.
   if (std::count_if(
         mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), 
-        [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == common::dataStructures::MountType::Archive; } )) {
+        [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == common::dataStructures::MountType::ArchiveForUser; } )) {
     tapeList = m_catalogue.getTapesForWriting(logicalLibraryName);
     getTapeForWriteTime = timer.secs(utils::Timer::resetCounter);
   }
@@ -899,7 +899,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
   // We can now simply iterate on the candidates until we manage to find a valid mount
   for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {
     // If the mount is an archive, we still have to find a tape.
-    if (m->type==common::dataStructures::MountType::Archive) {
+    if (m->type==common::dataStructures::MountType::ArchiveForUser) {
       // We need to find a tape for archiving. It should be both in the right 
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
@@ -1033,7 +1033,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   // mount for one of them
   for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {
     // If the mount is an archive, we still have to find a tape.
-    if (m->type==common::dataStructures::MountType::Archive) {
+    if (m->type==common::dataStructures::MountType::ArchiveForUser) {
       // We need to find a tape for archiving. It should be both in the right 
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
@@ -1203,7 +1203,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     // Find or create the relevant entry.
     auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid, vid_to_tapeinfo);
     switch (pm.type) {
-    case common::dataStructures::MountType::Archive:
+    case common::dataStructures::MountType::ArchiveForUser:
       summary.mountPolicy.archivePriority = pm.priority;
       summary.mountPolicy.archiveMinRequestAge = pm.minRequestAge;
       summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
@@ -1227,7 +1227,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   for (auto & em: mountDecisionInfo->existingOrNextMounts) {
     auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid, vid_to_tapeinfo);
     switch (em.type) {
-    case common::dataStructures::MountType::Archive:
+    case common::dataStructures::MountType::ArchiveForUser:
     case common::dataStructures::MountType::Retrieve:
       if (em.currentMount) 
         summary.currentMounts++;
@@ -1244,7 +1244,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   mountDecisionInfo.reset();
   // Add the tape information where useful (archive queues).
   for (auto & mountOrQueue: ret) {
-    if (common::dataStructures::MountType::Archive==mountOrQueue.mountType) {
+    if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType) {
       // Get all the tape for this pool
       cta::catalogue::TapeSearchCriteria tsc;
       tsc.tapePool = mountOrQueue.tapePool;

@@ -24,9 +24,10 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 enum class MountType: uint32_t {
-  Archive = 1,
-  Retrieve = 2,
-  Label = 3,
+  ArchiveForUser = 1,
+  ArchiveForRepack = 2,
+  Retrieve = 3,
+  Label = 4,
   NoMount = 0
 };
 

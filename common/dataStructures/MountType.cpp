@@ -20,8 +20,10 @@
 
 std::string cta::common::dataStructures::toString(cta::common::dataStructures::MountType type) {
   switch(type) {
-    case cta::common::dataStructures::MountType::Archive:
-      return "Archive";
+    case cta::common::dataStructures::MountType::ArchiveForUser:
+      return "ArchiveForUser";
+    case cta::common::dataStructures::MountType::ArchiveForRepack:
+      return "ArchiveForRepack";
     case cta::common::dataStructures::MountType::Retrieve:
       return "Retrieve";
     case cta::common::dataStructures::MountType::Label:

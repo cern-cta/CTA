@@ -195,8 +195,11 @@ schedule:
   switch(m_volInfo.mountType) {
   case cta::common::dataStructures::MountType::Retrieve:
     return executeRead(lc, dynamic_cast<cta::RetrieveMount *>(tapeMount.get()));
-  case cta::common::dataStructures::MountType::Archive:
+  case cta::common::dataStructures::MountType::ArchiveForUser:
+  case cta::common::dataStructures::MountType::ArchiveForRepack:
     return executeWrite(lc, dynamic_cast<cta::ArchiveMount *>(tapeMount.get()));
+
+    
   case cta::common::dataStructures::MountType::Label:
     return executeLabel(lc, dynamic_cast<cta::LabelMount *>(tapeMount.get()));
   default:
@@ -541,7 +544,7 @@ const char *castor::tape::tapeserver::daemon::DataTransferSession::
   mountTypeToString(const cta::common::dataStructures::MountType mountType) const throw() {
   switch(mountType) {
   case cta::common::dataStructures::MountType::Retrieve: return "Retrieve";
-  case cta::common::dataStructures::MountType::Archive : return "Archive";
+  case cta::common::dataStructures::MountType::ArchiveForUser : return "Archive";
   case cta::common::dataStructures::MountType::Label: return "Label";
   default                      : return "UNKNOWN";
   }

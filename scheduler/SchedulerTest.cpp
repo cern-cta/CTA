@@ -462,7 +462,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
@@ -664,7 +664,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
@@ -917,7 +917,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
@@ -1158,7 +1158,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());

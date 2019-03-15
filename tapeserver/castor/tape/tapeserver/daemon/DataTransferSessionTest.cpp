@@ -1692,7 +1692,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   logToCheck += "";
   ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started\" thread=\"TapeWrite\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
                                               "mountId=\"1\" vo=\"vo\" mediaType=\"TestMediaType\" tapePool=\"TestTapePool\" logicalLibrary=\"TestLogicalLibrary\" "
-                                              "mountType=\"Archive\" vendor=\"TestVendor\" capacityInBytes=\"12345678\""));
+                                              "mountType=\"ArchiveForUser\" vendor=\"TestVendor\" capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" " 
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));

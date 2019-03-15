@@ -30,15 +30,15 @@ QueueAndMountSummary &QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndM
     const common::dataStructures::VidToTapeMap &vid_to_tapeinfo)
 {
   for (auto & summary: summaryList) {
-    if ((mountType==MountType::Archive && summary.tapePool==tapePool) ||
+    if ((mountType==MountType::ArchiveForUser && summary.tapePool==tapePool) ||
         (mountType==MountType::Retrieve && summary.vid==vid))
       return summary;
   }
-  if (std::set<MountType>({MountType::Archive, MountType::Retrieve}).count(mountType)) {
+  if (std::set<MountType>({MountType::ArchiveForUser, MountType::Retrieve}).count(mountType)) {
     summaryList.push_back(QueueAndMountSummary());
     summaryList.back().mountType=mountType;
     summaryList.back().tapePool=tapePool;
-    if (MountType::Archive==mountType) {
+    if (MountType::ArchiveForUser==mountType) {
       summaryList.back().vid="-";
       summaryList.back().logicalLibrary="-";
     } else {
