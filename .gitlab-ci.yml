@@ -13,6 +13,8 @@ before_script:
   - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
   - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
   - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
+  - echo "Removing protectbase from all repos (same as Puppet)"
+  - sed -i '/^protect=/d' /etc/yum.repos.d/* 
 
 cta_srpm:
   stage: build:srpm
