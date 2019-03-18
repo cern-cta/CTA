@@ -308,13 +308,12 @@ auto RetrieveRequest::addTransferFailure(uint32_t copyNumber, uint64_t mountId, 
       j.set_totalretries(j.totalretries() + 1);
       *j.mutable_failurelogs()->Add() = failureReason;
     }
-
     if(j.totalretries() < j.maxtotalretries()) {
       EnqueueingNextStep ret;
-      ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransferForUser;
+        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransferForUser;
       if(j.retrieswithinmount() < j.maxretrieswithinmount())
         // Job can try again within this mount
-        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransfer;
+        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransferForUser;
       else
         // No more retries within this mount: job remains owned by this session and will be garbage collected
         ret.nextStep = EnqueueingNextStep::NextStep::Nothing;
@@ -350,7 +349,7 @@ auto RetrieveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, 
     } else {
       // Status is unchanged
       ret.nextStatus = j.status();
-      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
+      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReportForUser;
     }
     return ret;
   }
@@ -696,8 +695,13 @@ auto RetrieveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent job
   switch(jobEvent)
   {  
     case JobEvent::TransferFailed:
-      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
-      ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure;
+      if(m_payload.isrepack()){
+        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReportForRepack;
+        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure;
+      } else {
+        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReportForUser;
+        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure;
+      }
       break;
 
     case JobEvent::ReportFailed:

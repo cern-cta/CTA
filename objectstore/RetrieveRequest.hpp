@@ -135,8 +135,9 @@ public:
   struct EnqueueingNextStep {
     enum class NextStep {
       Nothing,
-      EnqueueForTransfer,
-      EnqueueForReport,
+      EnqueueForTransferForUser,
+      EnqueueForReportForUser,
+      EnqueueForReportForRepack,
       StoreInFailedJobsContainer,
       Delete
     } nextStep = NextStep::Nothing;

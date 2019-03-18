@@ -3731,7 +3731,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       return;
     }
 
-    case NextStep::EnqueueForReport: {
+    case NextStep::EnqueueForReportForUser: {
       typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportForUser> CaRqtr;
 
       // Algorithms suppose the objects are not locked
@@ -3785,8 +3785,17 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       lc.log(log::INFO, "In RetrieveJob::failTransfer(): enqueued job for reporting");
       return;
     }
+    
+    case NextStep::EnqueueForReportForRepack:{
+      Sorter sorter(*m_oStoreDB.m_agentReference,m_oStoreDB.m_objectStore,m_oStoreDB.m_catalogue);
+      std::shared_ptr<objectstore::RetrieveRequest> rr = std::make_shared<objectstore::RetrieveRequest>(m_retrieveRequest);
+      sorter.insertRetrieveRequest(rr,*this->m_oStoreDB.m_agentReference,cta::optional<uint32_t>(selectedCopyNb),lc);
+      rel.release();
+      sorter.flushOneRetrieve(lc);
+      return;
+    }
 
-    case NextStep::EnqueueForTransfer: {
+    case NextStep::EnqueueForTransferForUser: {
       typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> CaRqtr;
 
       // Algorithms suppose the objects are not locked
@@ -3840,7 +3849,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       lc.log(log::INFO, "In RetrieveJob::failTransfer(): requeued job for (potentially in-mount) retry.");
       return;
     }
-
+    
     case NextStep::StoreInFailedJobsContainer:
       // For retrieve queues, once the job has been queued for report, we don't retry any more, so we
       // can never arrive at this case
@@ -3883,7 +3892,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
     // Apply the decision
     switch (enQueueingNextStep.nextStep) {
       // We have a reduced set of supported next steps as some are not compatible with this event
-      case NextStep::EnqueueForReport: {
+      case NextStep::EnqueueForReportForUser: {
         typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportForUser> CaRqtr;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;

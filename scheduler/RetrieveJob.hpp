@@ -82,7 +82,7 @@ public:
    * Completion will be checked implicitly in RetrieveMount::flushAsyncSuccessReports()
    */
   virtual void asyncSetSuccessful();
-
+  
   /**
    * Triggers a scheduler update following the failure of the job. Retry policy will
    * be applied by the scheduler.

@@ -53,6 +53,7 @@ public:
   Sorter(AgentReference& agentReference,Backend &objectstore, catalogue::Catalogue& catalogue);
   ~Sorter();
   
+  //std::string = containerIdentifier
   typedef std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr<ArchiveJobQueueInfo>>> MapArchive;
   typedef std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr<RetrieveJobQueueInfo>>> MapRetrieve;
   
@@ -133,6 +134,8 @@ public:
   struct SorterRetrieveRequest{
     common::dataStructures::ArchiveFile archiveFile;
     std::map<uint32_t, RetrieveJob> retrieveJobs;
+    std::string repackRequestAddress;
+    bool isRepack;
   };
   
   /* Retrieve-related methods */
@@ -201,12 +204,9 @@ private:
   threading::Mutex m_mutex;
   
   /* Retrieve-related methods */
-  std::set<std::string> getCandidateVidsToTransfer(RetrieveRequest &request);
-  std::set<std::string> getCandidateVidsToTransfer(const SorterRetrieveRequest& request);
   std::set<std::string> getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface &requestAccessor);
-  std::string getBestVidForQueueingRetrieveRequest(RetrieveRequest& retrieveRequest, std::set<std::string>& candidateVids, log::LogContext &lc);
-  std::string getBestVidForQueueingRetrieveRequest(const SorterRetrieveRequest& request, std::set<std::string>& candidateVids, log::LogContext &lc);
   std::string getBestVidForQueueingRetrieveRequest(RetrieveRequestInfosAccessorInterface &requestAccessor, std::set<std::string>& candidateVids, log::LogContext &lc);
+  std::string getContainerID(RetrieveRequestInfosAccessorInterface& requestAccessor, const std::string& vid, const uint32_t copyNb);
   void queueRetrieveRequests(const std::string vid, const JobQueueType jobQueueType, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& archiveJobInfos, log::LogContext &lc);
   void dispatchRetrieveAlgorithm(const std::string vid, const JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& retrieveJobsInfos, log::LogContext &lc);
   Sorter::RetrieveJob createRetrieveJob(std::shared_ptr<RetrieveRequest> retrieveRequest, const cta::common::dataStructures::ArchiveFile archiveFile, const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface *previousOwner);
@@ -246,6 +246,8 @@ class RetrieveRequestInfosAccessorInterface{
     virtual Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
         const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner) = 0;
     virtual ~RetrieveRequestInfosAccessorInterface();
+    virtual serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb) = 0;
+    virtual std::string getRepackAddress() = 0;
 };
 
 class OStoreRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterface{
@@ -256,6 +258,8 @@ class OStoreRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterfac
     common::dataStructures::ArchiveFile getArchiveFile();
     Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
         const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
+    serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
+    std::string getRepackAddress();
   private:
     std::shared_ptr<RetrieveRequest> m_retrieveRequest;
 };
@@ -268,6 +272,8 @@ class SorterRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterfac
     common::dataStructures::ArchiveFile getArchiveFile();
     Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
         const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
+    serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
+    std::string getRepackAddress();
   private:
     Sorter::SorterRetrieveRequest& m_retrieveRequest;
 };
