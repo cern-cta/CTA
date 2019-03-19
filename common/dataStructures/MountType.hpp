@@ -28,12 +28,18 @@ enum class MountType: uint32_t {
   ArchiveForRepack = 2,
   Retrieve = 3,
   Label = 4,
-  NoMount = 0
+  NoMount = 0,
+  /// A summary type used in scheduling.
+  ArchiveAllTypes = 99
 };
+
+/// A function summarizing subtypes (currently only Archive) to simplify scheduling.
+MountType getMountBasicType(MountType type);
 
 std::string toString(MountType type);
 
 std::ostream &operator <<(std::ostream& os, const MountType &obj);
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta

@@ -18,24 +18,42 @@
 
 #include "common/dataStructures/MountType.hpp"
 
-std::string cta::common::dataStructures::toString(cta::common::dataStructures::MountType type) {
+namespace cta {
+namespace common {
+namespace dataStructures {
+
+std::string toString(cta::common::dataStructures::MountType type) {
   switch(type) {
-    case cta::common::dataStructures::MountType::ArchiveForUser:
+    case MountType::ArchiveForUser:
       return "ArchiveForUser";
-    case cta::common::dataStructures::MountType::ArchiveForRepack:
+    case MountType::ArchiveForRepack:
       return "ArchiveForRepack";
-    case cta::common::dataStructures::MountType::Retrieve:
+    case MountType::ArchiveAllTypes:
+      return "ArchiveAllTypes";
+    case MountType::Retrieve:
       return "Retrieve";
-    case cta::common::dataStructures::MountType::Label:
+    case MountType::Label:
       return "Label";
-    case cta::common::dataStructures::MountType::NoMount:
+    case MountType::NoMount:
       return "-";
     default:
       return "UNKNOWN";
   }
 }
 
-std::ostream & cta::common::dataStructures::operator<<(std::ostream &os, 
+MountType getMountBasicType(MountType type) {
+  switch(type) {
+    case MountType::ArchiveForUser:
+    case MountType::ArchiveForRepack:
+      return MountType::ArchiveAllTypes;
+    default:
+      return type;
+  }
+}
+
+std::ostream & operator<<(std::ostream &os, 
   const cta::common::dataStructures::MountType &obj) {
   return os << toString(obj);
 }
+
+}}} // namespace cta::common::dataStructures

@@ -54,19 +54,5 @@ namespace cta { namespace objectstore {
     }
     return ret;
   }
-
-  template<>
-  auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>::PopCriteria::
-  operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
-    files -= pes.files;
-    return *this;
-  }
-
-  template<>
-  auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>::
-  getContainerSummary(Container& cont) -> ContainerSummary {
-    ContainerSummary ret;
-    ret.JobsSummary::operator=(cont.getJobsSummary());
-    return ret;
-  }
+  
 }}

@@ -94,6 +94,7 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(TapeNotWritable);
     CTA_GENERATE_EXCEPTION_CLASS(TapeIsBusy);
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
+      common::dataStructures::MountType mountType,
       const catalogue::TapeForWriting & tape,
       const std::string driveName, const std::string& logicalLibrary, 
       const std::string & hostName, 
@@ -121,6 +122,7 @@ public:
   class TapeMountDecisionInfoNoLock: public SchedulerDatabase::TapeMountDecisionInfo {
   public:
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
+      common::dataStructures::MountType mountType,
       const catalogue::TapeForWriting & tape,
       const std::string driveName, const std::string& logicalLibrary, 
       const std::string & hostName, const std::string& vo, const std::string& mediaType,
@@ -155,8 +157,9 @@ public:
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;
   private:
-    ArchiveMount(OStoreDB & oStoreDB);
+    ArchiveMount(OStoreDB & oStoreDB, objectstore::JobQueueType queueType);
     OStoreDB & m_oStoreDB;
+    objectstore::JobQueueType m_queueType;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;

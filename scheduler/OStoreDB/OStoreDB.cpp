@@ -185,7 +185,7 @@ void OStoreDB::ping() {
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re, 
     log::LogContext & logContext) {
   utils::Timer t, t2;
-  // Walk the archive queues for statistics
+  // Walk the archive queues for user for statistics
   for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
@@ -201,7 +201,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       params.add("queueObject", aqp.address)
             .add("tapePool", aqp.tapePool)
             .add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue. Skipping it.");
+      logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for user. Skipping it.");
       continue;
     }
     // If there are files queued, we create an entry for this tape pool in the
@@ -225,10 +225,57 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     log::ScopedParamContainer params (logContext);
     params.add("queueObject", aqp.address)
           .add("tapePool", aqp.tapePool)
+          .add("queueType", toString(cta::common::dataStructures::MountType::ArchiveForUser))
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
-    logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive queue.");
+    logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive for user queue.");
+  }
+  // Walk the archive queues for user for statistics
+  for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForRepack)) {
+    objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
+    // debug utility variable
+    std::string __attribute__((__unused__)) poolName = aqp.tapePool;
+    objectstore::ScopedSharedLock aqlock;
+    double queueLockTime = 0;
+    double queueFetchTime = 0;
+    try {
+      aqueue.fetchNoLock();
+      queueFetchTime = t.secs(utils::Timer::resetCounter);
+    } catch (cta::exception::Exception &ex) {
+      log::ScopedParamContainer params (logContext);
+      params.add("queueObject", aqp.address)
+            .add("tapePool", aqp.tapePool)
+            .add("exceptionMessage", ex.getMessageValue());
+      logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for repack. Skipping it.");
+      continue;
+    }
+    // If there are files queued, we create an entry for this tape pool in the
+    // mount candidates list.
+    if (aqueue.getJobsSummary().jobs) {
+      tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+      auto & m = tmdi.potentialMounts.back();
+      m.tapePool = aqp.tapePool;
+      m.type = cta::common::dataStructures::MountType::ArchiveForRepack;
+      m.bytesQueued = aqueue.getJobsSummary().bytes;
+      m.filesQueued = aqueue.getJobsSummary().jobs;      
+      m.oldestJobStartTime = aqueue.getJobsSummary().oldestJobStartTime;
+      m.priority = aqueue.getJobsSummary().priority;
+      m.maxDrivesAllowed = aqueue.getJobsSummary().maxDrivesAllowed;
+      m.minRequestAge = aqueue.getJobsSummary().minArchiveRequestAge;
+      m.logicalLibrary = "";
+    } else {
+      tmdi.queueTrimRequired = true;
+    }
+    auto processingTime = t.secs(utils::Timer::resetCounter);
+    log::ScopedParamContainer params (logContext);
+    params.add("queueObject", aqp.address)
+          .add("tapePool", aqp.tapePool)
+          .add("queueType", toString(cta::common::dataStructures::MountType::ArchiveForRepack))
+          .add("queueLockTime", queueLockTime)
+          .add("queueFetchTime", queueFetchTime)
+          .add("processingTime", processingTime);
+    logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive for repack queue.");
   }
   // Walk the retrieve queues for statistics
   for (auto & rqp: re.dumpRetrieveQueues(JobQueueType::JobsToTransferForUser)) {
@@ -441,6 +488,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 // OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(
+        common::dataStructures::MountType type,
         const catalogue::TapeForWriting& tape,
         const std::string driveName,
         const std::string& logicalLibrary,
@@ -2931,14 +2979,26 @@ void OStoreDB::setDriveShutdown(common::dataStructures::DriveState & driveState,
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> 
   OStoreDB::TapeMountDecisionInfo::createArchiveMount(
+    common::dataStructures::MountType type,
     const catalogue::TapeForWriting & tape, const std::string driveName,
     const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
       const std::string& vendor,uint64_t capacityInBytes, time_t startTime) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
+  objectstore::JobQueueType queueType;
+  switch (type) {
+  case common::dataStructures::MountType::ArchiveForUser:
+    queueType = objectstore::JobQueueType::JobsToTransferForUser;
+    break;
+  case common::dataStructures::MountType::ArchiveForRepack:
+    queueType = objectstore::JobQueueType::JobsToTransferForRepack;
+    break;
+  default:
+    throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfo::createArchiveMount(): unexpected mount type.");
+  }
   std::unique_ptr<OStoreDB::ArchiveMount> privateRet(
-    new OStoreDB::ArchiveMount(m_oStoreDB));
+    new OStoreDB::ArchiveMount(m_oStoreDB, queueType));
   auto &am = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
@@ -2996,7 +3056,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
 OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStoreDb): m_lockTaken(false), m_oStoreDB(oStoreDb) {}
 
 //------------------------------------------------------------------------------
-// OStoreDB::TapeMountDecisionInfo::createArchiveMount()
+// OStoreDB::TapeMountDecisionInfo::createRetrieveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RetrieveMount> 
   OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
@@ -3077,7 +3137,8 @@ OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::ArchiveMount()
 //------------------------------------------------------------------------------
-OStoreDB::ArchiveMount::ArchiveMount(OStoreDB & oStoreDB): m_oStoreDB(oStoreDB) {}
+OStoreDB::ArchiveMount::ArchiveMount(OStoreDB & oStoreDB, objectstore::JobQueueType queueType):
+      m_oStoreDB(oStoreDB), m_queueType(queueType) {}
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::getMountInfo()
@@ -3091,29 +3152,55 @@ const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMou
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested,
     uint64_t bytesRequested, log::LogContext& logContext) {
-  typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> AQAlgos;
-  AQAlgos aqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-  AQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
-  auto jobs = aqAlgos.popNextBatch(mountInfo.tapePool, popCriteria, logContext);
-  // We can construct the return value.
-  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
-  for (auto & j: jobs.elements) {
-    std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), m_oStoreDB));
-    aj->tapeFile.copyNb = j.copyNb;
-    aj->archiveFile = j.archiveFile;
-    aj->archiveReportURL = j.archiveReportURL;
-    aj->errorReportURL = j.errorReportURL;
-    aj->srcURL = j.srcURL;
-    aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-    aj->tapeFile.vid = mountInfo.vid;
-    aj->tapeFile.blockId =
-        std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
-    aj->m_jobOwned = true;
-    aj->m_mountId = mountInfo.mountId;
-    aj->m_tapePool = mountInfo.tapePool;
-    ret.emplace_back(std::move(aj));
+  if (m_queueType == objectstore::JobQueueType::JobsToTransferForUser) {
+    typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> AQAlgos;
+    AQAlgos aqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+    AQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
+    auto jobs = aqAlgos.popNextBatch(mountInfo.tapePool, popCriteria, logContext);
+    // We can construct the return value.
+    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
+    for (auto & j: jobs.elements) {
+      std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), m_oStoreDB));
+      aj->tapeFile.copyNb = j.copyNb;
+      aj->archiveFile = j.archiveFile;
+      aj->archiveReportURL = j.archiveReportURL;
+      aj->errorReportURL = j.errorReportURL;
+      aj->srcURL = j.srcURL;
+      aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      aj->tapeFile.vid = mountInfo.vid;
+      aj->tapeFile.blockId =
+          std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
+      aj->m_jobOwned = true;
+      aj->m_mountId = mountInfo.mountId;
+      aj->m_tapePool = mountInfo.tapePool;
+      ret.emplace_back(std::move(aj));
+    }
+    return ret;
+  } else {
+    typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForRepack> AQAlgos;
+    AQAlgos aqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+    AQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
+    auto jobs = aqAlgos.popNextBatch(mountInfo.tapePool, popCriteria, logContext);
+    // We can construct the return value.
+    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
+    for (auto & j: jobs.elements) {
+      std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), m_oStoreDB));
+      aj->tapeFile.copyNb = j.copyNb;
+      aj->archiveFile = j.archiveFile;
+      aj->archiveReportURL = j.archiveReportURL;
+      aj->errorReportURL = j.errorReportURL;
+      aj->srcURL = j.srcURL;
+      aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+      aj->tapeFile.vid = mountInfo.vid;
+      aj->tapeFile.blockId =
+          std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
+      aj->m_jobOwned = true;
+      aj->m_mountId = mountInfo.mountId;
+      aj->m_tapePool = mountInfo.tapePool;
+      ret.emplace_back(std::move(aj));
+    }
+    return ret;
   }
-  return ret;
 }
 
 //------------------------------------------------------------------------------

@@ -764,9 +764,9 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
     if (em.driveName!=driveName) {
       try {
-        existingMountsSummary.at(tpType(em.tapePool, em.type))++;
+        existingMountsSummary.at(tpType(em.tapePool, common::dataStructures::getMountBasicType(em.type)))++;
       } catch (std::out_of_range &) {
-        existingMountsSummary[tpType(em.tapePool, em.type)] = 1;
+        existingMountsSummary[tpType(em.tapePool, common::dataStructures::getMountBasicType(em.type))] = 1;
       }
       if (em.vid.size()) {
         tapesInUse.insert(em.vid);
@@ -787,7 +787,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     // Get summary data
     uint32_t existingMounts;
     try {
-      existingMounts = existingMountsSummary.at(tpType(m->tapePool, m->type));
+      existingMounts = existingMountsSummary.at(tpType(m->tapePool, common::dataStructures::getMountBasicType(m->type)));
     } catch (std::out_of_range &) {
       existingMounts = 0;
     } 
@@ -899,7 +899,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
   // We can now simply iterate on the candidates until we manage to find a valid mount
   for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {
     // If the mount is an archive, we still have to find a tape.
-    if (m->type==common::dataStructures::MountType::ArchiveForUser) {
+    if (common::dataStructures::getMountBasicType(m->type)==common::dataStructures::MountType::ArchiveAllTypes) {
       // We need to find a tape for archiving. It should be both in the right 
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
@@ -912,7 +912,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
           catalogueTime = getTapeInfoTime + getTapeForWriteTime;
           uint32_t existingMounts = 0;
           try {
-            existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
+            existingMounts=existingMountsSummary.at(tpType(m->tapePool, common::dataStructures::getMountBasicType(m->type)));
           } catch (...) {}
           log::ScopedParamContainer params(lc);
           params.add("tapePool", m->tapePool)
@@ -1033,7 +1033,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   // mount for one of them
   for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {
     // If the mount is an archive, we still have to find a tape.
-    if (m->type==common::dataStructures::MountType::ArchiveForUser) {
+    if (common::dataStructures::getMountBasicType(m->type)==common::dataStructures::MountType::ArchiveAllTypes) {
       // We need to find a tape for archiving. It should be both in the right 
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
@@ -1046,7 +1046,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
           // Get the db side of the session
           try {
             decisionTime += timer.secs(utils::Timer::resetCounter);
-            internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t,
+            internalRet->m_dbMount.reset(mountInfo->createArchiveMount(m->type, t,
                 driveName, 
                 logicalLibraryName, 
                 utils::getShortHostname(),

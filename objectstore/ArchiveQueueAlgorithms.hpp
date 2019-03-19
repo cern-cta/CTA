@@ -480,6 +480,18 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElemen
 };
 
 template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>::PopCriteria: 
+  public ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria {
+  using ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria::PopCriteria;
+};
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>::PoppedElementsSummary: 
+  public ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElementsSummary {
+  using ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElementsSummary::PoppedElementsSummary;
+};
+
+template<>
 struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::QueueType {
     objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForUser;
 };

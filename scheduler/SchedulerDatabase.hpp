@@ -591,6 +591,7 @@ public:
      * lock.
      */
     virtual std::unique_ptr<ArchiveMount> createArchiveMount(
+      common::dataStructures::MountType mountType,
       const catalogue::TapeForWriting & tape, const std::string driveName, 
       const std::string & logicalLibrary, const std::string & hostName,
       const std::string& vo, const std::string& mediaType,
