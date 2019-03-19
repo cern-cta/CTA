@@ -1686,7 +1686,7 @@ TEST_P(SchedulerTest, expandRepackRequestFailedRetrieve) {
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
   
-    
+
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
 #else
@@ -1825,7 +1825,7 @@ TEST_P(SchedulerTest, expandRepackRequestFailedRetrieve) {
       it++;
     }
     std::unique_ptr<cta::RetrieveJob> failedJobUniqPtr = std::move(*(executedJobs.begin()));
-    rrp.reportFailedJob(std::move(failedJobUniqPtr),cta::exception::Exception("FailedJob"));
+    rrp.reportFailedJob(std::move(failedJobUniqPtr),cta::exception::Exception("FailedJob expandRepackRequestFailedRetrieve"));
    
     rrp.setDiskDone();
     rrp.setTapeDone();
@@ -1860,7 +1860,7 @@ TEST_P(SchedulerTest, expandRepackRequestFailedRetrieve) {
 
         rrp.startThreads();
         
-        rrp.reportFailedJob(std::move(retrieveJob),cta::exception::Exception("FailedJob"));
+        rrp.reportFailedJob(std::move(retrieveJob),cta::exception::Exception("FailedJob for unit test expandRepackRequestFailedRetrieve"));
         
         rrp.setDiskDone();
         rrp.setTapeDone();
@@ -1878,7 +1878,7 @@ TEST_P(SchedulerTest, expandRepackRequestFailedRetrieve) {
         cta::objectstore::ScopedExclusiveLock sel(re);
         re.fetch();
 
-        //Get the retrieveQueueToReportToRepackForSuccess
+        //Get the retrieveQueueToReportToRepackForFailure
         // The queue is named after the repack request: we need to query the repack index
         objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
         ri.fetchNoLock();
@@ -1895,6 +1895,26 @@ TEST_P(SchedulerTest, expandRepackRequestFailedRetrieve) {
           ASSERT_EQ(1,job.copyNb);
           ASSERT_EQ(archiveFileSize,job.size);
         }
+      }
+      
+      {
+        Scheduler::RepackReportBatch reports = scheduler.getNextRepackReportBatch(lc);
+        reports.report(lc);
+        reports = scheduler.getNextRepackReportBatch(lc);
+        reports.report(lc);
+      }
+      {
+        //After the reporting, the RetrieveQueueToReportToRepackForFailure should not exist anymore.
+        cta::objectstore::RootEntry re(backend);
+        cta::objectstore::ScopedExclusiveLock sel(re);
+        re.fetch();
+
+        //Get the retrieveQueueToReportToRepackForFailure
+        // The queue is named after the repack request: we need to query the repack index
+        objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
+        ri.fetchNoLock();
+        
+        ASSERT_THROW(re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),cta::objectstore::JobQueueType::JobsToReportToRepackForFailure),cta::exception::Exception);
       }
     }
   }

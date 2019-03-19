@@ -434,6 +434,16 @@ public:
     SubrequestInfo::List m_subrequestList;
   };
   
+  class RepackRetrieveFailureReportBatch: public RepackReportBatch{
+    friend class OStoreDB;
+    RepackRetrieveFailureReportBatch(objectstore::Backend& backend, OStoreDB &oStoreDb):RepackReportBatch(backend,oStoreDb){}
+  public:
+    void report(log::LogContext& lc) override;
+  private:
+    typedef RepackReportBatch::SubrequestInfo<objectstore::RetrieveRequest> SubrequestInfo;
+    SubrequestInfo::List m_subrequestList;
+  };
+  
   class RepackArchiveSuccessesReportBatch: public RepackReportBatch {
     friend class OStoreDB;
     RepackArchiveSuccessesReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):
@@ -450,6 +460,7 @@ private:
   CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
   const size_t c_repackReportBatchSize = 500;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc);
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);
 public:
 

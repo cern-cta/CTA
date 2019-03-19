@@ -251,7 +251,7 @@ void RepackRequest::reportRetriveSuccesses(SubrequestStatistics::List& retrieveS
   }
   if (didUpdate) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
 }
 
@@ -279,7 +279,7 @@ void RepackRequest::reportRetriveFailures(SubrequestStatistics::List& retrieveFa
   }
   if (didUpdate) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
 }
 
@@ -307,7 +307,7 @@ void RepackRequest::reportArchiveSuccesses(SubrequestStatistics::List& archiveSu
   }
   if (didUpdate) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
 }
 
@@ -330,12 +330,12 @@ void RepackRequest::reportArchiveFailures(SubrequestStatistics::List& archiveFai
         didUpdate = true;
       }
     } catch (std::out_of_range &) {
-      throw exception::Exception("In RepackRequest::reportRetriveFailures(): got a report for unknown fSeq");
+      throw exception::Exception("In RepackRequest::reportArchiveFailures(): got a report for unknown fSeq");
     }
   }
   if (didUpdate) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
 }
 
@@ -361,7 +361,7 @@ void RepackRequest::reportSubRequestsForDeletion(std::list<uint64_t>& fSeqs) {
   }
   if (didUpdate) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.deserialize(*m_payload.mutable_subrequests()->Add());
+    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
 }
 
