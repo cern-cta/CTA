@@ -3860,6 +3860,7 @@ objectstore::ArchiveRequest::RepackInfo OStoreDB::ArchiveJob::getRepackInfoAfter
 // OStoreDB::RepackArchiveSuccessesReportBatch::report()
 //------------------------------------------------------------------------------
 void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
+  //TODO : Do the reporting of RepackArchiveSuccessesReportBatch
   throw 1;
 }
 

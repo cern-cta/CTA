@@ -407,6 +407,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       e->archiveReportURL = u->get()->getArchiveReportURL();
       e->errorReportURL = u->get()->getArchiveErrorReportURL();
       e->srcURL = u->get()->getSrcURL();
+      e->repackInfo = u->get()->getRepackInfo();
       switch(u->get()->getJobStatus()) {
         case serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer:
           e->reportType = SchedulerDatabase::ArchiveJob::ReportType::CompletionReport;

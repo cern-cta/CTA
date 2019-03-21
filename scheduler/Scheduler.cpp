@@ -855,7 +855,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   // list of tapes from the catalogue.
   if (std::count_if(
         mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), 
-        [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == common::dataStructures::MountType::ArchiveForUser; } )) {
+        [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return common::dataStructures::getMountBasicType(m.type) == common::dataStructures::MountType::ArchiveAllTypes; } )) {
     tapeList = m_catalogue.getTapesForWriting(logicalLibraryName);
     getTapeForWriteTime = timer.secs(utils::Timer::resetCounter);
   }

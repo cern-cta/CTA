@@ -560,6 +560,10 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
             retRef.m_archiveReportURL = payload.archivereporturl();
             retRef.m_archiveErrorReportURL = payload.archiveerrorreporturl();
             retRef.m_srcURL = payload.srcurl();
+            retRef.m_repackInfo.fSeq = payload.repack_info().fseq();
+            retRef.m_repackInfo.fileBufferURL = payload.repack_info().file_buffer_url();
+            retRef.m_repackInfo.isRepack = payload.isrepack();
+            retRef.m_repackInfo.repackRequestAddress = payload.repack_info().repack_request_address();
             if (j->failurelogs_size()) {
               retRef.m_latestError = j->failurelogs(j->failurelogs_size()-1);
             }
@@ -624,6 +628,13 @@ const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() {
 //------------------------------------------------------------------------------
 objectstore::serializers::ArchiveJobStatus ArchiveRequest::AsyncJobOwnerUpdater::getJobStatus() {
   return m_jobStatus;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo()
+//------------------------------------------------------------------------------
+ArchiveRequest::RepackInfo ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo(){
+  return m_repackInfo;
 }
 
 //------------------------------------------------------------------------------

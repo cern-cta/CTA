@@ -93,6 +93,15 @@ private:
    */
   EnqueueingNextStep determineNextStep(uint32_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext & lc);
 public:
+  // Repack information
+  struct RepackInfo {
+    bool isRepack = false;
+    uint64_t fSeq = 0;
+    std::string repackRequestAddress;
+    std::string fileBufferURL;
+  };
+  void setRepackInfo(const RepackInfo & repackInfo);
+  RepackInfo getRepackInfo();
   EnqueueingNextStep addTransferFailure(uint32_t copyNumber, uint64_t sessionId, const std::string & failureReason,
       log::LogContext &lc); //< returns next step to take with the job
   EnqueueingNextStep addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string & failureReason,
@@ -113,6 +122,7 @@ public:
     const std::string & getArchiveErrorReportURL();
     const std::string & getLastestError();
     serializers::ArchiveJobStatus getJobStatus();
+    RepackInfo getRepackInfo();
     // TODO: use the more general structure from utils.
     struct TimingsReport {
       double lockFetchTime = 0;
@@ -128,6 +138,7 @@ public:
     std::string m_archiveReportURL;
     std::string m_archiveErrorReportURL;
     serializers::ArchiveJobStatus m_jobStatus;
+    RepackInfo m_repackInfo;
     std::string m_latestError;
     utils::Timer m_timer;
     TimingsReport m_timingReport;
@@ -136,16 +147,6 @@ public:
   // one, the request will do nothing and not fail.
   AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint32_t copyNumber, const std::string & owner, const std::string &previousOwner,
       const cta::optional<serializers::ArchiveJobStatus>& newStatus);
-
-  // Repack information
-  struct RepackInfo {
-    bool isRepack = false;
-    uint64_t fSeq = 0;
-    std::string repackRequestAddress;
-    std::string fileBufferURL;
-  };
-  void setRepackInfo(const RepackInfo & repackInfo);
-  RepackInfo getRepackInfo();
   
   struct RepackInfoSerDeser: public RepackInfo {
     operator RepackInfo() { return RepackInfo(*this); }
