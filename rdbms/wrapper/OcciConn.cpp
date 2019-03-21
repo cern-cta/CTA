@@ -102,7 +102,7 @@ void OcciConn::executeNonQuery(const std::string &sql) {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql) {
+std::unique_ptr<StmtWrapper> OcciConn::createStmt(const std::string &sql) {
   try {
     threading::MutexLocker locker(m_mutex);
 

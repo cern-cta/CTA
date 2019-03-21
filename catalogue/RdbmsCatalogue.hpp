@@ -94,9 +94,8 @@ public:
    *
    * @param vid The volume identifier of the tape.
    * @param drive The name of tape drive that was used to label the tape.
-   * @param lbpIsOn Set to true if Logical Block Protection (LBP) was enabled.
    */
-  void tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) override;
+  void tapeLabelled(const std::string &vid, const std::string &drive) override;
 
   /**
    * Checks the specified archival could take place and returns a new and

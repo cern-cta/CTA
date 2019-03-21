@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/threading/Mutex.hpp"
-#include "rdbms/wrapper/Stmt.hpp"
+#include "rdbms/wrapper/StmtWrapper.hpp"
 
 #include <memory>
 #include <occi.h>
@@ -46,7 +46,7 @@ class OcciColumn;
 /**
  * A convenience wrapper around an OCCI prepared statement.
  */
-class OcciStmt: public Stmt {
+class OcciStmt: public StmtWrapper {
 public:
 
   /**
@@ -126,7 +126,7 @@ public:
    *
    * @return The result set.
    */
-  std::unique_ptr<Rset> executeQuery() override;
+  std::unique_ptr<RsetWrapper> executeQuery() override;
 
   /**
    * Executes the statement.

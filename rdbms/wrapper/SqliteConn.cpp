@@ -129,7 +129,7 @@ void SqliteConn::executeNonQuery(const std::string &sql) {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql) {
+std::unique_ptr<StmtWrapper> SqliteConn::createStmt(const std::string &sql) {
   try {
     threading::MutexLocker locker(m_mutex);
 

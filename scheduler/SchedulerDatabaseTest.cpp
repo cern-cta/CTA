@@ -174,8 +174,6 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
       ar.diskFileInfo.owner = "user";
       ar.diskFileInfo.group = "group";
-      // Attempt to create a no valid UTF8 string.
-      ar.diskFileInfo.recoveryBlob = std::string("recoveryBlob") + "\xc3\xb1";
       ar.fileSize = 1000;
       ar.requester = { "user", "group" };
       ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
@@ -256,8 +254,6 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
       ar.diskFileInfo.owner = "user";
       ar.diskFileInfo.group = "group";
-      // Attempt to create a no valid UTF8 string.
-      ar.diskFileInfo.recoveryBlob = std::string("recoveryBlob") + "\xc3\xb1";
       ar.fileSize = 1000;
       ar.requester = { "user", "group" };
       ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;

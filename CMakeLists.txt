@@ -72,14 +72,6 @@ endif (NOT DEFINED SKIP_UNIT_TESTS)
 #Load version information in all cases.
 include(cmake/CTAVersions.cmake)
 
-if (DEFINED NoACS)
-  message (STATUS "Running CMake without support for ACS")
-  set (use_manually_specified_variable ${NoACS})
-else (DEFINED NoACS)
-  message (STATUS "Running CMake with support for ACS")
-  message (STATUS "Override with -DNoACS:Bool=true")
-endif (DEFINED NoACS)
-
 IF(DEFINED PackageOnly)
   message (STATUS "Running CMake in package-only mode")
    set(COMPILE_PACKAGING "1") 

@@ -19,7 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include "rdbms/Stmt.hpp"
 #include "rdbms/StmtPool.hpp"
-#include "rdbms/wrapper/Stmt.hpp"
+#include "rdbms/wrapper/StmtWrapper.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -34,7 +34,7 @@ Stmt::Stmt():
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-Stmt::Stmt(std::unique_ptr<wrapper::Stmt> stmt, StmtPool &stmtPool):
+Stmt::Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool &stmtPool):
   m_stmt(std::move(stmt)),
   m_stmtPool(&stmtPool) {
 }
@@ -208,7 +208,7 @@ uint64_t Stmt::getNbAffectedRows() const {
 //-----------------------------------------------------------------------------
 // getStmt
 //-----------------------------------------------------------------------------
-wrapper::Stmt &Stmt::getStmt() {
+wrapper::StmtWrapper &Stmt::getStmt() {
   if(nullptr != m_stmt) {
     return *m_stmt;
   } else {

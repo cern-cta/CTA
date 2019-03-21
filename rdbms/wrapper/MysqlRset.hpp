@@ -19,7 +19,7 @@
 #pragma once
 
 #include "rdbms/wrapper/ColumnNameToIdxAndType.hpp"
-#include "rdbms/wrapper/Rset.hpp"
+#include "rdbms/wrapper/RsetWrapper.hpp"
 
 #include <memory>
 #include <stdint.h>
@@ -38,7 +38,7 @@ class MysqlStmt;
 /**
  * The result set of an sql query.
  */
-class MysqlRset: public Rset {
+class MysqlRset: public RsetWrapper {
 public:
 
   /**

@@ -260,7 +260,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   creationLog.time=0;
   creationLog.username="admin1";
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob="blob";
   diskFileInfo.group="group2";
   diskFileInfo.owner="cms_user";
   diskFileInfo.path="path/to/file";
@@ -322,7 +321,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 //  creationLog.time=0;
 //  creationLog.username="admin1";
 //  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-//  diskFileInfo.recoveryBlob="blob";
 //  diskFileInfo.group="group2";
 //  diskFileInfo.owner="cms_user";
 //  diskFileInfo.path="path/to/file";
@@ -397,7 +395,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -449,10 +446,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
-  const bool lbpIsOn = true;
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
+  catalogue.tapeLabelled(s_vid, "tape_drive");
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -508,7 +504,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -599,7 +594,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -651,10 +645,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
-  const bool lbpIsOn = true;
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
+  catalogue.tapeLabelled(s_vid, "tape_drive");
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -710,7 +703,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -852,7 +844,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -904,10 +895,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, "mediatype", "vendor", s_libraryName, s_tapePoolName,
     capacityInBytes, notDisabled, notFull, tapeComment);
 
-  const bool lbpIsOn = true;
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
+  catalogue.tapeLabelled(s_vid, "tape_drive");
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -963,7 +953,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -1111,7 +1100,6 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -1151,8 +1139,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
-  const bool lbpIsOn = true;
-  catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
+  catalogue.tapeLabelled(s_vid, "tape_drive");
 
   {
     // Emulate a tape server by asking for a mount and then a file
@@ -1195,7 +1182,6 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -1228,7 +1214,6 @@ TEST_P(SchedulerTest, showqueues) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.recoveryBlob="blob";
     diskFileInfo.group="group2";
     diskFileInfo.owner="cms_user";
     diskFileInfo.path="path/to/file";
@@ -1373,7 +1358,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   admin.host = "admin_host";
   const std::string diskFileUser = "public_disk_user";
   const std::string diskFileGroup = "public_disk_group";
-  const std::string diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   
   //Create a logical library in the catalogue
   catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
@@ -1426,7 +1410,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         fileWritten.diskFilePath = diskFilePath.str();
         fileWritten.diskFileUser = diskFileUser;
         fileWritten.diskFileGroup = diskFileGroup;
-        fileWritten.diskFileRecoveryBlob = diskFileRecoveryBlob;
         fileWritten.size = archiveFileSize;
         fileWritten.checksumType = checksumType;
         fileWritten.checksumValue = checksumValue;
@@ -1656,7 +1639,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ASSERT_EQ(archiveFile.diskFileInfo.path,diskFilePath.str());
         ASSERT_EQ(archiveFile.diskFileInfo.group,diskFileGroup);
         ASSERT_EQ(archiveFile.diskFileInfo.owner,diskFileUser);
-        ASSERT_EQ(archiveFile.diskFileInfo.recoveryBlob,diskFileRecoveryBlob);
         ASSERT_EQ(archiveFile.fileSize,archiveFileSize);
         ASSERT_EQ(archiveFile.storageClass,s_storageClassName);
         std::stringstream ss;
@@ -1711,7 +1693,6 @@ TEST_P(SchedulerTest, expandRepackRequestFailedRetrieve) {
   admin.host = "admin_host";
   const std::string diskFileUser = "public_disk_user";
   const std::string diskFileGroup = "public_disk_group";
-  const std::string diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   
   //Create a logical library in the catalogue
   catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
@@ -1754,7 +1735,6 @@ TEST_P(SchedulerTest, expandRepackRequestFailedRetrieve) {
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileUser = diskFileUser;
       fileWritten.diskFileGroup = diskFileGroup;
-      fileWritten.diskFileRecoveryBlob = diskFileRecoveryBlob;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -1954,7 +1934,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   admin.host = "admin_host";
   const std::string diskFileUser = "public_disk_user";
   const std::string diskFileGroup = "public_disk_group";
-  const std::string diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
   
   //Create a logical library in the catalogue
   catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
@@ -1997,7 +1976,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileUser = diskFileUser;
       fileWritten.diskFileGroup = diskFileGroup;
-      fileWritten.diskFileRecoveryBlob = diskFileRecoveryBlob;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;

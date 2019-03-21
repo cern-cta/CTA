@@ -64,8 +64,8 @@ public:
    */
   CatalogueRetryWrapper &operator=(const CatalogueRetryWrapper &) = delete;
 
-  void tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeLabelled(vid, drive, lbpIsOn);}, m_maxTriesToConnect);
+  void tapeLabelled(const std::string &vid, const std::string &drive) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeLabelled(vid, drive);}, m_maxTriesToConnect);
   }
 
   uint64_t checkAndGetNextArchiveFileId(const std::string &diskInstanceName, const std::string &storageClassName, const common::dataStructures::UserIdentity &user) override {

@@ -218,7 +218,7 @@ void ArchiveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFi
   m_payload.mutable_diskfileinfo()->set_group(archiveFile.diskFileInfo.group);
   m_payload.mutable_diskfileinfo()->set_owner(archiveFile.diskFileInfo.owner);
   m_payload.mutable_diskfileinfo()->set_path(archiveFile.diskFileInfo.path);
-  m_payload.mutable_diskfileinfo()->set_recoveryblob(archiveFile.diskFileInfo.recoveryBlob);
+  m_payload.mutable_diskfileinfo()->set_recoveryblob("");
   m_payload.set_diskinstance(archiveFile.diskInstance);
   m_payload.set_filesize(archiveFile.fileSize);
   m_payload.set_reconcilationtime(archiveFile.reconciliationTime);
@@ -239,7 +239,6 @@ cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
   ret.diskFileInfo.group = m_payload.diskfileinfo().group();
   ret.diskFileInfo.owner = m_payload.diskfileinfo().owner();
   ret.diskFileInfo.path = m_payload.diskfileinfo().path();
-  ret.diskFileInfo.recoveryBlob = m_payload.diskfileinfo().recoveryblob();
   ret.diskInstance = m_payload.diskinstance();
   ret.fileSize = m_payload.filesize();
   ret.reconciliationTime = m_payload.reconcilationtime();
@@ -552,7 +551,6 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
             retRef.m_archiveFile.diskFileInfo.group = payload.diskfileinfo().group();
             retRef.m_archiveFile.diskFileInfo.owner = payload.diskfileinfo().owner();
             retRef.m_archiveFile.diskFileInfo.path = payload.diskfileinfo().path();
-            retRef.m_archiveFile.diskFileInfo.recoveryBlob = payload.diskfileinfo().recoveryblob();
             retRef.m_archiveFile.diskInstance = payload.diskinstance();
             retRef.m_archiveFile.fileSize = payload.filesize();
             retRef.m_archiveFile.reconciliationTime = payload.reconcilationtime();

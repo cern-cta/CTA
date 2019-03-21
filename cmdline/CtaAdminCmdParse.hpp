@@ -253,7 +253,6 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--encrypted",             OptionBoolean::ENCRYPTED },
    { "--force",                 OptionBoolean::FORCE },
    { "--full",                  OptionBoolean::FULL },
-   { "--lbp",                   OptionBoolean::LBP },
 
    // hasOption options
    { "--checkchecksum",         OptionBoolean::CHECK_CHECKSUM },

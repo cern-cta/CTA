@@ -41,7 +41,7 @@ OcciStmt::OcciStmt(
   const std::string &sql,
   OcciConn &conn,
   oracle::occi::Statement *const stmt) :
-  Stmt(sql),
+  StmtWrapper(sql),
   m_conn(conn),
   m_stmt(stmt) {
 }
@@ -154,7 +154,7 @@ void OcciStmt::bindOptionalString(const std::string &paramName, const optional<s
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> OcciStmt::executeQuery() {
+std::unique_ptr<RsetWrapper> OcciStmt::executeQuery() {
   using namespace oracle;
 
   const auto autocommitMode = m_conn.getAutocommitMode();

@@ -30,7 +30,7 @@ namespace cta {
 namespace rdbms {
 
 namespace wrapper {
-  class Stmt;
+  class StmtWrapper;
 }
 
 class StmtPool;
@@ -54,7 +54,7 @@ public:
    * @param stmt The database statement.
    * @param stmtPool The database statement pool to which the m_stmt should be returned.
    */
-  Stmt(std::unique_ptr<wrapper::Stmt> stmt, StmtPool &stmtPool);
+  Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool &stmtPool);
 
   /**
    * Deletion of the copy constructor.
@@ -183,14 +183,14 @@ public:
    * Returns a reference to the underlying statement object that is not pool
    * aware.
    */
-  wrapper::Stmt &getStmt();
+  wrapper::StmtWrapper &getStmt();
 
 private:
 
   /**
    * The database statement.
    */
-  std::unique_ptr<wrapper::Stmt> m_stmt;
+  std::unique_ptr<wrapper::StmtWrapper> m_stmt;
 
   /**
    * The database statement pool to which the m_stmt should be returned.

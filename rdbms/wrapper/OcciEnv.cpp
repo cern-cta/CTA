@@ -49,7 +49,7 @@ OcciEnv::~OcciEnv() {
 //------------------------------------------------------------------------------
 // createConn
 //------------------------------------------------------------------------------
-std::unique_ptr<Conn> OcciEnv::createConn(
+std::unique_ptr<ConnWrapper> OcciEnv::createConn(
   const std::string &username,
   const std::string &password,
   const std::string &database) {

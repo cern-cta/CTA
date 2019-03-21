@@ -34,13 +34,11 @@ class DiskFileInfoSerDeser: public cta::common::dataStructures::DiskFileInfo {
 public:
   DiskFileInfoSerDeser (): cta::common::dataStructures::DiskFileInfo() {}
   DiskFileInfoSerDeser (const cta::common::dataStructures::DiskFileInfo & dfi): cta::common::dataStructures::DiskFileInfo(dfi) {}
-  DiskFileInfoSerDeser (const std::string & path, const std::string & owner, 
-  const std::string & group, const std::string &recoveryBlob): 
+  DiskFileInfoSerDeser (const std::string & path, const std::string & owner, const std::string & group): 
     cta::common::dataStructures::DiskFileInfo() {
     this->path=path;
     this->owner=owner;
     this->group=group;
-    this->recoveryBlob=recoveryBlob;
   }
   operator cta::common::dataStructures::DiskFileInfo() {
     return cta::common::dataStructures::DiskFileInfo(*this);
@@ -49,13 +47,12 @@ public:
     osdfi.set_path(path);
     osdfi.set_owner(owner);
     osdfi.set_group(group);
-    osdfi.set_recoveryblob(recoveryBlob);
+    osdfi.set_recoveryblob("");
   }
   void deserialize (const cta::objectstore::serializers::DiskFileInfo & osdfi) {
     path=osdfi.path();
     owner=osdfi.owner();
     group=osdfi.group();
-    recoveryBlob=osdfi.recoveryblob();
   }
 };
   

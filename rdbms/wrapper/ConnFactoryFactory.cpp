@@ -22,6 +22,7 @@
 #include "rdbms/wrapper/OcciConnFactory.hpp"
 #include "rdbms/wrapper/SqliteConnFactory.hpp"
 #include "rdbms/wrapper/MysqlConnFactory.hpp"
+#include "rdbms/wrapper/PostgresConnFactory.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -41,6 +42,8 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
       return cta::make_unique<SqliteConnFactory>(login.database);
     case Login::DBTYPE_MYSQL:
       return cta::make_unique<MysqlConnFactory>(login.hostname, login.username, login.password, login.database, login.port);
+    case Login::DBTYPE_POSTGRESQL:
+      return cta::make_unique<PostgresConnFactory>(login.database);
     case Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

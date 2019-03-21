@@ -259,7 +259,6 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, cons
         "LAST_FSEQ AS LAST_FSEQ,"
         "IS_DISABLED AS IS_DISABLED,"
         "IS_FULL AS IS_FULL,"
-        "LBP_IS_ON AS LBP_IS_ON,"
 
         "LABEL_DRIVE AS LABEL_DRIVE,"
         "LABEL_TIME AS LABEL_TIME,"
@@ -302,7 +301,6 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, cons
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
     tape.disabled = rset.columnBool("IS_DISABLED");
     tape.full = rset.columnBool("IS_FULL");
-    tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
     tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
     tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -430,7 +428,6 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
       row.diskFilePath = event.diskFilePath;
       row.diskFileUser = event.diskFileUser;
       row.diskFileGroup = event.diskFileGroup;
-      row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
       insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error

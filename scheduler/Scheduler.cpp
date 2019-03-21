@@ -157,7 +157,6 @@ void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std:
      .add("diskFilePath", request.diskFileInfo.path)
      .add("diskFileOwner", request.diskFileInfo.owner)
      .add("diskFileGroup", request.diskFileInfo.group)
-     .add("diskFileRecoveryBlob", postEllipsis(request.diskFileInfo.recoveryBlob, 20))
      .add("checksumValue", request.checksumValue)
      .add("checksumType", request.checksumType)
      .add("archiveReportURL", midEllipsis(request.archiveReportURL, 50, 15))
@@ -219,7 +218,6 @@ void Scheduler::queueRetrieve(
      .add("diskFilePath", request.diskFileInfo.path)
      .add("diskFileOwner", request.diskFileInfo.owner)
      .add("diskFileGroup", request.diskFileInfo.group)
-     .add("diskFileRecoveryBlob", postEllipsis(request.diskFileInfo.recoveryBlob, 20))
      .add("dstURL", request.dstURL)
      .add("errorReportURL", request.errorReportURL)
      .add("creationHost", request.creationLog.host)
@@ -234,7 +232,6 @@ void Scheduler::queueRetrieve(
      .add("criteriaDiskFileId", queueCriteria.archiveFile.diskFileId)
      .add("criteriaDiskFilePath", queueCriteria.archiveFile.diskFileInfo.path)
      .add("criteriaDiskFileOwner", queueCriteria.archiveFile.diskFileInfo.owner)
-     .add("criteriaDiskRecoveryBlob", postEllipsis(queueCriteria.archiveFile.diskFileInfo.recoveryBlob, 20))
      .add("criteriaDiskInstance", queueCriteria.archiveFile.diskInstance)
      .add("criteriaFileSize", queueCriteria.archiveFile.fileSize)
      .add("reconciliationTime", queueCriteria.archiveFile.reconciliationTime)
@@ -314,7 +311,7 @@ std::list<common::dataStructures::StorageClass> Scheduler::listStorageClass(cons
 //------------------------------------------------------------------------------
 // labelTape
 //------------------------------------------------------------------------------
-void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp) {
+void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force) {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 

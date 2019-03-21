@@ -60,13 +60,6 @@ struct Tape {
    */
   optional<std::string> encryptionKey;
 
-  /**
-   * Specifies whether or not the tape has Logical Block Protection (LBP)
-   * enabled.  This value is not set until the tape is either labelled or
-   * imported as a tape containing pre-existing files.
-   */
-  optional<bool> lbp;
-
   bool full;
   bool disabled;
   EntryLog creationLog;

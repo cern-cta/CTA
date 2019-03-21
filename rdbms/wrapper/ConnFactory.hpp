@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <memory>
 
@@ -42,7 +42,7 @@ public:
    *
    * @return A newly created database connection.
    */
-  virtual std::unique_ptr<Conn> create() = 0;
+  virtual std::unique_ptr<ConnWrapper> create() = 0;
 
 }; // class ConnFactory
 

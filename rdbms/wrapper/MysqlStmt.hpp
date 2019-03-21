@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/threading/Mutex.hpp"
-#include "rdbms/wrapper/Stmt.hpp"
+#include "rdbms/wrapper/StmtWrapper.hpp"
 
 #include <vector>
 #include <map>
@@ -44,7 +44,7 @@ class MysqlRset;
 /**
  * A convenience wrapper around an SQLite prepared statement.
  */
-class MysqlStmt: public Stmt {
+class MysqlStmt: public StmtWrapper {
 public:
 
   /**
@@ -129,7 +129,7 @@ public:
    *
    * @return The result set.
    */
-  std::unique_ptr<Rset> executeQuery() override;
+  std::unique_ptr<RsetWrapper> executeQuery() override;
 
   /**
    * Executes the statement.

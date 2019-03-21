@@ -20,7 +20,7 @@
 
 #include "common/threading/Mutex.hpp"
 #include "rdbms/wrapper/ColumnNameToIdx.hpp"
-#include "rdbms/wrapper/Rset.hpp"
+#include "rdbms/wrapper/RsetWrapper.hpp"
 
 #include <memory>
 #include <occi.h>
@@ -38,7 +38,7 @@ class OcciStmt;
 /**
  * A convenience wrapper around an OCCI result set.
  */
-class OcciRset: public Rset {
+class OcciRset: public RsetWrapper {
 public:
 
   /**

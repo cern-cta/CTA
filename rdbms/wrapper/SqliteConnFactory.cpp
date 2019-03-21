@@ -41,7 +41,7 @@ SqliteConnFactory::~SqliteConnFactory() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::unique_ptr<Conn> SqliteConnFactory::create() {
+std::unique_ptr<ConnWrapper> SqliteConnFactory::create() {
   try {
     return cta::make_unique<SqliteConn>(m_filename);
   } catch(exception::Exception &ex) {

@@ -15,10 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
-if (NOT DEFINED NoACS)
-  add_subdirectory(acs)
-endif (NOT DEFINED NoACS)
-
 add_subdirectory(reactor)
 add_subdirectory(castorrmc)
 find_package(openssl REQUIRED)

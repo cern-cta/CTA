@@ -43,7 +43,6 @@ struct DiskFileInfo {
   std::string path;
   std::string owner;
   std::string group;
-  std::string recoveryBlob;
 
 }; // struct DiskFileInfo
 

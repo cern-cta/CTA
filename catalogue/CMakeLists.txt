@@ -38,6 +38,7 @@ set (CATALOGUE_LIB_SRC_FILES
   MysqlCatalogueSchema.cpp
   OracleCatalogue.cpp
   OracleCatalogueFactory.cpp
+  PostgresCatalogue.cpp
   PostgresqlCatalogueFactory.cpp
   SqliteCatalogueSchema.cpp
   TapeFileWritten.cpp
@@ -78,7 +79,7 @@ target_link_libraries (ctacatalogue
   ctacommon
   ctardbms)
 
-add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sql oracle_catalogue_schema.sql
+add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sql oracle_catalogue_schema.sql postgres_catalogue_schema.sql
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
@@ -96,12 +97,19 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql
     | sed 's/VARCHAR/VARCHAR2/g'
     > oracle_catalogue_schema.sql
+  COMMAND cat
+    ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_header.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_trailer.sql
+    > postgres_catalogue_schema.sql
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trailer.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_header.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql)
 
@@ -126,6 +134,15 @@ add_custom_command(OUTPUT mysql_catalogue_schema_trigger.cpp
 add_custom_command(OUTPUT MysqlCatalogueSchema.cpp
   COMMAND sed -e '/CTA_SQL_SCHEMA/r mysql_catalogue_schema.cpp' -e '/CTA_SQL_TRIGGER/r mysql_catalogue_schema_trigger.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp > MysqlCatalogueSchema.cpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp mysql_catalogue_schema.cpp mysql_catalogue_schema_trigger.cpp)
+
+# For Postgres
+add_custom_command(OUTPUT postgres_catalogue_schema.cpp
+  COMMAND sed 's/^/\ \ \"/' postgres_catalogue_schema.sql | sed 's/$$/\"/' > postgres_catalogue_schema.cpp
+  DEPENDS postgres_catalogue_schema.sql)
+
+add_custom_command(OUTPUT PostgresCatalogueSchema.cpp
+  COMMAND sed -e '/CTA_SQL_SCHEMA/r postgres_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp > PostgresCatalogueSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp postgres_catalogue_schema.cpp)
 
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
@@ -175,6 +192,7 @@ add_executable(cta-catalogue-schema-create
   CreateSchemaCmdMain.cpp
   OracleCatalogueSchema.cpp
   SqliteCatalogueSchema.cpp
+  PostgresCatalogueSchema.cpp
   MysqlCatalogueSchema.cpp)
 
 target_link_libraries (cta-catalogue-schema-create

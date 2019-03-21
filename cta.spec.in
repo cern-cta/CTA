@@ -55,6 +55,7 @@ BuildRequires: json-c-devel >= 0.11
 BuildRequires: libattr-devel >= 2.4.44
 BuildRequires: oracle-instantclient12.2-devel
 BuildRequires: mariadb-devel
+BuildRequires: postgresql-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
 %{?systemd_requires}
@@ -228,6 +229,7 @@ Group: Application/CTA
 Requires: oracle-instantclient12.2-basic
 Requires: librados2 = %{radosVersion}
 Requires: mariadb-libs
+Requires: postgresql-libs
 Requires: zeromq
 %description -n cta-lib
 CERN Tape Archive:
@@ -287,7 +289,6 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libctatapeserverscsiunittests.so*
 %{_libdir}/libctadaemonunittests.so*
 %{_libdir}/libctamediachangerunittests.so*
-%{_libdir}/libctamediachangeracsdaemonunittests.so*
 %{_bindir}/cta-systemTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
@@ -342,34 +343,6 @@ Utilities to faciliate working with the mediachangers
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-mediachanger-dismount.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-mediachanger-mount.1cta.gz
 
-%package -n cta-acsd
-Summary: Tools to faciliate working with acsd in cta
-Group: Application/CTA
-Requires: logrotate
-Requires: cta-common = %{version}-%{release}
-Requires: cta-lib = %{version}-%{release}
-%description -n cta-acsd
-CERN Tape Archive:
-Tools to faciliate working with acsd in cta
-%files -n cta-acsd
-%defattr(-,root,root)
-%attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-acsd
-#%attr(0644,root,root) %doc /usr/share/man/man1/cta-acsd.1cta.gz
-%attr(0755,root,root) %{_bindir}/cta-acsd
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-acsd.conf
-%attr(0644,root,root) /etc/systemd/system/cta-acsd.service
-
-%post -n cta-acsd
-%systemd_post cta-acsd.service
-%systemdDaemonReload
-
-%preun -n cta-acsd
-%systemd_preun cta-acsd.service
-
-%postun -n cta-acsd
-%systemd_postun cta-acsd.service
-%systemdDaemonReload
-
 %package -n cta-rmcd
 Summary: Tools to faciliate working with rmcd and smc in cta
 Group: Application/CTA
@@ -400,25 +373,6 @@ Tools to faciliate working with rmcd and smc in cta
 %postun -n cta-rmcd
 %systemd_postun cta-rmcd.service
 %systemdDaemonReload
-
-%package -n cta-tape-developer-acs-tools
-Summary: Cern Advanced mass STORage
-Group: Application/Castor
-Requires: stk-ssi-lib
-BuildRequires: stk-ssi-devel
-%description -n cta-tape-developer-acs-tools
-castor (Cern Advanced STORage system)
- ASC tools for CASTOR tape developers
-%files -n cta-tape-developer-acs-tools
-%defattr(-,root,root)
-%attr(0755,root,root) /usr/bin/cta-acs-queryvolume
-%attr(0755,root,root) /usr/bin/cta-acs-dismount
-%attr(0755,root,root) /usr/bin/cta-acs-mount
-%attr(0755,root,root) /usr/bin/cta-acs-querydrive
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-acs-queryvolume.1cta.gz
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-acs-mount.1cta.gz
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-acs-dismount.1cta.gz
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-acs-querydrive.1cta.gz
 
 %package -n cta-common
 Summary: CERN Tape Archive common items

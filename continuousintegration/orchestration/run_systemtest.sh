@@ -27,7 +27,7 @@ SYSTEMTEST_TIMEOUT=3600
 die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-e <eos_configmap>] [-k] [-O] [-D] [-S]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-e <eos_configmap>] [-a <additional_k8_resources>] [-k] [-O] [-D | -d <database_configmap>] [-S]
 
 Options:
   -b    The directory containing both the source and the build tree for CTA. It will be mounted RO in the
@@ -36,7 +36,8 @@ Options:
   -k    keep namespace after systemtest_script run if successful
   -O    use Ceph account associated to this node (wipe content before tests), by default use local VFS
   -D    use Oracle account associated to this node (wipe content before tests), by default use local sqlite DB
-  -S    Use systemd to manage services inside containers 
+  -S    Use systemd to manage services inside containers
+  -a    additional kubernetes resources added to the kubernetes namespace
 
 
 Create a kubernetes instance and launch the system test script specified.
@@ -50,7 +51,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:s:p:b:e:B:t:kDOS" o; do
+while getopts "n:d:s:p:b:e:a:B:t:kDOS" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -58,6 +59,9 @@ while getopts "n:s:p:b:e:B:t:kDOS" o; do
             ;;
         n)
             namespace=${OPTARG}
+            ;;
+        d)
+            CREATE_OPTS="${CREATE_OPTS} -d ${OPTARG}"
             ;;
         p)
             CREATE_OPTS="${CREATE_OPTS} -p ${OPTARG}"
@@ -68,6 +72,9 @@ while getopts "n:s:p:b:e:B:t:kDOS" o; do
         e)
             config_eos=${OPTARG}
             test -f ${config_eos} || error="${error}EOS configmap file ${config_eos} does not exist\n"
+            ;;
+        a)
+            CREATE_OPTS="${CREATE_OPTS} -a ${OPTARG}"
             ;;
         B)
             CREATE_OPTS="${CREATE_OPTS} -B ${OPTARG}"

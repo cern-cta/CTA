@@ -85,7 +85,6 @@ namespace unitTests {
       fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
       fileReport.diskFileGroup = archiveFile.diskFileInfo.group;
       fileReport.diskFilePath = archiveFile.diskFileInfo.path;
-      fileReport.diskFileRecoveryBlob = archiveFile.diskFileInfo.recoveryBlob;
       fileReport.diskInstance = archiveFile.diskInstance;
       fileReport.fSeq = tapeFile.fSeq;
       fileReport.size = archiveFile.fileSize;
@@ -151,7 +150,6 @@ namespace unitTests {
     job1->archiveFile.diskFileInfo.path="filePath1";
     job1->archiveFile.diskFileInfo.owner="testUser1";
     job1->archiveFile.diskFileInfo.group="testGroup1";
-    job1->archiveFile.diskFileInfo.recoveryBlob="recoveryBlob1";
     job1->archiveFile.fileSize=1024;        
     job1->archiveFile.checksumType="md5";
     job1->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -177,7 +175,6 @@ namespace unitTests {
     job2->archiveFile.diskFileInfo.path="filePath2";
     job2->archiveFile.diskFileInfo.owner="testUser2";
     job2->archiveFile.diskFileInfo.group="testGroup2";
-    job2->archiveFile.diskFileInfo.recoveryBlob="recoveryBlob2";
     job2->archiveFile.fileSize=1024;        
     job2->archiveFile.checksumType="md5";
     job2->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -314,7 +311,6 @@ namespace unitTests {
     migratedBigFile->archiveFile.diskFileInfo.path="filePath2";
     migratedBigFile->archiveFile.diskFileInfo.owner="testUser2";
     migratedBigFile->archiveFile.diskFileInfo.group="testGroup2";
-    migratedBigFile->archiveFile.diskFileInfo.recoveryBlob="recoveryBlob2";
     migratedBigFile->archiveFile.fileSize=100000;        
     migratedBigFile->archiveFile.checksumType="md5";
     migratedBigFile->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -333,7 +329,6 @@ namespace unitTests {
     migratedFileSmall->archiveFile.diskFileInfo.path="filePath3";
     migratedFileSmall->archiveFile.diskFileInfo.owner="testUser2";
     migratedFileSmall->archiveFile.diskFileInfo.group="testGroup2";
-    migratedFileSmall->archiveFile.diskFileInfo.recoveryBlob="recoveryBlob2";
     migratedFileSmall->archiveFile.fileSize=1;        
     migratedFileSmall->archiveFile.checksumType="md5";
     migratedFileSmall->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -352,7 +347,6 @@ namespace unitTests {
     migratedNullFile->archiveFile.diskFileInfo.path="filePath4";
     migratedNullFile->archiveFile.diskFileInfo.owner="testUser2";
     migratedNullFile->archiveFile.diskFileInfo.group="testGroup2";
-    migratedNullFile->archiveFile.diskFileInfo.recoveryBlob="recoveryBlob2";
     migratedNullFile->archiveFile.fileSize=0;        
     migratedNullFile->archiveFile.checksumType="md5";
     migratedNullFile->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";

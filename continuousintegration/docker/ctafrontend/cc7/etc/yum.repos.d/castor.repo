@@ -1,7 +1,6 @@
 [castor]
 name=CASTOR Repositories in LINUXSOFT
 baseurl=http://linuxsoft.cern.ch/internal/repos/castor7-testing/$basearch/os
-protected=1
 priority=2
 enabled=0
 gpgcheck=0

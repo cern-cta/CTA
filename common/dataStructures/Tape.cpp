@@ -43,7 +43,6 @@ bool Tape::operator==(const Tape &rhs) const {
       && capacityInBytes==rhs.capacityInBytes
       && dataOnTapeInBytes==rhs.dataOnTapeInBytes
       && encryptionKey==rhs.encryptionKey
-      && lbp==rhs.lbp
       && full==rhs.full
       && disabled==rhs.disabled
       && creationLog==rhs.creationLog
@@ -72,7 +71,6 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
      << " capacityInBytes=" << obj.capacityInBytes
      << " dataOnTapeInBytes=" << obj.dataOnTapeInBytes
      << " encryptionKey=" << (obj.encryptionKey ? obj.encryptionKey.value() : "null")
-     << " lbp=" << (obj.lbp ? (obj.lbp.value() ? "true" : "false") : "null")
      << " full=" << obj.full
      << " disabled=" << obj.disabled
      << " creationLog=" << obj.creationLog

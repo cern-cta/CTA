@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/threading/Mutex.hpp"
-#include "rdbms/wrapper/Stmt.hpp"
+#include "rdbms/wrapper/StmtWrapper.hpp"
 
 #include <map>
 #include <memory>
@@ -36,7 +36,7 @@ class SqliteRset;
 /**
  * A convenience wrapper around an SQLite prepared statement.
  */
-class SqliteStmt: public Stmt {
+class SqliteStmt: public StmtWrapper {
 public:
 
   /**
@@ -121,7 +121,7 @@ public:
    * @param autocommitMode The autocommit mode of the statement.
    * @return The result set.
    */
-  std::unique_ptr<Rset> executeQuery() override;
+  std::unique_ptr<RsetWrapper> executeQuery() override;
 
   /**
    * Executes the statement.

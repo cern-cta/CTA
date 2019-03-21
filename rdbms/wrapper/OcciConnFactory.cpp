@@ -46,7 +46,7 @@ OcciConnFactory::~OcciConnFactory() {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::unique_ptr<Conn> OcciConnFactory::create() {
+std::unique_ptr<ConnWrapper> OcciConnFactory::create() {
   try {
     return OcciEnvSingleton::instance().createConn(m_username, m_password, m_database);
   } catch(exception::Exception &ex) {

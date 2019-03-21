@@ -43,11 +43,6 @@ target_link_libraries(cta-unitTests
   gtest
   pthread)
 
-if (NOT DEFINED NoACS)
-  target_link_libraries(cta-unitTests
-    ctamediachangeracsdaemonunittests)
-endif (NOT DEFINED NoACS)
-
 set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
   set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})

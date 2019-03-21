@@ -58,12 +58,15 @@ if [ "$KEEP_DATABASE" == "0" ]; then
     mkdir -p $(dirname $(echo ${DATABASEURL} | cut -d: -f2))
     cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
     chmod -R 777 $(dirname $(echo ${DATABASEURL} | cut -d: -f2)) # needed?
-  else
-    # Oracle DB
+  elif [ "$DATABASETYPE" == "oracle" ]; then
     echo "Purging Oracle recycle bin"
     test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
     LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
     cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+  elif [ "$DATABASETYPE" == "postgres" ]; then
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+  else
+    echo "${DATABASETYPE}: Unsupported database type."
   fi
 else
   echo "Reusing database (no check)"

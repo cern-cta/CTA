@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/threading/Mutex.hpp"
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <sqlite3.h>
 
@@ -36,7 +36,7 @@ class SqliteStmt;
 /**
  * A convenience wrapper around a connection to an SQLite database.
  */
-class SqliteConn: public Conn {
+class SqliteConn: public ConnWrapper {
 public:
 
   /**
@@ -91,7 +91,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
+  std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) override;
 
   /**
    * Commits the current transaction.

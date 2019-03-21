@@ -20,7 +20,7 @@
 
 #include "common/threading/MutexLocker.hpp"
 #include "common/threading/RWLock.hpp"
-#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <occi.h>
 
@@ -37,7 +37,7 @@ class OcciStmt;
 /**
  * A convenience wrapper around a connection to an OCCI database.
  */
-class OcciConn: public Conn {
+class OcciConn: public ConnWrapper {
 public:
 
   /**
@@ -90,7 +90,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<Stmt> createStmt(const std::string &sql) override;
+  std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) override;
 
   /**
    * Commits the current transaction.

@@ -1,7 +1,6 @@
 [cta-ci-castor]
 name=CTA CI repo castor cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/castor/
-protected=1
 priority=2
 gpgcheck=0
 enabled=1
@@ -9,7 +8,6 @@ enabled=1
 [cta-ci-ceph]
 name=CTA CI repo ceph cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/ceph/
-protected=1
 priority=3
 gpgcheck=0
 enabled=1
@@ -24,7 +22,6 @@ enabled=1
 [cta-ci-eos]
 name=CTA CI repo eos cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/eos/
-protected=1
 priority=4
 gpgcheck=0
 enabled=1
@@ -32,7 +29,6 @@ enabled=1
 [cta-ci-others]
 name=CTA CI repo any additional needed RPM cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/others/
-protected=1
 priority=4
 gpgcheck=0
 enabled=1
@@ -40,7 +36,6 @@ enabled=1
 [cta-ci-xroot]
 name=CTA CI repo xroot cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/xroot/
-protected=1
 priority=4
 gpgcheck=0
 enabled=1

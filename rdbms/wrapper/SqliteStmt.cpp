@@ -44,7 +44,7 @@ namespace wrapper {
 SqliteStmt::SqliteStmt(
   SqliteConn &conn,
   const std::string &sql):
-  Stmt(sql),
+  StmtWrapper(sql),
   m_conn(conn),
   m_nbAffectedRows(0) {
   m_stmt = nullptr;
@@ -223,7 +223,7 @@ void SqliteStmt::bindOptionalString(const std::string &paramName, const optional
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> SqliteStmt::executeQuery() {
+std::unique_ptr<RsetWrapper> SqliteStmt::executeQuery() {
   threading::MutexLocker connLocker(m_conn.m_mutex);
 
   return cta::make_unique<SqliteRset>(*this);

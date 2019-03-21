@@ -48,7 +48,7 @@ namespace wrapper {
 MysqlStmt::MysqlStmt(
   MysqlConn &conn,
   const std::string &sql):
-  Stmt(sql),
+  StmtWrapper(sql),
   m_conn(conn),
   m_stmt(nullptr), m_param_count(0),
   m_fields_info(nullptr),
@@ -282,7 +282,7 @@ void MysqlStmt::bindOptionalString(const std::string &paramName, const optional<
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> MysqlStmt::executeQuery() {
+std::unique_ptr<RsetWrapper> MysqlStmt::executeQuery() {
   // bind values before execute
   do_bind();
 
