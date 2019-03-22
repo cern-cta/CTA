@@ -306,6 +306,14 @@ void RepackRequest::reportArchiveSuccesses(SubrequestStatistics::List& archiveSu
     }
   }
   if (didUpdate) {
+    // Check whether we reached the end.
+    if (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() >= m_payload.totalfilestoarchive()) {
+      if (m_payload.failedtoarchivefiles()) {
+        m_payload.set_status(serializers::RepackRequestStatus::RRS_Failed);
+      } else {
+        m_payload.set_status(serializers::RepackRequestStatus::RRS_Failed);
+      }
+    }
     m_payload.mutable_subrequests()->Clear();
     for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
@@ -334,6 +342,9 @@ void RepackRequest::reportArchiveFailures(SubrequestStatistics::List& archiveFai
     }
   }
   if (didUpdate) {
+    // Check whether we reached the end.
+    if (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() >= m_payload.totalfilestoarchive())
+      m_payload.set_status(serializers::RepackRequestStatus::RRS_Failed);
     m_payload.mutable_subrequests()->Clear();
     for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }

@@ -565,7 +565,10 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
             if (j->failurelogs_size()) {
               retRef.m_latestError = j->failurelogs(j->failurelogs_size()-1);
             }
-            retRef.m_jobStatus = j->status();
+            for (auto &j2: payload.jobs()) {
+              // Get all jobs statuses.
+              retRef.m_jobsStatusMap[j2.copynb()] = j2.status();
+            }
             oh.set_payload(payload.SerializePartialAsString());
             retRef.m_timingReport.processTime = retRef.m_timer.secs(utils::Timer::resetCounter);
             return oh.SerializeAsString();
@@ -622,10 +625,10 @@ const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() {
 }
 
 //------------------------------------------------------------------------------
-// ArchiveRequest::AsyncJobOwnerUpdater::getJobStatus()
+// ArchiveRequest::AsyncJobOwnerUpdater::getArchiveJobsStatusMap()
 //------------------------------------------------------------------------------
-objectstore::serializers::ArchiveJobStatus ArchiveRequest::AsyncJobOwnerUpdater::getJobStatus() {
-  return m_jobStatus;
+std::map<uint32_t, serializers::ArchiveJobStatus> ArchiveRequest::AsyncJobOwnerUpdater::getJobsStatusMap(){
+  return m_jobsStatusMap;
 }
 
 //------------------------------------------------------------------------------

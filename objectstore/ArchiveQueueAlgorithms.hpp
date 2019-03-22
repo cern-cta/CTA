@@ -57,6 +57,7 @@ struct ContainerTraits<ArchiveQueue,C>
     std::string latestError;
     SchedulerDatabase::ArchiveJob::ReportType reportType;
     ArchiveRequest::RepackInfo repackInfo;
+    std::map<uint32_t, serializers::ArchiveJobStatus> archiveJobsStatusMap;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
@@ -408,7 +409,8 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       e->errorReportURL = u->get()->getArchiveErrorReportURL();
       e->srcURL = u->get()->getSrcURL();
       e->repackInfo = u->get()->getRepackInfo();
-      switch(u->get()->getJobStatus()) {
+      e->archiveJobsStatusMap = u->get()->getJobsStatusMap();
+      switch(e->archiveJobsStatusMap[e->copyNb]) {
         case serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer:
           e->reportType = SchedulerDatabase::ArchiveJob::ReportType::CompletionReport;
           break;

@@ -2131,8 +2131,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     {
       //Do the reporting of the Archive Jobs succeeded
       Scheduler::RepackReportBatch reports = scheduler.getNextRepackReportBatch(lc);
-      //TODO : uncomment and do the reporting
-      //reports.report(lc);
+      reports.report(lc);
     }
   }
 }

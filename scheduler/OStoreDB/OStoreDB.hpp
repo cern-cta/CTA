@@ -419,6 +419,11 @@ public:
     struct SubrequestInfo {
       /// CopyNb is only useful for archive requests where we want to distinguish several jobs.
       uint32_t archivedCopyNb = 0;
+      /** Status map is only useful for archive requests, where we need to know other job's status to decide
+       * whether we should delete the request (all done). It's more efficient to get the information on pop
+       * in order to save a read in the most common case (only one job), and trigger immediate deletion of
+       * the request after succeeding/failing. */
+      std::map<uint32_t, objectstore::serializers::ArchiveJobStatus> archiveJobsStatusMap;
       std::shared_ptr<SR> subrequest;
       common::dataStructures::ArchiveFile archiveFile;
       typename SR::RepackInfo repackInfo;

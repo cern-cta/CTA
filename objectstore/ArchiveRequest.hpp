@@ -121,8 +121,8 @@ public:
     const std::string & getArchiveReportURL();
     const std::string & getArchiveErrorReportURL();
     const std::string & getLastestError();
-    serializers::ArchiveJobStatus getJobStatus();
     RepackInfo getRepackInfo();
+    std::map<uint32_t, serializers::ArchiveJobStatus> getJobsStatusMap();
     // TODO: use the more general structure from utils.
     struct TimingsReport {
       double lockFetchTime = 0;
@@ -137,8 +137,8 @@ public:
     std::string m_srcURL;
     std::string m_archiveReportURL;
     std::string m_archiveErrorReportURL;
-    serializers::ArchiveJobStatus m_jobStatus;
     RepackInfo m_repackInfo;
+    std::map<uint32_t, serializers::ArchiveJobStatus> m_jobsStatusMap;
     std::string m_latestError;
     utils::Timer m_timer;
     TimingsReport m_timingReport;
