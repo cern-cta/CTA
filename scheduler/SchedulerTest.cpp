@@ -2131,6 +2131,18 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       //Do the reporting of the Archive Jobs succeeded
       Scheduler::RepackReportBatch reports = scheduler.getNextRepackReportBatch(lc);
       reports.report(lc);
+      scheduler.waitSchedulerDbSubthreadsComplete();
+    }
+    {
+      //Test that the repackRequestStatus is set as Complete.
+      cta::objectstore::RootEntry re(backend);
+      cta::objectstore::ScopedExclusiveLock sel(re);
+      re.fetch();
+      objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
+      ri.fetchNoLock();
+      cta::objectstore::RepackRequest rr(ri.getRepackRequestAddress(vid),backend);
+      rr.fetchNoLock();
+      ASSERT_EQ(common::dataStructures::RepackInfo::Status::Complete,rr.getInfo().status);
     }
   }
 }
