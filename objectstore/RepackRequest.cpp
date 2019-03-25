@@ -311,7 +311,7 @@ void RepackRequest::reportArchiveSuccesses(SubrequestStatistics::List& archiveSu
       if (m_payload.failedtoarchivefiles()) {
         m_payload.set_status(serializers::RepackRequestStatus::RRS_Failed);
       } else {
-        m_payload.set_status(serializers::RepackRequestStatus::RRS_Failed);
+        m_payload.set_status(serializers::RepackRequestStatus::RRS_Complete);
       }
     }
     m_payload.mutable_subrequests()->Clear();
