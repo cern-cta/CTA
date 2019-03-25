@@ -1996,23 +1996,23 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-  scheduler.queueRepack(admin,vid,"root://repackData/buffer",common::dataStructures::RepackInfo::Type::MoveOnly,lc);
-  scheduler.waitSchedulerDbSubthreadsComplete();
-  //scheduler.waitSchedulerDbSubthreadsComplete();
+    scheduler.queueRepack(admin,vid,"root://repackData/buffer",common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+    //scheduler.waitSchedulerDbSubthreadsComplete();
+ 
+    log::TimingList tl;
+    utils::Timer t;
+    
+    //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+    
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
+    //to promote more than 2 repack requests at a time. So we break here.
 
-  log::TimingList tl;
-  utils::Timer t;
-
-  //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
-  scheduler.promoteRepackRequestsToToExpand(lc);
-  scheduler.waitSchedulerDbSubthreadsComplete();
-
-  auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
-  //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
-  //to promote more than 2 repack requests at a time. So we break here.
-
-  scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
-  scheduler.waitSchedulerDbSubthreadsComplete();
+    scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
   }
   {
     std::unique_ptr<cta::TapeMount> mount;
