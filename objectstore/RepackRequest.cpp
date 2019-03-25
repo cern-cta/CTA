@@ -299,6 +299,7 @@ void RepackRequest::reportArchiveSuccesses(SubrequestStatistics::List& archiveSu
         p.archiveCopyNbsAccounted.insert(as.copyNb);
         m_payload.set_archivedbytes(m_payload.archivedbytes() + as.bytes);
         m_payload.set_archivedfiles(m_payload.archivedfiles() + as.files);
+        p.subrequestDeleted = as.subrequestDeleted;
         didUpdate = true;
       }
     } catch (std::out_of_range &) {
@@ -333,6 +334,7 @@ void RepackRequest::reportArchiveFailures(SubrequestStatistics::List& archiveFai
       auto & p = pointerMap.at(af.fSeq);
       if (!p.archiveCopyNbsAccounted.count(af.copyNb)) {
         p.archiveCopyNbsAccounted.insert(af.copyNb);
+        p.subrequestDeleted = true;
         m_payload.set_failedtoarchivebytes(m_payload.failedtoarchivebytes() + af.bytes);
         m_payload.set_failedtoarchivefiles(m_payload.failedtoarchivefiles() + af.files);
         didUpdate = true;

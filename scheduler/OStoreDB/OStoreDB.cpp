@@ -1580,6 +1580,9 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextRepackRep
   try {
     return getNextSuccessfulArchiveRepackReportBatch(lc);
   } catch (NoRepackReportBatchFound &) {}
+  try{
+    return getNextFailedArchiveRepackReportBatch(lc);
+  } catch (NoRepackReportBatchFound &) {}
   return nullptr;
 }
 
@@ -1715,6 +1718,48 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
     return std::unique_ptr<SchedulerDatabase::RepackReportBatch>(privateRet.release());
   }
   throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): no report found.");
+}
+
+std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc){
+  typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportToRepackForFailure> Caaqtrtrff;
+  Caaqtrtrff algo(this->m_objectStore, *m_agentReference);
+  // Decide from which queue we are going to pop.
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  while(true) {
+    auto queueList = re.dumpArchiveQueues(JobQueueType::JobsToReportToRepackForFailure);
+    if (queueList.empty()) throw NoRepackReportBatchFound("In OStoreDB::getNextFailedArchiveRepackReportBatch(): no queue found.");
+    // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
+    Caaqtrtrff::PopCriteria criteria;
+    criteria.files = c_repackReportBatchSize;
+    auto jobs = algo.popNextBatch(queueList.front().tapePool, criteria, lc);
+    if(jobs.elements.empty()) continue;
+    std::unique_ptr<RepackArchiveFailureReportBatch> privateRet;
+    privateRet.reset(new RepackArchiveFailureReportBatch(m_objectStore, *this));
+    std::set<std::string> repackRequestAddresses;
+    for(auto &j : jobs.elements)
+    {
+      privateRet->m_subrequestList.emplace_back(RepackArchiveFailureReportBatch::SubrequestInfo());
+      auto & sr = privateRet->m_subrequestList.back();
+      sr.repackInfo = j.repackInfo;
+      sr.archivedCopyNb = j.copyNb;
+      sr.archiveJobsStatusMap = j.archiveJobsStatusMap;
+      sr.archiveFile = j.archiveFile;
+      sr.subrequest.reset(j.archiveRequest.release());
+      repackRequestAddresses.insert(j.repackInfo.repackRequestAddress);
+    }
+    // As we are popping from a single report queue, all requests should concern only one repack request.
+    if (repackRequestAddresses.size() != 1) {
+      std::stringstream err;
+      err << "In OStoreDB::getNextFailedArchiveRepackReportBatch(): reports for several repack requests in the same queue. ";
+      for (auto & rr: repackRequestAddresses) { err << rr << " "; }
+      throw exception::Exception(err.str());
+    }
+    privateRet->m_repackRequest.setAddress(*repackRequestAddresses.begin());
+    
+    return std::unique_ptr<SchedulerDatabase::RepackReportBatch>(privateRet.release());
+  }
+   throw NoRepackReportBatchFound("In OStoreDB::getNextFailedArchiveRepackReportBatch(): no report found.");
 }
 
 //------------------------------------------------------------------------------
@@ -3637,7 +3682,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
   // Now apply the decision.
   // TODO: this will probably need to be factored out.
   switch (enQueueingNextStep.nextStep) {
-  case NextStep::Nothing: {
+    case NextStep::Nothing: {
       m_archiveRequest.commit();
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       log::ScopedParamContainer params(lc);
@@ -3653,7 +3698,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
           "In ArchiveJob::failTransfer(): left the request owned, to be garbage collected for retry at the end of the mount.");
       return;
     }
-  case NextStep::Delete: {
+    case NextStep::Delete: {
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       m_archiveRequest.remove();
       log::ScopedParamContainer params(lc);
@@ -3668,7 +3713,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       lc.log(log::INFO, "In ArchiveJob::failTransfer(): removed request");
       return;
     }
-  case NextStep::EnqueueForReport: {
+    case NextStep::EnqueueForReportForUser: {
       m_archiveRequest.commit();
       auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
@@ -3691,7 +3736,31 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       lc.log(log::INFO, "In ArchiveJob::failTransfer(): enqueued job for reporting");
       return;
     }
-  case NextStep::EnqueueForTransfer: {
+    case NextStep::EnqueueForReportForRepack:{
+      m_archiveRequest.commit();
+      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+      std::string repackRequestAddress = m_archiveRequest.getRepackInfo().repackRequestAddress;
+      // Algorithms suppose the objects are not locked.
+      arl.release();
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReportToRepackForFailure> CaAqtrtrff;
+      CaAqtrtrff caAqtrtrff(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+      CaAqtrtrff::InsertedElement::list insertedElements;
+      insertedElements.push_back(CaAqtrtrff::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
+      caAqtrtrff.referenceAndSwitchOwnership(repackRequestAddress, insertedElements, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", archiveFile.archiveFileID)
+            .add("copyNb", tapeFile.copyNb)
+            .add("failureReason", failureReason)
+            .add("requestObject", m_archiveRequest.getAddressIfSet())
+            .add("retriesWithinMount", retryStatus.retriesWithinMount)
+            .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
+            .add("totalRetries", retryStatus.totalRetries)
+            .add("maxTotalRetries", retryStatus.maxTotalRetries);
+      lc.log(log::INFO,
+          "In ArchiveJob::failTransfer(): enqueued job for reporting for Repack");
+      return;
+    }
+    case NextStep::EnqueueForTransferForUser: {
       m_archiveRequest.commit();
       auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
@@ -3715,6 +3784,31 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
           "In ArchiveJob::failTransfer(): requeued job for (potentially in-mount) retry.");
       return;
     }
+  case NextStep::EnqueueForTransferForRepack:{
+      m_archiveRequest.commit();
+      auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
+      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+      auto mountPolicy = m_archiveRequest.getMountPolicy();
+      // Algorithms suppose the objects are not locked.
+      arl.release();
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForRepack> CaAqtr;
+      CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+      CaAqtr::InsertedElement::list insertedElements;
+      insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, mountPolicy, cta::nullopt });
+      caAqtr.referenceAndSwitchOwnership(tapepool, insertedElements, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", archiveFile.archiveFileID)
+            .add("copyNb", tapeFile.copyNb)
+            .add("failureReason", failureReason)
+            .add("requestObject", m_archiveRequest.getAddressIfSet())
+            .add("retriesWithinMount", retryStatus.retriesWithinMount)
+            .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
+            .add("totalRetries", retryStatus.totalRetries)
+            .add("maxTotalRetries", retryStatus.maxTotalRetries);
+      lc.log(log::INFO,
+          "In ArchiveJob::failTransfer(): requeued job for (potentially in-mount) retry.");
+      return;
+  }
   case NextStep::StoreInFailedJobsContainer: {
       m_archiveRequest.commit();
       auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
@@ -3762,7 +3856,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
   // TODO: this will probably need to be factored out.
   switch (enQueueingNextStep.nextStep) {
     // We have a reduced set of supported next steps as some are not compatible with this event (see default).
-  case NextStep::EnqueueForReport: {
+  case NextStep::EnqueueForReportForUser: {
       m_archiveRequest.commit();
       auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
@@ -3882,6 +3976,15 @@ void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
       ssl.back().files = 1;
       ssl.back().fSeq = sri.repackInfo.fSeq;
       ssl.back().copyNb = sri.archivedCopyNb;
+      for(auto &j: sri.archiveJobsStatusMap){
+        if(j.first != sri.archivedCopyNb && 
+          (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && 
+          (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){
+          break;
+        } else {
+          ssl.back().subrequestDeleted = true;
+        }
+      }
     }
     // Record it.
     timingList.insertAndReset("successStatsPrepareTime", t);
@@ -3988,6 +4091,137 @@ void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
   log::ScopedParamContainer params(lc);
   timingList.addToLog(params);
   lc.log(log::INFO, "In OStoreDB::RepackArchiveSuccessesReportBatch::report(): reported a batch of jobs.");
+}
+
+void OStoreDB::RepackArchiveFailureReportBatch::report(log::LogContext& lc){
+  utils::Timer t;
+  log::TimingList timingList;
+  
+  // 1) Update statistics. As the repack request is protected against double reporting, we can release its lock
+  // before the next (deletions).
+  {
+    // Prepare the report
+    objectstore::RepackRequest::SubrequestStatistics::List ssl;
+    for (auto &sri: m_subrequestList) {
+      ssl.push_back(objectstore::RepackRequest::SubrequestStatistics());
+      ssl.back().bytes = sri.archiveFile.fileSize;
+      ssl.back().files = 1;
+      ssl.back().fSeq = sri.repackInfo.fSeq;
+      ssl.back().copyNb = sri.archivedCopyNb;
+      for(auto &j: sri.archiveJobsStatusMap){
+        if(j.first != sri.archivedCopyNb && 
+          (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && 
+          (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){
+          break;
+        } else {
+          ssl.back().subrequestDeleted = true;
+        }
+      }
+    }
+    // Record it.
+    timingList.insertAndReset("failureStatsPrepareTime", t);
+    objectstore::ScopedExclusiveLock rrl(m_repackRequest);
+    timingList.insertAndReset("failureStatsLockTime", t);
+    m_repackRequest.fetch();
+    timingList.insertAndReset("failureStatsFetchTime", t);
+    m_repackRequest.reportArchiveFailures(ssl);
+    timingList.insertAndReset("failureStatsUpdateTime", t);
+    m_repackRequest.commit();
+    timingList.insertAndReset("failureStatsCommitTime", t);
+  }
+  // 2) For each job, determine if sibling jobs are complete or not. If so, delete, else just update status and set empty owner.
+  struct Deleters {
+    std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> deleter;
+    RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> & subrequestInfo;
+    typedef std::list<Deleters> List;
+  };
+  struct JobOwnerUpdaters {
+    std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> jobOwnerUpdater;
+    RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> & subrequestInfo;
+    typedef std::list<JobOwnerUpdaters> List;
+  };
+  Deleters::List deletersList;
+  JobOwnerUpdaters::List jobOwnerUpdatersList;
+  for (auto &sri: m_subrequestList) {
+    bool moreJobsToDo = false;
+    for (auto &j: sri.archiveJobsStatusMap) {
+      if ((j.first != sri.archivedCopyNb) && 
+          (j.second != serializers::ArchiveJobStatus::AJS_Complete) && 
+          (j.second != serializers::ArchiveJobStatus::AJS_Failed)) {
+        moreJobsToDo = true;
+        break;
+      }
+    }
+    objectstore::ArchiveRequest & ar = *sri.subrequest;
+    if (moreJobsToDo) {
+      try {
+        jobOwnerUpdatersList.push_back(JobOwnerUpdaters{std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> (
+              ar.asyncUpdateJobOwner(sri.archivedCopyNb, "", m_oStoreDb.m_agentReference->getAgentAddress(),
+              serializers::ArchiveJobStatus::AJS_Failed)), 
+            sri});
+      } catch (cta::exception::Exception & ex) {
+        // Log the error
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", sri.archiveFile.archiveFileID)
+              .add("subrequestAddress", sri.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): failed to asyncUpdateJobOwner()");
+      }
+    } else {
+      try {
+        deletersList.push_back({std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter>(ar.asyncDeleteRequest()), sri});
+      } catch (cta::exception::Exception & ex) {
+        // Log the error
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", sri.archiveFile.archiveFileID)
+              .add("subrequestAddress", sri.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): failed to asyncDelete()");
+      }
+    }
+  }
+  timingList.insertAndReset("asyncUpdateOrDeleteLaunchTime", t);
+  for (auto & d: deletersList) {
+    try {
+      d.deleter->wait();
+      log::ScopedParamContainer params(lc);
+        params.add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
+              .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet());
+        lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): deleted request.");
+    } catch (cta::exception::Exception & ex) {
+        // Log the error
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
+              .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async deletion failed.");
+    }
+  }
+  for (auto & jou: jobOwnerUpdatersList) {
+    try {
+      jou.jobOwnerUpdater->wait();
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
+            .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet());
+      lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async updated job.");
+    } catch (cta::exception::Exception & ex) {
+      // Log the error
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
+            .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
+            .add("exceptionMsg", ex.getMessageValue());
+      lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async job update.");
+    }    
+  }
+  timingList.insertAndReset("asyncUpdateOrDeleteCompletionTime", t);
+  // 3) Just remove all jobs from ownership
+  std::list<std::string> jobsToUnown;
+  for (auto sri: m_subrequestList) jobsToUnown.push_back(sri.subrequest->getAddressIfSet());
+  m_oStoreDb.m_agentReference->removeBatchFromOwnership(jobsToUnown, m_oStoreDb.m_objectStore);
+  timingList.insertAndReset("ownershipRemoval", t);
+  log::ScopedParamContainer params(lc);
+  timingList.addToLog(params);
+  lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): reported a batch of jobs.");
 }
 
 //------------------------------------------------------------------------------

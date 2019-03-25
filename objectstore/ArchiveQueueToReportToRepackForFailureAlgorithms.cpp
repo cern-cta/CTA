@@ -31,6 +31,30 @@ namespace cta { namespace objectstore {
     ContainerSummary ret;
     ret.JobsSummary::operator=(cont.getJobsSummary());
     return ret;
-}
+  }
+  
+   template<>
+  auto ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForFailure>::
+  getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria, ElementsToSkipSet& elemtsToSkip,
+    log::LogContext& lc) -> PoppedElementsBatch
+  {
+    PoppedElementsBatch ret;
+    auto candidateJobsFromQueue=cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
+    for (auto &cjfq: candidateJobsFromQueue.candidates) {
+      ret.elements.emplace_back(PoppedElement());
+      PoppedElement & elem = ret.elements.back();
+      elem.archiveRequest = cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
+      elem.copyNb = cjfq.copyNb;
+      elem.bytes = cjfq.size;
+      elem.archiveFile = common::dataStructures::ArchiveFile();
+      elem.srcURL = "";
+      elem.archiveReportURL = "";
+      elem.errorReportURL = "";
+      elem.latestError = "";
+      elem.reportType = SchedulerDatabase::ArchiveJob::ReportType::Report;
+      ret.summary.files++;
+    }
+    return ret;
+  }
   
 }}

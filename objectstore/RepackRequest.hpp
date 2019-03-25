@@ -84,6 +84,7 @@ public:
     uint64_t bytes;
     /// CopyNb is needed to record archive jobs statistics (we can have several archive jobs for the same fSeq)
     uint32_t copyNb = 0;
+    bool subrequestDeleted = false;
     typedef std::list<SubrequestStatistics> List;
     bool operator< (const SubrequestStatistics & o) const { return fSeq < o.fSeq; }
   };

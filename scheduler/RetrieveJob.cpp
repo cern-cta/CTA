@@ -103,4 +103,3 @@ const cta::common::dataStructures::TapeFile& cta::RetrieveJob::selectedTapeFile(
     throw std::runtime_error(std::string("cta::RetrieveJob::selectedTapeFile(): ") + ex.what());
   }
 }
-

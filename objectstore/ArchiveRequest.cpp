@@ -145,13 +145,14 @@ auto ArchiveRequest::addTransferFailure(uint32_t copyNumber,
       return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
     } else {
       EnqueueingNextStep ret;
-      ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToTransferForUser;
+      bool isRepack =  m_payload.isrepack();
+      ret.nextStatus = isRepack ? serializers::ArchiveJobStatus::AJS_ToTransferForRepack : serializers::ArchiveJobStatus::AJS_ToTransferForUser;
       // Decide if we want the job to have a chance to come back to this mount (requeue) or not. In the latter
       // case, the job will remain owned by this session and get garbage collected.
       if (j.retrieswithinmount() >= j.maxretrieswithinmount())
         ret.nextStep = EnqueueingNextStep::NextStep::Nothing;
       else
-        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransfer;
+        ret.nextStep = isRepack ? EnqueueingNextStep::NextStep::EnqueueForTransferForRepack : EnqueueingNextStep::NextStep::EnqueueForTransferForUser;
       return ret;
     }
   }
@@ -179,7 +180,7 @@ auto ArchiveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, c
     } else {
       // Status is unchanged
       ret.nextStatus = j.status();
-      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
+      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReportForUser;
     }
     return ret;
   }
@@ -851,8 +852,13 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   {
     if (!m_payload.reportdecided()) {
       m_payload.set_reportdecided(true);
-      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
-      ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure;
+      if(!m_payload.isrepack()){
+        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReportForUser;
+        ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure;
+      } else {
+        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReportForRepack;
+        ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure;
+      }
     } else {
       ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
       ret.nextStatus = serializers::ArchiveJobStatus::AJS_Failed;
@@ -866,6 +872,28 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   }
   }
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::getRepackInfo()
+//------------------------------------------------------------------------------
+ArchiveRequest::RepackInfo ArchiveRequest::getRepackInfo(){
+  checkPayloadReadable();
+  cta::objectstore::serializers::ArchiveRequestRepackInfo repackInfo = m_payload.repack_info();
+  ArchiveRequest::RepackInfo ret;
+  ret.fSeq = repackInfo.fseq();
+  ret.fileBufferURL = repackInfo.file_buffer_url();
+  ret.isRepack = true;
+  ret.repackRequestAddress = repackInfo.repack_request_address();
+  return ret;
+}
+
+void ArchiveRequest::setRepackInfo(const RepackInfo& repackInfo){
+  checkPayloadWritable();
+  auto repackInfoToWrite = m_payload.mutable_repack_info();
+  repackInfoToWrite->set_repack_request_address(repackInfo.repackRequestAddress);
+  repackInfoToWrite->set_file_buffer_url(repackInfo.fileBufferURL);
+  repackInfoToWrite->set_fseq(repackInfo.fSeq);
 }
 
 //------------------------------------------------------------------------------
