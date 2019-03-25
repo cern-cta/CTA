@@ -1996,23 +1996,23 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"root://repackData/buffer",common::dataStructures::RepackInfo::Type::MoveOnly,lc);
-    scheduler.waitSchedulerDbSubthreadsComplete();
-    //scheduler.waitSchedulerDbSubthreadsComplete();
- 
-    log::TimingList tl;
-    utils::Timer t;
-    
-    //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
-    scheduler.promoteRepackRequestsToToExpand(lc);
-    scheduler.waitSchedulerDbSubthreadsComplete();
-    
-    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
-    //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
-    //to promote more than 2 repack requests at a time. So we break here.
+  scheduler.queueRepack(admin,vid,"root://repackData/buffer",common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  //scheduler.waitSchedulerDbSubthreadsComplete();
 
-    scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
-    scheduler.waitSchedulerDbSubthreadsComplete();
+  log::TimingList tl;
+  utils::Timer t;
+
+  //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
+  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+  //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
+  //to promote more than 2 repack requests at a time. So we break here.
+
+  scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
   }
   {
     std::unique_ptr<cta::TapeMount> mount;
@@ -2080,7 +2080,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     for(uint64_t j = 1;j<=nbArchiveFilesPerTape;++j){
       auto jobBatch = archiveMount->getNextJobBatch(1,archiveFileSize,lc);
       archiveJob.reset(jobBatch.front().release());
-      //TODO : how to generate properly the blockId, checksumType, checksumValue and compressedSize ?? Should it be done im OStoreDB::ArchiveMount::getNextJobBatch() ?
       archiveJob->tapeFile.blockId = j * 101;
       archiveJob->tapeFile.checksumType = checksumType;
       archiveJob->tapeFile.checksumValue = checksumValue;
@@ -2092,7 +2091,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     castor::tape::tapeserver::daemon::MigrationReportPacker mrp(archiveMount.get(),lc);
     mrp.startThreads();
     
-    //Report all archive jobs as succeeded except the first one.
+    //Report all archive jobs as succeeded
     for(auto it = executedJobs.begin();it != executedJobs.end(); ++it){
       mrp.reportCompletedJob(std::move(*it),lc);
     }
