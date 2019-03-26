@@ -394,8 +394,8 @@ const Option opt_hostname_alias       { Option::OPT_STR,  "--name",             
 const Option opt_input                { Option::OPT_STR,  "--input",                 "-i",   " <\"zero\" or \"urandom\">" };
 const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <instance_name>" };
 const Option opt_justarchive          { Option::OPT_FLAG, "--justarchive",           "-a",   "" };
-const Option opt_justrepack           { Option::OPT_FLAG, "--justrepack",            "-r",   "" };
-const Option opt_justexpand           { Option::OPT_FLAG, "--justexpand",            "-e",   "" };
+const Option opt_justmove             { Option::OPT_FLAG, "--justmove",              "-m",   "" };
+const Option opt_justaddcopies        { Option::OPT_FLAG, "--justaddcopies",         "-a",   "" };
 const Option opt_justretrieve         { Option::OPT_FLAG, "--justretrieve",          "-r",   "" };
 const Option opt_lastfseq             { Option::OPT_UINT, "--lastfseq",              "-l",   " <last_fseq>" };
 const Option opt_lbp                  { Option::OPT_BOOL, "--lbp",                   "-p",   " <\"true\" or \"false\">" };
@@ -501,7 +501,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ADD   },
-      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl, opt_justexpand.optional(), opt_justrepack.optional() }},
+      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl, opt_justmove.optional(), opt_justaddcopies.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_header.optional(), opt_vid.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},
