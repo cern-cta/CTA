@@ -439,8 +439,19 @@ public:
       std::set<uint32_t> copyNbsToRearchive;
       std::string fileBufferURL;
     };
+    
+    //Struct to hold the RepackRequest's total stats
+    struct TotalStatsFiles{
+      uint64_t totalFilesToArchive = 0;
+      uint64_t totalBytesToArchive = 0;
+      uint64_t totalFilesToRetrieve = 0;
+      uint64_t totalBytesToRetrieve = 0;
+      //TODO : userprovidedfiles and userprovidedbytes
+    };
+    
     virtual void addSubrequests(std::list<Subrequest>& repackSubrequests, 
       cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, log::LogContext & lc) = 0;
+    virtual void setTotalStats(const TotalStatsFiles& stats) = 0;
     virtual void expandDone() = 0;
     virtual void fail() = 0;
     virtual ~RepackRequest() {}

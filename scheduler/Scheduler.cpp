@@ -424,6 +424,8 @@ const std::string Scheduler::generateRetrieveDstURL(const cta::common::dataStruc
 void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) {
   std::list<common::dataStructures::ArchiveFile> files;
   auto repackInfo = repackRequest->getRepackInfo();
+  cta::SchedulerDatabase::RepackRequest::TotalStatsFiles totalStatsFile;
+  
   typedef cta::common::dataStructures::RepackInfo::Type RepackType;
   if (repackInfo.type != RepackType::MoveOnly) {
     log::ScopedParamContainer params(lc);
@@ -457,6 +459,8 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       auto & rsr = retrieveSubrequests.back();
       rsr.archiveFile = archiveFile;
       rsr.fSeq = std::numeric_limits<decltype(rsr.fSeq)>::max();
+      totalStatsFile.totalBytesToRetrieve += rsr.archiveFile.fileSize;
+      totalStatsFile.totalFilesToRetrieve += 1;
       // We have to determine which copynbs we want to rearchive, and under which fSeq we record this file.
       if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::MoveOnly) {
         // determine which fSeq(s) (normally only one) lives on this tape.
@@ -468,6 +472,8 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
           // restart of expansion.
           rsr.fSeq = std::min(tc.second.fSeq, rsr.fSeq);
           maxAddedFSeq = std::max(maxAddedFSeq, rsr.fSeq);
+          totalStatsFile.totalFilesToArchive += 1;
+          totalStatsFile.totalBytesToArchive += rsr.archiveFile.fileSize;
         }
       }
       if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::AddCopiesOnly) {
@@ -494,6 +500,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted). 
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
+    repackRequest->m_dbReq->setTotalStats(totalStatsFile);
     repackRequest->m_dbReq->addSubrequests(retrieveSubrequests, archiveRoutesMap, fSeq - 1, lc);
     fSeq = std::max(fSeq, maxAddedFSeq + 1);
   }

@@ -347,6 +347,8 @@ public:
     void expandDone() override;
     void fail() override;
     uint64_t getLastExpandedFSeq() override;
+    void setTotalStats(const TotalStatsFiles& stats) override;
+
   private:
     OStoreDB & m_oStoreDB;
     objectstore::RepackRequest m_repackRequest;

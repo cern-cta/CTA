@@ -1568,7 +1568,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getNextRepackJobToExpand()
+// OStoreDB::getNextRepackReportBatch()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextRepackReportBatch(log::LogContext& lc) {
   try {
@@ -2294,6 +2294,16 @@ void OStoreDB::RepackRequest::expandDone() {
   }
   typedef common::dataStructures::RepackInfo::Status Status;
   m_repackRequest.setStatus(running? Status::Running: Status::Starting);
+  m_repackRequest.commit();
+}
+
+void OStoreDB::RepackRequest::setTotalStats(const TotalStatsFiles& stats){
+  ScopedExclusiveLock rrl(m_repackRequest);
+  m_repackRequest.fetch();
+  m_repackRequest.addFileToArchive(stats.totalFilesToArchive);
+  m_repackRequest.addBytesToArchive(stats.totalBytesToArchive);
+  m_repackRequest.addFileToRetrieve(stats.totalFilesToRetrieve);
+  m_repackRequest.addBytesToRetrieve(stats.totalBytesToRetrieve);
   m_repackRequest.commit();
 }
 

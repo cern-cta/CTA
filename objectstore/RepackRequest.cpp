@@ -227,6 +227,27 @@ uint64_t RepackRequest::getLastExpandedFSeq() {
   return m_payload.lastexpandedfseq();
 }
 
+void RepackRequest::addFileToRetrieve(const uint64_t nbFilesToRetrieve){
+  checkPayloadWritable();
+  m_payload.set_totalfilestoretrieve(m_payload.totalfilestoretrieve()+nbFilesToRetrieve);
+}
+
+void RepackRequest::addBytesToRetrieve(const uint64_t nbBytesToRetrieve){
+  checkPayloadWritable();
+  m_payload.set_totalbytestoretrieve(m_payload.totalbytestoretrieve()+nbBytesToRetrieve);
+}
+
+void RepackRequest::addFileToArchive(const uint64_t nbFilesToArchive){
+  checkPayloadWritable();
+  m_payload.set_totalfilestoarchive(m_payload.totalfilestoarchive()+nbFilesToArchive);
+}
+
+void RepackRequest::addBytesToArchive(const uint64_t nbBytesToArchive) {
+  checkPayloadWritable();
+  m_payload.set_totalbytestoarchive(m_payload.totalbytestoarchive()+nbBytesToArchive);
+}
+
+
 //------------------------------------------------------------------------------
 // RepackRequest::reportRetriveSuccesses()
 //------------------------------------------------------------------------------
