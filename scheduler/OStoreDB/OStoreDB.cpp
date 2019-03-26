@@ -3958,6 +3958,88 @@ objectstore::ArchiveRequest::RepackInfo OStoreDB::ArchiveJob::getRepackInfoAfter
 // OStoreDB::RepackArchiveSuccessesReportBatch::report()
 //------------------------------------------------------------------------------
 void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
+  OStoreDB::RepackArchiveReportBatch::report(lc);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackArchiveSuccessesReportBatch::recordReport()
+//------------------------------------------------------------------------------
+void OStoreDB::RepackArchiveSuccessesReportBatch::recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t){
+  timingList.insertAndReset("successStatsPrepareTime", t);
+  objectstore::ScopedExclusiveLock rrl(m_repackRequest);
+  timingList.insertAndReset("successStatsLockTime", t);
+  m_repackRequest.fetch();
+  timingList.insertAndReset("successStatsFetchTime", t);
+  m_repackRequest.reportArchiveSuccesses(ssl);
+  timingList.insertAndReset("successStatsUpdateTime", t);
+  m_repackRequest.commit();
+  timingList.insertAndReset("successStatsCommitTime", t);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackArchiveSuccessesReportBatch::getNewStatus()
+//------------------------------------------------------------------------------
+serializers::ArchiveJobStatus OStoreDB::RepackArchiveSuccessesReportBatch::getNewStatus(){
+  return serializers::ArchiveJobStatus::AJS_Complete;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackArchiveFailureReportBatch::report()
+//------------------------------------------------------------------------------
+void OStoreDB::RepackArchiveFailureReportBatch::report(log::LogContext& lc){
+  OStoreDB::RepackArchiveReportBatch::report(lc);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackArchiveFailureReportBatch::recordReport()
+//------------------------------------------------------------------------------
+void OStoreDB::RepackArchiveFailureReportBatch::recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t){
+  timingList.insertAndReset("failureStatsPrepareTime", t);
+  objectstore::ScopedExclusiveLock rrl(m_repackRequest);
+  timingList.insertAndReset("failureStatsLockTime", t);
+  m_repackRequest.fetch();
+  timingList.insertAndReset("failureStatsFetchTime", t);
+  m_repackRequest.reportArchiveFailures(ssl);
+  timingList.insertAndReset("failureStatsUpdateTime", t);
+  m_repackRequest.commit();
+  timingList.insertAndReset("failureStatsCommitTime", t);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackArchiveFailureReportBatch::getNewStatus()
+//------------------------------------------------------------------------------
+serializers::ArchiveJobStatus OStoreDB::RepackArchiveFailureReportBatch::getNewStatus(){
+  return serializers::ArchiveJobStatus::AJS_Failed;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackArchiveReportBatch::prepareReport()
+//------------------------------------------------------------------------------
+objectstore::RepackRequest::SubrequestStatistics::List OStoreDB::RepackArchiveReportBatch::prepareReport() {
+  objectstore::RepackRequest::SubrequestStatistics::List ssl;
+  for (auto &sri: m_subrequestList) {
+    ssl.push_back(objectstore::RepackRequest::SubrequestStatistics());
+    ssl.back().bytes = sri.archiveFile.fileSize;
+    ssl.back().files = 1;
+    ssl.back().fSeq = sri.repackInfo.fSeq;
+    ssl.back().copyNb = sri.archivedCopyNb;
+    for(auto &j: sri.archiveJobsStatusMap){
+      if(j.first != sri.archivedCopyNb && 
+        (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && 
+        (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){
+        break;
+      } else {
+        ssl.back().subrequestDeleted = true;
+      }
+    }
+  }
+  return ssl;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackArchiveReportBatch::report()
+//------------------------------------------------------------------------------
+void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   // We have a batch of popped jobs to report. We will first record them in the repack requests (update statistics),
   // and then either mark them as complete (if any sibling jobs will still require processing) or
   // simply remove the request.
@@ -3967,36 +4049,8 @@ void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
   
   // 1) Update statistics. As the repack request is protected against double reporting, we can release its lock
   // before the next (deletions).
-  {
-    // Prepare the report
-    objectstore::RepackRequest::SubrequestStatistics::List ssl;
-    for (auto &sri: m_subrequestList) {
-      ssl.push_back(objectstore::RepackRequest::SubrequestStatistics());
-      ssl.back().bytes = sri.archiveFile.fileSize;
-      ssl.back().files = 1;
-      ssl.back().fSeq = sri.repackInfo.fSeq;
-      ssl.back().copyNb = sri.archivedCopyNb;
-      for(auto &j: sri.archiveJobsStatusMap){
-        if(j.first != sri.archivedCopyNb && 
-          (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && 
-          (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){
-          break;
-        } else {
-          ssl.back().subrequestDeleted = true;
-        }
-      }
-    }
-    // Record it.
-    timingList.insertAndReset("successStatsPrepareTime", t);
-    objectstore::ScopedExclusiveLock rrl(m_repackRequest);
-    timingList.insertAndReset("successStatsLockTime", t);
-    m_repackRequest.fetch();
-    timingList.insertAndReset("successStatsFetchTime", t);
-    m_repackRequest.reportArchiveSuccesses(ssl);
-    timingList.insertAndReset("successStatsUpdateTime", t);
-    m_repackRequest.commit();
-    timingList.insertAndReset("successStatsCommitTime", t);
-  }
+  objectstore::RepackRequest::SubrequestStatistics::List statistics = prepareReport();
+  recordReport(statistics,timingList,t);
   
   // 2) For each job, determine if sibling jobs are complete or not. If so, delete, else just update status and set empty owner.
   struct Deleters {
@@ -4026,7 +4080,7 @@ void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
       try {
         jobOwnerUpdatersList.push_back(JobOwnerUpdaters{std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> (
               ar.asyncUpdateJobOwner(sri.archivedCopyNb, "", m_oStoreDb.m_agentReference->getAgentAddress(),
-              serializers::ArchiveJobStatus::AJS_Complete)), 
+              getNewStatus())), 
             sri});
       } catch (cta::exception::Exception & ex) {
         // Log the error
@@ -4034,7 +4088,7 @@ void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
         params.add("fileId", sri.archiveFile.archiveFileID)
               .add("subrequestAddress", sri.subrequest->getAddressIfSet())
               .add("exceptionMsg", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::RepackArchiveSuccessesReportBatch::report(): failed to asyncUpdateJobOwner()");
+        lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): failed to asyncUpdateJobOwner()");
       }
     } else {
       try {
@@ -4045,7 +4099,7 @@ void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
         params.add("fileId", sri.archiveFile.archiveFileID)
               .add("subrequestAddress", sri.subrequest->getAddressIfSet())
               .add("exceptionMsg", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::RepackArchiveSuccessesReportBatch::report(): failed to asyncDelete()");
+        lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): failed to asyncDelete()");
       }
     }
   }
@@ -4056,145 +4110,14 @@ void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
       log::ScopedParamContainer params(lc);
         params.add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
               .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet());
-        lc.log(log::INFO, "In OStoreDB::RepackArchiveSuccessesReportBatch::report(): deleted request.");
+        lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): deleted request.");
     } catch (cta::exception::Exception & ex) {
         // Log the error
         log::ScopedParamContainer params(lc);
         params.add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
               .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
               .add("exceptionMsg", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::RepackArchiveSuccessesReportBatch::report(): async deletion failed.");
-    }
-  }
-  for (auto & jou: jobOwnerUpdatersList) {
-    try {
-      jou.jobOwnerUpdater->wait();
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
-            .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet());
-      lc.log(log::INFO, "In OStoreDB::RepackArchiveSuccessesReportBatch::report(): async updated job.");
-    } catch (cta::exception::Exception & ex) {
-      // Log the error
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
-            .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
-            .add("exceptionMsg", ex.getMessageValue());
-      lc.log(log::ERR, "In OStoreDB::RepackArchiveSuccessesReportBatch::report(): async job update.");
-    }    
-  }
-  timingList.insertAndReset("asyncUpdateOrDeleteCompletionTime", t);
-  // 3) Just remove all jobs from ownership
-  std::list<std::string> jobsToUnown;
-  for (auto sri: m_subrequestList) jobsToUnown.push_back(sri.subrequest->getAddressIfSet());
-  m_oStoreDb.m_agentReference->removeBatchFromOwnership(jobsToUnown, m_oStoreDb.m_objectStore);
-  timingList.insertAndReset("ownershipRemoval", t);
-  log::ScopedParamContainer params(lc);
-  timingList.addToLog(params);
-  lc.log(log::INFO, "In OStoreDB::RepackArchiveSuccessesReportBatch::report(): reported a batch of jobs.");
-}
-
-void OStoreDB::RepackArchiveFailureReportBatch::report(log::LogContext& lc){
-  utils::Timer t;
-  log::TimingList timingList;
-  
-  // 1) Update statistics. As the repack request is protected against double reporting, we can release its lock
-  // before the next (deletions).
-  {
-    // Prepare the report
-    objectstore::RepackRequest::SubrequestStatistics::List ssl;
-    for (auto &sri: m_subrequestList) {
-      ssl.push_back(objectstore::RepackRequest::SubrequestStatistics());
-      ssl.back().bytes = sri.archiveFile.fileSize;
-      ssl.back().files = 1;
-      ssl.back().fSeq = sri.repackInfo.fSeq;
-      ssl.back().copyNb = sri.archivedCopyNb;
-      for(auto &j: sri.archiveJobsStatusMap){
-        if(j.first != sri.archivedCopyNb && 
-          (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && 
-          (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){
-          break;
-        } else {
-          ssl.back().subrequestDeleted = true;
-        }
-      }
-    }
-    // Record it.
-    timingList.insertAndReset("failureStatsPrepareTime", t);
-    objectstore::ScopedExclusiveLock rrl(m_repackRequest);
-    timingList.insertAndReset("failureStatsLockTime", t);
-    m_repackRequest.fetch();
-    timingList.insertAndReset("failureStatsFetchTime", t);
-    m_repackRequest.reportArchiveFailures(ssl);
-    timingList.insertAndReset("failureStatsUpdateTime", t);
-    m_repackRequest.commit();
-    timingList.insertAndReset("failureStatsCommitTime", t);
-  }
-  // 2) For each job, determine if sibling jobs are complete or not. If so, delete, else just update status and set empty owner.
-  struct Deleters {
-    std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> deleter;
-    RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> & subrequestInfo;
-    typedef std::list<Deleters> List;
-  };
-  struct JobOwnerUpdaters {
-    std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> jobOwnerUpdater;
-    RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> & subrequestInfo;
-    typedef std::list<JobOwnerUpdaters> List;
-  };
-  Deleters::List deletersList;
-  JobOwnerUpdaters::List jobOwnerUpdatersList;
-  for (auto &sri: m_subrequestList) {
-    bool moreJobsToDo = false;
-    for (auto &j: sri.archiveJobsStatusMap) {
-      if ((j.first != sri.archivedCopyNb) && 
-          (j.second != serializers::ArchiveJobStatus::AJS_Complete) && 
-          (j.second != serializers::ArchiveJobStatus::AJS_Failed)) {
-        moreJobsToDo = true;
-        break;
-      }
-    }
-    objectstore::ArchiveRequest & ar = *sri.subrequest;
-    if (moreJobsToDo) {
-      try {
-        jobOwnerUpdatersList.push_back(JobOwnerUpdaters{std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> (
-              ar.asyncUpdateJobOwner(sri.archivedCopyNb, "", m_oStoreDb.m_agentReference->getAgentAddress(),
-              serializers::ArchiveJobStatus::AJS_Failed)), 
-            sri});
-      } catch (cta::exception::Exception & ex) {
-        // Log the error
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", sri.archiveFile.archiveFileID)
-              .add("subrequestAddress", sri.subrequest->getAddressIfSet())
-              .add("exceptionMsg", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): failed to asyncUpdateJobOwner()");
-      }
-    } else {
-      try {
-        deletersList.push_back({std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter>(ar.asyncDeleteRequest()), sri});
-      } catch (cta::exception::Exception & ex) {
-        // Log the error
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", sri.archiveFile.archiveFileID)
-              .add("subrequestAddress", sri.subrequest->getAddressIfSet())
-              .add("exceptionMsg", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): failed to asyncDelete()");
-      }
-    }
-  }
-  timingList.insertAndReset("asyncUpdateOrDeleteLaunchTime", t);
-  for (auto & d: deletersList) {
-    try {
-      d.deleter->wait();
-      log::ScopedParamContainer params(lc);
-        params.add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
-              .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet());
-        lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): deleted request.");
-    } catch (cta::exception::Exception & ex) {
-        // Log the error
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
-              .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
-              .add("exceptionMsg", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async deletion failed.");
+        lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async deletion failed.");
     }
   }
   for (auto & jou: jobOwnerUpdatersList) {
@@ -4221,7 +4144,7 @@ void OStoreDB::RepackArchiveFailureReportBatch::report(log::LogContext& lc){
   timingList.insertAndReset("ownershipRemoval", t);
   log::ScopedParamContainer params(lc);
   timingList.addToLog(params);
-  lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): reported a batch of jobs.");
+  lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): reported a batch of jobs.");
 }
 
 //------------------------------------------------------------------------------

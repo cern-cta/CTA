@@ -396,6 +396,7 @@ public:
  
   class RepackRetrieveSuccessesReportBatch;
   class RepackRetrieveFailureReportBatch;
+  class RepackArchiveReportBatch;
   class RepackArchiveSuccessesReportBatch;
   class RepackArchiveFailureReportBatch;
   friend class RepackRetrieveSuccessesReportBatch;
@@ -452,27 +453,45 @@ public:
     SubrequestInfo::List m_subrequestList;
   };
   
-  class RepackArchiveSuccessesReportBatch: public RepackReportBatch {
+  /**
+   * Super class that holds the common code for the reporting
+   * of Archive successes and failures
+   */
+  class RepackArchiveReportBatch: public RepackReportBatch{
+    friend class OStoreDB;
+  protected:
+    typedef RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> SubrequestInfo;
+    SubrequestInfo::List m_subrequestList;
+  public:
+    RepackArchiveReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):RepackReportBatch(backend,oStoreDb){}
+    void report(log::LogContext &lc);
+  private:
+    objectstore::RepackRequest::SubrequestStatistics::List prepareReport();
+    virtual void recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) = 0;
+    virtual cta::objectstore::serializers::ArchiveJobStatus getNewStatus() = 0;
+  };
+  
+  class RepackArchiveSuccessesReportBatch: public RepackArchiveReportBatch {
     friend class OStoreDB;
     RepackArchiveSuccessesReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):
-      RepackReportBatch(backend,oStoreDb) {}
+      RepackArchiveReportBatch(backend,oStoreDb) {}
   public:
     void report(log::LogContext& lc) override;
   private:
-    typedef RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> SubrequestInfo;
-    SubrequestInfo::List m_subrequestList;
+    void recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) override;
+    cta::objectstore::serializers::ArchiveJobStatus getNewStatus() override;
   };
   
-  class RepackArchiveFailureReportBatch: public RepackReportBatch {
+  class RepackArchiveFailureReportBatch: public RepackArchiveReportBatch {
     friend class OStoreDB;
     
     RepackArchiveFailureReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):
-      RepackReportBatch(backend,oStoreDb) {}
-    public:
-      void report(log::LogContext& lc) override;
-    private:
-      typedef RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> SubrequestInfo;
-      SubrequestInfo::List m_subrequestList;
+      RepackArchiveReportBatch(backend,oStoreDb) {}
+  public:
+    void report(log::LogContext& lc) override;
+  private:
+    void recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) override;
+    cta::objectstore::serializers::ArchiveJobStatus getNewStatus() override;
   };
   
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextRepackReportBatch(log::LogContext& lc) override;
