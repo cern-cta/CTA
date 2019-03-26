@@ -42,7 +42,7 @@ namespace cta { namespace tape { namespace  daemon {
 // constructor
 //------------------------------------------------------------------------------
 MaintenanceHandler::MaintenanceHandler(const TapedConfiguration& tapedConfig, ProcessManager& pm):
-SubprocessHandler("garbageCollector"), m_processManager(pm), m_tapedConfig(tapedConfig) {
+SubprocessHandler("maintenanceHandler"), m_processManager(pm), m_tapedConfig(tapedConfig) {
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
 }
