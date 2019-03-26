@@ -270,13 +270,13 @@ int MaintenanceHandler::runChild() {
   std::unique_ptr<cta::Scheduler> scheduler;
   try {
     backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, "Maintenance", m_processManager.logContext()));
-    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
-    const uint64_t nbArchiveFileListingConns = 0;
+    const uint64_t nbArchiveFileListingConns = 1;
     auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_processManager.logContext().logger(),
       catalogueLogin, nbConns, nbArchiveFileListingConns);
     catalogue=catalogueFactory->create();
+    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
     scheduler=make_unique<cta::Scheduler>(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
   // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping(m_processManager.logContext());
