@@ -2221,7 +2221,9 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
       "WHERE "
         "VID = :UPDATE_VID AND "
         "IS_FULL != '0' AND "
-        "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID)";
+        "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID "
+    "                                            AND SUPERSEDED_BY_VID IS NULL "
+    "                                            AND SUPERSEDED_BY_FSEQ IS NULL)";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -4826,36 +4828,76 @@ void RdbmsCatalogue::insertTapeFile(
   rdbms::Conn &conn,
   const common::dataStructures::TapeFile &tapeFile,
   const uint64_t archiveFileId) {
-  try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "INSERT INTO TAPE_FILE("
-        "VID,"
-        "FSEQ,"
-        "BLOCK_ID,"
-        "COMPRESSED_SIZE_IN_BYTES,"
-        "COPY_NB,"
-        "CREATION_TIME,"
-        "ARCHIVE_FILE_ID)"
-      "VALUES("
-        ":VID,"
-        ":FSEQ,"
-        ":BLOCK_ID,"
-        ":COMPRESSED_SIZE_IN_BYTES,"
-        ":COPY_NB,"
-        ":CREATION_TIME,"
-        ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql);
+  rdbms::AutoRollback autoRollback(conn);
+  bool updateSupersededNeeded = false;
+  try{
+    {
+      const char *const sql = 
+      "SELECT VID FROM TAPE_FILE "
+      "WHERE "
+      " TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND"
+      " TAPE_FILE.COPY_NB=:COPY_NB";
+      auto stmt = conn.createStmt(sql);
+      stmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
+      stmt.bindUint64(":COPY_NB",tapeFile.copyNb);
+      auto result = stmt.executeQuery();
+      if(result.next()){
+        updateSupersededNeeded = true;
+      }
+    }
+    {
+      const time_t now = time(nullptr);
+      const char *const sql =
+        "INSERT INTO TAPE_FILE("
+          "VID,"
+          "FSEQ,"
+          "BLOCK_ID,"
+          "COMPRESSED_SIZE_IN_BYTES,"
+          "COPY_NB,"
+          "CREATION_TIME,"
+          "ARCHIVE_FILE_ID)"
+        "VALUES("
+          ":VID,"
+          ":FSEQ,"
+          ":BLOCK_ID,"
+          ":COMPRESSED_SIZE_IN_BYTES,"
+          ":COPY_NB,"
+          ":CREATION_TIME,"
+          ":ARCHIVE_FILE_ID)";
+      auto stmt = conn.createStmt(sql);
 
-    stmt.bindString(":VID", tapeFile.vid);
-    stmt.bindUint64(":FSEQ", tapeFile.fSeq);
-    stmt.bindUint64(":BLOCK_ID", tapeFile.blockId);
-    stmt.bindUint64(":COMPRESSED_SIZE_IN_BYTES", tapeFile.compressedSize);
-    stmt.bindUint64(":COPY_NB", tapeFile.copyNb);
-    stmt.bindUint64(":CREATION_TIME", now);
-    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+      stmt.bindString(":VID", tapeFile.vid);
+      stmt.bindUint64(":FSEQ", tapeFile.fSeq);
+      stmt.bindUint64(":BLOCK_ID", tapeFile.blockId);
+      stmt.bindUint64(":COMPRESSED_SIZE_IN_BYTES", tapeFile.compressedSize);
+      stmt.bindUint64(":COPY_NB", tapeFile.copyNb);
+      stmt.bindUint64(":CREATION_TIME", now);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
 
-    stmt.executeNonQuery();
+      stmt.executeNonQuery();
+      if(!updateSupersededNeeded){
+        conn.commit();
+      }
+    } 
+    {
+      if(updateSupersededNeeded){
+        const char *const sql = 
+        "UPDATE TAPE_FILE SET "
+          "SUPERSEDED_BY_VID=:NEW_VID, " //VID of the new file
+          "SUPERSEDED_BY_FSEQ=:NEW_FSEQ " //FSEQ of the new file
+        "WHERE"
+        " TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND"
+        " TAPE_FILE.COPY_NB=:COPY_NB";
+
+        auto stmt = conn.createStmt(sql);
+        stmt.bindString(":NEW_VID",tapeFile.vid);
+        stmt.bindUint64(":NEW_FSEQ",tapeFile.fSeq);
+        stmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
+        stmt.bindUint64(":COPY_NB",tapeFile.copyNb);
+        stmt.executeNonQuery();
+        conn.commit();
+      }
+    }
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
