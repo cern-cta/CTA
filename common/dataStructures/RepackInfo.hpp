@@ -49,6 +49,16 @@ struct RepackInfo {
     Failed = 8,
     Undefined = 999
   } status;
+  uint64_t totalFilesToArchive;
+  uint64_t totalBytesToArchive;
+  uint64_t totalFilesToRetrieve;
+  uint64_t totalBytesToRetrieve;
+  uint64_t failedFilesToArchive;
+  uint64_t failedBytesToArchive;
+  uint64_t failedFilesToRetrieve;
+  uint64_t failedBytesToRetrieve;
+  uint64_t lastExpandedFseq;
+  uint64_t userProvidedFiles;
 //  std::string tag;
 //  uint64_t totalFiles;
 //  uint64_t totalSize;

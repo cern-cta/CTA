@@ -1454,25 +1454,29 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
-         "vid","files","size","type","to retrieve","to archive","failed","archived","status","name","host","time"
+         "vid","file buffer URL","UserProvidedFiles","FilesToRetrieve","BytesToRetrieve","FilesToArchive","BytesToArchive","FailedToRetrieve (files)","FailedToRetrieve (bytes)","FailedToArchive (files)","FailedToArchive (bytes)","LastExpandedFSeq","status"//,"name","host","time"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++)
       {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->vid);
-         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->totalFiles)));
-         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->totalSize)));
-         currentRow.push_back(common::dataStructures::toString(it->type));
-         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->filesToRetrieve)));//change names
-         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->filesToArchive)));
-         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->filesFailed)));
-         currentRow.push_back("0");//std::to_string(static_cast<unsigned long long>(it->filesArchived)));
-         currentRow.push_back(common::dataStructures::toString(it->status));
-         currentRow.push_back("-");//it->creationLog.username);
-         currentRow.push_back("-");//it->creationLog.host);
-         currentRow.push_back("-");//timeToString(it->creationLog.time));
-         responseTable.push_back(currentRow);
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->vid);
+        currentRow.push_back(utils::midEllipsis(it->repackBufferBaseURL,40));//std::to_string(static_cast<unsigned long long>(it->totalFiles)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->userProvidedFiles)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFilesToRetrieve)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalBytesToRetrieve)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFilesToArchive)));//std::to_string(static_cast<unsigned long long>(it->totalSize)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalBytesToArchive)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->failedFilesToRetrieve)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->failedBytesToRetrieve)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->failedFilesToArchive)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->failedBytesToArchive)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastExpandedFseq)));//std::to_string(static_cast<unsigned long long>(it->filesArchived)));
+        currentRow.push_back(common::dataStructures::toString(it->status));
+        //currentRow.push_back("-");//it->creationLog.username);
+        //currentRow.push_back("-");//it->creationLog.host);
+        //currentRow.push_back("-");//timeToString(it->creationLog.time));
+        responseTable.push_back(currentRow);
       }
       cmdlineOutput << formatResponse(responseTable);
    }

@@ -347,6 +347,7 @@ public:
     void expandDone() override;
     void fail() override;
     uint64_t getLastExpandedFSeq() override;
+    void setLastExpandedFSeq(uint64_t fseq) override;
     void setTotalStats(const TotalStatsFiles& stats) override;
 
   private:

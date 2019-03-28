@@ -503,6 +503,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     repackRequest->m_dbReq->setTotalStats(totalStatsFile);
     repackRequest->m_dbReq->addSubrequests(retrieveSubrequests, archiveRoutesMap, fSeq - 1, lc);
     fSeq = std::max(fSeq, maxAddedFSeq + 1);
+    repackRequest->m_dbReq->setLastExpandedFSeq(fSeq);
   }
 }
 

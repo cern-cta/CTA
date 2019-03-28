@@ -433,6 +433,7 @@ public:
   public:
     cta::common::dataStructures::RepackInfo repackInfo;
     virtual uint64_t getLastExpandedFSeq() = 0;
+    virtual void setLastExpandedFSeq(uint64_t fseq) = 0;
     struct Subrequest {
       uint64_t fSeq;
       cta::common::dataStructures::ArchiveFile archiveFile;

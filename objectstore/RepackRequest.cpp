@@ -125,6 +125,16 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.vid = m_payload.vid();
   ret.status = (RepackInfo::Status) m_payload.status();
   ret.repackBufferBaseURL = m_payload.buffer_url();
+  ret.totalFilesToArchive = m_payload.totalfilestoarchive();
+  ret.totalBytesToArchive = m_payload.totalbytestoarchive();
+  ret.totalFilesToRetrieve = m_payload.totalfilestoretrieve();
+  ret.totalBytesToRetrieve = m_payload.totalbytestoretrieve();
+  ret.failedFilesToArchive = m_payload.failedtoarchivefiles();
+  ret.failedBytesToArchive = m_payload.failedtoarchivebytes();
+  ret.failedFilesToRetrieve = m_payload.failedtoretrievefiles();
+  ret.failedBytesToRetrieve = m_payload.failedtoretrievebytes();
+  ret.lastExpandedFseq = m_payload.lastexpandedfseq();
+  ret.userProvidedFiles = m_payload.userprovidedfiles();
   if (m_payload.move_mode()) {
     if (m_payload.add_copies_mode()) {
       ret.type = RepackInfo::Type::MoveAndAddCopies;
@@ -134,7 +144,7 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   } else if (m_payload.add_copies_mode()) {
     ret.type = RepackInfo::Type::AddCopiesOnly;
   } else {
-    throw exception::Exception("In RepackRequest::getInfo(): unexpcted mode: neither expand nor repack.");
+    throw exception::Exception("In RepackRequest::getInfo(): unexpected mode: neither expand nor repack.");
   }
   return ret;
 }

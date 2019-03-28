@@ -2064,6 +2064,13 @@ uint64_t OStoreDB::RepackRequest::getLastExpandedFSeq() {
   return m_repackRequest.getLastExpandedFSeq();
 }
 
+void OStoreDB::RepackRequest::setLastExpandedFSeq(uint64_t fseq){
+  objectstore::ScopedExclusiveLock rrl (m_repackRequest);
+  m_repackRequest.fetch();
+  m_repackRequest.setLastExpandedFSeq(fseq);
+  m_repackRequest.commit();
+}
+
 //------------------------------------------------------------------------------
 // OStoreDB::RepackRequest::addSubrequests()
 //------------------------------------------------------------------------------
