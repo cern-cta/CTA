@@ -96,9 +96,6 @@ public:
         for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
           Data record;
 
-          // Copy number
-          record.mutable_afls_item()->set_copy_nb(jt->first);
-
           // Archive file
           auto af = record.mutable_afls_item()->mutable_af();
           af->set_archive_id(archiveFile.archiveFileID);
@@ -118,6 +115,7 @@ public:
           tf->set_vid(jt->second.vid);
           tf->set_f_seq(jt->second.fSeq);
           tf->set_block_id(jt->second.blockId);
+          record.mutable_afls_item()->set_copy_nb(jt->second.copyNb);
 
           // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
           // enough data to send to the client. The actual buffer size is double the block size,
