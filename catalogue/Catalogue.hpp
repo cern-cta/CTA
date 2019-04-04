@@ -336,6 +336,14 @@ public:
    * @param vid The volume identifier of the tape to be reclaimed.
    */
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) = 0;
+  
+  /**
+   * This method should ONLY be used for TESTS. It does exactly the same as the real reclaimTape but it does not verify the 
+   * SUPERSEDED_BY_VID and SUPERSEDED_BY_FSEQ attributes
+   * @param admin The administrator.
+   * @param vid The volume identifier of the tape to be reclaimed.
+   */
+  virtual void fakeReclaimTapeForTests(const common::dataStructures::SecurityIdentity& admin, const std::string &vid) = 0;
 
   virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) = 0;
   virtual void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) = 0;
@@ -589,6 +597,15 @@ public:
    * @return True if the tape exists.
    */
   virtual bool tapeExists(const std::string &vid) const = 0;
+  
+  /**
+   * Returns true if non superseded files exist after fSeq in the tape where vid is passed in parameter
+   * 
+   * @param vid the vid of the tape to check if non superseded files exist after fSeq
+   * @param fSeq the fSeq after which we want to check if non superseded files exist
+   * @return true if non superseded files exist, false otherwise
+   */
+  virtual bool existNonSupersededFilesAfterFSeq(const std::string &vid, const uint64_t fSeq) const  = 0;
 
 }; // class Catalogue
 

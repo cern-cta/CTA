@@ -330,7 +330,7 @@ public:
    * @param vid The volume identifier of the tape to be reclaimed.
    */
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override;
-
+  void fakeReclaimTapeForTests(const common::dataStructures::SecurityIdentity& admin, const std::string& vid) override;
   void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) override;
   void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) override;
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override;
@@ -713,6 +713,16 @@ protected:
    * @return True if the tape exists.
    */
   bool tapeExists(rdbms::Conn &conn, const std::string &vid) const;
+  
+  /**
+   * Returns true if non superseded files exist after fSeq in the tape where vid is passed in parameter
+   * 
+   * @param vid the vid of the tape to check if non superseded files exist after fSeq
+   * @param fSeq the fSeq after which we want to check if non superseded files exist
+   * @return true if non superseded files exist, false otherwise
+   */
+  bool existNonSupersededFilesAfterFSeq(const std::string& vid, const uint64_t fSeq) const override;
+
 
   /**
    * Returns the list of tapes that meet the specified search criteria.

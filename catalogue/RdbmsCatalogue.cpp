@@ -1791,6 +1791,31 @@ bool RdbmsCatalogue::tapeExists(rdbms::Conn &conn, const std::string &vid) const
   }
 }
 
+bool RdbmsCatalogue::existNonSupersededFilesAfterFSeq(const std::string& vid, const uint64_t fSeq) const {
+  try{
+    auto conn = m_connPool.getConn();
+    const char *const sql =
+    "SELECT VID "
+     "FROM TAPE_FILE "
+    "WHERE "
+      "VID = :VID AND "
+      "FSEQ > :FSEQ AND "
+      "SUPERSEDED_BY_VID IS NULL AND "
+      "SUPERSEDED_BY_FSEQ IS NULL";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID",vid);
+    stmt.bindUint64(":FSEQ",fSeq);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
 //------------------------------------------------------------------------------
 // deleteTape
 //------------------------------------------------------------------------------
@@ -2262,6 +2287,63 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
     throw;
   }
 }
+
+//------------------------------------------------------------------------------
+//fakeReclaimTapeForTests
+//------------------------------------------------------------------------------
+
+void RdbmsCatalogue::fakeReclaimTapeForTests(const common::dataStructures::SecurityIdentity& admin, const std::string& vid) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "DATA_IN_BYTES = 0,"
+        "LAST_FSEQ = 0,"
+        "IS_FULL = '0',"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :UPDATE_VID AND "
+        "IS_FULL != '0'";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":UPDATE_VID", vid);
+    stmt.executeNonQuery();
+
+    // If the update failed due to a user error
+    if(0 == stmt.getNbAffectedRows()) {
+      // Try to determine the user error
+      //
+      // Please note that this is a best effort diagnosis because there is no
+      // lock on the database to prevent other concurrent updates from taking
+      // place on the TAPE and TAPE_FILE tables
+      TapeSearchCriteria searchCriteria;
+      searchCriteria.vid = vid;
+      const auto tapes = getTapes(conn, searchCriteria);
+
+      if(tapes.empty()) {
+        throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it does not exist");
+      } else {
+        if(!tapes.front().full) {
+          throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
+        } else {
+          throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because there is at least one tape"
+            " file in the catalogue that is on the tape");
+        }
+      }
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // getTapeLogFromRset
