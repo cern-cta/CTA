@@ -389,6 +389,9 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
 
    // Set ArchiveFileId in xattrs
    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
+   
+   // Set the storage class in xattrs
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_StorageClass", storageClass));
 
    // Set response type
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
