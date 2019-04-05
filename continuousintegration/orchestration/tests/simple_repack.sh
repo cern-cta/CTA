@@ -33,7 +33,7 @@ executeReclaim() {
 }
 
 executeRepack() {
-    WAIT_FOR_REPACK_FILE_TIMEOUT=100
+    WAIT_FOR_REPACK_FILE_TIMEOUT=300
     echo
     echo "Changing the tape $1 to FULL status"
     kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin ta ch -v $1 -f true
