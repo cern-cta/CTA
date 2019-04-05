@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace>
