@@ -60,9 +60,11 @@ namespace unitTests {
       block_size = 262144;
       label = "K00001";
       fileToRecall.selectedCopyNb=1;
-      fileToRecall.archiveFile.tapeFiles[1];
-      fileToRecall.selectedTapeFile().blockId = 0;
-      fileToRecall.selectedTapeFile().fSeq = 1;
+      cta::common::dataStructures::TapeFile tf;
+      tf.blockId = 0;
+      tf.fSeq = 1;
+      tf.copyNb = 1;
+      fileToRecall.archiveFile.tapeFiles.push_back(tf);
       fileToRecall.retrieveRequest.archiveFileID = 1;
       fileToMigrate.archiveFile.fileSize = 500;
       fileToMigrate.archiveFile.archiveFileID = 1;

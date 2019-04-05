@@ -65,7 +65,7 @@ namespace {
       tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
       tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
 
-      archiveFile.tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
+      archiveFile.tapeFiles.push_back(tapeFile);
     }
 
     return archiveFile;

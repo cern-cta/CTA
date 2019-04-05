@@ -22,10 +22,10 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-std::ostream &operator<<(std::ostream &os, const std::map<uint32_t,TapeFile> &map) {
+std::ostream &operator<<(std::ostream &os, const std::list<TapeFile> &list) {
   os << "(";
-  for(auto it = map.begin(); it != map.end(); it++) {
-    os << " key=" << it->first << " value=" << it->second << " ";
+  for(auto & af: list) {
+    os << af << " ";
   }
   os << ")";
   return os;

@@ -68,7 +68,15 @@ struct ArchiveFile {
    * to be listed by the operator. For example, if the listing requested is 
    * for a single tape, the map will contain only one element. 
    */
-  std::map<uint32_t,TapeFile> tapeFiles;
+  class TapeFilesList: public std::list<TapeFile> {
+  public:
+    using std::list<TapeFile>::list;
+    TapeFile & at(uint32_t copyNb);
+    const TapeFile & at(uint32_t copyNb) const;
+    TapeFilesList::iterator find(uint32_t copyNb);
+    TapeFilesList::const_iterator find(uint32_t copyNb) const;
+  };
+  TapeFilesList tapeFiles;
   time_t creationTime;
   time_t reconciliationTime;
 

@@ -239,20 +239,28 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   rqc.archiveFile.diskInstance = "eoseos";
   rqc.archiveFile.fileSize = 1000;
   rqc.archiveFile.storageClass = "sc";
-  rqc.archiveFile.tapeFiles[1].blockId=0;
-  rqc.archiveFile.tapeFiles[1].compressedSize=1;
-  rqc.archiveFile.tapeFiles[1].compressedSize=1;
-  rqc.archiveFile.tapeFiles[1].copyNb=1;
-  rqc.archiveFile.tapeFiles[1].creationTime=time(nullptr);
-  rqc.archiveFile.tapeFiles[1].fSeq=2;
-  rqc.archiveFile.tapeFiles[1].vid="Tape0";
-  rqc.archiveFile.tapeFiles[2].blockId=0;
-  rqc.archiveFile.tapeFiles[2].compressedSize=2;
-  rqc.archiveFile.tapeFiles[2].compressedSize=2;
-  rqc.archiveFile.tapeFiles[2].copyNb=2;
-  rqc.archiveFile.tapeFiles[2].creationTime=time(nullptr);
-  rqc.archiveFile.tapeFiles[2].fSeq=2;
-  rqc.archiveFile.tapeFiles[2].vid="Tape1";
+  {
+    cta::common::dataStructures::TapeFile tf;
+    tf.blockId=0;
+    tf.compressedSize=1;
+    tf.compressedSize=1;
+    tf.copyNb=1;
+    tf.creationTime=time(nullptr);
+    tf.fSeq=2;
+    tf.vid="Tape0";
+    rqc.archiveFile.tapeFiles.push_back(tf);
+  }
+  {
+    cta::common::dataStructures::TapeFile tf;
+    tf.blockId=0;
+    tf.compressedSize=2;
+    tf.compressedSize=2;
+    tf.copyNb=2;
+    tf.creationTime=time(nullptr);
+    tf.fSeq=2;
+    tf.vid="Tape1";
+    rqc.archiveFile.tapeFiles.push_back(tf);
+  }
   rqc.mountPolicy.archiveMinRequestAge = 1;
   rqc.mountPolicy.archivePriority = 1;
   rqc.mountPolicy.creationLog.time = time(nullptr);
@@ -363,7 +371,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     ASSERT_EQ(aFile.fileSize,rqc.archiveFile.fileSize);
     ASSERT_EQ(aFile.storageClass,rqc.archiveFile.storageClass);
     ASSERT_EQ(elt.copyNb,2);
-    ASSERT_EQ(elt.archiveFile.tapeFiles[2].compressedSize,2);
+    ASSERT_EQ(elt.archiveFile.tapeFiles.at(2).compressedSize,2);
     ASSERT_EQ(elt.bytes,1000);
     ASSERT_EQ(elt.reportType,cta::SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired);
     ASSERT_EQ(elt.rr.archiveFileID,aFile.archiveFileID);
@@ -427,7 +435,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   rr.initialize();
   cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
   rqc.archiveFile.archiveFileID = 1L;
-  rqc.archiveFile.diskFileId = "eos://diskFile";
+  rqc.archiveFile.diskFileId = "eos://diskFile1";
   rqc.archiveFile.checksumType = "";
   rqc.archiveFile.checksumValue = "";
   rqc.archiveFile.creationTime = 0;
@@ -436,13 +444,17 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   rqc.archiveFile.diskInstance = "eoseos";
   rqc.archiveFile.fileSize = 1000;
   rqc.archiveFile.storageClass = "sc";
-  rqc.archiveFile.tapeFiles[1].blockId=0;
-  rqc.archiveFile.tapeFiles[1].compressedSize=1;
-  rqc.archiveFile.tapeFiles[1].compressedSize=1;
-  rqc.archiveFile.tapeFiles[1].copyNb=1;
-  rqc.archiveFile.tapeFiles[1].creationTime=time(nullptr);
-  rqc.archiveFile.tapeFiles[1].fSeq=1;
-  rqc.archiveFile.tapeFiles[1].vid="Tape0";
+  {
+    cta::common::dataStructures::TapeFile tf;
+    tf.blockId=0;
+    tf.compressedSize=1;
+    tf.compressedSize=1;
+    tf.copyNb=1;
+    tf.creationTime=time(nullptr);
+    tf.fSeq=1;
+    tf.vid="Tape0";
+    rqc.archiveFile.tapeFiles.push_back(tf);
+  }
   rqc.mountPolicy.archiveMinRequestAge = 1;
   rqc.mountPolicy.archivePriority = 1;
   rqc.mountPolicy.creationLog.time = time(nullptr);
@@ -467,7 +479,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   rr2.initialize();
   cta::common::dataStructures::RetrieveFileQueueCriteria rqc2;
   rqc2.archiveFile.archiveFileID = 2L;
-  rqc2.archiveFile.diskFileId = "eos://diskFile";
+  rqc2.archiveFile.diskFileId = "eos://diskFile2";
   rqc2.archiveFile.checksumType = "";
   rqc2.archiveFile.checksumValue = "";
   rqc2.archiveFile.creationTime = 0;
@@ -476,13 +488,17 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   rqc2.archiveFile.diskInstance = "eoseos";
   rqc2.archiveFile.fileSize = 1000;
   rqc2.archiveFile.storageClass = "sc";
-  rqc2.archiveFile.tapeFiles[1].blockId=0;
-  rqc2.archiveFile.tapeFiles[1].compressedSize=1;
-  rqc2.archiveFile.tapeFiles[1].compressedSize=1;
-  rqc2.archiveFile.tapeFiles[1].copyNb=2;
-  rqc2.archiveFile.tapeFiles[1].creationTime=time(nullptr);
-  rqc2.archiveFile.tapeFiles[1].fSeq=2;
-  rqc2.archiveFile.tapeFiles[1].vid="Tape0";
+  {
+    cta::common::dataStructures::TapeFile tf;
+    tf.blockId=0;
+    tf.compressedSize=1;
+    tf.compressedSize=1;
+    tf.copyNb=2;
+    tf.creationTime=time(nullptr);
+    tf.fSeq=2;
+    tf.vid="Tape0";
+    rqc2.archiveFile.tapeFiles.push_back(tf);
+  }
   rqc2.mountPolicy.archiveMinRequestAge = 1;
   rqc2.mountPolicy.archivePriority = 1;
   rqc2.mountPolicy.creationLog.time = time(nullptr);
@@ -639,13 +655,13 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
     
     auto& elt = elements.elements.front();
     ASSERT_EQ(elt.copyNb,1);
-    ASSERT_EQ(elt.archiveFile.tapeFiles[1].vid,"Tape0");
-    ASSERT_EQ(elt.archiveFile.tapeFiles[1].fSeq,1);
+    ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).vid,"Tape0");
+    ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).fSeq,1);
     
     auto& elt2 = elements.elements.back();
     ASSERT_EQ(elt2.copyNb,2);
-    ASSERT_EQ(elt2.archiveFile.tapeFiles[2].vid,"Tape0");
-    ASSERT_EQ(elt2.archiveFile.tapeFiles[2].fSeq,2);
+    ASSERT_EQ(elt2.archiveFile.tapeFiles.at(2).vid,"Tape0");
+    ASSERT_EQ(elt2.archiveFile.tapeFiles.at(2).fSeq,2);
     
   }
   {
@@ -885,13 +901,17 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   rqc.archiveFile.diskInstance = "eoseos";
   rqc.archiveFile.fileSize = 1000;
   rqc.archiveFile.storageClass = "sc";
-  rqc.archiveFile.tapeFiles[1].blockId=0;
-  rqc.archiveFile.tapeFiles[1].compressedSize=1;
-  rqc.archiveFile.tapeFiles[1].compressedSize=1;
-  rqc.archiveFile.tapeFiles[1].copyNb=1;
-  rqc.archiveFile.tapeFiles[1].creationTime=time(nullptr);
-  rqc.archiveFile.tapeFiles[1].fSeq=1;
-  rqc.archiveFile.tapeFiles[1].vid="Tape0";
+  {
+    cta::common::dataStructures::TapeFile tf;
+    tf.blockId=0;
+    tf.compressedSize=1;
+    tf.compressedSize=1;
+    tf.copyNb=1;
+    tf.creationTime=time(nullptr);
+    tf.fSeq=1;
+    tf.vid="Tape0";
+    rqc.archiveFile.tapeFiles.push_back(tf);
+  }
   rqc.mountPolicy.archiveMinRequestAge = 1;
   rqc.mountPolicy.archivePriority = 1;
   rqc.mountPolicy.creationLog.time = time(nullptr);
@@ -914,10 +934,10 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   request.archiveFile = rqc.archiveFile;
   
   for(auto& tf: request.archiveFile.tapeFiles){
-    Sorter::RetrieveJob& job = request.retrieveJobs[tf.first];
-    job.fSeq = tf.second.fSeq;
+    Sorter::RetrieveJob& job = request.retrieveJobs[tf.copyNb];
+    job.fSeq = tf.fSeq;
     job.fileSize = rqc.archiveFile.fileSize;
-    job.jobDump.copyNb = tf.first;
+    job.jobDump.copyNb = tf.copyNb;
     job.jobDump.status = serializers::RetrieveJobStatus::RJS_ToTransferForUser;
     job.jobQueueType = JobQueueType::JobsToTransferForUser;
     job.mountPolicy = rqc.mountPolicy;
@@ -956,8 +976,8 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
     
     auto& elt = elements.elements.front();
     ASSERT_EQ(elt.copyNb,1);
-    ASSERT_EQ(elt.archiveFile.tapeFiles[1].vid,"Tape0");
-    ASSERT_EQ(elt.archiveFile.tapeFiles[1].fSeq,1);
+    ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).vid,"Tape0");
+    ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).fSeq,1);
     ASSERT_EQ(elt.archiveFile.checksumValue,"checksumValue");
     ASSERT_EQ(elt.archiveFile.checksumType,"checksumType");
     ASSERT_EQ(elt.archiveFile.diskInstance,"eoseos");

@@ -238,7 +238,7 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
       std::string bestVid = getBestVidForQueueingRetrieveRequest(accessor, candidateVidsToTransfer ,lc);
 
       for (auto & tf: accessor.getArchiveFile().tapeFiles) {
-        if (tf.second.vid == bestVid) {
+        if (tf.vid == bestVid) {
           goto vidFound;
         }
       }
@@ -253,7 +253,7 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
         log::ScopedParamContainer params(lc);
         size_t copyNb = std::numeric_limits<size_t>::max();
         uint64_t fSeq = std::numeric_limits<uint64_t>::max();
-        for (auto & tc: accessor.getArchiveFile().tapeFiles) { if (tc.second.vid==bestVid) { copyNb=tc.first; fSeq=tc.second.fSeq; } }
+        for (auto & tc: accessor.getArchiveFile().tapeFiles) { if (tc.vid==bestVid) { copyNb=tc.copyNb; fSeq=tc.fSeq; } }
         cta::common::dataStructures::ArchiveFile archiveFile = accessor.getArchiveFile();
         try{
           Sorter::RetrieveJob jobToAdd = accessor.createRetrieveJob(archiveFile,copyNb,fSeq,&previousOwner);
@@ -282,7 +282,7 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
     log::ScopedParamContainer params(lc);
     auto rjqi = std::make_shared<RetrieveJobQueueInfo>();
     cta::common::dataStructures::ArchiveFile archiveFile = accessor.getArchiveFile();
-    cta::common::dataStructures::TapeFile jobTapeFile = archiveFile.tapeFiles[copyNb.value()];
+    cta::common::dataStructures::TapeFile jobTapeFile = archiveFile.tapeFiles.at(copyNb.value());
     try{
       Sorter::RetrieveJob jobToAdd = accessor.createRetrieveJob(archiveFile,jobTapeFile.copyNb,jobTapeFile.fSeq,&previousOwner);
       rjqi->jobToQueue = std::make_tuple(jobToAdd,std::promise<void>());

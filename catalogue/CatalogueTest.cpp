@@ -6451,7 +6451,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -6502,7 +6502,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -6512,7 +6512,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+    const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -6708,7 +6708,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -6759,7 +6759,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     const auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -6769,7 +6769,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     const auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+    const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -6830,7 +6830,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     const auto copyNbToTapeFile1Itor = queueCriteria.archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == queueCriteria.archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -6841,7 +6841,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     const auto copyNbToTapeFile2Itor = queueCriteria.archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == queueCriteria.archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+    const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -6864,7 +6864,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     const auto copyNbToTapeFile2Itor = queueCriteria.archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == queueCriteria.archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+    const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -7369,7 +7369,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(searchCriteria.diskFileGroup, archiveFile.diskFileInfo.group);
     ASSERT_EQ(searchCriteria.storageClass, archiveFile.storageClass);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
-    ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->second.vid);
+    ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->vid);
   }
 
   {
@@ -7423,28 +7423,26 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       {
         const auto it = archiveFile.tapeFiles.find(1);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten1.vid, it->second.vid);
-        ASSERT_EQ(fileWritten1.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten1.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten1.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten1.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten1.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten1.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten1.copyNb, it->first);
+        ASSERT_EQ(fileWritten1.vid, it->vid);
+        ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten1.blockId, it->blockId);
+        ASSERT_EQ(fileWritten1.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten1.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten1.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
       }
 
       // Tape copy 2
       {
         const auto it = archiveFile.tapeFiles.find(2);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten2.vid, it->second.vid);
-        ASSERT_EQ(fileWritten2.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten2.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten2.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten2.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten2.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten2.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten2.copyNb, it->first);
+        ASSERT_EQ(fileWritten2.vid, it->vid);
+        ASSERT_EQ(fileWritten2.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten2.blockId, it->blockId);
+        ASSERT_EQ(fileWritten2.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten2.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten2.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten2.copyNb, it->copyNb);
       }
     }
   }
@@ -7501,28 +7499,26 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       {
         const auto it = archiveFile.tapeFiles.find(1);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten1.vid, it->second.vid);
-        ASSERT_EQ(fileWritten1.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten1.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten1.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten1.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten1.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten1.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten1.copyNb, it->first);
+        ASSERT_EQ(fileWritten1.vid, it->vid);
+        ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten1.blockId, it->blockId);
+        ASSERT_EQ(fileWritten1.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten1.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten1.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
       }
 
       // Tape copy 2
       {
         const auto it = archiveFile.tapeFiles.find(2);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten2.vid, it->second.vid);
-        ASSERT_EQ(fileWritten2.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten2.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten2.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten2.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten2.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten2.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten2.copyNb, it->first);
+        ASSERT_EQ(fileWritten2.vid, it->vid);
+        ASSERT_EQ(fileWritten2.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten2.blockId, it->blockId);
+        ASSERT_EQ(fileWritten2.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten2.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten2.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten2.copyNb, it->copyNb);
       }
     }
   }
@@ -7579,14 +7575,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       {
         const auto it = archiveFile.tapeFiles.find(copyNb);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten.vid, it->second.vid);
-        ASSERT_EQ(fileWritten.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten.copyNb, it->first);
+        ASSERT_EQ(fileWritten.vid, it->vid);
+        ASSERT_EQ(fileWritten.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten.blockId, it->blockId);
+        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
   }
@@ -7643,14 +7638,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       {
         const auto it = archiveFile.tapeFiles.find(copyNb);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten.vid, it->second.vid);
-        ASSERT_EQ(fileWritten.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten.copyNb, it->first);
+        ASSERT_EQ(fileWritten.vid, it->vid);
+        ASSERT_EQ(fileWritten.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten.blockId, it->blockId);
+        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
   }
@@ -7707,14 +7701,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       {
         const auto it = archiveFile.tapeFiles.find(copyNb);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten.vid, it->second.vid);
-        ASSERT_EQ(fileWritten.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten.copyNb, it->first);
+        ASSERT_EQ(fileWritten.vid, it->vid);
+        ASSERT_EQ(fileWritten.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten.blockId, it->blockId);
+        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
   }
@@ -8317,7 +8310,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(searchCriteria.diskFileGroup, archiveFile.diskFileInfo.group);
     ASSERT_EQ(searchCriteria.storageClass, archiveFile.storageClass);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
-    ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->second.vid);
+    ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->vid);
   }
 
   auto afidToSeq = [](const uint64_t l_nbTot, const uint64_t l_batchsize, const uint64_t l_afid, uint64_t &l_seq1, uint64_t &l_seq2) {
@@ -8387,28 +8380,26 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       {
         const auto it = archiveFile.tapeFiles.find(1);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten1.vid, it->second.vid);
-        ASSERT_EQ(fileWritten1.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten1.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten1.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten1.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten1.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten1.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten1.copyNb, it->first);
+        ASSERT_EQ(fileWritten1.vid, it->vid);
+        ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten1.blockId, it->blockId);
+        ASSERT_EQ(fileWritten1.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten1.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten1.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
       }
 
       // Tape copy 2
       {
         const auto it = archiveFile.tapeFiles.find(2);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten2.vid, it->second.vid);
-        ASSERT_EQ(fileWritten2.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten2.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten2.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten2.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten2.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten2.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten2.copyNb, it->first);
+        ASSERT_EQ(fileWritten2.vid, it->vid);
+        ASSERT_EQ(fileWritten2.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten2.blockId, it->blockId);
+        ASSERT_EQ(fileWritten2.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten2.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten2.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten2.copyNb, it->copyNb);
       }
     }
   }
@@ -8469,28 +8460,26 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       {
         const auto it = archiveFile.tapeFiles.find(1);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten1.vid, it->second.vid);
-        ASSERT_EQ(fileWritten1.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten1.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten1.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten1.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten1.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten1.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten1.copyNb, it->first);
+        ASSERT_EQ(fileWritten1.vid, it->vid);
+        ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten1.blockId, it->blockId);
+        ASSERT_EQ(fileWritten1.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten1.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten1.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
       }
 
       // Tape copy 2
       {
         const auto it = archiveFile.tapeFiles.find(2);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten2.vid, it->second.vid);
-        ASSERT_EQ(fileWritten2.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten2.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten2.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten2.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten2.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten2.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten2.copyNb, it->first);
+        ASSERT_EQ(fileWritten2.vid, it->vid);
+        ASSERT_EQ(fileWritten2.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten2.blockId, it->blockId);
+        ASSERT_EQ(fileWritten2.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten2.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten2.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten2.copyNb, it->copyNb);
       }
     }
   }
@@ -8550,14 +8539,13 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       {
         const auto it = archiveFile.tapeFiles.find(copyNb);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten.vid, it->second.vid);
-        ASSERT_EQ(fileWritten.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten.copyNb, it->first);
+        ASSERT_EQ(fileWritten.vid, it->vid);
+        ASSERT_EQ(fileWritten.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten.blockId, it->blockId);
+        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
   }
@@ -8617,14 +8605,13 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       {
         const auto it = archiveFile.tapeFiles.find(copyNb);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten.vid, it->second.vid);
-        ASSERT_EQ(fileWritten.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten.copyNb, it->first);
+        ASSERT_EQ(fileWritten.vid, it->vid);
+        ASSERT_EQ(fileWritten.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten.blockId, it->blockId);
+        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
   }
@@ -8684,14 +8671,13 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       {
         const auto it = archiveFile.tapeFiles.find(copyNb);
         ASSERT_NE(archiveFile.tapeFiles.end(), it);
-        ASSERT_EQ(fileWritten.vid, it->second.vid);
-        ASSERT_EQ(fileWritten.fSeq, it->second.fSeq);
-        ASSERT_EQ(fileWritten.blockId, it->second.blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->second.compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->second.checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->second.checksumValue);
-        ASSERT_EQ(fileWritten.copyNb, it->second.copyNb);
-        ASSERT_EQ(fileWritten.copyNb, it->first);
+        ASSERT_EQ(fileWritten.vid, it->vid);
+        ASSERT_EQ(fileWritten.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten.blockId, it->blockId);
+        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
+        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
+        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
   }
@@ -9018,7 +9004,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -9079,7 +9065,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -9090,7 +9076,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+    const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -9247,7 +9233,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -9305,11 +9291,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
 
     // If there are two or more tape copies with the same copy number then
-    // only the last one read out by the database is returned by
-    // m_catalogue->getArchiveFileById()
-    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    // only one of them will be active (<=> supersededByVid.empty()).
+    ASSERT_EQ(1, std::count_if(archiveFile.tapeFiles.begin(), archiveFile.tapeFiles.end(),
+        [](const cta::common::dataStructures::TapeFile &tf){ return tf.supersededByVid.empty();}));
 
-    const auto &tapeFile = archiveFile.tapeFiles.begin()->second;
+    const auto &tapeFile = *archiveFile.tapeFiles.begin();
 
     ASSERT_TRUE(file1Written.vid == tapeFile.vid || file2Written.vid == tapeFile.vid);
 
@@ -9445,7 +9431,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -9503,11 +9489,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
 
     // If there are two or more tape copies with the same copy number then
-    // only the last one read out by the database is returned by
-    // m_catalogue->getArchiveFileById()
-    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    // only one of them will be active (<=> supersededByVid.empty()).
+    ASSERT_EQ(1, std::count_if(archiveFile.tapeFiles.begin(), archiveFile.tapeFiles.end(),
+        [](const cta::common::dataStructures::TapeFile &tf){ return tf.supersededByVid.empty();}));
 
-    const auto &tapeFile = archiveFile.tapeFiles.begin()->second;
+    const auto &tapeFile = *archiveFile.tapeFiles.begin();
 
     ASSERT_TRUE(file1Written.fSeq == tapeFile.fSeq || file2Written.fSeq == tapeFile.fSeq);
 
@@ -9671,7 +9657,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -9853,7 +9839,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10035,7 +10021,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10223,7 +10209,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10251,7 +10237,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10320,7 +10306,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
       auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
       ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-      const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+      const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
       ASSERT_EQ(file1Written.vid, tapeFile1.vid);
       ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
       ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10331,7 +10317,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
       auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
       ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
-      const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+      const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
       ASSERT_EQ(file2Written.vid, tapeFile2.vid);
       ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
       ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -10361,7 +10347,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10372,7 +10358,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+    const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -10540,7 +10526,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10568,7 +10554,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10637,7 +10623,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
       auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
       ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-      const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+      const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
       ASSERT_EQ(file1Written.vid, tapeFile1.vid);
       ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
       ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10648,7 +10634,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
       auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
       ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
-      const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+      const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
       ASSERT_EQ(file2Written.vid, tapeFile2.vid);
       ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
       ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -10678,7 +10664,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -10689,7 +10675,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
+    const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -11032,7 +11018,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -11255,7 +11241,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -11419,7 +11405,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -11487,6 +11473,15 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   file1WrittenAgain.copyNb               = 1;
   file1WrittenAgain.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenAgainSet);
+  
+  common::dataStructures::ArchiveFile repackedFile = m_catalogue->getArchiveFileById(archiveFileId);
+  ASSERT_EQ(2, repackedFile.tapeFiles.size());
+  for (auto &tf: repackedFile.tapeFiles) {
+    if (tf.vid == vid1)
+      ASSERT_EQ(vid2, tf.supersededByVid);
+    else
+      ASSERT_EQ("", tf.supersededByVid);
+  }
   
   ASSERT_NO_THROW(m_catalogue->reclaimTape(m_admin, vid1));
  

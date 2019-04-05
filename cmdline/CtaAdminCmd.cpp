@@ -405,10 +405,12 @@ void CtaAdminCmd::printAfLsHeader()
              << std::setfill(' ') << std::setw(12) << std::right << "size"           << ' '
              << std::setfill(' ') << std::setw(13) << std::right << "checksum type"  << ' '
              << std::setfill(' ') << std::setw(14) << std::right << "checksum value" << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' '
+             << std::setfill(' ') << std::setw(16) << std::right << "storage class"  << ' '
              << std::setfill(' ') << std::setw(8)  << std::right << "owner"          << ' '
              << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
              << std::setfill(' ') << std::setw(13) << std::right << "creation time"  << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "ss vid"         << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "ss fseq"        << ' '
                                                                  << "path"
              << TEXT_NORMAL << std::endl;
 }
@@ -425,11 +427,19 @@ void CtaAdminCmd::print(const cta::admin::ArchiveFileLsItem &afls_item)
              << std::setfill(' ') << std::setw(12) << std::right << afls_item.af().size()          << ' '
              << std::setfill(' ') << std::setw(13) << std::right << afls_item.af().cs().type()     << ' '
              << std::setfill(' ') << std::setw(14) << std::right << afls_item.af().cs().value()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << afls_item.af().storage_class() << ' '
+             << std::setfill(' ') << std::setw(16) << std::right << afls_item.af().storage_class() << ' '
              << std::setfill(' ') << std::setw(8)  << std::right << afls_item.af().df().owner()    << ' '
              << std::setfill(' ') << std::setw(8)  << std::right << afls_item.af().df().group()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << afls_item.af().creation_time() << ' '
-                                                                 << afls_item.af().df().path()
+             << std::setfill(' ') << std::setw(13) << std::right << afls_item.af().creation_time() << ' ';
+
+   if (afls_item.tf().superseded_by_vid().size()) {
+     std::cout << std::setfill(' ') << std::setw(7)  << std::right << afls_item.tf().superseded_by_vid()   << ' '
+               << std::setfill(' ') << std::setw(7)  << std::right << afls_item.tf().superseded_by_f_seq() << ' ';
+   } else {
+     std::cout << std::setfill(' ') << std::setw(7)  << std::right << "-" << ' '
+               << std::setfill(' ') << std::setw(7)  << std::right << "-" << ' ';
+   }
+   std::cout << afls_item.af().df().path()
              << std::endl;
 }
 

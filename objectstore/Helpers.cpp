@@ -407,7 +407,10 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       auto tapeStatus=catalogue.getTapesByVid({v});
       // Build a minimal service  retrieve file queue criteria to query queues.
       common::dataStructures::RetrieveFileQueueCriteria rfqc;
-      rfqc.archiveFile.tapeFiles[1].vid=v;
+      common::dataStructures::TapeFile tf;
+      tf.copyNb = 1;
+      tf.vid = v;
+      rfqc.archiveFile.tapeFiles.push_back(tf);
       auto queuesStats=Helpers::getRetrieveQueueStatistics(rfqc, {v}, objectstore);
       // We now have the data we need. Update the cache.
       grqsmLock.lock();
@@ -504,14 +507,14 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
   re.fetch();
   rel.release();
   for (auto &tf:criteria.archiveFile.tapeFiles) {
-    if (!vidsToConsider.count(tf.second.vid))
+    if (!vidsToConsider.count(tf.vid))
       continue;
     std::string rqAddr;
     try {
-      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, JobQueueType::JobsToTransferForUser);
+      std::string rqAddr = re.getRetrieveQueueAddress(tf.vid, JobQueueType::JobsToTransferForUser);
     } catch (cta::exception::Exception &) {
       ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
-      ret.back().vid=tf.second.vid;
+      ret.back().vid=tf.vid;
       ret.back().bytesQueued=0;
       ret.back().currentPriority=0;
       ret.back().filesQueued=0;
@@ -521,7 +524,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
     ScopedSharedLock rql(rq);
     rq.fetch();
     rql.release();
-    if (rq.getVid() != tf.second.vid)
+    if (rq.getVid() != tf.vid)
       throw cta::exception::Exception("In OStoreDB::getRetrieveQueueStatistics(): unexpected vid for retrieve queue");
     ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
     ret.back().vid=rq.getVid();

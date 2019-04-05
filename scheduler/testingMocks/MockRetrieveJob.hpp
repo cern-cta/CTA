@@ -31,7 +31,9 @@ namespace cta {
     cta::common::dataStructures::RetrieveRequest(), 
     cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByBlock), completes(0), failures(0) {
-      archiveFile.tapeFiles[1];
+      common::dataStructures::TapeFile tf;
+      tf.copyNb = 1;
+      archiveFile.tapeFiles.push_back(tf);
     } 
     virtual void asyncSetSuccessful() override { completes++;  }
     void transferFailed(const std::string &failureReason, cta::log::LogContext&) override { failures++; };

@@ -330,14 +330,17 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         std::set<std::string> candidateVids;
         for (auto & j: rr->dumpJobs()) {
           if(j.status==RetrieveJobStatus::RJS_ToTransferForUser) {
-            candidateVids.insert(rr->getArchiveFile().tapeFiles.at(j.copyNb).vid);
+            for (auto &tf: rr->getArchiveFile().tapeFiles) {
+              if ((tf.copyNb == j.copyNb) && (tf.supersededByVid.empty()))
+                candidateVids.insert(tf.vid);
+            }
           }
         }
         // Small parenthesis for non transfer cases.
         if (candidateVids.empty()) {
           // The request might need to be added to the failed to report of failed queue/container.
           try {
-            retrieveQueuesAndRequests[std::make_tuple(rr->getArchiveFile().tapeFiles.begin()->second.vid, rr->getQueueType())].emplace_back(rr);
+            retrieveQueuesAndRequests[std::make_tuple(rr->getArchiveFile().tapeFiles.begin()->vid, rr->getQueueType())].emplace_back(rr);
           } catch (cta::exception::Exception & ex) {
             log::ScopedParamContainer params3(lc);
             params3.add("fileId", rr->getArchiveFile().archiveFileID)
@@ -363,7 +366,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         // Find copyNb for logging
         size_t copyNb = std::numeric_limits<size_t>::max();
         uint64_t fSeq = std::numeric_limits<uint64_t>::max();
-        for (auto & tc: rr->getArchiveFile().tapeFiles) { if (tc.second.vid==vid) { copyNb=tc.first; fSeq=tc.second.fSeq; } }
+        for (auto & tc: rr->getArchiveFile().tapeFiles) { if (tc.vid==vid) { copyNb=tc.copyNb; fSeq=tc.fSeq; } }
         params3.add("fileId", rr->getArchiveFile().archiveFileID)
                .add("copyNb", copyNb)
                .add("tapeVid", vid)
@@ -553,8 +556,8 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       for (auto & rr: currentJobBatch) {
         // Determine the copy number and feed the queue with it.
         for (auto &tf: rr->getArchiveFile().tapeFiles) {
-          if (tf.second.vid == vid) {
-            jta.push_back({tf.second.copyNb, tf.second.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize, 
+          if (tf.vid == vid) {
+            jta.push_back({tf.copyNb, tf.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize, 
                 rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time});
           }
         }
@@ -579,11 +582,11 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
         std::list<RRUpdatedParams> rrUpdatersParams;
         for (auto & rr: currentJobBatch) {
           for (auto & tf: rr->getArchiveFile().tapeFiles) {
-            if (tf.second.vid == vid) {
+            if (tf.vid == vid) {
               rrUpdatersParams.emplace_back();
               rrUpdatersParams.back().retrieveRequest = rr;
-              rrUpdatersParams.back().copyNb = tf.second.copyNb;
-              rrUpdatersParams.back().updater.reset(rr->asyncUpdateJobOwner(tf.second.copyNb,
+              rrUpdatersParams.back().copyNb = tf.copyNb;
+              rrUpdatersParams.back().updater.reset(rr->asyncUpdateJobOwner(tf.copyNb,
                   rq.getAddressIfSet(), agent.getAddressIfSet()));
             }
           }

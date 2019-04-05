@@ -204,13 +204,13 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
 
     // Find the copy for this Volume ID
     for(auto &tf: osrr.first.getArchiveFile().tapeFiles) {
-      if(tf.second.vid == m_jobQueuesQueueIt->vid) {
+      if(tf.vid == m_jobQueuesQueueIt->vid) {
         auto job = cta::common::dataStructures::RetrieveJob();
 
-        job.request                   = osrr.first.getSchedulerRequest();
-        job.fileSize                  = osrr.first.getArchiveFile().fileSize;
-        job.tapeCopies[tf.second.vid] = std::make_pair(tf.second.copyNb, tf.second);
-        job.failurelogs               = osrr.first.getFailures();
+        job.request            = osrr.first.getSchedulerRequest();
+        job.fileSize           = osrr.first.getArchiveFile().fileSize;
+        job.tapeCopies[tf.vid] = std::make_pair(tf.copyNb, tf);
+        job.failurelogs        = osrr.first.getFailures();
 
         m_jobCache.push_back(job);
       }

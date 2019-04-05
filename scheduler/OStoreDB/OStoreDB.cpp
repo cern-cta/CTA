@@ -1047,13 +1047,13 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
     for(auto &j : queue.second) {
       auto tf_it = j.job->archiveFile.tapeFiles.begin();
       while(tf_it != j.job->archiveFile.tapeFiles.end()) {
-        if(queue.first == tf_it->second.vid) break;
+        if(queue.first == tf_it->vid) break;
       }
       if(tf_it == j.job->archiveFile.tapeFiles.end()) throw cta::exception::Exception(
         "In OStoreDB::setRetrieveJobBatchReported(): tape copy not found"
       );
       insertedElements.emplace_back(CaRQF::InsertedElement{
-        &j.job->m_retrieveRequest, tf_it->second.copyNb, tf_it->second.fSeq, tf_it->second.compressedSize,
+        &j.job->m_retrieveRequest, tf_it->copyNb, tf_it->fSeq, tf_it->compressedSize,
         common::dataStructures::MountPolicy(), serializers::RetrieveJobStatus::RJS_Failed
       });
     }
@@ -1089,13 +1089,13 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   cta::utils::Timer timer;
   // Get the best vid from the cache
   std::set<std::string> candidateVids;
-  for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.second.vid);
+  for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.vid);
   std::string bestVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
   // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
   uint64_t bestCopyNb;
   for (auto & tf: criteria.archiveFile.tapeFiles) {
-    if (tf.second.vid == bestVid) {
-      bestCopyNb = tf.second.copyNb;
+    if (tf.vid == bestVid) {
+      bestCopyNb = tf.copyNb;
       goto vidFound;
     }
   }
@@ -1135,7 +1135,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
     double agentReferencingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     rReq->setOwner(m_agentReference->getAgentAddress());
     // "Select" an arbitrary copy number. This is needed to serialize the object.
-    rReq->setActiveCopyNumber(criteria.archiveFile.tapeFiles.begin()->second.copyNb);
+    rReq->setActiveCopyNumber(criteria.archiveFile.tapeFiles.begin()->copyNb);
     rReq->insert();
     double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     m_taskQueueSize++;
@@ -2149,12 +2149,12 @@ void OStoreDB::RepackRequest::addSubrequests(std::list<Subrequest>& repackSubreq
       uint32_t activeCopyNumber = 0;
       // Make sure we have a copy on the vid we intend to repack.
       for (auto & tc: rsr.archiveFile.tapeFiles) {
-        if (tc.second.vid == repackInfo.vid) {
+        if (tc.vid == repackInfo.vid) {
           try {
             // Try to select the repack VID from a one-vid list.
             Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
             bestVid = repackInfo.vid;
-            activeCopyNumber = tc.second.copyNb;
+            activeCopyNumber = tc.copyNb;
           } catch (Helpers::NoTapeAvailableForRetrieve &) {}
           break;
         }
@@ -2162,7 +2162,7 @@ void OStoreDB::RepackRequest::addSubrequests(std::list<Subrequest>& repackSubreq
       // The repack vid was not appropriate, let's try all candidates.
       if (bestVid.empty()) {
         std::set<std::string> candidateVids;
-        for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.second.vid);
+        for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
         try {
           bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
         } catch (Helpers::NoTapeAvailableForRetrieve &) {
@@ -2179,8 +2179,8 @@ void OStoreDB::RepackRequest::addSubrequests(std::list<Subrequest>& repackSubreq
         }
       }
       for (auto &tc: rsr.archiveFile.tapeFiles)
-        if (tc.second.vid == bestVid) {
-          activeCopyNumber = tc.second.copyNb;
+        if (tc.vid == bestVid) {
+          activeCopyNumber = tc.copyNb;
           goto copyNbFound;
         }
       {
@@ -3468,7 +3468,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     std::map<objectstore::RetrieveRequest *, OStoreDB::RetrieveJob *> requestToJobMap;
     for (auto & req: repackRequestQueue.second) {
       insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb, 
-          req->archiveFile.tapeFiles[req->selectedCopyNb].fSeq, req->archiveFile.fileSize,
+          req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq, req->archiveFile.fileSize,
           cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,
           serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess});
       requestToJobMap[&req->m_retrieveRequest] = req;
@@ -4264,8 +4264,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       std::set<std::string> candidateVids;
       for(auto &tf: af.tapeFiles) {
-        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure)
-          candidateVids.insert(tf.second.vid);
+        if(m_retrieveRequest.getJobStatus(tf.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure)
+          candidateVids.insert(tf.vid);
       }
       if(candidateVids.empty()) {
         throw cta::exception::Exception(
@@ -4278,14 +4278,14 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
         m_oStoreDB.m_objectStore);
 
       auto tf_it = af.tapeFiles.begin();
-      for( ; tf_it != af.tapeFiles.end() && tf_it->second.vid != bestVid; ++tf_it) ;
+      for( ; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it) ;
       if(tf_it == af.tapeFiles.end()) {
         std::stringstream err;
         err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."
             << " archiveId=" << af.archiveFileID << " vid=" << bestVid;
         throw RetrieveRequestHasNoCopies(err.str());
       }
-      auto &tf = tf_it->second;
+      auto &tf = *tf_it;
 
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
@@ -4328,8 +4328,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       std::set<std::string> candidateVids;
       for(auto &tf : af.tapeFiles) {
-        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransferForUser)
-          candidateVids.insert(tf.second.vid);
+        if(m_retrieveRequest.getJobStatus(tf.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransferForUser)
+          candidateVids.insert(tf.vid);
       }
       if(candidateVids.empty()) {
         throw cta::exception::Exception(
@@ -4344,14 +4344,14 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
         m_oStoreDB.m_objectStore);
 
       auto tf_it = af.tapeFiles.begin();
-      for( ; tf_it != af.tapeFiles.end() && tf_it->second.vid != bestVid; ++tf_it) ;
+      for( ; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it) ;
       if(tf_it == af.tapeFiles.end()) {
         std::stringstream err;
         err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."
             << " archiveId=" << af.archiveFileID << " vid=" << bestVid;
         throw RetrieveRequestHasNoCopies(err.str());
       }
-      auto &tf = tf_it->second;
+      auto &tf = *tf_it;
 
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
@@ -4399,9 +4399,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
   auto &af   = rfqc.archiveFile;
 
   // Handle report failures for all tape copies in turn
-  for(auto &aftf: af.tapeFiles) {
-    auto &tf = aftf.second;
-
+  for(auto &tf: af.tapeFiles) {
     // Add a job failure and decide what to do next
     EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addReportFailure(tf.copyNb, m_mountId, failureReason, lc);
 

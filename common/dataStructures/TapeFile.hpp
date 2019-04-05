@@ -79,6 +79,21 @@ struct TapeFile {
    * The checksum value 
    */
   std::string checksumValue;
+  
+  /**
+   * The vid of the tape file superseding this one (or empty string if not)
+   */
+  std::string supersededByVid;
+  
+  /**
+   * The FSeq of the tape file superseding this one (or empty string if not)
+   */
+  uint64_t supersededByFSeq = 0;
+  
+  /**
+   * Returns true if this tape file is both an active (not superseded) tape file and matches the copy number.
+   */
+  bool isActiveCopyNb(uint32_t copyNb) const;
 
 }; // struct TapeFile
 

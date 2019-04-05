@@ -20,6 +20,8 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <algorithm>
+
 namespace cta {
 namespace common {
 namespace dataStructures {
@@ -55,6 +57,42 @@ bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
 bool ArchiveFile::operator!=(const ArchiveFile &rhs) const {
   return !operator==(rhs);
 }
+
+//------------------------------------------------------------------------------
+// ArchiveFile::TapeFilesList::at()
+//------------------------------------------------------------------------------
+TapeFile& ArchiveFile::TapeFilesList::at(uint32_t copyNb) {
+  auto ret = std::find_if(begin(), end(), [=](TapeFile& tf){ return tf.isActiveCopyNb(copyNb);});
+  if (ret == end()) throw cta::exception::Exception("In ArchiveFile::TapeFilesList::at(): not found.");
+  return *ret;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveFile::TapeFilesList::at() const
+//------------------------------------------------------------------------------
+const TapeFile& ArchiveFile::TapeFilesList::at(uint32_t copyNb) const {
+  auto ret = std::find_if(cbegin(), cend(), [=](const TapeFile& tf){ return tf.isActiveCopyNb(copyNb);});
+  if (ret == end()) throw cta::exception::Exception("In ArchiveFile::TapeFilesList::at(): not found.");
+  return *ret;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveFile::TapeFilesList::find() 
+//------------------------------------------------------------------------------
+ArchiveFile::TapeFilesList::iterator ArchiveFile::TapeFilesList::find(uint32_t copyNb) {
+  return std::find_if(begin(), end(), [=](TapeFile& tf){ return tf.isActiveCopyNb(copyNb);});
+}
+
+//------------------------------------------------------------------------------
+// ArchiveFile::TapeFilesList::find() const
+//------------------------------------------------------------------------------
+ArchiveFile::TapeFilesList::const_iterator ArchiveFile::TapeFilesList::find(uint32_t copyNb) const {
+  return std::find_if(cbegin(), cend(), [=](const TapeFile& tf){ return tf.isActiveCopyNb(copyNb);});
+}
+
+
+
+
 
 //------------------------------------------------------------------------------
 // operator<<

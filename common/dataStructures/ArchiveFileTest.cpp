@@ -19,6 +19,7 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 
 #include <gtest/gtest.h>
+#include <algorithm>
 
 namespace unitTests {
 
@@ -56,7 +57,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   tapeFile1.compressedSize = 5;
   tapeFile1.copyNb = 1;
 
-  archiveFile1.tapeFiles[1] = tapeFile1;
+  archiveFile1.tapeFiles.push_back(tapeFile1);
   ASSERT_EQ(1, archiveFile1.tapeFiles.size());
 
   TapeFile tapeFile2;
@@ -66,7 +67,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   tapeFile2.compressedSize = 6;
   tapeFile2.copyNb = 2;
 
-  archiveFile1.tapeFiles[2] = tapeFile1;
+  archiveFile1.tapeFiles.push_back(tapeFile2);
   ASSERT_EQ(2, archiveFile1.tapeFiles.size());
 
   ArchiveFile archiveFile2;
@@ -88,25 +89,25 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   ASSERT_EQ(2, archiveFile2.tapeFiles.size());
 
   {
-    auto copyNbToTapeFileItor = archiveFile2.tapeFiles.find(1);
+    auto copyNbToTapeFileItor = std::find_if(archiveFile2.tapeFiles.begin(), archiveFile2.tapeFiles.end(),
+        [](TapeFile &tf){ return tf.copyNb == 1; });
     ASSERT_TRUE(copyNbToTapeFileItor != archiveFile2.tapeFiles.end());
-    ASSERT_EQ(1, copyNbToTapeFileItor->first);
-    ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->second.vid);
-    ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->second.fSeq);
-    ASSERT_EQ(tapeFile1.blockId, copyNbToTapeFileItor->second.blockId);
-    ASSERT_EQ(tapeFile1.compressedSize, copyNbToTapeFileItor->second.compressedSize);
-    ASSERT_EQ(tapeFile1.copyNb, copyNbToTapeFileItor->second.copyNb);
+    ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->vid);
+    ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->fSeq);
+    ASSERT_EQ(tapeFile1.blockId, copyNbToTapeFileItor->blockId);
+    ASSERT_EQ(tapeFile1.compressedSize, copyNbToTapeFileItor->compressedSize);
+    ASSERT_EQ(tapeFile1.copyNb, copyNbToTapeFileItor->copyNb);
   }
 
   {
-    auto copyNbToTapeFileItor = archiveFile2.tapeFiles.find(2);
+    auto copyNbToTapeFileItor = std::find_if(archiveFile2.tapeFiles.begin(), archiveFile2.tapeFiles.end(),
+        [](TapeFile &tf){ return tf.copyNb == 2; });
     ASSERT_TRUE(copyNbToTapeFileItor != archiveFile2.tapeFiles.end());
-    ASSERT_EQ(2, copyNbToTapeFileItor->first);
-    ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->second.vid);
-    ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->second.fSeq);
-    ASSERT_EQ(tapeFile1.blockId, copyNbToTapeFileItor->second.blockId);
-    ASSERT_EQ(tapeFile1.compressedSize, copyNbToTapeFileItor->second.compressedSize);
-    ASSERT_EQ(tapeFile1.copyNb, copyNbToTapeFileItor->second.copyNb);
+    ASSERT_EQ(tapeFile2.vid, copyNbToTapeFileItor->vid);
+    ASSERT_EQ(tapeFile2.fSeq, copyNbToTapeFileItor->fSeq);
+    ASSERT_EQ(tapeFile2.blockId, copyNbToTapeFileItor->blockId);
+    ASSERT_EQ(tapeFile2.compressedSize, copyNbToTapeFileItor->compressedSize);
+    ASSERT_EQ(tapeFile2.copyNb, copyNbToTapeFileItor->copyNb);
   }
 }
 

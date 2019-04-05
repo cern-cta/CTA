@@ -427,7 +427,7 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
     const uint32_t hardcodedReportRetries = 2;
-    addJob(tf.second.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
+    addJob(tf.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
   }
 }
 

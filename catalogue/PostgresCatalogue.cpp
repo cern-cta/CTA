@@ -699,7 +699,9 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
+        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -752,8 +754,12 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
         tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        if (!selectRset.columnIsNull("SSBY_VID")) {
+          tapeFile.supersededByVid = selectRset.columnString("SSBY_VID");
+          tapeFile.supersededByFSeq = selectRset.columnUint64("SSBY_FSEQ");
+        }
 
-        archiveFile->tapeFiles[selectRset.columnUint64("COPY_NB")] = tapeFile;
+        archiveFile->tapeFiles.push_back(tapeFile);
       }
     }
 
@@ -784,15 +790,18 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
          .add("selectFromArchiveFileTime", selectFromArchiveFileTime);
       for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
         std::stringstream tapeCopyLogStream;
-        tapeCopyLogStream << "copy number: " << it->first
-          << " vid: " << it->second.vid
-          << " fSeq: " << it->second.fSeq
-          << " blockId: " << it->second.blockId
-          << " creationTime: " << it->second.creationTime
-          << " compressedSize: " << it->second.compressedSize
-          << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-          << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-          << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+        tapeCopyLogStream << "copy number: " << it->copyNb
+          << " vid: " << it->vid
+          << " fSeq: " << it->fSeq
+          << " blockId: " << it->blockId
+          << " creationTime: " << it->creationTime
+          << " compressedSize: " << it->compressedSize
+          << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
+          << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+          << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
+          << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
+          << " supersededByVid: " << it->supersededByVid
+          << " supersededByFSeq: " << it->supersededByFSeq;
         spc.add("TAPE FILE", tapeCopyLogStream.str());
       }
       lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
@@ -848,15 +857,17 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
        .add("commitTime", commitTime);
     for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
       std::stringstream tapeCopyLogStream;
-      tapeCopyLogStream << "copy number: " << it->first
-        << " vid: " << it->second.vid
-        << " fSeq: " << it->second.fSeq
-        << " blockId: " << it->second.blockId
-        << " creationTime: " << it->second.creationTime
-        << " compressedSize: " << it->second.compressedSize
-        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+      tapeCopyLogStream << "copy number: " << it->copyNb
+        << " vid: " << it->vid
+        << " fSeq: " << it->fSeq
+        << " blockId: " << it->blockId
+        << " creationTime: " << it->creationTime
+        << " compressedSize: " << it->compressedSize
+        << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
+        << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+        << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
+        << " supersededByVid: " << it->supersededByVid
+        << " supersededByFSeq: " << it->supersededByFSeq;
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");

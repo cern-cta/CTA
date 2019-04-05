@@ -96,15 +96,17 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
          .add("getArchiveFileTime", getArchiveFileTime);
       for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
         std::stringstream tapeCopyLogStream;
-        tapeCopyLogStream << "copy number: " << it->first
-          << " vid: " << it->second.vid
-          << " fSeq: " << it->second.fSeq
-          << " blockId: " << it->second.blockId
-          << " creationTime: " << it->second.creationTime
-          << " compressedSize: " << it->second.compressedSize
-          << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-          << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-          << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+        tapeCopyLogStream << "copy number: " << it->copyNb
+          << " vid: " << it->vid
+          << " fSeq: " << it->fSeq
+          << " blockId: " << it->blockId
+          << " creationTime: " << it->creationTime
+          << " compressedSize: " << it->compressedSize
+          << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
+          << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+          << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
+          << " supersededByVid: " << it->supersededByVid
+          << " supersededByFSeq: " << it->supersededByFSeq;
         spc.add("TAPE FILE", tapeCopyLogStream.str());
       }
       lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
@@ -163,15 +165,17 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("commitTime", commitTime);
     for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
       std::stringstream tapeCopyLogStream;
-      tapeCopyLogStream << "copy number: " << it->first
-        << " vid: " << it->second.vid
-        << " fSeq: " << it->second.fSeq
-        << " blockId: " << it->second.blockId
-        << " creationTime: " << it->second.creationTime
-        << " compressedSize: " << it->second.compressedSize
-        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+      tapeCopyLogStream << "copy number: " << it->copyNb
+        << " vid: " << it->vid
+        << " fSeq: " << it->fSeq
+        << " blockId: " << it->blockId
+        << " creationTime: " << it->creationTime
+        << " compressedSize: " << it->compressedSize
+        << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
+        << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+        << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
+        << " supersededByVid: " << it->supersededByVid
+        << " supersededByFSeq: " << it->supersededByFSeq;
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");

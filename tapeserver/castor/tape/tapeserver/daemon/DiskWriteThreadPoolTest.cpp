@@ -117,7 +117,9 @@ namespace unitTests{
       fileToRecall->retrieveRequest.archiveFileID = i+1;
       fileToRecall->retrieveRequest.dstURL = "/dev/null";
       fileToRecall->selectedCopyNb=1;
-      fileToRecall->archiveFile.tapeFiles[1];
+      cta::common::dataStructures::TapeFile tf;
+      tf.copyNb = 1;
+      fileToRecall->archiveFile.tapeFiles.push_back(tf);
       fileToRecall->selectedTapeFile().blockId = 1;
       DiskWriteTask* t=new DiskWriteTask(fileToRecall.release(),mm);
       MemBlock* mb=mm.getFreeBlock();

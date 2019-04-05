@@ -1554,7 +1554,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           cta::objectstore::RetrieveRequest retrieveRequest(job.address,schedulerDB.getBackend());
           retrieveRequest.fetchNoLock();
           uint32_t copyNb = job.copyNb;
-          common::dataStructures::TapeFile tapeFile = retrieveRequest.getArchiveFile().tapeFiles[copyNb];
+          common::dataStructures::TapeFile tapeFile = retrieveRequest.getArchiveFile().tapeFiles.at(copyNb);
           common::dataStructures::RetrieveRequest schedulerRetrieveRequest = retrieveRequest.getSchedulerRequest();
           common::dataStructures::ArchiveFile archiveFile = retrieveRequest.getArchiveFile();
 

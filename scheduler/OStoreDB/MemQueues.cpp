@@ -52,11 +52,11 @@ void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::special
     auto & job = jta.job;
     auto & request = jta.request;
     for (auto & j: request.getArchiveFile().tapeFiles) {
-      if (j.second.copyNb == job.copyNb) {
+      if (j.copyNb == job.copyNb) {
         auto criteria = request.getRetrieveFileQueueCriteria();
-        jtal.push_back({j.second.copyNb, j.second.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize, 
+        jtal.push_back({j.copyNb, j.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize, 
             criteria.mountPolicy, request.getEntryLog().time});
-        request.setActiveCopyNumber(j.second.copyNb);
+        request.setActiveCopyNumber(j.copyNb);
         request.setOwner(queueAddress);
         goto jobAdded;
       }

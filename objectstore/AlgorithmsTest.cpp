@@ -58,13 +58,17 @@ void fillRetrieveRequests(
     rqc.archiveFile.diskInstance = "eoseos";
     rqc.archiveFile.fileSize = 1000 + i;
     rqc.archiveFile.storageClass = "sc";
-    rqc.archiveFile.tapeFiles[1].blockId = 0;
-    rqc.archiveFile.tapeFiles[1].compressedSize = 1;
-    rqc.archiveFile.tapeFiles[1].compressedSize = 1;
-    rqc.archiveFile.tapeFiles[1].copyNb = 1;
-    rqc.archiveFile.tapeFiles[1].creationTime = time(nullptr);
-    rqc.archiveFile.tapeFiles[1].fSeq = i;
-    rqc.archiveFile.tapeFiles[1].vid = "Tape0";
+    {
+      cta::common::dataStructures::TapeFile tf;
+      tf.blockId = 0;
+      tf.compressedSize = 1;
+      tf.compressedSize = 1;
+      tf.copyNb = 1;
+      tf.creationTime = time(nullptr);
+      tf.fSeq = i;
+      tf.vid = "Tape0";
+      rqc.archiveFile.tapeFiles.push_back(tf);
+    }
     rqc.mountPolicy.archiveMinRequestAge = 1;
     rqc.mountPolicy.archivePriority = 1;
     rqc.mountPolicy.creationLog.time = time(nullptr);

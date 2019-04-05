@@ -111,7 +111,9 @@ namespace unitTests{
     std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob(mrm));
     fileToRecall->retrieveRequest.archiveFileID = 1;
     fileToRecall->selectedCopyNb=1;
-    fileToRecall->archiveFile.tapeFiles[1];
+    cta::common::dataStructures::TapeFile tf;
+    tf.copyNb = 1;
+    fileToRecall->archiveFile.tapeFiles.push_back(tf);
     DiskWriteTask t(fileToRecall.release(),mm);
     for(int i=0;i<6;++i){
       MemBlock* mb=mm.getFreeBlock();

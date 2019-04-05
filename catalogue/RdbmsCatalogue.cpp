@@ -4116,7 +4116,9 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
+        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ,"
         "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "ARCHIVE_FILE "
@@ -4163,8 +4165,12 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
       tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
       tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
+      if (!rset.columnIsNull("SSBY_VID")) {
+        tapeFile.supersededByVid = rset.columnString("SSBY_VID");
+        tapeFile.supersededByFSeq = rset.columnUint64("SSBY_VID");
+      }
 
-      archiveFile.tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
+      archiveFile.tapeFiles.push_back(tapeFile);
 
       archiveFiles.push_back(archiveFile);
 
@@ -4911,22 +4917,7 @@ void RdbmsCatalogue::insertTapeFile(
   const common::dataStructures::TapeFile &tapeFile,
   const uint64_t archiveFileId) {
   rdbms::AutoRollback autoRollback(conn);
-  bool updateSupersededNeeded = false;
   try{
-    {
-      const char *const sql = 
-      "SELECT VID FROM TAPE_FILE "
-      "WHERE "
-      " TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND"
-      " TAPE_FILE.COPY_NB=:COPY_NB";
-      auto stmt = conn.createStmt(sql);
-      stmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
-      stmt.bindUint64(":COPY_NB",tapeFile.copyNb);
-      auto result = stmt.executeQuery();
-      if(result.next()){
-        updateSupersededNeeded = true;
-      }
-    }
     {
       const time_t now = time(nullptr);
       const char *const sql =
@@ -4955,31 +4946,28 @@ void RdbmsCatalogue::insertTapeFile(
       stmt.bindUint64(":COPY_NB", tapeFile.copyNb);
       stmt.bindUint64(":CREATION_TIME", now);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-
       stmt.executeNonQuery();
-      if(!updateSupersededNeeded){
-        conn.commit();
-      }
-    } 
-    {
-      if(updateSupersededNeeded){
-        const char *const sql = 
-        "UPDATE TAPE_FILE SET "
-          "SUPERSEDED_BY_VID=:NEW_VID, " //VID of the new file
-          "SUPERSEDED_BY_FSEQ=:NEW_FSEQ " //FSEQ of the new file
-        "WHERE"
-        " TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND"
-        " TAPE_FILE.COPY_NB=:COPY_NB";
-
-        auto stmt = conn.createStmt(sql);
-        stmt.bindString(":NEW_VID",tapeFile.vid);
-        stmt.bindUint64(":NEW_FSEQ",tapeFile.fSeq);
-        stmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
-        stmt.bindUint64(":COPY_NB",tapeFile.copyNb);
-        stmt.executeNonQuery();
-        conn.commit();
-      }
     }
+    {
+      const char *const sql = 
+      "UPDATE TAPE_FILE SET "
+        "SUPERSEDED_BY_VID=:NEW_VID, " //VID of the new file
+        "SUPERSEDED_BY_FSEQ=:NEW_FSEQ " //FSEQ of the new file
+      "WHERE"
+      " TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND"
+      " TAPE_FILE.COPY_NB=:COPY_NB AND"
+      " ( TAPE_FILE.VID <> :NEW_VID2 OR TAPE_FILE.FSEQ <> :NEW_FSEQ2 )";
+
+      auto stmt = conn.createStmt(sql);
+      stmt.bindString(":NEW_VID",tapeFile.vid);
+      stmt.bindUint64(":NEW_FSEQ",tapeFile.fSeq);
+      stmt.bindString(":NEW_VID2",tapeFile.vid);
+      stmt.bindUint64(":NEW_FSEQ2",tapeFile.fSeq);
+      stmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
+      stmt.bindUint64(":COPY_NB",tapeFile.copyNb);
+      stmt.executeNonQuery();
+    }
+    conn.commit();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -5073,7 +5061,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
+        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -5118,8 +5108,12 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
         tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        if (!rset.columnIsNull("SSBY_VID")) {
+          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
+          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
+        }
 
-        archiveFile->tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
+        archiveFile->tapeFiles.push_back(tapeFile);
       }
     }
 
@@ -5157,7 +5151,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
+        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -5205,8 +5201,12 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
         tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
-
-        archiveFile->tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
+        if (!rset.columnIsNull("SSBY_VID")) {
+          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
+          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
+        }
+        
+        archiveFile->tapeFiles.push_back(tapeFile);
       }
     }
 
@@ -5246,7 +5246,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
+        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -5293,8 +5295,12 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
         tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
-
-        archiveFile->tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
+        if (!rset.columnIsNull("SSBY_VID")) {
+          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
+          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
+        }
+        
+        archiveFile->tapeFiles.push_back(tapeFile);
       }
     }
 
@@ -5334,7 +5340,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
+        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -5384,8 +5392,12 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
         tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
-
-        archiveFile->tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
+        if (!rset.columnIsNull("SSBY_VID")) {
+          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
+          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
+        }
+        
+        archiveFile->tapeFiles.push_back(tapeFile);
       }
     }
 

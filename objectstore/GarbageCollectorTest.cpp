@@ -559,20 +559,28 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     rqc.archiveFile.diskInstance = "eoseos";
     rqc.archiveFile.fileSize = 1000 + pass;
     rqc.archiveFile.storageClass = "sc";
-    rqc.archiveFile.tapeFiles[1].blockId=0;
-    rqc.archiveFile.tapeFiles[1].compressedSize=1;
-    rqc.archiveFile.tapeFiles[1].compressedSize=1;
-    rqc.archiveFile.tapeFiles[1].copyNb=1;
-    rqc.archiveFile.tapeFiles[1].creationTime=time(nullptr);
-    rqc.archiveFile.tapeFiles[1].fSeq=pass;
-    rqc.archiveFile.tapeFiles[1].vid="Tape0";
-    rqc.archiveFile.tapeFiles[2].blockId=0;
-    rqc.archiveFile.tapeFiles[2].compressedSize=1;
-    rqc.archiveFile.tapeFiles[2].compressedSize=1;
-    rqc.archiveFile.tapeFiles[2].copyNb=2;
-    rqc.archiveFile.tapeFiles[2].creationTime=time(nullptr);
-    rqc.archiveFile.tapeFiles[2].fSeq=pass;
-    rqc.archiveFile.tapeFiles[2].vid="Tape1";
+    {
+      cta::common::dataStructures::TapeFile tf;
+      tf.blockId=0;
+      tf.compressedSize=1;
+      tf.compressedSize=1;
+      tf.copyNb=1;
+      tf.creationTime=time(nullptr);
+      tf.fSeq=pass;
+      tf.vid="Tape0";
+      rqc.archiveFile.tapeFiles.push_back(tf);
+    }
+    {
+      cta::common::dataStructures::TapeFile tf;
+      tf.blockId=0;
+      tf.compressedSize=1;
+      tf.compressedSize=1;
+      tf.copyNb=2;
+      tf.creationTime=time(nullptr);
+      tf.fSeq=pass;
+      tf.vid="Tape1";
+      rqc.archiveFile.tapeFiles.push_back(tf);
+    }
     rqc.mountPolicy.archiveMinRequestAge = 1;
     rqc.mountPolicy.archivePriority = 1;
     rqc.mountPolicy.creationLog.time = time(nullptr);
@@ -598,7 +606,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       cta::objectstore::ScopedExclusiveLock rql(rq);
       rq.fetch();
       std::list <cta::objectstore::RetrieveQueue::JobToAdd> jta;
-      jta.push_back({1,rqc.archiveFile.tapeFiles[1].fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time});
+      jta.push_back({1,rqc.archiveFile.tapeFiles.front().fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time});
       rq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 5) { pass++; continue; }

@@ -238,8 +238,8 @@ void Scheduler::queueRetrieve(
      .add("storageClass", queueCriteria.archiveFile.storageClass);
   for (auto & tf:queueCriteria.archiveFile.tapeFiles) {
     std::stringstream tc;
-    tc << "tapeCopy" << tf.first;
-    spc.add(tc.str(), tf.second);
+    tc << "tapeCopy" << tf.copyNb;
+    spc.add(tc.str(), tf);
   }
   spc.add("selectedVid", selectedVid)
      .add("catalogueTime", catalogueTime)
@@ -464,13 +464,13 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       // We have to determine which copynbs we want to rearchive, and under which fSeq we record this file.
       if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::MoveOnly) {
         // determine which fSeq(s) (normally only one) lives on this tape.
-        for (auto & tc: archiveFile.tapeFiles) if (tc.second.vid == repackInfo.vid) {
-          rsr.copyNbsToRearchive.insert(tc.second.copyNb);
+        for (auto & tc: archiveFile.tapeFiles) if (tc.vid == repackInfo.vid) {
+          rsr.copyNbsToRearchive.insert(tc.copyNb);
           // We make the (reasonable) assumption that the archive file only has one copy on this tape.
           // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
           // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
           // restart of expansion.
-          rsr.fSeq = std::min(tc.second.fSeq, rsr.fSeq);
+          rsr.fSeq = std::min(tc.fSeq, rsr.fSeq);
           maxAddedFSeq = std::max(maxAddedFSeq, rsr.fSeq);
           totalStatsFile.totalFilesToArchive += 1;
           totalStatsFile.totalBytesToArchive += rsr.archiveFile.fileSize;

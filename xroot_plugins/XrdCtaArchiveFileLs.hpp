@@ -112,10 +112,12 @@ public:
 
           // Tape file
           auto tf = record.mutable_afls_item()->mutable_tf();
-          tf->set_vid(jt->second.vid);
-          tf->set_f_seq(jt->second.fSeq);
-          tf->set_block_id(jt->second.blockId);
-          record.mutable_afls_item()->set_copy_nb(jt->second.copyNb);
+          tf->set_vid(jt->vid);
+          tf->set_f_seq(jt->fSeq);
+          tf->set_block_id(jt->blockId);
+          tf->set_superseded_by_vid(jt->supersededByVid);
+          tf->set_superseded_by_f_seq(jt->supersededByFSeq);
+          record.mutable_afls_item()->set_copy_nb(jt->copyNb);
 
           // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
           // enough data to send to the client. The actual buffer size is double the block size,

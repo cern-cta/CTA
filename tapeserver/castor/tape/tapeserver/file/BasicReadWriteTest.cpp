@@ -217,7 +217,7 @@ int main (int argc, char *argv[])
 
                 BasicRetrieveJob fileToRecall;
                 fileToRecall.selectedCopyNb=1;
-                fileToRecall.archiveFile.tapeFiles[1];
+                fileToRecall.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
                 fileToRecall.selectedTapeFile().blockId = 110; // here should be the block ID of HDR1
                 fileToRecall.selectedTapeFile().fSeq = 2;
                 fileToRecall.retrieveRequest.archiveFileID = 2;

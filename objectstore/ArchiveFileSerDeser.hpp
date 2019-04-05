@@ -54,7 +54,7 @@ public:
     osaf.set_reconciliationtime(reconciliationTime);
     osaf.set_storageclass(storageClass);
     for (auto & tf: tapeFiles)
-      TapeFileSerDeser(tf.second).serialize(*osaf.add_tapefiles());
+      TapeFileSerDeser(tf).serialize(*osaf.add_tapefiles());
   }
   
   void deserialize (const cta::objectstore::serializers::ArchiveFile & osaf) {
@@ -75,7 +75,7 @@ public:
     for (auto tf: osaf.tapefiles()) {
       TapeFileSerDeser tfsd;
       tfsd.deserialize(tf);
-      tapeFiles[tfsd.copyNb]=tfsd;
+      tapeFiles.push_back(tfsd);
     }
   }
 };

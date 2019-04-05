@@ -84,22 +84,12 @@ void cta::RetrieveJob::transferFailed(const std::string &failureReason, log::Log
 // selectedTapeFile
 //------------------------------------------------------------------------------
 cta::common::dataStructures::TapeFile& cta::RetrieveJob::selectedTapeFile() {
-  try {
-    return archiveFile.tapeFiles.at(selectedCopyNb);
-  } catch (std::out_of_range &ex) {
-    auto __attribute__((__unused__)) & debug=ex;
-    throw std::runtime_error(std::string("cta::RetrieveJob::selectedTapeFile(): ") + ex.what());
-  }
+  return archiveFile.tapeFiles.at(selectedCopyNb);
 }
 
 //------------------------------------------------------------------------------
 // selectedTapeFile
 //------------------------------------------------------------------------------
 const cta::common::dataStructures::TapeFile& cta::RetrieveJob::selectedTapeFile() const {
-  try {
-    return archiveFile.tapeFiles.at(selectedCopyNb);
-  } catch (std::out_of_range &ex) {
-    auto __attribute__((__unused__)) & debug=ex;
-    throw std::runtime_error(std::string("cta::RetrieveJob::selectedTapeFile(): ") + ex.what());
-  }
+  return archiveFile.tapeFiles.at(selectedCopyNb);
 }
