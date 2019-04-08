@@ -64,7 +64,10 @@ namespace {
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
       tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
       tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
-
+      if(!rset.columnIsNull("SUPERSEDED_BY_VID") && !rset.columnIsNull("SUPERSEDED_BY_FSEQ")){
+        tapeFile.supersededByVid = rset.columnString("SUPERSEDED_BY_VID");
+        tapeFile.supersededByFSeq = rset.columnUint64("SUPERSEDED_BY_FSEQ");
+      }
       archiveFile.tapeFiles.push_back(tapeFile);
     }
 
@@ -106,6 +109,8 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
         "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
+        "TAPE_FILE.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID, "
+        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SUPERSEDED_BY_FSEQ, "
         "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "ARCHIVE_FILE "
