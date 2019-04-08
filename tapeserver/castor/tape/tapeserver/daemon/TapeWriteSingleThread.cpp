@@ -320,7 +320,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_logContext.log(cta::log::INFO, "Tape session started");
       mountTapeReadWrite();
       currentErrorToCount = "Error_tapeFSeqCheckAndTapeFileCleanup";
-      m_archiveMount.checkTapeFSeqForWriting(m_lastFseq);
+      m_archiveMount.checkTapeFSeqAndDeleteTapeFilesForWriting(m_lastFseq);
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
       currentErrorToCount = "Error_checkingTapeAlert";

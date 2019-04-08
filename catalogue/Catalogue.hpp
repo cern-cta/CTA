@@ -600,12 +600,13 @@ public:
   
   /**
    * Returns true if non superseded files exist after fSeq in the tape where vid is passed in parameter
+   * If there is only superseded files after fSeq, these tape files will be deleted
    * 
    * @param vid the vid of the tape to check if non superseded files exist after fSeq
    * @param fSeq the fSeq after which we want to check if non superseded files exist
    * @return true if non superseded files exist, false otherwise
    */
-  virtual bool existNonSupersededFilesAfterFSeq(const std::string &vid, const uint64_t fSeq) const  = 0;
+  virtual bool existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(const std::string &vid, const uint64_t fSeq) const  = 0;
 
 }; // class Catalogue
 

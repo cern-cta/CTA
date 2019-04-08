@@ -178,7 +178,7 @@ namespace cta {
      * we throw an exception : We don't want these files to be lost.
      * @param fSeq : The fSeq after which we want to check if the writing is possible
      */
-    void checkTapeFSeqForWriting(uint64_t fSeq) const;
+    void checkTapeFSeqAndDeleteTapeFilesForWriting(uint64_t fSeq) const;
     
     /**
      * Creates a disk reporter for the ArchiveJob (this is a wrapper).

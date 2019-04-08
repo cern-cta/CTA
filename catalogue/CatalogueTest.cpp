@@ -11532,7 +11532,7 @@ TEST_P(cta_catalogue_CatalogueTest, exist_non_superseded_files_after_fseq) {
     disabledValue, fullValue, createTapeComment);
   
   //A tape with no tape file have no files after FSeq 0
-  ASSERT_FALSE(m_catalogue->existNonSupersededFilesAfterFSeq(vid1,0));
+  ASSERT_FALSE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid1,0));
   
   const uint64_t archiveFileId = 1234;
 
@@ -11578,9 +11578,9 @@ TEST_P(cta_catalogue_CatalogueTest, exist_non_superseded_files_after_fseq) {
     m_catalogue->filesWrittenToTape(file1WrittenSet);
   }
   //One file written : this file is not superseded by another one, existNonSupersededFilesAfterFSeq = true
-  ASSERT_TRUE(m_catalogue->existNonSupersededFilesAfterFSeq(vid1,0));
+  ASSERT_TRUE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid1,0));
   //No file after the only file inserted, existNonSupersededFilesAfterFseq = false
-  ASSERT_FALSE(m_catalogue->existNonSupersededFilesAfterFSeq(vid1,1));
+  ASSERT_FALSE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid1,1));
   
   //Insert another file in another tape that will supersed the first one in vid1
   {
@@ -11615,8 +11615,8 @@ TEST_P(cta_catalogue_CatalogueTest, exist_non_superseded_files_after_fseq) {
   }
   //The tape files written to tape vid2 are not superseded by any file, but the tape files in vid1 
   //are superseded by the tape files in vid2
-  ASSERT_FALSE(m_catalogue->existNonSupersededFilesAfterFSeq(vid1,0));
-  ASSERT_TRUE(m_catalogue->existNonSupersededFilesAfterFSeq(vid2,0));
+  ASSERT_FALSE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid1,0));
+  ASSERT_TRUE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid2,0));
 }
 
 TEST_P(cta_catalogue_CatalogueTest, ping) {

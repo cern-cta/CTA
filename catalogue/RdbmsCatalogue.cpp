@@ -1791,7 +1791,7 @@ bool RdbmsCatalogue::tapeExists(rdbms::Conn &conn, const std::string &vid) const
   }
 }
 
-bool RdbmsCatalogue::existNonSupersededFilesAfterFSeq(const std::string& vid, const uint64_t fSeq) const {
+bool RdbmsCatalogue::existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(const std::string& vid, const uint64_t fSeq) const {
   try{
     auto conn = m_connPool.getConn();
     const char *const sql =
@@ -1806,7 +1806,23 @@ bool RdbmsCatalogue::existNonSupersededFilesAfterFSeq(const std::string& vid, co
     stmt.bindString(":VID",vid);
     stmt.bindUint64(":FSEQ",fSeq);
     auto rset = stmt.executeQuery();
-    return rset.next();
+    if(!rset.next()){
+      //No non-superseded files detected, we can delete the tape files
+      const char *const sqlDelete =
+      "DELETE FROM TAPE_FILE "
+      "WHERE "
+        "VID =:VID AND "
+        "FSEQ > :FSEQ AND "
+        "SUPERSEDED_BY_VID IS NOT NULL AND "
+        "SUPERSEDED_BY_FSEQ IS NOT NULL";
+      auto stmtDelete = conn.createStmt(sqlDelete);
+      stmtDelete.bindString(":VID",vid);
+      stmtDelete.bindUint64(":FSEQ",fSeq);
+      stmtDelete.executeNonQuery();
+      return false;
+    }
+    //Non superseded files are present
+    return true;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

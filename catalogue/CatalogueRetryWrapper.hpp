@@ -381,8 +381,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeExists(vid);}, m_maxTriesToConnect);
   }
   
-  bool existNonSupersededFilesAfterFSeq(const std::string& vid, const uint64_t fSeq) const override {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->existNonSupersededFilesAfterFSeq(vid,fSeq);},m_maxTriesToConnect);
+  bool existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(const std::string& vid, const uint64_t fSeq) const override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid,fSeq);},m_maxTriesToConnect);
   }
 
 

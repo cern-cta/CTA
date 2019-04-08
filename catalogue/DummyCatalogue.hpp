@@ -114,7 +114,7 @@ public:
   void tapeMountedForArchive(const std::string& vid, const std::string& drive) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void tapeMountedForRetrieve(const std::string& vid, const std::string& drive) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   bool tapePoolExists(const std::string& tapePoolName) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  bool existNonSupersededFilesAfterFSeq(const std::string& vid, const uint64_t fSeq) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  bool existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(const std::string& vid, const uint64_t fSeq) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 
   // Special functions for unit tests.
   void addEnabledTape(const std::string & vid) {

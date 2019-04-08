@@ -83,3 +83,8 @@ kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin ta ls -v V01003 -h
 echo
 echo "Summary of the repack requests"
 kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin re ls -h
+
+echo "Reclaiming tape V01003"
+executeReclaim V01003
+
+echo "End of test simple_repack"
