@@ -27,12 +27,19 @@
 #
 # or:
 #
+#    mysql://username:passord@hostname[:port]/database
+#
+# or:
+#
 #    oracle:username/password@database
+#
+# or:
+#
+#    postgresql:postgresql://username:password@hostname/database
 #
 # or:
 #
 #    sqlite:filename
 #
 # PLEASE NOTE that the "in_memory" and "sqlite:" connection strings are for
-# development and testing.  Only the "oracle:" connection string should be used
-# in production.
+# development and testing purposes only.
