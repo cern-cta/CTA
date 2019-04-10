@@ -440,22 +440,39 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     }
 
     const char *const sql =
-      "INSERT INTO TAPE_FILE("
-        "VID,"
-        "FSEQ,"
-        "BLOCK_ID,"
-        "COMPRESSED_SIZE_IN_BYTES,"
-        "COPY_NB,"
-        "CREATION_TIME,"
-        "ARCHIVE_FILE_ID)"
-      "VALUES("
-        ":VID,"
-        ":FSEQ,"
-        ":BLOCK_ID,"
-        ":COMPRESSED_SIZE_IN_BYTES,"
-        ":COPY_NB,"
-        ":CREATION_TIME,"
-        ":ARCHIVE_FILE_ID)";
+    "BEGIN"                                                                             "\n"
+      "INSERT INTO TEMP_TAPE_FILE_INSERTION_BATCH("                                     "\n"
+        "VID,"                                                                          "\n"
+        "FSEQ,"                                                                         "\n"
+        "BLOCK_ID,"                                                                     "\n"
+        "COMPRESSED_SIZE_IN_BYTES,"                                                     "\n"
+        "COPY_NB,"                                                                      "\n"
+        "CREATION_TIME,"                                                                "\n"
+        "ARCHIVE_FILE_ID)"                                                              "\n"
+      "VALUES("                                                                         "\n"
+        ":VID,"                                                                         "\n"
+        ":FSEQ,"                                                                        "\n"
+        ":BLOCK_ID,"                                                                    "\n"
+        ":COMPRESSED_SIZE_IN_BYTES,"                                                    "\n"
+        ":COPY_NB,"                                                                     "\n"
+        ":CREATION_TIME,"                                                               "\n"
+        ":ARCHIVE_FILE_ID);"                                                            "\n"
+      "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, COMPRESSED_SIZE_IN_BYTES,"           "\n"
+         "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n"
+      "SELECT VID, FSEQ, BLOCK_ID, COMPRESSED_SIZE_IN_BYTES,"                           "\n"
+         "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;" "\n"
+      "FOR TF IN (SELECT * FROM TEMP_TAPE_FILE_INSERTION_BATCH)"                        "\n"
+      "LOOP"                                                                            "\n"
+        "UPDATE TAPE_FILE SET"                                                          "\n"
+          "SUPERSEDED_BY_VID=TF.VID,"  /*VID of the new file*/                          "\n"
+          "SUPERSEDED_BY_FSEQ=TF.FSEQ" /*FSEQ of the new file*/                         "\n"
+        "WHERE"                                                                         "\n"
+          "TAPE_FILE.ARCHIVE_FILE_ID= TF.ARCHIVE_FILE_ID AND"                           "\n"
+          "TAPE_FILE.COPY_NB= TF.COPY_NB AND"                                           "\n"
+          "(TAPE_FILE.VID <> TF.VID OR TAPE_FILE.FSEQ <> TF.FSEQ);"                     "\n"
+      "END LOOP;"                                                                       "\n"
+      "COMMIT;"                                                                         "\n"
+    "END;";
     auto stmt = conn.createStmt(sql);
     rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
     occiStmt.setColumn(tapeFileBatch.vid);
@@ -493,8 +510,6 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
 
       throw exception::Exception(msg.str());
     }
-
-    conn.commit();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
