@@ -427,23 +427,45 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     }
 
     const char *const sql =
-      "COPY TAPE_FILE("
-        "VID,"
-        "FSEQ,"
-        "BLOCK_ID,"
-        "COMPRESSED_SIZE_IN_BYTES,"
-        "COPY_NB,"
-        "CREATION_TIME,"
-        "ARCHIVE_FILE_ID) "
-      "FROM STDIN --"
-        ":VID,"
-        ":FSEQ,"
-        ":BLOCK_ID,"
-        ":COMPRESSED_SIZE_IN_BYTES,"
-        ":COPY_NB,"
-        ":CREATION_TIME,"
-        ":ARCHIVE_FILE_ID";
-
+    "CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH ("                        "\n"
+      "LIKE TAPE_FILE) "                                                             "\n"
+      "ON COMMIT DROP;"                                                              "\n"
+    "COPY TEMP_TAPE_FILE_INSERTION_BATCH("                                           "\n"
+      "VID,"                                                                         "\n"
+      "FSEQ,"                                                                        "\n"
+      "BLOCK_ID,"                                                                    "\n"
+      "COMPRESSED_SIZE_IN_BYTES,"                                                    "\n"
+      "COPY_NB,"                                                                     "\n"
+      "CREATION_TIME,"                                                               "\n"
+      "ARCHIVE_FILE_ID) "                                                            "\n"
+    "FROM STDIN; --"                                                                 "\n"
+      "-- :VID,"                                                                     "\n"
+      "-- :FSEQ,"                                                                    "\n"
+      "-- :BLOCK_ID,"                                                                "\n"
+      "-- :COMPRESSED_SIZE_IN_BYTES,"                                                "\n"
+      "-- :COPY_NB,"                                                                 "\n"
+      "-- :CREATION_TIME,"                                                           "\n"
+      "-- :ARCHIVE_FILE_ID"                                                          "\n"
+    "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, COMPRESSED_SIZE_IN_BYTES,"          "\n"
+      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n"
+    "SELECT VID, FSEQ, BLOCK_ID, COMPRESSED_SIZE_IN_BYTES,"                          "\n"
+      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;" "\n"
+    "DO $$ "                                                                         "\n"
+      "DECLARE"                                                                      "\n"
+        "TF RECORD;"                                                                 "\n"
+      "BEGIN"                                                                        "\n"
+        "FOR TF IN SELECT * FROM TEMP_TAPE_FILE_INSERTION_BATCH LOOP"                "\n"
+          "UPDATE TAPE_FILE SET"                                                     "\n"
+            "SUPERSEDED_BY_VID=TF.VID,"  /*VID of the new file*/                     "\n"
+            "SUPERSEDED_BY_FSEQ=TF.FSEQ" /*FSEQ of the new file*/                    "\n"
+          "WHERE"                                                                    "\n"
+            "TAPE_FILE.ARCHIVE_FILE_ID= TF.ARCHIVE_FILE_ID AND"                      "\n"
+            "TAPE_FILE.COPY_NB= TF.COPY_NB AND"                                      "\n"
+            "(TAPE_FILE.VID <> TF.VID OR TAPE_FILE.FSEQ <> TF.FSEQ);"                "\n"
+        "END LOOP;"                                                                  "\n"
+      "END"                                                                          "\n"
+    "$$;"                                                                            "\n"
+    "COMMIT;";
     auto stmt = conn.createStmt(sql);
     rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
     postgresStmt.setColumn(tapeFileBatch.vid);
@@ -455,8 +477,6 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     postgresStmt.setColumn(tapeFileBatch.archiveFileId);
     
     postgresStmt.executeCopyInsert(tapeFileBatch.nbRows);
-
-    conn.commit();
     autoRollback.cancel();
   } catch(exception::UserError &) {
     throw;
