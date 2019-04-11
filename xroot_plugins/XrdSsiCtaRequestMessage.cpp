@@ -30,6 +30,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaListPendingQueue.hpp"
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
+#include "XrdCtaTapeLs.hpp"
 
 
 
@@ -240,7 +241,8 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processTape_Reclaim(request.admincmd(), response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS):
-               processTape_Ls(request.admincmd(), response);
+               //processTape_Ls(request.admincmd(), response);
+              processTape_Ls(request.admincmd(),response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LABEL):
                processTape_Label(request.admincmd(), response);
@@ -1852,16 +1854,51 @@ void RequestMessage::processTape_Reclaim(const cta::admin::AdminCmd &admincmd, c
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
+void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
+{
+  using namespace cta::admin;
+  
+  cta::catalogue::TapeSearchCriteria searchCriteria;
+   
+   if(!has_flag(OptionBoolean::ALL))
+   {
+      bool has_any = false; // set to true if at least one optional option is set
 
+      // Get the search criteria from the optional options
 
-void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+      searchCriteria.disabled        = getOptional(OptionBoolean::DISABLED,       &has_any);
+      searchCriteria.full            = getOptional(OptionBoolean::FULL,           &has_any);
+      searchCriteria.capacityInBytes = getOptional(OptionUInt64::CAPACITY,        &has_any);
+      searchCriteria.logicalLibrary  = getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
+      searchCriteria.tapePool        = getOptional(OptionString::TAPE_POOL,       &has_any);
+      searchCriteria.vo              = getOptional(OptionString::VO,              &has_any);
+      searchCriteria.vid             = getOptional(OptionString::VID,             &has_any);
+      searchCriteria.mediaType       = getOptional(OptionString::MEDIA_TYPE,      &has_any);
+      searchCriteria.vendor          = getOptional(OptionString::VENDOR,          &has_any);
+
+      if(!has_any) {
+         throw cta::exception::UserError("Must specify at least one search option, or --all");
+      }
+   }
+
+   // Create a XrdSsi stream object to return the results
+   stream = new TapeLsStream(m_catalogue, searchCriteria);
+
+   // Should the client display column headers?
+   if(has_flag(OptionBoolean::SHOW_HEADER)) {
+      response.set_show_header(HeaderType::TAPE_LS);
+   }
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+/*void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
 
    cta::catalogue::TapeSearchCriteria searchCriteria;
-
+   
    if(!has_flag(OptionBoolean::ALL))
    {
       bool has_any = false; // set to true if at least one optional option is set
@@ -1885,8 +1922,47 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
 
    std::list<cta::common::dataStructures::Tape> list= m_catalogue.getTapes(searchCriteria);
 
+   TapeLsItem tapeList;
    if(!list.empty())
    {
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        ::cta::common::Tape * tapeToAdd = tapeList.add_tapes();
+        tapeToAdd->set_vid(it->vid);
+        tapeToAdd->set_media_type(it->mediaType);
+        tapeToAdd->set_vendor(it->vendor);
+        tapeToAdd->set_logical_library(it->logicalLibraryName);
+        tapeToAdd->set_tapepool(it->tapePoolName);
+        tapeToAdd->set_vo(it->vo);
+        tapeToAdd->set_encryption_key((bool)it->encryptionKey ? it->encryptionKey.value() : "-");
+        tapeToAdd->set_capacity(it->capacityInBytes);
+        tapeToAdd->set_occupancy(it->dataOnTapeInBytes);
+        tapeToAdd->set_last_fseq(it->lastFSeq);
+        tapeToAdd->set_full(it->full);
+        tapeToAdd->set_disabled(it->disabled);
+        if(it->labelLog) {
+          ::cta::common::TapeLog * labelLog = tapeToAdd->mutable_label_log();
+          labelLog->set_drive(it->labelLog.value().drive);
+          labelLog->set_time(it->labelLog.value().time);
+        }
+        if(it->lastWriteLog){
+          ::cta::common::TapeLog * lastWriteLog = tapeToAdd->mutable_last_written_log();
+          lastWriteLog->set_drive(it->lastWriteLog.value().drive);
+          lastWriteLog->set_time(it->lastWriteLog.value().time);
+        }
+        if(it->lastReadLog){
+          ::cta::common::TapeLog * lastReadLog = tapeToAdd->mutable_last_read_log();
+          lastReadLog->set_drive(it->lastReadLog.value().drive);
+          lastReadLog->set_time(it->lastReadLog.value().time);
+        }
+        ::cta::common::EntryLog * creationLog = tapeToAdd->mutable_creation_log();
+        creationLog->set_username(it->creationLog.username);
+        creationLog->set_host(it->creationLog.host);
+        creationLog->set_time(it->creationLog.time);
+        ::cta::common::EntryLog * lastModificationLog = tapeToAdd->mutable_last_modification_log();
+        lastModificationLog->set_username(it->lastModificationLog.username);
+        lastModificationLog->set_host(it->lastModificationLog.host);
+        lastModificationLog->set_time(it->lastModificationLog.time);
+      }
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
          "vid","media type","vendor","logical library","tapepool","vo","encryption key","capacity","occupancy",
@@ -1942,7 +2018,7 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
+}*/
 
 
 

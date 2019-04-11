@@ -28,25 +28,30 @@ if [ ! -z "${error}" ]; then
 fi
 
 executeReclaim() {
-    kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin ta reclaim -v $1
+    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta reclaim -v $1
     echo "Tape $1 reclaimed"
+}
+
+getVidToRepack() {
+  vidToRepack=$(kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin --json ta ls --all | jq '[.[] | select(.occupancy != "0") | select(.lastFseq != 0) | .vid] | .[0]' | tr -d '"')
+  echo $vidToRepack
 }
 
 executeRepack() {
     WAIT_FOR_REPACK_FILE_TIMEOUT=300
     echo
     echo "Changing the tape $1 to FULL status"
-    kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin ta ch -v $1 -f true
+    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ch -v $1 -f true
     echo "Creating the eos directory to put the retrieve files from the repack request"
-    kubectl -n ${NAMESPACE} exec ctacli -ti -- rm -rf root://ctaeos.cta.svc.cluster.local:1094//eos/ctaeos/repack
-    kubectl -n ${NAMESPACE} exec ctaeos -ti -- eos mkdir /eos/ctaeos/repack
-    kubectl -n ${NAMESPACE} exec ctaeos -ti -- eos chmod 1777 /eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ctacli -- rm -rf root://ctaeos.cta.svc.cluster.local:1094//eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir /eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 /eos/ctaeos/repack
     echo "Removing an eventual previous repack request for tape $1"
-    kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin re rm -v $1
+    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re rm -v $1
     echo "Launching the repack request on tape $1"
-    kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin re add -v $1 -m -b root://ctaeos.cta.svc.cluster.local:1094//eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re add -v $1 -m -b root://ctaeos.cta.svc.cluster.local:1094//eos/ctaeos/repack
     SECONDS_PASSED=0
-    while test 0 = `kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l`; do
+    while test 0 = `kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l`; do
       echo "Waiting for repack request on tape $1 to be complete: Seconds passed = $SECONDS_PASSED"
       sleep 1
       let SECONDS_PASSED=SECONDS_PASSED+1
@@ -56,7 +61,7 @@ executeRepack() {
         exit 1
       fi
     done
-    if test 1 = `kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin re ls -v $1 | grep -E "Failed" | wc -l`; then
+    if test 1 = `kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -v $1 | grep -E "Failed" | wc -l`; then
         echo "Repack failed for tape $1"
         exit 1
     fi
@@ -64,27 +69,39 @@ executeRepack() {
 
 echo "Execution of simple_repack.sh"
 
-kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin ta ls --all -h
-
-executeRepack V01001
+vidToRepack1=$(getVidToRepack)
+if [ "$vidToRepack1" != "null" ] 
+then
+  executeRepack $vidToRepack1
+else
+  echo "No vid found to repack"
+  exit 1
+fi
 
 sleep 1
 
-echo "Reclaiming tape V01001"
-executeReclaim V01001
+echo "Reclaiming tape $vidToRepack1"
+executeReclaim $vidToRepack1
 
-executeRepack V01003
+vidToRepack2=$(getVidToRepack)
+if [ "$vidToRepack2" != "null" ] 
+then
+  executeRepack $vidToRepack2
+else
+  echo "No vid found to repack"
+  exit 1
+fi
 
 echo
+echo "Reclaiming tape $vidToRepack2"
+executeReclaim $vidToRepack2
+
 echo "Summary of the content of the tapes"
-kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin ta ls -v V01001 -h
-kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin ta ls -v V01003 -h
+kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ls -v $vidToRepack1 -h
+kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ls -v $vidToRepack2 -h
 
 echo
 echo "Summary of the repack requests"
-kubectl -n ${NAMESPACE} exec ctacli -ti -- cta-admin re ls -h
-
-echo "Reclaiming tape V01003"
-executeReclaim V01003
+kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -h
 
 echo "End of test simple_repack"

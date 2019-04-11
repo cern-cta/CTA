@@ -117,7 +117,7 @@ private:
    void processTape_Ch               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTape_Rm               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTape_Reclaim          (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTape_Ls               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   //void processTape_Ls               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTape_Label            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTapePool_Add          (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTapePool_Ch           (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
@@ -145,6 +145,7 @@ private:
    admincmdstream_t processListPendingArchives;
    admincmdstream_t processListPendingRetrieves;
    admincmdstream_t processTapePool_Ls;
+   admincmdstream_t processTape_Ls;
 
    /*!
     * Log an admin command

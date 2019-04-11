@@ -69,6 +69,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
          case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
          case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
+         case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item()); break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -84,6 +85,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLprItem:       CtaAdminCmd::print(record.lpr_item());     break;
          case Data::kLprSummary:    CtaAdminCmd::print(record.lpr_summary());  break;
          case Data::kTplsItem:      CtaAdminCmd::print(record.tpls_item());    break;
+         case Data::kTalsItem:      CtaAdminCmd::print(record.tals_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -226,6 +228,7 @@ void CtaAdminCmd::send() const
             case HeaderType::LISTPENDINGRETRIEVES:         printLprHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: printLprSummaryHeader(); break;
             case HeaderType::TAPEPOOL_LS:                  printTpLsHeader(); break;
+            case HeaderType::TAPE_LS:                      printTapeLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }
@@ -643,6 +646,80 @@ void CtaAdminCmd::printTpLsHeader()
              << TEXT_NORMAL << std::endl;
 }
 
+void CtaAdminCmd::printTapeLsHeader(){
+  std::cout << TEXT_RED
+            << std::setfill(' ') << std::setw(7) << std::right << "vid"              << ' '
+            << std::setfill(' ') << std::setw(10) << std::right << "media type"       << ' '
+            << std::setfill(' ') << std::setw(7)  << std::right << "vendor"           << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << "logical library"  << ' '
+            << std::setfill(' ') << std::setw(18) << std::right << "tapepool"         << ' '
+            << std::setfill(' ') << std::setw(10)  << std::right << "vo"               << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << "encryption key"   << ' '
+            << std::setfill(' ') << std::setw(12)  << std::right << "capacity"         << ' '
+            << std::setfill(' ') << std::setw(12)  << std::right << "occupancy"        << ' '
+            << std::setfill(' ') << std::setw(9)  << std::right << "last fseq"        << ' '
+            << std::setfill(' ') << std::setw(5)  << std::right << "full"             << ' '
+            << std::setfill(' ') << std::setw(8) << std::right << "disabled"         << ' '
+            << std::setfill(' ') << std::setw(12) << std::right << "label drive"      << ' '
+            << std::setfill(' ') << std::setw(12)  << std::right << "label time"       << ' '
+            << std::setfill(' ') << std::setw(12) << std::right << "last w drive"     << ' '
+            << std::setfill(' ') << std::setw(12) << std::right << "last w time"      << ' '
+            << std::setfill(' ') << std::setw(12) << std::right << "last r drive"     << ' '
+            << std::setfill(' ') << std::setw(12) << std::right << "last r time"      << ' '
+            << std::setfill(' ') << std::setw(20) << std::right << "c.user"           << ' '
+            << std::setfill(' ') << std::setw(25) << std::right << "c.host"           << ' '
+            << std::setfill(' ') << std::setw(13) << std::right << "c.time"           << ' '
+            << std::setfill(' ') << std::setw(20) << std::right << "m.user"           << ' '
+            << std::setfill(' ') << std::setw(25) << std::right << "m.host"           << ' '
+            << std::setfill(' ') << std::setw(13) << std::right << "m.time"           << ' '
+            <<                                                     "comment"          << ' '
+            << TEXT_NORMAL << std::endl;
+}
+
+
+void CtaAdminCmd::print(const cta::admin::TapeLsItem &tals_item){
+  std::cout << std::setfill(' ') << std::setw(7) << std::right << tals_item.vid()        << ' '
+            << std::setfill(' ') << std::setw(10) << std::right << tals_item.media_type() << ' '
+            << std::setfill(' ') << std::setw(7)  << std::right << tals_item.vendor()     << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << tals_item.logical_library() << ' '
+            << std::setfill(' ') << std::setw(18) << std::right << tals_item.tapepool()         << ' '
+            << std::setfill(' ') << std::setw(10)  << std::right << tals_item.vo()               << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << tals_item.encryption_key()   << ' '
+            << std::setfill(' ') << std::setw(12)  << std::right << tals_item.capacity()         << ' '
+            << std::setfill(' ') << std::setw(12)  << std::right << tals_item.occupancy()       << ' '
+            << std::setfill(' ') << std::setw(9)  << std::right << tals_item.last_fseq()       << ' '
+            << std::setfill(' ') << std::setw(5)  << std::right << tals_item.full()           << ' '
+            << std::setfill(' ') << std::setw(8) << std::right << tals_item.disabled()         << ' ';
+  if(tals_item.has_label_log()){
+    std::cout << std::setfill(' ') << std::setw(12) << std::right << tals_item.label_log().drive() << ' '
+              << std::setfill(' ') << std::setw(12) << std::right << tals_item.label_log().time() << ' ';
+  } else {
+    std::cout << std::setfill(' ') << std::setw(12) << std::right << "-" << ' '
+              << std::setfill(' ') << std::setw(12) << std::right << "-" << ' ';
+  }
+  if(tals_item.has_last_written_log()){
+    std::cout << std::setfill(' ') << std::setw(12) << std::right << tals_item.last_written_log().drive() << ' '
+              << std::setfill(' ') << std::setw(12) << std::right << tals_item.last_written_log().time() << ' ';
+  } else {
+    std::cout << std::setfill(' ') << std::setw(12) << "-" << ' '
+              << std::setfill(' ') << std::setw(12) << "-" << ' ';
+  }
+  if(tals_item.has_last_read_log()){
+    std::cout << std::setfill(' ') << std::setw(12) << std::right << tals_item.last_read_log().drive() << ' '
+              << std::setfill(' ') << std::setw(12) << std::right << tals_item.last_read_log().time() << ' ';
+  } else {
+    std::cout << std::setfill(' ') << std::setw(12) << std::right << "-" << ' '
+              << std::setfill(' ') << std::setw(12) << std::right << "-" << ' ';
+  }
+    std::cout << std::setfill(' ') << std::setw(20) << std::right << tals_item.creation_log().username()          << ' '
+              << std::setfill(' ') << std::setw(25) << std::right << tals_item.creation_log().host()          << ' '
+              << std::setfill(' ') << std::setw(13) << std::right << tals_item.creation_log().time()           << ' '
+              << std::setfill(' ') << std::setw(20) << std::right << tals_item.last_modification_log().username()        << ' '
+              << std::setfill(' ') << std::setw(25) << std::right << tals_item.last_modification_log().host()          << ' '
+              << std::setfill(' ') << std::setw(13) << std::right << tals_item.last_modification_log().time()           << ' '
+              << std::endl;
+}
+
 void CtaAdminCmd::print(const cta::admin::TapePoolLsItem &tpls_item)
 {
    std::string encrypt_str = tpls_item.encrypt() ? "true" : "false";
@@ -711,4 +788,3 @@ int main(int argc, const char **argv)
 
    return 1;
 }
-
