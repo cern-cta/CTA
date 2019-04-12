@@ -244,6 +244,7 @@ fi # DONOTARCHIVE
 
 if [[ $ARCHIVEONLY == 1 ]]; then
   echo "Archiveonly mode: exiting"
+  test -z $TAILPID || kill ${TAILPID} &> /dev/null
   exit 0
 fi
 

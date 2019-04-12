@@ -31,7 +31,7 @@ source ./repack_helper.sh
 
 echo "Execution of simple_repack.sh"
 
-vidToRepack1=$(getVidToRepack)
+vidToRepack1=$(getFirstVidContainingFiles)
 if [ "$vidToRepack1" != "null" ] 
 then
   echo
@@ -47,7 +47,7 @@ else
   exit 1
 fi
 
-vidToRepack2=$(getVidToRepack)
+vidToRepack2=$(getFirstVidContainingFiles)
 if [ "$vidToRepack2" != "null" ] 
 then
   echo
