@@ -43,13 +43,13 @@ executeRepack() {
     echo "Changing the tape $1 to FULL status"
     kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ch -v $1 -f true
     echo "Creating the eos directory to put the retrieve files from the repack request"
-    kubectl -n ${NAMESPACE} exec ctacli -- rm -rf root://ctaeos.cta.svc.cluster.local//eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ctacli -- rm -rf root://ctaeos//eos/ctaeos/repack
     kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir /eos/ctaeos/repack
     kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 /eos/ctaeos/repack
     echo "Removing an eventual previous repack request for tape $1"
     kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re rm -v $1
     echo "Launching the repack request on tape $1"
-    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re add -v $1 -m -b root://ctaeos.cta.svc.cluster.local//eos/ctaeos/repack
+    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re add -v $1 -m -b root://ctaeos//eos/ctaeos/repack
     SECONDS_PASSED=0
     while test 0 = `kubectl -n ${NAMESPACE} exec ctacli -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l`; do
       echo "Waiting for repack request on tape $1 to be complete: Seconds passed = $SECONDS_PASSED"
