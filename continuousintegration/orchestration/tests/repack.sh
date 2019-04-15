@@ -32,7 +32,7 @@ echo "Preparing namespace for the tests"
 
 kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
 
-NB_FILES=500
+NB_FILES=1000
 FILE_SIZE_KB=15
 
 echo

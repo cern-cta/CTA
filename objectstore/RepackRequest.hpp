@@ -78,10 +78,10 @@ public:
   void setLastExpandedFSeq(uint64_t lastExpandedFSeq);
   uint64_t getLastExpandedFSeq();
   
-  void addFileToRetrieve(const uint64_t nbFilesToRetrieve);
-  void addBytesToRetrieve(const uint64_t nbBytesToRetrieve);
-  void addFileToArchive(const uint64_t nbFilesToArchive);
-  void addBytesToArchive(const uint64_t nbBytesToArchive);
+  void setTotalFileToRetrieve(const uint64_t nbFilesToRetrieve);
+  void setTotalBytesToRetrieve(const uint64_t nbBytesToRetrieve);
+  void setTotalFileToArchive(const uint64_t nbFilesToArchive);
+  void setTotalBytesToArchive(const uint64_t nbBytesToArchive);
   
   struct SubrequestStatistics {
     uint64_t fSeq;

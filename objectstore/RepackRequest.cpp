@@ -237,24 +237,24 @@ uint64_t RepackRequest::getLastExpandedFSeq() {
   return m_payload.lastexpandedfseq();
 }
 
-void RepackRequest::addFileToRetrieve(const uint64_t nbFilesToRetrieve){
+void RepackRequest::setTotalFileToRetrieve(const uint64_t nbFilesToRetrieve){
   checkPayloadWritable();
-  m_payload.set_totalfilestoretrieve(m_payload.totalfilestoretrieve()+nbFilesToRetrieve);
+  m_payload.set_totalfilestoretrieve(nbFilesToRetrieve);
 }
 
-void RepackRequest::addBytesToRetrieve(const uint64_t nbBytesToRetrieve){
+void RepackRequest::setTotalBytesToRetrieve(const uint64_t nbBytesToRetrieve){
   checkPayloadWritable();
-  m_payload.set_totalbytestoretrieve(m_payload.totalbytestoretrieve()+nbBytesToRetrieve);
+  m_payload.set_totalbytestoretrieve(nbBytesToRetrieve);
 }
 
-void RepackRequest::addFileToArchive(const uint64_t nbFilesToArchive){
+void RepackRequest::setTotalFileToArchive(const uint64_t nbFilesToArchive){
   checkPayloadWritable();
-  m_payload.set_totalfilestoarchive(m_payload.totalfilestoarchive()+nbFilesToArchive);
+  m_payload.set_totalfilestoarchive(nbFilesToArchive);
 }
 
-void RepackRequest::addBytesToArchive(const uint64_t nbBytesToArchive) {
+void RepackRequest::setTotalBytesToArchive(const uint64_t nbBytesToArchive) {
   checkPayloadWritable();
-  m_payload.set_totalbytestoarchive(m_payload.totalbytestoarchive()+nbBytesToArchive);
+  m_payload.set_totalbytestoarchive(nbBytesToArchive);
 }
 
 

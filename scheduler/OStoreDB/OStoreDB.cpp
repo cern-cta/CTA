@@ -2310,10 +2310,10 @@ void OStoreDB::RepackRequest::expandDone() {
 void OStoreDB::RepackRequest::setTotalStats(const TotalStatsFiles& stats){
   ScopedExclusiveLock rrl(m_repackRequest);
   m_repackRequest.fetch();
-  m_repackRequest.addFileToArchive(stats.totalFilesToArchive);
-  m_repackRequest.addBytesToArchive(stats.totalBytesToArchive);
-  m_repackRequest.addFileToRetrieve(stats.totalFilesToRetrieve);
-  m_repackRequest.addBytesToRetrieve(stats.totalBytesToRetrieve);
+  m_repackRequest.setTotalFileToArchive(stats.totalFilesToArchive);
+  m_repackRequest.setTotalBytesToArchive(stats.totalBytesToArchive);
+  m_repackRequest.setTotalFileToRetrieve(stats.totalFilesToRetrieve);
+  m_repackRequest.setTotalBytesToRetrieve(stats.totalBytesToRetrieve);
   m_repackRequest.commit();
 }
 

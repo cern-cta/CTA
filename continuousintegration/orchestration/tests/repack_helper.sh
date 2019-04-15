@@ -39,7 +39,7 @@ getFirstVidContainingFiles() {
 
 writeTapeSummary(){
   echo "Summary of the content of the tape $1"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ls -v $1 -h
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json ta ls -v $1 | jq
 }
 
 executeRepack() {
