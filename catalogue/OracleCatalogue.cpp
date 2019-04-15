@@ -377,8 +377,11 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     const TapeItemWritten &lastEvent = **lastEventItor;
     updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten, lastEvent.tapeDrive);
 
-    // If we had only placeholders and no file recorded, we are done.
-    if (fileEvents.empty()) return;
+    // If we had only placeholders and no file recorded, we are done (but we still commit the update of the tape's fSeq).
+    if (fileEvents.empty()) {
+      conn.commit();
+      return;
+    }
     
     // Create the archive file entries, skipping those that already exist
     idempotentBatchInsertArchiveFiles(conn, fileEvents);

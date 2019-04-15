@@ -26,7 +26,9 @@ export EOS_AUTOLOAD_CONFIG=default
 export EOS_BROKER_URL=root://DUMMY_HOST_TO_REPLACE:1097//eos/
 
 # The EOS host geo location tag used to sort hosts into geographical (rack) locations 
-export EOS_GEOTAG="DUMMY_HOST_TO_REPLACE"
+# Should not be longer than 8 characters now, otherwise we get:
+# EOS_GEOTAG var contains a tag longer than the 8 chars maximum allowed
+export EOS_GEOTAG="flat"
 
 # The fully qualified hostname of MGM master1
 export EOS_MGM_MASTER1=DUMMY_HOST_TO_REPLACE
