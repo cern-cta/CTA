@@ -520,7 +520,7 @@ Scheduler::RepackReportBatch Scheduler::getNextRepackReportBatch(log::LogContext
 //------------------------------------------------------------------------------
 void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
   if (nullptr == m_DbBatch) {
-    lc.log(log::DEBUG, "In Scheduler::RepackReportBatch::report(): empty batch.");
+    // lc.log(log::DEBUG, "In Scheduler::RepackReportBatch::report(): empty batch.");
   } else {
     m_DbBatch->report(lc);
   }
@@ -595,10 +595,12 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
   for (auto & d: driveStates) {
     if (d.driveName == driveName) {
       auto schedulerDbTime = t.secs();
-      log::ScopedParamContainer spc(lc);
-      spc.add("drive", driveName)
-         .add("schedulerDbTime", schedulerDbTime);
-      lc.log(log::INFO, "In Scheduler::getDesiredDriveState(): success.");
+      if (schedulerDbTime > 1) {
+        log::ScopedParamContainer spc(lc);
+        spc.add("drive", driveName)
+           .add("schedulerDbTime", schedulerDbTime);
+        lc.log(log::INFO, "In Scheduler::getDesiredDriveState(): success.");
+      }
       return d.desiredDriveState;
     }
   }
@@ -645,10 +647,12 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
   utils::Timer t;
   m_db.reportDriveStatus(driveInfo, type, status, time(NULL), lc);
   auto schedulerDbTime = t.secs();
-  log::ScopedParamContainer spc(lc);
-  spc.add("drive", driveInfo.driveName)
-     .add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::reportDriveStatus(): success.");
+  if (schedulerDbTime > 1) {
+    log::ScopedParamContainer spc(lc);
+    spc.add("drive", driveInfo.driveName)
+       .add("schedulerDbTime", schedulerDbTime);
+    lc.log(log::INFO, "In Scheduler::reportDriveStatus(): success.");
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -985,7 +989,9 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
         .add("decisionTime", decisionTime)
         .add("schedulerDbTime", schedulerDbTime)
         .add("catalogueTime", catalogueTime);
-  lc.log(log::DEBUG, "In Scheduler::getNextMountDryRun(): No valid mount found.");
+  if ((getMountInfoTime > 1) || (getTapeInfoTime > 1) || (candidateSortingTime > 1) || (getTapeForWriteTime > 1) ||
+      (decisionTime > 1) || (schedulerDbTime > 1) || (catalogueTime > 1))
+    lc.log(log::DEBUG, "In Scheduler::getNextMountDryRun(): No valid mount found.");
   return false;
 }
 

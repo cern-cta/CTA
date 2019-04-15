@@ -313,7 +313,7 @@ int MaintenanceHandler::runChild() {
     do {
       utils::Timer t;
       m_processManager.logContext().log(log::DEBUG, 
-          "In MaintenanceHandler::runChild(): About to run a GC pass.");
+          "In MaintenanceHandler::runChild(): About to do a maintenance pass.");
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
       repackRequestManager.runOnePass(m_processManager.logContext());

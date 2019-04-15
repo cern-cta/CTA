@@ -37,7 +37,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
     utils::Timer t2, roundTime;
 
     auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(BATCH_SIZE, lc);
-    {
+    if (archiveJobsToReport.size()) {
       log::ScopedParamContainer params(lc);
       params.add("jobsToReport", archiveJobsToReport.size());
       lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): ready to process archive reports.");
@@ -52,7 +52,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
     }
 
     auto retrieveJobsToReport = m_scheduler.getNextRetrieveJobsToReportBatch(BATCH_SIZE, lc);
-    {
+    if (retrieveJobsToReport.size()) {
       log::ScopedParamContainer params(lc);
       params.add("jobsToReport", retrieveJobsToReport.size());
       lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): ready to process retrieve reports.");
@@ -67,9 +67,11 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
     }
   }
   log::ScopedParamContainer params(lc);  
+  auto passTime = t.secs();
   params.add("roundCount", roundCount)
-        .add("passTime", t.secs());
-  lc.log(log::INFO, "In DiskReportRunner::runOnePass(): finished one pass.");
+        .add("passTime", passTime);
+  if (passTime > 1)
+    lc.log(log::INFO, "In DiskReportRunner::runOnePass(): finished one pass.");
 }
 
 } // namespace cta

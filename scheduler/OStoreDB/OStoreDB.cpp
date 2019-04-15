@@ -370,7 +370,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   log::ScopedParamContainer params (logContext);
   params.add("queueFetchTime", registerFetchTime)
         .add("processingTime", registerProcessingTime);
-  logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched the drive register.");
+  if ((registerFetchTime > 1) || (registerProcessingTime > 1))
+    logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched the drive register.");
 }
 
 //------------------------------------------------------------------------------
@@ -404,7 +405,8 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
           .add("lockSchedGlobalTime", lockSchedGlobalTime)
           .add("fetchSchedGlobalTime", fetchSchedGlobalTime)
           .add("fetchMountInfoTime", fetchMountInfoTime);
-    logContext.log(log::INFO, "In OStoreDB::getMountInfo(): success.");
+    if ((rootFetchNoLockTime > 1) || (lockSchedGlobalTime > 1) || (fetchSchedGlobalTime > 1) || fetchMountInfoTime > 1)
+      logContext.log(log::INFO, "In OStoreDB::getMountInfo(): success.");
   }
   return ret;
 }
@@ -429,7 +431,8 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfo
     log::ScopedParamContainer params(logContext);
     params.add("rootFetchNoLockTime", rootFetchNoLockTime)
           .add("fetchMountInfoTime", fetchMountInfoTime);
-    logContext.log(log::INFO, "In OStoreDB::getMountInfoNoLock(): success.");
+    if ((rootFetchNoLockTime > 1) || (fetchMountInfoTime > 1))
+      logContext.log(log::INFO, "In OStoreDB::getMountInfoNoLock(): success.");
   }
   return ret;
 }

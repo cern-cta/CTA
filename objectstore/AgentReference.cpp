@@ -192,7 +192,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       // and commit
       ag.commit();
       double agentCommitTime = t.secs(utils::Timer::resetCounter);
-      if (ownershipModification) {
+      if (ownershipModification && false) { // Log disabled to not log too much.
         log::ScopedParamContainer params(lc);
         params.add("agentOwnershipSizeBefore", agentOwnershipSizeBefore)
               .add("agentOwnershipSizeAfter", agentOwnershipSizeAfter)
