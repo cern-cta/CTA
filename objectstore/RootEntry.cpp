@@ -233,6 +233,8 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, JobQueu
     ArchiveQueue aq (aqp.address(), m_objectStore);
     ScopedExclusiveLock aql;
     try {
+      // Give a slight grace period to avoid live locks (seen in CI: live lock between creation and deletion of empty queues).
+      std::this_thread::sleep_for (std::chrono::milliseconds(100));
       aql.lock(aq);
       aq.fetch();
     } catch (cta::exception::Exception & ex) {
@@ -370,6 +372,8 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, JobQueueTyp
     RetrieveQueue rq(rqp.address(), m_objectStore);
     ScopedExclusiveLock rql;
     try {
+      // Give a slight grace period to avoid live locks (seen in CI: live lock between creation and deletion of empty queues).
+      std::this_thread::sleep_for (std::chrono::milliseconds(100));
       rql.lock(rq);
       rq.fetch();
     } catch (cta::exception::Exception & ex) {
