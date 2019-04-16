@@ -63,6 +63,8 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       xrootd-client \
       xrootd-debuginfo \
       xrootd-server \
+      sudo \
+      logrotate \
       oracle-instantclient12.2-basic \
       oracle-instantclient12.2-meta \
       oracle-instantclient12.2-sqlplus \
@@ -88,6 +90,11 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       mariadb-devel \
       postgresql-libs \
       gtest \
+      jemalloc \
+      eos-folly \
+      hiredis \
+      jsoncpp \
+      libmicrohttpd \
   && \
     yum clean all \
   && \

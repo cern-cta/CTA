@@ -36,11 +36,11 @@ spec:
         configMapKeyRef:
           name: buildtree
           key: base
-    - name: BUILDTREE_SUBDIR
+    - name: CTA_BUILDTREE_SUBDIR
       valueFrom:
         configMapKeyRef:
           name: buildtree
-          key: subdir
+          key: cta_subdir
     command: ['/opt/run/bin/init.sh']
     args: ["none"]
     volumeMounts:

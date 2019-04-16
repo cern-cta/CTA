@@ -26,14 +26,15 @@ keepobjectstore=1
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
-      [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ]  \
+      [-p <gitlab pipeline ID> | -b <build tree base> -B <CTA build tree subdir> [-E <EOS build tree subdir>]] \
       [-S] [-D] [-O] [-m [mhvtl|ibm]]
 
 Options:
   -S    Use systemd to manage services inside containers
-  -b    The directory containing both the source and the build tree for CTA. It will be mounted RO in the
+  -b    The directory containing both the source and the build tree for CTA (and possibly EOS). It will be mounted RO in the
         containers.
-  -B    The subdirectory within the -b directory where the build tree is.
+  -B    The subdirectory within the -b directory where the CTA build tree is.
+  -E    The subdirectory within the -b directory where the EOS build tree is.
   -D	wipe database content during initialization phase (database content is kept by default)
   -O	wipe objectstore content during initialization phase (objectstore content is kept by default)
   -a    additional kubernetes resources added to the kubernetes namespace
@@ -43,7 +44,7 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:e:a:p:b:B:SDOm:" o; do
+while getopts "n:o:d:e:a:p:b:B:E:SDOm:" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -78,7 +79,10 @@ while getopts "n:o:d:e:a:p:b:B:SDOm:" o; do
             usesystemd=1
             ;;
         B)
-            buildtreesubdir=${OPTARG}
+            ctabuildtreesubdir=${OPTARG}
+            ;;
+        E)
+            eosbuildtreesubdir=${OPTARG}
             ;;
         O)
             keepobjectstore=0
@@ -106,7 +110,7 @@ poddir=$(mktemp -d)
 
 if [ ! -z "${buildtree}" ]; then
     # We need to know the subdir as well
-    if [ -z "${buildtreesubdir}" ]; then
+    if [ -z "${ctabuildtreesubdir}" ]; then
       usage
     fi
     # We are going to run with generic images against a build tree.
@@ -116,7 +120,11 @@ if [ ! -z "${buildtree}" ]; then
     docker rmi buildtree-runner:v0 &>/dev/null
     docker tag buildtree-runner buildtree-runner:v0
     cp pod-* ${poddir}
-    sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: buildtree-runner:v0\n\1PullPolicy: Never/"
+    if [ -z "${eosbuildtreesubdir}" ]; then
+      sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: buildtree-runner:latest\n\1PullPolicy: Never/"
+    else
+      sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: doublebuildtree-runner:latest\n\1PullPolicy: Never/"
+    fi
 
     # Add the build tree mount point the pods (volume mount then volume).
     sed -i ${poddir}/pod-* -e "s|\(^\s\+\)\(volumeMounts:\)|\1\2\n\1- mountPath: ${buildtree}\n\1  name: buildtree\n\1  readOnly: true|"
@@ -184,7 +192,8 @@ fi
 
 kubectl --namespace ${instance} create configmap init --from-literal=keepdatabase=${keepdatabase} --from-literal=keepobjectstore=${keepobjectstore}
 
-kubectl --namespace ${instance} create configmap buildtree --from-literal=base=${buildtree} --from-literal=subdir=${buildtreesubdir}
+kubectl --namespace ${instance} create configmap buildtree --from-literal=base=${buildtree} --from-literal=cta_subdir=${ctabuildtreesubdir} \
+  --from-literal=eos_subdir=${eosbuildtreesubdir}
 
 if [ ! -z "${additional_resources}" ]; then
   kubectl --namespace ${instance} create -f ${additional_resources} || die "Could not create additional resources described in ${additional_resources}"

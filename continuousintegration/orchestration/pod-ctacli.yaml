@@ -26,11 +26,11 @@ spec:
         configMapKeyRef:
           name: buildtree
           key: base
-    - name: BUILDTREE_SUBDIR
+    - name: CTA_BUILDTREE_SUBDIR
       valueFrom:
         configMapKeyRef:
           name: buildtree
-          key: subdir
+          key: cta_subdir
     - name: TERM
       value: "xterm"
     command: ['/opt/run/bin/ctacli.sh']
