@@ -26,6 +26,11 @@
 
 #include "CtaAdminCmd.hpp"
 
+// synchronisation flag between main thread and stream handler thread
+std::atomic<bool> isHeaderSent(false);
+
+
+
 // Define XRootD SSI Alert message callback
 namespace XrdSsiPb {
 
@@ -53,6 +58,9 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 {
    using namespace cta::xrd;
    using namespace cta::admin;
+
+   // Wait for primary response to be handled before allowing stream response
+   while(!isHeaderSent) { std::this_thread::yield(); }
 
    // Output results in JSON format for parsing by a script
    if(CtaAdminCmd::isJson())
@@ -229,6 +237,8 @@ void CtaAdminCmd::send() const
             case HeaderType::NONE:
             default:                                       break;
          }
+         // Allow stream processing to commence
+         isHeaderSent = true;
          break;
       case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
       case Response::RSP_ERR_USER:
@@ -701,4 +711,3 @@ int main(int argc, const char **argv)
 
    return 1;
 }
-
