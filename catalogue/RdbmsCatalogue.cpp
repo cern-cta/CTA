@@ -4442,7 +4442,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       tapeFile.vid = rset.columnString("VID");
       tapeFile.fSeq = rset.columnUint64("FSEQ");
       tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-      tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+      tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
       tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
@@ -5390,7 +5390,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
@@ -5483,7 +5483,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
@@ -5629,7 +5629,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
@@ -5726,7 +5726,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
@@ -5824,7 +5824,7 @@ void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &calling
     if(event.vid.empty()) throw exception::Exception("vid is an empty string");
     if(0 == event.fSeq) throw exception::Exception("fSeq is 0");
     if(0 == event.blockId && event.fSeq != 1) throw exception::Exception("blockId is 0 and fSeq is not 1");
-    if(0 == event.compressedSize) throw exception::Exception("compressedSize is 0");
+    if(0 == event.size) throw exception::Exception("size is 0");
     if(0 == event.copyNb) throw exception::Exception("copyNb is 0");
     if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
   } catch (exception::Exception &ex) {

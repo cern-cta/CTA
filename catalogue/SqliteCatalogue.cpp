@@ -101,7 +101,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
           << " fSeq: " << it->fSeq
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
-          << " compressedSize: " << it->compressedSize
+          << " fileSize: " << it->fileSize
           << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
           << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
@@ -170,7 +170,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         << " fSeq: " << it->fSeq
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
-        << " compressedSize: " << it->compressedSize
+        << " fileSize: " << it->fileSize
         << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
         << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
@@ -387,7 +387,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event); 
-        totalCompressedBytesWritten += fileEvent.compressedSize;
+        totalCompressedBytesWritten += fileEvent.size;
       } catch (std::bad_cast&) {}
     }
 
@@ -479,7 +479,7 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
     tapeFile.vid            = event.vid;
     tapeFile.fSeq           = event.fSeq;
     tapeFile.blockId        = event.blockId;
-    tapeFile.compressedSize = event.compressedSize;
+    tapeFile.fileSize       = event.size;
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
     insertTapeFile(conn, tapeFile, event.archiveFileId);

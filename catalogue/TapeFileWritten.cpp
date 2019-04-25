@@ -28,7 +28,6 @@ TapeFileWritten::TapeFileWritten() :
   archiveFileId(0),
   size(0),
   blockId(0),
-  compressedSize(0),
   copyNb(0) {
 }
 
@@ -49,7 +48,6 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
     checksumValue == rhs.checksumValue &&
     storageClassName == rhs.storageClassName &&
     blockId == rhs.blockId &&
-    compressedSize == rhs.compressedSize &&
     copyNb == rhs.copyNb &&
     tapeDrive == rhs.tapeDrive;
 }
@@ -72,7 +70,6 @@ std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj) {
   "vid=" << obj.vid << ","
   "fSeq=" << obj.fSeq << ","
   "blockId=" << obj.blockId << ","
-  "compressedSize=" << obj.compressedSize << ","
   "copyNb=" << obj.copyNb << ","
   "tapeDrive=" << obj.tapeDrive <<
   "}";

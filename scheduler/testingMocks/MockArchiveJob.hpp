@@ -51,7 +51,6 @@ namespace cta {
       fileReport.blockId = tapeFile.blockId;
       fileReport.checksumType = tapeFile.checksumType;
       fileReport.checksumValue = tapeFile.checksumValue;
-      fileReport.compressedSize = tapeFile.compressedSize;
       fileReport.copyNb = tapeFile.copyNb;
       fileReport.diskFileId = archiveFile.diskFileId;
       fileReport.diskFileUser = archiveFile.diskFileInfo.owner;

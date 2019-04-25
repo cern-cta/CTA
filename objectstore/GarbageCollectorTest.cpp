@@ -564,8 +564,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     {
       cta::common::dataStructures::TapeFile tf;
       tf.blockId=0;
-      tf.compressedSize=1;
-      tf.compressedSize=1;
+      tf.fileSize=1;
       tf.copyNb=1;
       tf.creationTime=time(nullptr);
       tf.fSeq=pass;
@@ -575,8 +574,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     {
       cta::common::dataStructures::TapeFile tf;
       tf.blockId=0;
-      tf.compressedSize=1;
-      tf.compressedSize=1;
+      tf.fileSize=1;
       tf.copyNb=2;
       tf.creationTime=time(nullptr);
       tf.fSeq=pass;

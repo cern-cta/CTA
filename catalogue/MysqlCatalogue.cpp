@@ -276,7 +276,7 @@ void MysqlCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event); 
-        totalCompressedBytesWritten += fileEvent.compressedSize;
+        totalCompressedBytesWritten += fileEvent.size;
       } catch (std::bad_cast&) {}
     }
 
@@ -369,7 +369,7 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
     tapeFile.vid            = event.vid;
     tapeFile.fSeq           = event.fSeq;
     tapeFile.blockId        = event.blockId;
-    tapeFile.compressedSize = event.compressedSize;
+    tapeFile.fileSize       = event.size;
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
     insertTapeFile(conn, tapeFile, event.archiveFileId);
@@ -454,7 +454,7 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         tapeFile.vid = selectRset.columnString("VID");
         tapeFile.fSeq = selectRset.columnUint64("FSEQ");
         tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+        tapeFile.fileSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         if (!selectRset.columnIsNull("SSBY_VID")) {
@@ -500,7 +500,7 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
           << " fSeq: " << it->fSeq
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
-          << " compressedSize: " << it->compressedSize
+          << " fileSize: " << it->fileSize
           << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
           << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
@@ -568,7 +568,7 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         << " fSeq: " << it->fSeq
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
-        << " compressedSize: " << it->compressedSize
+        << " fileSize: " << it->fileSize
         << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
         << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
