@@ -62,7 +62,7 @@ namespace {
       vid("VID", nbRows),
       fSeq("FSEQ", nbRows),
       blockId("BLOCK_ID", nbRows),
-      compressedSize("COMPRESSED_SIZE_IN_BYTES", nbRows),
+      compressedSize("LOGICAL_SIZE_IN_BYTES", nbRows),
       copyNb("COPY_NB", nbRows),
       creationTime("CREATION_TIME", nbRows),
       archiveFileId("ARCHIVE_FILE_ID", nbRows) {
@@ -430,6 +430,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     }
 
     const char *const sql =
+<<<<<<< HEAD
     "CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH ("                        "\n"
       "LIKE TAPE_FILE) "                                                             "\n"
       "ON COMMIT DROP;"                                                              "\n"
@@ -437,7 +438,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
       "VID,"                                                                         "\n"
       "FSEQ,"                                                                        "\n"
       "BLOCK_ID,"                                                                    "\n"
-      "COMPRESSED_SIZE_IN_BYTES,"                                                    "\n"
+      "LOGICAL_SIZE_IN_BYTES,"                                                       "\n"
       "COPY_NB,"                                                                     "\n"
       "CREATION_TIME,"                                                               "\n"
       "ARCHIVE_FILE_ID) "                                                            "\n"
@@ -445,13 +446,13 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
       "-- :VID,"                                                                     "\n"
       "-- :FSEQ,"                                                                    "\n"
       "-- :BLOCK_ID,"                                                                "\n"
-      "-- :COMPRESSED_SIZE_IN_BYTES,"                                                "\n"
+      "-- :LOGICAL_SIZE_IN_BYTES,"                                                   "\n"
       "-- :COPY_NB,"                                                                 "\n"
       "-- :CREATION_TIME,"                                                           "\n"
       "-- :ARCHIVE_FILE_ID"                                                          "\n"
-    "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, COMPRESSED_SIZE_IN_BYTES,"          "\n"
+    "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"             "\n"
       "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n"
-    "SELECT VID, FSEQ, BLOCK_ID, COMPRESSED_SIZE_IN_BYTES,"                          "\n"
+    "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                             "\n"
       "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;" "\n"
     "DO $$ "                                                                         "\n"
       "DECLARE"                                                                      "\n"
@@ -720,7 +721,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -772,7 +773,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         tapeFile.vid = selectRset.columnString("VID");
         tapeFile.fSeq = selectRset.columnUint64("FSEQ");
         tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.compressedSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
