@@ -61,8 +61,7 @@ void fillRetrieveRequests(
     {
       cta::common::dataStructures::TapeFile tf;
       tf.blockId = 0;
-      tf.compressedSize = 1;
-      tf.compressedSize = 1;
+      tf.fileSize = 1;
       tf.copyNb = 1;
       tf.creationTime = time(nullptr);
       tf.fSeq = i;

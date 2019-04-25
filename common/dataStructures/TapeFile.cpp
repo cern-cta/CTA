@@ -30,7 +30,7 @@ namespace dataStructures {
 TapeFile::TapeFile():
   fSeq(0),
   blockId(0),
-  compressedSize(0),
+  fileSize(0),
   copyNb(0),
   creationTime(0) {}
 
@@ -41,7 +41,7 @@ bool TapeFile::operator==(const TapeFile &rhs) const {
   return vid==rhs.vid
       && fSeq==rhs.fSeq
       && blockId==rhs.blockId
-      && compressedSize==rhs.compressedSize
+      && fileSize==rhs.fileSize
       && copyNb==rhs.copyNb
       && creationTime==rhs.creationTime;
 }
@@ -67,7 +67,7 @@ std::ostream &operator<<(std::ostream &os, const TapeFile &obj) {
   os << "(vid=" << obj.vid
      << " fSeq=" << obj.fSeq
      << " blockId=" << obj.blockId
-     << " compressedSize=" << obj.compressedSize
+     << " fileSize=" << obj.fileSize
      << " copyNb=" << obj.copyNb
      << " creationTime=" << obj.creationTime << ")";
   return os;

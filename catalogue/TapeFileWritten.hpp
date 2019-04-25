@@ -105,12 +105,6 @@ struct TapeFileWritten: public TapeItemWritten {
   uint64_t blockId;
 
   /**
-   * The compressed size of the tape file in bytes.  In other words the actual
-   * number of bytes it occupies on tape.
-   */
-  uint64_t compressedSize;
-
-  /**
    * The copy number of the tape file.
    */
   uint32_t copyNb;

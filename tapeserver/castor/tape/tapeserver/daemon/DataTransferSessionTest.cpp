@@ -439,7 +439,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
       tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
@@ -621,7 +620,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.fSeq=fseq;
         tapeFileWritten.blockId=0;
         tapeFileWritten.copyNb=1;
-        tapeFileWritten.compressedSize=archiveFileSize; // No compression
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq);
         tapeFileWritten.diskFilePath = "/somefile";
@@ -646,7 +644,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.fSeq=fseq + 1;
         tapeFileWritten.blockId=wf.getBlockId() + 10000;
         tapeFileWritten.copyNb=1;
-        tapeFileWritten.compressedSize=archiveFileSize; // No compression
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq + 1);
         tapeFileWritten.diskFilePath = remoteFilePath.str();
@@ -822,7 +819,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
       tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
@@ -1033,7 +1029,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
       tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
@@ -1181,7 +1176,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
       tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();

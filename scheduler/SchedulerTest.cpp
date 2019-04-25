@@ -480,7 +480,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     archiveJob->tapeFile.fSeq = 1;
     archiveJob->tapeFile.checksumType = "ADLER32";
     archiveJob->tapeFile.checksumValue = "1234abcd";
-    archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
@@ -680,7 +680,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     archiveJob->tapeFile.fSeq = 1;
     archiveJob->tapeFile.checksumType = "ADLER32";
     archiveJob->tapeFile.checksumValue = "1234abcd";
-    archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
@@ -931,7 +931,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     archiveJob->tapeFile.fSeq = 1;
     archiveJob->tapeFile.checksumType = "ADLER32";
     archiveJob->tapeFile.checksumValue = "1234abcd";
-    archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
@@ -1435,7 +1435,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  const uint64_t compressedFileSize = archiveFileSize;
 
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
@@ -1463,7 +1462,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         fileWritten.vid = currentVid;
         fileWritten.fSeq = j;
         fileWritten.blockId = j * 100;
-        fileWritten.compressedSize = compressedFileSize;
         fileWritten.copyNb = 1;
         fileWritten.tapeDrive = tapeDrive;
         tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
@@ -1512,7 +1510,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         //Test that the informations are correct for each file
         //ASSERT_EQ(retrieveJob.request.tapePool,s_tapePoolName);
         ASSERT_EQ(retrieveJob.request.archiveFileID,archiveFileId++);
-        ASSERT_EQ(retrieveJob.fileSize,compressedFileSize);
+        ASSERT_EQ(retrieveJob.fileSize,archiveFileSize);
         std::stringstream ss;
         ss<<"file://"<<tempDirectory.path()<<"/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
         ASSERT_EQ(retrieveJob.request.dstURL, ss.str());
@@ -1520,7 +1518,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumType,checksumType);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumValue,checksumValue);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.blockId,j*100);
-        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.compressedSize,compressedFileSize);
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.fileSize,archiveFileSize);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.fSeq,j);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.vid,vid);
         ++j;
@@ -1610,7 +1608,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           ASSERT_EQ(tapeFile.fSeq,j);
           ASSERT_EQ(tapeFile.checksumType, checksumType);
           ASSERT_EQ(tapeFile.checksumValue,checksumValue);
-          ASSERT_EQ(tapeFile.compressedSize, compressedFileSize);
+          ASSERT_EQ(tapeFile.fileSize, archiveFileSize);
 
           //Testing scheduler retrieve request
           ASSERT_EQ(schedulerRetrieveRequest.archiveFileID,archiveFileId++);

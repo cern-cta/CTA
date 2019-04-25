@@ -1101,7 +1101,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
         "In OStoreDB::setRetrieveJobBatchReported(): tape copy not found"
       );
       insertedElements.emplace_back(CaRQF::InsertedElement{
-        &j.job->m_retrieveRequest, tf_it->copyNb, tf_it->fSeq, tf_it->compressedSize,
+        &j.job->m_retrieveRequest, tf_it->copyNb, tf_it->fSeq, j.job->archiveFile.fileSize,
         common::dataStructures::MountPolicy(), serializers::RetrieveJobStatus::RJS_Failed,
         j.job->m_activityDescription
       });

@@ -176,7 +176,7 @@ message TapeFile {
   required string vid = 9120;
   required uint64 fseq = 9121;
   required uint64 blockid = 9122;
-  required uint64 compressedsize = 9123;
+  required uint64 filesize = 9123;
   required uint32 copynb = 9124;
   required uint64 creationtime = 9125;
   required string checksumtype = 9126;

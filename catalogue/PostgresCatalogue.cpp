@@ -47,7 +47,7 @@ namespace {
     rdbms::wrapper::PostgresColumn vid;
     rdbms::wrapper::PostgresColumn fSeq;
     rdbms::wrapper::PostgresColumn blockId;
-    rdbms::wrapper::PostgresColumn compressedSize;
+    rdbms::wrapper::PostgresColumn fileSize;
     rdbms::wrapper::PostgresColumn copyNb;
     rdbms::wrapper::PostgresColumn creationTime;
     rdbms::wrapper::PostgresColumn archiveFileId;
@@ -62,7 +62,7 @@ namespace {
       vid("VID", nbRows),
       fSeq("FSEQ", nbRows),
       blockId("BLOCK_ID", nbRows),
-      compressedSize("LOGICAL_SIZE_IN_BYTES", nbRows),
+      fileSize("LOGICAL_SIZE_IN_BYTES", nbRows),
       copyNb("COPY_NB", nbRows),
       creationTime("CREATION_TIME", nbRows),
       archiveFileId("ARCHIVE_FILE_ID", nbRows) {
@@ -347,7 +347,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
 
         checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
         
-        totalCompressedBytesWritten += fileEvent.compressedSize;
+        totalCompressedBytesWritten += fileEvent.size;
         
         fileEvents.insert(fileEvent);
       } catch (std::bad_cast&) {}
@@ -422,7 +422,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
       tapeFileBatch.vid.setFieldValue(i, event.vid);
       tapeFileBatch.fSeq.setFieldValue(i, event.fSeq);
       tapeFileBatch.blockId.setFieldValue(i, event.blockId);
-      tapeFileBatch.compressedSize.setFieldValue(i, event.compressedSize);
+      tapeFileBatch.fileSize.setFieldValue(i, event.size);
       tapeFileBatch.copyNb.setFieldValue(i, event.copyNb);
       tapeFileBatch.creationTime.setFieldValue(i, now);
       tapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
@@ -475,7 +475,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     postgresStmt.setColumn(tapeFileBatch.vid);
     postgresStmt.setColumn(tapeFileBatch.fSeq);
     postgresStmt.setColumn(tapeFileBatch.blockId);
-    postgresStmt.setColumn(tapeFileBatch.compressedSize);
+    postgresStmt.setColumn(tapeFileBatch.fileSize);
     postgresStmt.setColumn(tapeFileBatch.copyNb);
     postgresStmt.setColumn(tapeFileBatch.creationTime);
     postgresStmt.setColumn(tapeFileBatch.archiveFileId);
@@ -773,7 +773,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         tapeFile.vid = selectRset.columnString("VID");
         tapeFile.fSeq = selectRset.columnUint64("FSEQ");
         tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+        tapeFile.fileSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
@@ -819,7 +819,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
           << " fSeq: " << it->fSeq
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
-          << " compressedSize: " << it->compressedSize
+          << " fileSize: " << it->fileSize
           << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
           << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
@@ -886,7 +886,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         << " fSeq: " << it->fSeq
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
-        << " compressedSize: " << it->compressedSize
+        << " fileSize: " << it->fileSize
         << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
         << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field

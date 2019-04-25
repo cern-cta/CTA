@@ -48,7 +48,7 @@ namespace {
     rdbms::wrapper::OcciColumn vid;
     rdbms::wrapper::OcciColumn fSeq;
     rdbms::wrapper::OcciColumn blockId;
-    rdbms::wrapper::OcciColumn compressedSize;
+    rdbms::wrapper::OcciColumn fileSize;
     rdbms::wrapper::OcciColumn copyNb;
     rdbms::wrapper::OcciColumn creationTime;
     rdbms::wrapper::OcciColumn archiveFileId;
@@ -63,7 +63,7 @@ namespace {
       vid("VID", nbRows),
       fSeq("FSEQ", nbRows),
       blockId("BLOCK_ID", nbRows),
-      compressedSize("LOGICAL_SIZE_IN_BYTES", nbRows),
+      fileSize("LOGICAL_SIZE_IN_BYTES", nbRows),
       copyNb("COPY_NB", nbRows),
       creationTime("CREATION_TIME", nbRows),
       archiveFileId("ARCHIVE_FILE_ID", nbRows) {
@@ -354,14 +354,14 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
 
         checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
         
-        totalCompressedBytesWritten += fileEvent.compressedSize;
+        totalCompressedBytesWritten += fileEvent.size;
 
         // Store the length of each field and implicitly calculate the maximum field
         // length of each column 
         tapeFileBatch.vid.setFieldLenToValueLen(i, fileEvent.vid);
         tapeFileBatch.fSeq.setFieldLenToValueLen(i, fileEvent.fSeq);
         tapeFileBatch.blockId.setFieldLenToValueLen(i, fileEvent.blockId);
-        tapeFileBatch.compressedSize.setFieldLenToValueLen(i, fileEvent.compressedSize);
+        tapeFileBatch.fileSize.setFieldLenToValueLen(i, fileEvent.size);
         tapeFileBatch.copyNb.setFieldLenToValueLen(i, fileEvent.copyNb);
         tapeFileBatch.creationTime.setFieldLenToValueLen(i, now);
         tapeFileBatch.archiveFileId.setFieldLenToValueLen(i, fileEvent.archiveFileId);
@@ -435,7 +435,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       tapeFileBatch.vid.setFieldValue(i, event.vid);
       tapeFileBatch.fSeq.setFieldValue(i, event.fSeq);
       tapeFileBatch.blockId.setFieldValue(i, event.blockId);
-      tapeFileBatch.compressedSize.setFieldValue(i, event.compressedSize);
+      tapeFileBatch.fileSize.setFieldValue(i, event.size);
       tapeFileBatch.copyNb.setFieldValue(i, event.copyNb);
       tapeFileBatch.creationTime.setFieldValue(i, now);
       tapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
@@ -481,7 +481,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     occiStmt.setColumn(tapeFileBatch.vid);
     occiStmt.setColumn(tapeFileBatch.fSeq);
     occiStmt.setColumn(tapeFileBatch.blockId);
-    occiStmt.setColumn(tapeFileBatch.compressedSize);
+    occiStmt.setColumn(tapeFileBatch.fileSize);
     occiStmt.setColumn(tapeFileBatch.copyNb);
     occiStmt.setColumn(tapeFileBatch.creationTime);
     occiStmt.setColumn(tapeFileBatch.archiveFileId);
@@ -842,7 +842,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         tapeFile.vid = selectRset.columnString("VID");
         tapeFile.fSeq = selectRset.columnUint64("FSEQ");
         tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+        tapeFile.fileSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
@@ -888,7 +888,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
           << " fSeq: " << it->fSeq
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
-          << " compressedSize: " << it->compressedSize
+          << " fileSize: " << it->fileSize
           << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
           << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
@@ -953,7 +953,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         << " fSeq: " << it->fSeq
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
-        << " compressedSize: " << it->compressedSize
+        << " fileSize: " << it->compressedSize
         << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
         << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field

@@ -54,7 +54,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   tapeFile1.vid = "VID1";
   tapeFile1.fSeq = 5678;
   tapeFile1.blockId = 9012;
-  tapeFile1.compressedSize = 5;
+  tapeFile1.fileSize = 5;
   tapeFile1.copyNb = 1;
 
   archiveFile1.tapeFiles.push_back(tapeFile1);
@@ -64,7 +64,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   tapeFile2.vid = "VID2";
   tapeFile2.fSeq = 3456;
   tapeFile2.blockId = 7890;
-  tapeFile2.compressedSize = 6;
+  tapeFile2.fileSize = 6;
   tapeFile2.copyNb = 2;
 
   archiveFile1.tapeFiles.push_back(tapeFile2);
@@ -95,7 +95,6 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
     ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->vid);
     ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->fSeq);
     ASSERT_EQ(tapeFile1.blockId, copyNbToTapeFileItor->blockId);
-    ASSERT_EQ(tapeFile1.compressedSize, copyNbToTapeFileItor->compressedSize);
     ASSERT_EQ(tapeFile1.copyNb, copyNbToTapeFileItor->copyNb);
   }
 
@@ -106,7 +105,6 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
     ASSERT_EQ(tapeFile2.vid, copyNbToTapeFileItor->vid);
     ASSERT_EQ(tapeFile2.fSeq, copyNbToTapeFileItor->fSeq);
     ASSERT_EQ(tapeFile2.blockId, copyNbToTapeFileItor->blockId);
-    ASSERT_EQ(tapeFile2.compressedSize, copyNbToTapeFileItor->compressedSize);
     ASSERT_EQ(tapeFile2.copyNb, copyNbToTapeFileItor->copyNb);
   }
 }

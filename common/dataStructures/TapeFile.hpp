@@ -56,10 +56,10 @@ struct TapeFile {
   // TODO: change denomination to match SCSI nomenclature (logical object identifier).
   uint64_t blockId;
   /**
-   * The compressed size of the tape file in bytes. In other words the 
-   * actual number of bytes it occupies on tape. 
+   * The uncompressed (logical) size of the tape file in bytes. This field is redundant as it already exists in the
+   * ArchiveFile class, so it may be removed in future.
    */
-  uint64_t compressedSize;
+  uint64_t fileSize;
   /**
    * The copy number of the file. Copy numbers start from 1. Copy number 0 
    * is an invalid copy number. 

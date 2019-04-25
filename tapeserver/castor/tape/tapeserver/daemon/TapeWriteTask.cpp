@@ -168,7 +168,7 @@ namespace daemon {
             << std::setfill('0') << std::setw(8) << (uint32_t)ckSum;
         m_archiveJob->tapeFile.checksumValue = cs.str();
       }
-      m_archiveJob->tapeFile.compressedSize = m_taskStats.dataVolume;
+      m_archiveJob->tapeFile.fileSize = m_taskStats.dataVolume;
       m_archiveJob->tapeFile.blockId = output->getBlockId();
       reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
       m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);

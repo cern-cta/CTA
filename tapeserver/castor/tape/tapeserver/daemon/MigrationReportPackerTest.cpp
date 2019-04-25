@@ -79,7 +79,6 @@ namespace unitTests {
       fileReport.blockId = tapeFile.blockId;
       fileReport.checksumType = tapeFile.checksumType;
       fileReport.checksumValue = tapeFile.checksumValue;
-      fileReport.compressedSize = tapeFile.compressedSize;
       fileReport.copyNb = tapeFile.copyNb;
       fileReport.diskFileId = archiveFile.diskFileId;
       fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
@@ -159,7 +158,7 @@ namespace unitTests {
     job1->tapeFile.vid="VTEST001";
     job1->tapeFile.fSeq=1;
     job1->tapeFile.blockId=256;
-    job1->tapeFile.compressedSize=768;
+    job1->tapeFile.fileSize=768;
     job1->tapeFile.copyNb=1;
     job1->tapeFile.checksumType="md5";
     job1->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -184,7 +183,7 @@ namespace unitTests {
     job2->tapeFile.vid="VTEST001";
     job2->tapeFile.fSeq=2;
     job2->tapeFile.blockId=512;
-    job2->tapeFile.compressedSize=768;
+    job2->tapeFile.fileSize=768;
     job2->tapeFile.copyNb=1;
     job2->tapeFile.checksumType="md5";
     job2->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -324,7 +323,7 @@ namespace unitTests {
     migratedBigFile->tapeFile.vid="VTEST001";
     migratedBigFile->tapeFile.fSeq=1;
     migratedBigFile->tapeFile.blockId=256;
-    migratedBigFile->tapeFile.compressedSize=768;
+    migratedBigFile->tapeFile.fileSize=768;
     migratedBigFile->tapeFile.copyNb=1;
     migratedBigFile->tapeFile.checksumType="md5";
     migratedBigFile->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -342,7 +341,7 @@ namespace unitTests {
     migratedFileSmall->tapeFile.vid="VTEST001";
     migratedFileSmall->tapeFile.fSeq=2;
     migratedFileSmall->tapeFile.blockId=512;
-    migratedFileSmall->tapeFile.compressedSize=1;
+    migratedFileSmall->tapeFile.fileSize=1;
     migratedFileSmall->tapeFile.copyNb=1;
     migratedFileSmall->tapeFile.checksumType="md5";
     migratedFileSmall->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -360,7 +359,7 @@ namespace unitTests {
     migratedNullFile->tapeFile.vid="VTEST001";
     migratedNullFile->tapeFile.fSeq=3;
     migratedNullFile->tapeFile.blockId=768;
-    migratedNullFile->tapeFile.compressedSize=0;
+    migratedNullFile->tapeFile.fileSize=0;
     migratedNullFile->tapeFile.copyNb=1;
     migratedNullFile->tapeFile.checksumType="md5";
     migratedFileSmall->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6"; 

@@ -213,7 +213,6 @@ bool ListPendingQueueStream<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb:
     // Archive file
     auto af = record.mutable_lpr_item()->mutable_af();
     af->set_archive_id(job.request.archiveFileID);
-    //af->set_size(tape_it->second.second.compressedSize);
     af->set_size(job.fileSize);
     af->mutable_df()->set_owner(job.request.requester.name);
     af->mutable_df()->set_group(job.request.requester.group);

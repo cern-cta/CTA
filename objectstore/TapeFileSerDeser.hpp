@@ -42,7 +42,7 @@ public:
     ostf.set_vid(vid);
     ostf.set_fseq(fSeq);
     ostf.set_blockid(blockId);
-    ostf.set_compressedsize(compressedSize);
+    ostf.set_filesize(fileSize);
     ostf.set_copynb(copyNb);
     ostf.set_creationtime(creationTime);
     ostf.set_checksumtype(checksumType);
@@ -53,7 +53,7 @@ public:
     vid=ostf.vid();
     fSeq=ostf.fseq();
     blockId=ostf.blockid();
-    compressedSize=ostf.compressedsize();
+    fileSize=ostf.filesize();
     copyNb=ostf.copynb();
     creationTime=ostf.creationtime();
     checksumType=ostf.checksumtype();
