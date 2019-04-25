@@ -4491,7 +4491,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     std::string sql =
       "SELECT "
         "COALESCE(SUM(ARCHIVE_FILE.SIZE_IN_BYTES), 0) AS TOTAL_BYTES,"
-        "COALESCE(SUM(TAPE_FILE.LOGICAL_SIZE_IN_BYTES), 0) AS TOTAL_COMPRESSED_BYTES,"
         "COUNT(ARCHIVE_FILE.ARCHIVE_FILE_ID) AS TOTAL_FILES "
       "FROM "
         "ARCHIVE_FILE "
@@ -4606,7 +4605,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
 
     common::dataStructures::ArchiveFileSummary summary;
     summary.totalBytes = rset.columnUint64("TOTAL_BYTES");
-    summary.totalCompressedBytes = rset.columnUint64("TOTAL_COMPRESSED_BYTES");
     summary.totalFiles = rset.columnUint64("TOTAL_FILES");
     return summary;
   } catch(exception::UserError &) {

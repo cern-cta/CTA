@@ -254,7 +254,7 @@ void MysqlCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &
 
     const auto tape = selectTapeForUpdate(conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
-    uint64_t totalCompressedBytesWritten = 0;
+    uint64_t totalLogicalBytesWritten = 0;
 
     for(const auto &eventP: events) {
       const auto & event = *eventP;
@@ -276,14 +276,14 @@ void MysqlCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event); 
-        totalCompressedBytesWritten += fileEvent.size;
+        totalLogicalBytesWritten += fileEvent.size;
       } catch (std::bad_cast&) {}
     }
 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten, lastEvent.tapeDrive);
+    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten, lastEvent.tapeDrive);
 
     for(const auto &event : events) {
       try {

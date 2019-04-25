@@ -40,7 +40,6 @@ struct ArchiveFileSummary {
   bool operator!=(const ArchiveFileSummary &rhs) const;
 
   uint64_t totalBytes;
-  uint64_t totalCompressedBytes;
   uint64_t totalFiles;
 
 }; // struct ArchiveFileSummary
