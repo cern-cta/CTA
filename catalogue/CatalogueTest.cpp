@@ -8315,7 +8315,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8328,7 +8327,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8343,7 +8341,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8358,7 +8355,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8372,7 +8368,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8386,7 +8381,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8400,7 +8394,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8412,7 +8405,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8425,7 +8417,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -8438,7 +8429,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -8451,7 +8441,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -8464,7 +8453,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -8475,7 +8463,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(0, summary.totalBytes);
-    ASSERT_EQ(0, summary.totalCompressedBytes);
     ASSERT_EQ(0, summary.totalFiles);
   }
 }
@@ -9273,7 +9260,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9286,7 +9272,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9301,7 +9286,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9316,7 +9300,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9330,7 +9313,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9344,7 +9326,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9358,7 +9339,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9370,7 +9350,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9383,7 +9362,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -9396,7 +9374,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -9409,7 +9386,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -9422,7 +9398,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -9433,7 +9408,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(0, summary.totalBytes);
-    ASSERT_EQ(0, summary.totalCompressedBytes);
     ASSERT_EQ(0, summary.totalFiles);
   }
 }

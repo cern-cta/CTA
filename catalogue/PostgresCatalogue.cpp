@@ -313,7 +313,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
 
     const auto tape = selectTapeForUpdate(conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
-    uint64_t totalCompressedBytesWritten = 0;
+    uint64_t totalLogicalBytesWritten = 0;
 
     // We have a mix of files and items. Only files will be recorded, but items
     // allow checking fSeq coherency.
@@ -347,7 +347,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
 
         checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
         
-        totalCompressedBytesWritten += fileEvent.size;
+        totalLogicalBytesWritten += fileEvent.size;
         
         fileEvents.insert(fileEvent);
       } catch (std::bad_cast&) {}
@@ -357,7 +357,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
+    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten,
       lastEvent.tapeDrive);
 
     // If we had only placeholders and no file recorded, we are done (but we still commit the update of the tape's fSeq).

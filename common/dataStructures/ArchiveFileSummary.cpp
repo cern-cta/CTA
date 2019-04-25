@@ -29,7 +29,6 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 ArchiveFileSummary::ArchiveFileSummary():
   totalBytes(0),
-  totalCompressedBytes(0),
   totalFiles(0) {}
 
 //------------------------------------------------------------------------------
@@ -37,7 +36,6 @@ ArchiveFileSummary::ArchiveFileSummary():
 //------------------------------------------------------------------------------
 bool ArchiveFileSummary::operator==(const ArchiveFileSummary &rhs) const {
   return totalBytes==rhs.totalBytes
-      && totalCompressedBytes==rhs.totalCompressedBytes
       && totalFiles==rhs.totalFiles;
 }
 
@@ -53,7 +51,6 @@ bool ArchiveFileSummary::operator!=(const ArchiveFileSummary &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const ArchiveFileSummary &obj) {
   os << "(totalBytes=" << obj.totalBytes
-     << " totalCompressedBytes=" << obj.totalCompressedBytes
      << " totalFiles=" << obj.totalFiles << ")";
   return os;
 }
