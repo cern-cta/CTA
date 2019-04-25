@@ -59,7 +59,7 @@ namespace {
       tapeFile.vid = rset.columnString("VID");
       tapeFile.fSeq = rset.columnUint64("FSEQ");
       tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-      tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+      tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
       tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
@@ -103,7 +103,7 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
         "TAPE_COPY.VID AS VID,"
         "TAPE_COPY.FSEQ AS FSEQ,"
         "TAPE_COPY.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_COPY.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_COPY.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_COPY.COPY_NB AS COPY_NB,"
         "TAPE_COPY.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
         "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "

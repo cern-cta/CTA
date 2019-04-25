@@ -4395,7 +4395,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -4442,7 +4442,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       tapeFile.vid = rset.columnString("VID");
       tapeFile.fSeq = rset.columnUint64("FSEQ");
       tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-      tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+      tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
       tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
@@ -4491,7 +4491,7 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     std::string sql =
       "SELECT "
         "COALESCE(SUM(ARCHIVE_FILE.SIZE_IN_BYTES), 0) AS TOTAL_BYTES,"
-        "COALESCE(SUM(TAPE_FILE.COMPRESSED_SIZE_IN_BYTES), 0) AS TOTAL_COMPRESSED_BYTES,"
+        "COALESCE(SUM(TAPE_FILE.LOGICAL_SIZE_IN_BYTES), 0) AS TOTAL_COMPRESSED_BYTES,"
         "COUNT(ARCHIVE_FILE.ARCHIVE_FILE_ID) AS TOTAL_FILES "
       "FROM "
         "ARCHIVE_FILE "
@@ -5212,7 +5212,7 @@ void RdbmsCatalogue::insertTapeFile(
           "VID,"
           "FSEQ,"
           "BLOCK_ID,"
-          "COMPRESSED_SIZE_IN_BYTES,"
+          "LOGICAL_SIZE_IN_BYTES,"
           "COPY_NB,"
           "CREATION_TIME,"
           "ARCHIVE_FILE_ID)"
@@ -5220,7 +5220,7 @@ void RdbmsCatalogue::insertTapeFile(
           ":VID,"
           ":FSEQ,"
           ":BLOCK_ID,"
-          ":COMPRESSED_SIZE_IN_BYTES,"
+          ":LOGICAL_SIZE_IN_BYTES,"
           ":COPY_NB,"
           ":CREATION_TIME,"
           ":ARCHIVE_FILE_ID)";
@@ -5229,7 +5229,7 @@ void RdbmsCatalogue::insertTapeFile(
       stmt.bindString(":VID", tapeFile.vid);
       stmt.bindUint64(":FSEQ", tapeFile.fSeq);
       stmt.bindUint64(":BLOCK_ID", tapeFile.blockId);
-      stmt.bindUint64(":COMPRESSED_SIZE_IN_BYTES", tapeFile.compressedSize);
+      stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES", tapeFile.compressedSize);
       stmt.bindUint64(":COPY_NB", tapeFile.copyNb);
       stmt.bindUint64(":CREATION_TIME", now);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
@@ -5346,7 +5346,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -5390,7 +5390,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
@@ -5436,7 +5436,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -5483,7 +5483,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
@@ -5583,7 +5583,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -5629,7 +5629,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
@@ -5677,7 +5677,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -5726,7 +5726,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.compressedSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
