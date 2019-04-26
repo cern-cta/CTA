@@ -779,15 +779,15 @@ bool RdbmsCatalogue::diskFileUserExists(rdbms::Conn &conn, const std::string &di
     const char *const sql =
       "SELECT "
         "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-        "DISK_FILE_USER AS DISK_FILE_USER "
+        "DISK_FILE_UID AS DISK_FILE_UID "
       "FROM "
         "ARCHIVE_FILE "
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "DISK_FILE_USER = :DISK_FILE_USER";
+        "DISK_FILE_UID = :DISK_FILE_UID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    stmt.bindString(":DISK_FILE_USER", diskFileUser);
+    stmt.bindString(":DISK_FILE_UID", diskFileUser);
     auto rset = stmt.executeQuery();
     return rset.next();
   } catch(exception::UserError &) {
@@ -807,15 +807,15 @@ bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &d
     const char *const sql =
       "SELECT "
         "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-        "DISK_FILE_GROUP AS DISK_FILE_GROUP "
+        "DISK_FILE_GID AS DISK_FILE_GID "
       "FROM "
         "ARCHIVE_FILE "
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "DISK_FILE_GROUP = :DISK_FILE_GROUP";
+        "DISK_FILE_GID = :DISK_FILE_GID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    stmt.bindString(":DISK_FILE_GROUP", diskFileGroup);
+    stmt.bindString(":DISK_FILE_GID", diskFileGroup);
     auto rset = stmt.executeQuery();
     return rset.next();
   } catch(exception::UserError &) {
@@ -4215,8 +4215,8 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
         "DISK_INSTANCE_NAME,"
         "DISK_FILE_ID,"
         "DISK_FILE_PATH,"
-        "DISK_FILE_USER,"
-        "DISK_FILE_GROUP,"
+        "DISK_FILE_UID,"
+        "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
         "CHECKSUM_TYPE,"
         "CHECKSUM_VALUE,"
@@ -4228,8 +4228,8 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
         "DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
         ":DISK_FILE_PATH,"
-        ":DISK_FILE_USER,"
-        ":DISK_FILE_GROUP,"
+        ":DISK_FILE_UID,"
+        ":DISK_FILE_GID,"
         ":SIZE_IN_BYTES,"
         ":CHECKSUM_TYPE,"
         ":CHECKSUM_VALUE,"
@@ -4247,8 +4247,8 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
     stmt.bindString(":DISK_INSTANCE_NAME", row.diskInstance);
     stmt.bindString(":DISK_FILE_ID", row.diskFileId);
     stmt.bindString(":DISK_FILE_PATH", row.diskFilePath);
-    stmt.bindString(":DISK_FILE_USER", row.diskFileUser);
-    stmt.bindString(":DISK_FILE_GROUP", row.diskFileGroup);
+    stmt.bindString(":DISK_FILE_UID", row.diskFileUser);
+    stmt.bindString(":DISK_FILE_GID", row.diskFileGroup);
     stmt.bindUint64(":SIZE_IN_BYTES", row.size);
     stmt.bindString(":CHECKSUM_TYPE", row.checksumType);
     stmt.bindString(":CHECKSUM_VALUE", row.checksumValue);
@@ -4384,8 +4384,8 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -4429,8 +4429,8 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
       archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
       archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-      archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-      archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+      archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_UID");
+      archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GID");
       archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
       archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
       archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -4538,12 +4538,12 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     }
     if(searchCriteria.diskFileUser) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_USER = :DISK_FILE_USER";
+      sql += "ARCHIVE_FILE.DISK_FILE_UID = :DISK_FILE_UID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileGroup) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_GROUP = :DISK_FILE_GROUP";
+      sql += "ARCHIVE_FILE.DISK_FILE_GID = :DISK_FILE_GID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.storageClass) {
@@ -4581,10 +4581,10 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       stmt.bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
     }
     if(searchCriteria.diskFileUser) {
-      stmt.bindString(":DISK_FILE_USER", searchCriteria.diskFileUser.value());
+      stmt.bindString(":DISK_FILE_UID", searchCriteria.diskFileUser.value());
     }
     if(searchCriteria.diskFileGroup) {
-      stmt.bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup.value());
+      stmt.bindString(":DISK_FILE_GID", searchCriteria.diskFileGroup.value());
     }
     if(searchCriteria.storageClass) {
       stmt.bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());
@@ -5333,8 +5333,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -5371,8 +5371,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_UID");
+        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -5423,8 +5423,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -5464,8 +5464,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_UID");
+        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -5570,8 +5570,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -5610,8 +5610,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_UID");
+        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -5664,8 +5664,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
@@ -5707,8 +5707,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_UID");
+        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");

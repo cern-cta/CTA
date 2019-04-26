@@ -44,8 +44,8 @@ namespace {
     archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
     archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
     archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-    archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-    archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+    archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_UID");
+    archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GID");
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
     archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
     archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -92,8 +92,8 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
