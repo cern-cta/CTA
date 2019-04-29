@@ -71,12 +71,12 @@ struct TapeFileWritten: public TapeItemWritten {
   /**
    * The user name of the source disk file within its host disk system.
    */
-  std::string diskFileUser;
+  uint32_t diskFileOwnerUid;
 
   /**
    * The group name of the source disk file within its host disk system.
    */
-  std::string diskFileGroup;
+  uint32_t diskFileGid;
 
   /**
    * The uncompressed size of the tape file in bytes.

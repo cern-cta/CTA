@@ -20,7 +20,7 @@
 
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
 
 #include <list>
 #include <map>
@@ -42,7 +42,7 @@ struct ArchiveRequest {
 
   bool operator!=(const ArchiveRequest &rhs) const;
 
-  UserIdentity requester;
+  RequesterIdentity requester;
   std::string diskFileID;
 
   std::string srcURL;

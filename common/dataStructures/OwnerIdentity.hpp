@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,22 +31,22 @@ namespace dataStructures {
 /**
  * This struct holds the username and group name of a given user 
  */
-struct UserIdentity {
+struct OwnerIdentity {
 
-  UserIdentity();
+  OwnerIdentity();
   
-  UserIdentity(const std::string &name, const std::string &group);
+  OwnerIdentity(uint32_t uid, uint32_t gid);
 
-  bool operator==(const UserIdentity &rhs) const;
+  bool operator==(const OwnerIdentity &rhs) const;
 
-  bool operator!=(const UserIdentity &rhs) const;
+  bool operator!=(const OwnerIdentity &rhs) const;
 
-  std::string name;
-  std::string group;
+  uint32_t uid;
+  uint32_t gid;
 
-}; // struct UserIdentity
+}; // struct OwnerIdentity
 
-std::ostream &operator<<(std::ostream &os, const UserIdentity &obj);
+std::ostream &operator<<(std::ostream &os, const OwnerIdentity &obj);
 
 } // namespace dataStructures
 } // namespace common

@@ -62,12 +62,12 @@ struct TapeFileSearchCriteria {
   /**
    * The owner of a file within its disk instance.
    */
-  optional<std::string> diskFileUser;
+  optional<uint64_t> diskFileOwnerUid;
 
   /**
    * The group of a file within its disk instance.
    */
-  optional<std::string> diskFileGroup;
+  optional<uint64_t> diskFileGid;
 
   /**
    * The storage class name of the file.

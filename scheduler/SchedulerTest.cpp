@@ -57,6 +57,11 @@
 
 namespace unitTests {
 
+const uint32_t CMS_USER = 9751;
+const uint32_t GROUP_2  = 9752;
+const uint32_t PUBLIC_OWNER_UID = 9753;
+const uint32_t PUBLIC_GID = 9754;
+
 namespace {
 
 /**
@@ -189,7 +194,6 @@ public:
     ASSERT_EQ(mountPolicyComment, group.comment);
 
     const std::string ruleComment = "create requester mount-rule";
-    cta::common::dataStructures::UserIdentity userIdentity;
     catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_diskInstance, s_userName, ruleComment);
 
     const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.getRequesterMountRules();
@@ -264,8 +268,8 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   creationLog.time=0;
   creationLog.username="admin1";
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.group="group2";
-  diskFileInfo.owner="cms_user";
+  diskFileInfo.gid=GROUP_2;
+  diskFileInfo.owner_uid=CMS_USER;
   diskFileInfo.path="path/to/file";
   cta::common::dataStructures::ArchiveRequest request;
   request.checksumType="ADLER32";
@@ -274,7 +278,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.diskFileInfo=diskFileInfo;
   request.diskFileID="diskFileID";
   request.fileSize=100*1000*1000;
-  cta::common::dataStructures::UserIdentity requester;
+  cta::common::dataStructures::RequesterIdentity requester;
   requester.name = s_userName;
   requester.group = "userGroup";
   request.requester = requester;
@@ -325,8 +329,8 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 //  creationLog.time=0;
 //  creationLog.username="admin1";
 //  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-//  diskFileInfo.group="group2";
-//  diskFileInfo.owner="cms_user";
+//  diskFileInfo.gid=GROUP_2;
+//  diskFileInfo.owner_uid=CMS_USER;
 //  diskFileInfo.path="path/to/file";
 //  cta::common::dataStructures::ArchiveRequest request;
 //  request.checksumType="ADLER32";
@@ -335,7 +339,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 //  request.diskFileInfo=diskFileInfo;
 //  request.diskFileID="diskFileID";
 //  request.fileSize=100*1000*1000;
-//  cta::common::dataStructures::UserIdentity requester;
+//  cta::common::dataStructures::RequesterIdentity requester;
 //  requester.name = s_userName;
 //  requester.group = "userGroup";
 //  request.requester = requester;
@@ -399,8 +403,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
     request.checksumType="ADLER32";
@@ -409,7 +413,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -509,8 +513,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
@@ -599,8 +603,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
     request.checksumType="ADLER32";
@@ -609,7 +613,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -709,8 +713,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
@@ -850,8 +854,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
     request.checksumType="ADLER32";
@@ -860,7 +864,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -960,8 +964,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
@@ -1107,8 +1111,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
     request.checksumType="ADLER32";
@@ -1117,7 +1121,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -1190,8 +1194,8 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = 12345;
@@ -1222,8 +1226,8 @@ TEST_P(SchedulerTest, showqueues) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
     request.checksumType="ADLER32";
@@ -1232,7 +1236,7 @@ TEST_P(SchedulerTest, showqueues) {
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -1453,8 +1457,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         fileWritten.diskInstance = storageClass.diskInstance;
         fileWritten.diskFileId = diskFileId.str();
         fileWritten.diskFilePath = diskFilePath.str();
-        fileWritten.diskFileUser = diskFileUser;
-        fileWritten.diskFileGroup = diskFileGroup;
+        fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+        fileWritten.diskFileGid = PUBLIC_GID;
         fileWritten.size = archiveFileSize;
         fileWritten.checksumType = checksumType;
         fileWritten.checksumValue = checksumValue;

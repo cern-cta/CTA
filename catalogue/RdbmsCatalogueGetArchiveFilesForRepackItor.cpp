@@ -44,8 +44,8 @@ namespace {
     archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
     archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
     archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-    archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_UID");
-    archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GID");
+    archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+    archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
     archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
     archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");

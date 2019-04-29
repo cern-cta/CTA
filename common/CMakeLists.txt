@@ -50,10 +50,12 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/LogicalLibrary.cpp
   dataStructures/MountType.cpp
   dataStructures/MountPolicy.cpp
+  dataStructures/OwnerIdentity.cpp
   dataStructures/QueueAndMountSummary.cpp
   dataStructures/ReadTestResult.cpp
   dataStructures/RepackInfo.cpp
   dataStructures/RequesterGroupMountRule.cpp
+  dataStructures/RequesterIdentity.cpp
   dataStructures/RequesterMountRule.cpp
   dataStructures/RetrieveFileQueueCriteria.cpp
   dataStructures/RetrieveJob.cpp
@@ -66,7 +68,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/TestSourceType.cpp
   dataStructures/UpdateFileInfoRequest.cpp
   dataStructures/UpdateFileStorageClassRequest.cpp
-  dataStructures/UserIdentity.cpp
+  dataStructures/VerifyInfo.cpp
   dataStructures/WriteTestResult.cpp
   dataStructures/utils.cpp
   checksum/Checksum.cpp
@@ -143,7 +145,6 @@ set (COMMON_LIB_SRC_FILES
   ConfigurationFile.cpp
   SourcedParameter.cpp   
   Timer.cpp
-  UserIdentity.cpp
   optional.cpp)
 
 add_library (ctacommon SHARED
@@ -193,7 +194,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/GetOptThreadSafeTest.cpp
   utils/RegexTest.cpp
   utils/UtilsTest.cpp
-  UserIdentityTest.cpp
   optionalTest.cpp
   rangeTest.cpp)
 

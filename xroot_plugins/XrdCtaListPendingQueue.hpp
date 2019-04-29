@@ -156,8 +156,8 @@ bool ListPendingQueueStream<OStoreDB::ArchiveQueueItor_t>::pushRecord(XrdSsiPb::
   af->mutable_cs()->set_type(job.request.checksumType);
   af->mutable_cs()->set_value(job.request.checksumValue);         
   af->set_storage_class(job.request.storageClass);
-  af->mutable_df()->set_owner(job.request.requester.name);
-  af->mutable_df()->set_group(job.request.requester.group);
+  af->mutable_df()->mutable_owner_id()->set_uid(job.request.diskFileInfo.owner_uid);
+  af->mutable_df()->mutable_owner_id()->set_gid(job.request.diskFileInfo.gid);
   af->mutable_df()->set_path(job.request.diskFileInfo.path);
 
   return streambuf->Push(record);
@@ -214,8 +214,8 @@ bool ListPendingQueueStream<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb:
     auto af = record.mutable_lpr_item()->mutable_af();
     af->set_archive_id(job.request.archiveFileID);
     af->set_size(job.fileSize);
-    af->mutable_df()->set_owner(job.request.requester.name);
-    af->mutable_df()->set_group(job.request.requester.group);
+    af->mutable_df()->mutable_owner_id()->set_uid(job.request.diskFileInfo.owner_uid);
+    af->mutable_df()->mutable_owner_id()->set_gid(job.request.diskFileInfo.gid);
     af->mutable_df()->set_path(job.request.diskFileInfo.path);
 
     // Tape file

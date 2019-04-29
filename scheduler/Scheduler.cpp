@@ -101,7 +101,7 @@ void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity &c
 // checkAndGetNextArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string &instanceName,
-  const std::string &storageClassName, const common::dataStructures::UserIdentity &user, log::LogContext &lc) {
+  const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user, log::LogContext &lc) {
   cta::utils::Timer t;
   const uint64_t archiveFileId = m_catalogue.checkAndGetNextArchiveFileId(instanceName, storageClassName, user);
   const auto catalogueTime = t.secs();
@@ -157,8 +157,8 @@ void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std:
      .add("policyArchivePriority", catalogueInfo.mountPolicy.archivePriority)
      .add("policyMaxDrives", catalogueInfo.mountPolicy.maxDrivesAllowed)
      .add("diskFilePath", request.diskFileInfo.path)
-     .add("diskFileOwner", request.diskFileInfo.owner)
-     .add("diskFileGroup", request.diskFileInfo.group)
+     .add("diskFileOwnerUid", request.diskFileInfo.owner_uid)
+     .add("diskFileGid", request.diskFileInfo.gid)
      .add("checksumValue", request.checksumValue)
      .add("checksumType", request.checksumType)
      .add("archiveReportURL", midEllipsis(request.archiveReportURL, 50, 15))
@@ -218,8 +218,8 @@ void Scheduler::queueRetrieve(
   spc.add("fileId", request.archiveFileID)
      .add("instanceName", instanceName)
      .add("diskFilePath", request.diskFileInfo.path)
-     .add("diskFileOwner", request.diskFileInfo.owner)
-     .add("diskFileGroup", request.diskFileInfo.group)
+     .add("diskFileOwnerUid", request.diskFileInfo.owner_uid)
+     .add("diskFileGid", request.diskFileInfo.gid)
      .add("dstURL", request.dstURL)
      .add("errorReportURL", request.errorReportURL)
      .add("creationHost", request.creationLog.host)
@@ -233,7 +233,7 @@ void Scheduler::queueRetrieve(
      .add("criteriaCreationTime", queueCriteria.archiveFile.creationTime)
      .add("criteriaDiskFileId", queueCriteria.archiveFile.diskFileId)
      .add("criteriaDiskFilePath", queueCriteria.archiveFile.diskFileInfo.path)
-     .add("criteriaDiskFileOwner", queueCriteria.archiveFile.diskFileInfo.owner)
+     .add("criteriaDiskFileOwnerUid", queueCriteria.archiveFile.diskFileInfo.owner_uid)
      .add("criteriaDiskInstance", queueCriteria.archiveFile.diskInstance)
      .add("criteriaFileSize", queueCriteria.archiveFile.fileSize)
      .add("reconciliationTime", queueCriteria.archiveFile.reconciliationTime)

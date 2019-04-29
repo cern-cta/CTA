@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/UserIdentity.hpp"
 #include "objectstore/cta.pb.h"
 #include "common/dataStructures/MountPolicy.hpp"
 

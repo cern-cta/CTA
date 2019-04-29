@@ -18,7 +18,6 @@
 
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
-#include "common/UserIdentity.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -35,6 +34,9 @@
 #include <uuid/uuid.h>
 
 namespace unitTests {
+
+const uint32_t DISK_FILE_OWNER_UID = 9751;
+const uint32_t DISK_FILE_GID = 9752;
 
 /**
  * This structure is used to parameterize scheduler database tests.
@@ -172,8 +174,8 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       uuid_unparse(fileUUID, fileUUIDStr);
       ar.diskFileID = fileUUIDStr;
       ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
-      ar.diskFileInfo.owner = "user";
-      ar.diskFileInfo.group = "group";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       ar.fileSize = 1000;
       ar.requester = { "user", "group" };
       ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
@@ -252,8 +254,8 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       uuid_unparse(fileUUID, fileUUIDStr);
       ar.diskFileID = fileUUIDStr;
       ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
-      ar.diskFileInfo.owner = "user";
-      ar.diskFileInfo.group = "group";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       ar.fileSize = 1000;
       ar.requester = { "user", "group" };
       ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;

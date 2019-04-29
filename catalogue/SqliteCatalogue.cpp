@@ -84,8 +84,8 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
          .add("requestDiskInstance", diskInstanceName)
          .add("diskFileId", archiveFile->diskFileId)
          .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-         .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-         .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+         .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+         .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
          .add("checksumType", archiveFile->checksumType)
          .add("checksumValue", archiveFile->checksumValue)
@@ -150,8 +150,8 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("diskInstance", archiveFile->diskInstance)
        .add("diskFileId", archiveFile->diskFileId)
        .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+       .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+       .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
        .add("checksumType", archiveFile->checksumType)
        .add("checksumValue", archiveFile->checksumValue)
@@ -312,7 +312,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, cons
 
     tape.comment = rset.columnString("USER_COMMENT");
 
-    common::dataStructures::UserIdentity creatorUI;
+    common::dataStructures::RequesterIdentity creatorUI;
     creatorUI.name = rset.columnString("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
@@ -322,7 +322,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, cons
 
     tape.creationLog = creationLog;
 
-    common::dataStructures::UserIdentity updaterUI;
+    common::dataStructures::RequesterIdentity updaterUI;
     updaterUI.name = rset.columnString("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
@@ -430,8 +430,8 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
       row.checksumValue = event.checksumValue;
       row.storageClassName = event.storageClassName;
       row.diskFilePath = event.diskFilePath;
-      row.diskFileUser = event.diskFileUser;
-      row.diskFileGroup = event.diskFileGroup;
+      row.diskFileOwnerUid = event.diskFileOwnerUid;
+      row.diskFileGid = event.diskFileGid;
       insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error

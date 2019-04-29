@@ -16,30 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/UserIdentity.hpp"
-#include "objectstore/cta.pb.h"
+#pragma once
 
 #include <string>
-#include <stdint.h>
+
+#include "common/dataStructures/RequesterIdentity.hpp"
+#include "objectstore/cta.pb.h"
 
 namespace cta { namespace objectstore {
 
-class UserIdentity: public cta::common::dataStructures::UserIdentity {
-public:
-  UserIdentity (): cta::common::dataStructures::UserIdentity() {}
-  UserIdentity (const std::string &n, const std::string &g) {
-    name = n;
-    group = g;
-  }
-  UserIdentity(const cta::common::dataStructures::UserIdentity & user): cta::common::dataStructures::UserIdentity(user) {}
-  void serialize (cta::objectstore::serializers::UserIdentity & user) const {
+struct RequesterIdentitySerDeser: public cta::common::dataStructures::RequesterIdentity {
+
+  void serialize (cta::objectstore::serializers::RequesterIdentity & user) const {
     user.set_name(name);
     user.set_group(group);
   }
-  void deserialize (const cta::objectstore::serializers::UserIdentity & user) {
-    name = user.name();
-    group = user.group();
-  }
+
+  void deserialize (const cta::objectstore::serializers::RequesterIdentity & user) :
+    name(user.name()), group(user.group()) {}
 };
 
 }}

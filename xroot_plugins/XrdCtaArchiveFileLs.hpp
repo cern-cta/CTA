@@ -70,16 +70,16 @@ ArchiveFileLsStream::ArchiveFileLsStream(const RequestMessage &requestMsg,
 
     // Get the search criteria from the optional options
 
-    m_searchCriteria.archiveFileId  = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
-    m_searchCriteria.tapeFileCopyNb = requestMsg.getOptional(OptionUInt64::COPY_NUMBER,     &has_any);
-    m_searchCriteria.diskFileId     = requestMsg.getOptional(OptionString::DISKID,          &has_any);
-    m_searchCriteria.vid            = requestMsg.getOptional(OptionString::VID,             &has_any);
-    m_searchCriteria.tapePool       = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);
-    m_searchCriteria.diskFileUser   = requestMsg.getOptional(OptionString::OWNER,           &has_any);
-    m_searchCriteria.diskFileGroup  = requestMsg.getOptional(OptionString::GROUP,           &has_any);
-    m_searchCriteria.storageClass   = requestMsg.getOptional(OptionString::STORAGE_CLASS,   &has_any);
-    m_searchCriteria.diskFilePath   = requestMsg.getOptional(OptionString::PATH,            &has_any);
-    m_searchCriteria.diskInstance   = requestMsg.getOptional(OptionString::INSTANCE,        &has_any);
+    m_searchCriteria.archiveFileId    = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
+    m_searchCriteria.tapeFileCopyNb   = requestMsg.getOptional(OptionUInt64::COPY_NUMBER,     &has_any);
+    m_searchCriteria.diskFileId       = requestMsg.getOptional(OptionString::DISKID,          &has_any);
+    m_searchCriteria.vid              = requestMsg.getOptional(OptionString::VID,             &has_any);
+    m_searchCriteria.tapePool         = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);
+    m_searchCriteria.diskFileOwnerUid = requestMsg.getOptional(OptionUInt64::OWNER_UID,       &has_any);
+    m_searchCriteria.diskFileGid      = requestMsg.getOptional(OptionUInt64::GID,             &has_any);
+    m_searchCriteria.storageClass     = requestMsg.getOptional(OptionString::STORAGE_CLASS,   &has_any);
+    m_searchCriteria.diskFilePath     = requestMsg.getOptional(OptionString::PATH,            &has_any);
+    m_searchCriteria.diskInstance     = requestMsg.getOptional(OptionString::INSTANCE,        &has_any);
 
     if(!has_any) {
       throw cta::exception::UserError("Must specify at least one search option, or --all");

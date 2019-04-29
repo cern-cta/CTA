@@ -71,6 +71,11 @@ using namespace castor::tape::tapeserver::daemon;
 
 namespace unitTests {
 
+const uint32_t DISK_FILE_OWNER_UID = 9751;
+const uint32_t DISK_FILE_GID = 9752;
+const uint32_t DISK_FILE_SOME_USER = 9753;
+const uint32_t DISK_FILE_SOME_GROUP = 9754;
+
 namespace {
 
 /**
@@ -442,8 +447,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+      tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -623,8 +628,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq);
         tapeFileWritten.diskFilePath = "/somefile";
-        tapeFileWritten.diskFileUser = s_userName;
-        tapeFileWritten.diskFileGroup = "someGroup";
+        tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+        tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
         tapeFileWritten.storageClassName = s_storageClassName;
         tapeFileWritten.tapeDrive = "drive0";
         catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -647,8 +652,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq + 1);
         tapeFileWritten.diskFilePath = remoteFilePath.str();
-        tapeFileWritten.diskFileUser = s_userName;
-        tapeFileWritten.diskFileGroup = "someGroup";
+        tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+        tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
         tapeFileWritten.storageClassName = s_storageClassName;
         tapeFileWritten.tapeDrive = "drive0";
         catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -822,8 +827,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+      tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -1032,8 +1037,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+      tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -1179,8 +1184,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+      tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -1320,8 +1325,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       ar.fileSize = 1000;
       ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner = "z";
-      ar.diskFileInfo.group = "g";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1464,8 +1469,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       ar.diskFileID = "x";
       ar.diskFileID += std::to_string(fseq);
       ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner = "z";
-      ar.diskFileInfo.group = "g";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1623,8 +1628,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       ar.fileSize = 1000;
       ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner = "z";
-      ar.diskFileInfo.group = "g";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1781,8 +1786,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       ar.fileSize = 1000;
       ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner = "z";
-      ar.diskFileInfo.group = "g";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);

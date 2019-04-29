@@ -314,9 +314,9 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    checkIsNotEmptyString(notification.cli().user().groupname(), "notification.cli.user.groupname");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name  = notification.cli().user().username();
-   originator.group = notification.cli().user().groupname();
+   cta::common::dataStructures::RequesterIdentity requester;
+   requester.name  = notification.cli().user().username();
+   requester.group = notification.cli().user().groupname();
 
    const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
    if(notification.file().xattr().end() == storageClassItor) {
@@ -329,7 +329,7 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
 
    cta::utils::Timer t;
 
-   const uint64_t archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, originator, m_lc);
+   const uint64_t archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, requester, m_lc);
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
@@ -356,22 +356,11 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    // Validate received protobuf
    checkIsNotEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
-   checkIsNotEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
-   checkIsNotEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
    checkIsNotEmptyString(notification.file().lpath(),             "notification.file.lpath");
    checkIsNotEmptyString(notification.wf().instance().url(),      "notification.wf.instance.url");
    checkIsNotEmptyString(notification.transport().report_url(),   "notification.transport.report_url");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name    = notification.cli().user().username();
-   originator.group   = notification.cli().user().groupname();
-
-   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-   diskFileInfo.owner = notification.file().owner().username();
-   diskFileInfo.group = notification.file().owner().groupname();
-   diskFileInfo.path  = notification.file().lpath();
-
    std::string checksumtype(notification.file().cks().type());
    if(checksumtype == "adler") checksumtype = "ADLER32";   // replace this with an enum!
 
@@ -384,19 +373,22 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    }
 
    cta::common::dataStructures::ArchiveRequest request;
-   request.checksumType         = checksumtype;
-   request.checksumValue        = checksumvalue;
-   request.diskFileInfo         = diskFileInfo;
-   request.diskFileID           = std::to_string(notification.file().fid());
-   request.fileSize             = notification.file().size();
-   request.requester            = originator;
-   request.srcURL               = notification.wf().instance().url();
-   request.storageClass         = storageClassItor->second;
-   request.archiveReportURL     = notification.transport().report_url();
-   request.archiveErrorReportURL = notification.transport().error_report_url();
-   request.creationLog.host     = m_cliIdentity.host;
-   request.creationLog.username = m_cliIdentity.username;
-   request.creationLog.time     = time(nullptr);
+   request.checksumType           = checksumtype;
+   request.checksumValue          = checksumvalue;
+   request.diskFileInfo.owner_uid = notification.file().owner().uid();
+   request.diskFileInfo.gid       = notification.file().owner().gid();
+   request.diskFileInfo.path      = notification.file().lpath();
+   request.diskFileID             = std::to_string(notification.file().fid());
+   request.fileSize               = notification.file().size();
+   request.requester.name         = notification.cli().user().username();
+   request.requester.group        = notification.cli().user().groupname();
+   request.srcURL                 = notification.wf().instance().url();
+   request.storageClass           = storageClassItor->second;
+   request.archiveReportURL       = notification.transport().report_url();
+   request.archiveErrorReportURL  = notification.transport().error_report_url();
+   request.creationLog.host       = m_cliIdentity.host;
+   request.creationLog.username   = m_cliIdentity.username;
+   request.creationLog.time       = time(nullptr);
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
@@ -433,30 +425,21 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    // Validate received protobuf
    checkIsNotEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
-   checkIsNotEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
-   checkIsNotEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
    checkIsNotEmptyString(notification.file().lpath(),             "notification.file.lpath");
    checkIsNotEmptyString(notification.transport().dst_url(),      "notification.transport.dst_url");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name              = notification.cli().user().username();
-   originator.group             = notification.cli().user().groupname();
-
-   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-   diskFileInfo.owner           = notification.file().owner().username();
-   diskFileInfo.group           = notification.file().owner().groupname();
-   diskFileInfo.path            = notification.file().lpath();
-
    cta::common::dataStructures::RetrieveRequest request;
-   request.requester            = originator;
-   request.dstURL               = notification.transport().dst_url();
-   request.errorReportURL       = notification.transport().error_report_url();
-   request.diskFileInfo         = diskFileInfo;
-   request.creationLog.host     = m_cliIdentity.host;
-   request.creationLog.username = m_cliIdentity.username;
-   request.creationLog.time     = time(nullptr);
-
+   request.requester.name         = notification.cli().user().username();
+   request.requester.group        = notification.cli().user().groupname();
+   request.dstURL                 = notification.transport().dst_url();
+   request.errorReportURL         = notification.transport().error_report_url();
+   request.diskFileInfo.owner_uid = notification.file().owner().uid();
+   request.diskFileInfo.gid       = notification.file().owner().gid();
+   request.diskFileInfo.path      = notification.file().lpath();
+   request.creationLog.host       = m_cliIdentity.host;
+   request.creationLog.username   = m_cliIdentity.username;
+   request.creationLog.time       = time(nullptr);
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
@@ -502,13 +485,9 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name   = notification.cli().user().username();
-   originator.group  = notification.cli().user().groupname();
-
    cta::common::dataStructures::DeleteArchiveRequest request;
-   request.requester = originator;
-
+   request.requester.name   = notification.cli().user().username();
+   request.requester.group  = notification.cli().user().groupname();
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
@@ -547,12 +526,9 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name          = notification.cli().user().username();
-   originator.group         = notification.cli().user().groupname();
-
    cta::common::dataStructures::DeleteArchiveRequest request;
-   request.requester        = originator;
+   request.requester.name    = notification.cli().user().username();
+   request.requester.group   = notification.cli().user().groupname();
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t

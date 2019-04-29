@@ -26,6 +26,8 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 TapeFileWritten::TapeFileWritten() :
   archiveFileId(0),
+  diskFileOwnerUid(0),
+  diskFileGid(0),
   size(0),
   blockId(0),
   copyNb(0) {
@@ -41,8 +43,8 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
     diskInstance == rhs.diskInstance &&
     diskFileId == rhs.diskFileId &&
     diskFilePath == rhs.diskFilePath &&
-    diskFileUser == rhs.diskFileUser &&
-    diskFileGroup == rhs.diskFileGroup &&
+    diskFileOwnerUid == rhs.diskFileOwnerUid &&
+    diskFileGid == rhs.diskFileGid &&
     size == rhs.size &&
     checksumType == rhs.checksumType &&
     checksumValue == rhs.checksumValue &&
@@ -62,8 +64,8 @@ std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj) {
   "diskInstance=" << obj.diskInstance << ","
   "diskFileId=" << obj.diskFileId << ","
   "diskFilePath=" << obj.diskFilePath << ","
-  "diskFileUser=" << obj.diskFileUser << ","
-  "diskFileGroup=" << obj.diskFileGroup << ","
+  "diskFileOwnerUid=" << obj.diskFileOwnerUid << ","
+  "diskFileGid=" << obj.diskFileGid << ","
   "size=" << obj.size << ","
   "checksumType=" << obj.checksumType << "checksumValue=" << obj.checksumValue << ","
   "storageClassName=" << obj.storageClassName << ","
