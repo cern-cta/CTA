@@ -69,14 +69,14 @@ struct ArchiveFileRow {
   std::string diskFilePath;
 
   /**
-   * The user name of the source disk file within its host disk system.
+   * The user ID of the owner of the source disk file within its host disk system.
    */
-  std::string diskFileUser;
+  uint32_t diskFileOwnerUid;
 
   /**
-   * The group name of the source disk file within its host disk system.
+   * The group ID of the source disk file within its host disk system.
    */
-  std::string diskFileGroup;
+  uint32_t diskFileGid;
 
   /**
    * The uncompressed size of the tape file in bytes.

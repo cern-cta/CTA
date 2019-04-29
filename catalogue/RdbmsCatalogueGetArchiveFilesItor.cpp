@@ -44,8 +44,8 @@ namespace {
     archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
     archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
     archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-    archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_UID");
-    archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GID");
+    archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+    archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
     archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
     archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
@@ -126,8 +126,8 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       searchCriteria.diskInstance   ||
       searchCriteria.diskFileId     ||
       searchCriteria.diskFilePath   ||
-      searchCriteria.diskFileUser   ||
-      searchCriteria.diskFileGroup  ||
+      searchCriteria.diskFileOwnerUid   ||
+      searchCriteria.diskFileGid  ||
       searchCriteria.storageClass   ||
       searchCriteria.vid            ||
       searchCriteria.tapeFileCopyNb ||
@@ -158,12 +158,12 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       sql += "ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.diskFileUser) {
+    if(searchCriteria.diskFileOwnerUid) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_UID = :DISK_FILE_UID";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.diskFileGroup) {
+    if(searchCriteria.diskFileGid) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_GID = :DISK_FILE_GID";
       addedAWhereConstraint = true;
@@ -210,11 +210,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     if(searchCriteria.diskFilePath) {
       m_stmt.bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
     }
-    if(searchCriteria.diskFileUser) {
-      m_stmt.bindString(":DISK_FILE_UID", searchCriteria.diskFileUser.value());
+    if(searchCriteria.diskFileOwnerUid) {
+      m_stmt.bindUint64(":DISK_FILE_UID", searchCriteria.diskFileOwnerUid.value());
     }
-    if(searchCriteria.diskFileGroup) {
-      m_stmt.bindString(":DISK_FILE_GID", searchCriteria.diskFileGroup.value());
+    if(searchCriteria.diskFileGid) {
+      m_stmt.bindUint64(":DISK_FILE_GID", searchCriteria.diskFileGid.value());
     }
     if(searchCriteria.storageClass) {
       m_stmt.bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());

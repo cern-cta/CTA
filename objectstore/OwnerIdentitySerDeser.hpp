@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,38 +18,22 @@
 
 #pragma once
 
-#include <list>
-#include <map>
-#include <stdint.h>
 #include <string>
 
+#include "common/dataStructures/OwnerIdentity.hpp"
+#include "objectstore/cta.pb.h"
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta { namespace objectstore {
 
-/**
- * This struct holds all the data necessary to rebuild the original disk based 
- * file in case of disaster 
- */
-struct DiskFileInfo {
+struct OwnerIdentitySerDeser: public cta::common::dataStructures::OwnerIdentity {
 
-  DiskFileInfo();
+  void serialize(cta::objectstore::serializers::OwnerIdentity &user) const {
+    user.set_uid(uid);
+    user.set_gid(gid);
+  }
 
-  DiskFileInfo(const std::string &path, uint32_t owner_uid, uint32_t gid);
+  void deserialize(const cta::objectstore::serializers::OwnerIdentity &user) :
+    uid(user.uid()), gid(user.gid()) {}
+};
 
-  bool operator==(const DiskFileInfo &rhs) const;
-
-  bool operator!=(const DiskFileInfo &rhs) const;
-
-  std::string path;
-  uint32_t    owner_uid;
-  uint32_t    gid;
-
-}; // struct DiskFileInfo
-
-std::ostream &operator<<(std::ostream &os, const DiskFileInfo &obj);
-
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}}

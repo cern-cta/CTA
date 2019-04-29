@@ -52,7 +52,7 @@
 #include "common/dataStructures/TapeCopyToPoolMap.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "common/exception/UserError.hpp"
@@ -114,7 +114,7 @@ public:
   virtual uint64_t checkAndGetNextArchiveFileId(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const common::dataStructures::UserIdentity &user) = 0;
+    const common::dataStructures::RequesterIdentity &user) = 0;
 
   /**
    * Returns the information required to queue an archive request.
@@ -133,7 +133,7 @@ public:
   virtual common::dataStructures::ArchiveFileQueueCriteria getArchiveFileQueueCriteria(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const common::dataStructures::UserIdentity &user) = 0;
+    const common::dataStructures::RequesterIdentity &user) = 0;
 
   /**
    * Returns the list of tapes that can be written to by a tape drive in the
@@ -184,7 +184,7 @@ public:
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const std::string &diskInstanceName,
     const uint64_t archiveFileId,
-    const common::dataStructures::UserIdentity &user,
+    const common::dataStructures::RequesterIdentity &user,
     const optional<std::string> & activity,
     log::LogContext &lc) = 0;
 

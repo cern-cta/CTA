@@ -22,7 +22,7 @@
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "JobQueueType.hpp"
 #include "common/Timer.hpp"
@@ -206,8 +206,8 @@ public:
   void setArchiveErrorReportURL(const std::string &URL);
   std::string getArchiveErrorReportURL();
 
-  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
-  cta::common::dataStructures::UserIdentity getRequester();
+  void setRequester(const cta::common::dataStructures::RequesterIdentity &requester);
+  cta::common::dataStructures::RequesterIdentity getRequester();
 
   void setSrcURL(const std::string &srcURL);
   std::string getSrcURL();

@@ -64,8 +64,8 @@ message GenericObject {
 // ===========================  Root Entry =====================================
 // The objects making up the root entry.
 
-// A user information record
-message UserIdentity {
+// User information record for requesters
+message RequesterIdentity {
   required string name = 10;
   required string group = 11;
 }
@@ -184,9 +184,11 @@ message TapeFile {
 }
 
 message DiskFileInfo {
-  required bytes recoveryblob = 8900;
-  required string group = 8910;
-  required string owner = 8930;
+  //required bytes recoveryblob = 8900;  DEPRECATED
+  //required string group = 8910;        DEPRECATED
+  //required string owner = 8930;        DEPRECATED
+  required uint32 owner_uid = 8920;
+  required uint32 gid = 8925;
   required string path = 8940;
 }
 
@@ -331,7 +333,7 @@ message ArchiveRequest {
   required string archivereporturl = 9057;
   required string archiveerrorreporturl = 9058;
   required uint64 filesize = 9060;
-  required UserIdentity requester = 9070;
+  required RequesterIdentity requester = 9070;
   required string srcurl = 9080;
   required string storageclass = 9090;
   required EntryLog creationlog = 9091;
@@ -360,7 +362,7 @@ enum RetrieveJobStatus {
 }
 
 message SchedulerRetrieveRequest {
-  required UserIdentity requester = 9100;
+  required RequesterIdentity requester = 9100;
   required uint64 ArchiveFileId = 9101;
   required string dstURL = 9102;
   required DiskFileInfo diskfileinfo = 9103;

@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
 
 namespace cta {
 namespace common {
@@ -41,7 +41,7 @@ struct DeleteArchiveRequest {
 
   bool operator!=(const DeleteArchiveRequest &rhs) const;
 
-  UserIdentity requester;
+  RequesterIdentity requester;
   uint64_t archiveFileID;
 
 }; // struct DeleteArchiveRequest

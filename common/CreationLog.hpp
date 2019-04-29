@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "common/UserIdentity.hpp"
-
 #include <string>
+
+#include "common/dataStructures/OwnerIdentity.hpp"
 
 namespace cta {
 
@@ -38,13 +38,13 @@ struct CreationLog {
   /**
    * Constructor.
    */
-  CreationLog(const UserIdentity &user, const std::string &host,
+  CreationLog(const common::dataStructures::OwnerIdentity &user, const std::string &host,
     const time_t time,  const std::string & comment = "");
 
   /**
    * The identity of the creator.
    */
-  UserIdentity user;
+  common::dataStructures::OwnerIdentity user;
 
   /**
    * The network name of the host from which they are submitting a request.

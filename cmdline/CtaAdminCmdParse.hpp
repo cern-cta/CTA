@@ -266,6 +266,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--capacity",              OptionUInt64::CAPACITY },
    { "--copynb",                OptionUInt64::COPY_NUMBER },
    { "--firstfseq",             OptionUInt64::FIRST_FSEQ },
+   { "--gid",                   OptionUInt64::GID },
    { "--id",                    OptionUInt64::ARCHIVE_FILE_ID },
    { "--lastfseq",              OptionUInt64::LAST_FSEQ },
    { "--maxdrivesallowed",      OptionUInt64::MAX_DRIVES_ALLOWED },
@@ -275,7 +276,8 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--partial",               OptionUInt64::PARTIAL }, 
    { "--partialtapesnumber",    OptionUInt64::PARTIAL_TAPES_NUMBER },
    { "--retrievepriority",      OptionUInt64::RETRIEVE_PRIORITY },
-   { "--size",                  OptionUInt64::FILE_SIZE }                  
+   { "--size",                  OptionUInt64::FILE_SIZE },
+   { "--uid",                   OptionUInt64::OWNER_UID }
 };
 
 
@@ -290,7 +292,6 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--drive",                 OptionString::DRIVE },
    { "--encryptionkey",         OptionString::ENCRYPTION_KEY },
    { "--file",                  OptionString::FILENAME },
-   { "--group",                 OptionString::GROUP },
    { "--hostname",              OptionString::HOSTNAME },
    { "--input",                 OptionString::INPUT },
    { "--instance",              OptionString::INSTANCE },
@@ -298,7 +299,6 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--mediatype",             OptionString::MEDIA_TYPE },
    { "--mountpolicy",           OptionString::MOUNT_POLICY },
    { "--output",                OptionString::OUTPUT },
-   { "--owner",                 OptionString::OWNER },
    { "--path",                  OptionString::PATH },
    { "--storageclass",          OptionString::STORAGE_CLASS },
    { "--supply",                OptionString::SUPPLY },
@@ -371,7 +371,7 @@ const Option opt_filename             { Option::OPT_STR,  "--file",             
 const Option opt_firstfseq            { Option::OPT_UINT, "--firstfseq",             "-f",   " <first_fseq>" };
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
 const Option opt_force_flag           { Option::OPT_FLAG, "--force",                 "-f",   "" };
-const Option opt_group                { Option::OPT_STR,  "--group",                 "-g",   " <group>" };
+const Option opt_gid                  { Option::OPT_UINT, "--gid",                   "-g",   " <group_id>" };
 const Option opt_hostname_alias       { Option::OPT_STR,  "--name",                  "-n",   " <host_name>",
                                         "--hostname" };
 const Option opt_input                { Option::OPT_STR,  "--input",                 "-i",   " <\"zero\" or \"urandom\">" };
@@ -396,7 +396,7 @@ const Option opt_number_of_files      { Option::OPT_UINT, "--nbfiles",          
 const Option opt_number_of_files_alias{ Option::OPT_UINT, "--number",                "-n",   " <number_of_files>",
                                         "--nbfiles" };
 const Option opt_output               { Option::OPT_STR,  "--output",                "-o",   " <\"null\" or output_dir>" };
-const Option opt_owner                { Option::OPT_STR,  "--owner",                 "-o",   " <owner>" };
+const Option opt_owner_uid            { Option::OPT_UINT, "--uid",                   "-u",   " <owner_uid>" };
 const Option opt_partialfiles         { Option::OPT_UINT, "--partial",               "-p",   " <number_of_files_per_tape>" };
 const Option opt_partialtapes         { Option::OPT_UINT, "--partialtapesnumber",    "-p",   " <number_of_partial_tapes>" };
 const Option opt_path                 { Option::OPT_STR,  "--path",                  "-p",   " <full_path>" };
@@ -432,7 +432,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_ARCHIVEFILE,          AdminCmd::SUBCMD_LS    },
       { opt_archivefileid.optional(), opt_diskid.optional(), opt_copynb.optional(),
-        opt_vid.optional(), opt_tapepool.optional(), opt_owner.optional(), opt_group.optional(),
+        opt_vid.optional(), opt_tapepool.optional(), opt_owner_uid.optional(), opt_gid.optional(),
         opt_storageclass.optional(), opt_path.optional(), opt_instance.optional(), opt_all.optional(),
         opt_summary.optional() }},
    /*----------------------------------------------------------------------------------------------------*/

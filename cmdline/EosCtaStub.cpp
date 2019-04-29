@@ -217,8 +217,8 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
       else if(argstr == "--dsturl")              notification.mutable_transport()->set_dst_url(argval); // for retrieve WF
 
       else if(argstr == "--diskid")              notification.mutable_file()->set_fid(std::stoi(argval));
-      else if(argstr == "--diskfileowner")       notification.mutable_file()->mutable_owner()->set_username(argval);
-      else if(argstr == "--diskfilegroup")       notification.mutable_file()->mutable_owner()->set_groupname(argval);
+      else if(argstr == "--diskfileowner")       notification.mutable_file()->mutable_owner()->set_uid(std::stoi(argval));
+      else if(argstr == "--diskfilegroup")       notification.mutable_file()->mutable_owner()->set_gid(std::stoi(argval));
       else if(argstr == "--size")                notification.mutable_file()->set_size(std::stoi(argval));
       else if(argstr == "--checksumtype")        notification.mutable_file()->mutable_cks()->set_type(argval);
       else if(argstr == "--checksumvalue")       notification.mutable_file()->mutable_cks()->set_value(argval);
@@ -230,13 +230,6 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
       else if(argstr == "--id")                  {
          google::protobuf::MapPair<std::string,std::string> id("CTA_ArchiveFileId", argval);
          notification.mutable_file()->mutable_xattr()->insert(id);
-      }
-      else if(argstr == "--diskpool")            {} // = default?
-      else if(argstr == "--throughput")          {} // = 10000?
-      else if(argstr == "--recoveryblob:base64") try {
-         base64Decode(notification, argval);
-      } catch(...) {
-         throw std::runtime_error("Invalid recovery blob: " + argval);
       }
       else throw std::runtime_error("Unrecognised key " + argstr);
    }

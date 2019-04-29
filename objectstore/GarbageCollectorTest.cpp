@@ -376,7 +376,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
     ar.setArchiveErrorReportURL("");
-    ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
+    ar.setRequester(cta::common::dataStructures::RequesterIdentity(0, 0));
     ar.setSrcURL("root://eoseos/myFile");
     ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();

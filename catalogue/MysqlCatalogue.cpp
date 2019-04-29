@@ -205,8 +205,7 @@ common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &co
 
     tape.comment = rset.columnString("USER_COMMENT");
 
-    common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = rset.columnString("CREATION_LOG_USER_NAME");
+    // std::string creatorUIname = rset.columnString("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
     creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -215,8 +214,7 @@ common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &co
 
     tape.creationLog = creationLog;
 
-    common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = rset.columnString("LAST_UPDATE_USER_NAME");
+    // std::string updaterUIname = rset.columnString("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
     updateLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
@@ -320,8 +318,8 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
       row.checksumValue = event.checksumValue;
       row.storageClassName = event.storageClassName;
       row.diskFilePath = event.diskFilePath;
-      row.diskFileUser = event.diskFileUser;
-      row.diskFileGroup = event.diskFileGroup;
+      row.diskFileOwnerUid = event.diskFileOwnerUid;
+      row.diskFileGid = event.diskFileGid;
       insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error
@@ -437,8 +435,8 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = selectRset.columnString("DISK_FILE_UID");
-        archiveFile->diskFileInfo.group = selectRset.columnString("DISK_FILE_GID");
+        archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
+        archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");
@@ -482,8 +480,8 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
          .add("requestDiskInstance", diskInstanceName)
          .add("diskFileId", archiveFile->diskFileId)
          .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-         .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-         .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+         .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+         .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
          .add("checksumType", archiveFile->checksumType)
          .add("checksumValue", archiveFile->checksumValue)
@@ -547,8 +545,8 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
        .add("diskInstance", archiveFile->diskInstance)
        .add("diskFileId", archiveFile->diskFileId)
        .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+       .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+       .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
        .add("checksumType", archiveFile->checksumType)
        .add("checksumValue", archiveFile->checksumValue)

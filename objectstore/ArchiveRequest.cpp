@@ -216,10 +216,9 @@ void ArchiveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFi
   m_payload.set_checksumvalue(archiveFile.checksumValue);
   m_payload.set_creationtime(archiveFile.creationTime);
   m_payload.set_diskfileid(archiveFile.diskFileId);
-  m_payload.mutable_diskfileinfo()->set_group(archiveFile.diskFileInfo.group);
-  m_payload.mutable_diskfileinfo()->set_owner(archiveFile.diskFileInfo.owner);
+  m_payload.mutable_diskfileinfo()->set_gid(archiveFile.diskFileInfo.gid);
+  m_payload.mutable_diskfileinfo()->set_owner_uid(archiveFile.diskFileInfo.owner_uid);
   m_payload.mutable_diskfileinfo()->set_path(archiveFile.diskFileInfo.path);
-  m_payload.mutable_diskfileinfo()->set_recoveryblob("");
   m_payload.set_diskinstance(archiveFile.diskInstance);
   m_payload.set_filesize(archiveFile.fileSize);
   m_payload.set_reconcilationtime(archiveFile.reconciliationTime);
@@ -237,8 +236,8 @@ cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
   ret.checksumValue = m_payload.checksumvalue();
   ret.creationTime = m_payload.creationtime();
   ret.diskFileId = m_payload.diskfileid();
-  ret.diskFileInfo.group = m_payload.diskfileinfo().group();
-  ret.diskFileInfo.owner = m_payload.diskfileinfo().owner();
+  ret.diskFileInfo.gid = m_payload.diskfileinfo().gid();
+  ret.diskFileInfo.owner_uid = m_payload.diskfileinfo().owner_uid();
   ret.diskFileInfo.path = m_payload.diskfileinfo().path();
   ret.diskInstance = m_payload.diskinstance();
   ret.fileSize = m_payload.filesize();
@@ -300,7 +299,7 @@ cta::common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::setRequester()
 //------------------------------------------------------------------------------
-void ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
+void ArchiveRequest::setRequester(const cta::common::dataStructures::RequesterIdentity &requester) {
   checkPayloadWritable();
   auto payloadRequester = m_payload.mutable_requester();
   payloadRequester->set_name(requester.name);
@@ -310,9 +309,9 @@ void ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentit
 //------------------------------------------------------------------------------
 // ArchiveRequest::getRequester()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity ArchiveRequest::getRequester() {
+cta::common::dataStructures::RequesterIdentity ArchiveRequest::getRequester() {
   checkPayloadReadable();
-  cta::common::dataStructures::UserIdentity requester;
+  cta::common::dataStructures::RequesterIdentity requester;
   auto payloadRequester = m_payload.requester();
   requester.name=payloadRequester.name();
   requester.group=payloadRequester.group();
@@ -549,8 +548,8 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
             retRef.m_archiveFile.checksumValue = payload.checksumvalue();
             retRef.m_archiveFile.creationTime = payload.creationtime();
             retRef.m_archiveFile.diskFileId = payload.diskfileid();
-            retRef.m_archiveFile.diskFileInfo.group = payload.diskfileinfo().group();
-            retRef.m_archiveFile.diskFileInfo.owner = payload.diskfileinfo().owner();
+            retRef.m_archiveFile.diskFileInfo.gid = payload.diskfileinfo().gid();
+            retRef.m_archiveFile.diskFileInfo.owner_uid = payload.diskfileinfo().owner_uid();
             retRef.m_archiveFile.diskFileInfo.path = payload.diskfileinfo().path();
             retRef.m_archiveFile.diskInstance = payload.diskinstance();
             retRef.m_archiveFile.fileSize = payload.filesize();

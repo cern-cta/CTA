@@ -26,7 +26,6 @@
 #include <list>
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"

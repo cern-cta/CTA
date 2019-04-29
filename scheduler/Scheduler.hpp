@@ -119,7 +119,7 @@ public:
   uint64_t checkAndGetNextArchiveFileId(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const common::dataStructures::UserIdentity &user,
+    const common::dataStructures::RequesterIdentity &user,
     log::LogContext &lc);
 
   /** 

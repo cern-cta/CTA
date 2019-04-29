@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,47 +16,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
+#include "common/dataStructures/utils.hpp"
+#include "common/exception/Exception.hpp"
 
-#include <limits>
-#include <unistd.h>
-#include <ostream>
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::UserIdentity::UserIdentity() throw():
-  uid(std::numeric_limits<uid_t>::max()),
-  gid(std::numeric_limits<gid_t>::max()) {}
+namespace cta {
+namespace common {
+namespace dataStructures {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::UserIdentity::UserIdentity(
-  const uint32_t u,
-  const uint32_t g) throw():
-  uid(u),
-  gid(g) {
-}
+RequesterIdentity::RequesterIdentity() { }
+
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+RequesterIdentity::RequesterIdentity(const std::string& name, const std::string& group):
+  name(name), group(group) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::UserIdentity::operator==(const UserIdentity &rhs) const {
-  return uid == rhs.uid;
+bool RequesterIdentity::operator==(const RequesterIdentity &rhs) const {
+  return name==rhs.name
+      && group==rhs.group;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool cta::UserIdentity::operator!=(const UserIdentity &rhs) const {
+bool RequesterIdentity::operator!=(const RequesterIdentity &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const cta::UserIdentity &obj) {
-  os << "(uid=" << obj.uid << " gid=" << obj.gid << ")";
+std::ostream &operator<<(std::ostream &os, const RequesterIdentity &obj) {
+  os << "(name=" << obj.name
+     << " group=" << obj.group << ")";
   return os;
 }
+
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

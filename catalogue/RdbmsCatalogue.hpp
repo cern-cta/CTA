@@ -116,7 +116,7 @@ public:
   uint64_t checkAndGetNextArchiveFileId(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const common::dataStructures::UserIdentity &user) override;
+    const common::dataStructures::RequesterIdentity &user) override;
 
   /**
    * Returns the information required to queue an archive request.
@@ -135,7 +135,7 @@ public:
   common::dataStructures::ArchiveFileQueueCriteria getArchiveFileQueueCriteria(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const common::dataStructures::UserIdentity &user) override;
+    const common::dataStructures::RequesterIdentity &user) override;
 
   /**
    * Returns the list of tapes that can be written to by a tape drive in the
@@ -179,7 +179,7 @@ public:
   common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const std::string &diskInstanceName,
     const uint64_t archiveFileId,
-    const common::dataStructures::UserIdentity &user,
+    const common::dataStructures::RequesterIdentity &user,
     const optional<std::string> & activity,
     log::LogContext &lc) override;
 
@@ -703,26 +703,22 @@ protected:
   /**
    * Returns true if the specified disk file user exists.
    *
-   * @param conn The database connection.
-   * @param diskInstanceName The name of the disk instance to which the disk
-   * file user belongs.
-   * @param diskFileUSer The name of the disk file user.
-   * @return True if the disk file user exists.
+   * @param conn              The database connection.
+   * @param diskInstanceName  The name of the disk instance to which the disk file user belongs.
+   * @param diskFileOwnerUid  The user ID of the disk file owner.
+   * @return                  True if the disk file user exists.
    */
-  bool diskFileUserExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFileUser)
-    const;
+  bool diskFileUserExists(rdbms::Conn &conn, const std::string &diskInstanceName, uint32_t diskFileOwnerUid) const;
 
   /**
    * Returns true if the specified disk file group exists.
    *
-   * @param conn The database connection.
-   * @param diskInstanceName The name of the disk instance to which the disk
-   * file group belongs.
-   * @param diskFileGroup The name of the disk file group.
-   * @return True if the disk file group exists.
+   * @param conn              The database connection.
+   * @param diskInstanceName  The name of the disk instance to which the disk file group belongs.
+   * @param diskFileGid       The group ID of the disk file.
+   * @return                  True if the disk file group exists.
    */
-  bool diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFileGroup)
-    const;
+  bool diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName, uint32_t diskFileGid) const;
 
   /**
    * Returns true if the specified archive route exists.

@@ -57,6 +57,13 @@
 
 namespace unitTests {
 
+const uint32_t PUBLIC_DISK_USER = 9751;
+const uint32_t PUBLIC_DISK_GROUP = 9752;
+const uint32_t DISK_FILE_OWNER_UID = 9753;
+const uint32_t DISK_FILE_GID = 9754;
+const uint32_t NON_EXISTENT_DISK_FILE_OWNER_UID = 9755;
+const uint32_t NON_EXISTENT_DISK_FILE_GID = 9756;
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -3457,8 +3464,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.diskInstance         = storageClass.diskInstance;
     file1Written.diskFileId           = "5678";
     file1Written.diskFilePath         = "/public_dir/public_file";
-    file1Written.diskFileUser         = "public_disk_user";
-    file1Written.diskFileGroup        = "public_disk_group";
+    file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
     file1Written.checksumType         = "checksum_type";
     file1Written.checksumValue        = "checksum_value";
@@ -3661,8 +3668,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     file1Written.diskInstance         = storageClass.diskInstance;
     file1Written.diskFileId           = "5678";
     file1Written.diskFilePath         = "/public_dir/public_file";
-    file1Written.diskFileUser         = "public_disk_user";
-    file1Written.diskFileGroup        = "public_disk_group";
+    file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
     file1Written.checksumType         = "checksum_type";
     file1Written.checksumValue        = "checksum_value";
@@ -6240,11 +6247,11 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_archive_rout
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity),
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity),
     exception::UserError);
 }
 
@@ -6256,7 +6263,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
   const std::string diskInstanceName = "disk_instance_name";
-  common::dataStructures::UserIdentity userIdentity;
 
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = diskInstanceName;
@@ -6295,10 +6301,11 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   ASSERT_EQ(creationLog, lastModificationLog);
 
   const std::string requesterName = "requester_name";
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity),
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity),
     exception::UserError);
 }
 
@@ -6380,14 +6387,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -6471,14 +6478,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = "username";
-  userIdentity.group = requesterGroupName;
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = "username";
+  requesterIdentity.group = requesterGroupName;
 
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -6581,14 +6588,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -6645,11 +6652,11 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_no_archive_route
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity),
+  ASSERT_THROW(m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity),
     exception::UserError);
 }
 
@@ -6731,10 +6738,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
-  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity);
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
+  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_mount_rule) {
@@ -6814,10 +6821,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = "username";
-  userIdentity.group = requesterGroupName;
-  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity);
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = "username";
+  requesterIdentity.group = requesterGroupName;
+  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_rule_overide) {
@@ -6916,10 +6923,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
-  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity);
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
+  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
@@ -7031,8 +7038,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -7056,8 +7063,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -7079,8 +7086,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -7104,8 +7111,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -7164,11 +7171,11 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
   log::LogContext dummyLc(m_dummyLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc);
+    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
 
   ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
@@ -7176,7 +7183,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 
   // Check that the diskInstanceName mismatch detection works
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, userIdentity, cta::nullopt, dummyLc),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
     exception::UserError);
 }
 
@@ -7287,8 +7294,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -7312,8 +7319,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -7335,8 +7342,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -7360,8 +7367,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -7420,13 +7427,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   log::LogContext dummyLc(m_dummyLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc);
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
@@ -7458,7 +7465,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc);
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
@@ -7478,7 +7485,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   m_catalogue->setTapeDisabled(m_admin, vid2, true);
 
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
     exception::UserError);
 }
 
@@ -7499,7 +7506,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_group_without_inst
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskFileGroup = "disk_file_group";
+  searchCriteria.diskFileGid = DISK_FILE_GID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -7510,7 +7517,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_disk_file_group
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
-  searchCriteria.diskFileGroup = "non_existant_disk_file_group";
+  searchCriteria.diskFileGid = NON_EXISTENT_DISK_FILE_GID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -7565,7 +7572,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_user_without_insta
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskFileUser = "disk_file_user";
+  searchCriteria.diskFileOwnerUid = DISK_FILE_OWNER_UID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -7576,7 +7583,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_disk_file_user)
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
-  searchCriteria.diskFileUser = "non_existant_disk_file_user";
+  searchCriteria.diskFileOwnerUid = NON_EXISTENT_DISK_FILE_OWNER_UID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -7835,8 +7842,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskInstance = storageClass.diskInstance;
     fileWritten.diskFileId = diskFileId.str();
     fileWritten.diskFilePath = diskFilePath.str();
-    fileWritten.diskFileUser = "public_disk_user";
-    fileWritten.diskFileGroup = "public_disk_group";
+    fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
     fileWritten.checksumType = checksumType;
     fileWritten.checksumValue = checksumValue;
@@ -7897,8 +7904,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskInstance = storageClass.diskInstance;
     fileWritten.diskFileId = diskFileId.str();
     fileWritten.diskFilePath = diskFilePath.str();
-    fileWritten.diskFileUser = "public_disk_user";
-    fileWritten.diskFileGroup = "public_disk_group";
+    fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
     fileWritten.checksumType = checksumType;
     fileWritten.checksumValue = checksumValue;
@@ -7951,8 +7958,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     searchCriteria.diskInstance = storageClass.diskInstance;
     searchCriteria.diskFileId = std::to_string(12345678);
     searchCriteria.diskFilePath = "/public_dir/public_file_1";
-    searchCriteria.diskFileUser = "public_disk_user";
-    searchCriteria.diskFileGroup = "public_disk_group";
+    searchCriteria.diskFileOwnerUid = PUBLIC_DISK_USER;
+    searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     searchCriteria.storageClass = storageClass.name;
     searchCriteria.vid = vid1;
     searchCriteria.tapeFileCopyNb = 1;
@@ -7969,8 +7976,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(searchCriteria.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(searchCriteria.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(searchCriteria.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(searchCriteria.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(searchCriteria.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(searchCriteria.diskFileOwnerUid, static_cast<uint64_t>(archiveFile.diskFileInfo.owner_uid));
+    ASSERT_EQ(searchCriteria.diskFileGid, static_cast<uint64_t>(archiveFile.diskFileInfo.gid));
     ASSERT_EQ(searchCriteria.storageClass, archiveFile.storageClass);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->vid);
@@ -7992,8 +7999,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileUser = "public_disk_user";
-      fileWritten1.diskFileGroup = "public_disk_group";
+      fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumType = checksumType;
       fileWritten1.checksumValue = checksumValue;
@@ -8014,8 +8021,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
@@ -8065,8 +8072,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileUser = "public_disk_user";
-      fileWritten1.diskFileGroup = "public_disk_group";
+      fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumType = checksumType;
       fileWritten1.checksumValue = checksumValue;
@@ -8087,8 +8094,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
@@ -8140,8 +8147,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -8158,8 +8165,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -8201,8 +8208,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -8219,8 +8226,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -8262,8 +8269,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -8280,8 +8287,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -8361,7 +8368,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileUser = "public_disk_user";
+    searchCriteria.diskFileOwnerUid     = PUBLIC_DISK_USER;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -8374,7 +8381,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileGroup = "public_disk_group";
+    searchCriteria.diskFileGid     = PUBLIC_DISK_GROUP;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -8555,8 +8562,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
           fileWritten.diskInstance = m_storageClass.diskInstance;
           fileWritten.diskFileId = diskFileId.str();
           fileWritten.diskFilePath = diskFilePath.str();
-          fileWritten.diskFileUser = "public_disk_user";
-          fileWritten.diskFileGroup = "public_disk_group";
+          fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+          fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
           fileWritten.size = m_archiveFileSize;
           fileWritten.checksumType = m_checksumType;
           fileWritten.checksumValue = m_checksumValue;
@@ -8867,8 +8874,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     searchCriteria.diskInstance = storageClass.diskInstance;
     searchCriteria.diskFileId = std::to_string(12345678);
     searchCriteria.diskFilePath = "/public_dir/public_file_1";
-    searchCriteria.diskFileUser = "public_disk_user";
-    searchCriteria.diskFileGroup = "public_disk_group";
+    searchCriteria.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    searchCriteria.diskFileGid     = PUBLIC_DISK_GROUP;
     searchCriteria.storageClass = storageClass.name;
     searchCriteria.vid = vid1;
     searchCriteria.tapeFileCopyNb = 1;
@@ -8885,8 +8892,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(searchCriteria.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(searchCriteria.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(searchCriteria.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(searchCriteria.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(searchCriteria.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(searchCriteria.diskFileOwnerUid, static_cast<uint64_t>(archiveFile.diskFileInfo.owner_uid));
+    ASSERT_EQ(searchCriteria.diskFileGid, static_cast<uint64_t>(archiveFile.diskFileInfo.gid));
     ASSERT_EQ(searchCriteria.storageClass, archiveFile.storageClass);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->vid);
@@ -8922,8 +8929,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileUser = "public_disk_user";
-      fileWritten1.diskFileGroup = "public_disk_group";
+      fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumType = checksumType;
       fileWritten1.checksumValue = checksumValue;
@@ -8946,8 +8953,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
@@ -8999,8 +9006,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileUser = "public_disk_user";
-      fileWritten1.diskFileGroup = "public_disk_group";
+      fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumType = checksumType;
       fileWritten1.checksumValue = checksumValue;
@@ -9023,8 +9030,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
@@ -9079,8 +9086,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -9097,8 +9104,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -9143,8 +9150,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -9161,8 +9168,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -9207,8 +9214,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumType = checksumType;
       fileWritten.checksumValue = checksumValue;
@@ -9225,8 +9232,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
       ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
       ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
@@ -9306,7 +9313,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileUser = "public_disk_user";
+    searchCriteria.diskFileOwnerUid     = PUBLIC_DISK_USER;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -9319,7 +9326,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileGroup = "public_disk_group";
+    searchCriteria.diskFileGid     = PUBLIC_DISK_GROUP;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -9521,8 +9528,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -9555,8 +9562,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -9578,8 +9585,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -9613,8 +9620,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -9749,8 +9756,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -9783,8 +9790,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -9806,8 +9813,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -9841,8 +9848,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     // If there are two or more tape copies with the same copy number then
     // only one of them will be active (<=> supersededByVid.empty()).
@@ -9947,8 +9954,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -9981,8 +9988,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10004,8 +10011,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -10039,8 +10046,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     // If there are two or more tape copies with the same copy number then
     // only one of them will be active (<=> supersededByVid.empty()).
@@ -10173,8 +10180,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize1;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -10207,8 +10214,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10232,8 +10239,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize2;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -10356,8 +10363,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType1;
   file1Written.checksumValue        = checksumValue;
@@ -10390,8 +10397,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10415,8 +10422,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType2;
   file2Written.checksumValue        = checksumValue;
@@ -10539,8 +10546,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue1;
@@ -10573,8 +10580,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10598,8 +10605,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue2;
@@ -10722,8 +10729,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -10762,8 +10769,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10789,8 +10796,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10812,8 +10819,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -10855,8 +10862,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
       ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
       ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -10894,8 +10901,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -11035,8 +11042,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -11075,8 +11082,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -11102,8 +11109,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -11125,8 +11132,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumType         = checksumType;
   file2Written.checksumValue        = checksumValue;
@@ -11168,8 +11175,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
       ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
       ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -11207,8 +11214,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -11549,8 +11556,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -11574,8 +11581,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -11774,8 +11781,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumType         = checksumType;
   file1Written.checksumValue        = checksumValue;
@@ -11799,8 +11806,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);

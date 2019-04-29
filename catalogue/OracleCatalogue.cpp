@@ -269,8 +269,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
 
     tape.comment = rset.columnString("USER_COMMENT");
 
-    common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = rset.columnString("CREATION_LOG_USER_NAME");
+    //std::string creatorUIname = rset.columnString("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
     creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -279,8 +278,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
 
     tape.creationLog = creationLog;
 
-    common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = rset.columnString("LAST_UPDATE_USER_NAME");
+    //std::string updaterUIname = rset.columnString("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
     updateLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
@@ -537,8 +535,8 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskInstance.setFieldLenToValueLen(i, event.diskInstance);
       archiveFileBatch.diskFileId.setFieldLenToValueLen(i, event.diskFileId);
       archiveFileBatch.diskFilePath.setFieldLenToValueLen(i, event.diskFilePath);
-      archiveFileBatch.diskFileUser.setFieldLenToValueLen(i, event.diskFileUser);
-      archiveFileBatch.diskFileGroup.setFieldLenToValueLen(i, event.diskFileGroup);
+      archiveFileBatch.diskFileUser.setFieldLenToValueLen(i, event.diskFileOwnerUid);
+      archiveFileBatch.diskFileGroup.setFieldLenToValueLen(i, event.diskFileGid);
       archiveFileBatch.size.setFieldLenToValueLen(i, event.size);
       archiveFileBatch.checksumType.setFieldLenToValueLen(i, event.checksumType);
       archiveFileBatch.checksumValue.setFieldLenToValueLen(i, event.checksumValue);
@@ -555,8 +553,8 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskInstance.setFieldValue(i, event.diskInstance);
       archiveFileBatch.diskFileId.setFieldValue(i, event.diskFileId);
       archiveFileBatch.diskFilePath.setFieldValue(i, event.diskFilePath);
-      archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileUser);
-      archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGroup);
+      archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileOwnerUid);
+      archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
       archiveFileBatch.size.setFieldValue(i, event.size);
       archiveFileBatch.checksumType.setFieldValue(i, event.checksumType);
       archiveFileBatch.checksumValue.setFieldValue(i, event.checksumValue);
@@ -825,8 +823,8 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = selectRset.columnString("DISK_FILE_UID");
-        archiveFile->diskFileInfo.group = selectRset.columnString("DISK_FILE_GID");
+        archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
+        archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
         archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
         archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");
@@ -870,8 +868,8 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
          .add("requestDiskInstance", diskInstanceName)
          .add("diskFileId", archiveFile->diskFileId)
          .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-         .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-         .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+         .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+         .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
          .add("checksumType", archiveFile->checksumType)
          .add("checksumValue", archiveFile->checksumValue)
@@ -932,8 +930,8 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("diskInstance", archiveFile->diskInstance)
        .add("diskFileId", archiveFile->diskFileId)
        .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+       .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+       .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
        .add("checksumType", archiveFile->checksumType)
        .add("checksumValue", archiveFile->checksumValue)

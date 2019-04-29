@@ -62,8 +62,8 @@ cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWr
   fileReport.checksumValue = tapeFile.checksumValue;
   fileReport.copyNb = tapeFile.copyNb;
   fileReport.diskFileId = archiveFile.diskFileId;
-  fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
-  fileReport.diskFileGroup = archiveFile.diskFileInfo.group;
+  fileReport.diskFileOwnerUid = archiveFile.diskFileInfo.owner_uid;
+  fileReport.diskFileGid = archiveFile.diskFileInfo.gid;
   fileReport.diskFilePath = archiveFile.diskFileInfo.path;
   fileReport.diskInstance = archiveFile.diskInstance;
   fileReport.fSeq = tapeFile.fSeq;

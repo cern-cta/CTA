@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,32 +23,30 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/DiskFileInfo.hpp"
-#include "common/dataStructures/RequesterIdentity.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
 /**
- * This is the request to cancel and ongoing retrieval 
+ * This struct holds the username and group name of a given user 
  */
-struct CancelRetrieveRequest {
+struct RequesterIdentity {
 
-  CancelRetrieveRequest();
+  RequesterIdentity();
+  
+  RequesterIdentity(const std::string &name, const std::string &group);
 
-  bool operator==(const CancelRetrieveRequest &rhs) const;
+  bool operator==(const RequesterIdentity &rhs) const;
 
-  bool operator!=(const CancelRetrieveRequest &rhs) const;
+  bool operator!=(const RequesterIdentity &rhs) const;
 
-  RequesterIdentity requester;
-  uint64_t archiveFileID;
-  std::string dstURL;
-  DiskFileInfo diskFileInfo;
+  std::string name;
+  std::string group;
 
-}; // struct CancelRetrieveRequest
+}; // struct RequesterIdentity
 
-std::ostream &operator<<(std::ostream &os, const CancelRetrieveRequest &obj);
+std::ostream &operator<<(std::ostream &os, const RequesterIdentity &obj);
 
 } // namespace dataStructures
 } // namespace common

@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/UserIdentity.hpp"
+#include <limits>
+
+#include "common/dataStructures/OwnerIdentity.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -27,36 +29,35 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-UserIdentity::UserIdentity() { }
-
+OwnerIdentity::OwnerIdentity() :
+  uid(std::numeric_limits<uid_t>::max()),
+  gid(std::numeric_limits<gid_t>::max()) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-UserIdentity::UserIdentity(const std::string& name, const std::string& group):
-  name(name), group(group) {}
+OwnerIdentity::OwnerIdentity(uint32_t uid, uint32_t gid) : uid(uid), gid(gid) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool UserIdentity::operator==(const UserIdentity &rhs) const {
-  return name==rhs.name
-      && group==rhs.group;
+bool OwnerIdentity::operator==(const OwnerIdentity &rhs) const {
+  return uid == rhs.uid && gid == rhs.gid;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool UserIdentity::operator!=(const UserIdentity &rhs) const {
+bool OwnerIdentity::operator!=(const OwnerIdentity &rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const UserIdentity &obj) {
-  os << "(name=" << obj.name
-     << " group=" << obj.group << ")";
+std::ostream &operator<<(std::ostream &os, const OwnerIdentity &obj) {
+  os << "(uid=" << obj.uid
+     << " gid=" << obj.gid << ")";
   return os;
 }
 

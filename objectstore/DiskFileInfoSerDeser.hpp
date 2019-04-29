@@ -1,4 +1,4 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
  * Copyright (C) 2015  CERN
  *
@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/UserIdentity.hpp"
 #include "objectstore/cta.pb.h"
 #include "common/dataStructures/DiskFileInfo.hpp"
 
@@ -27,33 +26,29 @@
 #include <limits>
 
 namespace cta { namespace objectstore {
+
 /**
  * A decorator class of scheduler's creation log adding serialization.
  */
-class DiskFileInfoSerDeser: public cta::common::dataStructures::DiskFileInfo {
-public:
-  DiskFileInfoSerDeser (): cta::common::dataStructures::DiskFileInfo() {}
-  DiskFileInfoSerDeser (const cta::common::dataStructures::DiskFileInfo & dfi): cta::common::dataStructures::DiskFileInfo(dfi) {}
-  DiskFileInfoSerDeser (const std::string & path, const std::string & owner, const std::string & group): 
-    cta::common::dataStructures::DiskFileInfo() {
-    this->path=path;
-    this->owner=owner;
-    this->group=group;
-  }
+struct DiskFileInfoSerDeser: public cta::common::dataStructures::DiskFileInfo {
+  DiskFileInfoSerDeser() : cta::common::dataStructures::DiskFileInfo() {}
+  DiskFileInfoSerDeser(const cta::common::dataStructures::DiskFileInfo &dfi) : cta::common::dataStructures::DiskFileInfo(dfi) {}
+
   operator cta::common::dataStructures::DiskFileInfo() {
     return cta::common::dataStructures::DiskFileInfo(*this);
-  } 
+  }
+
   void serialize (cta::objectstore::serializers::DiskFileInfo & osdfi) const {
     osdfi.set_path(path);
-    osdfi.set_owner(owner);
-    osdfi.set_group(group);
-    osdfi.set_recoveryblob("");
+    osdfi.set_owner_uid(owner_uid);
+    osdfi.set_gid(gid);
   }
+
   void deserialize (const cta::objectstore::serializers::DiskFileInfo & osdfi) {
-    path=osdfi.path();
-    owner=osdfi.owner();
-    group=osdfi.group();
+    path      = osdfi.path();
+    owner_uid = osdfi.owner_uid();
+    gid       = osdfi.gid();
   }
 };
-  
+
 }}
