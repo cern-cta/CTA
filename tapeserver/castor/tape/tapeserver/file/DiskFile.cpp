@@ -21,8 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <xrootd/XrdClient/XrdClientUrlInfo.hh>
 
-#include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
 #include "common/exception/Errnum.hpp"
@@ -592,5 +593,96 @@ void RadosStriperWriteFile::close()  {
 }
 
 RadosStriperWriteFile::~RadosStriperWriteFile() throw() {}
+
+
+//==============================================================================
+// DIRECTORY FACTORY
+//============================================================================== 
+DirectoryFactory::DirectoryFactory():
+    m_URLLocalDirectory("^file://(.*)$"),
+    m_URLXrootDirectory("^(root://.*)$"){}
+
+
+Directory * DirectoryFactory::createDirectory(const std::string& path){
+  // URL path parsing
+  std::vector<std::string> regexResult;
+  // local file URL?
+  regexResult = m_URLLocalDirectory.exec(path);
+  if (regexResult.size()) {
+    return new LocalDirectory(regexResult[1]);
+  }
+  // Xroot URL?
+  regexResult = m_URLXrootDirectory.exec(path);
+  if (regexResult.size()) {
+    return new XRootdDirectory(path);
+  }
+  throw cta::exception::Exception("In DirectoryFactory::createDirectory: unknown type of URL");
+}
+
+//==============================================================================
+// LOCAL DIRECTORY
+//============================================================================== 
+LocalDirectory::LocalDirectory(const std::string& path){
+  m_URL = path;
+}
+
+void LocalDirectory::mkdir(){
+  const int retCode = ::mkdir(m_URL.c_str(),S_IRWXU);
+  cta::exception::Errnum::throwOnMinusOne(retCode,"In LocalDirectory::mkdir(): failed to create directory at "+m_URL);
+}
+
+bool LocalDirectory::exist(){
+  struct stat buffer;
+  return (stat(m_URL.c_str(), &buffer) == 0);
+}
+
+std::set<std::string> LocalDirectory::getFilesName(){
+  std::set<std::string> names;
+  DIR *dir;
+  struct dirent *file;
+  dir = opendir(m_URL.c_str());
+  cta::exception::Errnum::throwOnNull(dir,"In LocalDirectory::getFilesName, failed to open directory at "+m_URL);
+  while((file = readdir(dir)) != NULL){
+    char *fileName = file->d_name;
+    if(strcmp(fileName,".")  && strcmp(fileName,"..")){
+      names.insert(std::string(file->d_name));
+    }
+  }
+  cta::exception::Errnum::throwOnMinusOne(::closedir(dir),"In LocalDirectory::getFilesName(), fail to close directory at "+m_URL);
+  return names;
+}
+
+//==============================================================================
+// XROOT DIRECTORY
+//============================================================================== 
+XRootdDirectory::XRootdDirectory(const std::string& path):m_xrootFileSystem(path){
+  m_URL = path;
+  m_truncatedDirectoryURL = this->truncatePath(path);
+}
+
+std::string XRootdDirectory::truncatePath(const std::string &path) {
+  XrdClientUrlInfo urlInfo(path.c_str());
+  return std::string(urlInfo.File.c_str());
+}
+
+void XRootdDirectory::mkdir() {
+  XrdCl::XRootDStatus mkdirStatus = m_xrootFileSystem.MkDir(m_truncatedDirectoryURL,XrdCl::MkDirFlags::None,XrdCl::Access::Mode::UR | XrdCl::Access::Mode::UW | XrdCl::Access::Mode::UX,c_xrootTimeout);
+  cta::exception::XrootCl::throwOnError(mkdirStatus,"In XRootdDirectory::mkdir() : failed to create directory at "+m_URL);
+}
+
+bool XRootdDirectory::exist() {
+  XrdCl::LocationInfo *locationDirectory;
+  XrdCl::XRootDStatus statStatus = m_xrootFileSystem.Locate(m_truncatedDirectoryURL,XrdCl::OpenFlags::Flags::Write,locationDirectory,c_xrootTimeout);
+  cta::exception::XrootCl::throwOnError(statStatus,"In XrootdDirectory::exist(): fail to determine if directory exists.");
+  if(locationDirectory->GetSize() != 0){
+    return true;
+  }
+  return false;
+}
+
+std::set<std::string> XRootdDirectory::getFilesName(){
+  std::set<std::string> ret;
+  return ret;
+}
 
 }}} //end of namespace diskFile

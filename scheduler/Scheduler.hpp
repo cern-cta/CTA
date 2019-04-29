@@ -302,7 +302,6 @@ private:
     std::map<tpType, uint32_t> & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
   
-  const std::string generateRetrieveDstURL(const cta::common::dataStructures::DiskFileInfo dfi) const;
   
 public:
   /**

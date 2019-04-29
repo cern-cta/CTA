@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR} 
-  ${PROJECT_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+  ${PROJECT_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${XROOTD_INCLUDE_DIR})
 
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
@@ -34,7 +34,7 @@ set_property(TARGET ctascheduler PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctaeos)
+target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctaeos File)
 
 #add_library (ctaschedulerutils SHARED
 #  _old_prototype_DummyScheduler.cpp)

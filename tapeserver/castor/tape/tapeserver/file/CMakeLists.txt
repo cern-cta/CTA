@@ -62,7 +62,7 @@ target_link_libraries(BasicReadWriteTest
 
 add_library(File
   ${TAPESERVER_FILE_LIBRARY_SRCS})
-target_link_libraries (File XrdCl cryptopp radosstriper)
+target_link_libraries (File XrdCl XrdClient cryptopp radosstriper)
 
 if(CMAKE_COMPILER_IS_GNUCC)
   if(GCC_VERSION_GE_4_8_0)

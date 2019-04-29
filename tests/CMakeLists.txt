@@ -82,7 +82,7 @@ if (OCCI_SUPPORT)
 endif (OCCI_SUPPORT)
 
 add_library(unitTestHelper
-  TempFile.cpp)
+  TempFile.cpp TempDirectory.cpp)
 
 add_library(systemTestHelperTests SHARED
   SubprocessSystemTests.cpp)

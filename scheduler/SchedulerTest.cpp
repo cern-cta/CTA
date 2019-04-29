@@ -38,6 +38,7 @@
 #include "objectstore/JobQueueType.hpp"
 #include "objectstore/RepackIndex.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
+#include "tests/TempDirectory.hpp"
 #include "common/Timer.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "objectstore/Algorithms.hpp"
@@ -1242,7 +1243,7 @@ TEST_P(SchedulerTest, showqueues) {
 
 TEST_P(SchedulerTest, repack) {
   using namespace cta;
-  
+  unitTests::TempDirectory tempDirectory;
   setupDefaultCatalogue();
   
   Scheduler &scheduler = getScheduler();
@@ -1256,7 +1257,7 @@ TEST_P(SchedulerTest, repack) {
   // Create and then cancel repack
   common::dataStructures::SecurityIdentity cliId;
   std::string tape1 = "Tape";
-  scheduler.queueRepack(cliId, tape1, "root://server/repackDir", common::dataStructures::RepackInfo::Type::MoveOnly, lc);
+  scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, repacks.size());
@@ -1266,7 +1267,7 @@ TEST_P(SchedulerTest, repack) {
   scheduler.cancelRepack(cliId, tape1, lc);
   ASSERT_EQ(0, scheduler.getRepacks().size());
   // Recreate a repack and get it moved to ToExpand
-  scheduler.queueRepack(cliId, "Tape2", "root://server/repackDir", common::dataStructures::RepackInfo::Type::MoveOnly, lc);
+  scheduler.queueRepack(cliId, "Tape2", "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, repacks.size());
@@ -1283,6 +1284,7 @@ TEST_P(SchedulerTest, repack) {
 
 TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   using namespace cta;
+  unitTests::TempDirectory tempDirectory;
   
   setupDefaultCatalogue();
   
@@ -1294,10 +1296,10 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   // Create a repack request
   common::dataStructures::SecurityIdentity cliId;
   std::string tape1 = "Tape";
-  scheduler.queueRepack(cliId, tape1, "root://server/repackDir", common::dataStructures::RepackInfo::Type::MoveOnly, lc);
+  scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
   
   std::string tape2 = "Tape2";
-  scheduler.queueRepack(cliId,tape2,"root://server/repackDir",common::dataStructures::RepackInfo::Type::AddCopiesOnly,lc);
+  scheduler.queueRepack(cliId,tape2,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,lc);
   
   //Test the repack request queued has status Pending
   ASSERT_EQ(scheduler.getRepack(tape1).status,common::dataStructures::RepackInfo::Status::Pending);
@@ -1329,6 +1331,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
 
 TEST_P(SchedulerTest, expandRepackRequest) {
   using namespace cta;
+  unitTests::TempDirectory tempDirectory;
   
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
@@ -1431,7 +1434,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
     for(uint64_t i = 0; i < nbTapesToRepack ; ++i) {
-      scheduler.queueRepack(admin,allVid.at(i),"root://repackData/buffer",common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+      scheduler.queueRepack(admin,allVid.at(i),"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
     }
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();
@@ -1468,7 +1471,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ASSERT_EQ(retrieveJob.request.archiveFileID,archiveFileId++);
         ASSERT_EQ(retrieveJob.fileSize,compressedFileSize);
         std::stringstream ss;
-        ss<<"root://repackData/buffer/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
+        ss<<"file://"<<tempDirectory.path()<<"/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
         ASSERT_EQ(retrieveJob.request.dstURL, ss.str());
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.copyNb,1);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumType,checksumType);
@@ -1569,7 +1572,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           //Testing scheduler retrieve request
           ASSERT_EQ(schedulerRetrieveRequest.archiveFileID,archiveFileId++);
           std::stringstream ss;
-          ss<<"root://repackData/buffer/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
+          ss<<"file://"<<tempDirectory.path()<<"/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
           ASSERT_EQ(schedulerRetrieveRequest.dstURL,ss.str());
           // TODO ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
           // TODO ASSERT_EQ(schedulerRetrieveRequest.tapePool,s_tapePoolName);
@@ -1642,7 +1645,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ASSERT_EQ(archiveFile.fileSize,archiveFileSize);
         ASSERT_EQ(archiveFile.storageClass,s_storageClassName);
         std::stringstream ss;
-        ss<<"root://repackData/buffer/"<<allVid.at(tapeIndex-1)<<"/"<<std::setw(9)<<std::setfill('0')<<fileIndex;
+        ss<<"file://"<<tempDirectory.path()<<"/"<<allVid.at(tapeIndex-1)<<"/"<<std::setw(9)<<std::setfill('0')<<fileIndex;
         ASSERT_EQ(ar.getSrcURL(),ss.str());
         for(auto archiveJob : ar.dumpJobs()){
           ASSERT_EQ(archiveJob.status,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
@@ -1662,7 +1665,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   using namespace cta;
   using namespace cta::objectstore;
-  
+  unitTests::TempDirectory tempDirectory;
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
   auto &schedulerDB = getSchedulerDB();
@@ -1755,9 +1758,8 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"root://repackData/buffer",common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
-    //scheduler.waitSchedulerDbSubthreadsComplete();
  
     log::TimingList tl;
     utils::Timer t;
@@ -1903,7 +1905,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
 TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   using namespace cta;
   using namespace cta::objectstore;
-  
+  unitTests::TempDirectory tempDirectory;
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
   auto &schedulerDB = getSchedulerDB();
@@ -1995,7 +1997,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"root://repackData/buffer",common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();
  
@@ -2149,7 +2151,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
 TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   using namespace cta;
   using namespace cta::objectstore;
-  
+  unitTests::TempDirectory tempDirectory;
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
   auto &schedulerDB = getSchedulerDB();
@@ -2241,7 +2243,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"root://repackData/buffer",common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     log::TimingList tl;

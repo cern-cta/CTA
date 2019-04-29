@@ -30,6 +30,8 @@
 #include "common/make_unique.hpp"
 #include "objectstore/RepackRequest.hpp"
 #include "RetrieveRequestDump.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/DiskFileImplementations.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/RadosStriperPool.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -410,15 +412,6 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
 }
 
 //------------------------------------------------------------------------------
-// generateRetrieveDstURL
-//------------------------------------------------------------------------------
-const std::string Scheduler::generateRetrieveDstURL(const cta::common::dataStructures::DiskFileInfo dfi) const{
-  std::ostringstream strStream;
-  strStream<<"repack:/"<<dfi.path;
-  return strStream.str();
-}
-
-//------------------------------------------------------------------------------
 // expandRepackRequest
 //------------------------------------------------------------------------------
 void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) {
@@ -446,54 +439,82 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   }
   uint64_t fSeq = repackRequest->m_dbReq->getLastExpandedFSeq() + 1;
   cta::catalogue::ArchiveFileItor archiveFilesForCatalogue = m_catalogue.getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
+  std::stringstream dirBufferURL;
+  dirBufferURL << repackInfo.repackBufferBaseURL << "/" << repackInfo.vid << "/";
+  castor::tape::diskFile::DirectoryFactory dirFactory;
+  std::unique_ptr<castor::tape::diskFile::Directory> dir;
+  dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
+  std::set<std::string> filesInDirectory;
+  if(dir->exist()){
+    filesInDirectory = dir->getFilesName();
+  } else {
+    dir->mkdir();
+  }
   while(archiveFilesForCatalogue.hasMore()) {
     size_t filesCount = 0;
     uint64_t maxAddedFSeq = 0;
     std::list<SchedulerDatabase::RepackRequest::Subrequest> retrieveSubrequests;
     while(filesCount < c_defaultMaxNbFilesForRepack && archiveFilesForCatalogue.hasMore())
     {
-      auto archiveFile = archiveFilesForCatalogue.next();
       filesCount++;
       fSeq++;
       retrieveSubrequests.push_back(cta::SchedulerDatabase::RepackRequest::Subrequest());
-      auto & rsr = retrieveSubrequests.back();
-      rsr.archiveFile = archiveFile;
-      rsr.fSeq = std::numeric_limits<decltype(rsr.fSeq)>::max();
-      totalStatsFile.totalBytesToRetrieve += rsr.archiveFile.fileSize;
-      totalStatsFile.totalFilesToRetrieve += 1;
+      auto archiveFile = archiveFilesForCatalogue.next();
+      auto & retrieveSubRequest  = retrieveSubrequests.back();
+      
+      retrieveSubRequest.archiveFile = archiveFile;
+      retrieveSubRequest.fSeq = std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max();
+      
       // We have to determine which copynbs we want to rearchive, and under which fSeq we record this file.
       if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::MoveOnly) {
         // determine which fSeq(s) (normally only one) lives on this tape.
         for (auto & tc: archiveFile.tapeFiles) if (tc.vid == repackInfo.vid) {
-          rsr.copyNbsToRearchive.insert(tc.copyNb);
+          retrieveSubRequest.copyNbsToRearchive.insert(tc.copyNb);
           // We make the (reasonable) assumption that the archive file only has one copy on this tape.
           // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
           // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
           // restart of expansion.
-          rsr.fSeq = std::min(tc.fSeq, rsr.fSeq);
-          maxAddedFSeq = std::max(maxAddedFSeq, rsr.fSeq);
+          retrieveSubRequest.fSeq = std::min(tc.fSeq, retrieveSubRequest.fSeq);
           totalStatsFile.totalFilesToArchive += 1;
-          totalStatsFile.totalBytesToArchive += rsr.archiveFile.fileSize;
+          totalStatsFile.totalBytesToArchive += retrieveSubRequest.archiveFile.fileSize;
         }
       }
-      if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::AddCopiesOnly) {
-        // We should not get here are the type is filtered at the beginning of the function.
-        // TODO: add support for expand.
-        throw cta::exception::Exception("In Scheduler::expandRepackRequest(): expand not yet supported.");
+      std::stringstream fileName;
+      fileName << std::setw(9) << std::setfill('0') << retrieveSubRequest.fSeq;
+      bool createArchiveSubrequest = false;
+      if(filesInDirectory.count(fileName.str())){
+        castor::tape::file::RadosStriperPool radosStriperPool;
+        castor::tape::diskFile::DiskFileFactory fileFactory("",0,radosStriperPool);
+        castor::tape::diskFile::ReadFile *fileReader = fileFactory.createReadFile(dirBufferURL.str() + fileName.str());
+        if(fileReader->size() == archiveFile.fileSize){
+          createArchiveSubrequest = true;
+          retrieveSubrequests.pop_back();
+          //TODO : We don't want to retrieve the file again, create archive subrequest
+        }
       }
-      if ((rsr.fSeq == std::numeric_limits<decltype(rsr.fSeq)>::max()) || rsr.copyNbsToRearchive.empty()) {
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", rsr.archiveFile.archiveFileID)
-              .add("repackVid", repackInfo.vid);
-        lc.log(log::ERR, "In Scheduler::expandRepackRequest(): no fSeq found for this file on this tape.");
-        retrieveSubrequests.pop_back();
-      } else {
-        // We found some copies to rearchive. We still have to decide which file path we are going to use.
-        // File path will be base URL + /<VID>/<fSeq>
-        std::stringstream fileBufferURL;
-        fileBufferURL << repackInfo.repackBufferBaseURL << "/" << repackInfo.vid << "/" 
-            << std::setw(9) << std::setfill('0') << rsr.fSeq;
-        rsr.fileBufferURL = fileBufferURL.str();
+      if(!createArchiveSubrequest){
+        totalStatsFile.totalBytesToRetrieve += retrieveSubRequest.archiveFile.fileSize;
+        totalStatsFile.totalFilesToRetrieve += 1;
+        if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::AddCopiesOnly) {
+          // We should not get here are the type is filtered at the beginning of the function.
+          // TODO: add support for expand.
+          throw cta::exception::Exception("In Scheduler::expandRepackRequest(): expand not yet supported.");
+        }
+        if ((retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) || retrieveSubRequest.copyNbsToRearchive.empty()) {
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", retrieveSubRequest.archiveFile.archiveFileID)
+                .add("repackVid", repackInfo.vid);
+          lc.log(log::ERR, "In Scheduler::expandRepackRequest(): no fSeq found for this file on this tape.");
+          retrieveSubrequests.pop_back();
+        } else {
+          // We found some copies to rearchive. We still have to decide which file path we are going to use.
+          // File path will be base URL + /<VID>/<fSeq>
+          /*std::stringstream fileBufferURL;
+          fileBufferURL << repackInfo.repackBufferBaseURL << "/" << repackInfo.vid << "/" 
+              << std::setw(9) << std::setfill('0') << rsr.fSeq;*/
+          maxAddedFSeq = std::max(maxAddedFSeq,retrieveSubRequest.fSeq);
+          retrieveSubRequest.fileBufferURL = dirBufferURL.str() + fileName.str();
+        }
       }
     }
     // Note: the highest fSeq will be recorded internally in the following call.

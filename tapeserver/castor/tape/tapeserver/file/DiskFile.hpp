@@ -28,6 +28,7 @@
 #include <cryptopp/rsa.h>
 #include <memory>
 #include <stdint.h>
+#include <set>
 /*
  * This file only contains the interface declaration of the base classes
  * the real implementation, which depends on many includes is hidden in
@@ -47,6 +48,7 @@ namespace castor {
       
       class ReadFile;
       class WriteFile;
+      class Directory;
       
       /**
        * Factory class deciding on the type of read/write file type
@@ -146,6 +148,56 @@ namespace castor {
         std::string m_URL;
       };
 
+      /**
+       * Factory class deciding what type of Directory subclass
+       * to instanciate based on the URL passed
+       */
+      class DirectoryFactory{
+	typedef cta::utils::Regex Regex;
+      public:
+	DirectoryFactory();
+	
+	/**
+	 * Returns the correct directory subclass regarding the path passed in parameter
+	 * @param path the path of the directory to manage
+	 * @return the Directory subclass instance regarding the path passed in parameter
+	 * @throws cta::exception if the path provided does not allow to determine which instance of
+	 * Directory will be instanciated.
+	 */
+	Directory * createDirectory(const std::string &path);
+	
+      private:
+	Regex m_URLLocalDirectory;
+        Regex m_URLXrootDirectory;
+      };
+      
+      
+      class Directory {
+      public:
+	/**
+	 * Creates a directory
+	 * @throws an exception if the directory could not have been created
+	 */
+	virtual void mkdir() = 0;
+	/**
+	 * Check if the directory exist
+	 * @return true if the directory exists, false otherwise
+	 */
+	virtual bool exist() = 0;
+	/**
+	 * Return all the names of the files present in the directory
+	 * @return 
+	 */
+	virtual std::set<std::string> getFilesName() = 0;
+	
+	virtual ~Directory() throw() {}
+      protected:
+	/**
+         * Storage for the URL
+         */
+	std::string m_URL;
+      };
+      
     } //end of namespace diskFile
     
  }}

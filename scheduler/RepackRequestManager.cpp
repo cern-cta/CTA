@@ -38,11 +38,17 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
     if(repackRequest != nullptr){
       //We have a RepackRequest that has the status ToExpand, expand it
       timingList.insertAndReset("expandRepackRequestTime", t);
-      m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
-      log::ScopedParamContainer params(lc);
-      params.add("tapeVid",repackRequest->getRepackInfo().vid);
-      timingList.addToLog(params);
-      lc.log(log::INFO, "In RepackRequestManager::runOnePass(): Repack Request expanded");
+      try{
+        m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid",repackRequest->getRepackInfo().vid);
+        timingList.addToLog(params);
+        lc.log(log::INFO, "In RepackRequestManager::runOnePass(): Repack Request expanded");
+      } catch(const cta::exception::Exception &e){
+        lc.log(log::ERR,e.what());
+        repackRequest->fail();
+        throw(e);
+      }
     }
   }
   

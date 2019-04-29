@@ -32,6 +32,7 @@
 #include "common/exception/Exception.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "DiskFileImplementations.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -302,4 +303,40 @@ namespace unitTests {
       ASSERT_EQ(strncmp(data1, data2, res1), 0);
     } while(res1 || res2);
   }
+  
+  TEST(ctaDirectoryTests, directoryExist) {
+    castor::tape::diskFile::LocalDirectory dir("/tmp/");
+    ASSERT_TRUE(dir.exist());
+    
+    castor::tape::diskFile::LocalDirectory dirNotExist("/AZERTY/");
+    ASSERT_FALSE(dirNotExist.exist());
+  }
+  
+   TEST(ctaDirectoryTests, directoryCreate){
+     const char * dirTestPath = "/tmp/testDir";
+     ::rmdir(dirTestPath);
+     castor::tape::diskFile::LocalDirectory dir(dirTestPath);
+     ASSERT_NO_THROW(dir.mkdir());
+     ::rmdir(dirTestPath);
+   }
+   
+   TEST(ctaDirectoryTests, directoryFailCreate){
+     const char * dirTestPath = "//WRONG/PATH";
+     castor::tape::diskFile::LocalDirectory dir(dirTestPath);
+     ASSERT_THROW(dir.mkdir(),cta::exception::Errnum);
+   }
+   
+   TEST(ctaDirectoryTests, directoryGetFilesName){
+     std::string dirTestPath = "/tmp/directoryGetFilesNames";
+     std::string rmCommand = "rm -rf "+dirTestPath;
+     ::system(rmCommand.c_str());
+     castor::tape::diskFile::LocalDirectory dir(dirTestPath);
+     ASSERT_NO_THROW(dir.mkdir());
+     char filePath[] = "/tmp/directoryGetFilesNames/fileXXXXXX";
+     int fd = ::mkstemp(filePath);
+     cta::exception::Errnum::throwOnMinusOne(fd,"In directoryGetFilesName, fail mkstemp");
+     ::close(fd);
+     ASSERT_EQ(1,dir.getFilesName().size());
+     ::unlink(filePath);
+   }
 }

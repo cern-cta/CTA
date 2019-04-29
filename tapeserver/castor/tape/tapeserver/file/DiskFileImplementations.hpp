@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/file/DiskFile.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
-#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/DiskFile.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "common/exception/XrootCl.hpp"
 #include "common/exception/Exception.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
@@ -174,6 +174,33 @@ namespace castor {
         std::string m_osd;
         size_t m_writePosition;
       };
-    } //end of namespace diskFile
+      
+    class LocalDirectory: public Directory {
+    public:
+      LocalDirectory(const std::string& path);
+      virtual void mkdir() override;
+      virtual bool exist() override;
+      virtual std::set<std::string> getFilesName() override;
+    };
     
+    class XRootdDirectory: public Directory{
+    public:
+      XRootdDirectory(const std::string& path);
+      virtual void mkdir() override;
+      virtual bool exist() override;
+      virtual std::set<std::string> getFilesName() override;
+    private:
+      /**
+       * Remove the root://.../ from the path passed in parameter
+       * @param path the path to truncate
+       * @return the truncated path
+       */
+      std::string truncatePath(const std::string &path);
+      
+      XrdCl::FileSystem m_xrootFileSystem;
+      std::string m_truncatedDirectoryURL; // root://.../ part of the path is removed
+      const uint16_t c_xrootTimeout = 15; 
+    };
+      
+    } //end of namespace diskFile
  }}
