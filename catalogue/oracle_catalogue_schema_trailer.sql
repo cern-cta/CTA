@@ -13,7 +13,8 @@ CREATE TABLE UsageStats (
   timestamp NUMBER  DEFAULT 0 CONSTRAINT NN_UsageStats_ts NOT NULL,
   maxFileId INTEGER, fileCount INTEGER, fileSize INTEGER,
   segCount INTEGER, segSize INTEGER, segCompressedSize INTEGER,
-  seg2Count INTEGER, seg2Size INTEGER, seg2CompressedSize INTEGER);
+  seg2Count INTEGER, seg2Size INTEGER, seg2CompressedSize INTEGER
+);
 
 ALTER TABLE UsageStats ADD CONSTRAINT PK_UsageStats_gid_ts PRIMARY KEY (gid, timestamp);
 
@@ -23,13 +24,15 @@ CREATE TABLE CastorUsageStats (
   timestamp NUMBER  DEFAULT 0 CONSTRAINT NN_UsageStats_ts NOT NULL,
   maxFileId INTEGER, fileCount INTEGER, fileSize INTEGER,
   segCount INTEGER, segSize INTEGER, segCompressedSize INTEGER,
-  seg2Count INTEGER, seg2Size INTEGER, seg2CompressedSize INTEGER);
+  seg2Count INTEGER, seg2Size INTEGER, seg2CompressedSize INTEGER
+);
 
 -- This table is used to store the mapping gid -> experiment name, like in CASTOR.
 -- Still to be manually updated, in the lack of an automated mechanism.
 CREATE TABLE EXPERIMENTS (
-   name VARCHAR2(20 BYTE),
-   gid NUMBER(6,0) CONSTRAINT "GID_PK" PRIMARY KEY ("GID"));
+   NAME VARCHAR2(20 BYTE),
+   GID NUMBER(6,0) CONSTRAINT GID_PK PRIMARY KEY (GID)
+);
 
 
 -- Helper procedure to insert/accumulate statistics in the UsageStats table
