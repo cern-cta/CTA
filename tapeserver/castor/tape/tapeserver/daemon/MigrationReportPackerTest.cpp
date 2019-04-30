@@ -35,6 +35,11 @@ using ::testing::Invoke;
 using namespace castor::tape;
 
 namespace unitTests {
+
+const uint32_t TEST_USER_1  = 9751;
+const uint32_t TEST_GROUP_1 = 9752;
+const uint32_t TEST_USER_2  = 9753;
+const uint32_t TEST_GROUP_2 = 9754;
   
   class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing::Test {
   public:
@@ -81,8 +86,8 @@ namespace unitTests {
       fileReport.checksumValue = tapeFile.checksumValue;
       fileReport.copyNb = tapeFile.copyNb;
       fileReport.diskFileId = archiveFile.diskFileId;
-      fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
-      fileReport.diskFileGroup = archiveFile.diskFileInfo.group;
+      fileReport.diskFileOwnerUid = archiveFile.diskFileInfo.owner_uid;
+      fileReport.diskFileGid = archiveFile.diskFileInfo.gid;
       fileReport.diskFilePath = archiveFile.diskFileInfo.path;
       fileReport.diskInstance = archiveFile.diskInstance;
       fileReport.fSeq = tapeFile.fSeq;
@@ -149,8 +154,8 @@ namespace unitTests {
     job1->archiveFile.diskInstance="disk_instance";
     job1->archiveFile.diskFileId="diskFileId1";
     job1->archiveFile.diskFileInfo.path="filePath1";
-    job1->archiveFile.diskFileInfo.owner="testUser1";
-    job1->archiveFile.diskFileInfo.group="testGroup1";
+    job1->archiveFile.diskFileInfo.owner_uid=TEST_USER_1;
+    job1->archiveFile.diskFileInfo.gid=TEST_GROUP_1;
     job1->archiveFile.fileSize=1024;        
     job1->archiveFile.checksumType="md5";
     job1->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -174,8 +179,8 @@ namespace unitTests {
     job2->archiveFile.diskInstance="disk_instance";
     job2->archiveFile.diskFileId="diskFileId2";
     job2->archiveFile.diskFileInfo.path="filePath2";
-    job2->archiveFile.diskFileInfo.owner="testUser2";
-    job2->archiveFile.diskFileInfo.group="testGroup2";
+    job2->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
+    job2->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
     job2->archiveFile.fileSize=1024;        
     job2->archiveFile.checksumType="md5";
     job2->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -314,8 +319,8 @@ namespace unitTests {
     migratedBigFile->archiveFile.diskInstance="disk_instance";
     migratedBigFile->archiveFile.diskFileId="diskFileId2";
     migratedBigFile->archiveFile.diskFileInfo.path="filePath2";
-    migratedBigFile->archiveFile.diskFileInfo.owner="testUser2";
-    migratedBigFile->archiveFile.diskFileInfo.group="testGroup2";
+    migratedBigFile->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
+    migratedBigFile->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
     migratedBigFile->archiveFile.fileSize=100000;        
     migratedBigFile->archiveFile.checksumType="md5";
     migratedBigFile->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -332,8 +337,8 @@ namespace unitTests {
     migratedFileSmall->archiveFile.diskInstance="disk_instance";
     migratedFileSmall->archiveFile.diskFileId="diskFileId3";
     migratedFileSmall->archiveFile.diskFileInfo.path="filePath3";
-    migratedFileSmall->archiveFile.diskFileInfo.owner="testUser2";
-    migratedFileSmall->archiveFile.diskFileInfo.group="testGroup2";
+    migratedFileSmall->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
+    migratedFileSmall->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
     migratedFileSmall->archiveFile.fileSize=1;        
     migratedFileSmall->archiveFile.checksumType="md5";
     migratedFileSmall->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
@@ -350,8 +355,8 @@ namespace unitTests {
     migratedNullFile->archiveFile.diskInstance="disk_instance";
     migratedNullFile->archiveFile.diskFileId="diskFileId4";
     migratedNullFile->archiveFile.diskFileInfo.path="filePath4";
-    migratedNullFile->archiveFile.diskFileInfo.owner="testUser2";
-    migratedNullFile->archiveFile.diskFileInfo.group="testGroup2";
+    migratedNullFile->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
+    migratedNullFile->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
     migratedNullFile->archiveFile.fileSize=0;        
     migratedNullFile->archiveFile.checksumType="md5";
     migratedNullFile->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
