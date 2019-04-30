@@ -175,6 +175,22 @@ namespace castor {
         size_t m_writePosition;
       };
       
+    class LocalDiskFileRemover: public DiskFileRemover {
+    public:
+      LocalDiskFileRemover(const std::string& path);
+      void remove() override;
+    };
+    
+    class XRootdDiskFileRemover: public DiskFileRemover{
+    public:
+      XRootdDiskFileRemover(const std::string &path);
+      void remove() override;
+    private:
+      XrdCl::FileSystem m_xrootFileSystem;
+      std::string m_truncatedFileURL; // root://.../ part of the path is removed
+      const uint16_t c_xrootTimeout = 15;
+    };
+    
     class LocalDirectory: public Directory {
     public:
       LocalDirectory(const std::string& path);
@@ -189,14 +205,7 @@ namespace castor {
       virtual void mkdir() override;
       virtual bool exist() override;
       virtual std::set<std::string> getFilesName() override;
-    private:
-      /**
-       * Remove the root://.../ from the path passed in parameter
-       * @param path the path to truncate
-       * @return the truncated path
-       */
-      std::string truncatePath(const std::string &path);
-      
+    private: 
       XrdCl::FileSystem m_xrootFileSystem;
       std::string m_truncatedDirectoryURL; // root://.../ part of the path is removed
       const uint16_t c_xrootTimeout = 15; 

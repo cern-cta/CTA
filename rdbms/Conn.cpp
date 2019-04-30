@@ -17,7 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/utils/utils.cpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Conn.hpp"
 

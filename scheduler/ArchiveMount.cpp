@@ -178,7 +178,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       // Get the next job to report and make sure we will not attempt to process it twice.
       job = std::move(successfulArchiveJobs.front());
       successfulArchiveJobs.pop();
-      if (!job.get()) continue;        
+      if (!job.get()) continue;
       tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
       files++;
       bytes+=job->archiveFile.fileSize;

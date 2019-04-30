@@ -36,6 +36,7 @@
 #include <sys/utsname.h>
 #include <sys/prctl.h>
 #include <iomanip>
+#include <xrootd/XrdClient/XrdClientUrlInfo.hh>
 
 using cta::exception::Exception;
 
@@ -791,6 +792,11 @@ std::string getCurrentLocalTime() {
   ::strftime(buff,sizeof(buff), "%b %e %H:%M:%S.", localNow);
   ::snprintf(buff2, sizeof(buff2), "%06ld", tv.tv_usec);
   return std::string(buff) + std::string(buff2);
+}
+
+std::string truncateXrootdPath(const std::string& path){
+  XrdClientUrlInfo urlInfo(path.c_str());
+  return std::string(urlInfo.File.c_str());
 }
 
 } // namespace utils

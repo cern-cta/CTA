@@ -157,7 +157,9 @@ target_link_libraries (ctacommon
   uuid
   z
   cap
-  XrdCl)
+  XrdCl
+  ${XROOTD_XRDCLIENT_LIB}
+)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ChecksumTest.cpp
@@ -201,4 +203,3 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 add_executable(mutexLtrace threading/MutexLtrace.cpp)
 target_link_libraries(mutexLtrace ctacommon)
-

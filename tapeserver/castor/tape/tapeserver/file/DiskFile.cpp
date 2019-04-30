@@ -22,12 +22,12 @@
  *****************************************************************************/
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <xrootd/XrdClient/XrdClientUrlInfo.hh>
 
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/utils/utils.hpp"
 #include <rados/buffer.h>
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <uuid/uuid.h>
@@ -594,6 +594,70 @@ void RadosStriperWriteFile::close()  {
 
 RadosStriperWriteFile::~RadosStriperWriteFile() throw() {}
 
+//==============================================================================
+// DiskFileRemover FACTORY
+//==============================================================================
+DiskFileRemoverFactory::DiskFileRemoverFactory():
+    m_URLLocalFile("^file://(.*)$"),
+    m_URLXrootdFile("^(root://.*)$"){}
+
+DiskFileRemover * DiskFileRemoverFactory::createDiskFileRemover(const std::string &path){
+  // URL path parsing
+  std::vector<std::string> regexResult;
+  //local file URL?
+  regexResult = m_URLLocalFile.exec(path);
+  if(regexResult.size()){
+    return new LocalDiskFileRemover(regexResult[1]);
+  }
+  regexResult = m_URLXrootdFile.exec(path);
+  if(regexResult.size()){
+    return new XRootdDiskFileRemover(path);
+  }
+  throw cta::exception::Exception("In DiskFileRemoverFactory::createDiskFileRemover: unknown type of URL");
+}
+
+
+//==============================================================================
+// LocalDiskFileRemover
+//==============================================================================
+LocalDiskFileRemover::LocalDiskFileRemover(const std::string &path){
+  m_URL = path;
+}
+
+void LocalDiskFileRemover::remove(){
+  cta::exception::Errnum::throwOnNonZero(::remove(m_URL.c_str()),"In LocalDiskFileRemover::remove(), failed to delete the file at "+m_URL);
+}
+
+//==============================================================================
+// XRootdDiskFileRemover
+//==============================================================================
+XRootdDiskFileRemover::XRootdDiskFileRemover(const std::string& path):m_xrootFileSystem(path){
+  m_URL = path;
+  m_truncatedFileURL = cta::utils::truncateXrootdPath(path);
+}
+
+void XRootdDiskFileRemover::remove(){
+  //XrdCl::ResponseHandler response;
+  XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL,c_xrootTimeout);
+  /*XrdCl::AnyObject obj;
+  response.HandleResponse(&statusRm,&obj);*/
+  cta::exception::XrootCl::throwOnError(statusRm,"In XRootdDiskFileRemover::remove(), fail to remove file at "+m_URL);
+}
+
+//==============================================================================
+// AsyncDiskFileRemover
+//============================================================================== 
+AsyncDiskFileRemover::AsyncDiskFileRemover(std::unique_ptr<DiskFileRemover> diskFileRemover):m_diskFileRemover(std::move(diskFileRemover)){
+  
+}
+
+void AsyncDiskFileRemover::asyncDelete(){
+  m_futureDeletion = std::async(std::launch::async,[this](){m_diskFileRemover->remove();});
+}
+
+void AsyncDiskFileRemover::wait(){
+  m_futureDeletion.get();
+}
 
 //==============================================================================
 // DIRECTORY FACTORY
@@ -657,12 +721,7 @@ std::set<std::string> LocalDirectory::getFilesName(){
 //============================================================================== 
 XRootdDirectory::XRootdDirectory(const std::string& path):m_xrootFileSystem(path){
   m_URL = path;
-  m_truncatedDirectoryURL = this->truncatePath(path);
-}
-
-std::string XRootdDirectory::truncatePath(const std::string &path) {
-  XrdClientUrlInfo urlInfo(path.c_str());
-  return std::string(urlInfo.File.c_str());
+  m_truncatedDirectoryURL = cta::utils::truncateXrootdPath(path);
 }
 
 void XRootdDirectory::mkdir() {

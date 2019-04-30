@@ -29,6 +29,7 @@
 #include <memory>
 #include <stdint.h>
 #include <set>
+#include <future>
 /*
  * This file only contains the interface declaration of the base classes
  * the real implementation, which depends on many includes is hidden in
@@ -48,6 +49,7 @@ namespace castor {
       
       class ReadFile;
       class WriteFile;
+      class DiskFileRemover;
       class Directory;
       
       /**
@@ -147,7 +149,39 @@ namespace castor {
          */
         std::string m_URL;
       };
-
+      
+      /**
+       * Factory class deciding which disk file remover
+       * to instanciate regarding the format of the path pass of the disk file
+       */
+      class DiskFileRemoverFactory {
+	typedef cta::utils::Regex Regex;
+      public:
+	DiskFileRemoverFactory();
+	DiskFileRemover * createDiskFileRemover(const std::string &path);
+      private:
+	Regex m_URLLocalFile;
+        Regex m_URLXrootdFile;
+      };
+      
+      class DiskFileRemover{
+      public:
+	virtual void remove() = 0;
+	virtual ~DiskFileRemover() throw() {}
+      protected:
+	std::string m_URL;
+      };
+      
+      class AsyncDiskFileRemover{
+      public:
+	AsyncDiskFileRemover(std::unique_ptr<DiskFileRemover> diskFileRemover);
+	void asyncDelete();
+	void wait();
+      private:
+	std::future<void> m_futureDeletion;
+	std::unique_ptr<DiskFileRemover> m_diskFileRemover;
+      };
+      
       /**
        * Factory class deciding what type of Directory subclass
        * to instanciate based on the URL passed

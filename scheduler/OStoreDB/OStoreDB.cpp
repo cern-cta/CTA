@@ -37,6 +37,7 @@
 #include "common/make_unique.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "Scheduler.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/DiskFile.hpp"
 #include <algorithm>
 #include <cmath>
 #include <stdlib.h>     /* srand, rand */
@@ -4124,13 +4125,32 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
     }
   }
   timingList.insertAndReset("asyncUpdateOrDeleteLaunchTime", t);
+  struct DiskFileRemovers{
+    std::unique_ptr<castor::tape::diskFile::AsyncDiskFileRemover> asyncRemover;
+    RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> & subrequestInfo;
+    typedef std::list<DiskFileRemovers> List;
+  };
+  DiskFileRemovers::List diskFileRemoverList;
   for (auto & d: deletersList) {
     try {
       d.deleter->wait();
       log::ScopedParamContainer params(lc);
+      params.add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
+            .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet());
+      lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): deleted request.");
+      try {
+        //Subrequest deleted, async delete the file from the disk
+        castor::tape::diskFile::DiskFileRemoverFactory fileRemoverFactory;
+        std::unique_ptr<castor::tape::diskFile::DiskFileRemover> remover(fileRemoverFactory.createDiskFileRemover(d.subrequestInfo.repackInfo.fileBufferURL));
+        diskFileRemoverList.push_back(DiskFileRemovers{std::unique_ptr<castor::tape::diskFile::AsyncDiskFileRemover>(new castor::tape::diskFile::AsyncDiskFileRemover(std::move(remover))),d.subrequestInfo});
+        diskFileRemoverList.back().asyncRemover->asyncDelete();
+      } catch (const cta::exception::Exception &ex){
+        log::ScopedParamContainer params(lc);
         params.add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
-              .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet());
-        lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): deleted request.");
+              .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async deletion of disk file failed.");
+      }
     } catch (cta::exception::Exception & ex) {
         // Log the error
         log::ScopedParamContainer params(lc);
@@ -4138,6 +4158,24 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
               .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
               .add("exceptionMsg", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async deletion failed.");
+    }
+  }
+  for(auto & dfr: diskFileRemoverList){
+    try {
+      dfr.asyncRemover->wait();
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
+            .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
+            .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL);
+      lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async deleted file.");
+    } catch (const cta::exception::Exception& ex){
+      // Log the error
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
+            .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
+            .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
+            .add("exceptionMsg", ex.getMessageValue());
+      lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async file not deleted.");
     }
   }
   for (auto & jou: jobOwnerUpdatersList) {

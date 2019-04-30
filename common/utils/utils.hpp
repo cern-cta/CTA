@@ -370,6 +370,14 @@ namespace utils {
    * @return the foramtted time.
    */
   std::string getCurrentLocalTime();
+  
+  /**
+   * Remove the root:// part of the path passed in parameter
+   * and return the corresponding string
+   * @param path the xroot path to truncate
+   * @return the xroot path truncated
+   */
+  std::string truncateXrootdPath(const std::string &path);
 
 } // namespace utils
 
