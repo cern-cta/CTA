@@ -149,7 +149,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
     ar.setArchiveErrorReportURL("");
-    ar.setRequester(cta::common::dataStructures::RequesterIdentity(0, 0));
+    ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
     ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
