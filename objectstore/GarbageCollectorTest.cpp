@@ -308,8 +308,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   re.initialize();
   re.insert();
   // Create the agent register
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -376,7 +375,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
     ar.setArchiveErrorReportURL("");
-    ar.setRequester(cta::common::dataStructures::RequesterIdentity(0, 0));
+    ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
     ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
