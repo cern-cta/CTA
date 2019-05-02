@@ -794,7 +794,7 @@ std::string getCurrentLocalTime() {
   return std::string(buff) + std::string(buff2);
 }
 
-std::string truncateXrootdPath(const std::string& path){
+std::string extractPathFromXrootdPath(const std::string& path){
   XrdClientUrlInfo urlInfo(path.c_str());
   return std::string(urlInfo.File.c_str());
 }

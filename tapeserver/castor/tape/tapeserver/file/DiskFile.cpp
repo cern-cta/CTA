@@ -595,23 +595,23 @@ void RadosStriperWriteFile::close()  {
 RadosStriperWriteFile::~RadosStriperWriteFile() throw() {}
 
 //==============================================================================
-// DiskFileRemover FACTORY
+// AsyncDiskFileRemover FACTORY
 //==============================================================================
-DiskFileRemoverFactory::DiskFileRemoverFactory():
+AsyncDiskFileRemoverFactory::AsyncDiskFileRemoverFactory():
     m_URLLocalFile("^file://(.*)$"),
     m_URLXrootdFile("^(root://.*)$"){}
 
-DiskFileRemover * DiskFileRemoverFactory::createDiskFileRemover(const std::string &path){
+AsyncDiskFileRemover * AsyncDiskFileRemoverFactory::createAsyncDiskFileRemover(const std::string &path){
   // URL path parsing
   std::vector<std::string> regexResult;
   //local file URL?
   regexResult = m_URLLocalFile.exec(path);
   if(regexResult.size()){
-    return new LocalDiskFileRemover(regexResult[1]);
+    return new AsyncLocalDiskFileRemover(regexResult[1]);
   }
   regexResult = m_URLXrootdFile.exec(path);
   if(regexResult.size()){
-    return new XRootdDiskFileRemover(path);
+    return new AsyncXRootdDiskFileRemover(path);
   }
   throw cta::exception::Exception("In DiskFileRemoverFactory::createDiskFileRemover: unknown type of URL");
 }
@@ -633,29 +633,59 @@ void LocalDiskFileRemover::remove(){
 //==============================================================================
 XRootdDiskFileRemover::XRootdDiskFileRemover(const std::string& path):m_xrootFileSystem(path){
   m_URL = path;
-  m_truncatedFileURL = cta::utils::truncateXrootdPath(path);
+  m_truncatedFileURL = cta::utils::extractPathFromXrootdPath(path);
 }
 
 void XRootdDiskFileRemover::remove(){
-  //XrdCl::ResponseHandler response;
   XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL,c_xrootTimeout);
-  /*XrdCl::AnyObject obj;
-  response.HandleResponse(&statusRm,&obj);*/
-  cta::exception::XrootCl::throwOnError(statusRm,"In XRootdDiskFileRemover::remove(), fail to remove file at "+m_URL);
+  cta::exception::XrootCl::throwOnError(statusRm,"In XRootdDiskFileRemover::remove(), fail to remove file.");;
+}
+
+void XRootdDiskFileRemover::removeAsync(AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler &responseHandler){
+  XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL,&responseHandler,c_xrootTimeout);
+  try{
+    cta::exception::XrootCl::throwOnError(statusRm,"In XRootdDiskFileRemover::remove(), fail to remove file.");
+  } catch(const cta::exception::Exception &e){
+    responseHandler.m_deletionPromise.set_exception(std::current_exception());
+  }
 }
 
 //==============================================================================
-// AsyncDiskFileRemover
+// AsyncXrootdDiskFileRemover
 //============================================================================== 
-AsyncDiskFileRemover::AsyncDiskFileRemover(std::unique_ptr<DiskFileRemover> diskFileRemover):m_diskFileRemover(std::move(diskFileRemover)){
-  
+AsyncXRootdDiskFileRemover::AsyncXRootdDiskFileRemover(const std::string &path){
+  m_diskFileRemover.reset(new XRootdDiskFileRemover(path));
 }
 
-void AsyncDiskFileRemover::asyncDelete(){
+void AsyncXRootdDiskFileRemover::asyncDelete(){
+  m_diskFileRemover->removeAsync(m_responseHandler);
+}
+
+void AsyncXRootdDiskFileRemover::wait(){
+  m_responseHandler.m_deletionPromise.get_future().get();
+}
+
+void AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler::HandleResponse(XrdCl::XRootDStatus* status, XrdCl::AnyObject* response){
+  try{
+    cta::exception::XrootCl::throwOnError(*status,"In XRootdDiskFileRemover::remove(), fail to remove file.");
+    m_deletionPromise.set_value();
+  } catch(const cta::exception::Exception &e){
+    m_deletionPromise.set_exception(std::current_exception());
+  }
+}
+
+//==============================================================================
+// AsyncLocalDiskFileRemover
+//============================================================================== 
+AsyncLocalDiskFileRemover::AsyncLocalDiskFileRemover(const std::string& path){
+  m_diskFileRemover.reset(new LocalDiskFileRemover(path));  
+}
+
+void AsyncLocalDiskFileRemover::asyncDelete(){
   m_futureDeletion = std::async(std::launch::async,[this](){m_diskFileRemover->remove();});
 }
 
-void AsyncDiskFileRemover::wait(){
+void AsyncLocalDiskFileRemover::wait(){
   m_futureDeletion.get();
 }
 
@@ -695,6 +725,11 @@ void LocalDirectory::mkdir(){
   cta::exception::Errnum::throwOnMinusOne(retCode,"In LocalDirectory::mkdir(): failed to create directory at "+m_URL);
 }
 
+void LocalDirectory::rmdir(){
+  const int retcode = ::rmdir(m_URL.c_str());
+  cta::exception::Errnum::throwOnMinusOne(retcode,"In LocalDirectory::rmdir(): failed to remove the directory at "+m_URL);
+}
+
 bool LocalDirectory::exist(){
   struct stat buffer;
   return (stat(m_URL.c_str(), &buffer) == 0);
@@ -721,12 +756,17 @@ std::set<std::string> LocalDirectory::getFilesName(){
 //============================================================================== 
 XRootdDirectory::XRootdDirectory(const std::string& path):m_xrootFileSystem(path){
   m_URL = path;
-  m_truncatedDirectoryURL = cta::utils::truncateXrootdPath(path);
+  m_truncatedDirectoryURL = cta::utils::extractPathFromXrootdPath(path);
 }
 
 void XRootdDirectory::mkdir() {
   XrdCl::XRootDStatus mkdirStatus = m_xrootFileSystem.MkDir(m_truncatedDirectoryURL,XrdCl::MkDirFlags::None,XrdCl::Access::Mode::UR | XrdCl::Access::Mode::UW | XrdCl::Access::Mode::UX,c_xrootTimeout);
   cta::exception::XrootCl::throwOnError(mkdirStatus,"In XRootdDirectory::mkdir() : failed to create directory at "+m_URL);
+}
+
+void XRootdDirectory::rmdir() {
+  XrdCl::XRootDStatus rmdirStatus = m_xrootFileSystem.RmDir(m_truncatedDirectoryURL, c_xrootTimeout);
+  cta::exception::XrootCl::throwOnError(rmdirStatus,"In XRootdDirectory::rmdir() : failed to remove directory at "+m_URL);
 }
 
 bool XRootdDirectory::exist() {
@@ -741,6 +781,7 @@ bool XRootdDirectory::exist() {
 
 std::set<std::string> XRootdDirectory::getFilesName(){
   std::set<std::string> ret;
+  //TODO : Implement this method
   return ret;
 }
 

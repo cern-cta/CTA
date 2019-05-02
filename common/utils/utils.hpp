@@ -377,7 +377,7 @@ namespace utils {
    * @param path the xroot path to truncate
    * @return the xroot path truncated
    */
-  std::string truncateXrootdPath(const std::string &path);
+  std::string extractPathFromXrootdPath(const std::string &path);
 
 } // namespace utils
 

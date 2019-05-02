@@ -151,14 +151,27 @@ namespace castor {
       };
       
       /**
-       * Factory class deciding which disk file remover
-       * to instanciate regarding the format of the path pass of the disk file
+       * This class is the base class to asynchronously delete
+       * Disk Files
        */
-      class DiskFileRemoverFactory {
+      class AsyncDiskFileRemover{
+      protected:
+	std::future<void> m_futureDeletion;
+      public:
+	virtual void asyncDelete() = 0;
+	virtual void wait() = 0;
+	virtual ~AsyncDiskFileRemover(){}
+      };
+      
+      /**
+       * Factory class deciding which async disk file remover
+       * to instanciate regarding the format of the path of the disk file
+       */
+      class AsyncDiskFileRemoverFactory {
 	typedef cta::utils::Regex Regex;
       public:
-	DiskFileRemoverFactory();
-	DiskFileRemover * createDiskFileRemover(const std::string &path);
+	AsyncDiskFileRemoverFactory();
+	AsyncDiskFileRemover * createAsyncDiskFileRemover(const std::string &path);
       private:
 	Regex m_URLLocalFile;
         Regex m_URLXrootdFile;
@@ -170,16 +183,6 @@ namespace castor {
 	virtual ~DiskFileRemover() throw() {}
       protected:
 	std::string m_URL;
-      };
-      
-      class AsyncDiskFileRemover{
-      public:
-	AsyncDiskFileRemover(std::unique_ptr<DiskFileRemover> diskFileRemover);
-	void asyncDelete();
-	void wait();
-      private:
-	std::future<void> m_futureDeletion;
-	std::unique_ptr<DiskFileRemover> m_diskFileRemover;
       };
       
       /**
@@ -223,6 +226,11 @@ namespace castor {
 	 * @return 
 	 */
 	virtual std::set<std::string> getFilesName() = 0;
+	
+	/**
+	 * Remove the directory located at this->m_URL 
+	 */
+	virtual void rmdir() = 0;
 	
 	virtual ~Directory() throw() {}
       protected:

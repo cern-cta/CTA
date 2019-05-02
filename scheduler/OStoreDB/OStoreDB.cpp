@@ -4140,9 +4140,9 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): deleted request.");
       try {
         //Subrequest deleted, async delete the file from the disk
-        castor::tape::diskFile::DiskFileRemoverFactory fileRemoverFactory;
-        std::unique_ptr<castor::tape::diskFile::DiskFileRemover> remover(fileRemoverFactory.createDiskFileRemover(d.subrequestInfo.repackInfo.fileBufferURL));
-        diskFileRemoverList.push_back(DiskFileRemovers{std::unique_ptr<castor::tape::diskFile::AsyncDiskFileRemover>(new castor::tape::diskFile::AsyncDiskFileRemover(std::move(remover))),d.subrequestInfo});
+        castor::tape::diskFile::AsyncDiskFileRemoverFactory asyncDiskFileRemoverFactory;
+        std::unique_ptr<castor::tape::diskFile::AsyncDiskFileRemover> asyncRemover(asyncDiskFileRemoverFactory.createAsyncDiskFileRemover(d.subrequestInfo.repackInfo.fileBufferURL));
+        diskFileRemoverList.push_back({std::move(asyncRemover),d.subrequestInfo});
         diskFileRemoverList.back().asyncRemover->asyncDelete();
       } catch (const cta::exception::Exception &ex){
         log::ScopedParamContainer params(lc);
@@ -4176,6 +4176,28 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
             .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
             .add("exceptionMsg", ex.getMessageValue());
       lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async file not deleted.");
+    }
+    if(&dfr == &(diskFileRemoverList.back())){
+      //We deleted the last file, delete the buffer directory
+      castor::tape::diskFile::DirectoryFactory directoryFactory;
+      std::string directoryPath = cta::utils::getEnclosingPath(dfr.subrequestInfo.repackInfo.fileBufferURL);
+      std::unique_ptr<castor::tape::diskFile::Directory> directory;
+      try{
+        directory.reset(directoryFactory.createDirectory(directoryPath));
+        directory->rmdir();
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
+              .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
+              .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL);
+        lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): deleted the "+directoryPath+" directory");
+      } catch (const cta::exception::Exception &ex){
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
+              .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
+              .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): failed to remove the "+directoryPath+" directory");
+      }
     }
   }
   for (auto & jou: jobOwnerUpdatersList) {
