@@ -316,8 +316,9 @@ void RepackRequest::reportRetriveFailures(SubrequestStatistics::List& retrieveFa
 
 //------------------------------------------------------------------------------
 // RepackRequest::reportArchiveSuccesses()
+// Returns the status of the RepackRequest
 //------------------------------------------------------------------------------
-void RepackRequest::reportArchiveSuccesses(SubrequestStatistics::List& archiveSuccesses) {
+serializers::RepackRequestStatus RepackRequest::reportArchiveSuccesses(SubrequestStatistics::List& archiveSuccesses) {
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
   // Read the map
@@ -349,12 +350,13 @@ void RepackRequest::reportArchiveSuccesses(SubrequestStatistics::List& archiveSu
     m_payload.mutable_subrequests()->Clear();
     for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
+  return m_payload.status();
 }
 
 //------------------------------------------------------------------------------
 // RepackRequest::reportArchiveFailures()
 //------------------------------------------------------------------------------
-void RepackRequest::reportArchiveFailures(SubrequestStatistics::List& archiveFailures) {
+serializers::RepackRequestStatus RepackRequest::reportArchiveFailures(SubrequestStatistics::List& archiveFailures) {
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
   // Read the map
@@ -381,6 +383,7 @@ void RepackRequest::reportArchiveFailures(SubrequestStatistics::List& archiveFai
     m_payload.mutable_subrequests()->Clear();
     for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
+  return m_payload.status();
 }
 
 //------------------------------------------------------------------------------

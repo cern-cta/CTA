@@ -3985,16 +3985,17 @@ void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
 //------------------------------------------------------------------------------
 // OStoreDB::RepackArchiveSuccessesReportBatch::recordReport()
 //------------------------------------------------------------------------------
-void OStoreDB::RepackArchiveSuccessesReportBatch::recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t){
+serializers::RepackRequestStatus OStoreDB::RepackArchiveSuccessesReportBatch::recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t){
   timingList.insertAndReset("successStatsPrepareTime", t);
   objectstore::ScopedExclusiveLock rrl(m_repackRequest);
   timingList.insertAndReset("successStatsLockTime", t);
   m_repackRequest.fetch();
   timingList.insertAndReset("successStatsFetchTime", t);
-  m_repackRequest.reportArchiveSuccesses(ssl);
+  serializers::RepackRequestStatus repackRequestStatus = m_repackRequest.reportArchiveSuccesses(ssl);
   timingList.insertAndReset("successStatsUpdateTime", t);
   m_repackRequest.commit();
   timingList.insertAndReset("successStatsCommitTime", t);
+  return repackRequestStatus;
 }
 
 //------------------------------------------------------------------------------
@@ -4013,17 +4014,19 @@ void OStoreDB::RepackArchiveFailureReportBatch::report(log::LogContext& lc){
 
 //------------------------------------------------------------------------------
 // OStoreDB::RepackArchiveFailureReportBatch::recordReport()
+// Return false as at least 1 archive did not work
 //------------------------------------------------------------------------------
-void OStoreDB::RepackArchiveFailureReportBatch::recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t){
+serializers::RepackRequestStatus OStoreDB::RepackArchiveFailureReportBatch::recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t){
   timingList.insertAndReset("failureStatsPrepareTime", t);
   objectstore::ScopedExclusiveLock rrl(m_repackRequest);
   timingList.insertAndReset("failureStatsLockTime", t);
   m_repackRequest.fetch();
   timingList.insertAndReset("failureStatsFetchTime", t);
-  m_repackRequest.reportArchiveFailures(ssl);
+  serializers::RepackRequestStatus repackRequestStatus = m_repackRequest.reportArchiveFailures(ssl);
   timingList.insertAndReset("failureStatsUpdateTime", t);
   m_repackRequest.commit();
   timingList.insertAndReset("failureStatsCommitTime", t);
+  return repackRequestStatus;
 }
 
 //------------------------------------------------------------------------------
@@ -4071,7 +4074,8 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   // 1) Update statistics. As the repack request is protected against double reporting, we can release its lock
   // before the next (deletions).
   objectstore::RepackRequest::SubrequestStatistics::List statistics = prepareReport();
-  recordReport(statistics,timingList,t);
+  objectstore::serializers::RepackRequestStatus repackRequestStatus = recordReport(statistics,timingList,t);
+  std::string bufferURL;
   
   // 2) For each job, determine if sibling jobs are complete or not. If so, delete, else just update status and set empty owner.
   struct Deleters {
@@ -4087,6 +4091,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   Deleters::List deletersList;
   JobOwnerUpdaters::List jobOwnerUpdatersList;
   for (auto &sri: m_subrequestList) {
+    bufferURL = sri.repackInfo.fileBufferURL;
     bool moreJobsToDo = false;
     for (auto &j: sri.archiveJobsStatusMap) {
       if ((j.first != sri.archivedCopyNb) && 
@@ -4177,27 +4182,23 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
             .add("exceptionMsg", ex.getMessageValue());
       lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async file not deleted.");
     }
-    if(&dfr == &(diskFileRemoverList.back())){
-      //We deleted the last file, delete the buffer directory
-      castor::tape::diskFile::DirectoryFactory directoryFactory;
-      std::string directoryPath = cta::utils::getEnclosingPath(dfr.subrequestInfo.repackInfo.fileBufferURL);
-      std::unique_ptr<castor::tape::diskFile::Directory> directory;
-      try{
-        directory.reset(directoryFactory.createDirectory(directoryPath));
-        directory->rmdir();
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
-              .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
-              .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL);
-        lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): deleted the "+directoryPath+" directory");
-      } catch (const cta::exception::Exception &ex){
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
-              .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
-              .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
-              .add("exceptionMsg", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): failed to remove the "+directoryPath+" directory");
-      }
+  }
+  if(repackRequestStatus == objectstore::serializers::RepackRequestStatus::RRS_Complete){
+    //Repack Request is complete, delete the directory in the buffer
+    castor::tape::diskFile::DirectoryFactory directoryFactory;
+    std::string directoryPath = cta::utils::getEnclosingPath(bufferURL);
+    std::unique_ptr<castor::tape::diskFile::Directory> directory;
+    try{
+      directory.reset(directoryFactory.createDirectory(directoryPath));
+      directory->rmdir();
+      log::ScopedParamContainer params(lc);
+      params.add("repackRequestAddress", m_repackRequest.getAddressIfSet());
+      lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): deleted the "+directoryPath+" directory");
+    } catch (const cta::exception::Exception &ex){
+      log::ScopedParamContainer params(lc);
+      params.add("repackRequestAddress", m_repackRequest.getAddressIfSet())
+            .add("exceptionMsg", ex.getMessageValue());
+      lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): failed to remove the "+directoryPath+" directory");
     }
   }
   for (auto & jou: jobOwnerUpdatersList) {

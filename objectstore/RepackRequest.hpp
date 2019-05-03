@@ -95,8 +95,8 @@ public:
   };
   void reportRetriveSuccesses (SubrequestStatistics::List & retrieveSuccesses);
   void reportRetriveFailures (SubrequestStatistics::List & retrieveFailures);
-  void reportArchiveSuccesses (SubrequestStatistics::List & archiveSuccesses);
-  void reportArchiveFailures (SubrequestStatistics::List & archiveFailures);
+  serializers::RepackRequestStatus reportArchiveSuccesses (SubrequestStatistics::List & archiveSuccesses);
+  serializers::RepackRequestStatus reportArchiveFailures (SubrequestStatistics::List & archiveFailures);
   void reportSubRequestsForDeletion (std::list<uint64_t>& fSeqs);
   enum class StatsType: uint8_t {
     UserProvided,

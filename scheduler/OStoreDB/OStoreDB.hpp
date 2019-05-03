@@ -470,7 +470,7 @@ public:
     void report(log::LogContext &lc);
   private:
     objectstore::RepackRequest::SubrequestStatistics::List prepareReport();
-    virtual void recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) = 0;
+    virtual cta::objectstore::serializers::RepackRequestStatus recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) = 0;
     virtual cta::objectstore::serializers::ArchiveJobStatus getNewStatus() = 0;
   };
   
@@ -481,7 +481,7 @@ public:
   public:
     void report(log::LogContext& lc) override;
   private:
-    void recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) override;
+    cta::objectstore::serializers::RepackRequestStatus recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) override;
     cta::objectstore::serializers::ArchiveJobStatus getNewStatus() override;
   };
   
@@ -493,7 +493,7 @@ public:
   public:
     void report(log::LogContext& lc) override;
   private:
-    void recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) override;
+    cta::objectstore::serializers::RepackRequestStatus recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) override;
     cta::objectstore::serializers::ArchiveJobStatus getNewStatus() override;
   };
   
