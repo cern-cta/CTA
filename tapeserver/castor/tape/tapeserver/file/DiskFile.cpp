@@ -770,10 +770,13 @@ void XRootdDirectory::rmdir() {
 }
 
 bool XRootdDirectory::exist() {
-  XrdCl::LocationInfo *locationDirectory;
-  XrdCl::XRootDStatus statStatus = m_xrootFileSystem.Locate(m_truncatedDirectoryURL,XrdCl::OpenFlags::Flags::Write,locationDirectory,c_xrootTimeout);
+  XrdCl::StatInfo *statInfo;
+  XrdCl::XRootDStatus statStatus = m_xrootFileSystem.Stat(m_truncatedDirectoryURL,statInfo,c_xrootTimeout);
+  if(statStatus.errNo == XErrorCode::kXR_NotFound){
+    return false;
+  }
   cta::exception::XrootCl::throwOnError(statStatus,"In XrootdDirectory::exist(): fail to determine if directory exists.");
-  if(locationDirectory->GetSize() != 0){
+  if(statInfo->GetSize() !=  0){
     return true;
   }
   return false;
@@ -781,7 +784,14 @@ bool XRootdDirectory::exist() {
 
 std::set<std::string> XRootdDirectory::getFilesName(){
   std::set<std::string> ret;
-  //TODO : Implement this method
+  XrdCl::DirectoryList *directoryContent;
+  XrdCl::XRootDStatus dirListStatus = m_xrootFileSystem.DirList(m_truncatedDirectoryURL,XrdCl::DirListFlags::Flags::Stat,directoryContent,c_xrootTimeout);
+  cta::exception::XrootCl::throwOnError(dirListStatus,"In XrootdDirectory::getFilesName(): unable to list the files contained in the directory.");
+  XrdCl::DirectoryList::ConstIterator iter = directoryContent->Begin();
+  while(iter != directoryContent->End()){
+    ret.insert((*iter)->GetName());
+    iter++;
+  }
   return ret;
 }
 
