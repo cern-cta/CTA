@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/checksum/Checksum.hpp"
+#include "common/checksum/ChecksumBlob.hpp"
 #include "TapeItemWritten.hpp"
 
 #include <string>
@@ -84,15 +84,10 @@ struct TapeFileWritten: public TapeItemWritten {
   uint64_t size;
 
   /**
-   * Checksum type for the tape file contents.
+   * Set of checksum types and values
    */
-  std::string checksumType;
+  ChecksumBlob checksumBlob;
 
-  /**
-   * Checksum value for the tape file contents.
-   */
-  std::string checksumValue;
-  
   /**
    * The name of the file's storage class.
    */

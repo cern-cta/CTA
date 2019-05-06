@@ -28,8 +28,6 @@ set (CATALOGUE_LIB_SRC_FILES
   CatalogueFactory.cpp
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
-  ChecksumTypeMismatch.cpp
-  ChecksumValueMismatch.cpp
   CmdLineTool.cpp
   FileSizeMismatch.cpp
   InMemoryCatalogue.cpp
