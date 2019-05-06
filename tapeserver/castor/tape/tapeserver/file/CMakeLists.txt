@@ -78,7 +78,7 @@ add_library(ctatapeserverfileunittests SHARED
 )
 
 target_link_libraries(ctatapeserverfileunittests
-  disk
+  ctadisk
 )
 
 set_property(TARGET ctatapeserverfileunittests PROPERTY SOVERSION "${CTA_SOVERSION}")

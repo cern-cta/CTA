@@ -21,7 +21,7 @@ find_package (xrootdclient REQUIRED)
 
 include_directories (${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-add_library(disk SHARED
+add_library(ctadisk SHARED
   DiskReporter.cpp
   DiskReporterFactory.cpp
   EOSReporter.cpp
@@ -29,10 +29,10 @@ add_library(disk SHARED
   RadosStriperPool.cpp
 )
 
-target_link_libraries (disk XrdCl cryptopp radosstriper)
+target_link_libraries (ctadisk XrdCl cryptopp radosstriper)
 
-set_property(TARGET disk PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET disk PROPERTY   VERSION "${CTA_LIBVERSION}")
+set_property(TARGET ctadisk PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctadisk PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 add_library(ctadiskunittests SHARED
   CryptoPPTest.cpp
@@ -41,5 +41,5 @@ add_library(ctadiskunittests SHARED
 set_property(TARGET ctadiskunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadiskunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS disk DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctadisk DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 install(TARGETS ctadiskunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
