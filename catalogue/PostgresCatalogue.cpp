@@ -17,14 +17,14 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/ChecksumTypeMismatch.hpp"
-#include "catalogue/ChecksumValueMismatch.hpp"
 #include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/PostgresCatalogue.hpp"
 #include "catalogue/retryOnLostConnection.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/ChecksumTypeMismatch.hpp"
+#include "common/ChecksumValueMismatch.hpp"
 #include "common/make_unique.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
@@ -102,8 +102,7 @@ namespace {
       diskFileUser("DISK_FILE_UID", nbRows),
       diskFileGroup("DISK_FILE_GID", nbRows),
       size("SIZE_IN_BYTES", nbRows),
-      checksumType("CHECKSUM_TYPE", nbRows),
-      checksumValue("CHECKSUM_VALUE", nbRows),
+      checksumType("CHECKSUM_BLOB", nbRows),
       storageClassName("STORAGE_CLASS_NAME", nbRows),
       creationTime("CREATION_TIME", nbRows),
       reconciliationTime("RECONCILIATION_TIME", nbRows) {
@@ -524,8 +523,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "DISK_FILE_UID,"
         "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
-        "CHECKSUM_TYPE,"
-        "CHECKSUM_VALUE,"
+        "CHECKSUM_BLOB,"
         "STORAGE_CLASS_NAME,"
         "CREATION_TIME,"
         "RECONCILIATION_TIME) "
@@ -537,8 +535,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         ":DISK_FILE_UID,"
         ":DISK_FILE_GID,"
         ":SIZE_IN_BYTES,"
-        ":CHECKSUM_TYPE,"
-        ":CHECKSUM_VALUE,"
+        ":CHECKSUM_BLOB,"
         ":STORAGE_CLASS_NAME,"
         ":CREATION_TIME,"
         ":RECONCILIATION_TIME";
@@ -570,8 +567,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "DISK_FILE_UID,"
         "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
-        "CHECKSUM_TYPE,"
-        "CHECKSUM_VALUE,"
+        "CHECKSUM_BLOB,"
         "STORAGE_CLASS_ID,"
         "CREATION_TIME,"
         "RECONCILIATION_TIME) "
@@ -583,8 +579,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "A.DISK_FILE_UID,"
         "A.DISK_FILE_GID,"
         "A.SIZE_IN_BYTES,"
-        "A.CHECKSUM_TYPE," 
-  	    "A.CHECKSUM_VALUE,"
+        "A.CHECKSUM_BLOB," 
         "S.STORAGE_CLASS_ID,"
         "A.CREATION_TIME,"
         "A.RECONCILIATION_TIME "
@@ -624,8 +619,7 @@ std::map<uint64_t, PostgresCatalogue::FileSizeAndChecksum> PostgresCatalogue::se
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE "
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN TEMP_TAPE_FILE_BATCH ON "
@@ -647,8 +641,7 @@ std::map<uint64_t, PostgresCatalogue::FileSizeAndChecksum> PostgresCatalogue::se
 
       FileSizeAndChecksum fileSizeAndChecksum;
       fileSizeAndChecksum.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      fileSizeAndChecksum.checksumType = rset.columnString("CHECKSUM_TYPE");
-      fileSizeAndChecksum.checksumValue = rset.columnString("CHECKSUM_VALUE");
+      fileSizeAndChecksum.checksumType = rset.columnString("CHECKSUM_BLOB");
 
       fileSizesAndChecksums[archiveFileId] = fileSizeAndChecksum;
     }
@@ -711,8 +704,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
@@ -757,8 +749,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");
+        archiveFile->checksumType = selectRset.columnString("CHECKSUM_BLOB");
         archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");

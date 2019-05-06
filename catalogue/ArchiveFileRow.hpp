@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/checksum/Checksum.hpp"
+#include "common/checksum/ChecksumBlob.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -84,15 +84,10 @@ struct ArchiveFileRow {
   uint64_t size;
   
   /**
-   * Checksum type of the tape file content
+   * Set of checksum types and values
    */
-  std::string checksumType;
+  ChecksumBlob checksumBlob;
   
-  /**
-   * Checksum value of the file type content
-   */
-  std::string checksumValue;
-
   /**
    * The name of the file's storage class.
    */

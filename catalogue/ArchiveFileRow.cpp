@@ -17,6 +17,7 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
+#include "common/dataStructures/utils.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -41,8 +42,7 @@ bool ArchiveFileRow::operator==(const ArchiveFileRow &rhs) const {
     diskFileOwnerUid == rhs.diskFileOwnerUid &&
     diskFileGid == rhs.diskFileGid &&
     size == rhs.size &&
-    checksumType == rhs.checksumType &&
-    checksumValue == rhs.checksumValue &&
+    checksumBlob == rhs.checksumBlob &&
     storageClassName == rhs.storageClassName;
 }
 
@@ -59,7 +59,7 @@ std::ostream &operator<<(std::ostream &os, const ArchiveFileRow &obj) {
   "diskFileOwnerUid=" << obj.diskFileOwnerUid <<
   "diskFileGid=" << obj.diskFileGid <<
   "size=" << obj.size <<
-  "checksumType=" << obj.checksumType << "checksumValue=" << obj.checksumValue <<
+  "checksumBlob=" << obj.checksumBlob <<
   "storageClassName=" << obj.storageClassName <<
   "}";
   return os;

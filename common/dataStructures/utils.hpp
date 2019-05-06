@@ -18,12 +18,16 @@
 
 #pragma once
 
+#include "common/checksum/ChecksumBlob.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 
 #include <iostream>
 #include <map>
 
 namespace cta {
+
+std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb);
+
 namespace common {
 namespace dataStructures {
   

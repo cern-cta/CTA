@@ -21,7 +21,6 @@
 #include "common/exception/Exception.hpp"
 
 namespace cta {
-namespace catalogue {
 
 /**
  * Exception representing an unexpected mismatch between checksum types.
@@ -36,13 +35,12 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  ChecksumTypeMismatch(const std::string &context = "", const bool embedBacktrace = true);
+  ChecksumTypeMismatch(const std::string &context = "", const bool embedBacktrace = true) {}
 
   /**
    * Destructor.
    */
-  ~ChecksumTypeMismatch() override;
+  ~ChecksumTypeMismatch() override {}
 }; // class ChecksumTypeMismatch
 
-} // namespace catalogue
 } // namespace cta

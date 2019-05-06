@@ -361,20 +361,13 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    checkIsNotEmptyString(notification.transport().report_url(),   "notification.transport.report_url");
 
    // Unpack message
-   std::string checksumtype(notification.file().cks().type());
-   if(checksumtype == "adler") checksumtype = "ADLER32";   // replace this with an enum!
-
-   std::string checksumvalue("0X" + notification.file().cks().value());
-   cta::utils::toUpper(checksumvalue);    // replace this with a number!
-
    const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
    if(notification.file().xattr().end() == storageClassItor) {
      throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_StorageClass");
    }
 
    cta::common::dataStructures::ArchiveRequest request;
-   request.checksumType           = checksumtype;
-   request.checksumValue          = checksumvalue;
+   request.checksumBlob            (notification.file().csb());
    request.diskFileInfo.owner_uid = notification.file().owner().uid();
    request.diskFileInfo.gid       = notification.file().owner().gid();
    request.diskFileInfo.path      = notification.file().lpath();

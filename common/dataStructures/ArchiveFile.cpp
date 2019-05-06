@@ -44,8 +44,7 @@ bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
       && diskFileId    == rhs.diskFileId
       && diskInstance  == rhs.diskInstance
       && fileSize      == rhs.fileSize
-      && checksumType  == rhs.checksumType
-      && checksumValue == rhs.checksumValue
+      && checksumBlob  == rhs.checksumBlob
       && storageClass  == rhs.storageClass
       && diskFileInfo  == rhs.diskFileInfo
       && tapeFiles    == rhs.tapeFiles;
@@ -104,8 +103,7 @@ std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj) {
     "diskFileID="         << obj.diskFileId         << ","
     "diskInstance="       << obj.diskInstance       << ","
     "fileSize="           << obj.fileSize           << ","
-    "checksumType="       << obj.checksumType       << ","
-    "checksumValue="      << obj.checksumValue      << ","
+    "checksumBlob="       << obj.checksumBlob       << ","
     "storageClass="       << obj.storageClass       << ","
     "diskFileInfo="       << obj.diskFileInfo       << ","
     "tapeFiles="          << obj.tapeFiles          << ","

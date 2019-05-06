@@ -153,12 +153,16 @@ bool ListPendingQueueStream<OStoreDB::ArchiveQueueItor_t>::pushRecord(XrdSsiPb::
   af->set_disk_instance(job.instanceName);
   af->set_disk_id(job.request.diskFileID);
   af->set_size(job.request.fileSize);
-  af->mutable_cs()->set_type(job.request.checksumType);
-  af->mutable_cs()->set_value(job.request.checksumValue);         
   af->set_storage_class(job.request.storageClass);
   af->mutable_df()->mutable_owner_id()->set_uid(job.request.diskFileInfo.owner_uid);
   af->mutable_df()->mutable_owner_id()->set_gid(job.request.diskFileInfo.gid);
   af->mutable_df()->set_path(job.request.diskFileInfo.path);
+
+#ifdef CTA_CHECKSUM_DONE
+  // Checksum array
+  af->mutable_cs()->set_type(job.request.checksumType);
+  af->mutable_cs()->set_value(job.request.checksumValue);
+#endif
 
   return streambuf->Push(record);
 }

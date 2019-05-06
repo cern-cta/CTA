@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,13 @@
 
 #pragma once
 
-#include "common/exception/Exception.hpp"
-
 #include <ostream>
 #include <sstream>
 #include <typeinfo>
+
+#include <common/exception/Exception.hpp>
+#include <common/checksum/ChecksumTypeMismatch.hpp>
+#include <common/checksum/ChecksumValueMismatch.hpp>
 
 namespace cta {
 
@@ -31,35 +33,33 @@ namespace cta {
  */
 class Checksum {
 public:
-
   /**
-   * Enumeration of the supported checksum types.
+   * Enumeration of the supported checksum types
    */
   enum ChecksumType {
     CHECKSUMTYPE_NONE,
     CHECKSUMTYPE_ADLER32};
 
   /**
-   * Thread safe method that returns the string representation of the specified
-   * checksum type.
+   * Thread safe method that returns the string representation of the specified checksum type
    *
-   * @param enumValue The integer value of the type.
-   * @return The string representation.
+   * @param enumValue The integer value of the type
+   * @return The string representation
    */
   static const char *checksumTypeToStr(const ChecksumType enumValue) throw();
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * Creates an empty checksum.
+   * Creates an empty checksum
    */
   Checksum();
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param type The type of the checksum.
-   * @param val A numeric value to store in the byte array.
+   * @param type The type of the checksum
+   * @param val A numeric value to store in the byte array
    */
   template <typename t>
   Checksum(const ChecksumType &type, t val): m_type(type) { 
@@ -79,39 +79,43 @@ public:
   }
   
   /**
-   * String based constructor.
+   * String based constructor
    * 
    * @param url A string describing the type of the checksum
    */
   Checksum(const std::string & url);
 
   /**
-   * Equality operator.
-   *
-   * @param ths The right hand side of the operator.
+   * Check two checksums are equal, throw an exception if not
+   */
+  void validate(const Checksum &rhs) const;
+
+  /**
+   * Equality operator
    */
   bool operator==(const Checksum &rhs) const;
 
   /**
-   * Returns the type of the checksum.
-   *
-   * @return The type of the checksum.
+   * Inequality operator
+   */
+  bool operator!=(const Checksum &rhs) const { return !(*this == rhs); }
+
+  /**
+   * Returns the type of the checksum
    */
   ChecksumType getType() const throw();
 
   /**
-   * Returns the checksum as a byte array that can be used for storing in a
-   * database.
+   * Returns the checksum as a byte array that can be used for storing in a database
    *
-   * The bytes of the bytes array are in little-endian order.
+   * The bytes of the bytes array are in little-endian order
    *
-   * @return The checksum as a byte array that can be used for storing in a
-   * database.
+   * @return The checksum as a byte array that can be used for storing in a database
    */
   const std::string &getByteArray() const throw();
 
   /**
-   * Returns a human-readable string representation of the checksum.
+   * Returns a human-readable string representation of the checksum
    */
   std::string str() const;
   
@@ -133,25 +137,18 @@ public:
   }
 
 private:
-
-  /**
-   * The type of the checksum.
-   */
-  ChecksumType m_type;
-
-  /**
-   * The checksum as a byte array that can be used to store the checksum in a
-   * database alongside its type.
-   */
-  std::string m_byteArray;
+  ChecksumType m_type;        //!< The type of the checksum.
+  std::string m_byteArray;    //!< The checksum as a byte array in little-endian order
 
 }; // class Checksum
 
+
+
 /**
- * Writes the specified Checksum object to the specified ooutput stream.
+ * Writes the specified Checksum object to the specified output stream
  *
- * @param os The output stream.
- * @param checksum The checksum.
+ * @param os The output stream
+ * @param checksum The checksum
  */
 std::ostream &operator<<(std::ostream &os, const Checksum &checksum);
 

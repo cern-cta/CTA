@@ -18,8 +18,6 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueTest.hpp"
-#include "catalogue/ChecksumTypeMismatch.hpp"
-#include "catalogue/ChecksumValueMismatch.hpp"
 #include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
@@ -38,6 +36,8 @@
 #include "catalogue/UserSpecifiedAZeroCopyNb.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/ChecksumTypeMismatch.hpp"
+#include "common/ChecksumValueMismatch.hpp"
 #include "common/make_unique.hpp"
 #include "common/Constants.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"

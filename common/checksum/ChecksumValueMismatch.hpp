@@ -16,24 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/ChecksumValueMismatch.hpp"
+#pragma once
+
+#include "common/exception/Exception.hpp"
 
 namespace cta {
-namespace catalogue {
 
+/**
+ * Exception representing an unexpected mismatch between checksum values.
+ */
+class ChecksumValueMismatch: public exception::Exception {
+public:
+  /**
+   * Constructor.
+   *
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
+   */
+  ChecksumValueMismatch(const std::string &context = "", const bool embedBacktrace = true) {}
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-ChecksumValueMismatch::ChecksumValueMismatch(const std::string &context, const bool embedBacktrace):
-  cta::exception::Exception(context, embedBacktrace) {
-}
+  /**
+   * Destructor.
+   */
+  ~ChecksumValueMismatch() override {}
+}; // class ChecksumValueMismatch
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-ChecksumValueMismatch::~ChecksumValueMismatch() {
-}
-
-} // namespace catalogue
 } // namespace cta
