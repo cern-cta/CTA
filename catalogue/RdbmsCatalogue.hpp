@@ -1210,6 +1210,17 @@ protected:
   bool isNonCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const;
 
   /**
+   * Returns the number of tapes in the specified tape pool.
+   *
+   * If the tape pool does not exist then this method returns 0.
+   *
+   * @param conn The database connection.
+   * @param name The name of the tape pool.
+   * @return The number of tapes in the specified tape pool.
+   */
+  uint64_t getNbTapesInPool(rdbms::Conn &conn, const std::string &name) const;
+
+  /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
    */
