@@ -342,7 +342,7 @@ public:
     log::LogContext &logContext);
   
   void reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>> & archiveJobsBatch,
-      eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer &, log::LogContext &);
+      cta::disk::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer &, log::LogContext &);
   
   /*============== Repack support ===========================================*/
   // Promotion of requests
@@ -378,7 +378,7 @@ public:
     log::LogContext &logContext);
 
   void reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>> & retrieveJobsBatch,
-      eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer&, log::LogContext&);
+      disk::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer&, log::LogContext&);
 
   /*!
    * Batch job factory

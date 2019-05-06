@@ -87,7 +87,7 @@ public:
    * Reads all the buffer in one go from a diskFile::ReadFile object 
    * @param from reference to the diskFile::ReadFile
    */
-  size_t read(tape::diskFile::ReadFile& from){
+  size_t read(cta::disk::ReadFile& from){
     m_size = from.read(m_data,m_totalCapacity);
     return m_size;
   }
@@ -98,7 +98,7 @@ public:
    * @param from reference to the tapeFile::ReadFile
    * @return whether another tape block will fit in the memory block.
    */
-  bool append(tape::tapeFile::ReadFile & from){
+  bool append(castor::tape::tapeFile::ReadFile & from){
     if (from.getBlockSize() > remainingFreeSpace()) {
       std::stringstream err;
       err << "Trying to read a tape file block with too little space left: BlockSize="
@@ -120,7 +120,7 @@ public:
    * Write the complete buffer to a diskFile::WriteFile
    * @param to reference to the diskFile::WriteFile
    */
-  void write(tape::diskFile::WriteFile& to){
+  void write(cta::disk::WriteFile& to){
     to.write(m_data,m_size);
   }
   

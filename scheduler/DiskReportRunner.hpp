@@ -33,6 +33,6 @@ public:
   
 private:
   Scheduler & m_scheduler;
-  eos::DiskReporterFactory m_reporterFactory;
+  disk::DiskReporterFactory m_reporterFactory;
 };
 } // namespace cta

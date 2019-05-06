@@ -441,8 +441,8 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   cta::catalogue::ArchiveFileItor archiveFilesForCatalogue = m_catalogue.getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
   std::stringstream dirBufferURL;
   dirBufferURL << repackInfo.repackBufferBaseURL << "/" << repackInfo.vid << "/";
-  castor::tape::diskFile::DirectoryFactory dirFactory;
-  std::unique_ptr<castor::tape::diskFile::Directory> dir;
+  cta::disk::DirectoryFactory dirFactory;
+  std::unique_ptr<cta::disk::Directory> dir;
   dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
   std::set<std::string> filesInDirectory;
   if(dir->exist()){
@@ -483,9 +483,9 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       fileName << std::setw(9) << std::setfill('0') << retrieveSubRequest.fSeq;
       bool createArchiveSubrequest = false;
       if(filesInDirectory.count(fileName.str())){
-        castor::tape::file::RadosStriperPool radosStriperPool;
-        castor::tape::diskFile::DiskFileFactory fileFactory("",0,radosStriperPool);
-        castor::tape::diskFile::ReadFile *fileReader = fileFactory.createReadFile(dirBufferURL.str() + fileName.str());
+        cta::disk::RadosStriperPool radosStriperPool;
+        cta::disk::DiskFileFactory fileFactory("",0,radosStriperPool);
+        cta::disk::ReadFile *fileReader = fileFactory.createReadFile(dirBufferURL.str() + fileName.str());
         if(fileReader->size() == archiveFile.fileSize){
           createArchiveSubrequest = true;
           retrieveSubrequests.pop_back();
@@ -1389,11 +1389,11 @@ SchedulerDatabase::JobsFailedSummary Scheduler::getRetrieveJobsFailedSummary(log
 // reportArchiveJobsBatch
 //------------------------------------------------------------------------------
 void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& archiveJobsBatch,
-    eos::DiskReporterFactory & reporterFactory, log::TimingList& timingList, utils::Timer& t, 
+    disk::DiskReporterFactory & reporterFactory, log::TimingList& timingList, utils::Timer& t, 
     log::LogContext& lc){
   // Create the reporters
   struct JobAndReporter {
-    std::unique_ptr<eos::DiskReporter> reporter;
+    std::unique_ptr<disk::DiskReporter> reporter;
     ArchiveJob * archiveJob;
   };
   std::list<JobAndReporter> pendingReports;
@@ -1460,11 +1460,11 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
 //------------------------------------------------------------------------------
 void Scheduler::
 reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>> & retrieveJobsBatch,
-  eos::DiskReporterFactory & reporterFactory, log::TimingList & timingList, utils::Timer & t, log::LogContext & lc)
+  disk::DiskReporterFactory & reporterFactory, log::TimingList & timingList, utils::Timer & t, log::LogContext & lc)
 {
   // Create the reporters
   struct JobAndReporter {
-    std::unique_ptr<eos::DiskReporter> reporter;
+    std::unique_ptr<disk::DiskReporter> reporter;
     RetrieveJob * retrieveJob;
   };
   std::list<JobAndReporter> pendingReports;

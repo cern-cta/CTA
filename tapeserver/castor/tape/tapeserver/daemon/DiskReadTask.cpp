@@ -46,7 +46,7 @@ m_nextTask(destination),m_archiveJob(archiveJob),
 //------------------------------------------------------------------------------
 // DiskReadTask::execute
 //------------------------------------------------------------------------------
-void DiskReadTask::execute(cta::log::LogContext&  lc, diskFile::DiskFileFactory & fileFactory,
+void DiskReadTask::execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory & fileFactory,
     MigrationWatchDog & watchdog, const int threadID) {
   using cta::log::LogContext;
   using cta::log::Param;
@@ -67,7 +67,7 @@ void DiskReadTask::execute(cta::log::LogContext&  lc, diskFile::DiskFileFactory 
     //so dont do the same mistake twice !
     checkMigrationFailing();
     currentErrorToCount = "Error_diskOpenForRead";
-    std::unique_ptr<tape::diskFile::ReadFile> sourceFile(
+    std::unique_ptr<cta::disk::ReadFile> sourceFile(
       fileFactory.createReadFile(m_archiveJob->srcURL));
     cta::log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_archiveJob->srcURL)

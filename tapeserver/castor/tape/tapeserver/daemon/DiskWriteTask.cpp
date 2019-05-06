@@ -42,7 +42,7 @@ m_retrieveJob(retrieveJob),m_memManager(mm){}
 // DiskWriteTask::execute
 //------------------------------------------------------------------------------
 bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  lc,
-    diskFile::DiskFileFactory & fileFactory, RecallWatchDog & watchdog,
+    cta::disk::DiskFileFactory & fileFactory, RecallWatchDog & watchdog,
     const int threadID) {
   using cta::log::LogContext;
   using cta::log::Param;
@@ -64,7 +64,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
     currentErrorToCount = "";
     // Placeholder for the disk file. We will open it only
     // after getting a first correct memory block.
-    std::unique_ptr<tape::diskFile::WriteFile> writeFile;
+    std::unique_ptr<cta::disk::WriteFile> writeFile;
     
     int blockId  = 0;
     unsigned long checksum = Payload::zeroAdler32();

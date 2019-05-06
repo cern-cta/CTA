@@ -48,7 +48,7 @@ public:
           cta::ArchiveJob *archiveJob,size_t numberOfBlock,
           cta::threading::AtomicFlag& errorFlag);
   
-  void execute(cta::log::LogContext&  lc, diskFile::DiskFileFactory & fileFactory,
+  void execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory & fileFactory,
     MigrationWatchDog & watchdog, const int threadID);
   /**
    * Return the stats of the tasks. Should be call after execute 

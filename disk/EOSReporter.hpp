@@ -23,7 +23,7 @@
 
 #include <future>
 
-namespace cta { namespace eos {
+namespace cta { namespace disk {
 const uint16_t CTA_EOS_QUERY_TIMEOUT = 15; // Timeout in seconds that is rounded up to the nearest 15 seconds
     
 class EOSReporter: public DiskReporter, public XrdCl::ResponseHandler {

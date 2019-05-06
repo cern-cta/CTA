@@ -271,17 +271,17 @@ namespace unitTests {
     const uint32_t block_size = 1024;
     char data1[block_size];
     char data2[block_size];
-    castor::tape::file::RadosStriperPool striperPool;
-    castor::tape::diskFile::DiskFileFactory fileFactory("", 0, striperPool);
+    cta::disk::RadosStriperPool striperPool;
+    cta::disk::DiskFileFactory fileFactory("", 0, striperPool);
     TempFile sourceFile;
     sourceFile.randomFill(1000);
     TempFile destinationFile(sourceFile.path()+"_dst");
     // host part of file location
     std::string lh = "localhost:";
     {
-      std::unique_ptr<castor::tape::diskFile::ReadFile> rf(
+      std::unique_ptr<cta::disk::ReadFile> rf(
         fileFactory.createReadFile(lh + sourceFile.path()));
-      std::unique_ptr<castor::tape::diskFile::WriteFile> wf(
+      std::unique_ptr<cta::disk::WriteFile> wf(
         fileFactory.createWriteFile(lh + destinationFile.path()));
       size_t res=0;
       do {
@@ -290,9 +290,9 @@ namespace unitTests {
       } while(res);
       wf->close();
     }
-    std::unique_ptr<castor::tape::diskFile::ReadFile> src(
+    std::unique_ptr<cta::disk::ReadFile> src(
         fileFactory.createReadFile(sourceFile.path()));
-    std::unique_ptr<castor::tape::diskFile::ReadFile> dst(
+    std::unique_ptr<cta::disk::ReadFile> dst(
         fileFactory.createReadFile(destinationFile.path()));
     size_t res1=0;
     size_t res2=0;
@@ -305,24 +305,24 @@ namespace unitTests {
   }
   
   TEST(ctaDirectoryTests, directoryExist) {
-    castor::tape::diskFile::LocalDirectory dir("/tmp/");
+    cta::disk::LocalDirectory dir("/tmp/");
     ASSERT_TRUE(dir.exist());
     
-    castor::tape::diskFile::LocalDirectory dirNotExist("/AZERTY/");
+    cta::disk::LocalDirectory dirNotExist("/AZERTY/");
     ASSERT_FALSE(dirNotExist.exist());
   }
   
    TEST(ctaDirectoryTests, directoryCreate){
      const char * dirTestPath = "/tmp/testDir";
      ::rmdir(dirTestPath);
-     castor::tape::diskFile::LocalDirectory dir(dirTestPath);
+     cta::disk::LocalDirectory dir(dirTestPath);
      ASSERT_NO_THROW(dir.mkdir());
      ::rmdir(dirTestPath);
    }
    
    TEST(ctaDirectoryTests, directoryFailCreate){
      const char * dirTestPath = "//WRONG/PATH";
-     castor::tape::diskFile::LocalDirectory dir(dirTestPath);
+     cta::disk::LocalDirectory dir(dirTestPath);
      ASSERT_THROW(dir.mkdir(),cta::exception::Errnum);
    }
    
@@ -330,7 +330,7 @@ namespace unitTests {
      std::string dirTestPath = "/tmp/directoryGetFilesNames";
      std::string rmCommand = "rm -rf "+dirTestPath;
      ::system(rmCommand.c_str());
-     castor::tape::diskFile::LocalDirectory dir(dirTestPath);
+     cta::disk::LocalDirectory dir(dirTestPath);
      ASSERT_NO_THROW(dir.mkdir());
      char filePath[] = "/tmp/directoryGetFilesNames/fileXXXXXX";
      int fd = ::mkstemp(filePath);

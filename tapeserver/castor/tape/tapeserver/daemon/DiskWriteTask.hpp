@@ -57,7 +57,7 @@ public:
    * @return true if the file has been successfully written false otherwise.
    */
   virtual bool execute(RecallReportPacker& reporter,cta::log::LogContext&  lc,
-    diskFile::DiskFileFactory & fileFactory, RecallWatchDog & watchdog,
+    cta::disk::DiskFileFactory & fileFactory, RecallWatchDog & watchdog,
     const int threadID);
   
   /**

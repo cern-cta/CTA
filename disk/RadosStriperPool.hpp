@@ -24,9 +24,8 @@
 #include <map>
 #include <memory>
 
-namespace castor {
-namespace tape {    
-namespace file {
+namespace cta {
+namespace disk {    
 /**
  * Utility singleton managing the rados stripers connections by name.
  * The destructor will implicitly release the pool connections.
@@ -78,6 +77,5 @@ private:
   unsigned int m_striperIdx;
 };
 
-} // namespace file
-} // namespace tape
-} // namespace castor
+} // namespace disk
+} // namespace cta

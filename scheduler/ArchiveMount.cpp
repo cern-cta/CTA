@@ -117,7 +117,7 @@ void cta::ArchiveMount::checkTapeFSeqAndDeleteTapeFilesForWriting(uint64_t fSeq)
 //------------------------------------------------------------------------------
 // createDiskReporter
 //------------------------------------------------------------------------------
-cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {
+cta::disk::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {
   return m_reporterFactory.createDiskReporter(URL);
 }
 

@@ -20,7 +20,7 @@
 
 #include <future>
 
-namespace cta { namespace eos {
+namespace cta { namespace disk {
 
 class DiskReporter {
 public:
@@ -31,4 +31,4 @@ protected:
   std::promise<void> m_promise;
 };
 
-}} // name space cta::clientsystem
+}} // name space cta::disk

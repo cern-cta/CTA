@@ -35,12 +35,11 @@
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 
-namespace castor {
-namespace tape {
-namespace diskFile {
+namespace cta {
+namespace disk {
 
 DiskFileFactory::DiskFileFactory(const std::string & xrootPrivateKeyFile, uint16_t xrootTimeout,
-  castor::tape::file::RadosStriperPool & striperPool):
+  cta::disk::RadosStriperPool & striperPool):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
   m_NoURLRemoteFile("^([^:]*:)(.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
@@ -795,4 +794,4 @@ std::set<std::string> XRootdDirectory::getFilesName(){
   return ret;
 }
 
-}}} //end of namespace diskFile
+}} //end of namespace cta::disk

@@ -20,7 +20,7 @@
 
 #include "DiskReporter.hpp"
 
-namespace cta { namespace eos {
+namespace cta { namespace disk {
 
 class NullReporter: public DiskReporter {
 public:

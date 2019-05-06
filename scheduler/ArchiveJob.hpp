@@ -131,7 +131,7 @@ private:
   /**
    * The reporter for the job. TODO: this should be generic and fed with a factory.
    */
-  std::unique_ptr<cta::eos::DiskReporter> m_reporter;
+  std::unique_ptr<cta::disk::DiskReporter> m_reporter;
   
   /**
    * Report time measurement.

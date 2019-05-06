@@ -37,15 +37,14 @@
  * There is still a single .cpp file
  */
 
-namespace castor {
-  namespace tape {
+namespace cta {
+  namespace disk {
   // Forward declaration of RadosStriperPool
-  namespace file { class RadosStriperPool; }
+  class RadosStriperPool;
 
     /**
      * Namespace managing the reading and writing of files to and from disk.
      */
-    namespace diskFile {
       
       class ReadFile;
       class WriteFile;
@@ -60,7 +59,7 @@ namespace castor {
         typedef cta::utils::Regex Regex;
       public:
         DiskFileFactory(const std::string & xrootPrivateKey, uint16_t xrootTimeout, 
-          castor::tape::file::RadosStriperPool & striperPool);
+          cta::disk::RadosStriperPool & striperPool);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
       private:
@@ -74,7 +73,7 @@ namespace castor {
         CryptoPP::RSA::PrivateKey m_xrootPrivateKey;
         bool m_xrootPrivateKeyLoaded;
         const uint16_t m_xrootTimeout;
-        castor::tape::file::RadosStriperPool & m_striperPool;
+        cta::disk::RadosStriperPool & m_striperPool;
         
       public:
         /** Return the private key. Read it from the file if necessary. */ 
@@ -240,7 +239,6 @@ namespace castor {
 	std::string m_URL;
       };
       
-    } //end of namespace diskFile
-    
- }}
+    } //end of namespace disk  
+} //end of namespace cta
 

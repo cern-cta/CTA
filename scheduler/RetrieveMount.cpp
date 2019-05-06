@@ -216,7 +216,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
 //------------------------------------------------------------------------------
 // createDiskReporter()
 //------------------------------------------------------------------------------
-cta::eos::DiskReporter* cta::RetrieveMount::createDiskReporter(std::string& URL) {
+cta::disk::DiskReporter* cta::RetrieveMount::createDiskReporter(std::string& URL) {
   return m_reporterFactory.createDiskReporter(URL);
 }
 

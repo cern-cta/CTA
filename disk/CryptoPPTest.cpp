@@ -38,7 +38,7 @@ namespace unitTests {
     virtual void run() {
       for (int i=0; i<100; i++) {
         std::string payload = "Some payload... And some more...";
-        std::string signature = castor::tape::diskFile::CryptoPPSigner::sign(
+        std::string signature = cta::disk::CryptoPPSigner::sign(
           payload, m_key);
       }
     }
@@ -164,8 +164,8 @@ namespace unitTests {
     }
   private:
     virtual void run() {
-      castor::tape::file::RadosStriperPool striperPool;
-      castor::tape::diskFile::DiskFileFactory dff(m_keyPath, 0, 
+      cta::disk::RadosStriperPool striperPool;
+      cta::disk::DiskFileFactory dff(m_keyPath, 0, 
           striperPool);
       for (int i=0; i<5; i++) {
         // Read keys in parallel and in a loop to test MT protection of the
@@ -230,7 +230,7 @@ namespace unitTests {
     // This is the output of:
     // echo -n 'Any random message will do!' | openssl dgst -sha1 -sign  ~/testRSAPrivate.pem | openssl enc -base64 | tr -d '\n' ; echo
     std::string osslSign("bfqLxACTFS7fMKH5ewNUOaglRlIGCEPWGhx4fRPErFGHtuCi2yWlYFsXIfjBxOT+yCyKRpTnZWGJTbcP72eT7os2qCqIOejAM3nTcsChHN5f3UyADvsi1f7C3DqhYVKVFQPaBdb3zm8IBHsFjmu2EzVE5juc1C9L+ztVmoABptw=");
-    std::string CryptoPPSign(castor::tape::diskFile::CryptoPPSigner::sign(msg,CryptoPPKey));
+    std::string CryptoPPSign(cta::disk::CryptoPPSigner::sign(msg,CryptoPPKey));
     // std::cout << CryptoPPSign << std::endl;
     ASSERT_EQ(osslSign,CryptoPPSign);
     // A few examples generated with openssl's command line:
@@ -241,10 +241,10 @@ namespace unitTests {
     // ~/testRSAPrivate.pem contains the same content as the variable somePrivateKey.
     
     ASSERT_EQ("O8nSHzVPXyNRGRu8vaQ+CrqJjlv28qdsiFCTjlmeMFgc/aEnlJq+2b2q5al7BiHmPAFOd6fUkvn8xlFBm9IUlPFENhPLuMKJGqRSBndE7At0t+/vbS9UVnKiuOjrFepXo8JOvbt7lpqfp3jBwrQE5OZpOT92Nh8GXlpiCksvoxI=",
-      castor::tape::diskFile::CryptoPPSigner::sign("rsoCb+KBj9j9Xk6wr5Cgh+TVuI3eDZHTzD9z8pTFjBPEjdyfiTFIeQ==",CryptoPPKey));
+      cta::disk::CryptoPPSigner::sign("rsoCb+KBj9j9Xk6wr5Cgh+TVuI3eDZHTzD9z8pTFjBPEjdyfiTFIeQ==",CryptoPPKey));
     ASSERT_EQ("uf8Cgkwtmh9K1VFLfeIfkZFQMd/pfSGCHNYPByH0nm0COPHNQAkYEI38ez9DS43fsIBVU9Gdrs0x50dVIntzawgzDrjp8YJIeARJF73he8M+6/FUgWJumNMoDE8fdvgiBaCFTv4+di5vtSb/abKVfqY9IbUPSDByxYjDKKI0OF0=",
-      castor::tape::diskFile::CryptoPPSigner::sign("MtvFsd09F8UQNpwsULF6eMyVkRDIU+uAvBXyJs/LoNM5HrjoJgZrig==",CryptoPPKey));
+      cta::disk::CryptoPPSigner::sign("MtvFsd09F8UQNpwsULF6eMyVkRDIU+uAvBXyJs/LoNM5HrjoJgZrig==",CryptoPPKey));
     ASSERT_EQ("EzSR5Fd1kfmdrVhCiYgoWQ7E1MSdv8OYng3L7LepCfS9OStlEFTkJcMezt4VRqUZnarlcIZ0yPAvrmOUscjrAOAbqA0rMYKsvHnAwd19RaH54QZhtRCDwMloxpuLmUC1cmyJ/PAdRoMYCoHiMVr7yQw0CnVJ5168MUe5o0v3swY=",
-      castor::tape::diskFile::CryptoPPSigner::sign("v3lPb49U+Zz+DNdzoTf2R8AU+AFP+/9/7nLlJV1+HNf3Z+Nzl/HuiQ==",CryptoPPKey));
+      cta::disk::CryptoPPSigner::sign("v3lPb49U+Zz+DNdzoTf2R8AU+AFP+/9/7nLlJV1+HNf3Z+Nzl/HuiQ==",CryptoPPKey));
   }
 }

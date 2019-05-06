@@ -181,7 +181,7 @@ namespace cta {
      * @param URL: report address
      * @return pointer to the reporter created.
      */
-    eos::DiskReporter * createDiskReporter(std::string & URL);
+    disk::DiskReporter * createDiskReporter(std::string & URL);
     
     /**
      * Destructor.
@@ -211,7 +211,7 @@ namespace cta {
     bool m_diskRunning;
     
     /** An initialized-once factory for archive reports (indirectly used by ArchiveJobs) */
-    eos::DiskReporterFactory m_reporterFactory;
+    disk::DiskReporterFactory m_reporterFactory;
     
 
   }; // class RetrieveMount

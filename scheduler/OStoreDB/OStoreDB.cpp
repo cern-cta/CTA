@@ -4131,7 +4131,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   }
   timingList.insertAndReset("asyncUpdateOrDeleteLaunchTime", t);
   struct DiskFileRemovers{
-    std::unique_ptr<castor::tape::diskFile::AsyncDiskFileRemover> asyncRemover;
+    std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover;
     RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> & subrequestInfo;
     typedef std::list<DiskFileRemovers> List;
   };
@@ -4145,8 +4145,8 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): deleted request.");
       try {
         //Subrequest deleted, async delete the file from the disk
-        castor::tape::diskFile::AsyncDiskFileRemoverFactory asyncDiskFileRemoverFactory;
-        std::unique_ptr<castor::tape::diskFile::AsyncDiskFileRemover> asyncRemover(asyncDiskFileRemoverFactory.createAsyncDiskFileRemover(d.subrequestInfo.repackInfo.fileBufferURL));
+        cta::disk::AsyncDiskFileRemoverFactory asyncDiskFileRemoverFactory;
+        std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover(asyncDiskFileRemoverFactory.createAsyncDiskFileRemover(d.subrequestInfo.repackInfo.fileBufferURL));
         diskFileRemoverList.push_back({std::move(asyncRemover),d.subrequestInfo});
         diskFileRemoverList.back().asyncRemover->asyncDelete();
       } catch (const cta::exception::Exception &ex){
@@ -4185,9 +4185,9 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   }
   if(repackRequestStatus == objectstore::serializers::RepackRequestStatus::RRS_Complete){
     //Repack Request is complete, delete the directory in the buffer
-    castor::tape::diskFile::DirectoryFactory directoryFactory;
+    cta::disk::DirectoryFactory directoryFactory;
     std::string directoryPath = cta::utils::getEnclosingPath(bufferURL);
-    std::unique_ptr<castor::tape::diskFile::Directory> directory;
+    std::unique_ptr<cta::disk::Directory> directory;
     try{
       directory.reset(directoryFactory.createDirectory(directoryPath));
       directory->rmdir();

@@ -492,7 +492,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     // Emulate the the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
     ASSERT_NE(0, jobsToReport.size());
-    eos::DiskReporterFactory factory;
+    disk::DiskReporterFactory factory;
     log::TimingList timings;
     utils::Timer t;
     scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);
@@ -691,7 +691,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     // Emulate the the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
     ASSERT_NE(0, jobsToReport.size());
-    eos::DiskReporterFactory factory;
+    disk::DiskReporterFactory factory;
     log::TimingList timings;
     utils::Timer t;
     scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);
@@ -809,7 +809,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     // Emulate the the reporter process
     auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
     ASSERT_EQ(1, jobsToReport.size());
-    eos::DiskReporterFactory factory;
+    disk::DiskReporterFactory factory;
     log::TimingList timings;
     utils::Timer t;
     scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc);
@@ -941,7 +941,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     // Emulate the the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
     ASSERT_NE(0, jobsToReport.size());
-    eos::DiskReporterFactory factory;
+    disk::DiskReporterFactory factory;
     log::TimingList timings;
     utils::Timer t;
     scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);

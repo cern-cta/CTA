@@ -65,7 +65,7 @@ namespace unitTests{
   
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
-  using namespace castor::tape::diskFile;
+  using namespace cta::disk;
   struct MockRecallReportPacker : public RecallReportPacker {
     void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) override {
       cta::threading::MutexLocker ml(m_mutex);
@@ -104,7 +104,7 @@ namespace unitTests{
     TestingRetrieveMount trm(std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);
     RecallMemoryManager mm(10,100,lc);
-    castor::tape::file::RadosStriperPool striperPool;
+    cta::disk::RadosStriperPool striperPool;
     DiskFileFactory fileFactory("", 0, striperPool);
     
     cta::MockRetrieveMount mrm;

@@ -32,12 +32,11 @@
 #include <cryptopp/rsa.h>
 #include <radosstriper/libradosstriper.hpp>
 
-namespace castor {
-  namespace tape {
+namespace cta {
+  namespace disk {
     /**
      * Namespace managing the reading and writing of files to and from disk.
      */
-    namespace diskFile {
       
       //Forward declarations
       class XRootdDiskFileRemover;
@@ -278,5 +277,5 @@ namespace castor {
 	const uint16_t c_xrootTimeout = 15; 
       };
       
-    } //end of namespace diskFile
- }}
+    } //end of namespace disk
+ }

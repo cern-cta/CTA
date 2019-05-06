@@ -48,7 +48,7 @@ namespace unitTests{
   };
   
   using namespace castor::tape::tapeserver::daemon;
-  using namespace castor::tape::diskFile;
+  using namespace cta::disk;
   
   struct MockMigrationReportPacker : public MigrationReportPacker {
     void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) override {}
@@ -137,7 +137,7 @@ namespace unitTests{
     FakeTapeWriteTask ftwt;
     ftwt.pushDataBlock(new MemBlock(1,blockSize));
     castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
-    castor::tape::file::RadosStriperPool striperPool;
+    cta::disk::RadosStriperPool striperPool;
     DiskFileFactory fileFactory("", 0, striperPool);
 
     castor::messages::TapeserverProxyDummy tspd;

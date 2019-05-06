@@ -145,7 +145,7 @@ private:
      * A disk file factory, that will create the proper type of file access class,
      * depending on the received path
      */
-    diskFile::DiskFileFactory m_diskFileFactory;
+    cta::disk::DiskFileFactory m_diskFileFactory;
 
     virtual void run();
   };
@@ -192,7 +192,7 @@ protected:
   /**
    * A pool of rados striper connections, to be shared by all threads
    */
-  castor::tape::file::RadosStriperPool m_striperPool;
+  cta::disk::RadosStriperPool m_striperPool;
 
 private:
   /**

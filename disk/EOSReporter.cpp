@@ -21,7 +21,7 @@
 #include "EOSReporter.hpp"
 #include "common/exception/XrootCl.hpp"
 
-namespace cta { namespace eos {
+namespace cta { namespace disk {
 
 EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue):
   m_fs(hostURL), m_query(queryValue) {}
