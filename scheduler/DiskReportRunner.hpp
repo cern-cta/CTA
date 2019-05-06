@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
-#include "eos/DiskReporterFactory.hpp"
+#include "disk/DiskReporterFactory.hpp"
 
 namespace cta {
 

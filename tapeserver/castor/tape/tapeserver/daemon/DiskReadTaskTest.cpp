@@ -25,7 +25,7 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
+#include "disk/RadosStriperPool.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"

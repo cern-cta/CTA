@@ -23,9 +23,9 @@
 
 #include <gtest/gtest.h>
 #include "common/threading/Thread.hpp"
-#include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
-#include "castor/tape/tapeserver/file/DiskFile.hpp"
-#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
+#include "disk/DiskFileImplementations.hpp"
+#include "disk/DiskFile.hpp"
+#include "disk/RadosStriperPool.hpp"
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 

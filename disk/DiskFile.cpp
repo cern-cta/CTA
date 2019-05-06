@@ -23,8 +23,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
-#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
+#include "disk/DiskFileImplementations.hpp"
+#include "disk/RadosStriperPool.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"

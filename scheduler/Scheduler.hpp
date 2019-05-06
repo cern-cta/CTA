@@ -51,8 +51,8 @@
 #include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 
-#include "eos/DiskReporter.hpp"
-#include "eos/DiskReporterFactory.hpp"
+#include "disk/DiskReporter.hpp"
+#include "disk/DiskReporterFactory.hpp"
 
 #include <list>
 #include <map>

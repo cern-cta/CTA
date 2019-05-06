@@ -30,7 +30,7 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "common/threading/AtomicFlag.hpp"
 #include "common/log/LogContext.hpp"
-#include "castor/tape/tapeserver/file/DiskFile.hpp"
+#include "disk/DiskFile.hpp"
 
 namespace castor {
 namespace tape {

@@ -23,7 +23,7 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "eos/DiskReporterFactory.hpp"
+#include "disk/DiskReporterFactory.hpp"
 
 #include <memory>
 #include <queue>

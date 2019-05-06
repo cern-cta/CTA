@@ -246,6 +246,7 @@ The shared libraries
 %{_libdir}/libctamessagesutils.so*
 %{_libdir}/libctardbms.so*
 %{_libdir}/libctardbmswrapper.so*
+%{_libdir}/libdisk.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.conf.example
 
 #CTA-lib installs libraries so we need ldconfig.

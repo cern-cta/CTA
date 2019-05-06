@@ -139,7 +139,7 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(catalogue)
   add_subdirectory(common)
-  add_subdirectory(eos)
+  add_subdirectory(disk)
   add_subdirectory(mediachanger)
   add_subdirectory(objectstore)
   add_subdirectory(python)

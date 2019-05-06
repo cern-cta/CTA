@@ -23,7 +23,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "eos/DiskReporterFactory.hpp"
+#include "disk/DiskReporterFactory.hpp"
 
 #include <memory>
 #include <atomic>

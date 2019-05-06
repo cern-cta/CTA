@@ -26,13 +26,13 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/tape/tapeserver/file/DiskFile.hpp"
-#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
+#include "disk/DiskFile.hpp"
+#include "disk/RadosStriperPool.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
-#include "DiskFileImplementations.hpp"
+#include "disk/DiskFileImplementations.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>

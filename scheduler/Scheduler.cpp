@@ -30,8 +30,8 @@
 #include "common/make_unique.hpp"
 #include "objectstore/RepackRequest.hpp"
 #include "RetrieveRequestDump.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/DiskFileImplementations.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/RadosStriperPool.hpp"
+#include "disk/DiskFileImplementations.hpp"
+#include "disk/RadosStriperPool.hpp"
 
 #include <iostream>
 #include <sstream>

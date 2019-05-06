@@ -32,7 +32,7 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
+#include "disk/RadosStriperPool.hpp"
 #include "common/Timer.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS

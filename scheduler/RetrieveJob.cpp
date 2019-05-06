@@ -18,7 +18,7 @@
 
 #include "scheduler/RetrieveJob.hpp"
 #include "common/Timer.hpp"
-#include "eos/DiskReporter.hpp"
+#include "disk/DiskReporter.hpp"
 #include "RetrieveMount.hpp"
 #include <cryptopp/base64.h>
 #include <future>

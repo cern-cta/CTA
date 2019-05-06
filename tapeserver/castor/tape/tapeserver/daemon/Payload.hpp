@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include <zlib.h>
-#include "castor/tape/tapeserver/file/DiskFile.hpp"
+#include "disk/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "common/exception/MemException.hpp"
 #include "common/exception/EndOfFile.hpp"

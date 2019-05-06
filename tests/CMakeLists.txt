@@ -40,6 +40,7 @@ target_link_libraries(cta-unitTests
   ctatapeserverdriveunittests
   ctatapeserverfileunittests
   ctatapeserverscsiunittests
+  ctadiskunittests
   gtest
   pthread)
 

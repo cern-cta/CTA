@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "tapeserver/castor/tape/tapeserver/file/DiskFile.hpp"
+#include "disk/DiskFile.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "common/exception/XrootCl.hpp"

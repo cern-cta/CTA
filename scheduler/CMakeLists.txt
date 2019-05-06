@@ -34,7 +34,7 @@ set_property(TARGET ctascheduler PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctaeos File)
+target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} disk)
 
 #add_library (ctaschedulerutils SHARED
 #  _old_prototype_DummyScheduler.cpp)

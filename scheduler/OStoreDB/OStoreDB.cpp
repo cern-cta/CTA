@@ -37,7 +37,7 @@
 #include "common/make_unique.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "Scheduler.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/DiskFile.hpp"
+#include "disk/DiskFile.hpp"
 #include <algorithm>
 #include <cmath>
 #include <stdlib.h>     /* srand, rand */

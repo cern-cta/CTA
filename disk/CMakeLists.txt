@@ -16,11 +16,30 @@
 
 cmake_minimum_required (VERSION 2.6)
 
+find_package (xrootd REQUIRED)
 find_package (xrootdclient REQUIRED)
+
 include_directories (${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-add_library (ctaeos
+add_library(disk SHARED
   DiskReporter.cpp
   DiskReporterFactory.cpp
-  EOSReporter.cpp)
+  EOSReporter.cpp
+  DiskFile.cpp
+  RadosStriperPool.cpp
+)
 
+target_link_libraries (disk XrdCl cryptopp radosstriper)
+
+set_property(TARGET disk PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET disk PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+add_library(ctadiskunittests SHARED
+  CryptoPPTest.cpp
+)
+
+set_property(TARGET ctadiskunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctadiskunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+install(TARGETS disk DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctadiskunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

@@ -23,7 +23,7 @@
 #include "common/Timer.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "eos/DiskReporter.hpp"
+#include "disk/DiskReporter.hpp"
 
 #include <stdint.h>
 #include <string>

@@ -18,7 +18,7 @@
 
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "eos/DiskReporterFactory.hpp"
+#include "disk/DiskReporterFactory.hpp"
 #include "common/make_unique.hpp"
 #include <limits>
 #include <cryptopp/base64.h>
