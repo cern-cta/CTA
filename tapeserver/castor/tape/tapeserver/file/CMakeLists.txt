@@ -82,8 +82,5 @@ add_library(ctatapeserverfileunittests SHARED
 set_property(TARGET ctatapeserverfileunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeserverfileunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries(ctatapeserverfileunittests
-  File)
-
 install(TARGETS ctatapeserverfileunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
