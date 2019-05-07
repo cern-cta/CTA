@@ -109,3 +109,37 @@ If tests don't run, edit the /etc/resolv.conf file and add a line with
 ```
 search cern.ch
 ```
+
+## Setting an Oracle database for the CTA catalogue
+1. Install the Oracle client
+ ```bash
+ sudo yum install -y oracle-instantclient12.2-basic.x86_64
+```
+2. Install sqlplus that will allow you to query the CTA catalogue
+```bash
+#if necessary, enable all the repos
+sudo yum install oracle-instantclient12.2-sqlplus.x86_64
+```
+You can test that the sqlplus runs via the command *sqlplus64*.
+
+3. Install **oracle tns name** that will allow you to get all the informations about the database connection by just providing its name.
+```bash
+sudo yum install -y oracle-instantclient-tnsnames.ora.noarch
+```
+4. Update the **tns name** database by typing
+```bash
+sudo /etc/cron.hourly/tnsnames-update.cron
+```
+5. Install **rlwrap** tool that will make your life easier while dealing with sqlplus (allows to have an history of the typed commands for example)
+```bash
+sudo yum install rlwrap
+```
+6. Ask for your database credentials : *username*, *database*, *password*. 
+7. Try to connect to the database and execute a simple sql query.
+```bash
+rlwrap sqlplus64 username@database
+#Then type your password
+```
+```sql
+select table_name from user_tables;
+```
