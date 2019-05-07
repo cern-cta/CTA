@@ -5,6 +5,11 @@
 # oracle sqlplus client binary path
 ORACLE_SQLPLUS="/usr/bin/sqlplus64"
 
+die() {
+  echo "$@" 1>&2
+  exit 1
+}
+
 if [ ! -e /etc/buildtreeRunner ]; then
   # enable cta repository from previously built artifacts
   yum-config-manager --enable cta-artifacts
@@ -29,14 +34,14 @@ if [ "$KEEP_OBJECTSTORE" == "0" ]; then
   if [ "$OBJECTSTORETYPE" == "file" ]; then
     rm -fr $OBJECTSTOREURL
     mkdir -p $OBJECTSTOREURL
-    cta-objectstore-initialize $OBJECTSTOREURL
+    cta-objectstore-initialize $OBJECTSTOREURL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $OBJECTSTOREURL FAILED"
     chmod -R 777 $OBJECTSTOREURL
   else
     if [[ $(rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | wc -l) -gt 0 ]]; then
       echo "Rados objectstore ${OBJECTSTOREURL} is not empty: deleting content"
       rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | xargs -L 100 -P 100 rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE rm 
     fi
-    cta-objectstore-initialize $OBJECTSTOREURL
+    cta-objectstore-initialize $OBJECTSTOREURL || die "ERROR: Could not Wipe the objectstore. cta-objectstore-initialize $OBJECTSTOREURL FAILED"
     echo "Rados objectstore ${OBJECTSTOREURL} content:"
     rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls
   fi
@@ -52,21 +57,21 @@ echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 if [ "$KEEP_DATABASE" == "0" ]; then
   echo "Wiping database"
-  echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
+  echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf || die "ERROR: Could not wipe database. cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf FAILED"
 
   if [ "$DATABASETYPE" == "sqlite" ]; then
     mkdir -p $(dirname $(echo ${DATABASEURL} | cut -d: -f2))
-    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
     chmod -R 777 $(dirname $(echo ${DATABASEURL} | cut -d: -f2)) # needed?
   elif [ "$DATABASETYPE" == "oracle" ]; then
     echo "Purging Oracle recycle bin"
     test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
     LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
-    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   elif [ "$DATABASETYPE" == "postgres" ]; then
-    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   else
-    echo "${DATABASETYPE}: Unsupported database type."
+    die "ERROR: Unsupported database type: ${DATABASETYPE}"
   fi
 else
   echo "Reusing database (no check)"
