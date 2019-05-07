@@ -858,14 +858,20 @@ bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &di
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTapePool(const std::string &name) {
   try {
-    const char *const sql = "DELETE FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":TAPE_POOL_NAME", name);
-    stmt.executeNonQuery();
+    const uint64_t nbTapesInPool = getNbTapesInPool(conn, name);
 
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
+    if(0 == nbTapesInPool) {
+      const char *const sql = "DELETE FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME";
+      auto stmt = conn.createStmt(sql);
+      stmt.bindString(":TAPE_POOL_NAME", name);
+      stmt.executeNonQuery();
+
+      if(0 == stmt.getNbAffectedRows()) {
+        throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
+      }
+    } else {
+      throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it is not empty");
     }
   } catch(exception::UserError &) {
     throw;
@@ -5490,6 +5496,32 @@ void RdbmsCatalogue::checkTapeItemWrittenFieldsAreSet(const std::string& calling
   }
 }
 
+//------------------------------------------------------------------------------
+// getNbTapesInPool
+//------------------------------------------------------------------------------
+uint64_t RdbmsCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::string &name) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "COUNT(*) AS NB_TAPES "
+      "FROM "
+        "TAPE "
+      "WHERE "
+        "TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":TAPE_POOL_NAME", name);
+    auto rset = stmt.executeQuery();
+    if(!rset.next()) {
+      throw exception::Exception("Result set of SELECT COUNT(*) is empty");
+    }
+    return rset.columnUint64("NB_TAPES");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
 } // namespace catalogue
 } // namespace cta

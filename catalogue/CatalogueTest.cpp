@@ -879,6 +879,91 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
 }
 
+TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+
+  ASSERT_FALSE(m_catalogue->tapeExists(vid));
+
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
+    "Create logical library");
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, 2, true, "Create tape pool");
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+  }
+
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, comment);
+
+  ASSERT_TRUE(m_catalogue->tapeExists(vid));
+
+  const auto tapes = m_catalogue->getTapes();
+
+  ASSERT_EQ(1, tapes.size());
+
+  {
+    const auto tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const auto creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+  }
+
+  ASSERT_THROW(m_catalogue->deleteTapePool(tapePoolName), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringTapePoolName) {
   using namespace cta;
       
