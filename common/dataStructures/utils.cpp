@@ -19,16 +19,6 @@
 #include "common/dataStructures/utils.hpp"
 
 namespace cta {
-
-std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb) {
-  os << "(";
-  for(auto it = csb.cs.begin(); it != csb.cs.end(); it++) {
-    os << " " << *it << " ";
-  }
-  os << ")";
-  return os;
-}
-
 namespace common {
 namespace dataStructures {
 

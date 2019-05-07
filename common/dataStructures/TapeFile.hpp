@@ -20,9 +20,9 @@
 
 #include <list>
 #include <map>
-#include <stdint.h>
 #include <string>
 
+#include <common/checksum/ChecksumBlob.hpp>
 
 namespace cta {
 namespace common {
@@ -71,14 +71,9 @@ struct TapeFile {
   time_t creationTime;
   
   /**
-   * The checksum type
+   * Set of checksum (type, value) pairs
    */
-  std::string checksumType;
-  
-  /**
-   * The checksum value 
-   */
-  std::string checksumValue;
+  cta::ChecksumBlob checksumBlob;
   
   /**
    * The vid of the tape file superseding this one (or empty string if not)

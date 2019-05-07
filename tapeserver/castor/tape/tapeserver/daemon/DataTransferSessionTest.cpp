@@ -437,8 +437,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+      tapeFileWritten.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
@@ -617,8 +616,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
         tapeFileWritten.archiveFileId=666;
-        tapeFileWritten.checksumType="ADLER32";
-        tapeFileWritten.checksumValue="0xDEADBEEF";
+        tapeFileWritten.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "0xDEADBEEF");
         tapeFileWritten.vid=volInfo.vid;
         tapeFileWritten.size=archiveFileSize;
         tapeFileWritten.fSeq=fseq;
@@ -641,8 +639,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
         tapeFileWritten.archiveFileId=1000 + fseq;
-        tapeFileWritten.checksumType="ADLER32";
-        tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+        tapeFileWritten.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
         tapeFileWritten.vid=volInfo.vid;
         tapeFileWritten.size=archiveFileSize;
         tapeFileWritten.fSeq=fseq + 1;
@@ -817,8 +814,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+      tapeFileWritten.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
@@ -1027,8 +1023,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+      tapeFileWritten.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
@@ -1174,8 +1169,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+      tapeFileWritten.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
@@ -1315,8 +1309,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumType="ADLER32";
-      ar.checksumValue=sourceFiles.back()->adler32();
+      ar.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, sourceFiles.back()->adler32());
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
@@ -1365,7 +1358,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
     auto afi = *(afiiter++);
     auto afs = catalogue.getArchiveFileById(afi);
     ASSERT_EQ(1, afs.tapeFiles.size());
-    ASSERT_EQ(sf->adler32(), afs.checksumValue);
+    cta::ChecksumBlob checksumBlob;
+    checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, sf->adler32());
+    ASSERT_EQ(afs.checksumBlob, checksumBlob);
     ASSERT_EQ(1000, afs.fileSize);
   }
 
@@ -1458,8 +1453,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumType="ADLER32";
-      ar.checksumValue=sourceFiles.back()->adler32();
+      ar.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, sourceFiles.back()->adler32());
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
@@ -1618,8 +1612,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumType="ADLER32";
-      ar.checksumValue=sourceFiles.back()->adler32();
+      ar.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, sourceFiles.back()->adler32());
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
@@ -1672,7 +1665,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     if (archiveFileCount <= 3) {
       auto afs = catalogue.getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
-      ASSERT_EQ(sf->adler32(), afs.checksumValue);
+      cta::ChecksumBlob checksumBlob;
+      checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, sf->adler32());
+      ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
     } else {
       ASSERT_THROW(catalogue.getArchiveFileById(afi), cta::exception::Exception);
@@ -1776,8 +1771,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumType="ADLER32";
-      ar.checksumValue=sourceFiles.back()->adler32();
+      ar.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, sourceFiles.back()->adler32());
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
@@ -1830,7 +1824,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
     if (archiveFileCount <= 3) {
       auto afs = catalogue.getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
-      ASSERT_EQ(sf->adler32(), afs.checksumValue);
+      cta::ChecksumBlob checksumBlob;
+      checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, sf->adler32());
+      ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
     } else {
       ASSERT_THROW(catalogue.getArchiveFileById(afi), cta::exception::Exception);

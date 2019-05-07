@@ -47,7 +47,7 @@ namespace {
     archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
     archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    archiveFile.checksumType = rset.columnString("CHECKSUM_BLOB");
+    archiveFile.checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
     archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
     archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
     archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -61,8 +61,7 @@ namespace {
       tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
-      tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
+      tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
       if(!rset.columnIsNull("SUPERSEDED_BY_VID") && !rset.columnIsNull("SUPERSEDED_BY_FSEQ")){
         tapeFile.supersededByVid = rset.columnString("SUPERSEDED_BY_VID");
         tapeFile.supersededByFSeq = rset.columnUint64("SUPERSEDED_BY_FSEQ");

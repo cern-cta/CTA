@@ -24,8 +24,6 @@
 #include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/ChecksumTypeMismatch.hpp"
-#include "common/ChecksumValueMismatch.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
@@ -87,8 +85,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
          .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
          .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
-         .add("checksumType", archiveFile->checksumType)
-         .add("checksumValue", archiveFile->checksumValue)
+         .add("checksumBlob", archiveFile->checksumBlob)
          .add("creationTime", std::to_string(archiveFile->creationTime))
          .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
          .add("storageClass", archiveFile->storageClass)
@@ -102,8 +99,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
           << " fileSize: " << it->fileSize
-          << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-          << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+          << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
           << " supersededByVid: " << it->supersededByVid
           << " supersededByFSeq: " << it->supersededByFSeq;
@@ -153,8 +149,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumType", archiveFile->checksumType)
-       .add("checksumValue", archiveFile->checksumValue)
+       .add("checksumBlob", archiveFile->checksumBlob)
        .add("creationTime", std::to_string(archiveFile->creationTime))
        .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
        .add("storageClass", archiveFile->storageClass)
@@ -171,8 +166,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
         << " fileSize: " << it->fileSize
-        << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+        << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
         << " supersededByVid: " << it->supersededByVid
         << " supersededByFSeq: " << it->supersededByFSeq;
@@ -426,8 +420,7 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
       row.diskFileId = event.diskFileId;
       row.diskInstance = event.diskInstance;
       row.size = event.size;
-      row.checksumType = event.checksumType;
-      row.checksumValue = event.checksumValue;
+      row.checksumBlob = event.checksumBlob;
       row.storageClassName = event.storageClassName;
       row.diskFilePath = event.diskFilePath;
       row.diskFileOwnerUid = event.diskFileOwnerUid;
@@ -460,19 +453,7 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
       throw ex;
     }
 
-    if(archiveFile->checksumType != event.checksumType) {
-      catalogue::ChecksumTypeMismatch ex;
-      ex.getMessage() << "Checksum type mismatch: expected=" << archiveFile->checksumType << ", actual=" <<
-        event.checksumType << ": " << fileContext.str();
-      throw ex;
-    }
-
-    if(archiveFile->checksumValue != event.checksumValue) {
-      catalogue::ChecksumValueMismatch ex;
-      ex.getMessage() << "Checksum value mismatch: expected=" << archiveFile->checksumValue << ", actual=" <<
-        event.checksumValue << ": " << fileContext.str();
-      throw ex;
-    }
+    archiveFile->checksumBlob.validate(event.checksumBlob);
 
     // Insert the tape file
     common::dataStructures::TapeFile tapeFile;

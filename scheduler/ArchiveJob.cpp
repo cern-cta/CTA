@@ -58,8 +58,7 @@ cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWr
   auto & fileReport = *fileReportUP;
   fileReport.archiveFileId = archiveFile.archiveFileID;
   fileReport.blockId = tapeFile.blockId;
-  fileReport.checksumType = tapeFile.checksumType;
-  fileReport.checksumValue = tapeFile.checksumValue;
+  fileReport.checksumBlob = tapeFile.checksumBlob;
   fileReport.copyNb = tapeFile.copyNb;
   fileReport.diskFileId = archiveFile.diskFileId;
   fileReport.diskFileOwnerUid = archiveFile.diskFileInfo.owner_uid;
@@ -83,17 +82,10 @@ void cta::ArchiveJob::validate(){
       std::numeric_limits<decltype(tapeFile.blockId)>::max())
     throw BlockIdNotSet("In cta::ArchiveJob::validate(): Block ID not set");
   // Also check the checksum has been set
-  if (archiveFile.checksumType.empty() || archiveFile.checksumValue.empty() || 
-      tapeFile.checksumType.empty() || tapeFile.checksumValue.empty())
+  if (archiveFile.checksumBlob.empty() || tapeFile.checksumBlob.empty())
     throw ChecksumNotSet("In cta::ArchiveJob::validate(): checksums not set");
   // And matches
-  if (archiveFile.checksumType != tapeFile.checksumType || 
-      archiveFile.checksumValue != tapeFile.checksumValue)
-    throw ChecksumMismatch(std::string("In cta::ArchiveJob::validate(): checksum mismatch!")
-            +" Archive file checksum type: "+archiveFile.checksumType
-            +" Archive file checksum value: "+archiveFile.checksumValue
-            +" Tape file checksum type: "+tapeFile.checksumType
-            +" Tape file checksum value: "+tapeFile.checksumValue);
+  archiveFile.checksumBlob.validate(tapeFile.checksumBlob);
 }
 
 //------------------------------------------------------------------------------

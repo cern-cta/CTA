@@ -17,7 +17,6 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "common/dataStructures/utils.hpp"
 
 namespace cta {
 namespace catalogue {

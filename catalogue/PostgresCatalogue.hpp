@@ -155,8 +155,7 @@ private:
    */
   struct FileSizeAndChecksum {
     uint64_t fileSize;
-    std::string checksumType;
-    std::string checksumValue;
+    ChecksumBlob checksumBlob;
   };
 
   /**

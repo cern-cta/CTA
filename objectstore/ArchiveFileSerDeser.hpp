@@ -42,8 +42,7 @@ public:
   void serialize (cta::objectstore::serializers::ArchiveFile & osaf) const {
     osaf.set_archivefileid(archiveFileID);
     osaf.set_creationtime(creationTime);
-    osaf.set_checksumtype(checksumType);
-    osaf.set_checksumvalue(checksumValue);
+    osaf.set_checksumblob(checksumBlob.serialize());
     osaf.set_creationtime(creationTime);
     DiskFileInfoSerDeser dfisd(diskFileInfo);
     dfisd.serialize(*osaf.mutable_diskfileinfo());
@@ -60,8 +59,7 @@ public:
     tapeFiles.clear();
     archiveFileID=osaf.archivefileid();
     creationTime=osaf.creationtime();
-    checksumType=osaf.checksumtype();
-    checksumValue=osaf.checksumvalue();
+    checksumBlob.deserialize(osaf.checksumblob());
     diskFileId=osaf.diskfileid();
     DiskFileInfoSerDeser dfisd;
     dfisd.deserialize(osaf.diskfileinfo());

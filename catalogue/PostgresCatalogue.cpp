@@ -23,8 +23,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/ChecksumTypeMismatch.hpp"
-#include "common/ChecksumValueMismatch.hpp"
 #include "common/make_unique.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
@@ -82,8 +80,7 @@ namespace {
     rdbms::wrapper::PostgresColumn diskFileUser;
     rdbms::wrapper::PostgresColumn diskFileGroup;
     rdbms::wrapper::PostgresColumn size;
-    rdbms::wrapper::PostgresColumn checksumType;
-    rdbms::wrapper::PostgresColumn checksumValue;
+    rdbms::wrapper::PostgresColumn checksumBlob;
     rdbms::wrapper::PostgresColumn storageClassName;
     rdbms::wrapper::PostgresColumn creationTime;
     rdbms::wrapper::PostgresColumn reconciliationTime;
@@ -102,7 +99,7 @@ namespace {
       diskFileUser("DISK_FILE_UID", nbRows),
       diskFileGroup("DISK_FILE_GID", nbRows),
       size("SIZE_IN_BYTES", nbRows),
-      checksumType("CHECKSUM_BLOB", nbRows),
+      checksumBlob("CHECKSUM_BLOB", nbRows),
       storageClassName("STORAGE_CLASS_NAME", nbRows),
       creationTime("CREATION_TIME", nbRows),
       reconciliationTime("RECONCILIATION_TIME", nbRows) {
@@ -398,19 +395,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
         throw ex;
       }
 
-      if(fileSizeAndChecksum.checksumType != event.checksumType) {
-        catalogue::ChecksumTypeMismatch ex;
-        ex.getMessage() << __FUNCTION__ << ": Checksum type mismatch: expected=" << fileSizeAndChecksum.checksumType <<
-          ", actual=" << event.checksumType << ": " << fileContext.str();
-        throw ex;
-      }
-
-      if(fileSizeAndChecksum.checksumValue != event.checksumValue) {
-        catalogue::ChecksumValueMismatch ex;
-        ex.getMessage() << __FUNCTION__ << ": Checksum value mismatch: expected=" << fileSizeAndChecksum.checksumValue
-          << ", actual=" << event.checksumValue << ": " << fileContext.str();
-        throw ex;
-      }
+      fileSizeAndChecksum.checksumBlob.validate(event.checksumBlob);
     }
 
     // Store the value of each field
@@ -506,8 +491,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
       archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileOwnerUid);
       archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
       archiveFileBatch.size.setFieldValue(i, event.size);
-      archiveFileBatch.checksumType.setFieldValue(i, event.checksumType);
-      archiveFileBatch.checksumValue.setFieldValue(i, event.checksumValue);
+      archiveFileBatch.checksumBlob.setFieldValue(i, event.checksumBlob.serialize());
       archiveFileBatch.storageClassName.setFieldValue(i, event.storageClassName);
       archiveFileBatch.creationTime.setFieldValue(i, now);
       archiveFileBatch.reconciliationTime.setFieldValue(i, now);
@@ -550,8 +534,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
     postgresStmt.setColumn(archiveFileBatch.diskFileUser);
     postgresStmt.setColumn(archiveFileBatch.diskFileGroup);
     postgresStmt.setColumn(archiveFileBatch.size);
-    postgresStmt.setColumn(archiveFileBatch.checksumType);
-    postgresStmt.setColumn(archiveFileBatch.checksumValue);
+    postgresStmt.setColumn(archiveFileBatch.checksumBlob);
     postgresStmt.setColumn(archiveFileBatch.storageClassName);
     postgresStmt.setColumn(archiveFileBatch.creationTime);
     postgresStmt.setColumn(archiveFileBatch.reconciliationTime);
@@ -641,7 +624,7 @@ std::map<uint64_t, PostgresCatalogue::FileSizeAndChecksum> PostgresCatalogue::se
 
       FileSizeAndChecksum fileSizeAndChecksum;
       fileSizeAndChecksum.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      fileSizeAndChecksum.checksumType = rset.columnString("CHECKSUM_BLOB");
+      fileSizeAndChecksum.checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
 
       fileSizesAndChecksums[archiveFileId] = fileSizeAndChecksum;
     }
@@ -749,7 +732,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = selectRset.columnString("CHECKSUM_BLOB");
+        archiveFile->checksumBlob.deserialize(selectRset.columnString("CHECKSUM_BLOB"));
         archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");
@@ -765,8 +748,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         tapeFile.fileSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!selectRset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = selectRset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = selectRset.columnUint64("SSBY_FSEQ");
@@ -793,8 +775,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
          .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
          .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
-         .add("checksumType", archiveFile->checksumType)
-         .add("checksumValue", archiveFile->checksumValue)
+         .add("checksumBlob", archiveFile->checksumBlob)
          .add("creationTime", std::to_string(archiveFile->creationTime))
          .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
          .add("storageClass", archiveFile->storageClass)
@@ -809,8 +790,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
           << " fileSize: " << it->fileSize
-          << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-          << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+          << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
           << " supersededByVid: " << it->supersededByVid
@@ -857,8 +837,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumType", archiveFile->checksumType)
-       .add("checksumValue", archiveFile->checksumValue)
+       .add("checksumBlob", archiveFile->checksumBlob)
        .add("creationTime", std::to_string(archiveFile->creationTime))
        .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
        .add("storageClass", archiveFile->storageClass)
@@ -876,8 +855,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
         << " fileSize: " << it->fileSize
-        << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+        << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
         << " supersededByVid: " << it->supersededByVid
         << " supersededByFSeq: " << it->supersededByFSeq;

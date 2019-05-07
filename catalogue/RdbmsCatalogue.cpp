@@ -4248,7 +4248,7 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
     stmt.bindUint64(":DISK_FILE_UID", row.diskFileOwnerUid);
     stmt.bindUint64(":DISK_FILE_GID", row.diskFileGid);
     stmt.bindUint64(":SIZE_IN_BYTES", row.size);
-    stmt.bindString(":CHECKSUM_BLOB", row.checksumType);
+    stmt.bindString(":CHECKSUM_BLOB", row.checksumBlob.serialize());
     stmt.bindString(":STORAGE_CLASS_NAME", row.storageClassName);
     stmt.bindUint64(":CREATION_TIME", now);
     stmt.bindUint64(":RECONCILIATION_TIME", now);
@@ -4428,7 +4428,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
       archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
       archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      archiveFile.checksumType = rset.columnString("CHECKSUM_BLOB");
+      archiveFile.checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
       archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
       archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
       archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -4440,8 +4440,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
-      tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
+      tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
       if (!rset.columnIsNull("SSBY_VID")) {
         tapeFile.supersededByVid = rset.columnString("SSBY_VID");
         tapeFile.supersededByFSeq = rset.columnUint64("SSBY_VID");
@@ -5368,7 +5367,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = rset.columnString("CHECKSUM_BLOB");
+        archiveFile->checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5384,8 +5383,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!rset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = rset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
@@ -5459,7 +5457,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = rset.columnString("CHECKSUM_BLOB");
+        archiveFile->checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5475,8 +5473,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!rset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = rset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
@@ -5603,7 +5600,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = rset.columnString("CHECKSUM_BLOB");
+        archiveFile->checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5619,8 +5616,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!rset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = rset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
@@ -5698,7 +5694,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = rset.columnString("CHECKSUM_BLOB");
+        archiveFile->checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5714,8 +5710,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!rset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = rset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
@@ -5803,8 +5798,7 @@ void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &calling
     if(0 == event.diskFileOwnerUid) throw exception::Exception("diskFileOwnerUid is 0");
     if(0 == event.diskFileGid) throw exception::Exception("diskFileGid is 0");
     if(0 == event.size) throw exception::Exception("size is 0");
-    if(event.checksumType.empty()) throw exception::Exception("checksumType is an empty string");
-    if(event.checksumValue.empty()) throw exception::Exception("checksumValue is an empty string");
+    if(event.checksumBlob.length() == 0) throw exception::Exception("checksumBlob is an empty string");
     if(event.storageClassName.empty()) throw exception::Exception("storageClassName is an empty string");
     if(event.vid.empty()) throw exception::Exception("vid is an empty string");
     if(0 == event.fSeq) throw exception::Exception("fSeq is 0");

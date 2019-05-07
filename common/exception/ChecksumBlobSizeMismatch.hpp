@@ -1,6 +1,6 @@
-/*
+/*!
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,26 +21,25 @@
 #include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace exception {
 
 /**
  * Exception representing an unexpected mismatch between checksum types.
  */
-class ChecksumTypeMismatch: public exception::Exception {
+class ChecksumBlobSizeMismatch: public exception::Exception {
 public:
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
+   * @param context optional context string added to the message at initialisation time
+   * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
    */
-  ChecksumTypeMismatch(const std::string &context = "", const bool embedBacktrace = true) {}
+  ChecksumBlobSizeMismatch(const std::string &context = "", const bool embedBacktrace = true) {}
 
   /**
-   * Destructor.
+   * Destructor
    */
-  ~ChecksumTypeMismatch() override {}
+  ~ChecksumBlobSizeMismatch() override {}
 }; // class ChecksumTypeMismatch
 
-} // namespace cta
+}} // namespace cta::exception

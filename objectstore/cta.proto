@@ -179,14 +179,15 @@ message TapeFile {
   required uint64 filesize = 9123;
   required uint32 copynb = 9124;
   required uint64 creationtime = 9125;
-  required string checksumtype = 9126;
-  required string checksumvalue = 9127;
+  //required string checksumtype = 9126;     DEPRECATED
+  //required string checksumvalue = 9127;    DEPRECATED
+  required string checksumblob = 9128;
 }
 
 message DiskFileInfo {
-  //required bytes recoveryblob = 8900;  DEPRECATED
-  //required string group = 8910;        DEPRECATED
-  //required string owner = 8930;        DEPRECATED
+  //required bytes recoveryblob = 8900;      DEPRECATED
+  //required string group = 8910;            DEPRECATED
+  //required string owner = 8930;            DEPRECATED
   required uint32 owner_uid = 8920;
   required uint32 gid = 8925;
   required string path = 8940;
@@ -198,8 +199,9 @@ message ArchiveFile {
   required string diskfileid = 4353;
   required string diskinstance= 4354;
   required DiskFileInfo diskfileinfo= 4355;
-  required string checksumtype = 4356;
-  required string checksumvalue = 4357;
+  //required string checksumtype = 4356;     DEPRECATED
+  //required string checksumvalue = 4357;    DEPRECATED
+  required string checksumblob = 4362;
   required uint64 creationtime = 4358;
   repeated TapeFile tapefiles = 4359;
   required uint64 reconciliationtime = 4360;
@@ -323,8 +325,9 @@ message ArchiveRequestRepackInfo {
 message ArchiveRequest {
   required uint64 archivefileid = 8990;
   required MountPolicy mountpolicy = 8995;
-  required string checksumtype = 9000;
-  required string checksumvalue = 9010;
+  //required string checksumtype = 9000;     DEPRECATED
+  //required string checksumvalue = 9010;    DEPRECATED
+  required string checksumblob = 9011;
   required uint64 creationtime = 9015;
   required uint64 reconcilationtime = 9017;
   required DiskFileInfo diskfileinfo = 9040;

@@ -212,8 +212,7 @@ void ArchiveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFi
   checkPayloadWritable();
   // TODO: factor out the archivefile structure from the flat ArchiveRequest.
   m_payload.set_archivefileid(archiveFile.archiveFileID);
-  m_payload.set_checksumtype(archiveFile.checksumType);
-  m_payload.set_checksumvalue(archiveFile.checksumValue);
+  m_payload.set_checksumblob(archiveFile.checksumBlob.serialize());
   m_payload.set_creationtime(archiveFile.creationTime);
   m_payload.set_diskfileid(archiveFile.diskFileId);
   m_payload.mutable_diskfileinfo()->set_gid(archiveFile.diskFileInfo.gid);
@@ -232,8 +231,7 @@ cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
   checkPayloadReadable();
   cta::common::dataStructures::ArchiveFile ret;
   ret.archiveFileID = m_payload.archivefileid();
-  ret.checksumType = m_payload.checksumtype();
-  ret.checksumValue = m_payload.checksumvalue();
+  ret.checksumBlob.deserialize(m_payload.checksumblob());
   ret.creationTime = m_payload.creationtime();
   ret.diskFileId = m_payload.diskfileid();
   ret.diskFileInfo.gid = m_payload.diskfileinfo().gid();
@@ -544,8 +542,7 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
             // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequesgetLockedAndFetchedJobQueuet.
             // We could try and refactor this.
             retRef.m_archiveFile.archiveFileID = payload.archivefileid();
-            retRef.m_archiveFile.checksumType = payload.checksumtype();
-            retRef.m_archiveFile.checksumValue = payload.checksumvalue();
+            retRef.m_archiveFile.checksumBlob.deserialize(payload.checksumblob());
             retRef.m_archiveFile.creationTime = payload.creationtime();
             retRef.m_archiveFile.diskFileId = payload.diskfileid();
             retRef.m_archiveFile.diskFileInfo.gid = payload.diskfileinfo().gid();

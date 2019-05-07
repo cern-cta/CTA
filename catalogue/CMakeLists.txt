@@ -17,6 +17,11 @@ cmake_minimum_required (VERSION 2.6)
 
 include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
+#
+# Compiled protocol buffers (for ChecksumBlob)
+#
+include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 set (CATALOGUE_LIB_SRC_FILES
@@ -64,10 +69,12 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringVid.cpp
   UserSpecifiedAnEmptyStringVo.cpp
   UserSpecifiedAZeroCapacity.cpp
-  UserSpecifiedAZeroCopyNb.cpp)
+  UserSpecifiedAZeroCopyNb.cpp
+  ${CMAKE_BINARY_DIR}/eos_cta/cta_common.pb.cc)
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})
+
 set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
 
@@ -196,7 +203,8 @@ add_executable(cta-catalogue-schema-create
   MysqlCatalogueSchema.cpp)
 
 target_link_libraries (cta-catalogue-schema-create
-  ctacatalogue)
+  ctacatalogue
+  ${PROTOBUF3_LIBRARIES})
 
 set_property (TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
@@ -209,7 +217,8 @@ add_executable(cta-catalogue-schema-drop
   DropSchemaCmdMain.cpp)
 
 target_link_libraries (cta-catalogue-schema-drop
-  ctacatalogue)
+  ctacatalogue
+  ${PROTOBUF3_LIBRARIES})
 
 set_property (TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
@@ -222,7 +231,8 @@ add_executable(cta-database-poll
   PollDatabaseCmdMain.cpp)
 
 target_link_libraries (cta-database-poll
-  ctacatalogue)
+  ctacatalogue
+  ${PROTOBUF3_LIBRARIES})
 
 set_property (TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
@@ -235,7 +245,8 @@ add_executable(cta-catalogue-admin-user-create
   CreateAdminUserCmdMain.cpp)
 
 target_link_libraries (cta-catalogue-admin-user-create
-  ctacatalogue)
+  ctacatalogue
+  ${PROTOBUF3_LIBRARIES})
 
 set_property (TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 

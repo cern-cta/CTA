@@ -44,8 +44,7 @@ public:
     ostf.set_filesize(fileSize);
     ostf.set_copynb(copyNb);
     ostf.set_creationtime(creationTime);
-    ostf.set_checksumtype(checksumType);
-    ostf.set_checksumvalue(checksumValue);
+    ostf.set_checksumblob(checksumBlob.serialize());
   }
   
   void deserialize (const cta::objectstore::serializers::TapeFile & ostf) {
@@ -55,8 +54,7 @@ public:
     fileSize=ostf.filesize();
     copyNb=ostf.copynb();
     creationTime=ostf.creationtime();
-    checksumType=ostf.checksumtype();
-    checksumValue=ostf.checksumvalue();
+    checksumBlob.deserialize(ostf.checksumblob());
   }
 };
   
