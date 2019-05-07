@@ -6,7 +6,8 @@
 ORACLE_SQLPLUS="/usr/bin/sqlplus64"
 
 die() {
-  echo "$@" 1>&2
+  stdbuf -i 0 -o 0 -e 0 echo "$@"
+  sleep 1
   exit 1
 }
 
