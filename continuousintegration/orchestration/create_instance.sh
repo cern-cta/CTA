@@ -241,7 +241,7 @@ kubectl	create -f ${poddir}/pod-init.yaml --namespace=${instance}
 echo -n "Waiting for init"
 for ((i=0; i<400; i++)); do
   echo -n "."
-  kubectl get pod init -a --namespace=${instance} | grep -q Completed && break
+  kubectl get pod init -a --namespace=${instance} | egrep -q 'Completed|Error' && break
   sleep 1
 done
 
