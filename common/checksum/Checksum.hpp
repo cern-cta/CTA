@@ -23,8 +23,8 @@
 #include <typeinfo>
 
 #include <common/exception/Exception.hpp>
-#include <common/checksum/ChecksumTypeMismatch.hpp>
-#include <common/checksum/ChecksumValueMismatch.hpp>
+#include <common/exception/ChecksumTypeMismatch.hpp>
+#include <common/exception/ChecksumValueMismatch.hpp>
 
 namespace cta {
 
@@ -37,8 +37,13 @@ public:
    * Enumeration of the supported checksum types
    */
   enum ChecksumType {
-    CHECKSUMTYPE_NONE,
-    CHECKSUMTYPE_ADLER32};
+    CHECKSUMTYPE_NONE,       //!< No checksum specified
+    CHECKSUMTYPE_ADLER32,    //!< Adler-32 checksum
+    CHECKSUMTYPE_CRC32,      //!< CRC-32 checksum
+    CHECKSUMTYPE_CRC32C,     //!< CRC-32C checksum
+    CHECKSUMTYPE_MD5,        //!< MD5 128-bit hash
+    CHECKSUMTYPE_SHA1        //!< SHA-1 160-bit hash
+  };
 
   /**
    * Thread safe method that returns the string representation of the specified checksum type

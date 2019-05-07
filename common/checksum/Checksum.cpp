@@ -59,10 +59,12 @@ cta::Checksum::Checksum(const std::string& url): m_type(CHECKSUMTYPE_NONE) {
 //------------------------------------------------------------------------------
 void cta::Checksum::validate(const Checksum &rhs) const {
   if(m_type != rhs.m_type) {
-    throw ChecksumTypeMismatch(static_cast<std::string>("Checksum type ") + checksumTypeToStr(m_type) + " does not match " + checksumTypeToStr(rhs.m_type));
+    throw exception::ChecksumTypeMismatch(static_cast<std::string>("Checksum type ") +
+      checksumTypeToStr(m_type) + " does not match " + checksumTypeToStr(rhs.m_type));
   }
   if(m_byteArray != rhs.m_byteArray) {
-    throw ChecksumValueMismatch(static_cast<std::string>("Checksum value ") + m_byteArray + " does not match " + rhs.m_byteArray);
+    throw exception::ChecksumValueMismatch(static_cast<std::string>("Checksum value ") +
+      m_byteArray + " does not match " + rhs.m_byteArray);
   }
 }
 

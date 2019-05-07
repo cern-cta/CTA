@@ -586,8 +586,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   // Summarize all as an archiveFile
   cta::common::dataStructures::ArchiveFile aFile;
   aFile.archiveFileID = criteria.fileId;
-  aFile.checksumType = request.checksumType;
-  aFile.checksumValue = request.checksumValue;
+  aFile.checksumBlob = request.checksumBlob;
   // TODO: fully fledged archive file should not be the representation of the request.
   aFile.creationTime = std::numeric_limits<decltype(aFile.creationTime)>::min();
   aFile.reconciliationTime = 0;

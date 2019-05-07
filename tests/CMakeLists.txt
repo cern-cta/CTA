@@ -62,7 +62,8 @@ target_link_libraries(cta-rdbmsUnitTests
   ctadbconfigstmtunittests
   ctardbmsunittests
   gtest
-  pthread)
+  pthread
+  ${PROTOBUF3_LIBRARIES})
 
 if (OCCI_SUPPORT)
   set_property (TARGET cta-rdbmsUnitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
@@ -104,7 +105,8 @@ target_link_libraries(cta-systemTests
   systemTestHelperTests
   cta-tapedSystemTests
   gtest
-  pthread)
+  pthread
+  ${PROTOBUF3_LIBRARIES})
 
 install(TARGETS cta-rdbmsUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
 

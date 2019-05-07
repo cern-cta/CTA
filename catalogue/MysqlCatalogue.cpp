@@ -24,8 +24,6 @@
 #include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/ChecksumTypeMismatch.hpp"
-#include "common/ChecksumValueMismatch.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
@@ -347,7 +345,7 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
       throw ex;
     }
 
-    validateChecksumBlob(archiveFile->checksumBlob, event.checksumBlob);
+    archiveFile->checksumBlob.validate(event.checksumBlob);
 
     // Insert the tape file
     common::dataStructures::TapeFile tapeFile;
@@ -424,7 +422,7 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumBlob = selectRset.columnString("CHECKSUM_BLOB");
+        archiveFile->checksumBlob.deserialize(selectRset.columnString("CHECKSUM_BLOB"));
         archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");

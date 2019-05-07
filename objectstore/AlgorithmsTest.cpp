@@ -50,8 +50,7 @@ void fillRetrieveRequests(
     cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
     rqc.archiveFile.archiveFileID = 123456789L;
     rqc.archiveFile.diskFileId = "eos://diskFile";
-    rqc.archiveFile.checksumType = "";
-    rqc.archiveFile.checksumValue = "";
+    rqc.archiveFile.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_NONE, "");
     rqc.archiveFile.creationTime = 0;
     rqc.archiveFile.reconciliationTime = 0;
     rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -130,8 +129,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     cta::common::dataStructures::ArchiveFile aFile;
     aFile.archiveFileID = 123456789L;
     aFile.diskFileId = "eos://diskFile";
-    aFile.checksumType = "";
-    aFile.checksumValue = "";
+    aFile.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_NONE, "");
     aFile.creationTime = 0;
     aFile.reconciliationTime = 0;
     aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();

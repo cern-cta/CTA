@@ -23,8 +23,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/ChecksumTypeMismatch.hpp"
-#include "common/ChecksumValueMismatch.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
@@ -83,8 +81,7 @@ namespace {
     rdbms::wrapper::OcciColumn diskFileUser;
     rdbms::wrapper::OcciColumn diskFileGroup;
     rdbms::wrapper::OcciColumn size;
-    rdbms::wrapper::OcciColumn checksumType;
-    rdbms::wrapper::OcciColumn checksumValue;
+    rdbms::wrapper::OcciColumn checksumBlob;
     rdbms::wrapper::OcciColumn storageClassName;
     rdbms::wrapper::OcciColumn creationTime;
     rdbms::wrapper::OcciColumn reconciliationTime;
@@ -103,7 +100,7 @@ namespace {
       diskFileUser("DISK_FILE_UID", nbRows),
       diskFileGroup("DISK_FILE_GID", nbRows),
       size("SIZE_IN_BYTES", nbRows),
-      checksumType("CHECKSUM_BLOB", nbRows),
+      checksumBlob("CHECKSUM_BLOB", nbRows),
       storageClassName("STORAGE_CLASS_NAME", nbRows),
       creationTime("CREATION_TIME", nbRows),
       reconciliationTime("RECONCILIATION_TIME", nbRows) {
@@ -411,19 +408,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
         throw ex;
       }
 
-      if(fileSizeAndChecksum.checksumType != event.checksumType) {
-        catalogue::ChecksumTypeMismatch ex;
-        ex.getMessage() << __FUNCTION__ << ": Checksum type mismatch: expected=" << fileSizeAndChecksum.checksumType <<
-          ", actual=" << event.checksumType << ": " << fileContext.str();
-        throw ex;
-      }
-
-      if(fileSizeAndChecksum.checksumValue != event.checksumValue) {
-        catalogue::ChecksumValueMismatch ex;
-        ex.getMessage() << __FUNCTION__ << ": Checksum value mismatch: expected=" << fileSizeAndChecksum.checksumValue
-          << ", actual=" << event.checksumValue << ": " << fileContext.str();
-        throw ex;
-      }
+      fileSizeAndChecksum.checksumBlob.validate(event.checksumBlob);
     }
 
     // Store the value of each field
@@ -537,8 +522,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskFileUser.setFieldLenToValueLen(i, event.diskFileOwnerUid);
       archiveFileBatch.diskFileGroup.setFieldLenToValueLen(i, event.diskFileGid);
       archiveFileBatch.size.setFieldLenToValueLen(i, event.size);
-      archiveFileBatch.checksumType.setFieldLenToValueLen(i, event.checksumType);
-      archiveFileBatch.checksumValue.setFieldLenToValueLen(i, event.checksumValue);
+      archiveFileBatch.checksumBlob.setFieldLenToValueLen(i, event.checksumBlob);
       archiveFileBatch.storageClassName.setFieldLenToValueLen(i, event.storageClassName);
       archiveFileBatch.creationTime.setFieldLenToValueLen(i, now);
       archiveFileBatch.reconciliationTime.setFieldLenToValueLen(i, now);
@@ -555,8 +539,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileOwnerUid);
       archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
       archiveFileBatch.size.setFieldValue(i, event.size);
-      archiveFileBatch.checksumType.setFieldValue(i, event.checksumType);
-      archiveFileBatch.checksumValue.setFieldValue(i, event.checksumValue);
+      archiveFileBatch.checksumBlob.setFieldValue(i, event.checksumBlob.serialize());
       archiveFileBatch.storageClassName.setFieldValue(i, event.storageClassName);
       archiveFileBatch.creationTime.setFieldValue(i, now);
       archiveFileBatch.reconciliationTime.setFieldValue(i, now);
@@ -604,8 +587,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
     occiStmt.setColumn(archiveFileBatch.diskFileUser);
     occiStmt.setColumn(archiveFileBatch.diskFileGroup);
     occiStmt.setColumn(archiveFileBatch.size);
-    occiStmt.setColumn(archiveFileBatch.checksumType);
-    occiStmt.setColumn(archiveFileBatch.checksumValue);
+    occiStmt.setColumn(archiveFileBatch.checksumBlob);
     occiStmt.setColumn(archiveFileBatch.storageClassName);
     occiStmt.setColumn(archiveFileBatch.creationTime);
     occiStmt.setColumn(archiveFileBatch.reconciliationTime);
@@ -702,7 +684,7 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
 
       FileSizeAndChecksum fileSizeAndChecksum;
       fileSizeAndChecksum.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      fileSizeAndChecksum.checksumType = rset.columnString("CHECKSUM_BLOB");
+      fileSizeAndChecksum.checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
 
       fileSizesAndChecksums[archiveFileId] = fileSizeAndChecksum;
     }
@@ -820,7 +802,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = selectRset.columnString("CHECKSUM_BLOB");
+        archiveFile->checksumBlob.deserialize(selectRset.columnString("CHECKSUM_BLOB"));
         archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");
@@ -836,8 +818,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         tapeFile.fileSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!selectRset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = selectRset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = selectRset.columnUint64("SSBY_FSEQ");
@@ -864,8 +845,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
          .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
          .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
-         .add("checksumType", archiveFile->checksumType)
-         .add("checksumValue", archiveFile->checksumValue)
+         .add("checksumBlob", archiveFile->checksumBlob)
          .add("creationTime", std::to_string(archiveFile->creationTime))
          .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
          .add("storageClass", archiveFile->storageClass)
@@ -880,8 +860,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
           << " fileSize: " << it->fileSize
-          << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-          << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+          << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
           << " supersededByVid: " << it->supersededByVid
           << " supersededByFSeq: " << it->supersededByFSeq;
@@ -926,8 +905,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumType", archiveFile->checksumType)
-       .add("checksumValue", archiveFile->checksumValue)
+       .add("checksumBlob", archiveFile->checksumBlob)
        .add("creationTime", std::to_string(archiveFile->creationTime))
        .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
        .add("storageClass", archiveFile->storageClass)
@@ -945,8 +923,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
         << " fileSize: " << it->compressedSize
-        << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+        << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
         << " supersededByVid: " << it->supersededByVid
         << " supersededByFSeq: " << it->supersededByFSeq;

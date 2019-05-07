@@ -21,6 +21,7 @@
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
+#include "common/checksum/ChecksumBlob.hpp"
 
 #include <list>
 #include <map>
@@ -47,14 +48,7 @@ struct ArchiveRequest {
 
   std::string srcURL;
   uint64_t fileSize;
-  /**
-   * The human readable checksum type. Ex: ADLER32 
-   */
-  std::string checksumType;
-  /**
-   * The human readable checksum value. Ex: 0X1292AB12 
-   */
-  std::string checksumValue;
+  ChecksumBlob checksumBlob;
   std::string storageClass;
   DiskFileInfo diskFileInfo;
   std::string archiveReportURL;

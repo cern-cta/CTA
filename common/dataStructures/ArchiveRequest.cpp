@@ -37,8 +37,7 @@ bool ArchiveRequest::operator==(const ArchiveRequest &rhs) const {
       && diskFileID==rhs.diskFileID
       && srcURL==rhs.srcURL
       && fileSize==rhs.fileSize
-      && checksumType==rhs.checksumType
-      && checksumValue==rhs.checksumValue
+      && checksumBlob==rhs.checksumBlob
       && storageClass==rhs.storageClass
       && diskFileInfo==rhs.diskFileInfo
       && archiveReportURL==rhs.archiveReportURL
@@ -61,8 +60,7 @@ std::ostream &operator<<(std::ostream &os, const ArchiveRequest &obj) {
      << " diskFileID=" << obj.diskFileID
      << " srcURL=" << obj.srcURL
      << " fileSize=" << obj.fileSize
-     << " checksumType=" << obj.checksumType
-     << " checksumValue=" << obj.checksumValue
+     << " checksumBlob=" << obj.checksumBlob
      << " storageClass=" << obj.storageClass
      << " diskFileInfo=" << obj.diskFileInfo
      << " archiveReportURL=" << obj.archiveReportURL

@@ -21,28 +21,41 @@
 #include <set>
 
 #include <common/checksum/Checksum.hpp>
-#include <common/checksum/ChecksumBlobSizeMismatch.hpp>
+#include <common/exception/ChecksumBlobSizeMismatch.hpp>
 
 namespace cta {
 
 /*!
  * A set of one or more checksums
  */
-struct ChecksumBlob {
-  std::set<Checksum> cs;
+class ChecksumBlob {
+public:
+  /*!
+   * Insert a new checksum into the blob
+   *
+   * @param[in] value    Little-endian byte array containing the checksum
+   */
+  void insert(Checksum::ChecksumType type, const std::string &value);
+
+  /*!
+   * Insert a new 32-bit checksum into the blob
+   *
+   * @param[in] value    32-bit unsigned integer containing the checksum
+   */
+  void insert(Checksum::ChecksumType type, uint32_t value);
 
   /*!
    * Check all the checksums in the blob match, throw an exception if they don't
    */
   void validate(const ChecksumBlob &blob) const {
-     if(cs.size() != blob.cs.size()) {
-       throw ChecksumBlobSizeMismatch("Checksum blob sizes of " + std::to_string(cs.size()) + " and " +
-         std::to_string(blob.cs.size()) + " do not match.");
+     if(m_cs.size() != blob.m_cs.size()) {
+       throw exception::ChecksumBlobSizeMismatch("Checksum blob sizes of " + std::to_string(m_cs.size()) +
+         " and " + std::to_string(blob.m_cs.size()) + " do not match.");
      }
 
-     auto it1 = cs.begin();
-     auto it2 = blob.cs.begin();
-     for( ; it1 != cs.end(); ++it1, ++it2) {
+     auto it1 = m_cs.begin();
+     auto it2 = blob.m_cs.begin();
+     for( ; it1 != m_cs.end(); ++it1, ++it2) {
        it1->validate(*it2);
      }
   }
@@ -53,11 +66,11 @@ struct ChecksumBlob {
   bool operator==(const ChecksumBlob &blob) const {
     try {
       this->validate(blob);
-    } catch(ChecksumBlobSizeMismatch &ex) {
+    } catch(exception::ChecksumBlobSizeMismatch &ex) {
       return false;
-    } catch(ChecksumTypeMismatch &ex) {
+    } catch(exception::ChecksumTypeMismatch &ex) {
       return false;
-    } catch(ChecksumValueMismatch &ex) {
+    } catch(exception::ChecksumValueMismatch &ex) {
       return false;
     }
     return true;
@@ -69,29 +82,23 @@ struct ChecksumBlob {
   std::string serialize() const;
 
   /*!
+   * Length of the serialized byte array
+   */
+  size_t length() const;
+
+  /*!
+   * True if there are no checksums in the blob
+   */
+  bool empty() const { return m_cs.empty(); }
+
+  /*!
    * Deserialize from a byte array
    */
   void deserialize(const std::string &bytearray);
+
+private:
+  friend std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb);
+  std::set<Checksum> m_cs;
 };
 
-
-
-
-#if 0
-    if(archiveFile->checksumBlob != event.checksumBlob) {
-      catalogue::ChecksumTypeMismatch ex;
-      ex.getMessage() << "Checksum type mismatch: expected=" << archiveFile->checksumType << ", actual=" <<
-        event.checksumType << ": " << fileContext.str();
-      throw ex;
-    }
-
-    if(archiveFile->checksumValue != event.checksumValue) {
-      catalogue::ChecksumValueMismatch ex;
-      ex.getMessage() << "Checksum value mismatch: expected=" << archiveFile->checksumValue << ", actual=" <<
-        event.checksumValue << ": " << fileContext.str();
-      throw ex;
-    }
-#endif
-
 } // namespace cta
-

@@ -25,6 +25,11 @@ add_subdirectory (exception)
 
 include_directories (${XROOTD_INCLUDE_DIR})
 
+#
+# Compiled protocol buffers (used for ChecksumBlob serialization)
+#
+include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+
 set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 set (COMMON_LIB_SRC_FILES
@@ -72,6 +77,8 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/WriteTestResult.cpp
   dataStructures/utils.cpp
   checksum/Checksum.cpp
+  checksum/ChecksumBlob.cpp
+  ${CMAKE_BINARY_DIR}/eos_cta/cta_common.pb.cc
   exception/AcceptConnectionInterrupted.cpp
   exception/AcsQueryVolumeCmd.cpp
   exception/Backtrace.cpp
@@ -204,4 +211,4 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 add_executable(mutexLtrace threading/MutexLtrace.cpp)
-target_link_libraries(mutexLtrace ctacommon)
+target_link_libraries(mutexLtrace ctacommon ${PROTOBUF3_LIBRARIES})

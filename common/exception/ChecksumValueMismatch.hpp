@@ -21,6 +21,7 @@
 #include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace exception {
 
 /**
  * Exception representing an unexpected mismatch between checksum values.
@@ -43,4 +44,4 @@ public:
   ~ChecksumValueMismatch() override {}
 }; // class ChecksumValueMismatch
 
-} // namespace cta
+}} // namespace cta::excpetion

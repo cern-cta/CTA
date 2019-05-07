@@ -49,8 +49,7 @@ namespace cta {
       auto &  fileReport = *fileReportUP;
       fileReport.archiveFileId = archiveFile.archiveFileID;
       fileReport.blockId = tapeFile.blockId;
-      fileReport.checksumType = tapeFile.checksumType;
-      fileReport.checksumValue = tapeFile.checksumValue;
+      fileReport.checksumBlob = tapeFile.checksumBlob;
       fileReport.copyNb = tapeFile.copyNb;
       fileReport.diskFileId = archiveFile.diskFileId;
       fileReport.diskFileOwnerUid = archiveFile.diskFileInfo.owner_uid;

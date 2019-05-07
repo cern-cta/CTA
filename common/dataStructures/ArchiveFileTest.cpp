@@ -44,8 +44,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   archiveFile1.archiveFileID = 1234;
   archiveFile1.diskFileId = "EOS_file_ID";
   archiveFile1.fileSize = 1;
-  archiveFile1.checksumType = "checksum_type";
-  archiveFile1.checksumValue = "cheskum_value";
+  archiveFile1.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1234");
   archiveFile1.storageClass = "storage_class";
 
   archiveFile1.diskInstance = "recovery_instance";
@@ -80,8 +79,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   ASSERT_EQ(archiveFile1.archiveFileID, archiveFile2.archiveFileID);
   ASSERT_EQ(archiveFile1.diskFileId, archiveFile2.diskFileId);
   ASSERT_EQ(archiveFile1.fileSize, archiveFile2.fileSize);
-  ASSERT_EQ(archiveFile1.checksumType, archiveFile2.checksumType);
-  ASSERT_EQ(archiveFile1.checksumValue, archiveFile2.checksumValue);
+  ASSERT_EQ(archiveFile1.checksumBlob, archiveFile2.checksumBlob);
   ASSERT_EQ(archiveFile1.storageClass, archiveFile2.storageClass);
 
   ASSERT_EQ(archiveFile1.diskInstance, archiveFile2.diskInstance);

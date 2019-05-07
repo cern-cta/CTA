@@ -46,8 +46,7 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
     diskFileOwnerUid == rhs.diskFileOwnerUid &&
     diskFileGid == rhs.diskFileGid &&
     size == rhs.size &&
-    checksumType == rhs.checksumType &&
-    checksumValue == rhs.checksumValue &&
+    checksumBlob == rhs.checksumBlob &&
     storageClassName == rhs.storageClassName &&
     blockId == rhs.blockId &&
     copyNb == rhs.copyNb &&
@@ -67,7 +66,7 @@ std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj) {
   "diskFileOwnerUid=" << obj.diskFileOwnerUid << ","
   "diskFileGid=" << obj.diskFileGid << ","
   "size=" << obj.size << ","
-  "checksumType=" << obj.checksumType << "checksumValue=" << obj.checksumValue << ","
+  "checksumBlob=" << obj.checksumBlob << ","
   "storageClassName=" << obj.storageClassName << ","
   "vid=" << obj.vid << ","
   "fSeq=" << obj.fSeq << ","

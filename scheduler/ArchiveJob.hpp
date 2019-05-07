@@ -74,7 +74,6 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(BlockIdNotSet);
   CTA_GENERATE_EXCEPTION_CLASS(ChecksumNotSet);
-  CTA_GENERATE_EXCEPTION_CLASS(ChecksumMismatch);
   
   /**
    * Start an asynchronous update for a batch of jobs and then make sure they complete.
