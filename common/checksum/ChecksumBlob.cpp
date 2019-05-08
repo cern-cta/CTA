@@ -23,11 +23,39 @@ namespace cta {
 namespace checksum {
 
 void ChecksumBlob::insert(ChecksumType type, const std::string &value) {
-  throw exception::Exception("not implemented");
+  // Validate the length of the checksum
+  size_t expectedLength;
+  switch(type) {
+    case NONE:       expectedLength = 0;  break;
+    case ADLER32:
+    case CRC32:
+    case CRC32C:     expectedLength = 4;  break;
+    case MD5:        expectedLength = 16; break;
+    case SHA1:       expectedLength = 20; break;
+  }
+  if(value.length() != expectedLength) throw exception::ChecksumValueMismatch(
+    "Checksum type="    + ChecksumTypeName.at(type) +
+    " length expected=" + std::to_string(expectedLength) +
+    " actual="          + std::to_string(value.length()));
+  m_cs[type] = value;
 }
 
 void ChecksumBlob::insert(ChecksumType type, uint32_t value) {
-  throw exception::Exception("not implemented");
+  // This method is only valid for 32-bit checksums
+  std::string cs;
+  switch(type) {
+    case ADLER32:
+    case CRC32:
+    case CRC32C:
+      for(int i = 0; i < 4; ++i) {
+        cs.push_back(static_cast<char>(value & 0x0F));
+        value >>= 1;
+      }
+      m_cs[type] = cs;
+      break;
+    default:
+      throw exception::ChecksumTypeMismatch(ChecksumTypeName.at(type) + " is not a 32-bit checksum");
+  }
 }
 
 void ChecksumBlob::validate(const ChecksumBlob &blob) const {
@@ -44,25 +72,12 @@ void ChecksumBlob::validate(const ChecksumBlob &blob) const {
 }
 
 std::string ChecksumBlob::serialize() const {
+  common::ChecksumBlob p_csb;
+  ChecksumBlobToProtobuf(*this, p_csb);
 
-  throw exception::Exception("not implemented");
-#if 0
-  common::ChecksumBlob csb;
-
-  for(auto &cs : m_cs) {
-    auto p_cs = csb.add_cs();
-    switch(cs.getType()) {
-      case Checksum::CHECKSUMTYPE_NONE:
-      default:
-        p_cs->set_type(common::ChecksumBlob::Checksum::NONE);
-    }
-    p_cs->set_value(cs.getByteArray());
-  }
-
-  std::string s;
-  csb.SerializeToString(&s);
-  return s;
-#endif
+  std::string bytearray;
+  p_csb.SerializeToString(&bytearray);
+  return bytearray;
 }
 
 size_t ChecksumBlob::length() const {
@@ -71,7 +86,7 @@ size_t ChecksumBlob::length() const {
 }
 
 void ChecksumBlob::deserialize(const std::string &bytearray) {
-  throw exception::Exception("not implemented");
+//ProtobufToChecksumBlob(const common::ChecksumBlob &p_csb, checksum::ChecksumBlob &csb)
 }
 
 std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb) {

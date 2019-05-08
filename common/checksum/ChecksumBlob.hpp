@@ -42,6 +42,18 @@ enum ChecksumType {
 };
 
 /*!
+ * String representations of the checksum types
+ */
+const std::map<ChecksumType, std::string> ChecksumTypeName = {
+  { NONE,    "NONE" },
+  { ADLER32, "ADLER32" },
+  { CRC32,   "CRC32" }, 
+  { CRC32C,  "CRC32C" }, 
+  { MD5,     "MD5" }, 
+  { SHA1,    "SHA1" }
+};
+
+/*!
  * A class to store one or more checksums
  */
 class ChecksumBlob {
