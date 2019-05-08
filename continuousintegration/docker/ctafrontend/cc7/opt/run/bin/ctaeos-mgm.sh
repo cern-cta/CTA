@@ -10,6 +10,10 @@ if [ ! -e /etc/buildtreeRunner ]; then
 
   # Install missing RPMs
   yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate
+
+  ## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
+  # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
+  # yum -y install eos-protobuf3
 fi
 
 # create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure

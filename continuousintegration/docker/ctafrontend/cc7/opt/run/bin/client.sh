@@ -8,6 +8,12 @@ if [ ! -e /etc/buildtreeRunner ]; then
 
   # Install missing RPMs
   yum -y install cta-cli cta-debuginfo xrootd-client eos-client
+
+  ## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
+  # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
+  # Andreas is fixing eos-(client|server) rpms to depend on eos-protobuf3 instead
+  # yum -y install eos-protobuf3
+
 fi
 
 cat <<EOF > /etc/cta/cta-cli.conf
