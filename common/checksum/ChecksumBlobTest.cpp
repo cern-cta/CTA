@@ -31,29 +31,54 @@ protected:
 };
 
 TEST_F(cta_ChecksumBlobTest, default_constructor) {
-  using namespace cta;
-  using namespace checksum;
+  using namespace cta::checksum;
 
   const ChecksumBlob checksumBlob;
 
   ASSERT_EQ(checksumBlob.length(), 0);
 }
 
-TEST_F(cta_ChecksumBlobTest, adler32) {
-  using namespace cta;
-  using namespace checksum;
+TEST_F(cta_ChecksumBlobTest, checksum_types) {
+  using namespace cta::checksum;
 
   ChecksumBlob checksumBlob;
-  checksumBlob.insert(checksum::ADLER32, 0x0A141E28);
+  checksumBlob.insert(NONE, "");
+  checksumBlob.insert(ADLER32, "12\0004");
+}
+
+TEST_F(cta_ChecksumBlobTest, adler32) {
+  using namespace cta::checksum;
+
+  ChecksumBlob checksumBlob;
+  checksumBlob.insert(ADLER32, 0x0A141E28);
   ASSERT_EQ(checksumBlob.length(), 1);
 
-  std::string bytearray = checksumBlob.at(checksum::ADLER32);
+  std::string bytearray = checksumBlob.at(ADLER32);
 
   ASSERT_EQ(4, bytearray.length());
   ASSERT_EQ(static_cast<uint8_t>(10), bytearray[0]);
   ASSERT_EQ(static_cast<uint8_t>(20), bytearray[1]);
   ASSERT_EQ(static_cast<uint8_t>(30), bytearray[2]);
   ASSERT_EQ(static_cast<uint8_t>(40), bytearray[3]);
+}
+
+TEST_F(cta_ChecksumBlobTest, invalid_checksums) {
+  using namespace cta::checksum;
+
+  ChecksumBlob checksumBlob;
+  checksumBlob.insert(NONE, "none");
+  checksumBlob.insert(MD5, 0x0A141E28);
+}
+
+TEST_F(cta_ChecksumBlobTest, serialize_deserialize) {
+  using namespace cta::checksum;
+
+  ChecksumBlob checksumBlob1;
+  auto bytearray = checksumBlob1.serialize();
+
+  ChecksumBlob checksumBlob2;
+  checksumBlob2.deserialize(bytearray);
+  ASSERT_EQ(checksumBlob1, checksumBlob2);
 }
 
 } // namespace unitTests

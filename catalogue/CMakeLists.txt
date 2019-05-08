@@ -77,7 +77,7 @@ add_library (ctacatalogue SHARED
 set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-set_property (TARGET ctacatalogue APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+set_property(TARGET ctacatalogue APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
@@ -202,8 +202,7 @@ add_executable(cta-catalogue-schema-create
   MysqlCatalogueSchema.cpp)
 
 target_link_libraries (cta-catalogue-schema-create
-  ctacatalogue
-  ${PROTOBUF3_LIBRARIES})
+  ctacatalogue)
 
 set_property (TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
@@ -216,8 +215,7 @@ add_executable(cta-catalogue-schema-drop
   DropSchemaCmdMain.cpp)
 
 target_link_libraries (cta-catalogue-schema-drop
-  ctacatalogue
-  ${PROTOBUF3_LIBRARIES})
+  ctacatalogue)
 
 set_property (TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
@@ -230,8 +228,7 @@ add_executable(cta-database-poll
   PollDatabaseCmdMain.cpp)
 
 target_link_libraries (cta-database-poll
-  ctacatalogue
-  ${PROTOBUF3_LIBRARIES})
+  ctacatalogue)
 
 set_property (TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
@@ -244,8 +241,7 @@ add_executable(cta-catalogue-admin-user-create
   CreateAdminUserCmdMain.cpp)
 
 target_link_libraries (cta-catalogue-admin-user-create
-  ctacatalogue
-  ${PROTOBUF3_LIBRARIES})
+  ctacatalogue)
 
 set_property (TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 

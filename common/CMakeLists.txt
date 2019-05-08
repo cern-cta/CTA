@@ -160,6 +160,7 @@ set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacommon
+  XrdSsiPbEosCta
   pthread
   uuid
   z
@@ -209,4 +210,4 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 add_executable(mutexLtrace threading/MutexLtrace.cpp)
-target_link_libraries(mutexLtrace ctacommon ${PROTOBUF3_LIBRARIES})
+target_link_libraries(mutexLtrace ctacommon)
