@@ -48,7 +48,7 @@ struct ArchiveRequest {
 
   std::string srcURL;
   uint64_t fileSize;
-  ChecksumBlob checksumBlob;
+  checksum::ChecksumBlob checksumBlob;
   std::string storageClass;
   DiskFileInfo diskFileInfo;
   std::string archiveReportURL;

@@ -86,7 +86,7 @@ struct TapeFileWritten: public TapeItemWritten {
   /**
    * Set of checksum types and values
    */
-  ChecksumBlob checksumBlob;
+  checksum::ChecksumBlob checksumBlob;
 
   /**
    * The name of the file's storage class.

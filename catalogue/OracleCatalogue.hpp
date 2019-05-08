@@ -146,7 +146,7 @@ private:
    */
   struct FileSizeAndChecksum {
     uint64_t fileSize;
-    ChecksumBlob checksumBlob;
+    checksum::ChecksumBlob checksumBlob;
   };
 
   /**

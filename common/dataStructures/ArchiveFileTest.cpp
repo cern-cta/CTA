@@ -44,7 +44,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   archiveFile1.archiveFileID = 1234;
   archiveFile1.diskFileId = "EOS_file_ID";
   archiveFile1.fileSize = 1;
-  archiveFile1.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  archiveFile1.checksumBlob.insert(cta::checksum::ADLER32, "1234");
   archiveFile1.storageClass = "storage_class";
 
   archiveFile1.diskInstance = "recovery_instance";

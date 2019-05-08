@@ -53,7 +53,7 @@ struct ArchiveFile {
   std::string diskFileId;
   std::string diskInstance;
   uint64_t fileSize;
-  ChecksumBlob checksumBlob;
+  checksum::ChecksumBlob checksumBlob;
   std::string storageClass;
   DiskFileInfo diskFileInfo;
   /**

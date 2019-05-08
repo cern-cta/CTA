@@ -17,19 +17,36 @@
  */
 
 #include "ChecksumBlob.hpp"
-#include "cta_common.pb.h"
+#include "ChecksumBlobSerDeser.hpp"
 
 namespace cta {
+namespace checksum {
 
-void ChecksumBlob::insert(Checksum::ChecksumType type, const std::string &value) {
+void ChecksumBlob::insert(ChecksumType type, const std::string &value) {
   throw exception::Exception("not implemented");
 }
 
-void ChecksumBlob::insert(Checksum::ChecksumType type, uint32_t value) {
+void ChecksumBlob::insert(ChecksumType type, uint32_t value) {
   throw exception::Exception("not implemented");
+}
+
+void ChecksumBlob::validate(const ChecksumBlob &blob) const {
+  if(m_cs.size() != blob.m_cs.size()) {
+    throw exception::ChecksumBlobSizeMismatch("Checksum blob size does not match. expected=" +
+      std::to_string(m_cs.size()) + " actual=" + std::to_string(blob.m_cs.size()));
+  }
+
+  auto it1 = m_cs.begin();
+  auto it2 = blob.m_cs.begin();
+  for( ; it1 != m_cs.end(); ++it1, ++it2) {
+    throw exception::Exception("not implemented");
+  }
 }
 
 std::string ChecksumBlob::serialize() const {
+
+  throw exception::Exception("not implemented");
+#if 0
   common::ChecksumBlob csb;
 
   for(auto &cs : m_cs) {
@@ -37,7 +54,6 @@ std::string ChecksumBlob::serialize() const {
     switch(cs.getType()) {
       case Checksum::CHECKSUMTYPE_NONE:
       default:
-        throw exception::Exception("not implemented");
         p_cs->set_type(common::ChecksumBlob::Checksum::NONE);
     }
     p_cs->set_value(cs.getByteArray());
@@ -46,6 +62,7 @@ std::string ChecksumBlob::serialize() const {
   std::string s;
   csb.SerializeToString(&s);
   return s;
+#endif
 }
 
 size_t ChecksumBlob::length() const {
@@ -57,13 +74,16 @@ void ChecksumBlob::deserialize(const std::string &bytearray) {
   throw exception::Exception("not implemented");
 }
 
-std::ostream &operator<<(std::ostream &os, const cta::ChecksumBlob &csb) {
+std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb) {
+  throw exception::Exception("not implemented");
+#if 0
   os << "(";
   for(auto &cs : csb.m_cs) {
     os << " " << cs << " ";
   }
   os << ")";
+#endif
   return os;
 }
 
-} // namespace cta
+}} // namespace cta::checksum

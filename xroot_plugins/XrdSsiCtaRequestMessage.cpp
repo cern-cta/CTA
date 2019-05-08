@@ -367,7 +367,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    }
 
    cta::common::dataStructures::ArchiveRequest request;
-   request.checksumBlob           = notification.file().csb();
+   checksum::ProtobufToChecksumBlob(notification.file().csb(), request.checksumBlob);
    request.diskFileInfo.owner_uid = notification.file().owner().uid();
    request.diskFileInfo.gid       = notification.file().owner().gid();
    request.diskFileInfo.path      = notification.file().lpath();

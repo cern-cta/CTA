@@ -73,7 +73,7 @@ struct TapeFile {
   /**
    * Set of checksum (type, value) pairs
    */
-  cta::ChecksumBlob checksumBlob;
+  checksum::ChecksumBlob checksumBlob;
   
   /**
    * The vid of the tape file superseding this one (or empty string if not)

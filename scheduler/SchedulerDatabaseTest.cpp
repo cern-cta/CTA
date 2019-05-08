@@ -166,7 +166,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       afqc.mountPolicy.comment = "comment";
       afqc.fileId = i;
       ar.archiveReportURL="";
-      ar.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_NONE, "");
+      ar.checksumBlob.insert(cta::checksum::NONE, "");
       ar.creationLog = { "user", "host", time(nullptr)};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
@@ -246,7 +246,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       afqc.mountPolicy.comment = "comment";
       afqc.fileId = i;
       ar.archiveReportURL="";
-      ar.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_NONE, "");
+      ar.checksumBlob.insert(cta::checksum::NONE, "");
       ar.creationLog = { "user", "host", time(nullptr)};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
