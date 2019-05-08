@@ -272,7 +272,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   diskFileInfo.owner_uid=CMS_USER;
   diskFileInfo.path="path/to/file";
   cta::common::dataStructures::ArchiveRequest request;
-  request.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1111");
+  request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
   request.creationLog=creationLog;
   request.diskFileInfo=diskFileInfo;
   request.diskFileID="diskFileID";
@@ -332,7 +332,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 //  diskFileInfo.owner_uid=CMS_USER;
 //  diskFileInfo.path="path/to/file";
 //  cta::common::dataStructures::ArchiveRequest request;
-//  request.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1111");
+//  request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
 //  request.creationLog=creationLog;
 //  request.diskFileInfo=diskFileInfo;
 //  request.diskFileID="diskFileID";
@@ -405,7 +405,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1234abcd");
+    request.checksumBlob.insert(cta::checksum::ADLER32, "1234abcd");
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
@@ -479,7 +479,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
-    archiveJob->tapeFile.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1234abcd");
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, "1234abcd");
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
@@ -603,7 +603,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1234abcd");
+    request.checksumBlob.insert(cta::checksum::ADLER32, "1234abcd");
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
@@ -677,7 +677,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
-    archiveJob->tapeFile.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1234abcd");
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, "1234abcd");
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
@@ -852,7 +852,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1234abcd");
+    request.checksumBlob.insert(cta::checksum::ADLER32, "1234abcd");
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
@@ -926,7 +926,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
-    archiveJob->tapeFile.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1234abcd");
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, "1234abcd");
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
@@ -1107,7 +1107,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1111");
+    request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
@@ -1221,7 +1221,7 @@ TEST_P(SchedulerTest, showqueues) {
     diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1111");
+    request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
@@ -1429,8 +1429,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-  ChecksumBlob checksumBlob;
-  checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  checksum::ChecksumBlob checksumBlob;
+  checksumBlob.insert(cta::checksum::ADLER32, "1234");
   {
     uint64_t archiveFileId = 1;
     for(uint64_t i = 1; i<= nbTapesToRepack;++i){

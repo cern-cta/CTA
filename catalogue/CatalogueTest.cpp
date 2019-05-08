@@ -3465,7 +3465,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
     file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
-    file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+    file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
     file1Written.storageClassName     = storageClass.name;
     file1Written.vid                  = vid1;
     file1Written.fSeq                 = 1;
@@ -3668,7 +3668,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
     file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
-    file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+    file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
     file1Written.storageClassName     = storageClass.name;
     file1Written.vid                  = vid;
     file1Written.fSeq                 = 1;
@@ -7035,7 +7035,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -7080,7 +7080,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -7283,7 +7283,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -7328,7 +7328,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -7819,7 +7819,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
     fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
-    fileWritten.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1357");
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
     fileWritten.vid = vid1;
     fileWritten.fSeq = i;
@@ -7880,7 +7880,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
     fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
-    fileWritten.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1357");
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
     fileWritten.vid = vid2;
     fileWritten.fSeq = i;
@@ -7974,7 +7974,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
-      fileWritten1.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "2468");
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
       fileWritten1.vid = vid1;
       fileWritten1.fSeq = i;
@@ -8043,7 +8043,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
-      fileWritten1.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "2468");
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
       fileWritten1.vid = vid1;
       fileWritten1.fSeq = i;
@@ -8114,7 +8114,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1357");
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = i;
@@ -8172,7 +8172,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1357");
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = i;
@@ -8230,7 +8230,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1357");
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = i;
@@ -8486,7 +8486,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         const uint64_t batchSize,
         const common::dataStructures::StorageClass &storageClass,
         const uint64_t &archiveFileSize,
-        const ChecksumBlob &checksumBlob,
+        const checksum::ChecksumBlob &checksumBlob,
         const std::string &vid,
         const uint64_t &copyNb,
         const std::string &tapeDrive) :
@@ -8519,7 +8519,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
           fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
           fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
           fileWritten.size = m_archiveFileSize;
-          fileWritten.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1357");
+          fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
           fileWritten.storageClassName = m_storageClass.name;
           fileWritten.vid = m_vid;
           fileWritten.fSeq = fn_seq;
@@ -8549,7 +8549,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     const uint64_t m_batchSize;
     const common::dataStructures::StorageClass m_storageClass;
     const uint64_t m_archiveFileSize;
-    const ChecksumBlob m_checksumBlob;
+    const checksum::ChecksumBlob m_checksumBlob;
     const std::string m_vid;
     const uint64_t m_copyNb;
     const std::string m_tapeDrive;
@@ -8739,8 +8739,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   const uint64_t batchsize = 20;
 
-  ChecksumBlob checksumBlob;
-  checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "9876");
+  checksum::ChecksumBlob checksumBlob;
+  checksumBlob.insert(checksum::ADLER32, "9876");
 
   {
     Barrier barrier(2);
@@ -8885,7 +8885,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
-      fileWritten1.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "2468");
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
       fileWritten1.vid = vid1;
       fileWritten1.fSeq = seq1;
@@ -8958,7 +8958,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
-      fileWritten1.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "2468");
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
       fileWritten1.vid = vid1;
       fileWritten1.fSeq = seq1;
@@ -9034,7 +9034,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1357");
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = seq;
@@ -9095,7 +9095,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1357");
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = seq;
@@ -9156,7 +9156,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1357");
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = seq;
@@ -9465,7 +9465,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -9519,7 +9519,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -9684,7 +9684,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -9738,7 +9738,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -9874,7 +9874,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -9928,7 +9928,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid1;
   file2Written.fSeq                 = 2;
@@ -10092,7 +10092,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize1;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -10148,7 +10148,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize2;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -10270,7 +10270,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -10323,10 +10323,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid        = file1Written.diskFileGid;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -10446,7 +10446,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -10501,7 +10501,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -10621,7 +10621,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -10706,7 +10706,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file2Written.diskFileOwnerUid         = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid        = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -10920,7 +10920,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -11005,7 +11005,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -11420,7 +11420,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
@@ -11638,9 +11638,9 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(Checksum::CHECKSUMTYPE_ADLER32, "1234");
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;

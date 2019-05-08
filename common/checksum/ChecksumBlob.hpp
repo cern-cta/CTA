@@ -18,54 +18,92 @@
 
 #pragma once
 
-#include <set>
+#include <map>
 
-#include <common/checksum/Checksum.hpp>
 #include <common/exception/ChecksumBlobSizeMismatch.hpp>
+#include <common/exception/ChecksumTypeMismatch.hpp>
+#include <common/exception/ChecksumValueMismatch.hpp>
 
 namespace cta {
+namespace checksum {
 
 /*!
- * A set of one or more checksums
+ * Enumeration of the supported checksum types
+ *
+ * We allow all checksum types supported by EOS
+ */
+enum ChecksumType {
+  NONE,       //!< No checksum specified
+  ADLER32,    //!< Adler-32 checksum
+  CRC32,      //!< CRC-32 checksum
+  CRC32C,     //!< CRC-32C checksum
+  MD5,        //!< MD5 128-bit hash
+  SHA1        //!< SHA-1 160-bit hash
+};
+
+/*!
+ * A class to store one or more checksums
  */
 class ChecksumBlob {
 public:
+  /*!
+   * Clear all of the checksums in this blob
+   */
+  void clear() { m_cs.clear(); }
+
   /*!
    * Insert a new checksum into the blob
    *
    * @param[in] value    Little-endian byte array containing the checksum
    */
-  void insert(Checksum::ChecksumType type, const std::string &value);
+  void insert(ChecksumType type, const std::string &value);
 
   /*!
    * Insert a new 32-bit checksum into the blob
    *
+   * Only valid for Adler-32, CRC-32 and CRC-32c checksums
+   *
    * @param[in] value    32-bit unsigned integer containing the checksum
    */
-  void insert(Checksum::ChecksumType type, uint32_t value);
+  void insert(ChecksumType type, uint32_t value);
+
+  /*!
+   * Return the checksum for the specified key
+   */
+  std::string at(ChecksumType type) {
+    return m_cs.at(type);
+  }
+
+  /*!
+   * Check that a single checksum is in the blob and that it has the value expected, throw an exception if not
+   */
+  void validate(ChecksumType type, const std::string &value) const;
+
+  /*!
+   * Returns true if the checksum is in the blob and that it has the value expected
+   */
+  bool contains(ChecksumType type, const std::string &value) const {
+    try {
+      validate(type, value);
+    } catch(exception::ChecksumTypeMismatch &ex) {
+      return false;
+    } catch(exception::ChecksumValueMismatch &ex) {
+      return false;
+    }
+    return true;
+  }
 
   /*!
    * Check all the checksums in the blob match, throw an exception if they don't
    */
-  void validate(const ChecksumBlob &blob) const {
-     if(m_cs.size() != blob.m_cs.size()) {
-       throw exception::ChecksumBlobSizeMismatch("Checksum blob sizes of " + std::to_string(m_cs.size()) +
-         " and " + std::to_string(blob.m_cs.size()) + " do not match.");
-     }
-
-     auto it1 = m_cs.begin();
-     auto it2 = blob.m_cs.begin();
-     for( ; it1 != m_cs.end(); ++it1, ++it2) {
-       it1->validate(*it2);
-     }
-  }
+  void validate(const ChecksumBlob &blob) const;
 
   /*!
    * Returns true if all the checksums in the blob match
    */
   bool operator==(const ChecksumBlob &blob) const {
     try {
-      this->validate(blob);
+      validate(blob);
     } catch(exception::ChecksumBlobSizeMismatch &ex) {
       return false;
     } catch(exception::ChecksumTypeMismatch &ex) {
@@ -98,7 +136,7 @@ public:
 
 private:
   friend std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb);
-  std::set<Checksum> m_cs;
+  std::map<ChecksumType,std::string> m_cs;
 };
 
-} // namespace cta
+}} // namespace cta::checksum

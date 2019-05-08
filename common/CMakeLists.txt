@@ -171,7 +171,7 @@ target_link_libraries (ctacommon
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
-  checksum/ChecksumTest.cpp
+  checksum/ChecksumBlobTest.cpp
   ConfigurationFileTests.cpp
   SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp

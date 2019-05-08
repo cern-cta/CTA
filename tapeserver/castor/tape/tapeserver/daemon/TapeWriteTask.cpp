@@ -161,7 +161,7 @@ namespace daemon {
       m_taskStats.filesCount ++;
       // Record the fSeq in the tape session
       session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
-      m_archiveJob->tapeFile.checksumBlob.insert(cta::Checksum::CHECKSUMTYPE_ADLER32, ckSum);
+      m_archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, ckSum);
       m_archiveJob->tapeFile.fileSize = m_taskStats.dataVolume;
       m_archiveJob->tapeFile.blockId = output->getBlockId();
       reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
