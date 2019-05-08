@@ -77,7 +77,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/WriteTestResult.cpp
   dataStructures/utils.cpp
   checksum/ChecksumBlob.cpp
-  ${CMAKE_BINARY_DIR}/eos_cta/cta_common.pb.cc
   exception/AcceptConnectionInterrupted.cpp
   exception/AcsQueryVolumeCmd.cpp
   exception/Backtrace.cpp
