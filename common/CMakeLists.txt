@@ -76,7 +76,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/VerifyInfo.cpp
   dataStructures/WriteTestResult.cpp
   dataStructures/utils.cpp
-  checksum/Checksum.cpp
   checksum/ChecksumBlob.cpp
   ${CMAKE_BINARY_DIR}/eos_cta/cta_common.pb.cc
   exception/AcceptConnectionInterrupted.cpp
