@@ -30,6 +30,7 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
+#include "common/dataStructures/LifecycleTimings.hpp"
 #include "AgentReference.hpp"
 
 namespace cta { 
@@ -51,6 +52,7 @@ public:
   void addJob(uint32_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();
   void setFailureReason(const std::string & reason);
+  static void updateLifecycleTiming(serializers::RetrieveRequest& payload, const cta::objectstore::serializers::RetrieveJob & retrieveJob);
   class JobDump {
   public:
     uint32_t copyNb;
@@ -235,7 +237,11 @@ public:
   cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
   cta::common::dataStructures::ArchiveFile getArchiveFile();
   cta::common::dataStructures::EntryLog getEntryLog();
-  
+  cta::common::dataStructures::LifecycleTimings getLifecycleTimings();
+  void setCreationTime(const uint64_t creationTime);
+  void setFirstSelectedTime(const uint64_t firstSelectedTime);
+  void setCompletedTime(const uint64_t completedTime);
+  void setReportedTime(const uint64_t reportedTime);
   void setActiveCopyNumber(uint32_t activeCopyNb);
   uint32_t getActiveCopyNumber();
   // ===========================================================================

@@ -26,6 +26,7 @@
 #include "objectstore/cta.pb.h"
 #include "Helpers.hpp"
 #include "common/utils/utils.hpp"
+#include "LifecycleTimingsSerDeser.hpp"
 #include <google/protobuf/util/json_util.h>
 #include <cmath>
 
@@ -724,6 +725,22 @@ serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint32_t copyNumber
   throw exception::Exception(err.str());
 }
 
+void RetrieveRequest::updateLifecycleTiming(serializers::RetrieveRequest& payload, const cta::objectstore::serializers::RetrieveJob& retrieveJob){
+  typedef ::cta::objectstore::serializers::RetrieveJobStatus RetrieveJobStatus;
+  LifecycleTimingsSerDeser lifeCycleSerDeser;
+  lifeCycleSerDeser.deserialize(payload.lifecycle_timings());
+  switch(retrieveJob.status() == RetrieveJobStatus::RJS_ToTransferForUser){
+    case RetrieveJobStatus::RJS_ToTransferForUser:
+      if(retrieveJob.totalretries() == 0){
+        //totalretries = 0 then this is the first selection of the request
+        lifeCycleSerDeser.first_selected_time = time(nullptr);
+      }
+      break;
+    default:
+      break;
+  }
+  lifeCycleSerDeser.serialize(*payload.mutable_lifecycle_timings());
+}
 //------------------------------------------------------------------------------
 // RetrieveRequest::asyncUpdateJobOwner()
 //------------------------------------------------------------------------------
@@ -783,6 +800,10 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
             af.deserialize(payload.archivefile());
             retRef.m_archiveFile = af;
             retRef.m_jobStatus = j.status();
+            RetrieveRequest::updateLifecycleTiming(payload,j);
+            LifecycleTimingsSerDeser lifeCycleSerDeser;
+            lifeCycleSerDeser.deserialize(payload.lifecycle_timings());
+            retRef.m_retrieveRequest.lifecycleTimings = lifeCycleSerDeser;
             if (payload.isrepack()) {
               RetrieveRequest::RepackInfo & ri = retRef.m_repackInfo;
               for (auto &ar: payload.repack_info().archive_routes()) {
@@ -834,6 +855,28 @@ const RetrieveRequest::RepackInfo& RetrieveRequest::AsyncJobOwnerUpdater::getRep
 //------------------------------------------------------------------------------
 const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveRequest() {
   return m_retrieveRequest;
+}
+
+cta::common::dataStructures::LifecycleTimings RetrieveRequest::getLifecycleTimings(){
+  checkPayloadReadable();
+  LifecycleTimingsSerDeser serDeser;
+  serDeser.deserialize(m_payload.lifecycle_timings());
+  return serDeser;
+}
+
+void RetrieveRequest::setCreationTime(const uint64_t creationTime){
+  checkPayloadWritable();
+  m_payload.mutable_lifecycle_timings()->set_creation_time(creationTime);
+}
+
+void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime){
+  checkPayloadWritable();
+  m_payload.mutable_lifecycle_timings()->set_first_selected_time(firstSelectedTime);
+}
+
+void RetrieveRequest::setCompletedTime(const uint64_t completedTime){
+  checkPayloadWritable();
+  m_payload.mutable_lifecycle_timings()->set_completed_time(completedTime);
 }
 
 //------------------------------------------------------------------------------

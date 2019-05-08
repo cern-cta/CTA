@@ -1115,6 +1115,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   rReq->initialize();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
+  rReq->setCreationTime(rqst.creationLog.time);
   // Find the job corresponding to the vid (and check we indeed have one).
   auto jobs = rReq->getJobs();
   objectstore::RetrieveRequest::JobDump job;
@@ -3459,7 +3460,19 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     } else {
       try {
         osdbJob->m_jobDelete->wait();
-        rjToUnown.push_back(osdbJob->m_retrieveRequest.getAddressIfSet());
+        osdbJob->retrieveRequest.lifecycleTimings.completed_time = time(nullptr);
+        std::string requestAddress = osdbJob->m_retrieveRequest.getAddressIfSet();
+        
+        rjToUnown.push_back(requestAddress);
+        
+        cta::common::dataStructures::LifecycleTimings requestTimings = osdbJob->retrieveRequest.lifecycleTimings;
+        log::ScopedParamContainer params(lc);
+        params.add("requestAddress",requestAddress)
+              .add("archiveFileID",osdbJob->archiveFile.archiveFileID)
+              .add("vid",osdbJob->m_retrieveMount->mountInfo.vid)
+              .add("timeForSelection",requestTimings.getTimeForSelection())
+              .add("timeForCompletion", requestTimings.getTimeForCompletion());
+        lc.log(log::INFO, "Retrieve job successfully deleted");
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", osdbJob->archiveFile.archiveFileID)
