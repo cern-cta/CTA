@@ -388,6 +388,13 @@ message RetrieveRequestRepackInfo {
   required uint64 fseq = 9540;
 }
 
+// The different timings of the lifecycle of a RetrieveRequest (creation time, first select time, request complete)
+message LifecycleTimings{
+  optional uint64 creation_time = 9160 [default = 0];
+  optional uint64 first_selected_time = 9161 [default = 0];
+  optional uint64 completed_time = 9162 [default = 0];
+}
+
 message RetrieveRequest {
   required SchedulerRetrieveRequest schedulerrequest = 9150;
   required MountPolicy mountpolicy = 9151;
@@ -398,6 +405,7 @@ message RetrieveRequest {
   required string failurereportlog = 9156;
   required bool isrepack = 9157;
   optional RetrieveRequestRepackInfo repack_info = 9158;
+  optional LifecycleTimings lifecycle_timings = 9159;
 }
 
 message ValueCountPair {
