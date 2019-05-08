@@ -69,8 +69,7 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringVid.cpp
   UserSpecifiedAnEmptyStringVo.cpp
   UserSpecifiedAZeroCapacity.cpp
-  UserSpecifiedAZeroCopyNb.cpp
-  ${CMAKE_BINARY_DIR}/eos_cta/cta_common.pb.cc)
+  UserSpecifiedAZeroCopyNb.cpp)
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})
