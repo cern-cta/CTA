@@ -50,14 +50,23 @@ void ChecksumBlob::insert(ChecksumType type, uint32_t value) {
     case CRC32:
     case CRC32C:
       for(int i = 0; i < 4; ++i) {
-        cs.push_back(static_cast<char>(value & 0x0F));
-        value >>= 1;
+        cs.push_back(static_cast<unsigned char>(value & 0xFF));
+        value >>= 8;
       }
       m_cs[type] = cs;
       break;
     default:
       throw exception::ChecksumTypeMismatch(ChecksumTypeName.at(type) + " is not a 32-bit checksum");
   }
+}
+
+void ChecksumBlob::validate(ChecksumType type, const std::string &value) const {
+  auto cs = m_cs.find(type);
+  if(cs == m_cs.end()) throw exception::ChecksumTypeMismatch(
+      "Checksum type " + ChecksumTypeName.at(type) + " not found");
+  if(cs->second != value) throw exception::ChecksumValueMismatch(
+      "Checksum value expected=0x" + ByteArrayToHex(value) +
+                       "actual=0x" + ByteArrayToHex(cs->second));
 }
 
 void ChecksumBlob::validate(const ChecksumBlob &blob) const {
@@ -109,7 +118,7 @@ std::string ChecksumBlob::HexToByteArray(std::string hexString) {
 
   for(unsigned int i = 0; i < hexString.length(); i += 2) {
     uint8_t byte = strtol(hexString.substr(i,2).c_str(), nullptr, 16);
-    bytearray.push_back(byte);
+    bytearray.insert(0,1,byte);
   }
 
   return bytearray;
@@ -119,10 +128,9 @@ std::string ChecksumBlob::ByteArrayToHex(const std::string &bytearray) {
   if(bytearray.empty()) return "0";
 
   std::stringstream value;
-  value << std::hex << std::setfill('0') << std::setw(2);
-  for(auto c = bytearray.end(); c != bytearray.begin(); ) {
-    --c;
-    value << static_cast<uint8_t>(*c);
+  value << std::hex << std::setfill('0');
+  for(auto c = bytearray.rbegin(); c != bytearray.rend(); ++c) {
+    value << std::setw(2) << (static_cast<uint8_t>(*c) & 0xFF);
   }
   return value.str();
 }

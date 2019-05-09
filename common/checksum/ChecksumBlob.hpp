@@ -100,6 +100,11 @@ public:
   bool empty() const { return m_cs.empty(); }
 
   /*!
+   * Returns the number of checksums in the blob
+   */
+  size_t size() const { return m_cs.size(); }
+
+  /*!
    * Get a const reference to the implementation (for conversion to protobuf)
    */
   const std::map<ChecksumType,std::string> &getMap() const {
@@ -152,6 +157,11 @@ public:
     }
     return true;
   }
+
+  /*!
+   * Returns false if all the checksums in the blob match
+   */
+  bool operator!=(const ChecksumBlob &blob) const { return !(*this == blob); }
 
   /*!
    * Convert hexadecimal string to little-endian byte array
