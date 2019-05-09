@@ -80,9 +80,36 @@ public:
   void insert(ChecksumType type, uint32_t value);
 
   /*!
+   * Deserialize from a byte array
+   */
+  void deserialize(const std::string &bytearray);
+
+  /*!
+   * Serialise to a byte array
+   */
+  std::string serialize() const;
+
+  /*!
+   * Length of the serialized byte array
+   */
+  size_t length() const;
+
+  /*!
+   * True if there are no checksums in the blob
+   */
+  bool empty() const { return m_cs.empty(); }
+
+  /*!
+   * Get a const reference to the implementation (for conversion to protobuf)
+   */
+  const std::map<ChecksumType,std::string> &getMap() const {
+    return m_cs;
+  }
+
+  /*!
    * Return the checksum for the specified key
    */
-  std::string at(ChecksumType type) {
+  std::string at(ChecksumType type) const {
     return m_cs.at(type);
   }
 
@@ -90,6 +117,11 @@ public:
    * Check that a single checksum is in the blob and that it has the value expected, throw an exception if not
    */
   void validate(ChecksumType type, const std::string &value) const;
+
+  /*!
+   * Check all the checksums in the blob match, throw an exception if they don't
+   */
+  void validate(const ChecksumBlob &blob) const;
 
   /*!
    * Returns true if the checksum is in the blob and that it has the value expected
@@ -104,11 +136,6 @@ public:
     }
     return true;
   }
-
-  /*!
-   * Check all the checksums in the blob match, throw an exception if they don't
-   */
-  void validate(const ChecksumBlob &blob) const;
 
   /*!
    * Returns true if all the checksums in the blob match
@@ -127,27 +154,13 @@ public:
   }
 
   /*!
-   * Serialise to a byte array
+   * Convert little-endian byte array to hexadecimal string
    */
-  std::string serialize() const;
-
-  /*!
-   * Length of the serialized byte array
-   */
-  size_t length() const;
-
-  /*!
-   * True if there are no checksums in the blob
-   */
-  bool empty() const { return m_cs.empty(); }
-
-  /*!
-   * Deserialize from a byte array
-   */
-  void deserialize(const std::string &bytearray);
+  static std::string ChecksumValueHex(const std::string &bytearray);
 
 private:
   friend std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb);
+
   std::map<ChecksumType,std::string> m_cs;
 };
 

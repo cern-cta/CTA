@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iomanip>
+
 #include "ChecksumBlob.hpp"
 #include "ChecksumBlobSerDeser.hpp"
 
@@ -86,18 +88,33 @@ size_t ChecksumBlob::length() const {
 }
 
 void ChecksumBlob::deserialize(const std::string &bytearray) {
-//ProtobufToChecksumBlob(const common::ChecksumBlob &p_csb, checksum::ChecksumBlob &csb)
+  common::ChecksumBlob p_csb;
+  p_csb.ParseFromString(bytearray);
+  ProtobufToChecksumBlob(p_csb, *this);
+}
+
+static std::string ChecksumValueHex(const std::string &bytearray) {
+  if(bytearray.empty()) return "0";
+
+  std::stringstream value;
+  value << std::hex << std::setfill('0') << std::setw(2);
+  for(auto c = bytearray.end(); c != bytearray.begin(); ) {
+    --c;
+    value << static_cast<uint8_t>(*c);
+  }
+  return value.str();
 }
 
 std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb) {
-  throw exception::Exception("not implemented");
-#if 0
-  os << "(";
+  os << "[ ";
+  auto num_els = csb.m_cs.size();
   for(auto &cs : csb.m_cs) {
-    os << " " << cs << " ";
+    bool is_last_el = --num_els > 0;
+    os << "{ \"" << ChecksumTypeName.at(cs.first) << "\",0x"  << ChecksumValueHex(cs.second)
+       << (is_last_el ? " }," : " }");
   }
-  os << ")";
-#endif
+  os << " ]";
+
   return os;
 }
 

@@ -70,6 +70,17 @@ TEST_F(cta_ChecksumBlobTest, invalid_checksums) {
   checksumBlob.insert(MD5, 0x0A141E28);
 }
 
+TEST_F(cta_ChecksumBlobTest, bytearray_to_hex) {
+  using namespace cta::checksum;
+
+  ChecksumBlob checksumBlob;
+  checksumBlob.insert(ADLER32, 0x00120abc);
+
+  std::stringstream ss;
+  ss << checksumBlob;
+  ASSERT_EQ(ss.str(), "[ {\"ADLER32\",0x00120abc} ]");
+}
+
 TEST_F(cta_ChecksumBlobTest, serialize_deserialize) {
   using namespace cta::checksum;
 
