@@ -43,10 +43,8 @@ struct RepackInfo {
     ToExpand = 2,
     Starting = 3,
     Running = 4,
-    Aborting = 5,
-    Aborted = 6,
-    Complete = 7,
-    Failed = 8,
+    Complete = 5,
+    Failed = 6,
     Undefined = 999
   } status;
   uint64_t totalFilesToArchive;

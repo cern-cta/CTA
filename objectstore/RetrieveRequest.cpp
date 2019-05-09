@@ -729,7 +729,7 @@ void RetrieveRequest::updateLifecycleTiming(serializers::RetrieveRequest& payloa
   typedef ::cta::objectstore::serializers::RetrieveJobStatus RetrieveJobStatus;
   LifecycleTimingsSerDeser lifeCycleSerDeser;
   lifeCycleSerDeser.deserialize(payload.lifecycle_timings());
-  switch(retrieveJob.status() == RetrieveJobStatus::RJS_ToTransferForUser){
+  switch(retrieveJob.status()){
     case RetrieveJobStatus::RJS_ToTransferForUser:
       if(retrieveJob.totalretries() == 0){
         //totalretries = 0 then this is the first selection of the request

@@ -37,10 +37,6 @@ std::string toString(RepackInfo::Type type) {
 
 std::string toString(RepackInfo::Status status) {
   switch(status) {
-    case RepackInfo::Status::Aborted:
-      return "Aborted";
-    case RepackInfo::Status::Aborting:
-      return "Aborting";
     case RepackInfo::Status::Complete:
       return "Complete";
     case RepackInfo::Status::Failed:

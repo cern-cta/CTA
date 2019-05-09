@@ -492,10 +492,8 @@ enum RepackRequestStatus {
   RRS_ToExpand = 2;
   RRS_Starting = 3;
   RRS_Running = 4;
-  RRS_Aborting = 5;
-  RRS_Aborted = 6;
-  RRS_Complete = 7;
-  RRS_Failed = 8;
+  RRS_Complete = 5;
+  RRS_Failed = 6;
 }
 
 // In order to properly handle retries in case of failure during reporting, we hold

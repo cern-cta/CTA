@@ -1038,7 +1038,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
         log::ScopedParamContainer params(lc);
         params.add("fileId", j->archiveFile.archiveFileID)
               .add("objectAddress", castFromSchedDBJob(j)->m_retrieveRequest.getAddressIfSet());
-        lc.log(log::ERR, "In OStoreDB::setRetrieveJobBatchReported(): unexpected job status. Leaving the job as-is.");
+        lc.log(log::ERR, "In OStoreDB::setRetrieveJobBatchReportedToUser(): unexpected job status. Leaving the job as-is.");
       }
     }
   }
@@ -1793,6 +1793,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
     objectstore::ScopedExclusiveLock rrl(m_repackRequest);
     timingList.insertAndReset("successStatsLockTime", t);
     m_repackRequest.fetch();
+    m_repackRequest.setStatus(common::dataStructures::RepackInfo::Status::Running);
     timingList.insertAndReset("successStatsFetchTime", t);
     m_repackRequest.reportRetriveSuccesses(ssl);
     timingList.insertAndReset("successStatsUpdateTime", t);
@@ -2291,7 +2292,7 @@ void OStoreDB::RepackRequest::addSubrequests(std::list<Subrequest>& repackSubreq
 //------------------------------------------------------------------------------
 void OStoreDB::RepackRequest::expandDone() {
   // We are now done with the repack request. We can set its status.
-  ScopedSharedLock rrl(m_repackRequest);
+  ScopedExclusiveLock rrl(m_repackRequest);
   m_repackRequest.fetch();
   // After expansion, 2 statuses are possible: starting (nothing reported as done) or running (anything reported as done).
   // We can find that out from the statistics...

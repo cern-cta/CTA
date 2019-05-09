@@ -526,6 +526,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     fSeq = std::max(fSeq, maxAddedFSeq + 1);
     repackRequest->m_dbReq->setLastExpandedFSeq(fSeq);
   }
+  repackRequest->m_dbReq->expandDone();
 }
 
 //------------------------------------------------------------------------------
