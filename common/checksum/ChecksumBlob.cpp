@@ -36,9 +36,9 @@ void ChecksumBlob::insert(ChecksumType type, const std::string &value) {
     case SHA1:       expectedLength = 20; break;
   }
   if(value.length() != expectedLength) throw exception::ChecksumValueMismatch(
-    "Checksum type="    + ChecksumTypeName.at(type) +
-    " length expected=" + std::to_string(expectedLength) +
-    " actual="          + std::to_string(value.length()));
+    "Checksum length type=" + ChecksumTypeName.at(type) +
+    " expected=" + std::to_string(expectedLength) +
+      " actual=" + std::to_string(value.length()));
   m_cs[type] = value;
 }
 
@@ -69,7 +69,12 @@ void ChecksumBlob::validate(const ChecksumBlob &blob) const {
   auto it1 = m_cs.begin();
   auto it2 = blob.m_cs.begin();
   for( ; it1 != m_cs.end(); ++it1, ++it2) {
-    throw exception::Exception("not implemented");
+    if(it1->first != it2->first) throw exception::ChecksumTypeMismatch(
+      "Checksum type expected=" + ChecksumTypeName.at(it1->first) +
+                      "actual=" + ChecksumTypeName.at(it2->first));
+    if(it1->second != it2->second) throw exception::ChecksumValueMismatch(
+      "Checksum value expected=0x" + ByteArrayToHex(it1->second) +
+                       "actual=0x" + ByteArrayToHex(it2->second));
   }
 }
 
