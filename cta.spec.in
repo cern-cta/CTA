@@ -230,6 +230,8 @@ Requires: oracle-instantclient12.2-basic
 Requires: librados2 = %{radosVersion}
 Requires: mariadb-libs
 Requires: postgresql-libs
+# Explicity require protobuf3 to avoid clash with eos-protobuf3
+Requires: protobuf3
 Requires: zeromq
 %description -n cta-lib
 CERN Tape Archive:
