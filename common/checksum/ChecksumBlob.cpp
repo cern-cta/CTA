@@ -93,7 +93,24 @@ void ChecksumBlob::deserialize(const std::string &bytearray) {
   ProtobufToChecksumBlob(p_csb, *this);
 }
 
-static std::string ChecksumValueHex(const std::string &bytearray) {
+std::string ChecksumBlob::HexToByteArray(std::string hexString) {
+  std::string bytearray;
+
+  if(hexString.substr(0,2) == "0x" || hexString.substr(0,2) == "0X") {
+    hexString.erase(0,2);
+  }
+  // ensure we have an even number of hex digits
+  if(hexString.length() % 2 == 1) hexString.insert(0, "0");
+
+  for(unsigned int i = 0; i < hexString.length(); i += 2) {
+    uint8_t byte = strtol(hexString.substr(i,2).c_str(), nullptr, 16);
+    bytearray.push_back(byte);
+  }
+
+  return bytearray;
+}
+
+std::string ChecksumBlob::ByteArrayToHex(const std::string &bytearray) {
   if(bytearray.empty()) return "0";
 
   std::stringstream value;
@@ -110,7 +127,7 @@ std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb) {
   auto num_els = csb.m_cs.size();
   for(auto &cs : csb.m_cs) {
     bool is_last_el = --num_els > 0;
-    os << "{ \"" << ChecksumTypeName.at(cs.first) << "\",0x"  << ChecksumValueHex(cs.second)
+    os << "{ \"" << ChecksumTypeName.at(cs.first) << "\",0x"  << ChecksumBlob::ByteArrayToHex(cs.second)
        << (is_last_el ? " }," : " }");
   }
   os << " ]";
