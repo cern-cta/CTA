@@ -154,9 +154,14 @@ public:
   }
 
   /*!
+   * Convert hexadecimal string to little-endian byte array
+   */
+  static std::string HexToByteArray(std::string hexString);
+
+  /*!
    * Convert little-endian byte array to hexadecimal string
    */
-  static std::string ChecksumValueHex(const std::string &bytearray);
+  static std::string ByteArrayToHex(const std::string &bytearray);
 
 private:
   friend std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb);
