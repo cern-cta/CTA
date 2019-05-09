@@ -62,6 +62,8 @@ void MaintenanceHandler::postForkCleanup() {
   // We are in the child process of another handler. We can close our socket pair
   // without re-registering it from poll.
   m_socketPair.reset(nullptr);
+  // We forget about our child process which is not handled by siblings.
+  m_pid = -1;
 }
 
 
@@ -370,7 +372,7 @@ MaintenanceHandler::~MaintenanceHandler() {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("pid", m_pid);
     ::kill(m_pid, SIGKILL);
-    m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::~GarbageCollectorHandler(): killed leftover subprocess");
+    m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::~MaintenanceHandler(): killed leftover subprocess");
   }
 }
 
