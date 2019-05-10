@@ -43,6 +43,7 @@ public:
   SubprocessHandler::ProcessingStatus processSigChild() override;
   SubprocessHandler::ProcessingStatus processTimeout() override;
 private:
+  void exceptionThrowingRunChild();
   /** Reference to the process manager*/
   cta::tape::daemon::ProcessManager & m_processManager;
   /** The parameters */

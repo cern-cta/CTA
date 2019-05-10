@@ -245,6 +245,19 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {
 // GarbageCollectorHandler::runChild
 //------------------------------------------------------------------------------
 int MaintenanceHandler::runChild() {
+  try{
+    exceptionThrowingRunChild();
+    return EXIT_SUCCESS;
+  } catch(const cta::exception::Exception &ctaEx){
+    return EXIT_FAILURE;
+  } catch (const std::exception &stdEx){
+    return EXIT_FAILURE;
+  } catch (...){
+    return EXIT_FAILURE;
+  }
+}
+
+void MaintenanceHandler::exceptionThrowingRunChild(){
   // We are in the child process. It is time to open connections to the catalogue
   // and object store, and run the garbage collector.
   // We do not have to care for previous crashed sessions as we will garbage
@@ -287,15 +300,15 @@ int MaintenanceHandler::runChild() {
       log::ScopedParamContainer param(m_processManager.logContext());
       param.add("errorMessage", ex.getMessageValue());
       m_processManager.logContext().log(log::CRIT, 
-          "In MaintenanceHandler::runChild(): contact central storage. Waiting for shutdown.");
+          "In MaintenanceHandler::exceptionThrowingRunChild(): contact central storage. Waiting for shutdown.");
     }
     server::SocketPair::pollMap pollList;
     pollList["0"]=m_socketPair.get();
     // Wait forever (negative timeout) for something to come from parent process.
     server::SocketPair::poll(pollList, -1, server::SocketPair::Side::parent);
     m_processManager.logContext().log(log::INFO,
-        "In MaintenanceHandler::runChild(): Received shutdown message after failure to contact storage. Exiting.");
-    return EXIT_FAILURE; 
+        "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message after failure to contact storage. Exiting.");
+    throw ex;
   }
   
   // The object store is accessible, let's turn the agent heartbeat on.
@@ -315,7 +328,7 @@ int MaintenanceHandler::runChild() {
     do {
       utils::Timer t;
       m_processManager.logContext().log(log::DEBUG, 
-          "In MaintenanceHandler::runChild(): About to do a maintenance pass.");
+          "In MaintenanceHandler::exceptionThrowingRunChild(): About to do a maintenance pass.");
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
       repackRequestManager.runOnePass(m_processManager.logContext());
@@ -325,26 +338,28 @@ int MaintenanceHandler::runChild() {
       } catch (server::SocketPair::Timeout & ex) {}
     } while (!receivedMessage);
     m_processManager.logContext().log(log::INFO,
-        "In MaintenanceHandler::runChild(): Received shutdown message. Exiting.");
+        "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message. Exiting.");
   } catch(cta::exception::Exception & ex) {
     {
       log::ScopedParamContainer params(m_processManager.logContext());
       params.add("Message", ex.getMessageValue());
       m_processManager.logContext().log(log::ERR,
-        "In MaintenanceHandler::runChild(): received an exception. Backtrace follows.");
+        "In MaintenanceHandler::exceptionThrowingRunChild(): received an exception. Backtrace follows.");
     }
     m_processManager.logContext().logBacktrace(log::ERR, ex.backtrace());
+    throw ex;
   } catch(std::exception &ex) {
     log::ScopedParamContainer params(m_processManager.logContext());
     params.add("Message", ex.what());
     m_processManager.logContext().log(log::ERR, 
-        "In MaintenanceHandler::runChild(): received a std::exception.");
+        "In MaintenanceHandler::exceptionThrowingRunChild(): received a std::exception.");
+    throw ex;
   } catch(...) {
     m_processManager.logContext().log(log::ERR, 
-        "In MaintenanceHandler::runChild(): received an unknown exception.");
+        "In MaintenanceHandler::exceptionThrowingRunChild(): received an unknown exception.");
+    throw;
   }
   agentHeartbeat.stopAndWaitThread();
-  return EXIT_SUCCESS;
 }
 
 //------------------------------------------------------------------------------
