@@ -437,7 +437,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
+      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
@@ -616,7 +616,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
         tapeFileWritten.archiveFileId=666;
-        tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, "0xDEADBEEF");
+        tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::checksum::ChecksumBlob::HexToByteArray("0xDEADBEEF"));
         tapeFileWritten.vid=volInfo.vid;
         tapeFileWritten.size=archiveFileSize;
         tapeFileWritten.fSeq=fseq;
@@ -639,7 +639,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
         tapeFileWritten.archiveFileId=1000 + fseq;
-        tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
+        tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
         tapeFileWritten.vid=volInfo.vid;
         tapeFileWritten.size=archiveFileSize;
         tapeFileWritten.fSeq=fseq + 1;
@@ -814,7 +814,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
+      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
@@ -1023,7 +1023,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
+      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
@@ -1169,7 +1169,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32String(data, archiveFileSize));
+      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;

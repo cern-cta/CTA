@@ -326,16 +326,6 @@ namespace utils {
   uint32_t getAdler32(const uint8_t *buf, const uint32_t len);
   
   /**
-   * Returns the alder32 checksum of the specified buffer in string format,
-   * CTA style that is with leading 0x, 8 digits with leading 0 and uppercase.
-   *
-   * @param buf The buffer.
-   * @param len The length of the buffer in bytes.
-   * @return the alder32 checksum of the specified buffer.
-   */
-  std::string getAdler32String(const uint8_t *buf, const uint32_t len);
-
-  /**
    * Returns true if the attributes of the current process indicate that it will
    * produce a core dump if it receives a signal whose behaviour is to produce a
    * core dump.
