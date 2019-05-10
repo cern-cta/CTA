@@ -31,13 +31,24 @@ source ./repack_helper.sh
 
 echo "Execution of simple_repack.sh"
 
+REPACK_BUFFER_URL=/eos/ctaeos/repack
 vidToRepack1=$(getFirstVidContainingFiles)
 if [ "$vidToRepack1" != "null" ] 
 then
   echo
-  writeTapeSummary $vidToRepack1
-  executeRepack $vidToRepack1
+  echo "Creating the repack buffer URL directory (${REPACK_BUFFER_URL})"
+  kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir ${REPACK_BUFFER_URL}
+  kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${REPACK_BUFFER_URL}
+
+  echo "Marking tape $vidToRepack1 as full before repacking"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ch -v $vidToRepack1 -f true
+
+  kubectl -n ${NAMESPACE} cp repack_systemtest.sh client:/root/repack_systemtest.sh
+
   echo
+  echo "Launching the repack test on VID ${vidToRepack1}"
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${vidToRepack1} -b ${REPACK_BUFFER_URL}
+
   echo "Reclaiming tape $vidToRepack1"
   executeReclaim $vidToRepack1
   echo
@@ -51,9 +62,18 @@ vidToRepack2=$(getFirstVidContainingFiles)
 if [ "$vidToRepack2" != "null" ] 
 then
   echo
-  writeTapeSummary $vidToRepack2
-  executeRepack $vidToRepack2
+  echo "Creating the repack buffer URL directory (${REPACK_BUFFER_URL})"
+  kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir ${REPACK_BUFFER_URL}
+  kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${REPACK_BUFFER_URL}
+
+  echo "Marking tape $vidToRepack2 as full before repacking"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ch -v $vidToRepack2 -f true
+  kubectl -n ${NAMESPACE} cp repack_systemtest.sh client:/root/repack_systemtest.sh
+
   echo
+  echo "Launching the repack test on VID ${vidToRepack2}"
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${vidToRepack2} -b ${REPACK_BUFFER_URL}
+
   echo "Reclaiming tape $vidToRepack2"
   executeReclaim $vidToRepack2
   echo
