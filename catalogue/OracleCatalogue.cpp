@@ -965,7 +965,10 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    std::ostringstream msg;
+    msg << __FUNCTION__ << ": diskInstanceName=" << diskInstanceName <<",archiveFileId=" <<
+      archiveFileId << ": " << ex.getMessage().str();
+    ex.getMessage().str(msg.str());
     throw;
   }
 }
