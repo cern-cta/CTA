@@ -57,14 +57,14 @@ void TempFile::randomFill(size_t size) {
   out.write(buff.get(), size);
 }
 
-std::string TempFile::adler32() {
+uint32_t TempFile::adler32() {
   struct ::stat fileStat;
   cta::exception::Errnum::throwOnMinusOne(::stat(m_path.c_str(), &fileStat),
       "In TempFile::adler32(): failed to stat file.");
   std::unique_ptr<char[] > buff(new char[fileStat.st_size]);
   std::ifstream in(m_path, std::ios::in | std::ios::binary);
   in.read(buff.get(), fileStat.st_size);
-  return cta::utils::getAdler32String((uint8_t*)buff.get(), fileStat.st_size);
+  return cta::utils::getAdler32((uint8_t*)buff.get(), fileStat.st_size);
 }
 
 void TempFile::stringFill(const std::string& string) {
