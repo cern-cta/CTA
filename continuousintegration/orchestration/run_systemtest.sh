@@ -20,6 +20,10 @@ useceph=0
 usesystemd=0
 # time out for the kubernetes eoscta instance creation
 CREATEINSTANCE_TIMEOUT=1400
+# preflight test script
+PREFLIGHTTEST_SCRIPT='tests/preflighttest.sh'
+# default preflight checks timeout is 60 seconds
+PREFLIGHTTEST_TIMEOUT=60
 # default systemtest timeout is 1 hour
 SYSTEMTEST_TIMEOUT=3600
 
@@ -184,6 +188,16 @@ function execute_log {
 
 # create instance timeout after 10 minutes
 execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log" ${CREATEINSTANCE_TIMEOUT}
+
+# Launch preflighttest and timeout after ${PREFLIGHTTEST_TIMEOUT} seconds
+if [ -x ${PREFLIGHTTEST_SCRIPT} ]; then
+  cd $(dirname ${PREFLIGHTTEST_SCRIPT})
+  echo "Launching preflight test: ${PREFLIGHTTEST_SCRIPT}"
+  execute_log "./$(basename ${PREFLIGHTTEST_SCRIPT}) -n ${namespace} 2>&1" "${log_dir}/$(basename ${PREFLIGHTTEST_SCRIPT}).log" ${PREFLIGHTTEST_TIMEOUT}
+  cd ${orchestration_dir}
+else
+  echo "SKIPPING preflight test: ${PREFLIGHTTEST_SCRIPT} not available"
+fi
 
 # launch system test and timeout after ${SYSTEMTEST_TIMEOUT} seconds
 cd $(dirname ${systemtest_script})
