@@ -62,14 +62,14 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   ASSERT_EQ(checksumBlob.contains(SHA1, "12345678901234567890"), true);
 
   // invalid insertions
-  ASSERT_THROW(checksumBlob.insert(NONE, "0"),                ChecksumValueMismatch);
-  ASSERT_THROW(checksumBlob.insert(ADLER32, "12345"),         ChecksumValueMismatch);
-  ASSERT_THROW(checksumBlob.insert(CRC32, "123"),             ChecksumValueMismatch);
-  ASSERT_THROW(checksumBlob.insert(CRC32C, ""),               ChecksumValueMismatch);
-  ASSERT_THROW(checksumBlob.insert(MD5, "1234"),              ChecksumValueMismatch);
-  ASSERT_THROW(checksumBlob.insert(SHA1, "1234567890123456"), ChecksumValueMismatch);
-  ASSERT_THROW(checksumBlob.insert(MD5, 0x12345678),          ChecksumTypeMismatch);
-  ASSERT_THROW(checksumBlob.insert(SHA1, 0x12345678),         ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.insert(NONE, "0"),                     ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(ADLER32, "12345"),              ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(CRC32, "12345"),                ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(CRC32C, "12345"),               ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(MD5, "12345678901234567"),      ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(SHA1, "123456789012345678901"), ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(MD5, 0x12345678),               ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.insert(SHA1, 0x12345678),              ChecksumTypeMismatch);
 
   // Blob types are different
   ChecksumBlob checksumBlob2, checksumBlob3;
@@ -154,9 +154,9 @@ TEST_F(cta_ChecksumBlobTest, serialize_deserialize) {
   ChecksumBlob checksumBlob1;
 
   checksumBlob1.insert(NONE, "");                      // 0 bits
-  checksumBlob1.insert(ADLER32, "1234");               // 32 bits
+  checksumBlob1.insert(ADLER32, 0);                    // 32 bits
   checksumBlob1.insert(CRC32, "1234");                 // 32 bits
-  checksumBlob1.insert(CRC32C, "1234");                // 32 bits
+  checksumBlob1.insert(CRC32C, "FFFF");                // 32 bits
   checksumBlob1.insert(MD5, "1234567890123456");       // 128 bits
   checksumBlob1.insert(SHA1, "12345678901234567890");  // 160 bits
 
