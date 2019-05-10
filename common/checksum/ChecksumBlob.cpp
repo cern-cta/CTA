@@ -35,11 +35,12 @@ void ChecksumBlob::insert(ChecksumType type, const std::string &value) {
     case MD5:        expectedLength = 16; break;
     case SHA1:       expectedLength = 20; break;
   }
-  if(value.length() != expectedLength) throw exception::ChecksumValueMismatch(
+  if(value.length() > expectedLength) throw exception::ChecksumValueMismatch(
     "Checksum length type=" + ChecksumTypeName.at(type) +
     " expected=" + std::to_string(expectedLength) +
       " actual=" + std::to_string(value.length()));
-  m_cs[type] = value;
+  // Pad bytearray to expected length with trailing zeros
+  m_cs[type] = value + std::string(expectedLength-value.length(), 0);
 }
 
 void ChecksumBlob::insert(ChecksumType type, uint32_t value) {
