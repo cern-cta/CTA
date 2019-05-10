@@ -98,6 +98,17 @@ public:
   bool columnIsNull(const std::string &colName) const;
 
   /**
+   * Returns the value of the specified column as a binary string (byte array).
+   *
+   * This method will throw an exception if the value of the specified column
+   * is nullptr.
+   *
+   * @param colName The name of the column.
+   * @return The string value of the specified column.
+   */
+  std::string columnBlob(const std::string &colName) const;
+
+  /**
    * Returns the value of the specified column as a string.
    *
    * This method will throw an exception if the value of the specified column

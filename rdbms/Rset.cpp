@@ -60,6 +60,17 @@ Rset &Rset::operator=(Rset &&rhs) {
 //------------------------------------------------------------------------------
 // columnString
 //------------------------------------------------------------------------------
+std::string Rset::columnBlob(const std::string &colName) const {
+  if(nullptr == m_impl) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: "
+      "This result set is invalid");
+  }
+  return m_impl->columnBlob(colName);
+}
+
+//------------------------------------------------------------------------------
+// columnString
+//------------------------------------------------------------------------------
 std::string Rset::columnString(const std::string &colName) const {
   try {
     if(nullptr == m_impl) {

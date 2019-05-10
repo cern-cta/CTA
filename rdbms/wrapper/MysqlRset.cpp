@@ -96,6 +96,10 @@ bool MysqlRset::columnIsNull(const std::string &colName) const {
   return *holder->get_is_null();
 }
 
+std::string MysqlRset::columnBlob(const std::string &colName) const {
+  throw exception::Exception("Not implemented.");
+}
+
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------

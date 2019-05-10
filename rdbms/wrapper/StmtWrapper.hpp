@@ -144,6 +144,14 @@ public:
   void bindOptionalBool(const std::string &paramName, const optional<bool> &paramValue);
 
   /** 
+   * Binds an SQL parameter of type binary string (byte array).
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */ 
+  virtual void bindBlob(const std::string &paramName, const std::string &paramValue) = 0;
+
+  /** 
    * Binds an SQL parameter of type string.
    *
    * Please note that this method will throw an exception if the string

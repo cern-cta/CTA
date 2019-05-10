@@ -126,6 +126,10 @@ void OcciRset::close() {
   }
 }
 
+std::string OcciRset::columnBlob(const std::string &colName) const {
+  throw exception::Exception("Not implemented.");
+}
+
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------

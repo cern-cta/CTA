@@ -115,6 +115,10 @@ void OcciStmt::bindOptionalUint64(const std::string &paramName, const optional<u
   }
 }
 
+void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
+  throw exception::Exception("Not implemented.");
+}
+
 //------------------------------------------------------------------------------
 // bindDouble
 //------------------------------------------------------------------------------

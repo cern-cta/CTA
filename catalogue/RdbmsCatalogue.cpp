@@ -4248,7 +4248,7 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
     stmt.bindUint64(":DISK_FILE_UID", row.diskFileOwnerUid);
     stmt.bindUint64(":DISK_FILE_GID", row.diskFileGid);
     stmt.bindUint64(":SIZE_IN_BYTES", row.size);
-    stmt.bindString(":CHECKSUM_BLOB", row.checksumBlob.serialize());
+    stmt.bindBlob  (":CHECKSUM_BLOB", row.checksumBlob.serialize());
     stmt.bindString(":STORAGE_CLASS_NAME", row.storageClassName);
     stmt.bindUint64(":CREATION_TIME", now);
     stmt.bindUint64(":RECONCILIATION_TIME", now);
@@ -4428,7 +4428,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
       archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
       archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      archiveFile.checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
+      archiveFile.checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
       archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
       archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
       archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5367,7 +5367,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
+        archiveFile->checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5457,7 +5457,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
+        archiveFile->checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5600,7 +5600,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
+        archiveFile->checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5694,7 +5694,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumBlob.deserialize(rset.columnString("CHECKSUM_BLOB"));
+        archiveFile->checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
