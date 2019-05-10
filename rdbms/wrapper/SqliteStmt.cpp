@@ -211,6 +211,21 @@ void SqliteStmt::bindOptionalDouble(const std::string &paramName, const optional
   }
 }
 
+void SqliteStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
+  try {
+    const unsigned int paramIdx = getParamIdx(paramName);
+    int bindRc = sqlite3_bind_blob(m_stmt, paramIdx, paramValue.c_str(), paramValue.length(), SQLITE_TRANSIENT);
+    if(SQLITE_OK != bindRc) {
+      exception::Exception ex;
+      ex.getMessage() << "sqlite3_bind_blob() failed: " << Sqlite::rcToStr(bindRc);
+      throw ex;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + ex.getMessage().str()); 
+  }
+}
+
 //------------------------------------------------------------------------------
 // bindString
 //------------------------------------------------------------------------------

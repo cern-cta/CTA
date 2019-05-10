@@ -73,6 +73,10 @@ bool PostgresRset::columnIsNull(const std::string &colName) const {
   return PQgetisnull(m_resItr->get(), 0, ifield);
 }
 
+std::string PostgresRset::columnBlob(const std::string &colName) const {
+  throw exception::Exception("Not implemented.");
+}
+
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------

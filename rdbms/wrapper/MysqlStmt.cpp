@@ -260,6 +260,10 @@ void MysqlStmt::bindOptionalDouble(const std::string &paramName, const optional<
   }
 }
 
+void MysqlStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
+  throw exception::Exception("Not implemented.");
+}
+
 //------------------------------------------------------------------------------
 // bindString
 //------------------------------------------------------------------------------
