@@ -172,9 +172,10 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, std::list<l
     // The agent will be removed from our ownership by the calling function: we're done.
     return;
   }
-  // Aquire ownership of the agent.
+  // Aquire ownership of the agent. Prevent further updates to it.
   m_ourAgentReference.addToOwnership(address,m_objectStore);
   agent.setOwner(m_ourAgentReference.getAgentAddress());
+  agent.setBeingGarbageCollected();
   agent.commit();
   // Update the register
   ScopedExclusiveLock arl(m_agentRegister);

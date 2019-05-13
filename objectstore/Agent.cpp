@@ -44,6 +44,7 @@ void cta::objectstore::Agent::initialize() {
   m_payload.set_heartbeat(0);
   m_payload.set_timeout_us(60*1000*1000);
   m_payload.set_description("");
+  m_payload.set_being_garbage_collected(false);
   m_payloadInterpreted = true;
 }
 
@@ -136,6 +137,16 @@ bool cta::objectstore::Agent::isEmpty() {
   if (m_payload.ownedobjects_size())
     return false;
   return true;
+}
+
+bool cta::objectstore::Agent::isBeingGarbageCollected() {
+  checkPayloadReadable();
+  return m_payload.being_garbage_collected();
+}
+
+void cta::objectstore::Agent::setBeingGarbageCollected() {
+  checkPayloadWritable();
+  m_payload.set_being_garbage_collected(true);
 }
 
 void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,

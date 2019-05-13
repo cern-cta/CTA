@@ -159,6 +159,12 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       objectstore::ScopedExclusiveLock agl(ag);
       double agentLockTime = t.secs(utils::Timer::resetCounter);
       ag.fetch();
+      if (ag.isBeingGarbageCollected()) {
+        log::ScopedParamContainer params(lc);
+        params.add("agentObject", ag.getAddressIfSet());
+        lc.log(log::CRIT, "In AgentReference::queueAndExecuteAction(): agent object being garbage collected. Exiting.");
+        ::exit(EXIT_FAILURE);
+      }
       double agentFetchTime = t.secs(utils::Timer::resetCounter);
       size_t agentOwnershipSizeBefore = ag.getOwnershipListSize();
       size_t operationsCount = q->queue.size() + 1;

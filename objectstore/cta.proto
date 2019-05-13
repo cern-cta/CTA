@@ -155,6 +155,7 @@ message Agent {
   required uint64 heartbeat = 2001;
   required uint64 timeout_us = 2002;
   repeated string ownedobjects = 2003;
+  optional bool being_garbage_collected = 2004 [default = false];
 }
 
 message AgentRegister {
