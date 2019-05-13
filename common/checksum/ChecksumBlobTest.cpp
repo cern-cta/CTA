@@ -160,7 +160,9 @@ TEST_F(cta_ChecksumBlobTest, serialize_deserialize) {
   checksumBlob1.insert(MD5, "1234567890123456");       // 128 bits
   checksumBlob1.insert(SHA1, "12345678901234567890");  // 160 bits
 
+  auto len = checksumBlob1.length();
   auto bytearray = checksumBlob1.serialize();
+  ASSERT_EQ(len,bytearray.length());
 
   ChecksumBlob checksumBlob2;
   checksumBlob2.deserialize(bytearray);

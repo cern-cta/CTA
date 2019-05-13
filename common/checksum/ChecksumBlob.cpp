@@ -98,8 +98,9 @@ std::string ChecksumBlob::serialize() const {
 }
 
 size_t ChecksumBlob::length() const {
-  // Inefficient as it requires re-doing the serialization. Check if we really need this method.
-  return serialize().length();
+  common::ChecksumBlob p_csb;
+  ChecksumBlobToProtobuf(*this, p_csb);
+  return p_csb.ByteSizeLong();
 }
 
 void ChecksumBlob::deserialize(const std::string &bytearray) {
