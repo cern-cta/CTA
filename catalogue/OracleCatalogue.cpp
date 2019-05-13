@@ -522,7 +522,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskFileUser.setFieldLenToValueLen(i, event.diskFileOwnerUid);
       archiveFileBatch.diskFileGroup.setFieldLenToValueLen(i, event.diskFileGid);
       archiveFileBatch.size.setFieldLenToValueLen(i, event.size);
-      archiveFileBatch.checksumBlob.setFieldLenToValueLen(i, event.checksumBlob);
+      archiveFileBatch.checksumBlob.setFieldLen(i, 2 + event.checksumBlob.length());
       archiveFileBatch.storageClassName.setFieldLenToValueLen(i, event.storageClassName);
       archiveFileBatch.creationTime.setFieldLenToValueLen(i, now);
       archiveFileBatch.reconciliationTime.setFieldLenToValueLen(i, now);
@@ -539,7 +539,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileOwnerUid);
       archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
       archiveFileBatch.size.setFieldValue(i, event.size);
-      archiveFileBatch.checksumBlob.setFieldValue(i, event.checksumBlob.serialize());
+      archiveFileBatch.checksumBlob.setFieldValueToRaw(i, event.checksumBlob.serialize());
       archiveFileBatch.storageClassName.setFieldValue(i, event.storageClassName);
       archiveFileBatch.creationTime.setFieldValue(i, now);
       archiveFileBatch.reconciliationTime.setFieldValue(i, now);
@@ -587,7 +587,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
     occiStmt.setColumn(archiveFileBatch.diskFileUser);
     occiStmt.setColumn(archiveFileBatch.diskFileGroup);
     occiStmt.setColumn(archiveFileBatch.size);
-    occiStmt.setColumn(archiveFileBatch.checksumBlob);
+    occiStmt.setColumn(archiveFileBatch.checksumBlob, oracle::occi::OCCI_SQLT_VBI);
     occiStmt.setColumn(archiveFileBatch.storageClassName);
     occiStmt.setColumn(archiveFileBatch.creationTime);
     occiStmt.setColumn(archiveFileBatch.reconciliationTime);
@@ -662,7 +662,7 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN TEMP_TAPE_FILE_BATCH ON "

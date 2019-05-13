@@ -105,7 +105,15 @@ public:
     setFieldValue(index, value, std::is_integral<T>());
   }
 
-private:
+  /**
+   * Sets the field at the specified index to the specified raw byte array.
+   *
+   * This method tag dispatches using std::is_integral.
+   *
+   * @param index The index of the field.
+   * @param value The value of the field.
+   */
+  void setFieldValueToRaw(size_t index, const std::string &blob);
 
   /**
    * Sets the length of the field at the specified index.
@@ -114,6 +122,8 @@ private:
    * @param length The length of the field.
    */
   void setFieldLen(const size_t index, const ub2 length);
+
+private:
 
   /**
    * Sets the length of the field at the specified index to the length of the

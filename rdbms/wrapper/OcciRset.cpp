@@ -127,7 +127,19 @@ void OcciRset::close() {
 }
 
 std::string OcciRset::columnBlob(const std::string &colName) const {
-  throw exception::Exception("Not implemented.");
+  try {
+    const int colIdx = m_colNameToIdx.getIdx(colName);
+    auto raw = m_rset->getBytes(colIdx);
+    std::string ret;
+    for(unsigned i = 0; i < raw.length(); ++i) ret.push_back(raw.byteAt(i));
+    return ret;
+  } catch(exception::Exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+      ne.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+      se.what());
+  }
 }
 
 //------------------------------------------------------------------------------

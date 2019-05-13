@@ -182,9 +182,10 @@ public:
   /**
    * Sets the specified column data for a batch-based database access.
    *
-   * @param The column data.
+   * @param  col   The column data
+   * @param  type  The type of the data
    */
-  void setColumn(OcciColumn &col);
+  void setColumn(OcciColumn &col, oracle::occi::Type type = oracle::occi::OCCI_SQLT_STR);
 
   /**
    * Determines whether or not the connection should be closed based on the

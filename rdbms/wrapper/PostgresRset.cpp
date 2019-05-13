@@ -74,7 +74,7 @@ bool PostgresRset::columnIsNull(const std::string &colName) const {
 }
 
 std::string PostgresRset::columnBlob(const std::string &colName) const {
-  throw exception::Exception("Not implemented.");
+  throw exception::Exception("PostgresRset::columnBlob not implemented.");
 }
 
 //------------------------------------------------------------------------------
