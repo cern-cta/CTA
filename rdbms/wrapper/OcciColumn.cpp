@@ -150,6 +150,26 @@ void OcciColumn::copyStrIntoField(const size_t index, const std::string &str) {
   }
 }
 
+//------------------------------------------------------------------------------
+// setFieldValueToRaw
+//------------------------------------------------------------------------------
+void OcciColumn::setFieldValueToRaw(size_t index, const std::string &blob) {
+  try {
+    size_t maxlen = m_maxFieldLength < 2000 ? m_maxFieldLength : 2000;
+    if(blob.length() + 2 > maxlen) {
+      throw exception::Exception("Blob length=" + std::to_string(blob.length()) +
+        " exceeds maximum field length (" + std::to_string(maxlen-2) + ") bytes)");
+    }
+    uint16_t len = blob.length();
+    char *const buf = getBuffer();
+    char *const element = buf + index * m_maxFieldLength;
+    memcpy(element, &len, 2);
+    memcpy(element + 2, blob.c_str(), len);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: colName=" + m_colName + ": " + ex.getMessage().str());
+  }
+}
+
 } // namespace wrapper
 } // namespace rdbms
 } // namespace cta

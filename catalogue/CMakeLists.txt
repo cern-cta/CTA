@@ -91,22 +91,26 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
     | sed 's/NUMERIC\([^\)]*\)/INTEGER/g'
+    | sed 's/CHECKSUM_BLOB_TYPE/BLOB\(200\)/g'
     > sqlite_catalogue_schema.sql
   COMMAND cat 
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql 
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql 
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trailer.sql
+    | sed 's/CHECKSUM_BLOB_TYPE/RAWBINARY\(200\)/g'
     > mysql_catalogue_schema.sql
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql
     | sed 's/VARCHAR/VARCHAR2/g'
+    | sed 's/CHECKSUM_BLOB_TYPE/RAW\(200\)/g'
     > oracle_catalogue_schema.sql
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_trailer.sql
+    | sed 's/CHECKSUM_BLOB_TYPE/BYTEA\(200\)/g'
     > postgres_catalogue_schema.sql
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
