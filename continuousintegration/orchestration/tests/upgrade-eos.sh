@@ -87,5 +87,14 @@ kubectl -n ${NAMESPACE} exec ctaeos -- eos fs ls /fst
 echo "Available disk space inside EOS container:"
 kubectl -n ${NAMESPACE} exec ctaeos -- df -h
 
+# Launching preflight test against the new version of EOS
+PREFLIGHTTEST_SCRIPT='preflighttest.sh'
+if [ -x ${PREFLIGHTTEST_SCRIPT} ]; then
+  echo "Launching preflight test: ${PREFLIGHTTEST_SCRIPT}"
+  ./$(basename ${PREFLIGHTTEST_SCRIPT}) -n ${NAMESPACE}
+else
+  echo "SKIPPING preflight test: ${PREFLIGHTTEST_SCRIPT} not available"
+fi
+
 echo "Launching archive_retrieve.sh:"
 ./archive_retrieve.sh -n ${NAMESPACE}
