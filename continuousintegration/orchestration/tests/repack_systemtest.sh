@@ -1,6 +1,9 @@
 #!/bin/bash
 
+#default CI EOS instance
 EOSINSTANCE=ctaeos
+#default Repack timeout
+WAIT_FOR_REPACK_TIMEOUT=300
 
 die() {
   echo "$@" 1>&2
@@ -9,8 +12,10 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL>
+Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>]
 (bufferURL example : /eos/ctaeos/repack)
+eosinstance : the name of the ctaeos instance to be used (default ctaeos)
+timeout : the timeout in seconds to wait for the repack to be done
 EOF
 exit 1
 }
@@ -41,7 +46,7 @@ then
   usage
 fi;
 
-while getopts "v:e:b:" o; do
+while getopts "v:e:b:t:" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -51,6 +56,9 @@ while getopts "v:e:b:" o; do
       ;;
     b)
       REPACK_BUFFER_BASEDIR=${OPTARG}
+      ;;
+    t)
+      WAIT_FOR_REPACK_TIMEOUT={$OPTARG}
       ;;
     *)
       usage
@@ -64,6 +72,11 @@ if [ "x${REPACK_BUFFER_BASEDIR}" = "x" ]; then
   die "No repack buffer URL provided."
 fi
 
+if [ "x${VID_TO_REPACK}" = "x" ]; then
+  usage
+  die "No vid to repack provided."
+fi
+
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
@@ -75,23 +88,21 @@ klist -s || die "Cannot get kerberos credentials for user ${USER}"
 eospower_kdestroy
 eospower_kinit
 
-WAIT_FOR_REPACK_TIMEOUT=300
-
 echo "Testing the repackBufferURL provided"
 FULL_REPACK_BUFFER_URL=root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}
 testRepackBufferURL
 
 echo "Deleting existing repack request for VID ${VID_TO_REPACK}"
-admin_cta re rm --vid ${VID_TO_REPACK}
+admin_cta repack rm --vid ${VID_TO_REPACK}
 
 echo "State of the tape VID ${VID_TO_REPACK} BEFORE repack"
-admin_cta --json ta ls --vid ${VID_TO_REPACK}
+admin_cta --json tape ls --vid ${VID_TO_REPACK} | jq .
 
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
 admin_cta re add --vid ${VID_TO_REPACK} --justmove --bufferurl ${FULL_REPACK_BUFFER_URL}
 
 SECONDS_PASSED=0
-while test 0 = `admin_cta re ls --vid ${VID_TO_REPACK} | grep -E "Complete|Failed" | wc -l`; do
+while test 0 = `admin_cta repack ls --vid ${VID_TO_REPACK} | grep -E "Complete|Failed" | wc -l`; do
   echo "Waiting for repack request on tape ${VID_TO_REPACK} to be complete: Seconds passed = $SECONDS_PASSED"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -101,10 +112,10 @@ while test 0 = `admin_cta re ls --vid ${VID_TO_REPACK} | grep -E "Complete|Faile
     exit 1
   fi
 done
-if test 1 = `admin_cta re ls -v ${VID_TO_REPACK} | grep -E "Failed" | wc -l`; then
+if test 1 = `admin_cta repack ls --vid ${VID_TO_REPACK} | grep -E "Failed" | wc -l`; then
     echo "Repack failed for tape ${VID_TO_REPACK}."
     exit 1
 fi
 
 echo "State of the tape VID ${VID_TO_REPACK} AFTER repack"
-admin_cta --json ta ls --vid ${VID_TO_REPACK}
+admin_cta --json tape ls --vid ${VID_TO_REPACK} | jq .
