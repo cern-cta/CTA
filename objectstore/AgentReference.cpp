@@ -162,7 +162,8 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       if (ag.isBeingGarbageCollected()) {
         log::ScopedParamContainer params(lc);
         params.add("agentObject", ag.getAddressIfSet());
-        lc.log(log::CRIT, "In AgentReference::queueAndExecuteAction(): agent object being garbage collected. Exiting.");
+        lc.log(log::CRIT, "In AgentReference::queueAndExecuteAction(): agent object being garbage collected. Exiting (segfault).");
+        ::kill(::getpid(), SIGSEGV);
         ::exit(EXIT_FAILURE);
       }
       double agentFetchTime = t.secs(utils::Timer::resetCounter);

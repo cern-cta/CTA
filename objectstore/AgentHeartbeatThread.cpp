@@ -19,6 +19,9 @@
 #include "AgentHeartbeatThread.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
 
 namespace cta { namespace objectstore {
 
@@ -47,7 +50,8 @@ void AgentHeartbeatThread::run() {
         log::ScopedParamContainer params(lc);
         params.add("HeartbeatUpdateTimeLimit", updateTimeLimit)
               .add("HeartbeatUpdateTime", updateTime);
-        lc.log(log::CRIT, "In AgentHeartbeatThread::run(): Could not update heartbeat in time. Exiting.");
+        lc.log(log::CRIT, "In AgentHeartbeatThread::run(): Could not update heartbeat in time. Exiting (segfault).");
+        ::kill(::getpid(), SIGSEGV);
         ::exit(EXIT_FAILURE);
       }
     }
@@ -56,8 +60,9 @@ void AgentHeartbeatThread::run() {
   } catch (cta::exception::Exception & ex) {
     log::ScopedParamContainer params(lc);
     params.add("Message", ex.getMessageValue());
-    lc.log(log::CRIT, "In AgentHeartbeatThread::run(): exception while bumping heartbeat. Backtrace follows. Exiting.");
+    lc.log(log::CRIT, "In AgentHeartbeatThread::run(): exception while bumping heartbeat. Backtrace follows. Exiting (segfault).");
     lc.logBacktrace(log::ERR, ex.backtrace());
+    ::kill(::getpid(), SIGSEGV);
     ::exit(EXIT_FAILURE);
   }
 }
