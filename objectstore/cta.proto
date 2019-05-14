@@ -541,6 +541,10 @@ message RepackRequest {
   required uint64 failedtoarchivefiles = 11540;
   required uint64 failedtoarchivebytes = 11550;
   required uint64 lastexpandedfseq = 11560;
+  //A RepackRequest can be in status Running even if the expansion
+  //is not finished. This boolean is used to indicate wether
+  //the expansion of the RepackRequest is done or not
+  required bool is_expand_finished = 11561;
   repeated RepackSubRequestPointer subrequests = 11570;
 }
 

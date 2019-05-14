@@ -22,6 +22,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "common/log/StringLogger.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
@@ -670,6 +672,420 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
   ASSERT_NO_THROW(re.removeIfEmpty(lc));
   // TODO: this unit test still leaks tape pools and requests
+}
+
+TEST(ObjectStore, GarbageCollectorRepackRequestPending) {
+// We will need a log object
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("dummy", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "unitTest");
+#endif
+  cta::log::LogContext lc(dl);
+  // We need a dummy catalogue
+  cta::catalogue::DummyCatalogue catalogue;
+  // Here we check that can successfully call RetrieveRequests's garbage collector
+  cta::objectstore::BackendVFS be;
+  // Create the root entry
+  cta::objectstore::RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  cta::objectstore::EntryLogSerDeser el("user0",
+      "unittesthost", time(NULL));
+  cta::objectstore::ScopedExclusiveLock rel(re);
+  // Create the agent for objects creation
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
+  // Finish root creation.
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
+  rel.release();
+  // continue agent creation.
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  {
+    // Create an agent to be garbage collected
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
+    agentRepackRequest.initialize();
+    agentRepackRequest.setTimeout_us(0);
+    agentRepackRequest.insertAndRegisterSelf(lc);
+    //Create a RepackQueue and insert a RepackRequest with status "Pending" in it
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+
+    //Create the RepackRequest
+    std::string repackRequestAddr = agentReferenceRepackRequest.nextId("RepackRequest");
+    agentReferenceRepackRequest.addToOwnership(repackRequestAddr, be);
+    cta::objectstore::RepackRequest repackRequest(repackRequestAddr,be);
+    repackRequest.initialize();
+    repackRequest.setStatus(cta::common::dataStructures::RepackInfo::Status::Pending);
+    repackRequest.setVid("VIDTest");
+    repackRequest.setBufferURL("test/buffer/url");
+    repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
+    repackRequest.insert();
+  }
+  {
+    //Now we garbage collect the RepackRequest
+    
+    // Create the garbage collector and run it once.
+    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+    cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+    gcAgent.initialize();
+    gcAgent.setTimeout_us(0);
+    gcAgent.insertAndRegisterSelf(lc);
+    {
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      gc.runOnePass(lc);
+    }
+  }
+  //The repack request should have been requeued in the RepackQueuePending
+  {
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::Pending);
+    cta::objectstore::RepackQueue rq(repackQueueAddr,be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    ASSERT_EQ(1,rq.getRequestsSummary().requests);
+  }
+}
+
+TEST(ObjectStore, GarbageCollectorRepackRequestToExpand) {
+// We will need a log object
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("dummy", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "unitTest");
+#endif
+  cta::log::LogContext lc(dl);
+  // We need a dummy catalogue
+  cta::catalogue::DummyCatalogue catalogue;
+  // Here we check that can successfully call RetrieveRequests's garbage collector
+  cta::objectstore::BackendVFS be;
+  // Create the root entry
+  cta::objectstore::RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  cta::objectstore::EntryLogSerDeser el("user0",
+      "unittesthost", time(NULL));
+  cta::objectstore::ScopedExclusiveLock rel(re);
+  // Create the agent for objects creation
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
+  // Finish root creation.
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
+  rel.release();
+  // continue agent creation.
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  {
+    // Create an agent to be garbage collected
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
+    agentRepackRequest.initialize();
+    agentRepackRequest.setTimeout_us(0);
+    agentRepackRequest.insertAndRegisterSelf(lc);
+    //Create a RepackQueue and insert a RepackRequest with status "ToExpand" in it
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+
+    //Create the RepackRequest
+    std::string repackRequestAddr = agentReferenceRepackRequest.nextId("RepackRequest");
+    agentReferenceRepackRequest.addToOwnership(repackRequestAddr, be);
+    cta::objectstore::RepackRequest repackRequest(repackRequestAddr,be);
+    repackRequest.initialize();
+    repackRequest.setStatus(cta::common::dataStructures::RepackInfo::Status::ToExpand);
+    repackRequest.setVid("VID2Test");
+    repackRequest.setBufferURL("test/buffer/url");
+    repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
+    repackRequest.insert();
+  }
+  {
+    // Now we garbage collect the RepackRequest
+    
+    // Create the garbage collector and run it once.
+    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+    cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+    gcAgent.initialize();
+    gcAgent.setTimeout_us(0);
+    gcAgent.insertAndRegisterSelf(lc);
+    {
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      gc.runOnePass(lc);
+    }
+  }
+  {
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::ToExpand);
+    cta::objectstore::RepackQueue rq(repackQueueAddr,be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    ASSERT_EQ(1,rq.getRequestsSummary().requests);
+  }
+}
+
+TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
+  // We will need a log object
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("dummy", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "unitTest");
+#endif
+  cta::log::LogContext lc(dl);
+  // We need a dummy catalogue
+  cta::catalogue::DummyCatalogue catalogue;
+  // Here we check that can successfully call RetrieveRequests's garbage collector
+  cta::objectstore::BackendVFS be;
+  // Create the root entry
+  cta::objectstore::RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  cta::objectstore::EntryLogSerDeser el("user0",
+      "unittesthost", time(NULL));
+  cta::objectstore::ScopedExclusiveLock rel(re);
+  // Create the agent for objects creation
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
+  // Finish root creation.
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
+  rel.release();
+  // continue agent creation.
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  {
+    // Create an agent to be garbage collected
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
+    agentRepackRequest.initialize();
+    agentRepackRequest.setTimeout_us(0);
+    agentRepackRequest.insertAndRegisterSelf(lc);
+    //Create a RepackQueue and insert a RepackRequest with status "ToExpand" in it
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+
+    //Create the RepackRequest
+    std::string repackRequestAddr = agentReferenceRepackRequest.nextId("RepackRequest");
+    agentReferenceRepackRequest.addToOwnership(repackRequestAddr, be);
+    cta::objectstore::RepackRequest repackRequest(repackRequestAddr,be);
+    repackRequest.initialize();
+    repackRequest.setStatus(cta::common::dataStructures::RepackInfo::Status::Running);
+    repackRequest.setVid("VIDTest");
+    repackRequest.setBufferURL("test/buffer/url");
+    repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
+    repackRequest.setExpandFinished(false);
+    repackRequest.insert();
+  }
+  {
+    // Now we garbage collect the RepackRequest
+    
+    // Create the garbage collector and run it once.
+    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+    cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+    gcAgent.initialize();
+    gcAgent.setTimeout_us(0);
+    gcAgent.insertAndRegisterSelf(lc);
+    {
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      gc.runOnePass(lc);
+    }
+  }
+  {
+    //The request should be requeued in the ToExpand as it has not finished to expand
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::ToExpand);
+    cta::objectstore::RepackQueue rq(repackQueueAddr,be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    ASSERT_EQ(1,rq.getRequestsSummary().requests);
+  }
+}
+
+TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
+  // We will need a log object
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("dummy", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "unitTest");
+#endif
+  cta::log::LogContext lc(dl);
+  // We need a dummy catalogue
+  cta::catalogue::DummyCatalogue catalogue;
+  // Here we check that can successfully call RetrieveRequests's garbage collector
+  cta::objectstore::BackendVFS be;
+  // Create the root entry
+  cta::objectstore::RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  cta::objectstore::EntryLogSerDeser el("user0",
+      "unittesthost", time(NULL));
+  cta::objectstore::ScopedExclusiveLock rel(re);
+  // Create the agent for objects creation
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
+  // Finish root creation.
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
+  rel.release();
+  // continue agent creation.
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  {
+    // Create an agent to be garbage collected
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
+    agentRepackRequest.initialize();
+    agentRepackRequest.setTimeout_us(0);
+    agentRepackRequest.insertAndRegisterSelf(lc);
+    //Create a RepackQueue and insert a RepackRequest with status "ToExpand" in it
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+
+    //Create the RepackRequest
+    std::string repackRequestAddr = agentReferenceRepackRequest.nextId("RepackRequest");
+    agentReferenceRepackRequest.addToOwnership(repackRequestAddr, be);
+    cta::objectstore::RepackRequest repackRequest(repackRequestAddr,be);
+    repackRequest.initialize();
+    repackRequest.setStatus(cta::common::dataStructures::RepackInfo::Status::Running);
+    repackRequest.setVid("VIDTest");
+    repackRequest.setBufferURL("test/buffer/url");
+    repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
+    repackRequest.setExpandFinished(true);
+    repackRequest.insert();
+  }
+  cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);
+  cta::log::LogContext lc2(strLogger);
+  {
+    // Now we garbage collect the RepackRequest
+    
+    // Create the garbage collector and run it once.
+    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", strLogger);
+    cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+    gcAgent.initialize();
+    gcAgent.setTimeout_us(0);
+    gcAgent.insertAndRegisterSelf(lc2);
+    {
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      gc.runOnePass(lc2);
+    }
+  }
+  {
+    //The request should not be requeued in the ToExpand as it has finished to expand
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::ToExpand);
+    cta::objectstore::RepackQueue rq(repackQueueAddr,be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    ASSERT_EQ(0,rq.getRequestsSummary().requests);
+  }
+  {
+    //The request should not be requeued in the ToExpand as it has not finished to expand
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::Pending);
+    cta::objectstore::RepackQueue rq(repackQueueAddr,be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    ASSERT_EQ(0,rq.getRequestsSummary().requests);
+  }
+  //Check the logs contains the failed to requeue message
+  std::string logToCheck = strLogger.getLog();
+  logToCheck += "";
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Running have no corresponding queue.\""));
+}
+
+TEST(ObjectStore, GarbageCollectorRepackRequestStarting) {
+// We will need a log object
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("dummy", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "unitTest");
+#endif
+  cta::log::LogContext lc(dl);
+  // We need a dummy catalogue
+  cta::catalogue::DummyCatalogue catalogue;
+  // Here we check that can successfully call RetrieveRequests's garbage collector
+  cta::objectstore::BackendVFS be;
+  // Create the root entry
+  cta::objectstore::RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  cta::objectstore::EntryLogSerDeser el("user0",
+      "unittesthost", time(NULL));
+  cta::objectstore::ScopedExclusiveLock rel(re);
+  // Create the agent for objects creation
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
+  // Finish root creation.
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
+  rel.release();
+  // continue agent creation.
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  {
+    // Create an agent to be garbage collected
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
+    agentRepackRequest.initialize();
+    agentRepackRequest.setTimeout_us(0);
+    agentRepackRequest.insertAndRegisterSelf(lc);
+    //Create a RepackQueue and insert a RepackRequest with status "ToExpand" in it
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+
+    //Create the RepackRequest
+    std::string repackRequestAddr = agentReferenceRepackRequest.nextId("RepackRequest");
+    agentReferenceRepackRequest.addToOwnership(repackRequestAddr, be);
+    cta::objectstore::RepackRequest repackRequest(repackRequestAddr,be);
+    repackRequest.initialize();
+    repackRequest.setStatus(cta::common::dataStructures::RepackInfo::Status::Starting);
+    repackRequest.setVid("VIDTest");
+    repackRequest.setBufferURL("test/buffer/url");
+    repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
+    repackRequest.setExpandFinished(true);
+    repackRequest.insert();
+  }
+  cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);
+  cta::log::LogContext lc2(strLogger);
+  {
+    // Now we garbage collect the RepackRequest
+    
+    // Create the garbage collector and run it once.
+    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", strLogger);
+    cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+    gcAgent.initialize();
+    gcAgent.setTimeout_us(0);
+    gcAgent.insertAndRegisterSelf(lc2);
+    {
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      gc.runOnePass(lc2);
+    }
+  }
+  //Check the logs contains the failed to requeue message
+  std::string logToCheck = strLogger.getLog();
+  logToCheck += "";
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Starting have no corresponding queue.\""));
 }
 
 }

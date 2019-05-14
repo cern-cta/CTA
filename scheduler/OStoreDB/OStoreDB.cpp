@@ -2305,6 +2305,9 @@ void OStoreDB::RepackRequest::expandDone() {
       break;
     }
   }
+  if(stats.at(StatsType::RetrieveTotal).files == m_repackRequest.getInfo().totalFilesToRetrieve){
+    m_repackRequest.setExpandFinished(true);
+  }
   typedef common::dataStructures::RepackInfo::Status Status;
   m_repackRequest.setStatus(running? Status::Running: Status::Starting);
   m_repackRequest.commit();

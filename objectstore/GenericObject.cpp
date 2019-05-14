@@ -140,6 +140,9 @@ void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock,
     case serializers::RetrieveQueue_t:
       garbageCollectWithType<RetrieveQueue>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
+    case serializers::RepackRequest_t:
+      garbageCollectWithType<RepackRequest>(this, lock, presumedOwner, agentReference, lc, catalogue);
+      break;
     default: {
       std::stringstream err;
       err << "In GenericObject::garbageCollect, unsupported type: "

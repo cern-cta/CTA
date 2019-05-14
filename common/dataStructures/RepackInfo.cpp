@@ -17,6 +17,7 @@
  */
 
 #include "common/dataStructures/RepackInfo.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace cta {
 namespace common {
@@ -51,6 +52,22 @@ std::string toString(RepackInfo::Status status) {
       return "ToExpand";
   default:
       return "UNKNOWN";
+  }
+}
+
+cta::objectstore::RepackQueueType RepackInfo::getQueueType(){
+  switch(status){
+    case RepackInfo::Status::Pending:
+      return cta::objectstore::RepackQueueType::Pending;
+    case RepackInfo::Status::ToExpand:
+      return cta::objectstore::RepackQueueType::ToExpand;
+    case RepackInfo::Status::Running:
+    case RepackInfo::Status::Starting:
+      if(!isExpandFinished){
+        return cta::objectstore::RepackQueueType::ToExpand;
+      }
+    default:
+      throw cta::exception::Exception("The status "+toString(status)+" have no corresponding queue.");
   }
 }
 

@@ -42,7 +42,8 @@ public:
   void setStatus(common::dataStructures::RepackInfo::Status repackStatus);
   common::dataStructures::RepackInfo getInfo();
   void setBufferURL(const std::string & bufferURL);
-  
+  void setExpandFinished(const bool expandFinished);
+  bool isExpandFinished();
   // Sub request management
   struct SubrequestInfo {
     std::string address;

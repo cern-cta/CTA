@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>
+#include "objectstore/RepackQueueType.hpp"
 
 namespace cta {
 namespace common {
@@ -57,6 +58,7 @@ struct RepackInfo {
   uint64_t failedBytesToRetrieve;
   uint64_t lastExpandedFseq;
   uint64_t userProvidedFiles;
+  bool isExpandFinished;
 //  std::string tag;
 //  uint64_t totalFiles;
 //  uint64_t totalSize;
@@ -68,7 +70,7 @@ struct RepackInfo {
 //  std::string repackStatus;
 //  std::map<uint64_t,std::string> errors;
 //  EntryLog creationLog;
-
+cta::objectstore::RepackQueueType getQueueType();
 }; // struct RepackInfo
 
 std::string toString(RepackInfo::Type type);

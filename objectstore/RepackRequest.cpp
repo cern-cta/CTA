@@ -19,7 +19,10 @@
 #include "RepackRequest.hpp"
 #include "GenericObject.hpp"
 #include "AgentReference.hpp"
+#include "RepackQueueAlgorithms.hpp"
+#include "Algorithms.hpp"
 #include <google/protobuf/util/json_util.h>
+#include <iostream>
 
 namespace cta { namespace objectstore {
 
@@ -71,6 +74,7 @@ void RepackRequest::initialize() {
   m_payload.set_failedtoarchivefiles(0);
   m_payload.set_failedtoarchivebytes(0);
   m_payload.set_lastexpandedfseq(0);
+  m_payload.set_is_expand_finished(false);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -135,6 +139,7 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.failedBytesToRetrieve = m_payload.failedtoretrievebytes();
   ret.lastExpandedFseq = m_payload.lastexpandedfseq();
   ret.userProvidedFiles = m_payload.userprovidedfiles();
+  ret.isExpandFinished = m_payload.is_expand_finished();
   if (m_payload.move_mode()) {
     if (m_payload.add_copies_mode()) {
       ret.type = RepackInfo::Type::MoveAndAddCopies;
@@ -147,6 +152,22 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
     throw exception::Exception("In RepackRequest::getInfo(): unexpected mode: neither expand nor repack.");
   }
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::setExpandFinished()
+//------------------------------------------------------------------------------
+void RepackRequest::setExpandFinished(const bool expandFinished){
+  checkPayloadWritable();
+  m_payload.set_is_expand_finished(expandFinished);
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::getExpandFinished()
+//------------------------------------------------------------------------------
+bool RepackRequest::isExpandFinished(){
+  checkPayloadReadable();
+  return m_payload.is_expand_finished();
 }
 
 //------------------------------------------------------------------------------
@@ -441,7 +462,35 @@ auto RepackRequest::getStats() -> std::map<StatsType, StatsValues> {
 //------------------------------------------------------------------------------
 void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, 
     log::LogContext& lc, cta::catalogue::Catalogue& catalogue) {
-  throw exception::Exception("In RepackRequest::garbageCollect(): not implemented.");
+  //Let's requeue the RepackRequest if its status is ToExpand or Pending
+  agentReference.addToOwnership(this->getAddressIfSet(), m_objectStore);
+  cta::utils::Timer t;
+  RepackQueue rq(m_objectStore);
+  ScopedExclusiveLock rql;
+  try{
+    Helpers::getLockedAndFetchedRepackQueue(rq, rql, agentReference, this->getInfo().getQueueType(), lc);
+  } catch(const cta::exception::Exception &e){
+    lc.log(log::INFO,"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : "+e.getMessage().str());
+    return;
+  }
+  double queueLockFetchTime = t.secs(utils::Timer::resetCounter);
+  auto jobsSummary = rq.getRequestsSummary();
+  uint64_t requestsBefore = jobsSummary.requests;
+  std::list<std::string> requestsToAdd;
+  requestsToAdd.push_back(this->getAddressIfSet());
+  try{
+    rq.addRequestsAndCommit(requestsToAdd,lc);
+    jobsSummary = rq.getRequestsSummary();
+    uint64_t requestsAfter = jobsSummary.requests;
+    log::ScopedParamContainer params(lc);
+    params.add("queueLockFetchTime",queueLockFetchTime)
+          .add("queueAddress",rq.getAddressIfSet())
+          .add("requestsBefore",requestsBefore)
+          .add("requestsAfter",requestsAfter);
+    lc.log(log::INFO,"In RepackRequest::garbageCollect() succesfully requeued the RepackRequest.");
+  } catch(const cta::exception::Exception &e){
+    lc.log(log::INFO,"In RepackRequest::garbageCollect() failed to requeue the RepackRequest. Leaving it as it is.");
+  }
 }
 
 //------------------------------------------------------------------------------
