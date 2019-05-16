@@ -172,6 +172,28 @@ optional<uint64_t> OcciRset::columnOptionalUint64(const std::string &colName) co
   }
 }
 
+//------------------------------------------------------------------------------
+// columnOptionalDouble
+//------------------------------------------------------------------------------
+optional<double> OcciRset::columnOptionalDouble(const std::string &colName) const {
+  try {
+    threading::Mutex locker(m_mutex);
+
+    const int colIdx = m_colNameToIdx.getIdx(colName);
+    if(m_rset->isNull(colIdx)) {
+      return nullopt;
+    } else {
+      return m_rset->getDouble(colIdx);
+    }
+  } catch(exception::Exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+      ne.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+      se.what());
+  }
+}
+
 } // namespace wrapper
 } // namespace rdbms
 } // namespace cta

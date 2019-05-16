@@ -279,9 +279,11 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libctacommonunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
 %{_libdir}/libctadbconfigconnunittests.so*
+%{_libdir}/libctadbconfigstmtunittests.so*
 %{_libdir}/libctaexceptionunittests.so*
 %{_libdir}/libctainmemorycatalogueunittests.so*
 %{_libdir}/libctainmemoryconnunittests.so*
+%{_libdir}/libctainmemorystmtunittests.so*
 %{_libdir}/libctaobjectstoreunittests.so*
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*

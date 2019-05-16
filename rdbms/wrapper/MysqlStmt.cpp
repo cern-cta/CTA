@@ -189,14 +189,59 @@ void MysqlStmt::bindOptionalUint64(const std::string &paramName, const optional<
     const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
     const unsigned int idx = paramIdx - 1;
 
-    Mysql::Placeholder_Uint64* holder = dynamic_cast<Mysql::Placeholder_Uint64*>(m_placeholder[idx]);
+    Mysql::Placeholder_Double* holder = dynamic_cast<Mysql::Placeholder_Double*>(m_placeholder[idx]);
     // if already exists, try to reuse
     if (!holder and m_placeholder[idx]) {
       throw exception::Exception(std::string(__FUNCTION__) + " can't cast from Placeholder to Placeholder_Uint64. " );
     }
 
     if (!holder) {
-      holder = new Mysql::Placeholder_Uint64();
+      holder = new Mysql::Placeholder_Double();
+      holder->idx = idx;
+      holder->length = sizeof(uint64_t);
+    }
+
+    if (paramValue) {
+      holder->val = paramValue.value();
+    } else {
+      holder->is_null = true;
+    }
+    // delete m_placeholder[idx]; // remove the previous placeholder
+
+    m_placeholder[idx] = holder;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindDouble
+//------------------------------------------------------------------------------
+void MysqlStmt::bindDouble(const std::string &paramName, const double paramValue) {
+  try {
+    bindOptionalDouble(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalDouble
+//------------------------------------------------------------------------------
+void MysqlStmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
+  try {
+    const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
+    const unsigned int idx = paramIdx - 1;
+
+    Mysql::Placeholder_Double* holder = dynamic_cast<Mysql::Placeholder_Double*>(m_placeholder[idx]);
+    // if already exists, try to reuse
+    if (!holder and m_placeholder[idx]) {
+      throw exception::Exception(std::string(__FUNCTION__) + " can't cast from Placeholder to Placeholder_Double. " );
+    }
+
+    if (!holder) {
+      holder = new Mysql::Placeholder_Double();
       holder->idx = idx;
       holder->length = sizeof(uint64_t);
     }
@@ -393,6 +438,9 @@ bool MysqlStmt::do_bind() {
     case Mysql::Placeholder::placeholder_string:
       bind[idx].buffer_type = MYSQL_TYPE_STRING;
       break;
+    case Mysql::Placeholder::placeholder_double:
+      bind[idx].buffer_type = MYSQL_TYPE_DOUBLE;
+      break;
     default:
       throw exception::Exception(std::string(__FUNCTION__) + " Unknown buffer type in placeholder " + std::to_string(holder->get_buffer_type()));
       break;
@@ -471,6 +519,14 @@ bool MysqlStmt::do_bind_results() {
 
         holder = holder_;
         bind[i].buffer_type = MYSQL_TYPE_STRING;
+      }
+      break;
+    case MYSQL_TYPE_FLOAT:
+    case MYSQL_TYPE_DOUBLE:
+      {
+        Mysql::Placeholder_Double* holder_ = new Mysql::Placeholder_Double();
+        holder = holder_;
+        bind[i].buffer_type = MYSQL_TYPE_DOUBLE;
       }
       break;
     default:

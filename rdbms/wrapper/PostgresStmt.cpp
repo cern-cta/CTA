@@ -153,6 +153,45 @@ void PostgresStmt::bindUint64(const std::string &paramName, const uint64_t param
 }
 
 //------------------------------------------------------------------------------
+// bindDouble
+//------------------------------------------------------------------------------
+void PostgresStmt::bindDouble(const std::string &paramName, const double paramValue) {
+  try {
+    bindOptionalDouble(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalDouble
+//------------------------------------------------------------------------------
+void PostgresStmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
+  threading::RWLockWrLocker locker(m_lock);
+
+  try {
+    const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
+
+    if (paramIdx==0 || paramIdx>m_paramValues.size()) {
+      throw exception::Exception(std::string("Bad index for paramName ") + paramName);
+    }
+
+    const unsigned int idx = paramIdx - 1;
+    if (paramValue) {
+      // we must not cause the vector m_paramValues to resize, otherwise the c-pointers can be invalidated
+      m_paramValues[idx] = std::to_string(paramValue.value());
+      m_paramValuesPtrs[idx] = m_paramValues[idx].c_str();
+    } else {
+      m_paramValues[idx].clear();
+      m_paramValuesPtrs[idx] = nullptr;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // clear
 //------------------------------------------------------------------------------
 void PostgresStmt::clear() {

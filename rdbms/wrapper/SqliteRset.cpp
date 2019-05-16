@@ -254,6 +254,22 @@ optional<uint64_t> SqliteRset::columnOptionalUint64(const std::string &colName) 
   }
 }
 
+//------------------------------------------------------------------------------
+// columnOptionalDouble
+//------------------------------------------------------------------------------
+optional<double> SqliteRset::columnOptionalDouble(const std::string &colName) const {
+  try {
+    const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
+    if(SQLITE_NULL == idxAndType.colType) {
+      return nullopt;
+    } else {
+      return optional<double>(sqlite3_column_double(m_stmt.get(), idxAndType.colIdx));
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 } // namespace wrapper
 } // namespace rdbms
 } // namespace cta

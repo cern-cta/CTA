@@ -32,6 +32,7 @@ target_link_libraries(cta-unitTests
   ctamediachangerunittests
   ctainmemorycatalogueunittests
   ctainmemoryconnunittests
+  ctainmemorystmtunittests
   ctaobjectstore
   ctaobjectstoreunittests
   ctardbmswrapperunittests
@@ -58,6 +59,8 @@ add_executable(cta-rdbmsUnitTests
 target_link_libraries(cta-rdbmsUnitTests
   ctadbconfigcatalogueunittests
   ctadbconfigconnunittests
+  ctadbconfigstmtunittests
+  ctardbmsunittests
   gtest
   pthread)
 

@@ -129,6 +129,28 @@ void Stmt::bindOptionalUint64(const std::string &paramName, const optional<uint6
 }
 
 //-----------------------------------------------------------------------------
+// bindDouble
+//-----------------------------------------------------------------------------
+void Stmt::bindDouble(const std::string &paramName, const double paramValue) {
+  if(nullptr != m_stmt) {
+    return m_stmt->bindDouble(paramName, paramValue);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Stmt does not contain a cached statement");
+  }
+}
+
+//-----------------------------------------------------------------------------
+// bindOptionalDouble
+//-----------------------------------------------------------------------------
+void Stmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
+  if(nullptr != m_stmt) {
+    return m_stmt->bindOptionalDouble(paramName, paramValue);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Stmt does not contain a cached statement");
+  }
+}
+
+//-----------------------------------------------------------------------------
 // bindBool
 //-----------------------------------------------------------------------------
 void Stmt::bindBool(const std::string &paramName, const bool paramValue) {

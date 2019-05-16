@@ -82,6 +82,16 @@ public:
    */
   virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const = 0;
 
+  /**
+   * Returns the value of the specified column as a double.
+   *
+   * This method will return a null column value as an optional with no value.
+   *
+   * @param colName The name of the column.
+   * @return The value of the specified column.
+   */
+  virtual optional<double> columnOptionalDouble(const std::string &colName) const = 0;
+
 }; // class RsetWrapper
 
 } // namespace wrapper
