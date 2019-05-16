@@ -396,11 +396,16 @@ if [[ $REMOVE == 1 ]]; then
   # recount the files on tape as the workflows may have gone further...
   INITIALFILESONTAPE=$(admin_cta archivefile ls  --all | grep ${EOS_DIR} | wc -l)
   echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
-
-  for TEST_FILE_NAME in $(grep archived$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
-    echo ${TEST_FILE_NAME}
-  done | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME eos root://${EOSINSTANCE} rm ${EOS_DIR}/TEST_FILE_NAME
-
+  #XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
+  EOSRMPID=$!
+  # wait a bit in case eos prematurely fails...
+  sleep 0.1
+  if test ! -d /proc/${EOSRMPID}; then
+    # eos rm process died, get its status
+    wait ${EOSRMPID}
+    test $? -ne 0 && die "Could not launch eos rm"
+  fi
   # Now we can start to do something...
   # deleted files are the ones that made it on tape minus the ones that are still on tapes...
   echo "Waiting for files to be deleted:"
