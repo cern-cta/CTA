@@ -626,7 +626,7 @@ uint64_t toUint64(const std::string &str) {
     try {
       return std::stoul(str);
     } catch(std::invalid_argument &) {
-      throw exception::Exception("Invalid string");
+      throw exception::Exception("Invalid uint64");
     } catch(std::out_of_range &) {
       throw exception::Exception("Out of range");
     } catch(std::exception &se) {
