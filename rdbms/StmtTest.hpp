@@ -29,6 +29,11 @@ namespace unitTests {
 class cta_rdbms_StmtTest : public ::testing::TestWithParam<cta::rdbms::LoginFactory*> {
 protected:
   /**
+   * The database login.
+   */
+  cta::rdbms::Login m_login;
+
+  /**
    * The database connection pool.
    */
   std::unique_ptr<cta::rdbms::ConnPool> m_connPool;
