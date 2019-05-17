@@ -1377,7 +1377,7 @@ std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
   // First, try to get the address of of the repack index lockfree.
   try {
     ri.setAddress(re.getRepackIndexAddress());
-  } catch (RootEntry::NotAllocated &) {
+  } catch (cta::exception::Exception &) {
     return ret;
   }
   ri.fetchNoLock();
@@ -1402,7 +1402,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
   // First, try to get the address of of the repack index lockfree.
   try {
     ri.setAddress(re.getRepackIndexAddress());
-  } catch (RootEntry::NotAllocated &) {
+  } catch (cta::exception::Exception &) {
     throw NoSuchRepackRequest("In OStoreDB::getRepackInfo(): No repack request for this VID (index not present).");
   }
   ri.fetchNoLock();
@@ -1479,7 +1479,7 @@ void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabas
   objectstore::RepackIndex ri(m_objectStore);
   try {
     ri.setAddress(re.getRepackIndexAddress());
-  } catch (RootEntry::NotAllocated &) {
+  } catch (cta::exception::Exception &) {
     return;
   }
   ri.fetchNoLock();
@@ -2345,7 +2345,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
   // First, try to get the address of of the repack index lockfree.
   try {
     ri.setAddress(re.getRepackIndexAddress());
-  } catch (RootEntry::NotAllocated &) {
+  } catch (cta::exception::Exception &) {
     throw NoSuchRepackRequest("In OStoreDB::cancelRepack(): No repack request for this VID (index not present).");
   }
   ri.fetchNoLock();

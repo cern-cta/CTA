@@ -740,7 +740,7 @@ std::string RootEntry::getRepackIndexAddress() {
       m_payload.repackindexpointer().address().size()) {
     return m_payload.repackindexpointer().address();
   }
-  throw NotAllocated("In RootEntry::getRepackIndexAddress: repack tape register not yet allocated");
+  throw cta::exception::Exception("In RootEntry::getRepackIndexAddress: repack tape register not yet allocated");
 }
 
 std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef) {
@@ -748,7 +748,7 @@ std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef) {
   // Check if the repack tape register exists
   try {
     return getRepackIndexAddress();
-  } catch (NotAllocated &) {
+  } catch (cta::exception::Exception &) {
     // TODO: this insertion method is much simpler than the ones used for other objects.
     // It implies the only dangling pointer situation we can get is the one where
     // the object does not exist.
