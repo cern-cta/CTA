@@ -281,6 +281,21 @@ namespace utils {
   uint64_t toUint64(const std::string &str);
 
   /**
+   * Checks if the specified string is a double unsigned integer.
+   *
+   * @param str The string to be checked.
+   * @returns true if the string is a valid double, else false.
+   */
+  bool isValidDouble(const std::string &str);
+
+  /**
+   * Parses the specified string representation of a double.
+   *
+   * @return The parsed double.
+   */
+  double toDouble(const std::string &str);
+
+  /**
    * Converts the specified string to uppercase.
    *
    * @param In/out parameter: The string to be converted.

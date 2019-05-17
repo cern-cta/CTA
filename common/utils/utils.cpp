@@ -639,6 +639,61 @@ uint64_t toUint64(const std::string &str) {
 }
 
 //------------------------------------------------------------------------------
+// isValidDouble
+//------------------------------------------------------------------------------
+bool isValidDouble(const std::string &str) {
+  // An empty string is not a valid double
+  if(str.empty()) {
+    return false;
+  }
+
+  uint64_t nbDecimalPoints = 0;
+
+  // For each character in the string
+  for(std::string::const_iterator itor = str.begin(); itor != str.end(); itor++) {
+
+    const bool isFirstChar = itor == str.begin();
+    const bool isMinusChar = '-' == *itor;
+    const bool isANumericalDigit = '0' <= *itor && *itor <= '9';
+    const bool isADecimalPoint = '.' == *itor;
+
+    if(!(isFirstChar && isMinusChar) && !isANumericalDigit && !isADecimalPoint) {
+      return false;
+    }
+
+    if(isADecimalPoint) {
+      nbDecimalPoints++;
+    }
+
+    if(1 < nbDecimalPoints) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+//------------------------------------------------------------------------------
+// toDouble
+//------------------------------------------------------------------------------
+double toDouble(const std::string &str) {
+  try {
+    try {
+      return std::stod(str);
+    } catch(std::invalid_argument &) {
+      throw exception::Exception("Invalid double");
+    } catch(std::out_of_range &) {
+      throw exception::Exception("Out of range");
+    } catch(std::exception &se) {
+      throw exception::Exception(se.what());
+    }
+  } catch(exception::Exception  &ex) {
+    throw exception::Exception(std::string("Failed to parse ") + str + " as a double: " +
+      ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // toUpper
 //------------------------------------------------------------------------------
 void toUpper(std::string &str) {

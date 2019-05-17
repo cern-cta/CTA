@@ -484,6 +484,67 @@ TEST_F(cta_UtilsTest, toUint64_not_a_number) {
   ASSERT_THROW(utils::toUint64("one"), exception::Exception);
 }
 
+TEST_F(cta_UtilsTest, isValidDouble) {
+  using namespace cta;
+
+  ASSERT_TRUE(utils::isValidDouble("1.234"));
+}
+
+TEST_F(cta_UtilsTest, isValidDouble_empty_string) {
+  using namespace cta;
+
+  ASSERT_FALSE(utils::isValidDouble(""));
+}
+
+TEST_F(cta_UtilsTest, isValidDouble_negative_double) {
+  using namespace cta;
+
+  ASSERT_TRUE(utils::isValidDouble("-1.234"));
+}
+
+TEST_F(cta_UtilsTest, isValidDouble_not_a_number) {
+  using namespace cta;
+
+  ASSERT_FALSE(utils::isValidDouble("one"));
+}
+
+TEST_F(cta_UtilsTest, isValidDouble_two_decimal_points) {
+  using namespace cta;
+
+  ASSERT_FALSE(utils::isValidDouble("1.2.34"));
+}
+
+TEST_F(cta_UtilsTest, toDouble_double) {
+  using namespace cta;
+
+  ASSERT_EQ((double)1.234, utils::toDouble("1.234"));
+}
+
+TEST_F(cta_UtilsTest, toDouble_negative_double) {
+  using namespace cta;
+
+  ASSERT_EQ((double)-1.234, utils::toDouble("-1.234"));
+}
+
+TEST_F(cta_UtilsTest, toDouble_too_big) {
+  using namespace cta;
+
+  // std::numeric_limits<double>::max=1.79769e+308
+  ASSERT_THROW(utils::toDouble("1.79770e+308"), exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, toDouble_empty_string) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toDouble(""), exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, toDouble_not_a_number) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toDouble("one"), exception::Exception);
+}
+
 TEST_F(cta_UtilsTest, adler32_empty_buf) {
   using namespace cta;
 
