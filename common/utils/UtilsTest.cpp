@@ -429,7 +429,7 @@ TEST_F(cta_UtilsTest, toGid_too_big) {
   ASSERT_THROW(utils::toGid(oss.str()), std::exception);
 }
 
-TEST_F(cta_UtilsTest, isValidUInt_unsigned_int) {
+TEST_F(cta_UtilsTest, isValidUInt) {
   using namespace cta;
 
   ASSERT_TRUE(utils::isValidUInt("12345"));
@@ -441,7 +441,7 @@ TEST_F(cta_UtilsTest, isValidUInt_empty_string) {
   ASSERT_FALSE(utils::isValidUInt(""));
 }
 
-TEST_F(cta_UtilsTest, isValidUInt_signed_int) {
+TEST_F(cta_UtilsTest, isValidUInt_negative) {
   using namespace cta;
 
   ASSERT_FALSE(utils::isValidUInt("-12345"));
@@ -453,7 +453,7 @@ TEST_F(cta_UtilsTest, isValidUInt_not_a_number) {
   ASSERT_FALSE(utils::isValidUInt("one"));
 }
 
-TEST_F(cta_UtilsTest, toUint64_unsigned_int) {
+TEST_F(cta_UtilsTest, toUint64) {
   using namespace cta;
 
   ASSERT_EQ((uint64_t)12345, utils::toUint64("12345"));
