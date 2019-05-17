@@ -46,7 +46,7 @@ void cta_rdbms_StmtTest::SetUp() {
     // Do nothing
   }
 
-  m_conn.executeNonQuery("CREATE TABLE STMT_TEST(DOUBLE_COL FLOAT)");
+  m_conn.executeNonQuery("CREATE TABLE STMT_TEST(DOUBLE_COL FLOAT, UINT64_COL NUMERIC(20, 0))");
 }
 
 //------------------------------------------------------------------------------
@@ -95,6 +95,44 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble) {
 
     const double diff = insertValue - selectValue.value();
     ASSERT_TRUE(0.000001 > diff);
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64) {
+  using namespace cta::rdbms;
+
+  const uint64_t insertValue = 1234;
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST("
+        "UINT64_COL) "
+      "VALUES("
+        ":UINT64_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindDouble(":UINT64_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT "
+        "UINT64_COL AS UINT64_COL "
+      "FROM "
+        "STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalDouble("UINT64_COL");
+
+    ASSERT_TRUE((bool)selectValue);
+
+    ASSERT_EQ(insertValue,selectValue.value());
 
     ASSERT_FALSE(rset.next());
   }
