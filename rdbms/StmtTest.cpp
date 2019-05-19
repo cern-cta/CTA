@@ -52,7 +52,7 @@ void cta_rdbms_StmtTest::SetUp() {
 }
 
 //------------------------------------------------------------------------------
-// getStmtTestTableSql
+// getCreateStmtTestTableSql
 //------------------------------------------------------------------------------
 std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
   using namespace cta;
