@@ -63,7 +63,8 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
       "CREATE TABLE STMT_TEST("
         "DOUBLE_COL FLOAT,"
         "UINT64_COL NUMERIC(20, 0),"
-        "STRING_COL VARCHAR(100)"
+        "STRING_COL VARCHAR(100),"
+        "BOOL_COL CHAR(1)"
       ")";
 
     switch(m_login.dbType) {
@@ -301,6 +302,44 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString) {
     ASSERT_TRUE(rset.next());
 
     const auto selectValue = rset.columnOptionalString("STRING_COL");
+
+    ASSERT_TRUE((bool)selectValue);
+
+    ASSERT_EQ(insertValue,selectValue.value());
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_true) {
+  using namespace cta::rdbms;
+
+  const bool insertValue = true;
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST("
+        "BOOL_COL) "
+      "VALUES("
+        ":BOOL_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindBool(":BOOL_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT "
+        "BOOL_COL AS BOOL_COL "
+      "FROM "
+        "STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalBool("BOOL_COL");
 
     ASSERT_TRUE((bool)selectValue);
 
