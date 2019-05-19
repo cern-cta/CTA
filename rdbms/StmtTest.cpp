@@ -18,6 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/StmtTest.hpp"
 
@@ -46,7 +47,56 @@ void cta_rdbms_StmtTest::SetUp() {
     // Do nothing
   }
 
-  m_conn.executeNonQuery("CREATE TABLE STMT_TEST(DOUBLE_COL FLOAT, UINT64_COL NUMERIC(20, 0))");
+  const std::string createTableSql = getCreateStmtTestTableSql();
+  m_conn.executeNonQuery(createTableSql);
+}
+
+//------------------------------------------------------------------------------
+// getStmtTestTableSql
+//------------------------------------------------------------------------------
+std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  try {
+    std::string sql =
+      "CREATE TABLE STMT_TEST("
+        "DOUBLE_COL FLOAT,"
+        "UINT64_COL NUMERIC(20, 0),"
+        "STRING_COL VARCHAR(100)"
+      ")";
+
+    switch(m_login.dbType) {
+    case Login::DBTYPE_IN_MEMORY:
+      break;
+    case Login::DBTYPE_ORACLE:
+      utils::searchAndReplace(sql, "VARCHAR", "VARCHAR2");
+      break;
+    case Login::DBTYPE_SQLITE:
+      break;
+    case Login::DBTYPE_MYSQL:
+      break;
+    case Login::DBTYPE_POSTGRESQL:
+      break;
+    case Login::DBTYPE_NONE:
+      {
+        throw exception::Exception("Cannot create SQL for database type DBTYPE_NONE");
+      }
+    default:
+      {
+        std::ostringstream msg;
+        msg << "Unknown database type: intVal=" << m_login.dbType;
+        throw exception::Exception(msg.str());
+      }
+    }
+
+    return sql;
+  } catch(exception::Exception &ex) {
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " failed: " << ex.getMessage().str();
+    ex.getMessage().str(msg.str());
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -213,6 +263,48 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_1_not_mysql) {
     ASSERT_TRUE(rset.next());
 
     const auto selectValue = rset.columnOptionalUint64("UINT64_COL");
+
+    ASSERT_TRUE((bool)selectValue);
+
+    ASSERT_EQ(insertValue,selectValue.value());
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindString) {
+  using namespace cta::rdbms;
+
+  if(m_login.dbType == Login::DBTYPE_MYSQL) {
+    return;
+  }
+
+  const std::string insertValue = "value";
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST("
+        "STRING_COL) "
+      "VALUES("
+        ":STRING_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindString(":STRING_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT "
+        "STRING_COL AS STRING_COL "
+      "FROM "
+        "STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalString("STRING_COL");
 
     ASSERT_TRUE((bool)selectValue);
 

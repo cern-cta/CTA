@@ -45,6 +45,15 @@ protected:
 
   virtual void SetUp();
 
+  /**
+   * Returns the SQL to create the STMT_TEST table taking into account any
+   * differences between the various types of database backend.
+   *
+   * @return The SQL to create the STMT_TEST table taking into account any
+   * differences between the various types of database backend.
+   */
+  std::string getCreateStmtTestTableSql();
+
   virtual void TearDown();
 
 }; // cta_rdbms_StmtTest
