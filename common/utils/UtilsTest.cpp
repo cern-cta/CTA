@@ -744,4 +744,16 @@ TEST_F(cta_UtilsTest, DISABLED_currentTime) {
   std::cout << getCurrentLocalTime() << std::endl;
 }
 
+TEST_F(cta_UtilsTest, searchAndReplace) {
+  using namespace cta::utils;
+
+  std::string str = "one two three four one two three four";
+  const std::string search = "two";
+  const std::string replacement = "replacement";
+
+  searchAndReplace(str, search, replacement);
+
+  ASSERT_EQ("one replacement three four one replacement three four", str);
+}
+
 } // namespace unitTests

@@ -394,6 +394,15 @@ namespace utils {
    */
   std::string extractPathFromXrootdPath(const std::string &path);
 
+  /**
+   * Performs a search and replace operation on the specified string.
+   *
+   * @param str In/out parameter which is the string to be modified.
+   * @param search The search string.
+   * @param replacement The replacement string.
+   */
+  void searchAndReplace(std::string &str, const std::string &search, const std::string replacement);
+
 } // namespace utils
 
 } // namespace cta
