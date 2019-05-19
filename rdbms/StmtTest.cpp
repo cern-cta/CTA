@@ -275,10 +275,6 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_1_not_mysql) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindString) {
   using namespace cta::rdbms;
 
-  if(m_login.dbType == Login::DBTYPE_MYSQL) {
-    return;
-  }
-
   const std::string insertValue = "value";
 
   // Insert a row into the test table
