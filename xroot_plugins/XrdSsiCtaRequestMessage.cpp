@@ -2049,7 +2049,7 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
    auto &ptn       = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
    auto &comment   = getRequired(OptionString::COMMENT);
    auto &encrypted = getRequired(OptionBoolean::ENCRYPTED);
-   const cta::optional<std::string> supply("TBD");
+   auto  supply    = getOptional(OptionString::SUPPLY);
 
    m_catalogue.createTapePool(m_cliIdentity, name, vo, ptn, encrypted, supply, comment);
 

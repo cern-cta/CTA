@@ -646,6 +646,7 @@ void CtaAdminCmd::printTpLsHeader()
              << std::setfill(' ') << std::setw(6)  << std::right << "avail"       << ' '
              << std::setfill(' ') << std::setw(6)  << std::right << "use%"        << ' '
              << std::setfill(' ') << std::setw(8)  << std::right << "encrypt"     << ' '
+             << std::setfill(' ') << std::setw(20) << std::right << "supply"      << ' '
              << std::setfill(' ') << std::setw(8)  << std::right << "c.user"      << ' '
              << std::setfill(' ') << std::setw(25) << std::right << "c.host"      << ' '
              << std::setfill(' ') << std::setw(24) << std::right << "c.time"      << ' '
@@ -748,6 +749,7 @@ void CtaAdminCmd::print(const cta::admin::TapePoolLsItem &tpls_item)
              << std::setfill(' ') << std::setw(5)  << std::right << avail                      / 1000000000   << "G "
              << std::setfill(' ') << std::setw(5)  << std::right << std::fixed << std::setprecision(1) << use_percent << "% "
              << std::setfill(' ') << std::setw(8)  << std::right << encrypt_str                               << ' '
+             << std::setfill(' ') << std::setw(20) << std::right << tpls_item.supply()                        << ' '
              << std::setfill(' ') << std::setw(8)  << std::right << tpls_item.created().username()            << ' '
              << std::setfill(' ') << std::setw(25) << std::right << tpls_item.created().host()                << ' '
              << std::setfill(' ') << std::setw(24) << std::right << timeToString(tpls_item.created().time())  << ' '
