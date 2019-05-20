@@ -295,8 +295,9 @@ public:
     const std::string tapePoolComment = "Tape-pool comment";
     const std::string vo = "vo";
     const bool tapePoolEncryption = false;
+    const cta::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
     ASSERT_NO_THROW(catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo, nbPartialTapes, tapePoolEncryption,
-      tapePoolComment));
+      tapePoolSupply, tapePoolComment));
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
     catalogue.createArchiveRoute(s_adminOnAdminHost, s_diskInstance, s_storageClassName, copyNb, s_tapePoolName,

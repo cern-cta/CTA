@@ -568,6 +568,7 @@ void RdbmsCatalogue::createTapePool(
   const std::string &vo,
   const uint64_t nbPartialTapes,
   const bool encryptionValue,
+  const cta::optional<std::string> &supply,
   const std::string &comment) {
   try {
     if(name.empty()) {
@@ -595,6 +596,7 @@ void RdbmsCatalogue::createTapePool(
         "VO,"
         "NB_PARTIAL_TAPES,"
         "IS_ENCRYPTED,"
+        "SUPPLY,"
 
         "USER_COMMENT,"
 
@@ -610,6 +612,7 @@ void RdbmsCatalogue::createTapePool(
         ":VO,"
         ":NB_PARTIAL_TAPES,"
         ":IS_ENCRYPTED,"
+        ":SUPPLY,"
 
         ":USER_COMMENT,"
 
@@ -626,6 +629,7 @@ void RdbmsCatalogue::createTapePool(
     stmt.bindString(":VO", vo);
     stmt.bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
     stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
+    stmt.bindOptionalString(":SUPPLY", supply);
 
     stmt.bindString(":USER_COMMENT", comment);
 
@@ -893,6 +897,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "COALESCE(TAPE_POOL.VO, 'NONE') AS VO," // TBD Remove COALESCE
         "TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
         "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
+        "TAPE_POOL.SUPPLY AS SUPPLY,"
 
         "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
         "COALESCE(SUM(TAPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
@@ -917,6 +922,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "TAPE_POOL.VO,"
         "TAPE_POOL.NB_PARTIAL_TAPES,"
         "TAPE_POOL.IS_ENCRYPTED,"
+        "TAPE_POOL.SUPPLY,"
         "TAPE_POOL.USER_COMMENT,"
         "TAPE_POOL.CREATION_LOG_USER_NAME,"
         "TAPE_POOL.CREATION_LOG_HOST_NAME,"
@@ -937,6 +943,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       pool.vo = rset.columnString("VO");
       pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
       pool.encryption = rset.columnBool("IS_ENCRYPTED");
+      pool.supply = rset.columnOptionalString("SUPPLY");
       pool.nbTapes = rset.columnUint64("NB_TAPES");
       pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");

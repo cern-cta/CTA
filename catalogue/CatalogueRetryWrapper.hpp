@@ -137,8 +137,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassComment(admin, instanceName, name, comment);}, m_maxTriesToConnect);
   }
 
-  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, comment);}, m_maxTriesToConnect);
+  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, supply, comment);}, m_maxTriesToConnect);
   }
 
   void deleteTapePool(const std::string &name) override {
