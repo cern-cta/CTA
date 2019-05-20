@@ -20,6 +20,7 @@
 #include "AgentReference.hpp"
 #include "Agent.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/utils/utils.hpp"
 
 #include <sstream>
 #include <unistd.h>
@@ -163,7 +164,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
         log::ScopedParamContainer params(lc);
         params.add("agentObject", ag.getAddressIfSet());
         lc.log(log::CRIT, "In AgentReference::queueAndExecuteAction(): agent object being garbage collected. Exiting (segfault).");
-        ::kill(::getpid(), SIGSEGV);
+        cta::utils::segfault();
         ::exit(EXIT_FAILURE);
       }
       double agentFetchTime = t.secs(utils::Timer::resetCounter);

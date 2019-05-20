@@ -402,6 +402,13 @@ namespace utils {
    * @param replacement The replacement string.
    */
   void searchAndReplace(std::string &str, const std::string &search, const std::string replacement);
+  
+  /**
+   * Willful segmentation violation (accessing nullptr) ensuring the process will stop hard.
+   * This is different from self-killing the process as the signal delivery is not immediate.
+   * Here, the CPU will interrupt the process with a memory protection error.
+   */
+  void segfault(void);
 
 } // namespace utils
 

@@ -19,6 +19,7 @@
 #include "AgentHeartbeatThread.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
+#include "common/utils/utils.hpp"
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
@@ -51,7 +52,7 @@ void AgentHeartbeatThread::run() {
         params.add("HeartbeatUpdateTimeLimit", updateTimeLimit)
               .add("HeartbeatUpdateTime", updateTime);
         lc.log(log::CRIT, "In AgentHeartbeatThread::run(): Could not update heartbeat in time. Exiting (segfault).");
-        ::kill(::getpid(), SIGSEGV);
+        cta::utils::segfault();
         ::exit(EXIT_FAILURE);
       }
     }
@@ -62,7 +63,7 @@ void AgentHeartbeatThread::run() {
     params.add("Message", ex.getMessageValue());
     lc.log(log::CRIT, "In AgentHeartbeatThread::run(): exception while bumping heartbeat. Backtrace follows. Exiting (segfault).");
     lc.logBacktrace(log::ERR, ex.backtrace());
-    ::kill(::getpid(), SIGSEGV);
+    cta::utils::segfault();
     ::exit(EXIT_FAILURE);
   }
 }

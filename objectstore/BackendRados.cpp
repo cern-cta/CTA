@@ -21,6 +21,7 @@
 #include "common/Timer.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/utils/utils.hpp"
 #include <rados/librados.hpp>
 #include <sys/syscall.h>
 #include <errno.h>
@@ -453,7 +454,7 @@ BackendRados::LockWatcher::~LockWatcher() {
     }, "In BackendRados::LockWatcher::~LockWatcher(): failed m_context.aio_unwatch()");
   } catch (cta::exception::Exception & ex) {
     // If we get an exception in a destructor, we are going to exit anyway, so better halt the process early.
-    *((int *) nullptr) = 0;
+    cta::utils::segfault();
   }
   completion->release();
   rtl.logIfNeeded("In BackendRados::LockWatcher::~LockWatcher(): m_context.aio_unwatch() call", name);

@@ -865,5 +865,12 @@ void searchAndReplace(std::string &str, const std::string &search, const std::st
   }
 }
 
+//------------------------------------------------------------------------------
+// segfault
+//------------------------------------------------------------------------------
+void segfault() {
+  *((int *)nullptr) = 0;
+}
+
 } // namespace utils
 } // namespace cta
