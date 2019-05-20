@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
+find_package(Protobuf3 REQUIRED)
+
 include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
 #
@@ -76,8 +78,6 @@ add_library (ctacatalogue SHARED
 
 set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-set_property(TARGET ctacatalogue APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
@@ -205,10 +205,9 @@ add_executable(cta-catalogue-schema-create
   PostgresCatalogueSchema.cpp
   MysqlCatalogueSchema.cpp)
 
-target_link_libraries (cta-catalogue-schema-create
-  ctacatalogue)
-
-set_property (TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+target_link_libraries (cta-catalogue-schema-create ctacatalogue)
+set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
@@ -218,10 +217,9 @@ add_executable(cta-catalogue-schema-drop
   DropSchemaCmdLineArgs.cpp
   DropSchemaCmdMain.cpp)
 
-target_link_libraries (cta-catalogue-schema-drop
-  ctacatalogue)
-
-set_property (TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+target_link_libraries (cta-catalogue-schema-drop ctacatalogue)
+set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
@@ -231,10 +229,9 @@ add_executable(cta-database-poll
   PollDatabaseCmdLineArgs.cpp
   PollDatabaseCmdMain.cpp)
 
-target_link_libraries (cta-database-poll
-  ctacatalogue)
-
-set_property (TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+target_link_libraries (cta-database-poll ctacatalogue)
+set_property(TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
@@ -244,14 +241,12 @@ add_executable(cta-catalogue-admin-user-create
   CreateAdminUserCmdLineArgs.cpp
   CreateAdminUserCmdMain.cpp)
 
-target_link_libraries (cta-catalogue-admin-user-create
-  ctacatalogue)
-
-set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+target_link_libraries(cta-catalogue-admin-user-create ctacatalogue) 
 set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
-install (TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
+install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
 
 add_executable(cta-catalogue-schema-verify
   VerifySchemaCmd.cpp
