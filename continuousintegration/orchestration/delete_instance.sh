@@ -71,7 +71,7 @@ if [ $collectlogs == 1 ] ; then
   for podcontainer in "init -c ctainit" "client -c client" "ctacli -c ctacli" "ctaeos -c mgm" "ctafrontend -c ctafrontend" "kdc -c kdc" "tpsrv01 -c taped" "tpsrv01 -c rmcd" "tpsrv02 -c taped" "tpsrv02 -c rmcd"; do
     kubectl --namespace ${instance} logs ${podcontainer} > ${tmpdir}/$(echo ${podcontainer} | sed -e 's/ -c /-/').log
   done
-  kubectl --namespace ${instance} exec ctacli -- tar -C /mnt/logs -zcf - . > ${tmpdir}/varlog.tgz
+  kubectl --namespace ${instance} exec ctacli -- bash -c "XZ_OPT='-0 -T0' tar -C /mnt/logs -Jcf - ." > ${tmpdir}/varlog.tar.xz
 
   if [ ! -z "${CI_PIPELINE_ID}" ]; then
     # we are in the context of a CI run => save artifacts in the directory structure of the build
