@@ -184,7 +184,9 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "CHECK_TAPE_BEFORE_INSERT",
       "CHECK_TAPE_BEFORE_UPDATE",
       "TAPE_FILE_COPY_NB_GT_ZERO_BEFORE_INSERT",
-      "TAPE_FILE_COPY_NB_GT_ZERO_BEFORE_UPDATE"
+      "TAPE_FILE_COPY_NB_GT_ZERO_BEFORE_UPDATE",
+      "CHECK_LOGICAL_LIBRARY_BEFORE_INSERT",
+      "CHECK_LOGICAL_LIBRARY_BEFORE_UPDATE"
     };
     for (auto triggerToDrop: triggersToDrop) {
       conn.executeNonQuery(std::string("DROP TRIGGER IF EXISTS ") + triggerToDrop);
