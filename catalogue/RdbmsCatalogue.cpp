@@ -29,6 +29,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringMediaType.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringStorageClassName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringSupply.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVendor.hpp"
@@ -1114,6 +1115,51 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":TAPE_POOL_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// modifyTapePoolSupply
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &supply) {
+  try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
+        " string");
+    }
+
+    if(supply.empty()) {
+      throw UserSpecifiedAnEmptyStringSupply("Cannot modify tape pool because the new supply value is an empty"
+        " string");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE_POOL SET "
+        "SUPPLY = :SUPPLY,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":SUPPLY", supply);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

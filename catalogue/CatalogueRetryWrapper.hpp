@@ -165,6 +165,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapePoolEncryption(admin, name, encryptionValue);}, m_maxTriesToConnect);
   }
 
+  void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &supply) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapePoolSupply(admin, name, supply);}, m_maxTriesToConnect);
+  }
+
   void createArchiveRoute(const common::dataStructures::SecurityIdentity &admin, const std::string &diskInstanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createArchiveRoute(admin, diskInstanceName, storageClassName, copyNb, tapePoolName, comment);}, m_maxTriesToConnect);
   }

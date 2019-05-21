@@ -28,6 +28,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringMediaType.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringStorageClassName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringSupply.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVendor.hpp"
@@ -1468,6 +1469,139 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption_nonExistentTapePool) {
   const std::string tapePoolName = "tape_pool";
   const bool isEncrypted = false;
   ASSERT_THROW(m_catalogue->setTapePoolEncryption(m_admin, tapePoolName, isEncrypted), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "tape_pool";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::string comment = "Create tape pool";
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(isEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)supply);
+    ASSERT_EQ(supply.value(), pool.supply.value());
+    ASSERT_EQ(supply, pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedSupply("Modified supply");
+  m_catalogue->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+      
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(isEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)supply);
+    ASSERT_EQ(modifiedSupply, pool.supply.value());
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringTapePoolName) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "";
+  const std::string modifiedSupply = "Modified supply";
+  ASSERT_THROW(m_catalogue->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply),
+    catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringSupply) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "tape_pool";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::string comment = "Create tape pool";
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(isEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)supply);
+    ASSERT_EQ(supply.value(), pool.supply.value());
+    ASSERT_EQ(supply, pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedSupply = "";
+  ASSERT_THROW(m_catalogue->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply),
+    catalogue::UserSpecifiedAnEmptyStringSupply);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_nonExistentTapePool) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "tape_pool";
+  const std::string supply = "value for the supply pool mechanism";
+  ASSERT_THROW(m_catalogue->modifyTapePoolSupply(m_admin, tapePoolName, supply), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
