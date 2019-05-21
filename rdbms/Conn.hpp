@@ -209,6 +209,15 @@ public:
    */
   std::list<std::string> getTriggerNames();
 
+  /**
+   * Get a pointer to the connection wrapper implementation
+   *
+   * Required for Postgres PQescapeByteaConn()
+   */
+  wrapper::ConnWrapper *getConnWrapperPtr() {
+    return m_connAndStmts->conn.get();
+  }
+
 private:
 
   /**

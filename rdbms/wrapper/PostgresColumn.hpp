@@ -22,6 +22,8 @@
 #include <string.h>
 #include <typeinfo>
 #include <vector>
+#include <libpq-fe.h>
+#include <rdbms/Conn.hpp>
 
 namespace cta {
 namespace rdbms {
@@ -72,6 +74,15 @@ public:
   template<typename T> void setFieldValue(const size_t index, const T &value) {
     setFieldValue(index, value, std::is_integral<T>());
   }
+
+  /**
+   * Sets the BYTEA field at the specified index to the value of a byte array
+   *
+   * @param conn  The connection to the Postgres database
+   * @param index The index of the field
+   * @param value The value of the field expressed as a byte array
+   */
+  void setFieldByteA(rdbms::Conn &conn, const size_t index, const std::string &value);
 
 private:
 
