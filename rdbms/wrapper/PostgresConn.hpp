@@ -33,6 +33,7 @@ namespace wrapper {
 
 class PostgresStmt;
 class PostgresRset;
+class PostgresColumn;
 
 class PostgresConn: public ConnWrapper {
 public:
@@ -42,7 +43,7 @@ public:
    */
   friend PostgresStmt;
   friend PostgresRset;
-
+  friend PostgresColumn;
 
   /**
    * Constructor.

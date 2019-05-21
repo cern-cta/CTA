@@ -18,6 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/PostgresColumn.hpp"
+#include "rdbms/wrapper/PostgresConn.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -44,6 +45,22 @@ const std::string &PostgresColumn::getColName() const {
 //------------------------------------------------------------------------------
 size_t PostgresColumn::getNbRows() const {
   return m_nbRows;
+}
+
+//------------------------------------------------------------------------------
+// setFieldByteA
+//------------------------------------------------------------------------------
+void PostgresColumn::setFieldByteA(rdbms::Conn &conn, const size_t index, const std::string &value) {
+  auto pgconn_ptr = dynamic_cast<PostgresConn*>(conn.getConnWrapperPtr());
+  auto pgconn = pgconn_ptr->get();
+
+  size_t escaped_length;
+  auto escapedByteA = PQescapeByteaConn(pgconn, reinterpret_cast<const unsigned char*>(value.c_str()),
+    value.length(), &escaped_length);
+  std::string escapedStr(reinterpret_cast<const char*>(escapedByteA), escaped_length);
+  PQfreemem(escapedByteA);
+
+  copyStrIntoField(index, escapedStr);
 }
 
 //------------------------------------------------------------------------------
