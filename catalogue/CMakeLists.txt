@@ -110,7 +110,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_trailer.sql
-    | sed 's/CHECKSUM_BLOB_TYPE/BYTEA\(200\)/g'
+    | sed 's/CHECKSUM_BLOB_TYPE/BYTEA/g'
     > postgres_catalogue_schema.sql
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
