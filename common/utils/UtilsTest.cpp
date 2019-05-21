@@ -484,34 +484,34 @@ TEST_F(cta_UtilsTest, toUint64_not_a_number) {
   ASSERT_THROW(utils::toUint64("one"), exception::Exception);
 }
 
-TEST_F(cta_UtilsTest, isValidDouble) {
+TEST_F(cta_UtilsTest, isValidDecimal) {
   using namespace cta;
 
-  ASSERT_TRUE(utils::isValidDouble("1.234"));
+  ASSERT_TRUE(utils::isValidDecimal("1.234"));
 }
 
-TEST_F(cta_UtilsTest, isValidDouble_empty_string) {
+TEST_F(cta_UtilsTest, isValidDecimal_empty_string) {
   using namespace cta;
 
-  ASSERT_FALSE(utils::isValidDouble(""));
+  ASSERT_FALSE(utils::isValidDecimal(""));
 }
 
-TEST_F(cta_UtilsTest, isValidDouble_negative_double) {
+TEST_F(cta_UtilsTest, isValidDecimal_negative_double) {
   using namespace cta;
 
-  ASSERT_TRUE(utils::isValidDouble("-1.234"));
+  ASSERT_TRUE(utils::isValidDecimal("-1.234"));
 }
 
-TEST_F(cta_UtilsTest, isValidDouble_not_a_number) {
+TEST_F(cta_UtilsTest, isValidDecimal_not_a_number) {
   using namespace cta;
 
-  ASSERT_FALSE(utils::isValidDouble("one"));
+  ASSERT_FALSE(utils::isValidDecimal("one"));
 }
 
-TEST_F(cta_UtilsTest, isValidDouble_two_decimal_points) {
+TEST_F(cta_UtilsTest, isValidDecimal_two_decimal_points) {
   using namespace cta;
 
-  ASSERT_FALSE(utils::isValidDouble("1.2.34"));
+  ASSERT_FALSE(utils::isValidDecimal("1.2.34"));
 }
 
 TEST_F(cta_UtilsTest, toDouble_double) {

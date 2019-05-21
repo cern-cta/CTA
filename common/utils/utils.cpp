@@ -639,10 +639,10 @@ uint64_t toUint64(const std::string &str) {
 }
 
 //------------------------------------------------------------------------------
-// isValidDouble
+// isValidDecimal
 //------------------------------------------------------------------------------
-bool isValidDouble(const std::string &str) {
-  // An empty string is not a valid double
+bool isValidDecimal(const std::string &str) {
+  // An empty string is not a valid decimal
   if(str.empty()) {
     return false;
   }

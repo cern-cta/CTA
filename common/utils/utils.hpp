@@ -281,12 +281,12 @@ namespace utils {
   uint64_t toUint64(const std::string &str);
 
   /**
-   * Checks if the specified string is a double unsigned integer.
+   * Checks if the specified string is a valid decimal.
    *
    * @param str The string to be checked.
-   * @returns true if the string is a valid double, else false.
+   * @returns true if the string is a valid decimal, else false.
    */
-  bool isValidDouble(const std::string &str);
+  bool isValidDecimal(const std::string &str);
 
   /**
    * Parses the specified string representation of a double.

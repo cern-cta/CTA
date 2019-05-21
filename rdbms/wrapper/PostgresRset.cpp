@@ -144,9 +144,9 @@ optional<double> PostgresRset::columnOptionalDouble(const std::string &colName) 
 
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
-  if(!utils::isValidDouble(stringValue)) {
+  if(!utils::isValidDecimal(stringValue)) {
     throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-      " which is not a valid double");
+      " which is not a valid decimal");
   }
 
   return utils::toDouble(stringValue);
