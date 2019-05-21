@@ -292,7 +292,7 @@ RETRIEVED=0
 echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
-while test 0 != ${RETRIEVING}; do
+while test 0 -ge ${RETRIEVING}; do
   echo "$(date +%s): Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 3
   let SECONDS_PASSED=SECONDS_PASSED+1
