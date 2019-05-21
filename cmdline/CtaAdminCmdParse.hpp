@@ -545,7 +545,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_CH    },
-      { opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(), opt_comment.optional() }},
+      { opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(),
+        opt_supply.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM    }, { opt_tapepool_alias }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    /*----------------------------------------------------------------------------------------------------*/

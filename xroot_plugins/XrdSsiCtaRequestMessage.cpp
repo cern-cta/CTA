@@ -2067,6 +2067,7 @@ void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, ct
    auto  ptn       = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
    auto  comment   = getOptional(OptionString::COMMENT);
    auto  encrypted = getOptional(OptionBoolean::ENCRYPTED);
+   auto  supply    = getOptional(OptionString::SUPPLY);
 
    if(comment) {
       m_catalogue.modifyTapePoolComment(m_cliIdentity, name, comment.value());
@@ -2079,6 +2080,9 @@ void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, ct
    }
    if(encrypted) {
       m_catalogue.setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
+   }
+   if(supply) {
+      m_catalogue.modifyTapePoolSupply(m_cliIdentity, name, supply.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
