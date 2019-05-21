@@ -19,6 +19,7 @@
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/BackendPopulator.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -77,13 +78,13 @@ BackendPopulator::~BackendPopulator() throw() {
     m_lc.log(log::CRIT, "In BackendPopulator::~BackendPopulator(): error deleting agent (cta::exception::Exception). Backtrace follows.");
     m_lc.logBacktrace(log::ERR, ex.backtrace());
     // We have an exception (we should not), let's core dump.
-    *((int*)nullptr)=0;
+    cta::utils::segfault();
   } catch (std::exception & ex) {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("exceptionWhat", ex.what());
     m_lc.log(log::CRIT, "In BackendPopulator::~BackendPopulator(): error deleting agent (std::exception).");
     // We have an exception (we should not), let's core dump.
-    *((int*)nullptr)=0;    
+    cta::utils::segfault();
   }
 }
 
