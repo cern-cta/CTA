@@ -1203,8 +1203,9 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
 
    auto &name    = getRequired(OptionString::LOGICAL_LIBRARY);
    auto &comment = getRequired(OptionString::COMMENT);
+   const bool isDisabled = false; // TBD
 
-   m_catalogue.createLogicalLibrary(m_cliIdentity, name, comment);
+   m_catalogue.createLogicalLibrary(m_cliIdentity, name, isDisabled, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

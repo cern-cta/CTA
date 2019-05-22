@@ -269,7 +269,7 @@ public:
   void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) override;
   void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) override;
 
-  void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
+  void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool isDisabled, const std::string &comment) override;
   void deleteLogicalLibrary(const std::string &name) override;
   std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const override;
   void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;

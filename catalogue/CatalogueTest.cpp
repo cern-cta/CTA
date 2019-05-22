@@ -941,6 +941,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -951,7 +952,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled,
     "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -2213,7 +2214,8 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
       
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, comment);
+  const bool logicalLibraryIsDisabled= false;
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     m_catalogue->getLogicalLibraries();
@@ -2222,6 +2224,65 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
       
   const common::dataStructures::LogicalLibrary lib = libs.front();
   ASSERT_EQ(logicalLibraryName, lib.name);
+  ASSERT_FALSE(lib.isDisabled);
+  ASSERT_EQ(comment, lib.comment);
+
+  const common::dataStructures::EntryLog creationLog = lib.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+  
+  const common::dataStructures::EntryLog lastModificationLog =
+    lib.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_disabled_true) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+      
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  const bool logicalLibraryIsDisabled(true);
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+      
+  const std::list<common::dataStructures::LogicalLibrary> libs =
+    m_catalogue->getLogicalLibraries();
+      
+  ASSERT_EQ(1, libs.size());
+      
+  const common::dataStructures::LogicalLibrary lib = libs.front();
+  ASSERT_EQ(logicalLibraryName, lib.name);
+  ASSERT_TRUE(lib.isDisabled);
+  ASSERT_EQ(comment, lib.comment);
+
+  const common::dataStructures::EntryLog creationLog = lib.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+  
+  const common::dataStructures::EntryLog lastModificationLog =
+    lib.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_disabled_false) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+      
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  const bool logicalLibraryIsDisabled(false);
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+      
+  const std::list<common::dataStructures::LogicalLibrary> libs =
+    m_catalogue->getLogicalLibraries();
+      
+  ASSERT_EQ(1, libs.size());
+      
+  const common::dataStructures::LogicalLibrary lib = libs.front();
+  ASSERT_EQ(logicalLibraryName, lib.name);
+  ASSERT_FALSE(lib.isDisabled);
   ASSERT_EQ(comment, lib.comment);
 
   const common::dataStructures::EntryLog creationLog = lib.creationLog;
@@ -2238,8 +2299,9 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_same_twice) {
   
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, comment);
-  ASSERT_THROW(m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, comment), exception::UserError);
+  const bool logicalLibraryIsDisabled= false;
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+  ASSERT_THROW(m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
@@ -2249,7 +2311,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
       
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, comment);
+  const bool logicalLibraryIsDisabled= false;
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     m_catalogue->getLogicalLibraries();
@@ -2286,7 +2349,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
       
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, comment);
+  const bool logicalLibraryIsDisabled= false;
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
 
   {
     const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
@@ -2357,6 +2421,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -2367,8 +2432,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -2441,6 +2505,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -2451,8 +2516,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -2604,6 +2668,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "";
   const std::string vo = "vo";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
@@ -2611,8 +2676,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
     capacityInBytes, disabledValue, fullValue, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
@@ -2630,6 +2694,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_zeroCapacity) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -2640,8 +2705,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_zeroCapacity) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -2673,6 +2737,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringComment) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -2683,8 +2748,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringComment) {
   const bool fullValue = false;
   const std::string comment = "";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -2737,14 +2801,14 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_tape_pool) {
   const std::string vendor = "vendor";
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
     capacityInBytes, disabledValue, fullValue, comment), exception::UserError);
 }
@@ -2758,6 +2822,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
   const std::string vendor = "vendor";
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -2769,7 +2834,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -2837,6 +2902,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   const std::string vendor = "vendor";
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -2847,8 +2913,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -2904,6 +2969,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibrary = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -2915,7 +2981,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   const std::string comment = "Create tape";
 
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibrary, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibrary, logicalLibraryIsDisabled, "Create logical library");
 
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -3171,6 +3237,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -3181,7 +3248,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   {
@@ -3337,6 +3404,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -3347,8 +3415,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
     capacityInBytes, disabledValue, fullValue,
@@ -3402,6 +3469,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -3412,8 +3480,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
     comment);
@@ -3524,6 +3591,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
   const std::string anotherMediaType = "another_media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -3534,7 +3602,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
@@ -3605,6 +3673,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
   const std::string vendor = "vendor";
   const std::string anotherVendor = "another_vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -3615,7 +3684,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
@@ -3686,6 +3755,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
   const std::string mediaType = "mediaType";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string anotherLogicalLibraryName = "another_logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
@@ -3697,8 +3767,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
-  m_catalogue->createLogicalLibrary(m_admin, anotherLogicalLibraryName, "Create another logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, anotherLogicalLibraryName, logicalLibraryIsDisabled,
+    "Create another logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
@@ -3767,8 +3838,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName_nonExistentTape
 
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   ASSERT_THROW(m_catalogue->modifyTapeLogicalLibraryName(m_admin, vid, logicalLibraryName), exception::UserError);
 }
@@ -3782,6 +3854,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   const std::string mediaType = "mediaType";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -3793,7 +3866,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, anotherTapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create another tape pool");
@@ -3864,13 +3937,14 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName_nonExistentTape) {
 
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   ASSERT_THROW(m_catalogue->modifyTapeTapePoolName(m_admin, vid, tapePoolName), exception::UserError);
@@ -3885,6 +3959,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -3895,7 +3970,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -3979,6 +4054,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -3989,7 +4065,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4074,6 +4150,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -4084,7 +4161,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4169,6 +4246,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -4179,7 +4257,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4264,6 +4342,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -4274,7 +4353,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4359,6 +4438,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -4369,7 +4449,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4451,6 +4531,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -4461,7 +4542,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4543,6 +4624,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -4553,7 +4635,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4635,6 +4717,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -4645,7 +4728,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
    disabledValue, fullValue, comment);
@@ -4675,6 +4758,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -4685,7 +4769,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
    disabledValue, fullValue, comment);
@@ -6716,6 +6800,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -6726,7 +6811,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   const bool fullValue = false;
   const std::string createTapeComment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
@@ -6977,6 +7062,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -6987,7 +7073,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   const bool fullValue = false;
   const std::string createTapeComment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
@@ -7455,6 +7541,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const std::string vo = "vo";
@@ -7466,7 +7553,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName1, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -8443,6 +8530,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const std::string vo = "vo";
@@ -8454,7 +8542,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName1, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -9267,6 +9355,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -9277,7 +9366,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -9499,6 +9588,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -9509,7 +9599,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -9727,6 +9817,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -9737,7 +9828,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -9929,6 +10020,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -9939,7 +10031,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -10114,6 +10206,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -10124,7 +10217,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -10299,6 +10392,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string mediaType = "mediaType";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -10309,7 +10403,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -10484,6 +10578,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -10494,7 +10589,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -10804,6 +10899,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -10814,7 +10910,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -11152,6 +11248,7 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -11161,7 +11258,7 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
   const bool disabledValue = true;
   const bool fullValue = false;
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t nbTapes = 10;
@@ -11207,6 +11304,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   const std::string vendor = "vendor";
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -11217,7 +11315,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -11291,6 +11389,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
   const std::string vendor = "vendor";
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -11301,7 +11400,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
@@ -11350,6 +11449,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -11360,7 +11460,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   const bool fullValue = false;
   const std::string createTapeComment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
@@ -11576,6 +11676,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -11586,7 +11687,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   const bool fullValue = false;
   const std::string createTapeComment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
@@ -11739,6 +11840,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -11749,7 +11851,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   const bool fullValue = false;
   const std::string createTapeComment = "Create tape";
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
@@ -11961,6 +12063,7 @@ TEST_P(cta_catalogue_CatalogueTest, exist_non_superseded_files_after_fseq) {
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
   const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
@@ -11971,7 +12074,7 @@ TEST_P(cta_catalogue_CatalogueTest, exist_non_superseded_files_after_fseq) {
   const bool fullValue = false;
   const std::string createTapeComment = "Create tape";
   
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, createTapeComment);

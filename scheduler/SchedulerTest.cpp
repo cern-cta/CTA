@@ -435,8 +435,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
 
   // Create the environment for the migration to happen (library + tape) 
   const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryComment);
+    libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -634,8 +635,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
 
   // Create the environment for the migration to happen (library + tape) 
   const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryComment);
+    libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -884,8 +886,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
 
   // Create the environment for the migration to happen (library + tape) 
   const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryComment);
+    libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1128,8 +1131,9 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   
   // Create the environment for the migration to happen (library + tape) 
     const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryComment);
+    libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1366,7 +1370,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
-  catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
   
   uint64_t nbTapesToRepack = 10;
   uint64_t nbTapesForTest = 2; //corresponds to the targetAvailableRequests variable in the Scheduler::promoteRepackRequestsToToExpand() method
@@ -1701,7 +1706,8 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
-  catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
   
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -1940,7 +1946,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
-  catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
   
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -2186,7 +2193,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
-  catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
   
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;

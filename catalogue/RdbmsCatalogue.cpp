@@ -1491,6 +1491,7 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
 void RdbmsCatalogue::createLogicalLibrary(
   const common::dataStructures::SecurityIdentity &admin,
   const std::string &name,
+  const bool isDisabled,
   const std::string &comment) {
   try {
     auto conn = m_connPool.getConn();
@@ -1502,6 +1503,7 @@ void RdbmsCatalogue::createLogicalLibrary(
     const char *const sql =
       "INSERT INTO LOGICAL_LIBRARY("
         "LOGICAL_LIBRARY_NAME,"
+        "IS_DISABLED,"
 
         "USER_COMMENT,"
 
@@ -1514,6 +1516,7 @@ void RdbmsCatalogue::createLogicalLibrary(
         "LAST_UPDATE_TIME)"
       "VALUES("
         ":LOGICAL_LIBRARY_NAME,"
+        ":IS_DISABLED,"
 
         ":USER_COMMENT,"
 
@@ -1527,6 +1530,7 @@ void RdbmsCatalogue::createLogicalLibrary(
     auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt.bindBool(":IS_DISABLED", isDisabled);
 
     stmt.bindString(":USER_COMMENT", comment);
 
@@ -1602,6 +1606,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibr
     const char *const sql =
       "SELECT "
         "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "IS_DISABLED AS IS_DISABLED,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
@@ -1623,6 +1628,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibr
       common::dataStructures::LogicalLibrary lib;
 
       lib.name = rset.columnString("LOGICAL_LIBRARY_NAME");
+      lib.isDisabled = rset.columnBool("IS_DISABLED");
       lib.comment = rset.columnString("USER_COMMENT");
       lib.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       lib.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");

@@ -189,8 +189,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyArchiveRouteComment(admin, instanceName, storageClassName, copyNb, comment);}, m_maxTriesToConnect);
   }
 
-  void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->createLogicalLibrary(admin, name, comment);}, m_maxTriesToConnect);
+  void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool isDisabled, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createLogicalLibrary(admin, name, isDisabled, comment);}, m_maxTriesToConnect);
   }
 
   void deleteLogicalLibrary(const std::string &name) override {
