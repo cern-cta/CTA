@@ -1251,12 +1251,13 @@ void RequestMessage::processLogicalLibrary_Ls(const cta::admin::AdminCmd &adminc
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
-         "name","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+         "name","disabled","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
          currentRow.push_back(it->name);
+         currentRow.push_back(std::to_string(it->isDisabled));
          addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
          currentRow.push_back(it->comment);
          responseTable.push_back(currentRow);
