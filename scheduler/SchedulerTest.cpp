@@ -2493,7 +2493,8 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
-  catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
   
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
