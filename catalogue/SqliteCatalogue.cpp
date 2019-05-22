@@ -339,6 +339,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, cons
 // filesWrittenToTape
 //------------------------------------------------------------------------------
 void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &events) {
+  throw exception::Exception("Something bad happened");
   try {
     if(events.empty()) {
       return;
