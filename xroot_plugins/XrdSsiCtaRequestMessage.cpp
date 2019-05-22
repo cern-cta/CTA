@@ -1216,10 +1216,16 @@ void RequestMessage::processLogicalLibrary_Ch(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   auto &name    = getRequired(OptionString::LOGICAL_LIBRARY);
-   auto &comment = getRequired(OptionString::COMMENT);
+   auto &name     = getRequired(OptionString::LOGICAL_LIBRARY);
+   auto  disabled = getOptional(OptionBoolean::DISABLED);
+   auto  comment  = getOptional(OptionString::COMMENT);
 
-   m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name, comment);
+   if(disabled) {
+      m_catalogue.setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
+   }
+   if(comment) {
+      m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name, comment.value());
+   }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
