@@ -1201,11 +1201,11 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
 {
    using namespace cta::admin;
 
-   auto &name    = getRequired(OptionString::LOGICAL_LIBRARY);
-   auto &comment = getRequired(OptionString::COMMENT);
-   const bool isDisabled = false; // TBD
+   auto &name      = getRequired(OptionString::LOGICAL_LIBRARY);
+   auto isDisabled = getOptional(OptionBoolean::DISABLED);
+   auto &comment   = getRequired(OptionString::COMMENT);
 
-   m_catalogue.createLogicalLibrary(m_cliIdentity, name, isDisabled, comment);
+   m_catalogue.createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
