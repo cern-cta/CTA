@@ -108,11 +108,12 @@ std::string cta::ArchiveJob::reportURL() {
           new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
       return m_dbJob->errorReportURL + base64ErrorReport;
     }
-  default:
-    { 
-      throw exception::Exception("In ArchiveJob::reportURL(): job status does not require reporting.");
-    }
+  case SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired:
+    throw exception::Exception("In ArchiveJob::reportURL(): job status NoReportRequired does not require reporting.");
+  case SchedulerDatabase::ArchiveJob::ReportType::Report:
+    throw exception::Exception("In ArchiveJob::reportURL(): job status Report does not require reporting.");
   }
+  throw exception::Exception("In ArchiveJob::reportURL(): invalid report type.");
 }
 
 //------------------------------------------------------------------------------
