@@ -133,6 +133,7 @@ std::string cta::ArchiveJob::reportType() {
       throw exception::Exception("In ArchiveJob::reportType(): job status does not require reporting.");
     }
   }
+  throw exception::Exception("In ArchiveJob::reportType(): invalid report type.");
 }
 
 //------------------------------------------------------------------------------
