@@ -91,14 +91,14 @@ void cta::ArchiveJob::validate(){
 //------------------------------------------------------------------------------
 // ArchiveJob::reportURL
 //------------------------------------------------------------------------------
-std::string cta::ArchiveJob::reportURL() {
+std::string cta::ArchiveJob::exceptionThrowingReportURL() {
   switch (m_dbJob->reportType) {
   case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
     return m_dbJob->archiveReportURL;
   case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
     {
       if (m_dbJob->latestError.empty()) {
-        throw exception::Exception("In ArchiveJob::reportURL(): empty failure reason.");
+        throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): empty failure reason.");
       }
       std::string base64ErrorReport;
       // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
@@ -109,11 +109,24 @@ std::string cta::ArchiveJob::reportURL() {
       return m_dbJob->errorReportURL + base64ErrorReport;
     }
   case SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired:
-    throw exception::Exception("In ArchiveJob::reportURL(): job status NoReportRequired does not require reporting.");
+    throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): job status NoReportRequired does not require reporting.");
   case SchedulerDatabase::ArchiveJob::ReportType::Report:
-    throw exception::Exception("In ArchiveJob::reportURL(): job status Report does not require reporting.");
+    throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): job status Report does not require reporting.");
   }
-  throw exception::Exception("In ArchiveJob::reportURL(): invalid report type.");
+  throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): invalid report type.");
+}
+
+//------------------------------------------------------------------------------
+// ArchiveJob::reportURL
+//------------------------------------------------------------------------------
+std::string cta::ArchiveJob::reportURL() noexcept {
+  try {
+    return exceptionThrowingReportURL();
+  } catch(exception::Exception &ex) {
+    return ex.what();
+  } catch(...) {
+    return "In ArchiveJob::reportURL(): unknown exception";
+  }
 }
 
 //------------------------------------------------------------------------------
