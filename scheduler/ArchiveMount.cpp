@@ -212,7 +212,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
           .add("schedulerDbTime", schedulerDbTime)
           .add("totalTime", catalogueTime  + schedulerDbTime + clientReportingTime);
     logContext.log(log::INFO, "In ArchiveMount::reportJobsBatchWritten(): recorded a batch of archive jobs in metadata.");
-  } catch(cta::exception::Exception& e){
+  } catch(const cta::exception::Exception& e){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", e.getMessageValue());
     if (job.get()) {
@@ -225,7 +225,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
     throw cta::ArchiveMount::FailedMigrationRecallResult(msg_error);
-  } catch(std::exception& e){
+  } catch(const std::exception& e){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionWhat", e.what());
     if (job.get()) {
