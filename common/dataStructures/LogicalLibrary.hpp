@@ -35,6 +35,11 @@ namespace dataStructures {
  */
 struct LogicalLibrary {
 
+  /**
+   * Constructor.
+   *
+   * Initialises isDisabled to false.
+   */
   LogicalLibrary();
 
   bool operator==(const LogicalLibrary &rhs) const;
@@ -42,6 +47,7 @@ struct LogicalLibrary {
   bool operator!=(const LogicalLibrary &rhs) const;
 
   std::string name;
+  bool isDisabled;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
