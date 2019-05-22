@@ -7138,7 +7138,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   userIdentity.name = requesterName;
   userIdentity.group = "group";
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, dummyLc);
+    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc);
 
   ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
@@ -7146,7 +7146,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 
   // Check that the diskInstanceName mismatch detection works
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, userIdentity, dummyLc),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, userIdentity, cta::nullopt, dummyLc),
     exception::UserError);
 }
 
@@ -7401,7 +7401,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, dummyLc);
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc);
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
@@ -7435,7 +7435,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, dummyLc);
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc);
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
@@ -7456,7 +7456,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   m_catalogue->setTapeDisabled(m_admin, vid2, true);
 
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, dummyLc),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc),
     exception::UserError);
 }
 
@@ -12149,6 +12149,203 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_TRUE((bool)tape.lastWriteLog);
     ASSERT_EQ(tapeDrive, tape.lastWriteLog.value().drive);
   }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, exist_non_superseded_files_after_fseq) {
+  using namespace cta;
+
+  const std::string diskInstanceName1 = "disk_instance_1";
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid1 = "VID123";
+  const std::string vid2 = "VID234";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string createTapeComment = "Create tape";
+  
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, createTapeComment);
+  
+  //A tape with no tape file have no files after FSeq 0
+  ASSERT_FALSE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid1,0));
+  
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName1;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 1;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  /*
+   * Insert a file in the tape vid1
+   */
+  {
+    const uint64_t archiveFileSize = 1;
+    const std::string tapeDrive = "tape_drive";
+    const std::string checksumType = "checksum_type";
+    const std::string checksumValue = "checksum_value";
+
+    auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & file1Written = *file1WrittenUP;
+    std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+    file1WrittenSet.insert(file1WrittenUP.release());
+    file1Written.archiveFileId        = archiveFileId;
+    file1Written.diskInstance         = storageClass.diskInstance;
+    file1Written.diskFileId           = "5678";
+    file1Written.diskFilePath         = "/public_dir/public_file";
+    file1Written.diskFileUser         = "public_disk_user";
+    file1Written.diskFileGroup        = "public_disk_group";
+    file1Written.size                 = archiveFileSize;
+    file1Written.checksumType         = checksumType;
+    file1Written.checksumValue        = checksumValue;
+    file1Written.storageClassName     = storageClass.name;
+    file1Written.vid                  = vid1;
+    file1Written.fSeq                 = 1;
+    file1Written.blockId              = 4321;
+    file1Written.compressedSize       = 1;
+    file1Written.copyNb               = 1;
+    file1Written.tapeDrive            = tapeDrive;
+    m_catalogue->filesWrittenToTape(file1WrittenSet);
+  }
+  //One file written : this file is not superseded by another one, existNonSupersededFilesAfterFSeq = true
+  ASSERT_TRUE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid1,0));
+  //No file after the only file inserted, existNonSupersededFilesAfterFseq = false
+  ASSERT_FALSE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid1,1));
+  
+  //Insert another file in another tape that will supersed the first one in vid1
+  {
+    m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, createTapeComment);
+    const uint64_t archiveFileSize = 1;
+    const std::string tapeDrive = "tape_drive";
+    const std::string checksumType = "checksum_type";
+    const std::string checksumValue = "checksum_value";
+
+    auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & file1Written = *file1WrittenUP;
+    std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+    file1WrittenSet.insert(file1WrittenUP.release());
+    file1Written.archiveFileId        = archiveFileId;
+    file1Written.diskInstance         = storageClass.diskInstance;
+    file1Written.diskFileId           = "5678";
+    file1Written.diskFilePath         = "/public_dir/public_file";
+    file1Written.diskFileUser         = "public_disk_user";
+    file1Written.diskFileGroup        = "public_disk_group";
+    file1Written.size                 = archiveFileSize;
+    file1Written.checksumType         = checksumType;
+    file1Written.checksumValue        = checksumValue;
+    file1Written.storageClassName     = storageClass.name;
+    file1Written.vid                  = vid2;
+    file1Written.fSeq                 = 1;
+    file1Written.blockId              = 4321;
+    file1Written.compressedSize       = 1;
+    file1Written.copyNb               = 1;
+    file1Written.tapeDrive            = tapeDrive;
+    m_catalogue->filesWrittenToTape(file1WrittenSet);
+  }
+  //The tape files written to tape vid2 are not superseded by any file, but the tape files in vid1 
+  //are superseded by the tape files in vid2
+  ASSERT_FALSE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid1,0));
+  ASSERT_TRUE(m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid2,0));
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createModifyDeleteActivityWeight) {
+  using namespace cta;
+
+  const std::string diskInstanceName = "ExperimentEOS";
+  const std::string activity1 = "Reco";  
+  const std::string activity2 = "Grid";
+  const double weight1 = 0.654;
+  const double weight2 = 0.456;
+  const std::string comment = "No comment.";
+
+  m_catalogue->createActivitiesFairShareWeight(m_admin, diskInstanceName, activity1, weight1, comment);
+      
+  const auto activitiesList = m_catalogue->getActivitiesFairShareWeights();
+      
+  ASSERT_EQ(1, activitiesList.size());
+  ASSERT_EQ(1, activitiesList.front().activitiesWeights.size());
+  ASSERT_NO_THROW(activitiesList.front().activitiesWeights.at(activity1));
+  ASSERT_EQ(weight1, activitiesList.front().activitiesWeights.at(activity1));
+
+  m_catalogue->createActivitiesFairShareWeight(m_admin, diskInstanceName, activity2, weight2, comment);
+  
+  const auto activitiesList2 = m_catalogue->getActivitiesFairShareWeights();
+  
+  ASSERT_EQ(1, activitiesList2.size());
+  ASSERT_EQ(2, activitiesList2.front().activitiesWeights.size());
+  ASSERT_NO_THROW(activitiesList2.front().activitiesWeights.at(activity1));
+  ASSERT_EQ(weight1, activitiesList2.front().activitiesWeights.at(activity1));
+  ASSERT_NO_THROW(activitiesList2.front().activitiesWeights.at(activity2));
+  ASSERT_EQ(weight2, activitiesList2.front().activitiesWeights.at(activity2));
+  
+  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "NoSuchInstance", activity2, weight2, comment), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, diskInstanceName, "NoSuchActivity", weight2, comment), cta::exception::UserError);
+  
+  ASSERT_NO_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, diskInstanceName, activity1, weight2, comment));
+  ASSERT_NO_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, diskInstanceName, activity2, weight1, comment));
+  
+  
+  const auto activitiesList3 = m_catalogue->getActivitiesFairShareWeights();
+  
+  ASSERT_EQ(1, activitiesList3.size());
+  ASSERT_EQ(2, activitiesList3.front().activitiesWeights.size());
+  ASSERT_NO_THROW(activitiesList3.front().activitiesWeights.at(activity1));
+  ASSERT_EQ(weight2, activitiesList3.front().activitiesWeights.at(activity1));
+  ASSERT_NO_THROW(activitiesList3.front().activitiesWeights.at(activity2));
+  ASSERT_EQ(weight1, activitiesList3.front().activitiesWeights.at(activity2));
+  
+  ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, "NoSuchInstance", activity2), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, diskInstanceName, "NoSuchActivity"), cta::exception::UserError);
+  
+  ASSERT_NO_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, diskInstanceName, activity1));
+  
+  const auto activitiesList4 = m_catalogue->getActivitiesFairShareWeights();
+      
+  ASSERT_EQ(1, activitiesList4.size());
+  ASSERT_EQ(1, activitiesList4.front().activitiesWeights.size());
+  ASSERT_NO_THROW(activitiesList4.front().activitiesWeights.at(activity2));
+  ASSERT_EQ(weight1, activitiesList4.front().activitiesWeights.at(activity2));
+  
+  ASSERT_NO_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, diskInstanceName, activity2));
+  
+  ASSERT_EQ(0, m_catalogue->getActivitiesFairShareWeights().size());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, activitiesDataValidation) {
+  using namespace cta;
+  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "", "Activity", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
+  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringActivity);
+  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.0, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
+  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 1.1, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
+  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.1, ""), catalogue::UserSpecifiedAnEmptyStringComment);
+  
+  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "", "Activity", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
+  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringActivity);
+  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.0, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
+  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 1.1, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
+  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.1, ""), catalogue::UserSpecifiedAnEmptyStringComment);
+  
+  ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, "", "Activity"), catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
+  ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, "DiskInstance", ""), catalogue::UserSpecifiedAnEmptyStringActivity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, ping) {

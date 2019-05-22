@@ -89,8 +89,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeMountedForArchive(vid, drive);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(const std::string &diskInstanceName, const uint64_t archiveFileId, const common::dataStructures::UserIdentity &user, log::LogContext &lc) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, lc);}, m_maxTriesToConnect);
+  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(const std::string& diskInstanceName, const uint64_t archiveFileId, const common::dataStructures::UserIdentity& user, const optional<std::string>& activity, log::LogContext& lc) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, activity, lc);}, m_maxTriesToConnect);
   }
 
   void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) override {
@@ -344,6 +344,23 @@ public:
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMountPolicyComment(admin, name, comment);}, m_maxTriesToConnect);
   }
+  
+  void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createActivitiesFairShareWeight(admin, diskInstanceName, acttivity, weight, comment);}, m_maxTriesToConnect);
+  }
+  
+  void modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyActivitiesFairShareWeight(admin, diskInstanceName, acttivity, weight, comment);}, m_maxTriesToConnect);
+  }
+  
+  void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteActivitiesFairShareWeight(admin, diskInstanceName, acttivity);}, m_maxTriesToConnect);
+  }
+  
+  std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getActivitiesFairShareWeights();}, m_maxTriesToConnect);
+  }
+
 
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);

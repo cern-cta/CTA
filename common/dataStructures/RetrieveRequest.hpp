@@ -28,6 +28,7 @@
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "LifecycleTimings.hpp"
+#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
@@ -51,6 +52,8 @@ struct RetrieveRequest {
   DiskFileInfo diskFileInfo;
   EntryLog creationLog;
   LifecycleTimings lifecycleTimings;
+  optional<std::string> activity;
+
 }; // struct RetrieveRequest
 
 std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj);

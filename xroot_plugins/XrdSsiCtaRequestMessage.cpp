@@ -494,6 +494,11 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
+   
+   // Activity value is a string. The parameter might be present or not.
+   try {
+     request.activity = notification.file().xattr().at("activity");
+   } catch (...) {}
 
    cta::utils::Timer t;
 
