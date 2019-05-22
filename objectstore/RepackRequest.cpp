@@ -75,6 +75,7 @@ void RepackRequest::initialize() {
   m_payload.set_failedtoarchivebytes(0);
   m_payload.set_lastexpandedfseq(0);
   m_payload.set_is_expand_finished(false);
+  m_payload.set_is_expand_started(false);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -160,6 +161,47 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
 void RepackRequest::setExpandFinished(const bool expandFinished){
   checkPayloadWritable();
   m_payload.set_is_expand_finished(expandFinished);
+}
+
+void RepackRequest::setExpandStarted(const bool expandStarted){
+  checkPayloadWritable();
+  m_payload.set_is_expand_started(expandStarted);
+}
+
+void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles){
+  setTotalFileToRetrieve(totalStatsFiles.totalFilesToRetrieve);
+  setTotalFileToArchive(totalStatsFiles.totalFilesToArchive);
+  setTotalBytesToArchive(totalStatsFiles.totalBytesToArchive);
+  setTotalBytesToRetrieve(totalStatsFiles.totalBytesToRetrieve);
+}
+
+void RepackRequest::setStatus(){
+  checkPayloadWritable();
+  checkPayloadReadable();
+  
+  if(m_payload.is_expand_started()){
+    //The expansion of the Repack Request have started
+    if(m_payload.is_expand_finished()){
+      if( (m_payload.retrievedfiles() + m_payload.failedtoretrievefiles() >= m_payload.totalfilestoretrieve()) && (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() >= m_payload.totalfilestoarchive()) ){
+        //We reached the end
+        if (m_payload.failedtoretrievefiles() || m_payload.failedtoarchivefiles()) {
+          //At least one retrieve or archive has failed
+          setStatus(common::dataStructures::RepackInfo::Status::Failed);
+        } else {
+          //No Failure, we are status Complete
+          setStatus(common::dataStructures::RepackInfo::Status::Complete);
+        }
+        return;
+      }
+    }
+    //Expand is finished or not, if we have retrieved files, we are in Running,
+    //else we are in starting
+    if(m_payload.retrievedfiles()){
+      setStatus(common::dataStructures::RepackInfo::Status::Running);
+    } else {
+      setStatus(common::dataStructures::RepackInfo::Status::Starting);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -276,8 +318,17 @@ void RepackRequest::setTotalFileToArchive(const uint64_t nbFilesToArchive){
 void RepackRequest::setTotalBytesToArchive(const uint64_t nbBytesToArchive) {
   checkPayloadWritable();
   m_payload.set_totalbytestoarchive(nbBytesToArchive);
-}
+    }
 
+cta::SchedulerDatabase::RepackRequest::TotalStatsFiles RepackRequest::getTotalStatsFile() {
+  checkPayloadReadable();
+  cta::SchedulerDatabase::RepackRequest::TotalStatsFiles ret;
+  ret.totalBytesToRetrieve = m_payload.totalbytestoretrieve();
+  ret.totalBytesToArchive = m_payload.totalbytestoarchive();
+  ret.totalFilesToRetrieve = m_payload.totalfilestoretrieve();
+  ret.totalFilesToArchive = m_payload.totalfilestoarchive();
+  return ret;
+}
 
 //------------------------------------------------------------------------------
 // RepackRequest::reportRetriveSuccesses()
@@ -302,6 +353,7 @@ void RepackRequest::reportRetriveSuccesses(SubrequestStatistics::List& retrieveS
     }
   }
   if (didUpdate) {
+    setStatus();
     m_payload.mutable_subrequests()->Clear();
     for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
@@ -330,6 +382,7 @@ void RepackRequest::reportRetriveFailures(SubrequestStatistics::List& retrieveFa
     }
   }
   if (didUpdate) {
+    setStatus();
     m_payload.mutable_subrequests()->Clear();
     for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
@@ -360,14 +413,7 @@ serializers::RepackRequestStatus RepackRequest::reportArchiveSuccesses(Subreques
     }
   }
   if (didUpdate) {
-    // Check whether we reached the end.
-    if (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() >= m_payload.totalfilestoarchive()) {
-      if (m_payload.failedtoarchivefiles()) {
-        m_payload.set_status(serializers::RepackRequestStatus::RRS_Failed);
-      } else {
-        m_payload.set_status(serializers::RepackRequestStatus::RRS_Complete);
-      }
-    }
+    setStatus();
     m_payload.mutable_subrequests()->Clear();
     for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
@@ -399,8 +445,7 @@ serializers::RepackRequestStatus RepackRequest::reportArchiveFailures(Subrequest
   }
   if (didUpdate) {
     // Check whether we reached the end.
-    if (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() >= m_payload.totalfilestoarchive())
-      m_payload.set_status(serializers::RepackRequestStatus::RRS_Failed);
+    setStatus();
     m_payload.mutable_subrequests()->Clear();
     for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }

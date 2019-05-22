@@ -1491,7 +1491,7 @@ void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabas
   }
   // Ensure existence of stats for important statuses
   typedef common::dataStructures::RepackInfo::Status Status; 
-  for (auto s: {Status::Pending, Status::ToExpand, Status::Starting}) {
+  for (auto s: {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
     stats[s] = 0;
   }
   auto fet = fetchers.begin();
@@ -1793,7 +1793,6 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
     objectstore::ScopedExclusiveLock rrl(m_repackRequest);
     timingList.insertAndReset("successStatsLockTime", t);
     m_repackRequest.fetch();
-    m_repackRequest.setStatus(common::dataStructures::RepackInfo::Status::Running);
     timingList.insertAndReset("successStatsFetchTime", t);
     m_repackRequest.reportRetriveSuccesses(ssl);
     timingList.insertAndReset("successStatsUpdateTime", t);
@@ -2077,13 +2076,16 @@ void OStoreDB::RepackRequest::setLastExpandedFSeq(uint64_t fseq){
 //------------------------------------------------------------------------------
 // OStoreDB::RepackRequest::addSubrequests()
 //------------------------------------------------------------------------------
-void OStoreDB::RepackRequest::addSubrequests(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap, uint64_t maxFSeqLowBound, log::LogContext& lc) {
+void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap, uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles &totalStatsFiles, log::LogContext& lc) {
   // We need to prepare retrieve requests names and reference them, create them, enqueue them.
   objectstore::ScopedExclusiveLock rrl (m_repackRequest);
   m_repackRequest.fetch();
   std::set<uint64_t> fSeqs;
   for (auto rsr: repackSubrequests) fSeqs.insert(rsr.fSeq);
   auto subrequestsNames = m_repackRequest.getOrPrepareSubrequestInfo(fSeqs, *m_oStoreDB.m_agentReference);
+  m_repackRequest.setTotalStats(totalStatsFiles);
+  uint64_t fSeq = std::max(maxFSeqLowBound+1, maxAddedFSeq + 1);
+  m_repackRequest.setLastExpandedFSeq(fSeq);
   // We make sure the references to subrequests exist persistently before creating them.
   m_repackRequest.commit();
   // We keep holding the repack request lock: we need to ensure de deleted boolean of each subrequest does
@@ -2294,32 +2296,9 @@ void OStoreDB::RepackRequest::expandDone() {
   // We are now done with the repack request. We can set its status.
   ScopedExclusiveLock rrl(m_repackRequest);
   m_repackRequest.fetch();
-  // After expansion, 2 statuses are possible: starting (nothing reported as done) or running (anything reported as done).
-  // We can find that out from the statistics...
-  typedef objectstore::RepackRequest::StatsType StatsType;
-  bool running=false;
-  auto stats=m_repackRequest.getStats();
-  for (auto t: {StatsType::ArchiveFailure, StatsType::ArchiveSuccess, StatsType::RetrieveSuccess, StatsType::RetrieveFailure}) {
-    if (stats.at(t).files) {
-      running=true;
-      break;
-    }
-  }
-  if(stats.at(StatsType::RetrieveTotal).files == m_repackRequest.getInfo().totalFilesToRetrieve){
-    m_repackRequest.setExpandFinished(true);
-  }
-  typedef common::dataStructures::RepackInfo::Status Status;
-  m_repackRequest.setStatus(running? Status::Running: Status::Starting);
-  m_repackRequest.commit();
-}
 
-void OStoreDB::RepackRequest::setTotalStats(const TotalStatsFiles& stats){
-  ScopedExclusiveLock rrl(m_repackRequest);
-  m_repackRequest.fetch();
-  m_repackRequest.setTotalFileToArchive(stats.totalFilesToArchive);
-  m_repackRequest.setTotalBytesToArchive(stats.totalBytesToArchive);
-  m_repackRequest.setTotalFileToRetrieve(stats.totalFilesToRetrieve);
-  m_repackRequest.setTotalBytesToRetrieve(stats.totalBytesToRetrieve);
+  m_repackRequest.setExpandFinished(true);
+  m_repackRequest.setStatus();
   m_repackRequest.commit();
 }
 
@@ -2333,6 +2312,36 @@ void OStoreDB::RepackRequest::fail() {
   m_repackRequest.commit();
 }
 
+void OStoreDB::RepackRequest::requeueInToExpandQueue(log::LogContext& lc){
+  ScopedExclusiveLock rrl(m_repackRequest);
+  m_repackRequest.fetch();
+  std::string previousOwner = m_repackRequest.getOwner();
+  m_repackRequest.setStatus();
+  m_repackRequest.commit();
+  rrl.release();
+  std::unique_ptr<cta::objectstore::RepackRequest> rr(new cta::objectstore::RepackRequest(m_repackRequest.getAddressIfSet(),m_oStoreDB.m_objectStore));
+  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand> RQTEAlgo;
+  RQTEAlgo rqteAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+  RQTEAlgo::InsertedElement::list insertedElements;
+  insertedElements.push_back(RQTEAlgo::InsertedElement());
+  insertedElements.back().repackRequest = std::move(rr);
+  rqteAlgo.referenceAndSwitchOwnership(nullopt, previousOwner, insertedElements, lc);
+}
+
+void OStoreDB::RepackRequest::setExpandStartedAndChangeStatus(){
+  ScopedExclusiveLock rrl(m_repackRequest);
+  m_repackRequest.fetch();
+  m_repackRequest.setExpandStarted(true);
+  m_repackRequest.setStatus();
+  m_repackRequest.commit();
+}
+
+void OStoreDB::RepackRequest::fillLastExpandedFSeqAndTotalStatsFile(uint64_t& fSeq, TotalStatsFiles& totalStatsFiles) {
+  ScopedExclusiveLock rrl(m_repackRequest);
+  m_repackRequest.fetch();
+  fSeq = m_repackRequest.getLastExpandedFSeq();
+  totalStatsFiles = m_repackRequest.getTotalStatsFile();
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::cancelRepack()
