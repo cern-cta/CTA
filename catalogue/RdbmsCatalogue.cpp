@@ -1685,6 +1685,41 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
 }
 
 //------------------------------------------------------------------------------
+// setLogicalLibraryDisabled
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const bool disabledValue) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE LOGICAL_LIBRARY SET "
+        "IS_DISABLED = :IS_DISABLED,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindBool(":IS_DISABLED", disabledValue);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createTape(

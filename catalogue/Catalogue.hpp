@@ -278,6 +278,7 @@ public:
   virtual void deleteLogicalLibrary(const std::string &name) = 0;
   virtual std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const = 0;
   virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
+  virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool disabledValue) = 0;
 
   /**
    * Creates a tape which is assumed to have logical block protection (LBP)

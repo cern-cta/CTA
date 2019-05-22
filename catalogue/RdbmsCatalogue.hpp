@@ -273,6 +273,7 @@ public:
   void deleteLogicalLibrary(const std::string &name) override;
   std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const override;
   void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
+  virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool disabledValue) override;
 
   /**
    * Creates a tape.
