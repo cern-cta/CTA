@@ -1435,7 +1435,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
     auto & current = pendingReports.back();
     // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
     try {
-      current.reporter.reset(reporterFactory.createDiskReporter(j->reportURL()));
+      current.reporter.reset(reporterFactory.createDiskReporter(j->exceptionThrowingReportURL()));
       current.reporter->asyncReport();
       current.archiveJob = j.get();
     } catch (cta::exception::Exception & ex) {
