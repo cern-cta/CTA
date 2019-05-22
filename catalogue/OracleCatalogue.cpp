@@ -296,7 +296,6 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
 // filesWrittenToTape
 //------------------------------------------------------------------------------
 void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &events) {
-  throw exception::Exception("OracleCatalogue::filesWrittenToTape FAILED");
   try {
     if (events.empty()) {
       return;
