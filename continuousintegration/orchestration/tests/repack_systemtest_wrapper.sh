@@ -57,8 +57,6 @@ VID_TO_REPACK=$(getFirstVidContainingFiles)
 if [ "$VID_TO_REPACK" != "null" ] 
 then
 echo
-  echo "Marking the tape ${VID_TO_REPACK} as full"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${VID_TO_REPACK} -f true
   echo "Launching the repack test on VID ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} || exit 1
 else
@@ -73,8 +71,6 @@ VID_TO_REPACK=$(getFirstVidContainingFiles)
 if [ "$VID_TO_REPACK" != "null" ] 
 then
 echo
-  echo "Marking the tape ${VID_TO_REPACK} as full"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${VID_TO_REPACK} -f true
   echo "Launching the repack test on VID ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} || exit 1
 else
@@ -92,8 +88,6 @@ VID_TO_REPACK=$(getFirstVidContainingFiles)
 if [ "$VID_TO_REPACK" != "null" ] 
 then
 echo
-  echo "Marking the tape ${VID_TO_REPACK} as full"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin ta ch -v ${VID_TO_REPACK} -f true
   echo "Launching the repack test on VID ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} || exit 1
 else

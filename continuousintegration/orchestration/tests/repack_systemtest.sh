@@ -79,6 +79,9 @@ testRepackBufferURL
 echo "Deleting existing repack request for VID ${VID_TO_REPACK}"
 admin_cta repack rm --vid ${VID_TO_REPACK}
 
+echo "Marking the tape ${VID_TO_REPACK} as full before Repacking it"
+admin_cta tape ch --vid ${VID_TO_REPACK} --full true
+
 echo "State of the tape VID ${VID_TO_REPACK} BEFORE repack"
 admin_cta --json tape ls --vid ${VID_TO_REPACK} | jq .
 
