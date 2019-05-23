@@ -80,8 +80,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
   cta::common::dataStructures::ArchiveFile aFile;
   aFile.archiveFileID = 123456789L;
   aFile.diskFileId = "eos://diskFile";
-  aFile.checksumType = "checksumType";
-  aFile.checksumValue = "checksumValue";
+  aFile.checksumBlob.insert(cta::checksum::ADLER32, "1234");
   aFile.creationTime = 0;
   aFile.reconciliationTime = 0;
   aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -98,7 +97,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
   ar.setMountPolicy(mp);
   ar.setArchiveReportURL("");
   ar.setArchiveErrorReportURL("");
-  ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
+  ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
   ar.setSrcURL("root://eoseos/myFile");
   ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
   ar.insert();
@@ -145,8 +144,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
       ASSERT_EQ(archiveFile.archiveFileID,aFile.archiveFileID);
 
       ASSERT_EQ(archiveFile.diskFileId,aFile.diskFileId);
-      ASSERT_EQ(archiveFile.checksumType,aFile.checksumType);
-      ASSERT_EQ(archiveFile.checksumValue,aFile.checksumValue);
+      ASSERT_EQ(archiveFile.checksumBlob,aFile.checksumBlob);
       ASSERT_EQ(archiveFile.creationTime,aFile.creationTime);
       ASSERT_EQ(archiveFile.reconciliationTime,aFile.reconciliationTime);
       ASSERT_EQ(archiveFile.diskFileInfo,aFile.diskFileInfo);
@@ -175,8 +173,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
       ASSERT_EQ(archiveFile.archiveFileID,aFile.archiveFileID);
 
       ASSERT_EQ(archiveFile.diskFileId,aFile.diskFileId);
-      ASSERT_EQ(archiveFile.checksumType,aFile.checksumType);
-      ASSERT_EQ(archiveFile.checksumValue,aFile.checksumValue);
+      ASSERT_EQ(archiveFile.checksumBlob,aFile.checksumBlob);
       ASSERT_EQ(archiveFile.creationTime,aFile.creationTime);
       ASSERT_EQ(archiveFile.reconciliationTime,aFile.reconciliationTime);
       ASSERT_EQ(archiveFile.diskFileInfo,aFile.diskFileInfo);
@@ -231,8 +228,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
   rqc.archiveFile.archiveFileID = 123456789L;
   rqc.archiveFile.diskFileId = "eos://diskFile";
-  rqc.archiveFile.checksumType = "";
-  rqc.archiveFile.checksumValue = "";
+  rqc.archiveFile.checksumBlob.insert(cta::checksum::NONE, "");
   rqc.archiveFile.creationTime = 0;
   rqc.archiveFile.reconciliationTime = 0;
   rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -242,8 +238,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   {
     cta::common::dataStructures::TapeFile tf;
     tf.blockId=0;
-    tf.compressedSize=1;
-    tf.compressedSize=1;
+    tf.fileSize=1;
     tf.copyNb=1;
     tf.creationTime=time(nullptr);
     tf.fSeq=2;
@@ -253,8 +248,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   {
     cta::common::dataStructures::TapeFile tf;
     tf.blockId=0;
-    tf.compressedSize=2;
-    tf.compressedSize=2;
+    tf.fileSize=2;
     tf.copyNb=2;
     tf.creationTime=time(nullptr);
     tf.fSeq=2;
@@ -318,8 +312,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     cta::common::dataStructures::ArchiveFile aFile = elt.archiveFile;
     ASSERT_EQ(aFile.archiveFileID,rqc.archiveFile.archiveFileID);
     ASSERT_EQ(aFile.diskFileId,rqc.archiveFile.diskFileId);
-    ASSERT_EQ(aFile.checksumType,rqc.archiveFile.checksumType);
-    ASSERT_EQ(aFile.checksumValue,rqc.archiveFile.checksumValue);
+    ASSERT_EQ(aFile.checksumBlob,rqc.archiveFile.checksumBlob);
     ASSERT_EQ(aFile.creationTime,rqc.archiveFile.creationTime);
     ASSERT_EQ(aFile.reconciliationTime,rqc.archiveFile.reconciliationTime);
     ASSERT_EQ(aFile.diskFileInfo,rqc.archiveFile.diskFileInfo);
@@ -363,15 +356,14 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     cta::common::dataStructures::ArchiveFile aFile = elt.archiveFile;
     ASSERT_EQ(aFile.archiveFileID,rqc.archiveFile.archiveFileID);
     ASSERT_EQ(aFile.diskFileId,rqc.archiveFile.diskFileId);
-    ASSERT_EQ(aFile.checksumType,rqc.archiveFile.checksumType);
-    ASSERT_EQ(aFile.checksumValue,rqc.archiveFile.checksumValue);
+    ASSERT_EQ(aFile.checksumBlob,rqc.archiveFile.checksumBlob);
     ASSERT_EQ(aFile.creationTime,rqc.archiveFile.creationTime);
     ASSERT_EQ(aFile.reconciliationTime,rqc.archiveFile.reconciliationTime);
     ASSERT_EQ(aFile.diskFileInfo,rqc.archiveFile.diskFileInfo);
     ASSERT_EQ(aFile.fileSize,rqc.archiveFile.fileSize);
     ASSERT_EQ(aFile.storageClass,rqc.archiveFile.storageClass);
     ASSERT_EQ(elt.copyNb,2);
-    ASSERT_EQ(elt.archiveFile.tapeFiles.at(2).compressedSize,2);
+    ASSERT_EQ(elt.archiveFile.tapeFiles.at(2).fileSize,2);
     ASSERT_EQ(elt.bytes,1000);
     ASSERT_EQ(elt.reportType,cta::SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired);
     ASSERT_EQ(elt.rr.archiveFileID,aFile.archiveFileID);
@@ -436,8 +428,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
   rqc.archiveFile.archiveFileID = 1L;
   rqc.archiveFile.diskFileId = "eos://diskFile1";
-  rqc.archiveFile.checksumType = "";
-  rqc.archiveFile.checksumValue = "";
+  rqc.archiveFile.checksumBlob.insert(cta::checksum::NONE, "");
   rqc.archiveFile.creationTime = 0;
   rqc.archiveFile.reconciliationTime = 0;
   rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -447,8 +438,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   {
     cta::common::dataStructures::TapeFile tf;
     tf.blockId=0;
-    tf.compressedSize=1;
-    tf.compressedSize=1;
+    tf.fileSize=1;
     tf.copyNb=1;
     tf.creationTime=time(nullptr);
     tf.fSeq=1;
@@ -480,8 +470,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   cta::common::dataStructures::RetrieveFileQueueCriteria rqc2;
   rqc2.archiveFile.archiveFileID = 2L;
   rqc2.archiveFile.diskFileId = "eos://diskFile2";
-  rqc2.archiveFile.checksumType = "";
-  rqc2.archiveFile.checksumValue = "";
+  rqc2.archiveFile.checksumBlob.insert(cta::checksum::NONE, "");
   rqc2.archiveFile.creationTime = 0;
   rqc2.archiveFile.reconciliationTime = 0;
   rqc2.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -491,8 +480,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   {
     cta::common::dataStructures::TapeFile tf;
     tf.blockId=0;
-    tf.compressedSize=1;
-    tf.compressedSize=1;
+    tf.fileSize=1;
     tf.copyNb=2;
     tf.creationTime=time(nullptr);
     tf.fSeq=2;
@@ -559,8 +547,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   cta::common::dataStructures::ArchiveFile aFile;
   aFile.archiveFileID = 3L;
   aFile.diskFileId = "eos://diskFile";
-  aFile.checksumType = "checksumType";
-  aFile.checksumValue = "checksumValue";
+  aFile.checksumBlob.insert(cta::checksum::ADLER32, "1234");
   aFile.creationTime = 0;
   aFile.reconciliationTime = 0;
   aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -573,7 +560,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   ar.setMountPolicy(mp);
   ar.setArchiveReportURL("");
   ar.setArchiveErrorReportURL("");
-  ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
+  ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
   ar.setSrcURL("root://eoseos/myFile");
   ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
   ar.insert();
@@ -585,8 +572,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   cta::common::dataStructures::ArchiveFile aFile2;
   aFile2.archiveFileID = 4L;
   aFile2.diskFileId = "eos://diskFile";
-  aFile2.checksumType = "checksumType";
-  aFile2.checksumValue = "checksumValue";
+  aFile2.checksumBlob.insert(cta::checksum::ADLER32, "1234");
   aFile2.creationTime = 0;
   aFile2.reconciliationTime = 0;
   aFile2.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -600,7 +586,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   ar2.setMountPolicy(mp);
   ar2.setArchiveReportURL("");
   ar2.setArchiveErrorReportURL("");
-  ar2.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
+  ar2.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
   ar2.setSrcURL("root://eoseos/myFile");
   ar2.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
   ar2.insert();
@@ -747,8 +733,7 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
   cta::common::dataStructures::ArchiveFile aFile;
   aFile.archiveFileID = 3L;
   aFile.diskFileId = "eos://diskFile";
-  aFile.checksumType = "checksumType";
-  aFile.checksumValue = "checksumValue";
+  aFile.checksumBlob.insert(cta::checksum::ADLER32, "1234");
   aFile.creationTime = 0;
   aFile.reconciliationTime = 0;
   aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -762,7 +747,7 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
   ar.setMountPolicy(mp);
   ar.setArchiveReportURL("");
   ar.setArchiveErrorReportURL("");
-  ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
+  ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
   ar.setSrcURL("root://eoseos/myFile");
   ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
   ar.insert();
@@ -830,8 +815,7 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
     
     ASSERT_EQ(elt.copyNb,1);
     ASSERT_EQ(elt.archiveFile.archiveFileID,3L);
-    ASSERT_EQ(elt.archiveFile.checksumType,"checksumType");
-    ASSERT_EQ(elt.archiveFile.checksumValue,"checksumValue");
+    ASSERT_EQ(elt.archiveFile.checksumBlob,cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234"));
     ASSERT_EQ(elt.archiveFile.diskInstance,"eoseos");
     ASSERT_EQ(elt.archiveFile.diskFileId,"eos://diskFile");
     
@@ -839,8 +823,7 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
     
     ASSERT_EQ(elt2.copyNb,2);
     ASSERT_EQ(elt2.archiveFile.archiveFileID,3L);
-    ASSERT_EQ(elt2.archiveFile.checksumType,"checksumType");
-    ASSERT_EQ(elt2.archiveFile.checksumValue,"checksumValue");
+    ASSERT_EQ(elt2.archiveFile.checksumBlob,cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234"));
     ASSERT_EQ(elt.archiveFile.diskInstance,"eoseos");
     ASSERT_EQ(elt.archiveFile.diskFileId,"eos://diskFile");
   }
@@ -893,8 +876,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
   rqc.archiveFile.archiveFileID = 1L;
   rqc.archiveFile.diskFileId = "eos://diskFile";
-  rqc.archiveFile.checksumType = "checksumType";
-  rqc.archiveFile.checksumValue = "checksumValue";
+  rqc.archiveFile.checksumBlob.insert(cta::checksum::ADLER32, "1234");
   rqc.archiveFile.creationTime = 0;
   rqc.archiveFile.reconciliationTime = 0;
   rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -904,8 +886,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   {
     cta::common::dataStructures::TapeFile tf;
     tf.blockId=0;
-    tf.compressedSize=1;
-    tf.compressedSize=1;
+    tf.fileSize=1;
     tf.copyNb=1;
     tf.creationTime=time(nullptr);
     tf.fSeq=1;
@@ -978,8 +959,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
     ASSERT_EQ(elt.copyNb,1);
     ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).vid,"Tape0");
     ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).fSeq,1);
-    ASSERT_EQ(elt.archiveFile.checksumValue,"checksumValue");
-    ASSERT_EQ(elt.archiveFile.checksumType,"checksumType");
+    ASSERT_EQ(elt.archiveFile.checksumBlob,cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234"));
     ASSERT_EQ(elt.archiveFile.diskInstance,"eoseos");
     ASSERT_EQ(elt.archiveFile.fileSize,1000);
     ASSERT_EQ(elt.archiveFile.storageClass,"sc");

@@ -73,7 +73,6 @@ class StorageClass;
 class Tape;
 class TapeMount;
 class TapeSession;
-class UserIdentity;
 class RepackRequest;
 namespace objectstore{
   class RetrieveRequest;

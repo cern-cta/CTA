@@ -59,6 +59,25 @@ const std::map<ChecksumType, std::string> ChecksumTypeName = {
 class ChecksumBlob {
 public:
   /*!
+   * Default constructor
+   */
+  ChecksumBlob() {}
+
+  /*!
+   * Construct and insert one checksum
+   */
+  ChecksumBlob(ChecksumType type, const std::string &value) {
+    insert(type, value);
+  }
+
+  /*!
+   * Construct and insert one 32-bit checksum
+   */
+  ChecksumBlob(ChecksumType type, uint32_t value) {
+    insert(type, value);
+  }
+
+  /*!
    * Clear all of the checksums in this blob
    */
   void clear() { m_cs.clear(); }
@@ -73,7 +92,8 @@ public:
   /*!
    * Insert a new 32-bit checksum into the blob
    *
-   * Only valid for Adler-32, CRC-32 and CRC-32c checksums
+   * Only valid for Adler-32, CRC-32 and CRC-32c checksums. Throws an
+   * exception for other checksum types.
    *
    * @param[in] value    32-bit unsigned integer containing the checksum
    */

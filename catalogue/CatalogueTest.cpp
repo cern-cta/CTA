@@ -3666,7 +3666,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     file1Written.diskFileId           = "5678";
     file1Written.diskFilePath         = "/public_dir/public_file";
     file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-    file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+    file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
     file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
     file1Written.storageClassName     = storageClass.name;
@@ -7033,7 +7033,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -7281,7 +7281,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -7816,8 +7816,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskInstance = storageClass.diskInstance;
     fileWritten.diskFileId = diskFileId.str();
     fileWritten.diskFilePath = diskFilePath.str();
-    fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-    fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
@@ -7877,8 +7877,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskInstance = storageClass.diskInstance;
     fileWritten.diskFileId = diskFileId.str();
     fileWritten.diskFilePath = diskFilePath.str();
-    fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-    fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
@@ -8111,8 +8111,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
@@ -8169,8 +8169,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
@@ -8227,8 +8227,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
@@ -8336,7 +8336,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileGid     = PUBLIC_DISK_GROUP;
+    searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -8516,8 +8516,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
           fileWritten.diskInstance = m_storageClass.diskInstance;
           fileWritten.diskFileId = diskFileId.str();
           fileWritten.diskFilePath = diskFilePath.str();
-          fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-          fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
+          fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+          fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
           fileWritten.size = m_archiveFileSize;
           fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
           fileWritten.storageClassName = m_storageClass.name;
@@ -8882,8 +8882,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
-      fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
+      fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
@@ -8955,8 +8955,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
-      fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
+      fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
@@ -9031,8 +9031,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
@@ -9092,8 +9092,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-      fileWritten.diskFileGid     = PUBLIC_DISK_GROUP;
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
       fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
@@ -9262,7 +9262,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileGid     = PUBLIC_DISK_GROUP;
+    searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -9463,7 +9463,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -9682,7 +9682,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -9872,7 +9872,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -10090,7 +10090,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize1;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -10267,7 +10267,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -10441,7 +10441,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -10616,7 +10616,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -10915,7 +10915,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -11415,7 +11415,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid     = PUBLIC_DISK_GROUP;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
@@ -11786,8 +11786,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file1Written = *file1WrittenUP;
@@ -11797,16 +11795,15 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
+  file1Written.size                 = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -11817,14 +11814,13 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -11833,9 +11829,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.size, tapeFile1.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -11884,16 +11879,15 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   file1WrittenAgain.diskInstance         = storageClass.diskInstance;
   file1WrittenAgain.diskFileId           = "5678";
   file1WrittenAgain.diskFilePath         = "/public_dir/public_file";
-  file1WrittenAgain.diskFileUser         = "public_disk_user";
-  file1WrittenAgain.diskFileGroup        = "public_disk_group";
+  file1WrittenAgain.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1WrittenAgain.diskFileGid          = PUBLIC_DISK_GROUP;
   file1WrittenAgain.size                 = archiveFileSize;
-  file1WrittenAgain.checksumType         = checksumType;
-  file1WrittenAgain.checksumValue        = checksumValue;
+  file1WrittenAgain.checksumBlob.insert(checksum::ADLER32, "1234");
   file1WrittenAgain.storageClassName     = storageClass.name;
   file1WrittenAgain.vid                  = vid2;
   file1WrittenAgain.fSeq                 = 1;
   file1WrittenAgain.blockId              = 4321;
-  file1WrittenAgain.compressedSize       = 1;
+  file1WrittenAgain.size                 = 1;
   file1WrittenAgain.copyNb               = 1;
   file1WrittenAgain.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenAgainSet);
