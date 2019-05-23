@@ -96,6 +96,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
     ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->vid);
     ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->fSeq);
     ASSERT_EQ(tapeFile1.blockId, copyNbToTapeFileItor->blockId);
+    ASSERT_EQ(tapeFile1.fileSize, copyNbToTapeFileItor->fileSize);
     ASSERT_EQ(tapeFile1.copyNb, copyNbToTapeFileItor->copyNb);
   }
 
@@ -106,6 +107,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
     ASSERT_EQ(tapeFile2.vid, copyNbToTapeFileItor->vid);
     ASSERT_EQ(tapeFile2.fSeq, copyNbToTapeFileItor->fSeq);
     ASSERT_EQ(tapeFile2.blockId, copyNbToTapeFileItor->blockId);
+    ASSERT_EQ(tapeFile2.fileSize, copyNbToTapeFileItor->fileSize);
     ASSERT_EQ(tapeFile2.copyNb, copyNbToTapeFileItor->copyNb);
   }
 }

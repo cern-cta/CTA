@@ -1085,8 +1085,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     serializers::ArchiveRequest archiveRequestPayload;
     const cta::objectstore::serializers::ArchiveFile& archiveFile = retrieveRequestPayload.archivefile();
     archiveRequestPayload.set_archivefileid(archiveFile.archivefileid());
-    archiveRequestPayload.set_checksumtype(archiveFile.checksumtype());
-    archiveRequestPayload.set_checksumvalue(archiveFile.checksumvalue());
+    archiveRequestPayload.set_checksumblob(archiveFile.checksumblob());
     archiveRequestPayload.set_creationtime(archiveFile.creationtime()); //TODO : should the creation time be the same as the archiveFile creation time ?
     archiveRequestPayload.set_diskfileid(archiveFile.diskfileid());
     archiveRequestPayload.set_diskinstance(archiveFile.diskinstance());
@@ -1116,7 +1115,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     //ArchiveRequest source url is the same as the retrieveRequest destination URL
     const cta::objectstore::serializers::SchedulerRetrieveRequest schedulerRetrieveRequest = retrieveRequestPayload.schedulerrequest();
     archiveRequestPayload.set_srcurl(schedulerRetrieveRequest.dsturl());
-    cta::objectstore::serializers::UserIdentity *archiveRequestUser = archiveRequestPayload.mutable_requester();
+    cta::objectstore::serializers::RequesterIdentity *archiveRequestUser = archiveRequestPayload.mutable_requester();
     archiveRequestUser->CopyFrom(schedulerRetrieveRequest.requester());
     
     //Copy the RetrieveRequest MountPolicy into the new ArchiveRequest
