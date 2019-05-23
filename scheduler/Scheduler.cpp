@@ -317,6 +317,22 @@ void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliId
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
+void Scheduler::checkTapeFullBeforeRepack(std::string vid){
+  std::set<std::string> vidToRepack;
+  vidToRepack.insert(vid);
+  try{
+    auto vidToTapesMap = m_catalogue.getTapesByVid(vidToRepack); //throws an exception if the vid is not found on the database
+    cta::common::dataStructures::Tape tapeToCheck = vidToTapesMap.at(vid);
+    if(!tapeToCheck.full){
+      throw exception::UserError("You must set the tape as full before repacking it.");
+    }
+  } catch(const exception::UserError& userEx){
+    throw userEx;
+  } catch(const cta::exception::Exception & ex){
+    throw exception::UserError("The VID provided for repacking does not exist");
+  }
+}
+
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
@@ -326,6 +342,7 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
   if (vid.empty()) throw exception::UserError("Empty VID name.");
   if (bufferURL.empty()) throw exception::UserError("Empty buffer URL.");
   utils::Timer t;
+  checkTapeFullBeforeRepack(vid);
   m_db.queueRepack(vid, bufferURL, repackType, lc);
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);

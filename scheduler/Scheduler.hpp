@@ -308,6 +308,13 @@ private:
     std::map<tpType, uint32_t> & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
   
+  /**
+   * Checks wether the tape is full before repacking
+   * @param vid the vid of the tape to check
+   * @throws a UserError exception if the vid does not exist or if
+   * the tape is not full
+   */
+  void checkTapeFullBeforeRepack(std::string vid);
   
 public:
   /**
