@@ -4246,7 +4246,8 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "TAPE_FILE.VID = TAPE.VID "
        "WHERE "
          "TAPE_FILE.VID = :VID AND "
-         "TAPE_FILE.FSEQ >= :START_FSEQ "
+         "TAPE_FILE.FSEQ >= :START_FSEQ AND "
+         "TAPE_FILE.SUPERSEDED_BY_VID IS NULL "
        "ORDER BY FSEQ";
 
     auto conn = m_connPool.getConn();
