@@ -101,7 +101,7 @@ private:
    void processMountPolicy_Ls        (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processRepack_Add            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processRepack_Rm             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processRepack_Ls             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   //void processRepack_Ls             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processRepack_Err            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processRequesterMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processRequesterMountRule_Ch (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
@@ -137,6 +137,7 @@ private:
    admincmdstream_t processListPendingRetrieves;
    admincmdstream_t processTapePool_Ls;
    admincmdstream_t processTape_Ls;
+   admincmdstream_t processRepack_Ls;
 
    /*!
     * Log an admin command

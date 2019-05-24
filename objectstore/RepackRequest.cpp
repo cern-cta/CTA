@@ -138,6 +138,8 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.failedBytesToArchive = m_payload.failedtoarchivebytes();
   ret.failedFilesToRetrieve = m_payload.failedtoretrievefiles();
   ret.failedBytesToRetrieve = m_payload.failedtoretrievebytes();
+  ret.archivedFiles = m_payload.archivedfiles();
+  ret.retrievedFiles = m_payload.retrievedfiles();
   ret.lastExpandedFseq = m_payload.lastexpandedfseq();
   ret.userProvidedFiles = m_payload.userprovidedfiles();
   ret.isExpandFinished = m_payload.is_expand_finished();

@@ -78,6 +78,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
          case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
          case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item()); break;
+         case Data::kRelsItem:       std::cout << Log::DumpProtobuf(&record.rels_item()); break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -94,6 +95,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLprSummary:    CtaAdminCmd::print(record.lpr_summary());  break;
          case Data::kTplsItem:      CtaAdminCmd::print(record.tpls_item());    break;
          case Data::kTalsItem:      CtaAdminCmd::print(record.tals_item());    break;
+         case Data::kRelsItem:      CtaAdminCmd::print(record.rels_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -237,6 +239,7 @@ void CtaAdminCmd::send() const
             case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: printLprSummaryHeader(); break;
             case HeaderType::TAPEPOOL_LS:                  printTpLsHeader(); break;
             case HeaderType::TAPE_LS:                      printTapeLsHeader(); break;
+            case HeaderType::REPACK_LS:                    printRepackLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }
@@ -729,6 +732,44 @@ void CtaAdminCmd::print(const cta::admin::TapeLsItem &tals_item){
               << std::setfill(' ') << std::setw(25) << std::right << tals_item.last_modification_log().host()          << ' '
               << std::setfill(' ') << std::setw(13) << std::right << tals_item.last_modification_log().time()           << ' '
               << std::endl;
+}
+
+void CtaAdminCmd::printRepackLsHeader(){
+  std::cout << TEXT_RED
+            << std::setfill(' ') << std::setw(7) << std::right << "vid"              << ' '
+            << std::setfill(' ') << std::setw(50) << std::right << "repackBufferURL"       << ' '
+            << std::setfill(' ') << std::setw(17)  << std::right << "userProvidedFiles"           << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << "totalFilesToRetrieve" << ' '
+            << std::setfill(' ') << std::setw(19) << std::right <<  "totalBytesToRetrieve" << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << "totalFilesToArchive"  << ' '
+            << std::setfill(' ') << std::setw(19) << std::right <<  "totalBytesToArchive"  << ' '
+            << std::setfill(' ') << std::setw(14)  << std::right << "retrievedFiles"               << ' '
+            << std::setfill(' ') << std::setw(13)  << std::right << "archivedFiles"   << ' '
+            << std::setfill(' ') << std::setw(21)  << std::right << "failedToRetrieveFiles"         << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << "failedToRetrieveBytes"        << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right <<  "failedToArchiveFiles"        << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right <<  "failedToArchiveBytes"             << ' '
+            << std::setfill(' ') << std::setw(16)  << std::right <<  "lastExpandedFSeq"             << ' '
+            <<                                                      "status"         << ' '
+            << TEXT_NORMAL << std::endl;
+}
+
+void CtaAdminCmd::print(const cta::admin::RepackLsItem &rels_item){
+  std::cout << std::setfill(' ') << std::setw(7) << std::right << rels_item.vid()           << ' '
+            << std::setfill(' ') << std::setw(50) << std::right << rels_item.repack_buffer_url()      << ' '
+            << std::setfill(' ') << std::setw(17)  << std::right << rels_item.user_provided_files()           << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << rels_item.total_files_to_retrieve() << ' '
+            << std::setfill(' ') << std::setw(19) << std::right <<  rels_item.total_bytes_to_retrieve() << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << rels_item.total_files_to_archive()  << ' '
+            << std::setfill(' ') << std::setw(19) << std::right <<  rels_item.total_bytes_to_archive()  << ' '
+            << std::setfill(' ') << std::setw(14)  << std::right << rels_item.retrieved_files()               << ' '
+            << std::setfill(' ') << std::setw(13)  << std::right << rels_item.archived_files()   << ' '
+            << std::setfill(' ') << std::setw(21)  << std::right << rels_item.failed_to_retrieve_files()        << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right << rels_item.failed_to_retrieve_bytes()        << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right <<  rels_item.failed_to_archive_files()       << ' '
+            << std::setfill(' ') << std::setw(20)  << std::right <<  rels_item.failed_to_retrieve_bytes()         << ' '
+            << std::setfill(' ') << std::setw(10)  << std::right <<  rels_item.last_expanded_fseq()             << ' '
+            << rels_item.status() << std::endl;
 }
 
 void CtaAdminCmd::print(const cta::admin::TapePoolLsItem &tpls_item)

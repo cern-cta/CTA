@@ -58,6 +58,8 @@ struct RepackInfo {
   uint64_t failedBytesToRetrieve;
   uint64_t lastExpandedFseq;
   uint64_t userProvidedFiles;
+  uint64_t retrievedFiles;
+  uint64_t archivedFiles;
   bool isExpandFinished;
 //  std::string tag;
 //  uint64_t totalFiles;
