@@ -495,17 +495,12 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
 
       throw exception::Exception(msg.str());
     }
-  } catch(...) {
-    throw exception::Exception("HELLO WORLD");
-  }
-#if 0
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
-#endif
 }
 
 //------------------------------------------------------------------------------
