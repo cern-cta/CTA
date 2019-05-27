@@ -165,27 +165,19 @@ std::string trace;
     double catalogueTime=0;
     double schedulerDbTime=0;
     double clientReportingTime=0;
-trace += "ONE ";
     while(!successfulArchiveJobs.empty()) {
-trace += "TWO ";
       // Get the next job to report and make sure we will not attempt to process it twice.
       job = std::move(successfulArchiveJobs.front());
-trace += "THREE ";
       successfulArchiveJobs.pop();
-trace += "FOUR ";
       if (!job.get()) continue;
-trace += "FIVE ";
+trace += "ONE ";
       tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
-trace += "SIX ";
+trace += "TWO ";
       files++;
       bytes+=job->archiveFile.fileSize;
-trace += "SEVEN ";
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
-trace += "EIGHT ";
       job.reset();
-trace += "NINE ";
     }
-trace += "END";
     while (!skippedFiles.empty()) {
       auto tiwup = cta::make_unique<cta::catalogue::TapeItemWritten>();
       *tiwup = skippedFiles.front();
