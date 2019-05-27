@@ -95,25 +95,25 @@ std::string cta::ArchiveJob::exceptionThrowingReportURL() {
   switch (m_dbJob->reportType) {
   case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
     return m_dbJob->archiveReportURL;
-  case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
-    {
-      if (m_dbJob->latestError.empty()) {
-        throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): empty failure reason.");
-      }
-      std::string base64ErrorReport;
-      // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
-      const bool noNewLineInBase64Output = false;
-      CryptoPP::StringSource ss1(m_dbJob->latestError, true, 
-        new CryptoPP::Base64Encoder(
-          new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
-      return m_dbJob->errorReportURL + base64ErrorReport;
+  case SchedulerDatabase::ArchiveJob::ReportType::FailureReport: {
+    if (m_dbJob->latestError.empty()) {
+      throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): empty failure reason.");
     }
+    std::string base64ErrorReport;
+    // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
+    const bool noNewLineInBase64Output = false;
+    CryptoPP::StringSource ss1(m_dbJob->latestError, true, 
+      new CryptoPP::Base64Encoder(
+        new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
+    return m_dbJob->errorReportURL + base64ErrorReport;
+  }
   case SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired:
     throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): job status NoReportRequired does not require reporting.");
   case SchedulerDatabase::ArchiveJob::ReportType::Report:
     throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): job status Report does not require reporting.");
   }
-  throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): invalid report type.");
+  throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): invalid report type reportType=" +
+    std::to_string(static_cast<uint8_t>(m_dbJob->reportType)));
 }
 
 //------------------------------------------------------------------------------
