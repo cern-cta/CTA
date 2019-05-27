@@ -158,7 +158,6 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
   std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
   std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
   std::unique_ptr<cta::ArchiveJob> job;
-std::string trace;
   try{
     uint64_t files=0;
     uint64_t bytes=0;
@@ -170,9 +169,7 @@ std::string trace;
       job = std::move(successfulArchiveJobs.front());
       successfulArchiveJobs.pop();
       if (!job.get()) continue;
-trace += "ONE ";
       tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
-trace += "TWO ";
       files++;
       bytes+=job->archiveFile.fileSize;
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
@@ -223,7 +220,6 @@ trace += "TWO ";
             .add("diskInstance", job->archiveFile.diskInstance)
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-.add("trace",trace)
             .add("reportURL", job->reportURL());
     }
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
