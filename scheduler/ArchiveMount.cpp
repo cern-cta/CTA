@@ -158,12 +158,14 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
   std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
   std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
   std::unique_ptr<cta::ArchiveJob> job;
+std::string trace;
   try{
     uint64_t files=0;
     uint64_t bytes=0;
     double catalogueTime=0;
     double schedulerDbTime=0;
     double clientReportingTime=0;
+trace += "ONE ";
     while(!successfulArchiveJobs.empty()) {
       // Get the next job to report and make sure we will not attempt to process it twice.
       job = std::move(successfulArchiveJobs.front());
@@ -175,15 +177,18 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
       job.reset();
     }
+trace += "TWO ";
     while (!skippedFiles.empty()) {
       auto tiwup = cta::make_unique<cta::catalogue::TapeItemWritten>();
       *tiwup = skippedFiles.front();
       skippedFiles.pop();
       tapeItemsWritten.emplace(tiwup.release());
     }
+trace += "THREE ";
     utils::Timer t;
     // Note: former content of ReportFlush::updateCatalogueWithTapeFilesWritten
     updateCatalogueWithTapeFilesWritten(tapeItemsWritten);
+trace += "FOUR ";
     catalogueTime=t.secs(utils::Timer::resetCounter);
     {
       cta::log::ScopedParamContainer params(logContext);
@@ -193,6 +198,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("catalogueTime", catalogueTime);
       logContext.log(cta::log::INFO, "Catalog updated for batch of jobs");   
     }
+trace += "FIVE ";
     
     // Now get the db mount to mark the jobs as successful.
     // Extract the db jobs from the scheduler jobs.
@@ -200,6 +206,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
     for (auto &schJob: validatedSuccessfulArchiveJobs) {
       validatedSuccessfulDBArchiveJobs.emplace_back(std::move(schJob->m_dbJob));
     }
+trace += "SIX ";
     
     // We can now pass this list for the dbMount to process. We are done at that point.
     // Reporting to client will be queued if needed and done in another process.
@@ -212,6 +219,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
           .add("schedulerDbTime", schedulerDbTime)
           .add("totalTime", catalogueTime  + schedulerDbTime + clientReportingTime);
     logContext.log(log::INFO, "In ArchiveMount::reportJobsBatchWritten(): recorded a batch of archive jobs in metadata.");
+trace += "SEVEN ";
   } catch(const cta::exception::Exception& e){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", e.getMessageValue());
@@ -220,6 +228,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("diskInstance", job->archiveFile.diskInstance)
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
+.add("trace",trace)
             .add("reportURL", job->reportURL());
     }
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
