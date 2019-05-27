@@ -167,28 +167,34 @@ std::string trace;
     double clientReportingTime=0;
 trace += "ONE ";
     while(!successfulArchiveJobs.empty()) {
+trace += "TWO ";
       // Get the next job to report and make sure we will not attempt to process it twice.
       job = std::move(successfulArchiveJobs.front());
+trace += "THREE ";
       successfulArchiveJobs.pop();
+trace += "FOUR ";
       if (!job.get()) continue;
+trace += "FIVE ";
       tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
+trace += "SIX ";
       files++;
       bytes+=job->archiveFile.fileSize;
+trace += "SEVEN ";
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
+trace += "EIGHT ";
       job.reset();
+trace += "NINE ";
     }
-trace += "TWO ";
+trace += "END";
     while (!skippedFiles.empty()) {
       auto tiwup = cta::make_unique<cta::catalogue::TapeItemWritten>();
       *tiwup = skippedFiles.front();
       skippedFiles.pop();
       tapeItemsWritten.emplace(tiwup.release());
     }
-trace += "THREE ";
     utils::Timer t;
     // Note: former content of ReportFlush::updateCatalogueWithTapeFilesWritten
     updateCatalogueWithTapeFilesWritten(tapeItemsWritten);
-trace += "FOUR ";
     catalogueTime=t.secs(utils::Timer::resetCounter);
     {
       cta::log::ScopedParamContainer params(logContext);
@@ -198,7 +204,6 @@ trace += "FOUR ";
             .add("catalogueTime", catalogueTime);
       logContext.log(cta::log::INFO, "Catalog updated for batch of jobs");   
     }
-trace += "FIVE ";
     
     // Now get the db mount to mark the jobs as successful.
     // Extract the db jobs from the scheduler jobs.
@@ -206,7 +211,6 @@ trace += "FIVE ";
     for (auto &schJob: validatedSuccessfulArchiveJobs) {
       validatedSuccessfulDBArchiveJobs.emplace_back(std::move(schJob->m_dbJob));
     }
-trace += "SIX ";
     
     // We can now pass this list for the dbMount to process. We are done at that point.
     // Reporting to client will be queued if needed and done in another process.
@@ -219,7 +223,6 @@ trace += "SIX ";
           .add("schedulerDbTime", schedulerDbTime)
           .add("totalTime", catalogueTime  + schedulerDbTime + clientReportingTime);
     logContext.log(log::INFO, "In ArchiveMount::reportJobsBatchWritten(): recorded a batch of archive jobs in metadata.");
-trace += "SEVEN ";
   } catch(const cta::exception::Exception& e){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", e.getMessageValue());
