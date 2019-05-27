@@ -336,19 +336,6 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-drop.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-database-poll.1cta.gz
 
-%package -n cta-mediachangerutils
-Summary: Utilities to faciliate working with mediachangers
-Group: Application/CTA
-Requires: cta-lib = %{version}-%{release}
-%description -n cta-mediachangerutils
-CERN Tape Archive:
-Utilities to faciliate working with the mediachangers
-%files -n cta-mediachangerutils
-%attr(0755,root,root) %{_bindir}/cta-mediachanger-dismount
-%attr(0755,root,root) %{_bindir}/cta-mediachanger-mount
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-mediachanger-dismount.1cta.gz
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-mediachanger-mount.1cta.gz
-
 %package -n cta-rmcd
 Summary: Tools to faciliate working with rmcd and smc in cta
 Group: Application/CTA
