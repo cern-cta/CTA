@@ -36,7 +36,8 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  ChecksumValueMismatch(const std::string &context = "", const bool embedBacktrace = true) {}
+  ChecksumValueMismatch(const std::string &context = "", const bool embedBacktrace = true) :
+    Exception(context, embedBacktrace) {}
 
   /**
    * Destructor.

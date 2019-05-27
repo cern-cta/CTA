@@ -34,7 +34,8 @@ public:
    * @param context optional context string added to the message at initialisation time
    * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
    */
-  ChecksumBlobSizeMismatch(const std::string &context = "", const bool embedBacktrace = true) {}
+  ChecksumBlobSizeMismatch(const std::string &context = "", const bool embedBacktrace = true) :
+    Exception(context, embedBacktrace) {}
 
   /**
    * Destructor
