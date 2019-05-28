@@ -134,6 +134,25 @@ optional<uint64_t> MysqlRset::columnOptionalUint64(const std::string &colName) c
   return optional<uint64_t>(holder->get_uint64());
 }
 
+//------------------------------------------------------------------------------
+// columnOptionalDouble
+//------------------------------------------------------------------------------
+optional<double> MysqlRset::columnOptionalDouble(const std::string &colName) const {
+  if (not m_fields.exists(colName)) {
+    throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
+    return nullopt;
+  }
+
+  Mysql::Placeholder* holder = m_stmt.columnHolder(colName); // m_holders[idx];
+
+  // the value can be null
+  if (holder->get_is_null() and *holder->get_is_null()) {
+    return nullopt;
+  }
+
+  return optional<double>(holder->get_double());
+}
+
 } // namespace wrapper
 } // namespace rdbms
 } // namespace cta

@@ -29,6 +29,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringMediaType.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringStorageClassName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringSupply.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVendor.hpp"
@@ -568,6 +569,7 @@ void RdbmsCatalogue::createTapePool(
   const std::string &vo,
   const uint64_t nbPartialTapes,
   const bool encryptionValue,
+  const cta::optional<std::string> &supply,
   const std::string &comment) {
   try {
     if(name.empty()) {
@@ -595,6 +597,7 @@ void RdbmsCatalogue::createTapePool(
         "VO,"
         "NB_PARTIAL_TAPES,"
         "IS_ENCRYPTED,"
+        "SUPPLY,"
 
         "USER_COMMENT,"
 
@@ -610,6 +613,7 @@ void RdbmsCatalogue::createTapePool(
         ":VO,"
         ":NB_PARTIAL_TAPES,"
         ":IS_ENCRYPTED,"
+        ":SUPPLY,"
 
         ":USER_COMMENT,"
 
@@ -626,6 +630,7 @@ void RdbmsCatalogue::createTapePool(
     stmt.bindString(":VO", vo);
     stmt.bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
     stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
+    stmt.bindOptionalString(":SUPPLY", supply);
 
     stmt.bindString(":USER_COMMENT", comment);
 
@@ -893,6 +898,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "COALESCE(TAPE_POOL.VO, 'NONE') AS VO," // TBD Remove COALESCE
         "TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
         "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
+        "TAPE_POOL.SUPPLY AS SUPPLY,"
 
         "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
         "COALESCE(SUM(TAPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
@@ -917,6 +923,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "TAPE_POOL.VO,"
         "TAPE_POOL.NB_PARTIAL_TAPES,"
         "TAPE_POOL.IS_ENCRYPTED,"
+        "TAPE_POOL.SUPPLY,"
         "TAPE_POOL.USER_COMMENT,"
         "TAPE_POOL.CREATION_LOG_USER_NAME,"
         "TAPE_POOL.CREATION_LOG_HOST_NAME,"
@@ -937,6 +944,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       pool.vo = rset.columnString("VO");
       pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
       pool.encryption = rset.columnBool("IS_ENCRYPTED");
+      pool.supply = rset.columnOptionalString("SUPPLY");
       pool.nbTapes = rset.columnUint64("NB_TAPES");
       pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
@@ -1107,6 +1115,51 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":TAPE_POOL_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// modifyTapePoolSupply
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &supply) {
+  try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
+        " string");
+    }
+
+    if(supply.empty()) {
+      throw UserSpecifiedAnEmptyStringSupply("Cannot modify tape pool because the new supply value is an empty"
+        " string");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE_POOL SET "
+        "SUPPLY = :SUPPLY,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":SUPPLY", supply);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -1438,6 +1491,7 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
 void RdbmsCatalogue::createLogicalLibrary(
   const common::dataStructures::SecurityIdentity &admin,
   const std::string &name,
+  const bool isDisabled,
   const std::string &comment) {
   try {
     auto conn = m_connPool.getConn();
@@ -1449,6 +1503,7 @@ void RdbmsCatalogue::createLogicalLibrary(
     const char *const sql =
       "INSERT INTO LOGICAL_LIBRARY("
         "LOGICAL_LIBRARY_NAME,"
+        "IS_DISABLED,"
 
         "USER_COMMENT,"
 
@@ -1461,6 +1516,7 @@ void RdbmsCatalogue::createLogicalLibrary(
         "LAST_UPDATE_TIME)"
       "VALUES("
         ":LOGICAL_LIBRARY_NAME,"
+        ":IS_DISABLED,"
 
         ":USER_COMMENT,"
 
@@ -1474,6 +1530,7 @@ void RdbmsCatalogue::createLogicalLibrary(
     auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt.bindBool(":IS_DISABLED", isDisabled);
 
     stmt.bindString(":USER_COMMENT", comment);
 
@@ -1549,6 +1606,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibr
     const char *const sql =
       "SELECT "
         "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "IS_DISABLED AS IS_DISABLED,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
@@ -1570,6 +1628,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibr
       common::dataStructures::LogicalLibrary lib;
 
       lib.name = rset.columnString("LOGICAL_LIBRARY_NAME");
+      lib.isDisabled = rset.columnBool("IS_DISABLED");
       lib.comment = rset.columnString("USER_COMMENT");
       lib.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       lib.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -1608,6 +1667,41 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setLogicalLibraryDisabled
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const bool disabledValue) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE LOGICAL_LIBRARY SET "
+        "IS_DISABLED = :IS_DISABLED,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindBool(":IS_DISABLED", disabledValue);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -4152,7 +4246,8 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "TAPE_FILE.VID = TAPE.VID "
        "WHERE "
          "TAPE_FILE.VID = :VID AND "
-         "TAPE_FILE.FSEQ >= :START_FSEQ "
+         "TAPE_FILE.FSEQ >= :START_FSEQ AND "
+         "TAPE_FILE.SUPERSEDED_BY_VID IS NULL "
        "ORDER BY FSEQ";
 
     auto conn = m_connPool.getConn();

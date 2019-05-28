@@ -192,5 +192,36 @@ optional<uint64_t> Rset::columnOptionalUint64(const std::string &colName) const 
   return m_impl->columnOptionalUint64(colName);
 }
 
+//------------------------------------------------------------------------------
+// columnDouble
+//------------------------------------------------------------------------------
+double Rset::columnDouble(const std::string &colName) const {
+  try {
+    if(nullptr == m_impl) {
+      throw exception::Exception("This result set is invalid");
+    }
+
+    const optional<double> col = columnOptionalDouble(colName);
+    if(col) {
+      return col.value();
+    } else {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// columnOptionalDouble
+//------------------------------------------------------------------------------
+optional<double> Rset::columnOptionalDouble(const std::string &colName) const {
+  if(nullptr == m_impl) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: "
+      "This result set is invalid");
+  }
+  return m_impl->columnOptionalDouble(colName);
+}
+
 } // namespace rdbms
 } // namespace cta

@@ -117,6 +117,22 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
+  virtual void bindDouble(const std::string &paramName, const double paramValue) = 0;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  virtual void bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) = 0;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
   void bindBool(const std::string &paramName, const bool paramValue);
 
   /**

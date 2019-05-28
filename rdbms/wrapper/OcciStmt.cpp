@@ -116,6 +116,38 @@ void OcciStmt::bindOptionalUint64(const std::string &paramName, const optional<u
 }
 
 //------------------------------------------------------------------------------
+// bindDouble
+//------------------------------------------------------------------------------
+void OcciStmt::bindDouble(const std::string &paramName, const double paramValue) {
+  try {
+    bindOptionalDouble(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalDouble
+//------------------------------------------------------------------------------
+void OcciStmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
+  try {
+    const unsigned paramIdx = getParamIdx(paramName);
+    if(paramValue) {
+      // Bind integer as a string in order to support 64-bit integers
+      m_stmt->setDouble(paramIdx, paramValue.value());
+    } else {
+      m_stmt->setNull(paramIdx, oracle::occi::OCCIDOUBLE);
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + se.what());
+  }
+}
+
+//------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
 void OcciStmt::bindString(const std::string &paramName, const std::string &paramValue) {

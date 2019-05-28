@@ -450,11 +450,13 @@ public:
       //TODO : userprovidedfiles and userprovidedbytes
     };
     
-    virtual void addSubrequests(std::list<Subrequest>& repackSubrequests, 
-      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, log::LogContext & lc) = 0;
-    virtual void setTotalStats(const TotalStatsFiles& stats) = 0;
+    virtual void addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
+      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, log::LogContext & lc) = 0;
     virtual void expandDone() = 0;
     virtual void fail() = 0;
+    virtual void requeueInToExpandQueue(log::LogContext &lc) = 0;
+    virtual void setExpandStartedAndChangeStatus() = 0;
+    virtual void fillLastExpandedFSeqAndTotalStatsFile(uint64_t &fSeq, TotalStatsFiles &totalStatsFiles) = 0;
     virtual ~RepackRequest() {}
   };
   

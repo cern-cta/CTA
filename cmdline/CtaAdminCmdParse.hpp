@@ -302,6 +302,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--owner",                 OptionString::OWNER },
    { "--path",                  OptionString::PATH },
    { "--storageclass",          OptionString::STORAGE_CLASS },
+   { "--supply",                OptionString::SUPPLY },
    { "--tapepool",              OptionString::TAPE_POOL },
    { "--username",              OptionString::USERNAME },
    { "--vendor",                OptionString::VENDOR },
@@ -408,6 +409,7 @@ const Option opt_storageclass         { Option::OPT_STR,  "--storageclass",     
 const Option opt_storageclass_alias   { Option::OPT_STR,  "--name",                  "-n",   " <storage_class_name>",
                                         "--storageclass" };
 const Option opt_summary              { Option::OPT_FLAG, "--summary",               "-S",   "" };
+const Option opt_supply               { Option::OPT_STR,  "--supply",                "-s",   " <supply_value>" };
 const Option opt_tapepool             { Option::OPT_STR,  "--tapepool",              "-t",   " <tapepool_name>" };
 const Option opt_tapepool_alias       { Option::OPT_STR,  "--name",                  "-n",   " <tapepool_name>",
                                         "--tapepool" };
@@ -469,8 +471,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE  },
       { opt_header.optional(), opt_vid.optional(), opt_extended.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   }, { opt_logicallibrary_alias, opt_comment }},
-   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_CH    }, { opt_logicallibrary_alias, opt_comment }},
+   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   },
+      { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment }},
+   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_CH    },
+      { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_RM    }, { opt_logicallibrary_alias }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
@@ -523,9 +527,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_vid, opt_force.optional(), opt_lbp.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
-      { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_comment }},
+      { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_CH    },
-      { opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(), opt_comment.optional() }},
+      { opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(),
+        opt_supply.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM    }, { opt_tapepool_alias }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
 };

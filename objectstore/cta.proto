@@ -545,6 +545,7 @@ message RepackRequest {
   //is not finished. This boolean is used to indicate wether
   //the expansion of the RepackRequest is done or not
   required bool is_expand_finished = 11561;
+  required bool is_expand_started = 11562;
   repeated RepackSubRequestPointer subrequests = 11570;
 }
 

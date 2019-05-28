@@ -265,6 +265,12 @@ public:
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
   const size_t c_defaultMaxNbFilesForRepack = 500;
+  /**
+   * This time is used to limitate the time an expansion of a RepackRequest will take
+   * If the RepackRequest has not finished its expansion before this time limit,
+   * it will be requeued in the RepackQueueToExpand queue.
+   */
+  double m_repackRequestExpansionTimeLimit = 30;
   
   typedef std::pair<std::string, common::dataStructures::MountType> tpType;
   /**
@@ -276,6 +282,13 @@ private:
     std::map<tpType, uint32_t> & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
   
+  /**
+   * Checks wether the tape is full before repacking
+   * @param vid the vid of the tape to check
+   * @throws a UserError exception if the vid does not exist or if
+   * the tape is not full
+   */
+  void checkTapeFullBeforeRepack(std::string vid);
   
 public:
   /**
@@ -372,6 +385,10 @@ public:
 
   /*======================== Administrator management ========================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);
+  
+  void setRepackRequestExpansionTimeLimit(const double &time);
+  
+  double getRepackRequestExpansionTimeLimit() const;
 
 private:
 

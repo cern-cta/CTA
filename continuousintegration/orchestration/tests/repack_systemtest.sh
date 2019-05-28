@@ -21,23 +21,12 @@ exit 1
 }
 
 testRepackBufferURL(){
-  echo "Creating the repack buffer URL at root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}"
+  echo "Testing the repack buffer URL at root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}"
   eos root://${EOSINSTANCE} ls -d ${REPACK_BUFFER_BASEDIR} || die "Repack bufferURL directory does not exist"
   echo "Testing the insertion of a test file in the buffer URL"
-  for ((i=0; i<300; i++)); do
-    xrdcp /etc/group ${FULL_REPACK_BUFFER_URL}/testFile && break
-    echo -n "."
-    sleep 1
-  done
-  echo OK
-  failed_xrdcp_test=$i
-  if test $failed_xrdcp_test -eq 0; then
-    echo "[SUCCESS]: Repack buffer URL OK" | tee -a /var/log/CI_tests
-    echo "Removing the test file"
-    eos root://${EOSINSTANCE} rm ${REPACK_BUFFER_BASEDIR}/testFile
-  else
-    echo "[ERROR]: Unable to write a file into the provided repack buffer URL." | tee -a /var/log/CI_tests
-  fi
+  tempFilePath=$(mktemp /tmp/testFile.XXXX)
+  tempFileName=${tempFilePath##*/}
+  xrdcp ${tempFilePath} ${FULL_REPACK_BUFFER_URL}/${tempFileName} || die "Unable to write a file into the repack buffer directory"
   echo "OK"
 }
 
@@ -82,18 +71,16 @@ fi
 
 # Get kerberos credentials for user1
 admin_kinit
-klist -s || die "Cannot get kerberos credentials for user ${USER}"
+admin_klist > /dev/null 2>&1 || die "Cannot get kerberos credentials for user ${USER}"
 
-# Get kerberos credentials for poweruser1
-eospower_kdestroy
-eospower_kinit
-
-echo "Testing the repackBufferURL provided"
 FULL_REPACK_BUFFER_URL=root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}
 testRepackBufferURL
 
 echo "Deleting existing repack request for VID ${VID_TO_REPACK}"
 admin_cta repack rm --vid ${VID_TO_REPACK}
+
+echo "Marking the tape ${VID_TO_REPACK} as full before Repacking it"
+admin_cta tape ch --vid ${VID_TO_REPACK} --full true
 
 echo "State of the tape VID ${VID_TO_REPACK} BEFORE repack"
 admin_cta --json tape ls --vid ${VID_TO_REPACK} | jq .

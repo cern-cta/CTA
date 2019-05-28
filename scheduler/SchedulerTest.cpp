@@ -53,6 +53,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <utility>
+#include <bits/unique_ptr.h>
 
 namespace unitTests {
 
@@ -214,7 +215,9 @@ public:
     const std::string tapePoolComment = "Tape-pool comment";
     const std::string vo = "vo";
     const bool tapePoolEncryption = false;
-    catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo, nbPartialTapes, tapePoolEncryption, tapePoolComment);
+    const cta::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
+    catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo, nbPartialTapes, tapePoolEncryption, tapePoolSupply,
+      tapePoolComment);
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
     catalogue.createArchiveRoute(s_adminOnAdminHost, s_diskInstance, s_storageClassName, copyNb, s_tapePoolName,
@@ -432,8 +435,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
 
   // Create the environment for the migration to happen (library + tape) 
   const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryComment);
+    libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -631,8 +635,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
 
   // Create the environment for the migration to happen (library + tape) 
   const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryComment);
+    libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -881,8 +886,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
 
   // Create the environment for the migration to happen (library + tape) 
   const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryComment);
+    libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1125,8 +1131,9 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   
   // Create the environment for the migration to happen (library + tape) 
     const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryComment);
+    libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1247,16 +1254,35 @@ TEST_P(SchedulerTest, repack) {
   setupDefaultCatalogue();
   
   Scheduler &scheduler = getScheduler();
-  
+  cta::catalogue::Catalogue& catalogue = getCatalogue();
+    
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
   
   typedef cta::common::dataStructures::RepackInfo RepackInfo;
   typedef cta::common::dataStructures::RepackInfo::Status Status;
   
-  // Create and then cancel repack
+   // Create the environment for the migration to happen (library + tape) 
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, libraryComment);
+  
   common::dataStructures::SecurityIdentity cliId;
+  cliId.host = "host";
+  cliId.username = s_userName;
   std::string tape1 = "Tape";
+  
+  catalogue.createTape(cliId,tape1,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,false,"Comment");
+  
+  //The queueing of a repack request should fail if the tape to repack is not full
+  ASSERT_THROW(scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc),cta::exception::UserError);
+  //The queueing of a repack request in a vid that does not exist should throw an exception
+  ASSERT_THROW(scheduler.queueRepack(cliId, "NOT_EXIST", "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc),cta::exception::UserError);
+  
+  catalogue.setTapeFull(cliId,tape1,true);
+  
+  // Create and then cancel repack
   scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
   {
     auto repacks = scheduler.getRepacks();
@@ -1267,12 +1293,14 @@ TEST_P(SchedulerTest, repack) {
   scheduler.cancelRepack(cliId, tape1, lc);
   ASSERT_EQ(0, scheduler.getRepacks().size());
   // Recreate a repack and get it moved to ToExpand
-  scheduler.queueRepack(cliId, "Tape2", "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
+  std::string tape2 = "Tape2";
+  catalogue.createTape(cliId,tape2,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true,"Comment");
+  scheduler.queueRepack(cliId, tape2, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, repacks.size());
     auto repack = scheduler.getRepack(repacks.front().vid);
-    ASSERT_EQ("Tape2", repack.vid);
+    ASSERT_EQ(tape2, repack.vid);
   }
   scheduler.promoteRepackRequestsToToExpand(lc);
   {
@@ -1289,16 +1317,30 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   setupDefaultCatalogue();
   
   Scheduler &scheduler = getScheduler();
+  catalogue::Catalogue& catalogue = getCatalogue();
   
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
   
-  // Create a repack request
+  // Create the environment for the migration to happen (library + tape) 
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, libraryComment);
+  
   common::dataStructures::SecurityIdentity cliId;
+  cliId.host = "host";
+  cliId.username = s_userName;
   std::string tape1 = "Tape";
+  catalogue.createTape(cliId,tape1,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true,"Comment");
+  
+  //Queue the first repack request
   scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
   
   std::string tape2 = "Tape2";
+  catalogue.createTape(cliId,tape2,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true,"Comment");
+  
+  //Queue the second repack request
   scheduler.queueRepack(cliId,tape2,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,lc);
   
   //Test the repack request queued has status Pending
@@ -1354,7 +1396,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
-  const bool fullValue = false;
+  const bool fullValue = true;
   const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
@@ -1363,7 +1405,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
-  catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
   
   uint64_t nbTapesToRepack = 10;
   uint64_t nbTapesForTest = 2; //corresponds to the targetAvailableRequests variable in the Scheduler::promoteRepackRequestsToToExpand() method
@@ -1510,23 +1553,23 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         executedJobs.push_back(std::move(retrieveJob));
       }
       //Now, report the retrieve jobs to be completed
-        castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
+      castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
 
-        rrp.startThreads();
-        for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
-        {
-          rrp.reportCompletedJob(std::move(*it));
-        }
-        rrp.setDiskDone();
-        rrp.setTapeDone();
-
-        rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
-
-        rrp.reportEndOfSession();
-        rrp.waitThread();
-
-        ASSERT_EQ(rrp.allThreadsDone(),true);
+      rrp.startThreads();
+      for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
+      {
+        rrp.reportCompletedJob(std::move(*it));
       }
+      rrp.setDiskDone();
+      rrp.setTapeDone();
+
+      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+
+      rrp.reportEndOfSession();
+      rrp.waitThread();
+
+      ASSERT_EQ(rrp.allThreadsDone(),true);
+    }
     
     uint64_t archiveFileId = 1;
     for(uint64_t i = 1; i<= nbTapesForTest ;++i)
@@ -1689,7 +1732,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
-  const bool fullValue = false;
+  const bool fullValue = true;
   const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
@@ -1698,7 +1741,8 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
-  catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
   
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -1928,7 +1972,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
-  const bool fullValue = false;
+  const bool fullValue = true;
   const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
@@ -1937,13 +1981,18 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
-  catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
   
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
   catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
+  //Create a repack destination tape
+  std::string vidDestination = "vidDestination";
+  catalogue.createTape(s_adminOnAdminHost,vidDestination, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+    disabledValue, false, comment);
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -2174,7 +2223,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
-  const bool fullValue = false;
+  const bool fullValue = true;
   const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
@@ -2183,13 +2232,19 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
-  catalogue.createLogicalLibrary(admin, s_libraryName, "Create logical library");
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
   
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
   catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
+
+  //Create a repack destination tape
+  std::string vidDestinationRepack = "vidDestinationRepack";
+  catalogue.createTape(s_adminOnAdminHost,vidDestinationRepack, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+   disabledValue, false, comment);
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -2443,6 +2498,127 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       rr.fetchNoLock();
       ASSERT_EQ(common::dataStructures::RepackInfo::Status::Failed,rr.getInfo().status);
     }
+  }
+}
+
+TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  //Set the expansion time limit to 0
+  scheduler.setRepackRequestExpansionTimeLimit(0.0);
+  auto &schedulerDB = getSchedulerDB();
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = true;
+  const std::string comment = "Create tape";
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+  const std::string diskFileUser = "public_disk_user";
+  const std::string diskFileGroup = "public_disk_group";
+  
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  
+  std::ostringstream ossVid;
+  ossVid << s_vid << "_" << 1;
+  std::string vid = ossVid.str();
+  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+    disabledValue, fullValue, comment);
+  
+  //Create a storage class in the catalogue
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = s_diskInstance;
+  storageClass.name = s_storageClassName;
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+
+  const std::string checksumType = "checksum_type";
+  const std::string checksumValue = "checksum_value";
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesPerTape = 10;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+  const uint64_t compressedFileSize = archiveFileSize;
+  
+  //Simulate the writing of 10 files in 1 tape in the catalogue
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  {
+    uint64_t archiveFileId = 1;
+    std::string currentVid = vid;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + archiveFileId);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
+      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = archiveFileId++;
+      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+      fileWritten.diskFilePath = diskFilePath.str();
+      fileWritten.diskFileUser = diskFileUser;
+      fileWritten.diskFileGroup = diskFileGroup;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumType = checksumType;
+      fileWritten.checksumValue = checksumValue;
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = currentVid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.compressedSize = compressedFileSize;
+      fileWritten.copyNb = 1;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    tapeFilesWrittenCopy1.clear();
+  }
+  //Test the expanding requeue the Repack after the creation of 
+  //one retrieve request
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  {
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    log::TimingList tl;
+    utils::Timer t;
+
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+    
+    ASSERT_EQ(vid,repackRequestToExpand->getRepackInfo().vid);
+    //Because the timer is set to 0, the Repack Request should
+    //have been requeued in the ToExpand queue.
+    //We check that by the getNextRepackRequestToExpand method
+    repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    ASSERT_NE(nullptr,repackRequestToExpand);
+    ASSERT_EQ(vid,repackRequestToExpand->getRepackInfo().vid);
+    
   }
 }
 

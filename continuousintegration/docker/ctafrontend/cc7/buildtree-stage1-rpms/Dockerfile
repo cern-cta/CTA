@@ -95,6 +95,7 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       hiredis \
       jsoncpp \
       libmicrohttpd \
+      jq \
   && \
     yum clean all \
   && \

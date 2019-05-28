@@ -669,7 +669,7 @@ void Helpers::registerRepackRequestToIndex(const std::string& vid, const std::st
   // First, try to get the address of of the repack index lockfree.
   try {
     repackIndexAddress = re.getRepackIndexAddress();
-  } catch (RootEntry::NotAllocated &){
+  } catch (cta::exception::Exception &){
     ScopedExclusiveLock rel(re);
     re.fetch();
     repackIndexAddress = re.addOrGetRepackIndexAndCommit(agentReference);
@@ -692,7 +692,7 @@ void Helpers::removeRepackRequestToIndex(const std::string& vid, Backend& backen
   // First, try to get the address of of the repack index lockfree.
   try {
     repackIndexAddress = re.getRepackIndexAddress();
-  } catch (RootEntry::NotAllocated &){
+  } catch (cta::exception::Exception &){
     // No repack index, nothing to do.
     return;
   }

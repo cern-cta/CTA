@@ -166,6 +166,27 @@ public:
    */
   optional<bool> columnOptionalBool(const std::string &colName) const;
 
+  /**
+   * Returns the value of the specified column as a double.
+   *
+   * This method will throw an exception if the value of the specified column
+   * is nullptr.
+   *
+   * @param colName The name of the column.
+   * @return The value of the specified column.
+   */
+  double columnDouble(const std::string &colName) const;
+
+  /**
+   * Returns the value of the specified column as a double.
+   *
+   * This method will return a null column value as an optional with no value.
+   *
+   * @param colName The name of the column.
+   * @return The value of the specified column.
+   */
+  optional<double> columnOptionalDouble(const std::string &colName) const;
+
 private:
 
   /**

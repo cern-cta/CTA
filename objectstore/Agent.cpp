@@ -42,7 +42,7 @@ cta::objectstore::Agent::Agent(const std::string & name, Backend & os):
 void cta::objectstore::Agent::initialize() {
   ObjectOps<serializers::Agent, serializers::Agent_t>::initialize();
   m_payload.set_heartbeat(0);
-  m_payload.set_timeout_us(60*1000*1000);
+  m_payload.set_timeout_us(120*1000*1000);
   m_payload.set_description("");
   m_payload.set_being_garbage_collected(false);
   m_payloadInterpreted = true;

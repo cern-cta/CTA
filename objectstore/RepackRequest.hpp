@@ -23,6 +23,7 @@
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/Timer.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -44,6 +45,14 @@ public:
   void setBufferURL(const std::string & bufferURL);
   void setExpandFinished(const bool expandFinished);
   bool isExpandFinished();
+  void setExpandStarted(const bool expandStarted);
+  void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
+  cta::SchedulerDatabase::RepackRequest::TotalStatsFiles getTotalStatsFile();
+  /**
+   * Automatically set the new status of the Repack Request
+   * regarding multiple parameters
+   */
+  void setStatus();
   // Sub request management
   struct SubrequestInfo {
     std::string address;

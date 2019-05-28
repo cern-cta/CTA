@@ -1177,10 +1177,11 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
 {
    using namespace cta::admin;
 
-   auto &name    = getRequired(OptionString::LOGICAL_LIBRARY);
-   auto &comment = getRequired(OptionString::COMMENT);
+   auto &name      = getRequired(OptionString::LOGICAL_LIBRARY);
+   auto isDisabled = getOptional(OptionBoolean::DISABLED);
+   auto &comment   = getRequired(OptionString::COMMENT);
 
-   m_catalogue.createLogicalLibrary(m_cliIdentity, name, comment);
+   m_catalogue.createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1191,10 +1192,16 @@ void RequestMessage::processLogicalLibrary_Ch(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   auto &name    = getRequired(OptionString::LOGICAL_LIBRARY);
-   auto &comment = getRequired(OptionString::COMMENT);
+   auto &name     = getRequired(OptionString::LOGICAL_LIBRARY);
+   auto  disabled = getOptional(OptionBoolean::DISABLED);
+   auto  comment  = getOptional(OptionString::COMMENT);
 
-   m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name, comment);
+   if(disabled) {
+      m_catalogue.setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
+   }
+   if(comment) {
+      m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name, comment.value());
+   }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1226,12 +1233,13 @@ void RequestMessage::processLogicalLibrary_Ls(const cta::admin::AdminCmd &adminc
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
-         "name","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+         "name","disabled","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
          currentRow.push_back(it->name);
+         currentRow.push_back(std::to_string(it->isDisabled));
          addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
          currentRow.push_back(it->comment);
          responseTable.push_back(currentRow);
@@ -2012,8 +2020,9 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
    auto &ptn       = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
    auto &comment   = getRequired(OptionString::COMMENT);
    auto &encrypted = getRequired(OptionBoolean::ENCRYPTED);
+   auto  supply    = getOptional(OptionString::SUPPLY);
 
-   m_catalogue.createTapePool(m_cliIdentity, name, vo, ptn, encrypted, comment);
+   m_catalogue.createTapePool(m_cliIdentity, name, vo, ptn, encrypted, supply, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2029,6 +2038,7 @@ void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, ct
    auto  ptn       = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
    auto  comment   = getOptional(OptionString::COMMENT);
    auto  encrypted = getOptional(OptionBoolean::ENCRYPTED);
+   auto  supply    = getOptional(OptionString::SUPPLY);
 
    if(comment) {
       m_catalogue.modifyTapePoolComment(m_cliIdentity, name, comment.value());
@@ -2041,6 +2051,9 @@ void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, ct
    }
    if(encrypted) {
       m_catalogue.setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
+   }
+   if(supply) {
+      m_catalogue.modifyTapePoolSupply(m_cliIdentity, name, supply.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

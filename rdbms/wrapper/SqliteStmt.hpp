@@ -91,6 +91,22 @@ public:
    */
   void bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) override;
 
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  void bindDouble(const std::string &paramName, const double paramValue) override;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  void bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) override;
+
   /** 
    * Binds an SQL parameter of type string.
    *

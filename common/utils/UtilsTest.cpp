@@ -429,7 +429,7 @@ TEST_F(cta_UtilsTest, toGid_too_big) {
   ASSERT_THROW(utils::toGid(oss.str()), std::exception);
 }
 
-TEST_F(cta_UtilsTest, isValidUInt_unsigned_int) {
+TEST_F(cta_UtilsTest, isValidUInt) {
   using namespace cta;
 
   ASSERT_TRUE(utils::isValidUInt("12345"));
@@ -441,7 +441,7 @@ TEST_F(cta_UtilsTest, isValidUInt_empty_string) {
   ASSERT_FALSE(utils::isValidUInt(""));
 }
 
-TEST_F(cta_UtilsTest, isValidUInt_signed_int) {
+TEST_F(cta_UtilsTest, isValidUInt_negative) {
   using namespace cta;
 
   ASSERT_FALSE(utils::isValidUInt("-12345"));
@@ -453,7 +453,7 @@ TEST_F(cta_UtilsTest, isValidUInt_not_a_number) {
   ASSERT_FALSE(utils::isValidUInt("one"));
 }
 
-TEST_F(cta_UtilsTest, toUint64_unsigned_int) {
+TEST_F(cta_UtilsTest, toUint64) {
   using namespace cta;
 
   ASSERT_EQ((uint64_t)12345, utils::toUint64("12345"));
@@ -482,6 +482,67 @@ TEST_F(cta_UtilsTest, toUint64_not_a_number) {
   using namespace cta;
 
   ASSERT_THROW(utils::toUint64("one"), exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, isValidDecimal) {
+  using namespace cta;
+
+  ASSERT_TRUE(utils::isValidDecimal("1.234"));
+}
+
+TEST_F(cta_UtilsTest, isValidDecimal_empty_string) {
+  using namespace cta;
+
+  ASSERT_FALSE(utils::isValidDecimal(""));
+}
+
+TEST_F(cta_UtilsTest, isValidDecimal_negative_double) {
+  using namespace cta;
+
+  ASSERT_TRUE(utils::isValidDecimal("-1.234"));
+}
+
+TEST_F(cta_UtilsTest, isValidDecimal_not_a_number) {
+  using namespace cta;
+
+  ASSERT_FALSE(utils::isValidDecimal("one"));
+}
+
+TEST_F(cta_UtilsTest, isValidDecimal_two_decimal_points) {
+  using namespace cta;
+
+  ASSERT_FALSE(utils::isValidDecimal("1.2.34"));
+}
+
+TEST_F(cta_UtilsTest, toDouble_double) {
+  using namespace cta;
+
+  ASSERT_EQ((double)1.234, utils::toDouble("1.234"));
+}
+
+TEST_F(cta_UtilsTest, toDouble_negative_double) {
+  using namespace cta;
+
+  ASSERT_EQ((double)-1.234, utils::toDouble("-1.234"));
+}
+
+TEST_F(cta_UtilsTest, toDouble_too_big) {
+  using namespace cta;
+
+  // std::numeric_limits<double>::max=1.79769e+308
+  ASSERT_THROW(utils::toDouble("1.79770e+308"), exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, toDouble_empty_string) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toDouble(""), exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, toDouble_not_a_number) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toDouble("one"), exception::Exception);
 }
 
 TEST_F(cta_UtilsTest, adler32_empty_buf) {
@@ -681,6 +742,18 @@ TEST_F(cta_UtilsTest, DISABLED_currentTime) {
   using namespace cta::utils;
   ::system("date \"+%h %e %H:%M:%S.%N\" ");
   std::cout << getCurrentLocalTime() << std::endl;
+}
+
+TEST_F(cta_UtilsTest, searchAndReplace) {
+  using namespace cta::utils;
+
+  std::string str = "one two three four one two three four";
+  const std::string search = "two";
+  const std::string replacement = "replacement";
+
+  searchAndReplace(str, search, replacement);
+
+  ASSERT_EQ("one replacement three four one replacement three four", str);
 }
 
 } // namespace unitTests

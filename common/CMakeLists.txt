@@ -166,6 +166,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   ConfigurationFileTests.cpp
   SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp
+  dataStructures/LogicalLibraryTest.cpp
   dataStructures/StorageClassTest.cpp
   processCap/SmartCapTest.cpp
   log/FileLoggerTest.cpp

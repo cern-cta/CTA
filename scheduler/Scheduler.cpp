@@ -317,6 +317,22 @@ void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliId
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
+void Scheduler::checkTapeFullBeforeRepack(std::string vid){
+  std::set<std::string> vidToRepack;
+  vidToRepack.insert(vid);
+  try{
+    auto vidToTapesMap = m_catalogue.getTapesByVid(vidToRepack); //throws an exception if the vid is not found on the database
+    cta::common::dataStructures::Tape tapeToCheck = vidToTapesMap.at(vid);
+    if(!tapeToCheck.full){
+      throw exception::UserError("You must set the tape as full before repacking it.");
+    }
+  } catch(const exception::UserError& userEx){
+    throw userEx;
+  } catch(const cta::exception::Exception & ex){
+    throw exception::UserError("The VID provided for repacking does not exist");
+  }
+}
+
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
@@ -326,6 +342,7 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
   if (vid.empty()) throw exception::UserError("Empty VID name.");
   if (bufferURL.empty()) throw exception::UserError("Empty buffer URL.");
   utils::Timer t;
+  checkTapeFullBeforeRepack(vid);
   m_db.queueRepack(vid, bufferURL, repackType, lc);
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);
@@ -412,12 +429,25 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
 }
 
 //------------------------------------------------------------------------------
+// setRepackRequestExpansionTimeLimit
+//------------------------------------------------------------------------------
+void Scheduler::setRepackRequestExpansionTimeLimit(const double& time) {
+  m_repackRequestExpansionTimeLimit = time;
+}
+
+//------------------------------------------------------------------------------
+// getRepackRequestExpansionTimeLimit
+//------------------------------------------------------------------------------
+double Scheduler::getRepackRequestExpansionTimeLimit() const {
+  return m_repackRequestExpansionTimeLimit;
+}
+
+//------------------------------------------------------------------------------
 // expandRepackRequest
 //------------------------------------------------------------------------------
-void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList&, utils::Timer&, log::LogContext& lc) {
+void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList& timingList, utils::Timer& t, log::LogContext& lc) {
   std::list<common::dataStructures::ArchiveFile> files;
   auto repackInfo = repackRequest->getRepackInfo();
-  cta::SchedulerDatabase::RepackRequest::TotalStatsFiles totalStatsFile;
   
   typedef cta::common::dataStructures::RepackInfo::Type RepackType;
   if (repackInfo.type != RepackType::MoveOnly) {
@@ -430,6 +460,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   //We need to get the ArchiveRoutes to allow the retrieval of the tapePool in which the
   //tape where the file is is located
   std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue.getArchiveRoutes();
+  timingList.insertAndReset("catalogueGetArchiveRoutesTime",t);
   //To identify the routes, we need to have both the dist instance name and the storage class name
   //thus, the key of the map is a pair of string
   cta::common::dataStructures::ArchiveRoute::FullMap archiveRoutesMap;
@@ -437,8 +468,12 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     //insert the route into the map to allow a quick retrieval
     archiveRoutesMap[std::make_pair(route.diskInstanceName,route.storageClassName)][route.copyNb] = route;
   }
-  uint64_t fSeq = repackRequest->m_dbReq->getLastExpandedFSeq() + 1;
+  uint64_t fSeq;
+  cta::SchedulerDatabase::RepackRequest::TotalStatsFiles totalStatsFile;
+  repackRequest->m_dbReq->fillLastExpandedFSeqAndTotalStatsFile(fSeq,totalStatsFile);
+  timingList.insertAndReset("fillTotalStatsFileBeforeExpandTime",t);
   cta::catalogue::ArchiveFileItor archiveFilesForCatalogue = m_catalogue.getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
+  timingList.insertAndReset("catalogueGetArchiveFilesForRepackItorTime",t);
   std::stringstream dirBufferURL;
   dirBufferURL << repackInfo.repackBufferBaseURL << "/" << repackInfo.vid << "/";
   cta::disk::DirectoryFactory dirFactory;
@@ -450,11 +485,14 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   } else {
     dir->mkdir();
   }
-  while(archiveFilesForCatalogue.hasMore()) {
+  double elapsedTime = 0;
+  bool stopExpansion = false;
+  while(archiveFilesForCatalogue.hasMore() && !stopExpansion) {
     size_t filesCount = 0;
     uint64_t maxAddedFSeq = 0;
     std::list<SchedulerDatabase::RepackRequest::Subrequest> retrieveSubrequests;
-    while(filesCount < c_defaultMaxNbFilesForRepack && archiveFilesForCatalogue.hasMore())
+    repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
+    while(filesCount < c_defaultMaxNbFilesForRepack && !stopExpansion && archiveFilesForCatalogue.hasMore())
     {
       filesCount++;
       fSeq++;
@@ -487,8 +525,8 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         cta::disk::DiskFileFactory fileFactory("",0,radosStriperPool);
         cta::disk::ReadFile *fileReader = fileFactory.createReadFile(dirBufferURL.str() + fileName.str());
         if(fileReader->size() == archiveFile.fileSize){
-          createArchiveSubrequest = true;
-          retrieveSubrequests.pop_back();
+          /*createArchiveSubrequest = true;
+          retrieveSubrequests.pop_back();*/
           //TODO : We don't want to retrieve the file again, create archive subrequest
         }
       }
@@ -516,17 +554,27 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
           retrieveSubRequest.fileBufferURL = dirBufferURL.str() + fileName.str();
         }
       }
+      stopExpansion = (elapsedTime >= m_repackRequestExpansionTimeLimit);
     }
     // Note: the highest fSeq will be recorded internally in the following call.
     // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted). 
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
-    repackRequest->m_dbReq->setTotalStats(totalStatsFile);
-    repackRequest->m_dbReq->addSubrequests(retrieveSubrequests, archiveRoutesMap, fSeq - 1, lc);
-    fSeq = std::max(fSeq, maxAddedFSeq + 1);
-    repackRequest->m_dbReq->setLastExpandedFSeq(fSeq);
+    repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq - 1, maxAddedFSeq, totalStatsFile, lc);
+    timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
   }
-  repackRequest->m_dbReq->expandDone();
+  log::ScopedParamContainer params(lc);
+  params.add("tapeVid",repackInfo.vid);
+  timingList.addToLog(params);
+  if(archiveFilesForCatalogue.hasMore()){
+    if(stopExpansion){
+      repackRequest->m_dbReq->requeueInToExpandQueue(lc);
+      lc.log(log::INFO,"Expansion time reached, Repack Request requeued in ToExpand queue.");
+    }
+  } else {
+    repackRequest->m_dbReq->expandDone();
+    lc.log(log::INFO,"In Scheduler::expandRepackRequest(), repack request expanded");
+  }
 }
 
 //------------------------------------------------------------------------------

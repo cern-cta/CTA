@@ -99,6 +99,7 @@ class Mysql {
     enum buffer_types {
       placeholder_uint64,
       placeholder_string,
+      placeholder_double,
     };
 
     virtual std::string show() = 0;
@@ -113,6 +114,7 @@ class Mysql {
     // following is to access data
     virtual uint64_t get_uint64() = 0;
     virtual std::string get_string() = 0;
+    virtual double get_double() = 0;
     // helper
     virtual bool reset() = 0;
   };
@@ -153,6 +155,10 @@ class Mysql {
 
     std::string get_string() {
       return std::to_string(val);
+    }
+
+    double get_double() {
+      return val;
     }
 
     bool reset() {
@@ -210,10 +216,64 @@ class Mysql {
       return std::string(val, val+*get_length());
     }
 
+    // note: allow users try to convert from string to int,
+    //       but users need to catch the exception.
+    double get_double() {
+      return std::stod(val);
+    }
+
     bool reset() {
       memset(val, 0, buf_sz);
       
       return true;
+    }
+
+  };
+
+  struct Placeholder_Double: Placeholder {
+    double val;
+
+    Placeholder_Double()
+      : Placeholder(), val(0) {
+
+    }
+
+    std::string show() override {
+      std::stringstream ss;
+      ss << "['" << idx << "' '" << is_null << "' '" << length << "' '" << val << "' '" << get_buffer_length() << "']";
+      return ss.str();
+    }
+
+    buffer_types get_buffer_type() override {
+      return placeholder_double;
+    }
+
+    void* get_buffer() override {
+      return &val;
+    }
+
+    unsigned long get_buffer_length() override {
+      return sizeof(double);
+    }
+
+    bool get_is_unsigned() override {
+      return true;
+    }
+
+    uint64_t get_uint64() override {
+      return val;
+    }
+
+    std::string get_string() override {
+      return std::to_string(val);
+    }
+
+    double get_double() override {
+      return val;
+    }
+
+    bool reset() {
+      return false;
     }
 
   };

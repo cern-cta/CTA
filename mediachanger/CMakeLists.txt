@@ -105,8 +105,6 @@ set_property (TARGET cta-mediachanger-mount APPEND PROPERTY INSTALL_RPATH ${PROT
 target_link_libraries (cta-mediachanger-mount
   ctacommon
   ctamediachanger)
-install (TARGETS cta-mediachanger-mount DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-mediachanger-mount.1cta DESTINATION /usr/share/man/man1)
 
 set (MEDIA_CHANGER_DISMOUNT_SRC_FILES
   DismountCmd.cpp
@@ -121,5 +119,3 @@ set_property (TARGET cta-mediachanger-dismount APPEND PROPERTY INSTALL_RPATH ${P
 target_link_libraries (cta-mediachanger-dismount
   ctacommon
   ctamediachanger)
-install (TARGETS cta-mediachanger-dismount DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-mediachanger-dismount.1cta DESTINATION /usr/share/man/man1)

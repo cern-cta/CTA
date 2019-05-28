@@ -342,13 +342,15 @@ public:
   public:
     RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB) :
     m_oStoreDB(oStoreDB), m_repackRequest(jobAddress, m_oStoreDB.m_objectStore){}
-    void addSubrequests(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
-      uint64_t maxFSeqLowBound, log::LogContext& lc) override;
+    void addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+      uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles,  log::LogContext& lc) override;
     void expandDone() override;
     void fail() override;
+    void requeueInToExpandQueue(log::LogContext& lc) override;
+    void setExpandStartedAndChangeStatus() override;
+    void fillLastExpandedFSeqAndTotalStatsFile(uint64_t& fSeq, TotalStatsFiles& totalStatsFiles) override;
     uint64_t getLastExpandedFSeq() override;
     void setLastExpandedFSeq(uint64_t fseq) override;
-    void setTotalStats(const TotalStatsFiles& stats) override;
 
   private:
     OStoreDB & m_oStoreDB;

@@ -125,6 +125,34 @@ optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string &colName
 }
 
 //------------------------------------------------------------------------------
+// columnOptionalDouble
+//------------------------------------------------------------------------------
+optional<double> PostgresRset::columnOptionalDouble(const std::string &colName) const {
+  if (nullptr == m_resItr->get()) {
+    throw exception::Exception(std::string(__FUNCTION__) + " no row available");
+  }
+
+  const int ifield = PQfnumber(m_resItr->get(), colName.c_str());
+  if (ifield < 0) {
+    throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
+  }
+
+  // the value can be null
+  if (PQgetisnull(m_resItr->get(), 0, ifield)) {
+    return nullopt;
+  }
+
+  const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
+
+  if(!utils::isValidDecimal(stringValue)) {
+    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
+      " which is not a valid decimal");
+  }
+
+  return utils::toDouble(stringValue);
+}
+
+//------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
 const std::string &PostgresRset::getSql() const {

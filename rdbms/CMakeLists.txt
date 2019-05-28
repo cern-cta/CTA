@@ -43,7 +43,6 @@ install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
   ConnPoolTest.cpp
-  ConnTest.cpp
   LoginTest.cpp
   RdbmsTest.cpp
   StmtPoolTest.cpp)
@@ -72,6 +71,20 @@ target_link_libraries (ctainmemoryconnunittests
 
 install (TARGETS ctainmemoryconnunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
+set(IN_MEMORY_STMT_UNIT_TESTS_LIB_SRC_FILES
+  StmtTest.cpp
+  InMemoryVersionOfStmtTest.cpp)
+
+add_library (ctainmemorystmtunittests SHARED
+  ${IN_MEMORY_STMT_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctainmemorystmtunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctainmemorystmtunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_link_libraries (ctainmemorystmtunittests
+  ctardbms)
+
+install (TARGETS ctainmemorystmtunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
 set (DBCONFIG_CONN_UNIT_TESTS_LIB_SRC_FILES
   ConnTest.cpp
   DbConfigVersionOfConnTest.cpp)
@@ -85,3 +98,17 @@ target_link_libraries (ctadbconfigconnunittests
   ctardbms)
 
 install (TARGETS ctadbconfigconnunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+set (DBCONFIG_STMT_UNIT_TESTS_LIB_SRC_FILES
+  StmtTest.cpp
+  DbConfigVersionOfStmtTest.cpp)
+
+add_library (ctadbconfigstmtunittests SHARED
+  ${DBCONFIG_STMT_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctadbconfigstmtunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctadbconfigstmtunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_link_libraries (ctadbconfigstmtunittests
+  ctardbms)
+
+install (TARGETS ctadbconfigstmtunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

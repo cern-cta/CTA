@@ -58,6 +58,7 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringLogicalLibraryName.cpp
   UserSpecifiedAnEmptyStringMediaType.cpp
   UserSpecifiedAnEmptyStringStorageClassName.cpp
+  UserSpecifiedAnEmptyStringSupply.cpp
   UserSpecifiedAnEmptyStringTapePoolName.cpp
   UserSpecifiedAnEmptyStringUsername.cpp
   UserSpecifiedAnEmptyStringVendor.cpp

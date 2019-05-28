@@ -626,7 +626,7 @@ uint64_t toUint64(const std::string &str) {
     try {
       return std::stoul(str);
     } catch(std::invalid_argument &) {
-      throw exception::Exception("Invalid string");
+      throw exception::Exception("Invalid uint64");
     } catch(std::out_of_range &) {
       throw exception::Exception("Out of range");
     } catch(std::exception &se) {
@@ -634,6 +634,61 @@ uint64_t toUint64(const std::string &str) {
     }
   } catch(exception::Exception  &ex) {
     throw exception::Exception(std::string("Failed to parse ") + str + " as an unsigned 64-bit integer: " +
+      ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// isValidDecimal
+//------------------------------------------------------------------------------
+bool isValidDecimal(const std::string &str) {
+  // An empty string is not a valid decimal
+  if(str.empty()) {
+    return false;
+  }
+
+  uint64_t nbDecimalPoints = 0;
+
+  // For each character in the string
+  for(std::string::const_iterator itor = str.begin(); itor != str.end(); itor++) {
+
+    const bool isFirstChar = itor == str.begin();
+    const bool isMinusChar = '-' == *itor;
+    const bool isANumericalDigit = '0' <= *itor && *itor <= '9';
+    const bool isADecimalPoint = '.' == *itor;
+
+    if(!(isFirstChar && isMinusChar) && !isANumericalDigit && !isADecimalPoint) {
+      return false;
+    }
+
+    if(isADecimalPoint) {
+      nbDecimalPoints++;
+    }
+
+    if(1 < nbDecimalPoints) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+//------------------------------------------------------------------------------
+// toDouble
+//------------------------------------------------------------------------------
+double toDouble(const std::string &str) {
+  try {
+    try {
+      return std::stod(str);
+    } catch(std::invalid_argument &) {
+      throw exception::Exception("Invalid double");
+    } catch(std::out_of_range &) {
+      throw exception::Exception("Out of range");
+    } catch(std::exception &se) {
+      throw exception::Exception(se.what());
+    }
+  } catch(exception::Exception  &ex) {
+    throw exception::Exception(std::string("Failed to parse ") + str + " as a double: " +
       ex.getMessage().str());
   }
 }
@@ -797,6 +852,24 @@ std::string getCurrentLocalTime() {
 std::string extractPathFromXrootdPath(const std::string& path){
   XrdClientUrlInfo urlInfo(path.c_str());
   return std::string(urlInfo.File.c_str());
+}
+
+//------------------------------------------------------------------------------
+// searchAndReplace
+//------------------------------------------------------------------------------
+void searchAndReplace(std::string &str, const std::string &search, const std::string replacement) {
+  std::string::size_type pos = 0;
+  while(std::string::npos != (pos = str.find(search, pos))) {
+    str.replace(pos, search.length(), replacement);
+    pos += replacement.length();
+  }
+}
+
+//------------------------------------------------------------------------------
+// segfault
+//------------------------------------------------------------------------------
+void segfault() {
+  *((int *)nullptr) = 0;
 }
 
 } // namespace utils

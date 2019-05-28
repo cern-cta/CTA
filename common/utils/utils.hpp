@@ -281,6 +281,21 @@ namespace utils {
   uint64_t toUint64(const std::string &str);
 
   /**
+   * Checks if the specified string is a valid decimal.
+   *
+   * @param str The string to be checked.
+   * @returns true if the string is a valid decimal, else false.
+   */
+  bool isValidDecimal(const std::string &str);
+
+  /**
+   * Parses the specified string representation of a double.
+   *
+   * @return The parsed double.
+   */
+  double toDouble(const std::string &str);
+
+  /**
    * Converts the specified string to uppercase.
    *
    * @param In/out parameter: The string to be converted.
@@ -378,6 +393,22 @@ namespace utils {
    * @return the xroot path truncated
    */
   std::string extractPathFromXrootdPath(const std::string &path);
+
+  /**
+   * Performs a search and replace operation on the specified string.
+   *
+   * @param str In/out parameter which is the string to be modified.
+   * @param search The search string.
+   * @param replacement The replacement string.
+   */
+  void searchAndReplace(std::string &str, const std::string &search, const std::string replacement);
+  
+  /**
+   * Willful segmentation violation (accessing nullptr) ensuring the process will stop hard.
+   * This is different from self-killing the process as the signal delivery is not immediate.
+   * Here, the CPU will interrupt the process with a memory protection error.
+   */
+  void segfault(void);
 
 } // namespace utils
 

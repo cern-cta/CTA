@@ -19,6 +19,7 @@
 #include "AgentHeartbeatThread.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
+#include "common/utils/utils.hpp"
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
@@ -45,13 +46,12 @@ void AgentHeartbeatThread::run() {
       utils::Timer t;
       m_agentReference.bumpHeatbeat(m_backend);
       auto updateTime = t.secs();
-      auto updateTimeLimit = std::chrono::duration<double, std::ratio<1, 1>>(m_heartRate).count();
-      if (updateTime > updateTimeLimit) {
+      if (updateTime > std::chrono::duration_cast<std::chrono::seconds>(m_heartbeatDeadline).count()) {
         log::ScopedParamContainer params(lc);
-        params.add("HeartbeatUpdateTimeLimit", updateTimeLimit)
+        params.add("HeartbeatDeadline", std::chrono::duration_cast<std::chrono::seconds>(m_heartbeatDeadline).count())
               .add("HeartbeatUpdateTime", updateTime);
         lc.log(log::CRIT, "In AgentHeartbeatThread::run(): Could not update heartbeat in time. Exiting (segfault).");
-        ::kill(::getpid(), SIGSEGV);
+        cta::utils::segfault();
         ::exit(EXIT_FAILURE);
       }
     }
@@ -62,7 +62,7 @@ void AgentHeartbeatThread::run() {
     params.add("Message", ex.getMessageValue());
     lc.log(log::CRIT, "In AgentHeartbeatThread::run(): exception while bumping heartbeat. Backtrace follows. Exiting (segfault).");
     lc.logBacktrace(log::ERR, ex.backtrace());
-    ::kill(::getpid(), SIGSEGV);
+    cta::utils::segfault();
     ::exit(EXIT_FAILURE);
   }
 }

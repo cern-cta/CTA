@@ -18,44 +18,31 @@
 
 #pragma once
 
-#include <list>
-#include <map>
-#include <stdint.h>
-#include <string>
-
-#include "common/dataStructures/EntryLog.hpp"
+#include "common/exception/UserError.hpp"
 
 namespace cta {
-namespace common {
-namespace dataStructures {
+namespace catalogue {
 
 /**
- * The logical library is an attribute of both drives and tapes, it declares 
- * which tapes can be mounted in which drives 
+ * User specified an empty string for a supply value when this is not permitted.
  */
-struct LogicalLibrary {
-
+class UserSpecifiedAnEmptyStringSupply: public exception::UserError {
+public:
   /**
    * Constructor.
    *
-   * Initialises isDisabled to false.
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
    */
-  LogicalLibrary();
+  UserSpecifiedAnEmptyStringSupply(const std::string &context = "", const bool embedBacktrace = true);
 
-  bool operator==(const LogicalLibrary &rhs) const;
+  /**
+   * Destructor.
+   */
+  ~UserSpecifiedAnEmptyStringSupply() override;
+}; // class UserSpecifiedAnEmptyStringSupply
 
-  bool operator!=(const LogicalLibrary &rhs) const;
-
-  std::string name;
-  bool isDisabled;
-  EntryLog creationLog;
-  EntryLog lastModificationLog;
-  std::string comment;
-
-}; // struct LogicalLibrary
-
-std::ostream &operator<<(std::ostream &os, const LogicalLibrary &obj);
-
-} // namespace dataStructures
-} // namespace common
+} // namespace catalogue
 } // namespace cta
