@@ -304,8 +304,6 @@ class Gc:
         time.sleep(sleeptime)
 
 def main():
-  programname = 'cta-fst-gcd'
-
   parser = argparse.ArgumentParser()
   args = parser.parse_args()
 
