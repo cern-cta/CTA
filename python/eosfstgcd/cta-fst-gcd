@@ -100,10 +100,10 @@ class Gc:
     logging.config.dictConfig(config)
 
   def configurereallogging(self):
-    if None == self.logfilepath:
+    if None == self.logfile:
       raise Exception("Cannot configure file based logging because the log file path has not been set")
 
-    loggingdir = os.path.dirname(self.logfilepath)
+    loggingdir = os.path.dirname(self.logfile)
     if not os.path.isdir(loggingdir):
       raise UserError("The logging directory {} is not a directory or does not exist".format(loggingdir))
     if not os.access(loggingdir, os.W_OK):
@@ -124,7 +124,7 @@ class Gc:
           'level': 'INFO',
           'formatter': 'stdout',
           'class': 'logging.handlers.TimedRotatingFileHandler',
-          'filename' : self.logfilepath,
+          'filename' : self.logfile,
           'when' : 'midnight'
         }
       },
@@ -142,16 +142,16 @@ class Gc:
       raise UserError(err)
 
   def configurelogging(self):
-    if None == self.logfilepath:
+    if None == self.logfile:
       self.configuredummylogging()
     else:
       self.configurereallogging()
 
-  def __init__(self, env, logfilepath = '/var/log/eos/fst/cta-fst-gcd.log'):
+  def __init__(self, env, logfile):
     self.programname = 'cta-fst-gcd'
     self.env = env
     self.conffilepath = '/etc/cta/cta-fst-gcd.conf'
-    self.logfilepath = logfilepath
+    self.logfile = logfile
     self.fqdn = socket.getfqdn()
     self.localfilesystempaths = []
     self.nbfilesconsideredsincelastreport = 0
@@ -305,9 +305,10 @@ class Gc:
 
 def main():
   parser = argparse.ArgumentParser()
+  parser.add_argument("-l", "--logfile", default="/var/log/eos/fst/cta-fst-gcd.log", help="Log file path")
   args = parser.parse_args()
 
-  gc = Gc(os.environ)
+  gc = Gc(env=os.environ, logfile=args.logfile)
 
   try:
     gc.run()
