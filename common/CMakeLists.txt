@@ -66,7 +66,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/UpdateFileInfoRequest.cpp
   dataStructures/UpdateFileStorageClassRequest.cpp
   dataStructures/UserIdentity.cpp
-  dataStructures/VerifyInfo.cpp
   dataStructures/WriteTestResult.cpp
   dataStructures/utils.cpp
   checksum/Checksum.cpp

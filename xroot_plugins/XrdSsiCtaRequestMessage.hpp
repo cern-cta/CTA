@@ -107,7 +107,6 @@ private:
    void processRequesterMountRule_Ch (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processRequesterMountRule_Rm (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processRequesterMountRule_Ls (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processShrink                (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processShowQueues            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processStorageClass_Add      (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processStorageClass_Ch       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
@@ -117,18 +116,10 @@ private:
    void processTape_Ch               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTape_Rm               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTape_Reclaim          (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   //void processTape_Ls               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTape_Label            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTapePool_Add          (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTapePool_Ch           (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
    void processTapePool_Rm           (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTest_Read             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTest_Write            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTest_WriteAuto        (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processVerify_Add            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processVerify_Rm             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processVerify_Ls             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processVerify_Err            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
 
    /*!
     * Process AdminCmd events which can return a stream response

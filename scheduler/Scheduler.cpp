@@ -549,66 +549,6 @@ void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
   }
 }
 
-
-//------------------------------------------------------------------------------
-// shrink
-//------------------------------------------------------------------------------
-void Scheduler::shrink(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// verify
-//------------------------------------------------------------------------------
-void Scheduler::queueVerify(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<uint64_t> numberOfFiles) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// cancelVerify
-//------------------------------------------------------------------------------
-void Scheduler::cancelVerify(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// getVerifys
-//------------------------------------------------------------------------------
-std::list<common::dataStructures::VerifyInfo> Scheduler::getVerifys(const common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return std::list<common::dataStructures::VerifyInfo>(); 
-}
-
-//------------------------------------------------------------------------------
-// getVerify
-//------------------------------------------------------------------------------
-common::dataStructures::VerifyInfo Scheduler::getVerify(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) const {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// readTest
-//------------------------------------------------------------------------------
-common::dataStructures::ReadTestResult Scheduler::readTest(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
-        const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const std::string &output) const {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// writeTest
-//------------------------------------------------------------------------------
-common::dataStructures::WriteTestResult Scheduler::writeTest(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
-        const std::string &inputFile) const {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// write_autoTest
-//------------------------------------------------------------------------------
-common::dataStructures::WriteTestResult Scheduler::write_autoTest(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
-        const uint64_t numberOfFiles, const uint64_t fileSize, const common::dataStructures::TestSourceType testSourceType) const {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
 //------------------------------------------------------------------------------
 // getDesiredDriveState
 //------------------------------------------------------------------------------

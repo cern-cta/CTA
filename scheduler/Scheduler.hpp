@@ -37,7 +37,6 @@
 #include "common/dataStructures/TestSourceType.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/UpdateFileStorageClassRequest.hpp"
-#include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "common/dataStructures/QueueAndMountSummary.hpp"
 #include "common/Timer.hpp"
@@ -205,31 +204,6 @@ public:
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc);
   std::list<cta::common::dataStructures::RepackInfo> getRepacks();
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
-
-  void shrink(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool); 
-    // removes extra tape copies from a specific pool(usually an "_2" pool)
-
-  void queueVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const optional<uint64_t> numberOfFiles); 
-    //if numberOfFiles is nullopt, all files are verified
-  void cancelVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
-  std::list<cta::common::dataStructures::VerifyInfo> getVerifys(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
-  cta::common::dataStructures::VerifyInfo getVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &vid) const;
-
-  cta::common::dataStructures::ReadTestResult readTest(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &driveName, const std::string &vid, const uint64_t firstFSeq, const uint64_t lastFSeq, 
-    const bool checkChecksum, const std::string &output) const;
-    //when output=="null" discard the data read
-  cta::common::dataStructures::WriteTestResult writeTest(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &driveName, const std::string &vid, const std::string &inputFile) const;
-  cta::common::dataStructures::WriteTestResult write_autoTest(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &driveName, const std::string &vid, const uint64_t numberOfFiles, const uint64_t fileSize, 
-    const cta::common::dataStructures::TestSourceType testSourceType) const;
 
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(log::LogContext &lc) const;
   std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName, log::LogContext &lc) const;

@@ -53,7 +53,6 @@
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
-#include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "common/exception/UserError.hpp"

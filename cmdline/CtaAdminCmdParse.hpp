@@ -205,18 +205,12 @@ const cmdLookup_t cmdLookup = {
    { "rmr",                     AdminCmd::CMD_REQUESTERMOUNTRULE },
    { "showqueues",              AdminCmd::CMD_SHOWQUEUES },
    { "sq",                      AdminCmd::CMD_SHOWQUEUES },
-   { "shrink",                  AdminCmd::CMD_SHRINK },
-   { "sh",                      AdminCmd::CMD_SHRINK },
    { "storageclass",            AdminCmd::CMD_STORAGECLASS },
    { "sc",                      AdminCmd::CMD_STORAGECLASS },
    { "tape",                    AdminCmd::CMD_TAPE },
    { "ta",                      AdminCmd::CMD_TAPE },
    { "tapepool",                AdminCmd::CMD_TAPEPOOL },
    { "tp",                      AdminCmd::CMD_TAPEPOOL },
-   { "test",                    AdminCmd::CMD_TEST },
-   { "te",                      AdminCmd::CMD_TEST },
-   { "verify",                  AdminCmd::CMD_VERIFY },
-   { "ve",                      AdminCmd::CMD_VERIFY }
 };
 
 
@@ -236,9 +230,6 @@ const subcmdLookup_t subcmdLookup = {
    { "show",                    AdminCmd::SUBCMD_SHOW },
    { "up",                      AdminCmd::SUBCMD_UP },
    { "down",                    AdminCmd::SUBCMD_DOWN },
-   { "read",                    AdminCmd::SUBCMD_READ },
-   { "write",                   AdminCmd::SUBCMD_WRITE },
-   { "write_auto",              AdminCmd::SUBCMD_WRITE_AUTO }
 };
 
 
@@ -351,16 +342,9 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_REPACK,               { "repack",               "re",  { "add", "rm", "ls", "err" } }},
    { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
-   { AdminCmd::CMD_SHRINK,               { "shrink",               "sh",  { } }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_TEST,                 { "test",                 "te",  { "read", "write", "write_auto" },
-                        "\n  This is a synchronous command that returns performance stats and errors.\n"
-                          "  It should be run on an empty self-dedicated drive. All locations are local\n"
-                          "  to the tapeserver.\n\n"
-                                         }},
-   { AdminCmd::CMD_VERIFY,               { "verify",               "ve",  { "add", "rm", "ls", "err" } }}
 };
 
 
@@ -513,8 +497,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias }},
    {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_SHRINK,               AdminCmd::SUBCMD_NONE  }, { opt_tapepool }},
-   /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_SHOWQUEUES,           AdminCmd::SUBCMD_NONE  }, { opt_header.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_ADD   },
@@ -546,19 +528,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM    }, { opt_tapepool_alias }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_TEST,                 AdminCmd::SUBCMD_READ  },
-      { opt_drivename, opt_vid, opt_firstfseq, opt_lastfseq, opt_checkchecksum, opt_output }},
-   {{ AdminCmd::CMD_TEST,                 AdminCmd::SUBCMD_WRITE },
-      { opt_drivename, opt_vid, opt_filename }},
-   {{ AdminCmd::CMD_TEST,                 AdminCmd::SUBCMD_WRITE_AUTO },
-      { opt_drivename, opt_vid, opt_number_of_files_alias, opt_size, opt_input }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_VERIFY,               AdminCmd::SUBCMD_ADD   },
-      { opt_vid, opt_number_of_files.optional() }},
-   {{ AdminCmd::CMD_VERIFY,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
-   {{ AdminCmd::CMD_VERIFY,               AdminCmd::SUBCMD_LS    }, { opt_header.optional(), opt_vid.optional() }},
-   {{ AdminCmd::CMD_VERIFY,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},
 };
 
 
