@@ -196,9 +196,9 @@ void RepackRequest::setStatus(){
         return;
       }
     }
-    //Expand is finished or not, if we have retrieved files, we are in Running,
+    //Expand is finished or not, if we have retrieved files or not (first reporting), we are in Running,
     //else we are in starting
-    if(m_payload.retrievedfiles()){
+    if(m_payload.retrievedfiles() || m_payload.failedtoretrievefiles()){
       setStatus(common::dataStructures::RepackInfo::Status::Running);
     } else {
       setStatus(common::dataStructures::RepackInfo::Status::Starting);
