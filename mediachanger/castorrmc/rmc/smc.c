@@ -20,6 +20,8 @@
 
 #define	USERR	1
 #define PATH_CONF "cta-smc.conf"
+#define TEXT_RED    "\x1b[31;1m"
+#define TEXT_NORMAL "\x1b[0m"
 
 extern char *optarg;
 
@@ -33,30 +35,80 @@ static void smc_str_upper(char *const s) {
 
 static void smc_usage(const char *const cmd)
 {
-	fprintf (stderr, "usage: %s ", cmd);
+	fprintf (stderr, "Usage:\n");
 	fprintf (stderr,
-	    "-d -D drive_ordinal [-V vid] [-v]\n"
-	    "\t-e -V vid [-v]\n"
-	    "\t-i [-V vid] [-v]\n"
-	    "\t-m -D drive_ordinal -V vid [-v]\n"
-	    "\t-q D [-D drive_ordinal] [-v]\n"
-	    "\t-q L [-v]\n"
-	    "\t-q S [-N nbelem] [-S starting_slot] [-v]\n"
-	    "\t-q V [-N nbelem] [-V vid] [-v]\n");
+	    "  %s -d -D drive_ordinal [-V vid]\n"
+	    "  %s -e -V vid\n"
+	    "  %s -i [-V vid]\n"
+	    "  %s -m -D drive_ordinal -V vid\n"
+	    "  %s -q D [-D drive_ordinal] [-j]\n"
+	    "  %s -q L [-j]\n"
+            "  %s -q P [-j]\n"
+	    "  %s -q S [-N nbelem] [-S starting_slot] [-j]\n"
+	    "  %s -q V [-N nbelem] [-V vid] [-j]\n",
+            cmd, cmd, cmd, cmd, cmd, cmd, cmd, cmd, cmd);
 }
 
+void smc_qdrive_humanPrint(const struct robot_info *const robot_info,
+  const struct smc_element_info *const element_info, const int numberOfElements, 
+  const int useSpectraLib) {
+  char *pstatus;
+  int i;
+  printf (TEXT_RED "Drive Ordinal\tElement Addr.\tStatus\t\tVid\n" TEXT_NORMAL);
+  for (i = 0; i < numberOfElements; i++) {
+    if (((element_info+i)->state & 0x1) == 0)
+            pstatus = "free";
+    else if ((element_info+i)->state & 0x4)
+            pstatus = "error";
+    else if ((element_info+i)->state & 0x8 && !useSpectraLib)
+            pstatus = "unloaded";
+    else
+            pstatus = "loaded";
+    printf ("%13d\t%13d\t%6s\t%s\n",
+            (element_info+i)->element_address-robot_info->device_start,
+            (element_info+i)->element_address, pstatus,
+            (element_info+i)->name);
+  }
+}
+void smc_qdrive_jsonPrint(const struct robot_info *const robot_info,
+  const struct smc_element_info *const element_info, const int numberOfElements,
+  const int useSpectraLib) {
+  char *pstatus;
+  int i;
+  printf ("[");
+  for (i = 0; i < numberOfElements; i++) {
+    if (((element_info+i)->state & 0x1) == 0)
+            pstatus = "free";
+    else if ((element_info+i)->state & 0x4)
+            pstatus = "error";
+    else if ((element_info+i)->state & 0x8 && !useSpectraLib)
+            pstatus = "unloaded";
+    else
+            pstatus = "loaded";
+    if (0 != i) {
+      printf(",");
+    }
+    printf ("{\"driveOrdinal\":%d,"
+            "\"elementAddress\":%d,"
+            "\"status\":\"%s\","
+            "\"vid\":\"%s\"}",
+            (element_info+i)->element_address-robot_info->device_start,
+            (element_info+i)->element_address,
+             pstatus,
+            (element_info+i)->name);                
+  }
+  printf ("]");  
+}
 static int smc_qdrive (
 	const char *const rmchost,
 	const int fd,
 	const struct robot_info *const robot_info,
 	int drvord,
-	const int verbose)
+        const int isJsonEnabled)
 {
         int c;
         struct smc_element_info *element_info;
-	int i;
 	int nbelem;
-	char *pstatus;
         char *smcLibraryType;
         char useSpectraLib;
  
@@ -75,59 +127,120 @@ static int smc_qdrive (
 		free (element_info);
 		return (c);
 	}
-	if (verbose)
-		printf ("Drive Ordinal\tElement Addr.\tStatus\t\tVid\n");
-
         useSpectraLib=0;
         smcLibraryType = getconfent_fromfile(PATH_CONF,"SMC","LIBRARY_TYPE",0);
         if (NULL != smcLibraryType && 
             0 == strcasecmp(smcLibraryType,"SPECTRA")) {
           useSpectraLib = 1;
         }
- 
-	for (i = 0; i < c; i++) {
-		if (((element_info+i)->state & 0x1) == 0)
-			pstatus = "free";
-		else if ((element_info+i)->state & 0x4)
-			pstatus = "error";
-		else if ((element_info+i)->state & 0x8 && !useSpectraLib)
-			pstatus = "unloaded";
-		else
-			pstatus = "loaded";
-		printf ("	%2d\t    %d\t%s\t%s\n",
-			(element_info+i)->element_address-robot_info->device_start,
-			(element_info+i)->element_address, pstatus,
-			(element_info+i)->name);
-	}
+        if (isJsonEnabled) {
+          smc_qdrive_jsonPrint(robot_info, element_info, c, useSpectraLib);
+	} else {
+          smc_qdrive_humanPrint(robot_info, element_info, c, useSpectraLib);
+        }      
 	free (element_info);
 	return (0);
 }
 
-static int smc_qlib (const struct robot_info *const robot_info)
+void smc_qlib_humanPrint(const struct robot_info *const robot_info) {
+  printf ("Vendor/Product/Revision = <%s>\n", robot_info->inquiry);
+  printf ("Transport Count = %d, Start = %d\n",
+          robot_info->transport_count, robot_info->transport_start);
+  printf ("Slot Count = %d, Start = %d\n",
+          robot_info->slot_count, robot_info->slot_start);
+  printf ("Port Count = %d, Start = %d\n",
+          robot_info->port_count, robot_info->port_start);
+  printf ("Device Count = %d, Start = %d\n",
+          robot_info->device_count, robot_info->device_start);
+}
+
+void smc_qlib_jsonPrint(const struct robot_info *const robot_info) {
+  char T10Vendor[9];
+  char prodId[17];
+  char prodRevLvl[5];
+  memcpy (T10Vendor, robot_info->inquiry, 8);
+  T10Vendor[8] = '\0';
+  memcpy(prodId, robot_info->inquiry + 8, 16);
+  prodId[16] = '\0';
+  memcpy(prodRevLvl,robot_info->inquiry + 8 + 16, 4);
+  prodRevLvl[4] = '\0';      
+  printf ("[");
+  printf ("{\"inquiry\":{\"vendor\":\"%s\",\"product\":\"%s\",\"revision\":\"%s\"},",
+          T10Vendor, prodId, prodRevLvl);
+  printf ("\"transport\":{\"count\":%d,\"start\":%d},",
+          robot_info->transport_count, robot_info->transport_start);
+  printf ("\"slot\":{\"count\":%d,\"start\":%d},",
+          robot_info->slot_count, robot_info->slot_start);
+  printf ("\"port\":{\"count\":%d,\"start\":%d},",
+          robot_info->port_count, robot_info->port_start);
+  printf ("\"device\":{\"count\":%d,\"start\":%d}",
+          robot_info->device_count, robot_info->device_start);            
+  printf ("}]");
+}
+
+static int smc_qlib (const struct robot_info *const robot_info,
+  const int isJsonEnabled)
 {
-	printf ("Vendor/Product/Revision = <%s>\n", robot_info->inquiry);
-	printf ("Transport Count = %d, Start = %d\n",
-		robot_info->transport_count, robot_info->transport_start);
-	printf ("Slot Count = %d, Start = %d\n",
-		robot_info->slot_count, robot_info->slot_start);
-	printf ("Port Count = %d, Start = %d\n",
-		robot_info->port_count, robot_info->port_start);
-	printf ("Device Count = %d, Start = %d\n",
-		robot_info->device_count, robot_info->device_start);
+        if (isJsonEnabled) {
+          smc_qlib_jsonPrint(robot_info);
+	} else {
+          smc_qlib_humanPrint(robot_info);
+        }
 	return (0);
+}
+
+void smc_qport_humanPrint(const struct smc_element_info *const element_info,
+  const int numberOfElements) {
+  char *pstatus;
+  int i;
+  printf (TEXT_RED "Element Addr.\tVid\tImpExp\n" TEXT_NORMAL);
+  for (i = 0; i < numberOfElements; i++) {
+    if (((element_info+i)->state & 0x1) == 0)
+            pstatus = "";
+    else if (((element_info+i)->state & 0x2) == 0)
+            pstatus = "export";
+    else
+            pstatus = "import";
+    printf ("    %4d\t%s\t%s\n",
+            (element_info+i)->element_address,
+            (element_info+i)->name, pstatus);
+  }
+}
+
+void smc_qport_jsonPrint(const struct smc_element_info *const element_info,
+  const int numberOfElements) {
+  char *pstatus;
+  int i;
+  printf ("[");
+  for (i = 0; i < numberOfElements; i++) {
+    if (((element_info+i)->state & 0x1) == 0)
+            pstatus = "";
+    else if (((element_info+i)->state & 0x2) == 0)
+            pstatus = "export";
+    else
+            pstatus = "import";
+    if (0 != i) {
+      printf(",");
+    }
+    printf ("{\"elementAddress\":%d,"
+            "\"vid\":\"%s\","
+            "\"state\":\"%s\"}",
+            (element_info+i)->element_address,
+            (element_info+i)->name,
+             pstatus); 
+  }
+  printf ("]");
 }
 
 static int smc_qport (
 	const char *const rmchost,
 	const int fd,
 	const struct robot_info *const robot_info,
-	const int verbose)
+        const int isJsonEnabled)
 {
 	int c;
 	struct smc_element_info *element_info;
-	int i;
 	int nbelem;
-	char *pstatus;
 
 	nbelem = robot_info->port_count;
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
@@ -140,34 +253,51 @@ static int smc_qport (
 		free (element_info);
 		return (serrno - ERMCRBTERR);
 	}
-	if (verbose)
-		printf ("Element Addr.\tVid\tImpExp\n");
-	for (i = 0; i < c; i++) {
-		if (((element_info+i)->state & 0x1) == 0)
-			pstatus = "";
-		else if (((element_info+i)->state & 0x2) == 0)
-			pstatus = "export";
-		else
-			pstatus = "import";
-		printf ("    %4d\t%s\t%s\n",
-			(element_info+i)->element_address,
-			(element_info+i)->name, pstatus);
+	if (isJsonEnabled) {
+          smc_qport_jsonPrint(element_info, c);
+	} else {
+          smc_qport_humanPrint(element_info, c);
 	}
 	free (element_info);
 	return (0);
 }
- 
+
+void smc_qslot_humanPrint(const struct smc_element_info *element_info,
+  const int numberOfElements) {
+  int i;
+  printf (TEXT_RED "Element Addr.\tVid\n" TEXT_NORMAL);
+  for (i = 0; i < numberOfElements; i++) {
+    printf ("    %4d\t%s\n",
+            element_info[i].element_address, element_info[i].name);
+  }
+} 
+
+void smc_qslot_jsonPrint(const struct smc_element_info *element_info,
+  const int numberOfElements) {
+  int i;
+  printf ("[");
+  for (i = 0; i < numberOfElements; i++) {
+    if (0 != i) {
+      printf(",");
+    }
+    printf ("{\"elementAddress\":%4d,"
+            "\"vid\":\"%s\"}",
+            element_info[i].element_address, 
+            element_info[i].name); 
+  }
+  printf ("]");
+}
+
 static int smc_qslot (
 	const char *const rmchost,
 	const int fd,
 	const struct robot_info *robot_info,
 	int slotaddr,
 	int nbelem,
-	const int verbose)
+        const int isJsonEnabled)
 {
         int c;
         struct smc_element_info *element_info;
-	int i;
  
 	if (nbelem == 0) {
 		if (slotaddr < 0)
@@ -187,14 +317,62 @@ static int smc_qslot (
 		free (element_info);
 		return (serrno - ERMCRBTERR);
 	}
-	if (verbose)
-		printf ("Element Addr.\tVid\n");
-	for (i = 0; i < c; i++) {
-		printf ("    %4d\t%s\n",
-			element_info[i].element_address, element_info[i].name);
-	}
+        if (isJsonEnabled) {
+          smc_qslot_jsonPrint(element_info, c);
+	} else {
+          smc_qslot_humanPrint(element_info, c);
+        }
 	free (element_info);
 	return (0);
+}
+
+void smc_qvid_humanPrint(const struct smc_element_info *const element_info,
+  const int numberOfElements){
+  int i;
+  char *ptype;
+  char ptypes[5][6] = {"", "hand", "slot", "port", "drive"};
+  printf (TEXT_RED "Vid\tElement Addr.\tElement Type\n" TEXT_NORMAL);
+  for (i = 0; i < numberOfElements; i++) {
+    ptype = ptypes[(element_info+i)->element_type];
+    if ((element_info+i)->element_type == 3) {
+      if (((element_info+i)->state & 0x2) == 0) {
+        ptype = "export";
+      } else {
+        ptype = "import";
+      }
+    }
+    printf ("%s\t    %4d\t%s\n",
+            (element_info+i)->name, (element_info+i)->element_address,
+            ptype);
+  }
+}
+
+void smc_qvid_jsonPrint(const struct smc_element_info *const element_info,
+  const int numberOfElements){
+  int i;
+  char *ptype;
+  char ptypes[5][6] = {"", "hand", "slot", "port", "drive"};
+  printf ("[");
+  for (i = 0; i < numberOfElements; i++) {
+    ptype = ptypes[(element_info+i)->element_type];
+    if ((element_info+i)->element_type == 3) {
+      if (((element_info+i)->state & 0x2) == 0) {
+        ptype = "export";
+      } else {
+        ptype = "import";
+      }
+    }
+    if (0 != i) {
+      printf(",");
+    }
+    printf ("{\"vid\":\"%s\","
+            "\"elementAddress\":%d,"
+            "\"elementType\":\"%s\"}",
+            (element_info+i)->name,
+            (element_info+i)->element_address,
+            ptype);
+  }
+  printf ("]");
 }
 
 static int smc_qvid (
@@ -203,13 +381,10 @@ static int smc_qvid (
 	const struct robot_info *const robot_info,
 	const char *reqvid,
 	int nbelem,
-	const int verbose)
+        const int isJsonEnabled)
 {
         int c;
         struct smc_element_info *element_info;
-	int i;
-	char *ptype;
-	static char ptypes[5][6] = {"", "hand", "slot", "port", "drive"};
 	const char *vid;
  
 	if (*reqvid)
@@ -233,21 +408,11 @@ static int smc_qvid (
 		free (element_info);
 		return (serrno - ERMCRBTERR);
 	}
-	if (verbose)
-		printf ("Vid\tElement Addr.\tElement Type\n");
-	for (i = 0; i < c; i++) {
-		ptype = ptypes[(element_info+i)->element_type];
-		if ((element_info+i)->element_type == 3) {
-			if (((element_info+i)->state & 0x2) == 0) {
-				ptype = "export";
-			} else {
-				ptype = "import";
-                        }
-                }
-		printf ("%s\t    %4d\t%s\n",
-			(element_info+i)->name, (element_info+i)->element_address,
-			ptype);
-	}
+         if (isJsonEnabled) {
+           smc_qvid_jsonPrint(element_info, c); 
+	} else {   
+           smc_qvid_humanPrint(element_info, c);
+        }
 	free (element_info);
 	return (0);
 }
@@ -268,14 +433,13 @@ int main(const int argc,
 	struct robot_info robot_info;
 	const char *rmchost = "localhost";
 	int slotaddr = -1;
-	int targetslotaddr = -1;
-	int verbose = 0;
 	char vid[7];
+        int isJsonEnabled = 0;
 
 	/* parse and check command options */
 
 	memset (vid, '\0', sizeof(vid));
-	while ((c = getopt (argc, argv, "D:deimN:q:S:V:vT:")) != EOF) {
+	while ((c = getopt (argc, argv, "D:deimN:q:S:V:j")) != EOF) {
 		switch (c) {
 		case 'D':	/* drive ordinal */
 			drvord = strtol (optarg, &dp, 10);
@@ -335,13 +499,6 @@ int main(const int argc,
 				errflg++;
 			}
 			break;
-		case 'T':	/* Target slot */
-			targetslotaddr = strtol (optarg, &dp, 10);
-			if (*dp != '\0' || targetslotaddr < 0) {
-				fprintf (stderr, SR001);
-				errflg++;
-			}
-			break;
 		case 'V':	/* vid */
 			n = strlen (optarg);
 			if (n > 6) {
@@ -352,9 +509,9 @@ int main(const int argc,
 				smc_str_upper (vid);
 			}
 			break;
-		case 'v':
-			verbose = 1;
-			break;
+                case 'j':
+                        isJsonEnabled = 1;
+                        break;
 		case '?':
 			errflg++;
 			break;
@@ -422,21 +579,21 @@ int main(const int argc,
 		switch (qry_type) {
 		case 'D':
 			c = smc_qdrive (rmchost, fd, &robot_info, drvord,
-			    verbose);
+                            isJsonEnabled);
 			break;
 		case 'L':
-			c = smc_qlib (&robot_info);
+			c = smc_qlib (&robot_info, isJsonEnabled);
 			break;
 		case 'P':
-			c = smc_qport (rmchost, fd, &robot_info, verbose);
+			c = smc_qport (rmchost, fd, &robot_info, isJsonEnabled);
 			break;
 		case 'S':
 			c = smc_qslot (rmchost, fd, &robot_info, slotaddr,
-			    nbelem, verbose);
+			    nbelem, isJsonEnabled);
 			break;
 		case 'V':
 			c = smc_qvid (rmchost, fd, &robot_info, vid,
-			    nbelem, verbose);
+			    nbelem, isJsonEnabled);
 			break;
 		}
 		break;
