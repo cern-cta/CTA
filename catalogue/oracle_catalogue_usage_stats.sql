@@ -24,7 +24,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
--- This table will be used to safely store the legacy CASTOR usage statistics.
+-- This table will be used to safely store the legacy CASTOR usage statistics
 CREATE TABLE CastorUsageStats (
   gid NUMBER(6) DEFAULT 0 CONSTRAINT NN_CastorUsageStats_gid NOT NULL,
   timestamp NUMBER  DEFAULT 0 CONSTRAINT NN_CastorUsageStats_ts NOT NULL,
