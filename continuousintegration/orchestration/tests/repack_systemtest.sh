@@ -50,7 +50,7 @@ while getopts "v:e:b:t:" o; do
       REPACK_BUFFER_BASEDIR=${OPTARG}
       ;;
     t)
-      WAIT_FOR_REPACK_TIMEOUT={$OPTARG}
+      WAIT_FOR_REPACK_TIMEOUT=${OPTARG}
       ;;
     *)
       usage
@@ -104,4 +104,4 @@ if test 1 = `admin_cta repack ls --vid ${VID_TO_REPACK} | grep -E "Failed" | wc 
     exit 1
 fi
 
-./root/repack_generate_report.sh -v ${VID_TO_REPACK}
+exec /root/repack_generate_report.sh -v ${VID_TO_REPACK}

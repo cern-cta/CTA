@@ -70,7 +70,7 @@ echo "OK"
 
 echo "5. Report of the repacked tape"
 echo
-NB_NON_REPACKED_FILES=$(jq '[.[]] | length' ${NOT_REPACKED_JSON_PATH})
+NB_NON_REPACKED_FILES=$(jq '[.[]] | length' ${NOT_REPACKED_JSON_PATH} || 0)
 echo "Number of non repacked files : ${NB_NON_REPACKED_FILES}" 
 if [ ${NB_NON_REPACKED_FILES} -ne 0 ]
 then
@@ -78,7 +78,7 @@ then
   { echo -e $header; jq -r '.[] | [.af.archiveId,.tf.fSeq, .af.size] | @tsv' ${NOT_REPACKED_JSON_PATH}; } | column -t
 fi; 
 echo
-NB_SELF_REPACKED_FILES=$(jq '[.[]] | length' ${SELF_REPACKED_JSON_PATH})
+NB_SELF_REPACKED_FILES=$(jq '[.[]] | length' ${SELF_REPACKED_JSON_PATH} || 0)
 echo "Number of self-repacked files : ${NB_SELF_REPACKED_FILES}"
 if [ ${NB_SELF_REPACKED_FILES} -ne 0 ]
 then
@@ -86,7 +86,7 @@ then
   { echo -e $header; jq -r '.[] | [.af.archiveId, .tf.fSeq, .af.size] | @tsv' ${SELF_REPACKED_JSON_PATH}; } | column -t
 fi; 
 echo
-NB_REPACKED_FILES=$(jq '[.[]] | length' ${REPACKED_JSON_PATH})
+NB_REPACKED_FILES=$(jq '[.[]] | length' ${REPACKED_JSON_PATH} || 0)
 echo "Number of repacked files : ${NB_REPACKED_FILES}"
 if [ ${NB_REPACKED_FILES} -ne 0 ]
 then

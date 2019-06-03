@@ -48,8 +48,10 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
   }
   
   {
-    // Do one round of repack subrequest reporting (heavy lifting is done internally).
-    m_scheduler.getNextRepackReportBatch(lc).report(lc);
+    // Do all round of repack subrequest reporting (heavy lifting is done internally).
+    for(auto& reportBatch: m_scheduler.getRepackReportBatches(lc)){
+      reportBatch.report(lc);
+    }
   }
   
 }

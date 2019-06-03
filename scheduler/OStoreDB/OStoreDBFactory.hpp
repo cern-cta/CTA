@@ -157,6 +157,10 @@ public:
   std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext& lc) override {
     return m_OStoreDB.getNextRepackReportBatch(lc);
   }
+  
+  std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) override {
+    return m_OStoreDB.getRepackReportBatches(lc);
+  }
 
   JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &lc) override {
     return m_OStoreDB.getRetrieveJobsFailedSummary(lc);

@@ -586,6 +586,16 @@ Scheduler::RepackReportBatch Scheduler::getNextRepackReportBatch(log::LogContext
   return ret;
 }
 
+std::list<Scheduler::RepackReportBatch> Scheduler::getRepackReportBatches(log::LogContext &lc){
+  std::list<Scheduler::RepackReportBatch> ret;
+  for(auto& reportBatch: m_db.getRepackReportBatches(lc)){
+    Scheduler::RepackReportBatch report;
+    report.m_DbBatch.reset(reportBatch.release());
+    ret.push_back(std::move(report));
+  }
+  return ret;
+}
+
 //------------------------------------------------------------------------------
 // Scheduler::RepackReportBatch::report
 //------------------------------------------------------------------------------

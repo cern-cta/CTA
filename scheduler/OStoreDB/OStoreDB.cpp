@@ -1592,6 +1592,26 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextRepackRep
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::getRepackReportBatches()
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> OStoreDB::getRepackReportBatches(log::LogContext &lc){
+  std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> ret;
+  try{
+    ret.push_back(std::move(getNextSuccessfulRetrieveRepackReportBatch(lc)));
+  } catch (const NoRepackReportBatchFound &){}
+  try{
+    ret.push_back(std::move(getNextFailedRetrieveRepackReportBatch(lc)));
+  } catch (const NoRepackReportBatchFound &){}
+  try{
+    ret.push_back(std::move(getNextSuccessfulArchiveRepackReportBatch(lc)));
+  } catch (const NoRepackReportBatchFound &){}
+  try{
+    ret.push_back(std::move(getNextFailedArchiveRepackReportBatch(lc)));
+  } catch (const NoRepackReportBatchFound &){}
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getNextSuccessfulRetrieveRepackReportBatch()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
