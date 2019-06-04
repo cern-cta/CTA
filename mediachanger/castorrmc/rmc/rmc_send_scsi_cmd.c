@@ -277,7 +277,7 @@ int rmc_send_scsi_cmd (
 	if ((sg_hd->sense_buffer[0] & 0x70) &&
 	    ((sg_hd->sense_buffer[2] & 0xE0) == 0 ||
 	    (sg_hd->sense_buffer[2] & 0xF) != 0)) {
-		char tmp_msgbuf[132];
+		char tmp_msgbuf[32];
 		snprintf (tmp_msgbuf, sizeof(tmp_msgbuf), "%s ASC=%X ASCQ=%X",
 		    sk_msg[*(sense+2) & 0xF], *(sense+12), *(sense+13));
 		tmp_msgbuf[sizeof(tmp_msgbuf) - 1] = '\0';
