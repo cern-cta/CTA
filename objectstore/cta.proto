@@ -390,15 +390,24 @@ message RetrieveRequestRepackInfo {
 }
 
 // The different timings of the lifecycle of a RetrieveRequest (creation time, first select time, request complete)
-message LifecycleTimings{
+message LifecycleTimings {
   optional uint64 creation_time = 9160 [default = 0];
   optional uint64 first_selected_time = 9161 [default = 0];
   optional uint64 completed_time = 9162 [default = 0];
 }
 
+message RetrieveActivityWeight {
+  required uint64 priority = 9170;
+  required string disk_instance_name = 9171;
+  required string activity = 9172;
+  required double weight = 9173;
+  required int64 creation_time = 9174;
+}
+
 message RetrieveRequest {
   required SchedulerRetrieveRequest schedulerrequest = 9150;
   required MountPolicy mountpolicy = 9151;
+  optional RetrieveActivityWeight activity_weight = 9160;
   required ArchiveFile archivefile = 9152;
   required uint32 activecopynb = 9153;
   repeated RetrieveJob jobs = 9154;
@@ -449,6 +458,7 @@ message ArchiveQueue {
 }
 
 message RetrieveJobPointer {
+  // The retrieve job pointer needs to hold the sufficient information for all the running counters of the queue (priority, activity...)
   required uint64 size = 3101;
   required string address = 3102;
   required uint32 copynb = 3103;
@@ -457,6 +467,9 @@ message RetrieveJobPointer {
   required uint64 minretrieverequestage = 3105;
   required uint64 maxdrivesallowed = 3106;
   required uint64 starttime = 3108;
+  // For activity (if present), we need disk instance and activity name (priority is always provided)
+  optional string disk_instance_name = 3109;
+  optional string activity = 3110;
 }
 
 message RetrieveQueueShardPointer {
@@ -472,12 +485,18 @@ message RetrieveQueueShard {
   required uint64 retrievejobstotalsize = 10501;
 }
 
+message RetrieveActivityCountPair {
+  required RetrieveActivityWeight retrieve_activity_weight = 10600;
+  required uint64 count = 10601;
+}
+
 message RetrieveQueue {
   required string vid = 10100;
   repeated RetrieveQueueShardPointer retrievequeueshards = 10111;
   repeated ValueCountPair prioritymap = 10131;
   repeated ValueCountPair minretrieverequestagemap = 10132;
   repeated ValueCountPair maxdrivesallowedmap = 10133;
+  repeated RetrieveActivityCountPair activity_map = 10136;
   required uint64 retrievejobstotalsize = 10140;
   required uint64 retrievejobscount = 10145;
   required uint64 oldestjobcreationtime = 10150;

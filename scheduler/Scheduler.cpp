@@ -203,7 +203,7 @@ void Scheduler::queueArchiveRequestForRepackBatch(std::list<cta::objectstore::Ar
 //------------------------------------------------------------------------------
 void Scheduler::queueRetrieve(
   const std::string &instanceName,
-  const common::dataStructures::RetrieveRequest &request,
+  common::dataStructures::RetrieveRequest &request,
   log::LogContext & lc) {
   using utils::postEllipsis;
   using utils::midEllipsis;
@@ -250,9 +250,10 @@ void Scheduler::queueRetrieve(
      .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
      .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
      .add("policyPriority", queueCriteria.mountPolicy.retrievePriority);
+  if (request.activity)
+    spc.add("activity", request.activity.value());
   lc.log(log::INFO, "Queued retrieve request");
 }
-
 
 //------------------------------------------------------------------------------
 // deleteArchive

@@ -559,7 +559,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
         for (auto &tf: rr->getArchiveFile().tapeFiles) {
           if (tf.vid == vid) {
             jta.push_back({tf.copyNb, tf.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize, 
-                rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time});
+                rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity()});
           }
         }
       }

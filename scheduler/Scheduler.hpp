@@ -147,7 +147,7 @@ public:
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  void queueRetrieve(const std::string &instanceName, const cta::common::dataStructures::RetrieveRequest &request,
+  void queueRetrieve(const std::string &instanceName, cta::common::dataStructures::RetrieveRequest &request,
     log::LogContext &lc);
   
   /** 

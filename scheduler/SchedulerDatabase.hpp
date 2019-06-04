@@ -270,7 +270,7 @@ public:
    * @param logContext context allowing logging db operation
    * @return the selected vid (mostly for logging)
    */
-  virtual std::string queueRetrieve(const cta::common::dataStructures::RetrieveRequest &rqst,
+  virtual std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest &rqst,
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) = 0;
 
   /**

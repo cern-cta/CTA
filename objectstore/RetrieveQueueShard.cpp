@@ -96,12 +96,15 @@ auto RetrieveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) 
           const auto & j = jl->Get(i);
           ret.removedJobs.emplace_back(JobInfo());
           ret.removedJobs.back().address = j.address();
+          ret.removedJobs.back().fSeq = j.fseq();
           ret.removedJobs.back().copyNb = j.copynb();
           ret.removedJobs.back().maxDrivesAllowed = j.maxdrivesallowed();
           ret.removedJobs.back().minRetrieveRequestAge = j.minretrieverequestage();
           ret.removedJobs.back().priority = j.priority();
           ret.removedJobs.back().size = j.size();
           ret.removedJobs.back().startTime = j.starttime();
+          if (j.has_activity())
+            ret.removedJobs.back().activityDescription = JobInfo::ActivityDescription{ j.disk_instance_name(), j.activity() };
           ret.bytesRemoved += j.size();
           totalSize -= j.size();
           ret.jobsRemoved++;
@@ -136,7 +139,10 @@ auto RetrieveQueueShard::dumpJobs() -> std::list<JobInfo> {
   std::list<JobInfo> ret;
   for (auto &j: m_payload.retrievejobs()) {
     ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
-        j.minretrieverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(), j.fseq()});
+        j.minretrieverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(), j.fseq(), nullopt});
+    if (j.has_activity()) {
+      ret.back().activityDescription = JobInfo::ActivityDescription{ j.disk_instance_name(), j.activity() };
+    }
   }
   return ret;
 }
@@ -154,6 +160,12 @@ std::list<RetrieveQueue::JobToAdd> RetrieveQueueShard::dumpJobsToAdd() {
     ret.back().policy.retrievePriority = j.priority();
     ret.back().startTime = j.starttime();
     ret.back().retrieveRequestAddress = j.address();
+    if (j.has_activity()) {
+      RetrieveActivityDescription rad;
+      rad.diskInstanceName = j.disk_instance_name();
+      rad.activity = j.activity();
+      ret.back().activityDescription = rad;
+    }
   }
   return ret;
 }
@@ -252,6 +264,10 @@ void RetrieveQueueShard::addJob(const RetrieveQueue::JobToAdd& jobToAdd) {
   j->set_maxdrivesallowed(jobToAdd.policy.maxDrivesAllowed);
   j->set_priority(jobToAdd.policy.retrievePriority);
   j->set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
+  if (jobToAdd.activityDescription) {
+    j->set_disk_instance_name(jobToAdd.activityDescription.value().diskInstanceName);
+    j->set_activity(jobToAdd.activityDescription.value().activity);
+  }
   m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize()+jobToAdd.fileSize);
   // Sort the shard
   size_t jobIndex = m_payload.retrievejobs_size() - 1;
@@ -284,6 +300,10 @@ void RetrieveQueueShard::addJobsThroughCopy(JobsToAddSet& jobsToAdd) {
     rjp.set_maxdrivesallowed(jobToAdd.policy.maxDrivesAllowed);
     rjp.set_priority(jobToAdd.policy.retrievePriority);
     rjp.set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
+    if (jobToAdd.activityDescription) {
+      rjp.set_disk_instance_name(jobToAdd.activityDescription.value().diskInstanceName);
+      rjp.set_activity(jobToAdd.activityDescription.value().activity);
+    }
     i = serializedJobsToAdd.insert(i, rjp);
     totalSize+=jobToAdd.fileSize;
   }
@@ -295,9 +315,5 @@ void RetrieveQueueShard::addJobsThroughCopy(JobsToAddSet& jobsToAdd) {
     *m_payload.add_retrievejobs() = j;
   m_payload.set_retrievejobstotalsize(totalSize);
 }
-
-
-
-
 
 }}

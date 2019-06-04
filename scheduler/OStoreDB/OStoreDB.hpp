@@ -29,6 +29,7 @@
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RetrieveActivityCountMap.hpp"
 #include "objectstore/RepackQueue.hpp"
 #include "objectstore/RepackRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
@@ -256,6 +257,7 @@ public:
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
     objectstore::RetrieveRequest::RepackInfo m_repackInfo;
+    optional<objectstore::RetrieveActivityDescription> m_activityDescription;
   };
   static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
 
@@ -294,7 +296,7 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
-  std::string queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
+  std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override;
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override;

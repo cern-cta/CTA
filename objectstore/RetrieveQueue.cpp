@@ -22,6 +22,7 @@
 #include "EntryLogSerDeser.hpp"
 #include "ValueCountMap.hpp"
 #include "AgentReference.hpp"
+#include "RetrieveActivityCountMap.hpp"
 #include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
@@ -287,6 +288,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   ValueCountMap priorityMap(m_payload.mutable_prioritymap());
   ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+  RetrieveActivityCountMap retrieveActivityCountMap(m_payload.mutable_activity_map());
   // We need to figure out which job will be added to which shard.
   // We might have to split shards if they would become too big.
   // For a given jobs, there a 4 possible cases:
@@ -462,6 +464,9 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
       maxDriveAllowedMap.incCount(j.policy.maxDrivesAllowed);
       priorityMap.incCount(j.policy.retrievePriority);
       minRetrieveRequestAgeMap.incCount(j.policy.retrieveMinRequestAge);
+      if (j.activityDescription) {
+        retrieveActivityCountMap.incCount(j.activityDescription.value());
+      }
       // oldestjobcreationtime is initialized to 0 when 
       if (m_payload.oldestjobcreationtime()) {
         if ((uint64_t)j.startTime < m_payload.oldestjobcreationtime())
@@ -568,6 +573,10 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
     ret.priority = priorityMap.maxValue();
     ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
     ret.minRetrieveRequestAge = minRetrieveRequestAgeMap.minValue();
+    RetrieveActivityCountMap retrieveActivityCountMap(m_payload.mutable_activity_map());
+    for (auto ra: retrieveActivityCountMap.getActivities(ret.priority)) {
+      ret.activityCounts.push_back({ra.diskInstanceName, ra.activity, ra.weight, ra.count});
+    }
   } else {
     ret.maxDrivesAllowed = 0;
     ret.priority = 0;
@@ -646,6 +655,7 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   ValueCountMap priorityMap(m_payload.mutable_prioritymap());
   ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+  RetrieveActivityCountMap retrieveActivityCountMap(m_payload.mutable_activity_map());
   // Make a working copy of the jobs to remove. We will progressively trim this local list.
   auto localJobsToRemove = jobsToRemove;
   // The jobs are expected to be removed from the front shards first (poped in order)
@@ -672,6 +682,14 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
       maxDriveAllowedMap.decCount(j.maxDrivesAllowed);
       priorityMap.decCount(j.priority);
       minRetrieveRequestAgeMap.decCount(j.minRetrieveRequestAge);
+      if (j.activityDescription) {
+        // We have up a partial activity description, but this is enough to decCount.
+        RetrieveActivityDescription activityDescription;
+        activityDescription.priority = j.priority;
+        activityDescription.diskInstanceName = j.activityDescription.value().diskInstanceName;
+        activityDescription.activity = j.activityDescription.value().activity;
+        retrieveActivityCountMap.decCount(activityDescription);
+      }
     }
     // In all cases, we should update the global statistics.
     m_payload.set_retrievejobscount(m_payload.retrievejobscount() - removalResult.jobsRemoved);

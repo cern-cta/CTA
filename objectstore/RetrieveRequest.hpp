@@ -22,6 +22,7 @@
 #include "objectstore/cta.pb.h"
 #include "TapeFileSerDeser.hpp"
 #include "JobQueueType.hpp"
+#include "RetrieveActivityCountMap.hpp"
 #include <list>
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -234,6 +235,9 @@ public:
   cta::common::dataStructures::RetrieveRequest getSchedulerRequest();
   
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
+  void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest & retrieveRequest,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
+  optional<RetrieveActivityDescription> getActivity();
   cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
   cta::common::dataStructures::ArchiveFile getArchiveFile();
   cta::common::dataStructures::EntryLog getEntryLog();

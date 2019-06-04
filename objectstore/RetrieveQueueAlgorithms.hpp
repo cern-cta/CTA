@@ -29,7 +29,9 @@ struct ContainerTraits<RetrieveQueue,C>
 {
   struct ContainerSummary : public RetrieveQueue::JobsSummary {
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
-    ContainerSummary(const RetrieveQueue::JobsSummary &c) : RetrieveQueue::JobsSummary({c.jobs,c.bytes,c.oldestJobStartTime,c.priority,c.minRetrieveRequestAge,c.maxDrivesAllowed}) {}
+    ContainerSummary(const RetrieveQueue::JobsSummary &c) : 
+      RetrieveQueue::JobsSummary({c.jobs,c.bytes,c.oldestJobStartTime,c.priority,
+          c.minRetrieveRequestAge,c.maxDrivesAllowed,c.activityCounts}) {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
   
@@ -42,6 +44,7 @@ struct ContainerTraits<RetrieveQueue,C>
     uint64_t filesize;
     cta::common::dataStructures::MountPolicy policy;
     serializers::RetrieveJobStatus status;
+    optional<RetrieveActivityDescription> activityDescription;
     typedef std::list<InsertedElement> list;
   };
 
@@ -276,7 +279,7 @@ addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemC
   std::list<RetrieveQueue::JobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr)});
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription});
   }
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -289,7 +292,7 @@ addReferencesIfNecessaryAndCommit(Container& cont, typename InsertedElement::lis
   std::list<RetrieveQueue::JobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr)});
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription});
   }
   cont.addJobsIfNecessaryAndCommit(jobsToAdd, agentRef, lc);
 }
