@@ -24,6 +24,7 @@
 #include "DriveStatus.hpp"
 #include "MountType.hpp"
 #include "DesiredDriveState.hpp"
+#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
@@ -65,10 +66,17 @@ struct DriveState {
   DesiredDriveState desiredDriveState;
   std::string currentVid;
   std::string currentTapePool;
+  uint64_t currentPriority;
+  struct ActivityAndWeight {
+    std::string activity;
+    double weight;
+  };
+  optional<ActivityAndWeight> currentActivityAndWeight;
   MountType nextMountType;
   std::string nextVid;
   std::string nextTapepool;
-
+  uint64_t nextPriority;
+  optional<ActivityAndWeight> nextActivityAndWeight;
 }; // struct DriveState
 
 std::ostream &operator<<(std::ostream &os, const DriveState &obj);

@@ -231,10 +231,16 @@ message DriveState {
   required bool desiredUp = 5019;
   required bool desiredForceDown = 5020;
   optional string currentvid = 5021;
+  optional uint64 current_priority = 5028;
+  optional string current_activity = 5029;
+  optional double current_activity_weight = 5030;
   optional string currenttapepool = 5022;
   optional uint32 nextmounttype = 5023;
   optional string nextvid = 5024;
   optional string nexttapepool = 5025;
+  optional uint64 next_priority = 5031;
+  optional string next_activity = 5032;
+  optional double next_activity_weight = 5033;
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 

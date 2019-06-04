@@ -342,6 +342,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     (int)cta::common::dataStructures::DriveStatus::CleaningUp };
   std::set<int> activeMountTypes = {
     (int)cta::common::dataStructures::MountType::ArchiveForUser,
+    (int)cta::common::dataStructures::MountType::ArchiveForRepack,
     (int)cta::common::dataStructures::MountType::Retrieve,
     (int)cta::common::dataStructures::MountType::Label };
   for (const auto &d : driveStates) {

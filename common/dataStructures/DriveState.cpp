@@ -47,6 +47,7 @@ DriveState::DriveState():
   mountType(dataStructures::MountType::NoMount),
   driveStatus(dataStructures::DriveStatus::Down),
   desiredDriveState({false, false}),
+  currentPriority(0),
   nextMountType(dataStructures::MountType::NoMount) {}
 
 //------------------------------------------------------------------------------
@@ -77,9 +78,24 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && desiredDriveState==rhs.desiredDriveState
       && currentVid==rhs.currentVid
       && currentTapePool==rhs.currentTapePool
+      && currentPriority == rhs.currentPriority
+      && bool(currentActivityAndWeight) == bool(rhs.currentActivityAndWeight)
+      && (currentActivityAndWeight? (
+        currentActivityAndWeight.value().activity 
+          == rhs.currentActivityAndWeight.value().activity
+        && currentActivityAndWeight.value().weight
+          == rhs.currentActivityAndWeight.value().weight
+         ): true)
       && nextMountType == rhs.nextMountType
       && nextTapepool == rhs.nextTapepool
-      && nextVid == rhs.nextVid;
+      && nextVid == rhs.nextVid
+      && bool(nextActivityAndWeight) == bool(rhs.nextActivityAndWeight)
+      && (nextActivityAndWeight? (
+        nextActivityAndWeight.value().activity 
+          == rhs.nextActivityAndWeight.value().activity
+        && nextActivityAndWeight.value().weight
+          == rhs.nextActivityAndWeight.value().weight
+         ): true);
 }
 
 //------------------------------------------------------------------------------
@@ -118,9 +134,25 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " desiredState=" << obj.desiredDriveState
      << " currentVid=" << obj.currentVid
      << " currentTapePool=" << obj.currentTapePool
-     << " nextMountType=" << obj.nextMountType
+     << " currentPriority=" << obj.currentPriority
+     << " currentActivity=";
+  if (obj.currentActivityAndWeight) {
+    os << "(" << obj.currentActivityAndWeight.value().activity
+       << "," << obj.currentActivityAndWeight.value().weight << ")";
+  } else {
+    os << "(none)";
+  }
+  os << " nextMountType=" << obj.nextMountType
      << " nextVid=" << obj.nextVid
-     << " nextTapePool=" << obj.nextTapepool << ")";
+     << " nextTapePool=" << obj.nextTapepool
+     << " currentNext=";
+  if (obj.nextActivityAndWeight) {
+    os << "(" << obj.nextActivityAndWeight.value().activity
+       << "," << obj.nextActivityAndWeight.value().weight << ")";
+  } else {
+    os << "(none)";
+  }
+  os << ")";
 }
 
 } // namespace dataStructures

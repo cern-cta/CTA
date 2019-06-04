@@ -108,6 +108,23 @@ cta::common::dataStructures::DriveState DriveState::getState() {
   ret.desiredDriveState.forceDown = m_payload.desiredforcedown();
   ret.currentVid                  = m_payload.currentvid();
   ret.currentTapePool             = m_payload.currenttapepool();
+  ret.currentPriority             = m_payload.current_priority();
+  if (m_payload.has_current_activity())
+    ret.currentActivityAndWeight = 
+      cta::common::dataStructures::DriveState::ActivityAndWeight{
+        m_payload.current_activity(), m_payload.current_activity_weight()};
+  if (m_payload.has_nextmounttype())
+    ret.nextMountType = (common::dataStructures::MountType) m_payload.nextmounttype();
+  if (m_payload.has_nexttapepool())
+    ret.nextTapepool = m_payload.nexttapepool();
+  if (m_payload.has_nextvid())
+    ret.nextVid = m_payload.nextvid();
+  if (m_payload.has_next_priority())
+    ret.nextPriority = m_payload.next_priority();
+  if (m_payload.has_next_activity())
+    ret.nextActivityAndWeight =
+        cta::common::dataStructures::DriveState::ActivityAndWeight{
+          m_payload.next_activity(), m_payload.next_activity_weight()};
   return ret;
 }
 
@@ -137,6 +154,25 @@ void DriveState::setState(cta::common::dataStructures::DriveState& state) {
   m_payload.set_desiredforcedown(state.desiredDriveState.forceDown);
   m_payload.set_currentvid(state.currentVid);
   m_payload.set_currenttapepool(state.currentTapePool);
+  m_payload.set_current_priority(state.currentPriority);
+  if (state.currentActivityAndWeight) {
+    m_payload.set_current_activity(state.currentActivityAndWeight.value().activity);
+    m_payload.set_current_activity_weight(state.currentActivityAndWeight.value().weight);
+  } else {
+    m_payload.clear_current_activity();
+    m_payload.clear_current_activity_weight();
+  }
+  m_payload.set_nextvid(state.nextVid);
+  m_payload.set_nexttapepool(state.nextTapepool);
+  m_payload.set_next_priority(state.nextPriority);
+  m_payload.set_nextmounttype((uint32_t)state.nextMountType);
+  if (state.nextActivityAndWeight) {
+    m_payload.set_next_activity(state.nextActivityAndWeight.value().activity);
+    m_payload.set_next_activity_weight(state.nextActivityAndWeight.value().weight);
+  } else {
+    m_payload.clear_next_activity();
+    m_payload.clear_next_activity_weight();
+  }
 }
 
 }} // namespace cta::objectstore
