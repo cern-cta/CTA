@@ -232,10 +232,6 @@ public:
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->reclaimTape(admin, vid);}, m_maxTriesToConnect);
   }
-  
-  void fakeReclaimTapeForTests(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->fakeReclaimTapeForTests(admin, vid);}, m_maxTriesToConnect);
-  }
 
   void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeMediaType(admin, vid, mediaType);}, m_maxTriesToConnect);
@@ -388,11 +384,6 @@ public:
   bool tapeExists(const std::string &vid) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeExists(vid);}, m_maxTriesToConnect);
   }
-  
-  bool existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(const std::string& vid, const uint64_t fSeq) const override {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(vid,fSeq);},m_maxTriesToConnect);
-  }
-
 
 protected:
 

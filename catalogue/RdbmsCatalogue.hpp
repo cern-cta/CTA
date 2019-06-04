@@ -332,7 +332,27 @@ public:
    * @param vid The volume identifier of the tape to be reclaimed.
    */
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override;
-  void fakeReclaimTapeForTests(const common::dataStructures::SecurityIdentity& admin, const std::string& vid) override;
+   /**
+   * Returns the number of non superseded files contained in the tape identified by its vid
+   * @param conn the database connection
+   * @param vid the vid in which we will count non superseded files
+   * @return the number of non superseded files on the vid
+   */
+  uint64_t getNbNonSupersededFilesOnTape(rdbms::Conn &conn, const std::string &vid) const;
+  /**
+   * Delete all the tape files of the VID passed in parameter
+   * @param conn the database connection
+   * @param vid the vid in which we want to remove all the tape files
+   */
+  void deleteTapeFiles(rdbms::Conn &conn, const std::string& vid) const;
+  
+  /**
+   * Reset the counters of a tape
+   * @param conn the database connection
+   * @param admin the administrator
+   * @param vid the vid to reset the counters
+   */
+  void resetTapeCounters(rdbms::Conn &conn, const common::dataStructures::SecurityIdentity &admin ,const std::string& vid) const;
   void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) override;
   void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) override;
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override;
@@ -715,17 +735,6 @@ protected:
    * @return True if the tape exists.
    */
   bool tapeExists(rdbms::Conn &conn, const std::string &vid) const;
-  
-  /**
-   * Returns true if non superseded files exist after fSeq in the tape where vid is passed in parameter
-   * If there is only superseded files after fSeq, these tape files will be deleted
-   * 
-   * @param vid the vid of the tape to check if non superseded files exist after fSeq
-   * @param fSeq the fSeq after which we want to check if non superseded files exist
-   * @return true if non superseded files exist, false otherwise
-   */
-  bool existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(const std::string& vid, const uint64_t fSeq) const override;
-
 
   /**
    * Returns the list of tapes that meet the specified search criteria.
@@ -735,7 +744,7 @@ protected:
    * @return The list of tapes.
    */
   std::list<common::dataStructures::Tape> getTapes(rdbms::Conn &conn, const TapeSearchCriteria &searchCriteria) const;
-
+  
   /**
    * Returns true if the specified logical library exists.
    *
