@@ -188,7 +188,7 @@ class Gc:
 
     return result
 
-  def eosstagerrm(self, fxid, freebytes):
+  def eosstagerrm(self, fxid, subdir, freebytes):
     logger = logging.getLogger('gc')
     mgmurl = "root://{}".format(self.mgmhost)
     cmd = "eos {} stagerrm fxid:{}".format(mgmurl, fxid)
@@ -197,7 +197,7 @@ class Gc:
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     stdout,stderr = process.communicate()
     if 0 == process.returncode:
-      logger.info("minfreebytes={} freebytesbefore={} executed='{}'".format(self.minfreebytes, freebytes, cmd))
+      logger.info("minfreebytes={} subdir={} freebytesbefore={} executed='{}'".format(self.minfreebytes, subdir, freebytes, cmd))
 
   def processfile(self, subdir, fstfile):
     statvfs = os.statvfs(subdir)
@@ -210,7 +210,7 @@ class Gc:
       now = time.time()
       agesecs = now - statinfo.st_ctime
       if agesecs > self.gcagesecs:
-        self.eosstagerrm(fstfile, freebytes)
+        self.eosstagerrm(fstfile, subdir, freebytes)
 
     self.nbfilesconsideredsincelastreport = self.nbfilesconsideredsincelastreport + 1
     if self.nbfilesbeforereport == self.nbfilesconsideredsincelastreport:
