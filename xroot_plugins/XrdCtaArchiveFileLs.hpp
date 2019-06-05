@@ -45,12 +45,12 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
-  static constexpr const char* const LOG_SUFFIX  = "ArchiveFileLsStream";    //!< Identifier for log messages
-
   cta::catalogue::TapeFileSearchCriteria  m_searchCriteria;                  //!< Search criteria
   catalogue::ArchiveFileItor              m_archiveFileItor;                 //!< Iterator across files which have been archived
   bool                                    m_isSummary;                       //!< Full listing or short summary?
   bool                                    m_isSummaryDone;                   //!< Summary has been sent
+
+  static constexpr const char* const LOG_SUFFIX  = "ArchiveFileLsStream";    //!< Identifier for log messages
 };
 
 

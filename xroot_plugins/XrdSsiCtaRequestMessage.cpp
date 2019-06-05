@@ -704,18 +704,18 @@ void RequestMessage::processAdmin_Ls(const cta::admin::AdminCmd &admincmd, cta::
 
 void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   // Create a XrdSsi stream object to return the results
-   stream = new ArchiveFileLsStream(*this, m_catalogue, m_scheduler);
+  // Create a XrdSsi stream object to return the results
+  stream = new ArchiveFileLsStream(*this, m_catalogue, m_scheduler);
 
-   // Should the client display column headers?
-   if(has_flag(OptionBoolean::SHOW_HEADER)) {
-      response.set_show_header(has_flag(OptionBoolean::SUMMARY) ? HeaderType::ARCHIVEFILE_LS_SUMMARY
-                                                                : HeaderType::ARCHIVEFILE_LS);
-   }
+  // Should the client display column headers?
+  if(has_flag(OptionBoolean::SHOW_HEADER)) {
+    response.set_show_header(has_flag(OptionBoolean::SUMMARY) ? HeaderType::ARCHIVEFILE_LS_SUMMARY
+                                                              : HeaderType::ARCHIVEFILE_LS);
+  }
 
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -984,36 +984,17 @@ void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::
 
 void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   if(has_flag(OptionBoolean::SHOW_LOG_ENTRIES) && has_flag(OptionBoolean::SUMMARY)) {
-      throw cta::exception::UserError("--log and --summary are mutually exclusive");
-   }
+  stream = new FailedRequestLsStream(*this, m_catalogue, m_scheduler, m_scheddb, m_lc);
 
-   auto tapepool     = getOptional(OptionString::TAPE_POOL);
-   auto vid          = getOptional(OptionString::VID);
-   bool justarchive  = has_flag(OptionBoolean::JUSTARCHIVE)  || tapepool;
-   bool justretrieve = has_flag(OptionBoolean::JUSTRETRIEVE) || vid;
+  // Should the client display column headers?
+  if(has_flag(OptionBoolean::SHOW_HEADER)) {
+    response.set_show_header(has_flag(OptionBoolean::SUMMARY) ?
+      HeaderType::FAILEDREQUEST_LS_SUMMARY : HeaderType::FAILEDREQUEST_LS);
+  }
 
-   if(justarchive && justretrieve) {
-      throw cta::exception::UserError("--justarchive/--tapepool and --justretrieve/--vid options are mutually exclusive");
-   }
-
-   OStoreDB::ArchiveQueueItor_t *archiveQueueItorPtr = justretrieve ? nullptr :
-      m_scheddb.getArchiveJobItorPtr(tapepool ? *tapepool : "", objectstore::JobQueueType::FailedJobs);
-   OStoreDB::RetrieveQueueItor_t *retrieveQueueItorPtr = justarchive ? nullptr :
-      m_scheddb.getRetrieveJobItorPtr(vid ? *vid : "", objectstore::JobQueueType::FailedJobs);
-
-   // Create a XrdSsi stream object to return the results
-   stream = new FailedRequestLsStream(m_scheduler, archiveQueueItorPtr, retrieveQueueItorPtr, has_flag(OptionBoolean::SUMMARY), has_flag(OptionBoolean::SHOW_LOG_ENTRIES), m_lc);
-
-   // Should the client display column headers?
-   if(has_flag(OptionBoolean::SHOW_HEADER)) {
-      response.set_show_header(has_flag(OptionBoolean::SUMMARY) ?
-         HeaderType::FAILEDREQUEST_LS_SUMMARY : HeaderType::FAILEDREQUEST_LS);
-   }
-
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
