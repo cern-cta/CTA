@@ -32,7 +32,7 @@ namespace cta { namespace xrd {
 class XrdCtaStream : public XrdSsiStream
 {
 public:
-  XrdCtaStream(const cta::admin::AdminCmd &admincmd, cta::catalogue::Catalogue &catalogue, cta::scheduler::Scheduler &scheduler)
+  XrdCtaStream(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
     XrdSsiStream(XrdSsiStream::isActive),
     m_catalogue(catalogue),
     m_scheduler(scheduler)
@@ -40,7 +40,7 @@ public:
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdCtaStream() constructor");
   }
 
-  virtual ~ArchiveFileLsStream() {
+  virtual ~XrdCtaStream() {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~XrdCtaStream() destructor");
   }
 
@@ -99,19 +99,20 @@ public:
     return streambuf;
   }
 
+private:
   /*!
    * Returns true if there is nothing more to send (i.e. we can close the stream)
    */
-  bool isDone() const = 0;
+  virtual bool isDone() const = 0;
 
   /*!
    * Fills the stream buffer
    */
-  int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) = 0;
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) = 0;
 
 protected:
-  cta::catalogue::Catalogue &m_catalogue;                 //!< Reference to CTA Catalogue
-  cta::scheduler::Scheduler &m_scheduler;                 //!< Reference to CTA Scheduler
+  cta::catalogue::Catalogue &m_catalogue;    //!< Reference to CTA Catalogue
+  cta::Scheduler            &m_scheduler;    //!< Reference to CTA Scheduler
 
 private:
   static constexpr const char* const LOG_SUFFIX  = "XrdCtaStream";    //!< Identifier for log messages

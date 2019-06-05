@@ -706,32 +706,8 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
 {
    using namespace cta::admin;
 
-   cta::catalogue::TapeFileSearchCriteria searchCriteria;
-
-   if(!has_flag(OptionBoolean::ALL))
-   {
-      bool has_any = false; // set to true if at least one optional option is set
-
-      // Get the search criteria from the optional options
-
-      searchCriteria.archiveFileId  = getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
-      searchCriteria.tapeFileCopyNb = getOptional(OptionUInt64::COPY_NUMBER,     &has_any);
-      searchCriteria.diskFileId     = getOptional(OptionString::DISKID,          &has_any);
-      searchCriteria.vid            = getOptional(OptionString::VID,             &has_any);
-      searchCriteria.tapePool       = getOptional(OptionString::TAPE_POOL,       &has_any);
-      searchCriteria.diskFileUser   = getOptional(OptionString::OWNER,           &has_any);
-      searchCriteria.diskFileGroup  = getOptional(OptionString::GROUP,           &has_any);
-      searchCriteria.storageClass   = getOptional(OptionString::STORAGE_CLASS,   &has_any);
-      searchCriteria.diskFilePath   = getOptional(OptionString::PATH,            &has_any);
-      searchCriteria.diskInstance   = getOptional(OptionString::INSTANCE,        &has_any);
-
-      if(!has_any) {
-         throw cta::exception::UserError("Must specify at least one search option, or --all");
-      }
-   }
-
    // Create a XrdSsi stream object to return the results
-   stream = new ArchiveFileLsStream(m_catalogue, searchCriteria, has_flag(OptionBoolean::SUMMARY));
+   stream = new ArchiveFileLsStream(*this, m_catalogue, m_scheduler);
 
    // Should the client display column headers?
    if(has_flag(OptionBoolean::SHOW_HEADER)) {
