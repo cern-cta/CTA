@@ -861,7 +861,7 @@ void RequestMessage::processDrive_Ls(cta::xrd::Response &response)
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> headers = {
          "library","drive","host","desired","request","status","since","vid","tapepool","files",
-         "MBytes","MB/s","session","age"
+         "MBytes","MB/s","session","priority","activity","age"
       };
       responseTable.push_back(headers);
 
@@ -928,6 +928,8 @@ void RequestMessage::processDrive_Ls(cta::xrd::Response &response)
             default:
                currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.sessionId)));
          }
+         currentRow.push_back(std::to_string(ds.currentPriority));
+         currentRow.push_back(ds.currentActivityAndWeight?ds.currentActivityAndWeight.value().activity: "-");
          currentRow.push_back(std::to_string(timeSinceLastUpdate_s) +
             (timeSinceLastUpdate_s > DRIVE_TIMEOUT ? " [STALE]" : ""));
          responseTable.push_back(currentRow);

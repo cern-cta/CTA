@@ -543,6 +543,16 @@ public:
     std::string logicalLibrary;   /**< The logical library (for a retrieve) */
     double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 ] ratio of existing 
                                    * mounts/quota (for faire share of mounts)*/
+    uint32_t mountCount;          /**< The number of mounts for this tape pool (which is the current "chargeable" entity for quotas. */
+    struct ActivityNameAndWeightedMountCount {
+      std::string activity;
+      double weight;
+      double weightedMountCount;
+    };                            /**< Struct describing the activity if we have one for this mount. */
+    
+    optional<ActivityNameAndWeightedMountCount> activityNameAndWeightedMountCount;
+                                  /**< Description if the activity for this potential mount. */
+    
     
     bool operator < (const PotentialMount &other) const {
       if (priority < other.priority)
@@ -553,8 +563,21 @@ public:
         return false;
       if (other.type == cta::common::dataStructures::MountType::ArchiveForUser && type != cta::common::dataStructures::MountType::ArchiveForUser)
         return true;
-      if (ratioOfMountQuotaUsed < other.ratioOfMountQuotaUsed)
+      // If we have achieved a HIGHER ratio of our mount allowance, then the other mount will be privileged
+      if (ratioOfMountQuotaUsed > other.ratioOfMountQuotaUsed)
         return true;
+      if (ratioOfMountQuotaUsed < other.ratioOfMountQuotaUsed)
+        return false;
+      // If we have activities (and the mounts are for the same tape pool) we can compare them.
+      // If not, it does not matter too much: one mount will go, increasing its ratio, and next time it will
+      // the tapepool. So for different tape pools, we do not order. Likewise, both mounts should have an activity to
+      // be comparable
+      if (activityNameAndWeightedMountCount && other.activityNameAndWeightedMountCount && tapePool == other.tapePool) {
+        if (activityNameAndWeightedMountCount.value().weightedMountCount > other.activityNameAndWeightedMountCount.value().weight)
+          return true;
+        if (activityNameAndWeightedMountCount.value().weightedMountCount < other.activityNameAndWeightedMountCount.value().weight)
+          return false;
+      }
       if(minRequestAge < other.minRequestAge)
 	return true;
       if(minRequestAge > other.minRequestAge)
@@ -585,6 +608,8 @@ public:
     uint64_t bytesTransferred;
     uint64_t filesTransferred;
     double latestBandwidth;
+    uint64_t priority;
+    optional<std::string> activity;
   };
   
   /**
