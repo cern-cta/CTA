@@ -383,7 +383,6 @@ const Option opt_justmove             { Option::OPT_FLAG, "--justmove",         
 const Option opt_justaddcopies        { Option::OPT_FLAG, "--justaddcopies",         "-a",   "" };
 const Option opt_justretrieve         { Option::OPT_FLAG, "--justretrieve",          "-r",   "" };
 const Option opt_lastfseq             { Option::OPT_UINT, "--lastfseq",              "-l",   " <last_fseq>" };
-const Option opt_lbp                  { Option::OPT_BOOL, "--lbp",                   "-p",   " <\"true\" or \"false\">" };
 const Option opt_log                  { Option::OPT_FLAG, "--log",                   "-l",   "" };
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>",
@@ -522,9 +521,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LS    },
       { opt_header.optional(), opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(),
         opt_logicallibrary.optional(), opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(),
-        opt_lbp.optional(), opt_disabled.optional(), opt_full.optional(), opt_all.optional() }},
+        opt_disabled.optional(), opt_full.optional(), opt_all.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
-      { opt_vid, opt_force.optional(), opt_lbp.optional() }},
+      { opt_vid, opt_force.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},
