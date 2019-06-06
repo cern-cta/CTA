@@ -1086,46 +1086,36 @@ void RequestMessage::processGroupMountRule_Ls(const cta::admin::AdminCmd &adminc
 
 void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   // Filter criteria
-   auto tapepool = getOptional(OptionString::TAPE_POOL);
+  // Create a XrdSsi stream object to return the results
+  stream = new ListPendingQueueStream<OStoreDB::ArchiveQueueItor_t>(*this, m_catalogue, m_scheduler, m_scheddb);
 
-   // Create a XrdSsi stream object to return the results
-   stream = new ListPendingQueue<OStoreDB::ArchiveQueueItor_t>(
-      m_scheddb.getArchiveJobItor(tapepool ? tapepool.value() : ""),
-      has_flag(OptionBoolean::EXTENDED));
+  // Should the client display column headers?
+  if(has_flag(OptionBoolean::SHOW_HEADER)) {
+    response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGARCHIVES
+                                                               : HeaderType::LISTPENDINGARCHIVES_SUMMARY);
+  }
 
-   // Should the client display column headers?
-   if(has_flag(OptionBoolean::SHOW_HEADER)) {
-      response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGARCHIVES
-                                                                 : HeaderType::LISTPENDINGARCHIVES_SUMMARY);
-   }
-
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
 void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   // Filter criteria
-   auto vid = getOptional(OptionString::VID);
+  // Create a XrdSsi stream object to return the results
+  stream = new ListPendingQueueStream<OStoreDB::RetrieveQueueItor_t>(*this, m_catalogue, m_scheduler, m_scheddb);
 
-   // Create a XrdSsi stream object to return the results
-   stream = new ListPendingQueue<OStoreDB::RetrieveQueueItor_t>(
-      m_scheddb.getRetrieveJobItor(vid ? vid.value() : ""),
-      has_flag(OptionBoolean::EXTENDED));
+  // Should the client display column headers?
+  if(has_flag(OptionBoolean::SHOW_HEADER)) {
+    response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGRETRIEVES
+                                                               : HeaderType::LISTPENDINGRETRIEVES_SUMMARY);
+  }
 
-   // Should the client display column headers?
-   if(has_flag(OptionBoolean::SHOW_HEADER)) {
-         response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGRETRIEVES
-                                                                    : HeaderType::LISTPENDINGRETRIEVES_SUMMARY);
-   }
-
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 

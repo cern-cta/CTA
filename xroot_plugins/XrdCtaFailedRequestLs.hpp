@@ -20,8 +20,6 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-//#include <scheduler/OStoreDB/OStoreDB.hpp>
-
 
 
 namespace cta { namespace xrd {
@@ -107,6 +105,8 @@ FailedRequestLsStream::FailedRequestLsStream(const RequestMessage &requestMsg,
     m_lc(lc)
 {
   using namespace cta::admin;
+
+  XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "FailedRequestLsStream() constructor");
 
   if(m_isLogEntries && m_isSummary) {
     throw cta::exception::UserError("--log and --summary are mutually exclusive");
