@@ -54,7 +54,7 @@ void smc_qdrive_humanPrint(const struct robot_info *const robot_info,
   const int useSpectraLib) {
   char *pstatus;
   int i;
-  printf (TEXT_RED "Drive Ordinal\tElement Addr.\tStatus\t\tVid\n" TEXT_NORMAL);
+  printf (TEXT_RED "Drive Ordinal\tElement Addr.\t  Status     Vid\n" TEXT_NORMAL);
   for (i = 0; i < numberOfElements; i++) {
     if (((element_info+i)->state & 0x1) == 0)
             pstatus = "free";
@@ -64,7 +64,7 @@ void smc_qdrive_humanPrint(const struct robot_info *const robot_info,
             pstatus = "unloaded";
     else
             pstatus = "loaded";
-    printf ("%13d\t%13d\t%6s\t%s\n",
+    printf ("%13d\t%13d\t%8s  %s\n",
             (element_info+i)->element_address-robot_info->device_start,
             (element_info+i)->element_address, pstatus,
             (element_info+i)->name);
