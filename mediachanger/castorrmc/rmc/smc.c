@@ -14,6 +14,7 @@
 #include "serrno.h"
 #include "smc_constants.h"
 #include "getconfent.h"
+#include "getopt.h"
 
 #include <ctype.h>
 			/* exit codes */
@@ -437,9 +438,21 @@ int main(const int argc,
         int isJsonEnabled = 0;
 
 	/* parse and check command options */
-
+        struct option longopts [] = {
+          {"drive",  required_argument, NULL, 'D'},
+          {"dismount",     no_argument, NULL, 'd'},
+          {"export",       no_argument, NULL, 'e'},
+          {"import",       no_argument, NULL, 'i'},
+          {"mount",        no_argument, NULL, 'm'},
+          {"nbelem", required_argument, NULL, 'N'},
+          {"query",  required_argument, NULL, 'q'},
+          {"slot",   required_argument, NULL, 'S'},
+          {"vid",    required_argument, NULL, 'V'},
+          {"json",         no_argument, NULL, 'j'},
+          {NULL,                     0, NULL,   0}
+        };
 	memset (vid, '\0', sizeof(vid));
-	while ((c = getopt (argc, argv, "D:deimN:q:S:V:j")) != EOF) {
+	while ((c = getopt_long(argc, argv, "D:deimN:q:S:V:j", longopts, NULL)) != EOF) {
 		switch (c) {
 		case 'D':	/* drive ordinal */
 			drvord = strtol (optarg, &dp, 10);
