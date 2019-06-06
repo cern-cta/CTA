@@ -148,64 +148,62 @@ private:
    /*!
     * Process AdminCmd events
     *
-    * @param[in]     admincmd        CTA Admin command request message
     * @param[out]    response        CTA Admin command response message
     */
-   void processAdmin_Add             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processAdmin_Ch              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processAdmin_Rm              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processAdmin_Ls              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processArchiveRoute_Add      (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processArchiveRoute_Ch       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processArchiveRoute_Rm       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processArchiveRoute_Ls       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processDrive_Up              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processDrive_Down            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processDrive_Ls              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processDrive_Rm              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processGroupMountRule_Add    (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processGroupMountRule_Ch     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processGroupMountRule_Rm     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processGroupMountRule_Ls     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processLogicalLibrary_Add    (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processLogicalLibrary_Ch     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processLogicalLibrary_Rm     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processLogicalLibrary_Ls     (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processMountPolicy_Add       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processMountPolicy_Ch        (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processMountPolicy_Rm        (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processMountPolicy_Ls        (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processRepack_Add            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processRepack_Rm             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   //void processRepack_Ls             (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processRepack_Err            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processRequesterMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processRequesterMountRule_Ch (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processRequesterMountRule_Rm (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processRequesterMountRule_Ls (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processShowQueues            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processStorageClass_Add      (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processStorageClass_Ch       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processStorageClass_Rm       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processStorageClass_Ls       (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTape_Add              (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTape_Ch               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTape_Rm               (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTape_Reclaim          (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTape_Label            (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTapePool_Add          (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTapePool_Ch           (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
-   void processTapePool_Rm           (const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+   void processAdmin_Add             (cta::xrd::Response &response);
+   void processAdmin_Ch              (cta::xrd::Response &response);
+   void processAdmin_Rm              (cta::xrd::Response &response);
+   void processAdmin_Ls              (cta::xrd::Response &response);
+   void processArchiveRoute_Add      (cta::xrd::Response &response);
+   void processArchiveRoute_Ch       (cta::xrd::Response &response);
+   void processArchiveRoute_Rm       (cta::xrd::Response &response);
+   void processArchiveRoute_Ls       (cta::xrd::Response &response);
+   void processDrive_Up              (cta::xrd::Response &response);
+   void processDrive_Down            (cta::xrd::Response &response);
+   void processDrive_Ls              (cta::xrd::Response &response);
+   void processDrive_Rm              (cta::xrd::Response &response);
+   void processGroupMountRule_Add    (cta::xrd::Response &response);
+   void processGroupMountRule_Ch     (cta::xrd::Response &response);
+   void processGroupMountRule_Rm     (cta::xrd::Response &response);
+   void processGroupMountRule_Ls     (cta::xrd::Response &response);
+   void processLogicalLibrary_Add    (cta::xrd::Response &response);
+   void processLogicalLibrary_Ch     (cta::xrd::Response &response);
+   void processLogicalLibrary_Rm     (cta::xrd::Response &response);
+   void processLogicalLibrary_Ls     (cta::xrd::Response &response);
+   void processMountPolicy_Add       (cta::xrd::Response &response);
+   void processMountPolicy_Ch        (cta::xrd::Response &response);
+   void processMountPolicy_Rm        (cta::xrd::Response &response);
+   void processMountPolicy_Ls        (cta::xrd::Response &response);
+   void processRepack_Add            (cta::xrd::Response &response);
+   void processRepack_Rm             (cta::xrd::Response &response);
+   //void processRepack_Ls             (cta::xrd::Response &response);
+   void processRepack_Err            (cta::xrd::Response &response);
+   void processRequesterMountRule_Add(cta::xrd::Response &response);
+   void processRequesterMountRule_Ch (cta::xrd::Response &response);
+   void processRequesterMountRule_Rm (cta::xrd::Response &response);
+   void processRequesterMountRule_Ls (cta::xrd::Response &response);
+   void processShowQueues            (cta::xrd::Response &response);
+   void processStorageClass_Add      (cta::xrd::Response &response);
+   void processStorageClass_Ch       (cta::xrd::Response &response);
+   void processStorageClass_Rm       (cta::xrd::Response &response);
+   void processStorageClass_Ls       (cta::xrd::Response &response);
+   void processTape_Add              (cta::xrd::Response &response);
+   void processTape_Ch               (cta::xrd::Response &response);
+   void processTape_Rm               (cta::xrd::Response &response);
+   void processTape_Reclaim          (cta::xrd::Response &response);
+   void processTape_Label            (cta::xrd::Response &response);
+   void processTapePool_Add          (cta::xrd::Response &response);
+   void processTapePool_Ch           (cta::xrd::Response &response);
+   void processTapePool_Rm           (cta::xrd::Response &response);
 
    /*!
     * Process AdminCmd events which can return a stream response
     *
-    * @param[in]     admincmd        CTA Admin command request message
-    * @param[out]    response        Response protocol buffer message. This is used for response
-    *                                headers or for summary responses.
-    * @param[out]    stream          Reference to Response stream message pointer
+    * @param[out]    response    Response protocol buffer message. This is used for response
+    *                            headers or for summary responses.
+    * @param[out]    stream      Reference to Response stream message pointer
     */
-   typedef void admincmdstream_t(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream);
+   typedef void admincmdstream_t(cta::xrd::Response &response, XrdSsiStream* &stream);
 
    admincmdstream_t processArchiveFile_Ls;
    admincmdstream_t processFailedRequest_Ls;

@@ -103,157 +103,157 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             using namespace cta::admin;
 
             case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD):
-               processAdmin_Add(request.admincmd(), response);
+               processAdmin_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH):
-               processAdmin_Ch(request.admincmd(), response);
+               processAdmin_Ch(response);
                break;
             case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM):
-               processAdmin_Rm(request.admincmd(), response);
+               processAdmin_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS):
-               processAdmin_Ls(request.admincmd(), response);
+               processAdmin_Ls(response);
                break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_LS):
-               processArchiveFile_Ls(request.admincmd(), response, stream);
+               processArchiveFile_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD):
-               processArchiveRoute_Add(request.admincmd(), response);
+               processArchiveRoute_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_CH):
-               processArchiveRoute_Ch(request.admincmd(), response);
+               processArchiveRoute_Ch(response);
                break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM):
-               processArchiveRoute_Rm(request.admincmd(), response);
+               processArchiveRoute_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS):
-               processArchiveRoute_Ls(request.admincmd(), response);
+               processArchiveRoute_Ls(response);
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_UP):
-               processDrive_Up(request.admincmd(), response);
+               processDrive_Up(response);
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN):
-               processDrive_Down(request.admincmd(), response);
+               processDrive_Down(response);
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS):
-               processDrive_Ls(request.admincmd(), response);
+               processDrive_Ls(response);
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM):
-               processDrive_Rm(request.admincmd(), response);
+               processDrive_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS):
-               processFailedRequest_Ls(request.admincmd(), response, stream);
+               processFailedRequest_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD):
-               processGroupMountRule_Add(request.admincmd(), response);
+               processGroupMountRule_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_CH):
-               processGroupMountRule_Ch(request.admincmd(), response);
+               processGroupMountRule_Ch(response);
                break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM):
-               processGroupMountRule_Rm(request.admincmd(), response);
+               processGroupMountRule_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS):
-               processGroupMountRule_Ls(request.admincmd(), response);
+               processGroupMountRule_Ls(response);
                break;
             case cmd_pair(AdminCmd::CMD_LISTPENDINGARCHIVES, AdminCmd::SUBCMD_NONE):
-               processListPendingArchives(request.admincmd(), response, stream);
+               processListPendingArchives(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE):
-               processListPendingRetrieves(request.admincmd(), response, stream);
+               processListPendingRetrieves(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD):
-               processLogicalLibrary_Add(request.admincmd(), response);
+               processLogicalLibrary_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH):
-               processLogicalLibrary_Ch(request.admincmd(), response);
+               processLogicalLibrary_Ch(response);
                break;
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM):
-               processLogicalLibrary_Rm(request.admincmd(), response);
+               processLogicalLibrary_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS):
-               processLogicalLibrary_Ls(request.admincmd(), response);
+               processLogicalLibrary_Ls(response);
                break;
             case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD):
-               processMountPolicy_Add(request.admincmd(), response);
+               processMountPolicy_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH):
-               processMountPolicy_Ch(request.admincmd(), response);
+               processMountPolicy_Ch(response);
                break;
             case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM):
-               processMountPolicy_Rm(request.admincmd(), response);
+               processMountPolicy_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS):
-               processMountPolicy_Ls(request.admincmd(), response);
+               processMountPolicy_Ls(response);
                break;
             case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD):
-               processRepack_Add(request.admincmd(), response);
+               processRepack_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM):
-               processRepack_Rm(request.admincmd(), response);
+               processRepack_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS):
-               processRepack_Ls(request.admincmd(), response, stream);
+               processRepack_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR):
-               processRepack_Err(request.admincmd(), response);
+               processRepack_Err(response);
                break;
             case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD):
-               processRequesterMountRule_Add(request.admincmd(), response);
+               processRequesterMountRule_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH):
-               processRequesterMountRule_Ch(request.admincmd(), response);
+               processRequesterMountRule_Ch(response);
                break;
             case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM):
-               processRequesterMountRule_Rm(request.admincmd(), response);
+               processRequesterMountRule_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS):
-               processRequesterMountRule_Ls(request.admincmd(), response);
+               processRequesterMountRule_Ls(response);
                break;
             case cmd_pair(AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE):
-               processShowQueues(request.admincmd(), response);
+               processShowQueues(response);
                break;
             case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_ADD):
-               processStorageClass_Add(request.admincmd(), response);
+               processStorageClass_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_CH):
-               processStorageClass_Ch(request.admincmd(), response);
+               processStorageClass_Ch(response);
                break;
             case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_RM):
-               processStorageClass_Rm(request.admincmd(), response);
+               processStorageClass_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS):
-               processStorageClass_Ls(request.admincmd(), response);
+               processStorageClass_Ls(response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD):
-               processTape_Add(request.admincmd(), response);
+               processTape_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_CH):
-               processTape_Ch(request.admincmd(), response);
+               processTape_Ch(response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RM):
-               processTape_Rm(request.admincmd(), response);
+               processTape_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RECLAIM):
-               processTape_Reclaim(request.admincmd(), response);
+               processTape_Reclaim(response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS):
-               processTape_Ls(request.admincmd(),response, stream);
+               processTape_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LABEL):
-               processTape_Label(request.admincmd(), response);
+               processTape_Label(response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD):
-               processTapePool_Add(request.admincmd(), response);
+               processTapePool_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH):
-               processTapePool_Ch(request.admincmd(), response);
+               processTapePool_Ch(response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM):
-               processTapePool_Rm(request.admincmd(), response);
+               processTapePool_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS):
-               processTapePool_Ls(request.admincmd(), response, stream);
+               processTapePool_Ls(response, stream);
                break;
 
             default:
@@ -629,7 +629,7 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
 
 
 
-void RequestMessage::processAdmin_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processAdmin_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -643,7 +643,7 @@ void RequestMessage::processAdmin_Add(const cta::admin::AdminCmd &admincmd, cta:
 
 
 
-void RequestMessage::processAdmin_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processAdmin_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -657,7 +657,7 @@ void RequestMessage::processAdmin_Ch(const cta::admin::AdminCmd &admincmd, cta::
 
 
 
-void RequestMessage::processAdmin_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processAdmin_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -670,7 +670,7 @@ void RequestMessage::processAdmin_Rm(const cta::admin::AdminCmd &admincmd, cta::
 
 
 
-void RequestMessage::processAdmin_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processAdmin_Ls(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -701,7 +701,7 @@ void RequestMessage::processAdmin_Ls(const cta::admin::AdminCmd &admincmd, cta::
 
 
 
-void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
+void RequestMessage::processArchiveFile_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
   using namespace cta::admin;
 
@@ -719,7 +719,7 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
 
 
 
-void RequestMessage::processArchiveRoute_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processArchiveRoute_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -736,7 +736,7 @@ void RequestMessage::processArchiveRoute_Add(const cta::admin::AdminCmd &admincm
 
 
 
-void RequestMessage::processArchiveRoute_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processArchiveRoute_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -758,7 +758,7 @@ void RequestMessage::processArchiveRoute_Ch(const cta::admin::AdminCmd &admincmd
 
 
 
-void RequestMessage::processArchiveRoute_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processArchiveRoute_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -773,7 +773,7 @@ void RequestMessage::processArchiveRoute_Rm(const cta::admin::AdminCmd &admincmd
 
 
 
-void RequestMessage::processArchiveRoute_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processArchiveRoute_Ls(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -806,7 +806,7 @@ void RequestMessage::processArchiveRoute_Ls(const cta::admin::AdminCmd &admincmd
 
 
 
-void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processDrive_Up(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -818,7 +818,7 @@ void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::
 
 
 
-void RequestMessage::processDrive_Down(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processDrive_Down(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -830,7 +830,7 @@ void RequestMessage::processDrive_Down(const cta::admin::AdminCmd &admincmd, cta
 
 
 
-void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processDrive_Ls(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -938,7 +938,7 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
 
 
 
-void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processDrive_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -981,7 +981,7 @@ void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::
 
 
 
-void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
+void RequestMessage::processFailedRequest_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
   using namespace cta::admin;
 
@@ -998,7 +998,7 @@ void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincm
 
 
 
-void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processGroupMountRule_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1014,7 +1014,7 @@ void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admin
 
 
 
-void RequestMessage::processGroupMountRule_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processGroupMountRule_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1035,7 +1035,7 @@ void RequestMessage::processGroupMountRule_Ch(const cta::admin::AdminCmd &adminc
 
 
 
-void RequestMessage::processGroupMountRule_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processGroupMountRule_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1049,7 +1049,7 @@ void RequestMessage::processGroupMountRule_Rm(const cta::admin::AdminCmd &adminc
 
 
 
-void RequestMessage::processGroupMountRule_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processGroupMountRule_Ls(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1083,7 +1083,7 @@ void RequestMessage::processGroupMountRule_Ls(const cta::admin::AdminCmd &adminc
 
 
 
-void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
+void RequestMessage::processListPendingArchives(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
   using namespace cta::admin;
 
@@ -1101,7 +1101,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
 
 
 
-void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
+void RequestMessage::processListPendingRetrieves(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
   using namespace cta::admin;
 
@@ -1119,7 +1119,7 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
 
 
 
-void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processLogicalLibrary_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1134,7 +1134,7 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
 
 
 
-void RequestMessage::processLogicalLibrary_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processLogicalLibrary_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1154,7 +1154,7 @@ void RequestMessage::processLogicalLibrary_Ch(const cta::admin::AdminCmd &adminc
 
 
 
-void RequestMessage::processLogicalLibrary_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processLogicalLibrary_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1167,7 +1167,7 @@ void RequestMessage::processLogicalLibrary_Rm(const cta::admin::AdminCmd &adminc
 
 
 
-void RequestMessage::processLogicalLibrary_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processLogicalLibrary_Ls(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1199,7 +1199,7 @@ void RequestMessage::processLogicalLibrary_Ls(const cta::admin::AdminCmd &adminc
 
 
 
-void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processMountPolicy_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1219,7 +1219,7 @@ void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd
 
 
 
-void RequestMessage::processMountPolicy_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processMountPolicy_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1255,7 +1255,7 @@ void RequestMessage::processMountPolicy_Ch(const cta::admin::AdminCmd &admincmd,
 
 
 
-void RequestMessage::processMountPolicy_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processMountPolicy_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1268,7 +1268,7 @@ void RequestMessage::processMountPolicy_Rm(const cta::admin::AdminCmd &admincmd,
 
 
 
-void RequestMessage::processMountPolicy_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processMountPolicy_Ls(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1305,7 +1305,7 @@ void RequestMessage::processMountPolicy_Ls(const cta::admin::AdminCmd &admincmd,
 
 
 
-void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processRepack_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1351,7 +1351,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
 
 
 
-void RequestMessage::processRepack_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processRepack_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1364,7 +1364,7 @@ void RequestMessage::processRepack_Rm(const cta::admin::AdminCmd &admincmd, cta:
 
 
 
-void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
+void RequestMessage::processRepack_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
    using namespace cta::admin;
   
@@ -1383,7 +1383,7 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
 
 
 
-void RequestMessage::processRepack_Err(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processRepack_Err(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1413,7 +1413,7 @@ void RequestMessage::processRepack_Err(const cta::admin::AdminCmd &admincmd, cta
 
 
 
-void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processRequesterMountRule_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1429,7 +1429,7 @@ void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &a
 
 
 
-void RequestMessage::processRequesterMountRule_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processRequesterMountRule_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1450,7 +1450,7 @@ void RequestMessage::processRequesterMountRule_Ch(const cta::admin::AdminCmd &ad
 
 
 
-void RequestMessage::processRequesterMountRule_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processRequesterMountRule_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1464,7 +1464,7 @@ void RequestMessage::processRequesterMountRule_Rm(const cta::admin::AdminCmd &ad
 
 
 
-void RequestMessage::processRequesterMountRule_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processRequesterMountRule_Ls(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1497,7 +1497,7 @@ void RequestMessage::processRequesterMountRule_Ls(const cta::admin::AdminCmd &ad
 
 
 
-void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processShowQueues(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1562,7 +1562,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
 
 
 
-void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processStorageClass_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1580,7 +1580,7 @@ void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincm
 
 
 
-void RequestMessage::processStorageClass_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processStorageClass_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1601,7 +1601,7 @@ void RequestMessage::processStorageClass_Ch(const cta::admin::AdminCmd &admincmd
 
 
 
-void RequestMessage::processStorageClass_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processStorageClass_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1615,7 +1615,7 @@ void RequestMessage::processStorageClass_Rm(const cta::admin::AdminCmd &admincmd
 
 
 
-void RequestMessage::processStorageClass_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processStorageClass_Ls(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1648,7 +1648,7 @@ void RequestMessage::processStorageClass_Ls(const cta::admin::AdminCmd &admincmd
 
 
 
-void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processTape_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1669,7 +1669,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
 
 
 
-void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processTape_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1717,7 +1717,7 @@ void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::x
 
 
 
-void RequestMessage::processTape_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processTape_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1730,7 +1730,7 @@ void RequestMessage::processTape_Rm(const cta::admin::AdminCmd &admincmd, cta::x
 
 
 
-void RequestMessage::processTape_Reclaim(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processTape_Reclaim(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1742,7 +1742,7 @@ void RequestMessage::processTape_Reclaim(const cta::admin::AdminCmd &admincmd, c
 }
 
 
-void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
+void RequestMessage::processTape_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
   using namespace cta::admin;
 
@@ -1758,7 +1758,7 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
 }
 
 
-void RequestMessage::processTape_Label(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processTape_Label(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1772,7 +1772,7 @@ void RequestMessage::processTape_Label(const cta::admin::AdminCmd &admincmd, cta
 
 
 
-void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processTapePool_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1790,7 +1790,7 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
 
 
 
-void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processTapePool_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1822,7 +1822,7 @@ void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, ct
 
 
 
-void RequestMessage::processTapePool_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processTapePool_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
@@ -1835,7 +1835,7 @@ void RequestMessage::processTapePool_Rm(const cta::admin::AdminCmd &admincmd, ct
 
 
 
-void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
+void RequestMessage::processTapePool_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
   using namespace cta::admin;
 
