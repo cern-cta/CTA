@@ -40,7 +40,7 @@ public:
       return c;
    }
    static std::string jsonCloseDelim() {
-      return is_first_record ? "" : "]";
+      return is_first_record ? "[]" : "]";
    }
 
    // Static method to convert time to string
