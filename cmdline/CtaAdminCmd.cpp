@@ -77,8 +77,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
          case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
          case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
-         case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item()); break;
-         case Data::kRelsItem:       std::cout << Log::DumpProtobuf(&record.rels_item()); break;
+         case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
+         case Data::kRelsItem:       std::cout << Log::DumpProtobuf(&record.rels_item());   break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -108,8 +108,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 namespace cta {
 namespace admin {
 
-bool CtaAdminCmd::is_json         = false;
-bool CtaAdminCmd::is_first_record = true;
+std::atomic<bool> CtaAdminCmd::is_json(false);
+std::atomic<bool> CtaAdminCmd::is_first_record(true);
 
 CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    m_execname(argv[0])
@@ -256,7 +256,7 @@ void CtaAdminCmd::send() const
    stream_future.wait();
 
    // JSON output is an array of structs, close bracket
-   if(isJson()) { std::cout << ']'; }
+   if(isJson()) { std::cout << jsonCloseDelim(); }
 }
 
 

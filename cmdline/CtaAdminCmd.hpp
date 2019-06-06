@@ -39,6 +39,10 @@ public:
       is_first_record = false;
       return c;
    }
+   static std::string jsonCloseDelim() {
+      return is_first_record ? "" : "]";
+   }
+
    // Static method to convert time to string
    static std::string timeToString(const time_t &time)
    {
@@ -70,8 +74,8 @@ public:
    static void print(const ListPendingRetrievesItem &lpr_item);
    static void print(const ListPendingRetrievesSummary &lpr_summary);
    static void print(const TapePoolLsItem &tpls_item);
-   static void print(const cta::admin::TapeLsItem &tals_item);
-   static void print(const cta::admin::RepackLsItem &rels_item);
+   static void print(const TapeLsItem &tals_item);
+   static void print(const RepackLsItem &rels_item);
 
 private:
    //! Parse the options for a specific command/subcommand
@@ -98,8 +102,8 @@ private:
    std::string       m_execname;                                      //!< Executable name of this program
    cta::xrd::Request m_request;                                       //!< Protocol Buffer for the command and parameters
 
-   static bool is_json;                                               //!< Display results in JSON format
-   static bool is_first_record;                                       //!< Delimiter for JSON records
+   static std::atomic<bool> is_json;                                  //!< Display results in JSON format
+   static std::atomic<bool> is_first_record;                          //!< Delimiter for JSON records
 
    static constexpr const char* const TEXT_RED    = "\x1b[31;1m";     //!< Terminal formatting code for red text
    static constexpr const char* const TEXT_NORMAL = "\x1b[0m";        //!< Terminal formatting code for normal text
