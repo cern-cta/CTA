@@ -25,16 +25,16 @@
 namespace cta { namespace xrd {
 
 /*!
- * Stream object which implements "ta ls" command.
+ * Stream object which implements "tape ls" command
  */
 class TapeLsStream: public XrdCtaStream{
 public:
   /*!
    * Constructor
    *
-   * @param[in]    requestMsg              RequestMessage containing command-line arguments
-   * @param[in]    catalogue               CTA Catalogue
-   * @param[in]    scheduler               CTA Scheduler
+   * @param[in]    requestMsg    RequestMessage containing command-line arguments
+   * @param[in]    catalogue     CTA Catalogue
+   * @param[in]    scheduler     CTA Scheduler
    */
   TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 

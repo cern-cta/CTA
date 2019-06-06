@@ -33,11 +33,11 @@ public:
   /*!
    * Constructor
    *
-   * @param[in]    requestMsg              RequestMessage containing command-line arguments
-   * @param[in]    catalogue               CTA Catalogue
-   * @param[in]    scheduler               CTA Scheduler
-   * @param[in]    schedDb                 CTA ObjectStore
-   * @param[in]    lc                      CTA Log Context
+   * @param[in]    requestMsg    RequestMessage containing command-line arguments
+   * @param[in]    catalogue     CTA Catalogue
+   * @param[in]    scheduler     CTA Scheduler
+   * @param[in]    schedDb       CTA ObjectStore
+   * @param[in]    lc            CTA Log Context
    */
   FailedRequestLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
     cta::Scheduler &scheduler, OStoreDB &schedDb, log::LogContext &lc);

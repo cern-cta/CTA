@@ -25,7 +25,7 @@
 namespace cta { namespace xrd {
 
 /*!
- * Stream object which implements "af ls" command.
+ * Stream object which implements "archivefile ls" command.
  */
 class ArchiveFileLsStream : public XrdCtaStream
 {

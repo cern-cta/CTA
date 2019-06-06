@@ -1871,15 +1871,15 @@ void RequestMessage::processTapePool_Rm(const cta::admin::AdminCmd &admincmd, ct
 
 void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   // Create a XrdSsi stream object to return the results
-   stream = new TapePoolLsStream(m_catalogue);
+  // Create a XrdSsi stream object to return the results
+  stream = new TapePoolLsStream(*this, m_catalogue, m_scheduler);
 
-   // Should the client display column headers?
-   if(has_flag(OptionBoolean::SHOW_HEADER)) response.set_show_header(HeaderType::TAPEPOOL_LS);
+  // Should the client display column headers?
+  if(has_flag(OptionBoolean::SHOW_HEADER)) response.set_show_header(HeaderType::TAPEPOOL_LS);
 
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
