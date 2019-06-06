@@ -43,40 +43,6 @@ public:
       return is_first_record ? "[]" : "]";
    }
 
-   // Static method to convert time to string
-   static std::string timeToString(const time_t &time)
-   {
-      std::string timeString(ctime(&time));
-      timeString.resize(timeString.size()-1); //remove newline
-      return timeString;
-   }
-
-   // Output headers
-   static void printAfLsHeader();
-   static void printAfLsSummaryHeader();
-   static void printFrLsHeader();
-   static void printFrLsSummaryHeader();
-   static void printLpaHeader();
-   static void printLpaSummaryHeader();
-   static void printLprHeader();
-   static void printLprSummaryHeader();
-   static void printTpLsHeader();
-   static void printTapeLsHeader();
-   static void printRepackLsHeader();
-   
-   // Output records
-   static void print(const ArchiveFileLsItem &afls_item);
-   static void print(const ArchiveFileLsSummary &afls_summary);
-   static void print(const FailedRequestLsItem &frls_item);
-   static void print(const FailedRequestLsSummary &frls_summary);
-   static void print(const ListPendingArchivesItem &lpa_item);
-   static void print(const ListPendingArchivesSummary &lpa_summary);
-   static void print(const ListPendingRetrievesItem &lpr_item);
-   static void print(const ListPendingRetrievesSummary &lpr_summary);
-   static void print(const TapePoolLsItem &tpls_item);
-   static void print(const TapeLsItem &tals_item);
-   static void print(const RepackLsItem &rels_item);
-
 private:
    //! Parse the options for a specific command/subcommand
    void parseOptions(int start, int argc, const char *const *const argv, const cmd_val_t &options);
@@ -105,8 +71,6 @@ private:
    static std::atomic<bool> is_json;                                  //!< Display results in JSON format
    static std::atomic<bool> is_first_record;                          //!< Delimiter for JSON records
 
-   static constexpr const char* const TEXT_RED    = "\x1b[31;1m";     //!< Terminal formatting code for red text
-   static constexpr const char* const TEXT_NORMAL = "\x1b[0m";        //!< Terminal formatting code for normal text
    static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
 };
 

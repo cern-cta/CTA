@@ -32,7 +32,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 #
 # cta-admin <admin_command> is the SSI version of "cta <admin_command>"
 #
-add_executable(cta-admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp)
+add_executable(cta-admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp CtaAdminTextFormatter.cpp)
 target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsi-4 XrdSsiLib XrdUtils)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
