@@ -272,14 +272,23 @@ private:
    */
   double m_repackRequestExpansionTimeLimit = 30;
   
-  typedef std::pair<std::string, common::dataStructures::MountType> tpType;
+  typedef std::pair<std::string, common::dataStructures::MountType> TapePoolMountPair;
+  struct MountCounts {
+    uint32_t totalMounts = 0;
+    struct AutoZeroUint32_t {
+      uint32_t value = 0;
+    };
+    std::map<std::string, AutoZeroUint32_t> activityMounts;
+  };
+  typedef std::map<TapePoolMountPair, MountCounts> ExistingMountSummary;
+  
   /**
    * Common part to getNextMountDryRun() and getNextMount() to populate mount decision info.
    * The structure should be pre-loaded by the calling function.
    */
   void sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> &mountInfo, 
     const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer, 
-    std::map<tpType, uint32_t> & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
+    ExistingMountSummary & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
   
   /**

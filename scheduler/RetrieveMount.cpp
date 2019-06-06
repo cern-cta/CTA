@@ -57,6 +57,13 @@ std::string cta::RetrieveMount::getVid() const{
 }
 
 //------------------------------------------------------------------------------
+// getActivity()
+//------------------------------------------------------------------------------
+cta::optional<std::string> cta::RetrieveMount::getActivity() const {
+  return m_dbMount->mountInfo.activity;
+}
+
+//------------------------------------------------------------------------------
 // getMountTransactionId()
 //------------------------------------------------------------------------------
 std::string cta::RetrieveMount::getMountTransactionId() const{

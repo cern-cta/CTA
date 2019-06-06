@@ -4915,52 +4915,56 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
   log::LogContext &lc) {
   try {
     cta::utils::Timer t;
-    auto conn = m_connPool.getConn();
-    const auto getConnTime = t.secs(utils::Timer::resetCounter);
-    auto archiveFile = getArchiveFileToRetrieveByArchiveFileId(conn, archiveFileId);
-    const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
-    if(nullptr == archiveFile.get()) {
-      exception::UserError ex;
-      ex.getMessage() << "No tape files available for archive file with archive file ID " << archiveFileId;
-      throw ex;
-    }
-
-    if(diskInstanceName != archiveFile->diskInstance) {
-      exception::UserError ue;
-      ue.getMessage() << "Cannot retrieve file because the disk instance of the request does not match that of the"
-        " archived file: archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path <<
-        " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" << archiveFile->diskInstance;
-      throw ue;
-    }
-
-    t.reset();
-    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
-      user.group);
-     const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
-
-    log::ScopedParamContainer spc(lc);
-    spc.add("getConnTime", getConnTime)
-       .add("getArchiveFileTime", getArchiveFileTime)
-       .add("getMountPoliciesTime", getMountPoliciesTime);
-    lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
-
-    // Requester mount policies overrule requester group mount policies
-    common::dataStructures::MountPolicy mountPolicy;
-    if(!mountPolicies.requesterMountPolicies.empty()) {
-      mountPolicy = mountPolicies.requesterMountPolicies.front();
-    } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
-      mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
-    } else {
-      exception::UserError ue;
-      ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
-        " archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requester=" <<
-        diskInstanceName << ":" << user.name << ":" << user.group;
-      throw ue;
-    }
-
     common::dataStructures::RetrieveFileQueueCriteria criteria;
-    criteria.archiveFile = *archiveFile;
-    criteria.mountPolicy = mountPolicy;
+    {
+      auto conn = m_connPool.getConn();
+      const auto getConnTime = t.secs(utils::Timer::resetCounter);
+      auto archiveFile = getArchiveFileToRetrieveByArchiveFileId(conn, archiveFileId);
+      const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
+      if(nullptr == archiveFile.get()) {
+        exception::UserError ex;
+        ex.getMessage() << "No tape files available for archive file with archive file ID " << archiveFileId;
+        throw ex;
+      }
+
+      if(diskInstanceName != archiveFile->diskInstance) {
+        exception::UserError ue;
+        ue.getMessage() << "Cannot retrieve file because the disk instance of the request does not match that of the"
+          " archived file: archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path <<
+          " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" << archiveFile->diskInstance;
+        throw ue;
+      }
+
+      t.reset();
+      const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
+        user.group);
+       const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
+
+      log::ScopedParamContainer spc(lc);
+      spc.add("getConnTime", getConnTime)
+         .add("getArchiveFileTime", getArchiveFileTime)
+         .add("getMountPoliciesTime", getMountPoliciesTime);
+      lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
+
+      // Requester mount policies overrule requester group mount policies
+      common::dataStructures::MountPolicy mountPolicy;
+      if(!mountPolicies.requesterMountPolicies.empty()) {
+        mountPolicy = mountPolicies.requesterMountPolicies.front();
+      } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
+        mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
+      } else {
+        exception::UserError ue;
+        ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
+          " archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requester=" <<
+          diskInstanceName << ":" << user.name << ":" << user.group;
+        throw ue;
+      }
+
+
+      criteria.archiveFile = *archiveFile;
+      criteria.mountPolicy = mountPolicy;
+    }
+    criteria.activitiesFairShareWeight = getCachedActivitiesWeights(diskInstanceName);
     return criteria;
   } catch(exception::UserError &) {
     throw;

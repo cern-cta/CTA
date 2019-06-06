@@ -25,32 +25,6 @@ namespace common {
 namespace dataStructures {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-DriveState::DriveState():
-  sessionId(0),
-  bytesTransferredInSession(0),
-  filesTransferredInSession(0),
-  latestBandwidth(0),
-  sessionStartTime(0),
-  mountStartTime(0),
-  transferStartTime(0),
-  unloadStartTime(0),
-  unmountStartTime(0),
-  drainingStartTime(0),
-  downOrUpStartTime(0),
-  probeStartTime(0),
-  cleanupStartTime(0),
-  lastUpdateTime(0),
-  startStartTime(0),
-  shutdownTime(0),
-  mountType(dataStructures::MountType::NoMount),
-  driveStatus(dataStructures::DriveStatus::Down),
-  desiredDriveState({false, false}),
-  currentPriority(0),
-  nextMountType(dataStructures::MountType::NoMount) {}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool DriveState::operator==(const DriveState &rhs) const {

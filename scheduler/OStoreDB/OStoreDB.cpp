@@ -187,7 +187,7 @@ void OStoreDB::ping() {
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re, 
     log::LogContext & logContext) {
   utils::Timer t, t2;
-  // Walk the archive queues for user for statistics
+  // Walk the archive queues for USER for statistics
   for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
@@ -233,7 +233,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           .add("processingTime", processingTime);
     logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive for user queue.");
   }
-  // Walk the archive queues for user for statistics
+  // Walk the archive queues for REPACK for statistics
   for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForRepack)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
@@ -301,18 +301,56 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
-    if (rqueue.getJobsSummary().jobs) {
-      tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
-      auto & m = tmdi.potentialMounts.back();
-      m.vid = rqp.vid;
-      m.type = cta::common::dataStructures::MountType::Retrieve;
-      m.bytesQueued = rqueue.getJobsSummary().bytes;
-      m.filesQueued = rqueue.getJobsSummary().jobs;      
-      m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
-      m.priority = rqueue.getJobsSummary().priority;
-      m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
-      m.minRequestAge = rqueue.getJobsSummary().minRetrieveRequestAge;
-      m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
+    auto rqSummary = rqueue.getJobsSummary();
+    if (rqSummary.jobs) {
+      // Check if we have activities and if all the jobs are covered by one or not (possible mixed case).
+      bool jobsWithoutActivity = true;
+      if (rqSummary.activityCounts.size()) {
+        if (rqSummary.activityCounts.size() >= rqSummary.jobs)
+          jobsWithoutActivity = false;
+        // In all cases, we create one potential mount per activity
+        for (auto ac: rqSummary.activityCounts) {
+          tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+          auto & m = tmdi.potentialMounts.back();
+          m.vid = rqp.vid;
+          m.type = cta::common::dataStructures::MountType::Retrieve;
+          m.bytesQueued = rqueue.getJobsSummary().bytes;
+          m.filesQueued = rqueue.getJobsSummary().jobs;
+          m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
+          m.priority = rqueue.getJobsSummary().priority;
+          m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
+          m.minRequestAge = rqueue.getJobsSummary().minRetrieveRequestAge;
+          m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
+          m.tapePool = "";       // The tape pool is not know and will be determined by the caller.
+          m.vendor = "";         // The vendor is not known here, and will be determined by the caller.
+          m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
+          m.vo = "";             // The vo is not known here, and will be determined by the caller.
+          m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
+          m.activityNameAndWeightedMountCount = PotentialMount::ActivityNameAndWeightedMountCount();
+          m.activityNameAndWeightedMountCount.value().activity = ac.activity;
+          m.activityNameAndWeightedMountCount.value().weight = ac.weight;
+          m.activityNameAndWeightedMountCount.value().weightedMountCount = 0.0; // This value will be computed later by the caller.
+          m.activityNameAndWeightedMountCount.value().mountCount = 0; // This value will be computed later by the caller.
+        }
+      }
+      if (jobsWithoutActivity) {
+        tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+        auto & m = tmdi.potentialMounts.back();
+        m.vid = rqp.vid;
+        m.type = cta::common::dataStructures::MountType::Retrieve;
+        m.bytesQueued = rqueue.getJobsSummary().bytes;
+        m.filesQueued = rqueue.getJobsSummary().jobs;      
+        m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
+        m.priority = rqueue.getJobsSummary().priority;
+        m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
+        m.minRequestAge = rqueue.getJobsSummary().minRetrieveRequestAge;
+        m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
+        m.tapePool = "";       // The tape pool is not know and will be determined by the caller.
+        m.vendor = "";         // The vendor is not known here, and will be determined by the caller.
+        m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
+        m.vo = "";             // The vo is not known here, and will be determined by the caller.
+        m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
+      }
     } else {
       tmdi.queueTrimRequired = true;
     }
@@ -519,7 +557,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
         const std::string& mediaType,
         const std::string& vendor,
         const uint64_t capacityInBytes,
-        time_t startTime) {
+        time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
@@ -3165,7 +3203,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     inputs.latestBandwidth = 0;
     inputs.mountSessionId = am.mountInfo.mountId;
     inputs.reportTime = startTime;
-    inputs.status = common::dataStructures::DriveStatus::Mounting;
+    inputs.status = common::dataStructures::DriveStatus::Starting;
     inputs.vid = tape.vid;
     inputs.tapepool = tape.tapePool;
     log::LogContext lc(m_oStoreDB.m_logger);
@@ -3191,7 +3229,8 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
     const std::string& vid, const std::string & tapePool, const std::string driveName, 
     const std::string& logicalLibrary, const std::string& hostName,const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,const uint64_t capacityInBytes, time_t startTime) {
+    const std::string& vendor,const uint64_t capacityInBytes, time_t startTime, 
+    const optional<common::dataStructures::DriveState::ActivityAndWeight>& activityAndWeight) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to 
@@ -3223,6 +3262,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   rm.mountInfo.mediaType = mediaType;
   rm.mountInfo.vendor = vendor;
   rm.mountInfo.capacityInBytes = capacityInBytes;
+  if(activityAndWeight) rm.mountInfo.activity = activityAndWeight.value().activity;
   // Update the status of the drive in the registry
   {
     // Get hold of the drive registry
@@ -3237,9 +3277,10 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
     inputs.mountType = common::dataStructures::MountType::Retrieve;
     inputs.mountSessionId = rm.mountInfo.mountId;
     inputs.reportTime = startTime;
-    inputs.status = common::dataStructures::DriveStatus::Mounting;
+    inputs.status = common::dataStructures::DriveStatus::Starting;
     inputs.vid = rm.mountInfo.vid;
     inputs.tapepool = rm.mountInfo.tapePool;
+    inputs.activityAndWeigh = activityAndWeight;
     log::LogContext lc(m_oStoreDB.m_logger);
     m_oStoreDB.updateDriveStatus(driveInfo, inputs, lc);
   }

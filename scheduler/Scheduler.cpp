@@ -752,7 +752,7 @@ std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const co
 //------------------------------------------------------------------------------
 void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>& mountInfo,
     const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer,
-    std::map<tpType, uint32_t> & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
+    ExistingMountSummary & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc) {
   // The library information is not know for the tapes involved in retrieves. We 
   // need to query the catalogue now about all those tapes.
@@ -793,11 +793,10 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   for (auto & em: mountInfo->existingOrNextMounts) {
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
     if (em.driveName!=driveName) {
-      try {
-        existingMountsSummary.at(tpType(em.tapePool, common::dataStructures::getMountBasicType(em.type)))++;
-      } catch (std::out_of_range &) {
-        existingMountsSummary[tpType(em.tapePool, common::dataStructures::getMountBasicType(em.type))] = 1;
-      }
+      existingMountsSummary[TapePoolMountPair(em.tapePool, common::dataStructures::getMountBasicType(em.type))].totalMounts++;
+      if (em.activity)
+        existingMountsSummary[TapePoolMountPair(em.tapePool, common::dataStructures::getMountBasicType(em.type))]
+          .activityMounts[em.activity.value()].value++;
       if (em.vid.size()) {
         tapesInUse.insert(em.vid);
         log::ScopedParamContainer params(lc);
@@ -810,17 +809,25 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   }
   
   // We can now filter out the potential mounts for which their mount criteria
-  // is already met, filter out the potential mounts for which the maximum mount
+  // is not yet met, filter out the potential mounts for which the maximum mount
   // quota is already reached, and weight the remaining by how much of their quota 
   // is reached
   for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
     // Get summary data
-    uint32_t existingMounts;
+    uint32_t existingMounts = 0;
+    uint32_t activityMounts = 0;
     try {
-      existingMounts = existingMountsSummary.at(tpType(m->tapePool, common::dataStructures::getMountBasicType(m->type)));
-    } catch (std::out_of_range &) {
-      existingMounts = 0;
-    } 
+      existingMounts = existingMountsSummary
+          .at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type)))
+             .totalMounts;
+    } catch (std::out_of_range &) {}
+    if (m->activityNameAndWeightedMountCount) {
+      try {
+        activityMounts = existingMountsSummary
+          .at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type)))
+             .activityMounts.at(m->activityNameAndWeightedMountCount.value().activity).value;
+      } catch (std::out_of_range &) {}
+    }
     uint32_t effectiveExistingMounts = 0;
     if (m->type == common::dataStructures::MountType::ArchiveForUser) effectiveExistingMounts = existingMounts;
     bool mountPassesACriteria = false;
@@ -852,6 +859,16 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     } else {
       // populate the mount with a weight 
       m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->maxDrivesAllowed;
+      if (m->activityNameAndWeightedMountCount) {
+        m->activityNameAndWeightedMountCount.value().mountCount = activityMounts;
+        // Protect against division by zero
+        if (m->activityNameAndWeightedMountCount.value().weight) {
+          m->activityNameAndWeightedMountCount.value().weightedMountCount = 
+              1.0 * activityMounts / m->activityNameAndWeightedMountCount.value().weight;
+        } else {
+          m->activityNameAndWeightedMountCount.value().weightedMountCount = std::numeric_limits<double>::max();
+        }
+      }
       log::ScopedParamContainer params(lc);
       params.add("tapePool", m->tapePool);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
@@ -918,7 +935,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfoNoLock(lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
-  std::map<tpType, uint32_t> existingMountsSummary;
+  ExistingMountSummary existingMountsSummary;
   std::set<std::string> tapesInUse;
   std::list<catalogue::TapeForWriting> tapeList;
   
@@ -942,7 +959,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
           catalogueTime = getTapeInfoTime + getTapeForWriteTime;
           uint32_t existingMounts = 0;
           try {
-            existingMounts=existingMountsSummary.at(tpType(m->tapePool, common::dataStructures::getMountBasicType(m->type)));
+            existingMounts=existingMountsSummary.at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type))).totalMounts;
           } catch (...) {}
           log::ScopedParamContainer params(lc);
           params.add("tapePool", m->tapePool)
@@ -975,15 +992,21 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
       log::ScopedParamContainer params(lc);
       uint32_t existingMounts = 0;
       try {
-        existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
+        existingMounts=existingMountsSummary.at(TapePoolMountPair(m->tapePool, m->type)).totalMounts;
       } catch (...) {}
       schedulerDbTime = getMountInfoTime;
       catalogueTime = getTapeInfoTime + getTapeForWriteTime;
       params.add("tapePool", m->tapePool)
             .add("tapeVid", m->vid)
             .add("mountType", common::dataStructures::toString(m->type))
-            .add("existingMounts", existingMounts)
-            .add("bytesQueued", m->bytesQueued)
+            .add("existingMounts", existingMounts);
+      if (m->activityNameAndWeightedMountCount) {
+        params.add("activity", m->activityNameAndWeightedMountCount.value().activity)
+              .add("activityMounts", m->activityNameAndWeightedMountCount.value().weightedMountCount)
+              .add("ActivityMountCount", m->activityNameAndWeightedMountCount.value().mountCount)
+              .add("ActivityWeight", m->activityNameAndWeightedMountCount.value().weight);
+      }
+      params.add("bytesQueued", m->bytesQueued)
             .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
@@ -1053,7 +1076,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   }
   __attribute__((unused)) SchedulerDatabase::TapeMountDecisionInfo & debugMountInfo = *mountInfo;
   
-  std::map<tpType, uint32_t> existingMountsSummary;
+  ExistingMountSummary existingMountsSummary;
   std::set<std::string> tapesInUse;
   std::list<catalogue::TapeForWriting> tapeList;
   
@@ -1089,12 +1112,11 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
                 time(NULL)).release());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_sessionRunning = true;
-            internalRet->setDriveStatus(common::dataStructures::DriveStatus::Starting);
             driveStatusSetTime += timer.secs(utils::Timer::resetCounter);
             log::ScopedParamContainer params(lc);
             uint32_t existingMounts = 0;
             try {
-              existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
+              existingMounts=existingMountsSummary.at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type))).totalMounts;
             } catch (...) {}
             schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
             catalogueTime = getTapeInfoTime + getTapeForWriteTime;
@@ -1140,6 +1162,12 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
       try {
         // create the mount, and populate its DB side.
         decisionTime += timer.secs(utils::Timer::resetCounter);
+        optional<common::dataStructures::DriveState::ActivityAndWeight> actvityAndWeight;
+        if (m->activityNameAndWeightedMountCount) {
+          actvityAndWeight = common::dataStructures::DriveState::ActivityAndWeight{ 
+            m->activityNameAndWeightedMountCount.value().activity,
+            m->activityNameAndWeightedMountCount.value().weight };
+        }
         std::unique_ptr<RetrieveMount> internalRet (
           new RetrieveMount(mountInfo->createRetrieveMount(m->vid, 
             m->tapePool,
@@ -1150,17 +1178,16 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             m->mediaType,
             m->vendor,
             m->capacityInBytes,
-            time(NULL))));
+            time(NULL), actvityAndWeight)));
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;
         internalRet->m_tapeRunning = true;
-        internalRet->setDriveStatus(common::dataStructures::DriveStatus::Starting);
         driveStatusSetTime += timer.secs(utils::Timer::resetCounter);
         log::ScopedParamContainer params(lc);
         uint32_t existingMounts = 0;
         try {
-          existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
+          existingMounts=existingMountsSummary.at(TapePoolMountPair(m->tapePool, m->type)).totalMounts;
         } catch (...) {}
         schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
         catalogueTime = getTapeInfoTime + getTapeForWriteTime;
@@ -1170,7 +1197,14 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
               .add("mediaType",m->mediaType)
               .add("vendor",m->vendor)
               .add("mountType", common::dataStructures::toString(m->type))
-              .add("existingMounts", existingMounts)
+              .add("existingMounts", existingMounts);
+        if (m->activityNameAndWeightedMountCount) {
+          params.add("activity", m->activityNameAndWeightedMountCount.value().activity)
+                .add("activityMounts", m->activityNameAndWeightedMountCount.value().weightedMountCount)
+                .add("ActivityMountCount", m->activityNameAndWeightedMountCount.value().mountCount)
+                .add("ActivityWeight", m->activityNameAndWeightedMountCount.value().weight);
+        }
+        params.add("bytesQueued", m->bytesQueued)
               .add("bytesQueued", m->bytesQueued)
               .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
               .add("filesQueued", m->filesQueued)

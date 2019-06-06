@@ -41,34 +41,13 @@ void DriveState::garbageCollect(const std::string& presumedOwner, AgentReference
 }
 
 void DriveState::initialize(const std::string & driveName) {
-  // Setup underlying object
+  // Setup underlying object with defaults from dataStructures::DriveState
   ObjectOps<serializers::DriveState, serializers::DriveState_t>::initialize();
   m_payload.set_drivename(driveName);
-  m_payload.set_host("");
-  m_payload.set_logicallibrary("");
-  m_payload.set_sessionid(0);
-  m_payload.set_bytestransferedinsession(0);
-  m_payload.set_filestransferedinsession(0);
-  m_payload.set_latestbandwidth(0);
-  m_payload.set_sessionstarttime(0);
-  m_payload.set_mountstarttime(0);
-  m_payload.set_transferstarttime(0);
-  m_payload.set_unloadstarttime(0);
-  m_payload.set_unmountstarttime(0);
-  m_payload.set_drainingstarttime(0);
-  // In the absence of info, we sent down now.
-  m_payload.set_downorupstarttime(::time(nullptr));
-  m_payload.set_probestarttime(0);
-  m_payload.set_cleanupstarttime(0);
-  m_payload.set_lastupdatetime(0);
-  m_payload.set_startstarttime(0);
-  m_payload.set_shutdowntime(0);
-  m_payload.set_mounttype((uint32_t)common::dataStructures::MountType::NoMount);
-  m_payload.set_drivestatus((uint32_t)common::dataStructures::DriveStatus::Down);
-  m_payload.set_desiredup(false);
-  m_payload.set_desiredforcedown(false);
-  m_payload.set_currentvid("");
-  m_payload.set_currenttapepool("");
+  cta::common::dataStructures::DriveState driveState;
+  driveState.driveName = driveName;
+  driveState.downOrUpStartTime = ::time(nullptr);
+  setState(driveState);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }

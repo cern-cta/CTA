@@ -109,7 +109,7 @@ public:
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime) override;
+      time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
     virtual ~TapeMountDecisionInfo();
   private:
     TapeMountDecisionInfo (OStoreDB & oStoreDB);
@@ -136,7 +136,7 @@ public:
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime) override;
+      time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
     virtual ~TapeMountDecisionInfoNoLock();
   };
 
@@ -549,6 +549,7 @@ private:
     double latestBandwidth;
     std::string vid;
     std::string tapepool;
+    optional<common::dataStructures::DriveState::ActivityAndWeight> activityAndWeigh;
   };
   /** Collection of smaller scale parts of reportDriveStats */
   struct ReportDriveStatsInputs {

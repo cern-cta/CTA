@@ -351,6 +351,7 @@ public:
       std::string host;
       uint64_t capacityInBytes;
       uint64_t mountId;
+      optional<std::string> activity;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
@@ -546,8 +547,9 @@ public:
     uint32_t mountCount;          /**< The number of mounts for this tape pool (which is the current "chargeable" entity for quotas. */
     struct ActivityNameAndWeightedMountCount {
       std::string activity;
-      double weight;
-      double weightedMountCount;
+      double weight = 0.0;
+      uint32_t mountCount = 0;
+      double weightedMountCount = 0.0;
     };                            /**< Struct describing the activity if we have one for this mount. */
     
     optional<ActivityNameAndWeightedMountCount> activityNameAndWeightedMountCount;
@@ -654,7 +656,7 @@ public:
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime) = 0;
+      time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};
   };
