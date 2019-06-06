@@ -58,6 +58,7 @@ public:
    static void printLprSummaryHeader();
    static void printTpLsHeader();
    static void printTapeLsHeader();
+   static void printRepackLsHeader();
    
    // Output records
    static void print(const ArchiveFileLsItem &afls_item);
@@ -70,6 +71,7 @@ public:
    static void print(const ListPendingRetrievesSummary &lpr_summary);
    static void print(const TapePoolLsItem &tpls_item);
    static void print(const cta::admin::TapeLsItem &tals_item);
+   static void print(const cta::admin::RepackLsItem &rels_item);
 
 private:
    //! Parse the options for a specific command/subcommand

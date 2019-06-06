@@ -173,14 +173,6 @@ namespace cta {
     uint32_t getNbFiles() const override;
     
     /**
-     * Checks wether the writing is possible after the FSeq passed in parameter
-     * If TapeFiles are located after FSeq and are not superseded by other TapeFiles
-     * we throw an exception : We don't want these files to be lost.
-     * @param fSeq : The fSeq after which we want to check if the writing is possible
-     */
-    void checkTapeFSeqAndDeleteTapeFilesForWriting(uint64_t fSeq) const;
-    
-    /**
      * Creates a disk reporter for the ArchiveJob (this is a wrapper).
      * @param URL: report address
      * @param reporterState void promise to be set when the report is done asynchronously.

@@ -24,32 +24,22 @@ cta-smc \- command line interface to drive robotic devices through SCSI
 .BI -D " drive_ordinal"
 [
 .BI -V " vid"
-] [
-.BI -v
-]
+] 
 .br
 .B cta-smc
 .BI -e
 .BI -V " vid"
-[
-.BI -v
-]
 .br
 .B cta-smc
 .BI -i
 [
 .BI -V " vid"
-] [
-.BI -v
-]
+] 
 .br
 .B cta-smc
 .BI -m
 .BI -D " drive_ordinal"
 .BI -V " vid"
-[
-.BI -v
-]
 .br
 .B cta-smc
 .B -q D
@@ -57,19 +47,19 @@ cta-smc \- command line interface to drive robotic devices through SCSI
 .BI -D " drive_ordinal"
 ]
 [
-.BI -v
+.BI -j
 ]
 .br
 .B cta-smc
 .B -q L
 [
-.BI -v
+.BI -j
 ]
 .br
 .B cta-smc
 .B -q P
 [
-.BI -v
+.BI -j
 ]
 .br
 .B cta-smc
@@ -79,7 +69,7 @@ cta-smc \- command line interface to drive robotic devices through SCSI
 ] [
 .BI -S " starting_slot"
 ] [
-.BI -v
+.BI -j
 ]
 .br
 .B cta-smc
@@ -89,7 +79,7 @@ cta-smc \- command line interface to drive robotic devices through SCSI
 ] [
 .BI -V " vid"
 ] [
-.BI -v
+.BI -j
 ]
 .SH DESCRIPTION
 .B cta-smc
@@ -161,8 +151,8 @@ specifies the starting slot address for the query operation.
 A full vid or a pattern may be specified. In the latter case wild card
 characters '*' and '?' may be used but must be escaped because of the shell.
 .TP
-.B \-v
-verbose mode. On query requests it prints headers on top of the columns.
+.B \-j
+script mode. On query requests it prints json.
 
 .SH EXAMPLES
 .LP
@@ -195,7 +185,7 @@ Device Count = 2, Start = 1030
 To query the status of all the drives:
 .br
 .RS
-.B "cta-smc -q D -v"
+.B "cta-smc -q D"
 .sp
 .nf
 .cs R 20
@@ -209,7 +199,7 @@ Drive Ordinal   Element Addr.   Status          Vid
 To get the list of a few slots in the library:
 .br
 .RS
-.B "cta-smc -q S -S 20 -N 10 -v"
+.B "cta-smc -q S -S 20 -N 10"
 .sp
 .nf
 .cs R 20
@@ -231,7 +221,7 @@ Element Addr.   Vid
 To get the status of volumes for which the vid starts with JK200
 .br
 .RS
-.B "cta-smc -q V -V 'JK200*' -v"
+.B "cta-smc -q V -V 'JK200*'"
 .sp
 .nf
 .cs R 20

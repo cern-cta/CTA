@@ -347,6 +347,8 @@ public:
     bool empty() { return nullptr == m_DbBatch; }
   };
   RepackReportBatch getNextRepackReportBatch(log::LogContext & lc);
+  std::list<Scheduler::RepackReportBatch> getRepackReportBatches(log::LogContext &lc);
+  
   /*======================= Failed archive jobs support ======================*/
   SchedulerDatabase::JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &lc);
 

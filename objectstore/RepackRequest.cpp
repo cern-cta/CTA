@@ -138,6 +138,8 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.failedBytesToArchive = m_payload.failedtoarchivebytes();
   ret.failedFilesToRetrieve = m_payload.failedtoretrievefiles();
   ret.failedBytesToRetrieve = m_payload.failedtoretrievebytes();
+  ret.archivedFiles = m_payload.archivedfiles();
+  ret.retrievedFiles = m_payload.retrievedfiles();
   ret.lastExpandedFseq = m_payload.lastexpandedfseq();
   ret.userProvidedFiles = m_payload.userprovidedfiles();
   ret.isExpandFinished = m_payload.is_expand_finished();
@@ -194,9 +196,9 @@ void RepackRequest::setStatus(){
         return;
       }
     }
-    //Expand is finished or not, if we have retrieved files, we are in Running,
+    //Expand is finished or not, if we have retrieved files or not (first reporting), we are in Running,
     //else we are in starting
-    if(m_payload.retrievedfiles()){
+    if(m_payload.retrievedfiles() || m_payload.failedtoretrievefiles()){
       setStatus(common::dataStructures::RepackInfo::Status::Running);
     } else {
       setStatus(common::dataStructures::RepackInfo::Status::Starting);

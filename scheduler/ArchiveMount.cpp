@@ -105,16 +105,6 @@ uint32_t cta::ArchiveMount::getNbFiles() const {
 }
 
 //------------------------------------------------------------------------------
-// checkTapeFSeqForWriting
-//------------------------------------------------------------------------------
-void cta::ArchiveMount::checkTapeFSeqAndDeleteTapeFilesForWriting(uint64_t fSeq) const {
-  if(m_catalogue.existNonSupersededFilesAfterFSeqAndDeleteTapeFilesForWriting(getVid(),fSeq)){
-    throw cta::exception::Exception("Non superseded files have been detected in the tape "+getVid() +" after "+std::to_string(fSeq));
-  }
-}
-
-
-//------------------------------------------------------------------------------
 // createDiskReporter
 //------------------------------------------------------------------------------
 cta::disk::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {

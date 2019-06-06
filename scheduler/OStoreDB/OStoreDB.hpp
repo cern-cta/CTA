@@ -500,6 +500,9 @@ public:
   };
   
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextRepackReportBatch(log::LogContext& lc) override;
+  
+  std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) override;
+  
 private:
   CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
   const size_t c_repackReportBatchSize = 500;

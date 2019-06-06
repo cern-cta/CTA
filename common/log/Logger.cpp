@@ -120,14 +120,14 @@ std::map<int, std::string>
   std::map<int, std::string> m;
 
   try {
-    m[LOG_EMERG]   = "Emerg";
-    m[ALERT]       = "Alert";
-    m[LOG_CRIT]    = "Crit";
-    m[ERR]         = "Error";
-    m[WARNING]     = "Warn";
-    m[LOG_NOTICE]  = "Notice";
-    m[INFO]        = "Info";
-    m[DEBUG]       = "Debug";
+    m[LOG_EMERG]   = "EMERG";
+    m[ALERT]       = "ALERT";
+    m[LOG_CRIT]    = "CRIT";
+    m[ERR]         = "ERROR";
+    m[WARNING]     = "WARN";
+    m[LOG_NOTICE]  = "NOTICE";
+    m[INFO]        = "INFO";
+    m[DEBUG]       = "DEBUG";
   } catch(std::exception &se) {
     exception::Exception ex;
     ex.getMessage() << "Failed to generate priority to text mapping: " <<

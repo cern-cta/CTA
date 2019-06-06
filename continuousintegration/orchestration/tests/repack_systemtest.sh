@@ -22,12 +22,15 @@ exit 1
 
 testRepackBufferURL(){
   echo "Testing the repack buffer URL at root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}"
-  eos root://${EOSINSTANCE} ls -d ${REPACK_BUFFER_BASEDIR} || die "Repack bufferURL directory does not exist"
+  eos root://${EOSINSTANCE} ls -d ${REPACK_BUFFER_BASEDIR} 1> /dev/null || die "Repack bufferURL directory does not exist"
   echo "Testing the insertion of a test file in the buffer URL"
   tempFilePath=$(mktemp /tmp/testFile.XXXX)
   tempFileName=${tempFilePath##*/}
   xrdcp ${tempFilePath} ${FULL_REPACK_BUFFER_URL}/${tempFileName} || die "Unable to write a file into the repack buffer directory"
-  echo "OK"
+  echo "File ${tempFilePath} written in ${FULL_REPACK_BUFFER_URL}/${tempFileName}"
+  echo "Deleting test file from the test directory"
+  eos root://${EOSINSTANCE} rm ${REPACK_BUFFER_BASEDIR}/${tempFileName} || die "Unable to delete the testing file"
+  echo "Test repack buffer URL OK"
 }
 
 if [ $# -lt 2 ]
@@ -47,7 +50,7 @@ while getopts "v:e:b:t:" o; do
       REPACK_BUFFER_BASEDIR=${OPTARG}
       ;;
     t)
-      WAIT_FOR_REPACK_TIMEOUT={$OPTARG}
+      WAIT_FOR_REPACK_TIMEOUT=${OPTARG}
       ;;
     *)
       usage
@@ -82,9 +85,6 @@ admin_cta repack rm --vid ${VID_TO_REPACK}
 echo "Marking the tape ${VID_TO_REPACK} as full before Repacking it"
 admin_cta tape ch --vid ${VID_TO_REPACK} --full true
 
-echo "State of the tape VID ${VID_TO_REPACK} BEFORE repack"
-admin_cta --json tape ls --vid ${VID_TO_REPACK} | jq .
-
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
 admin_cta re add --vid ${VID_TO_REPACK} --justmove --bufferurl ${FULL_REPACK_BUFFER_URL}
 
@@ -104,5 +104,4 @@ if test 1 = `admin_cta repack ls --vid ${VID_TO_REPACK} | grep -E "Failed" | wc 
     exit 1
 fi
 
-echo "State of the tape VID ${VID_TO_REPACK} AFTER repack"
-admin_cta --json tape ls --vid ${VID_TO_REPACK} | jq .
+exec /root/repack_generate_report.sh -v ${VID_TO_REPACK}

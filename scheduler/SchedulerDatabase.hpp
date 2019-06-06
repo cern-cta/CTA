@@ -493,6 +493,13 @@ public:
   virtual std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext & lc) = 0;
   
   /**
+   * Return all batches of subrequests from the database to be reported to repack.
+   * @param lc log context
+   * @return the list of all batches to be reported
+   */
+  virtual std::list<std::unique_ptr<RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) = 0;
+  
+  /**
    * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
    * @param jobsBatch
    * @param lc

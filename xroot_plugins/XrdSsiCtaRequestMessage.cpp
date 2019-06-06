@@ -31,7 +31,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
 #include "XrdCtaTapeLs.hpp"
-
+#include "XrdCtaRepackLs.hpp"
 
 
 namespace cta {
@@ -193,7 +193,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processRepack_Rm(request.admincmd(), response);
                break;
             case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS):
-               processRepack_Ls(request.admincmd(), response);
+               processRepack_Ls(request.admincmd(), response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR):
                processRepack_Err(request.admincmd(), response);
@@ -1364,55 +1364,21 @@ void RequestMessage::processRepack_Rm(const cta::admin::AdminCmd &admincmd, cta:
 
 
 
-void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
    using namespace cta::admin;
+  
+  auto vid = getOptional(OptionString::VID);
 
-   std::stringstream cmdlineOutput;
+  // Create a XrdSsi stream object to return the results
+  stream = new RepackLsStream(m_scheduler, vid);
 
-   auto vid = getOptional(OptionString::VID);
+  // Should the client display column headers?
+  if(has_flag(OptionBoolean::SHOW_HEADER)) {
+     response.set_show_header(HeaderType::REPACK_LS);
+  }
 
-   std::list<cta::common::dataStructures::RepackInfo> list;
-
-   if(!vid) {      
-      list = m_scheduler.getRepacks();
-   } else {
-      list.push_back(m_scheduler.getRepack(vid.value()));
-   }
-
-   if(!list.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "vid","file buffer URL","UserProvidedFiles","FilesToRetrieve","BytesToRetrieve","FilesToArchive","BytesToArchive","FailedToRetrieve (files)","FailedToRetrieve (bytes)","FailedToArchive (files)","FailedToArchive (bytes)","LastExpandedFSeq","status"//,"name","host","time"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++)
-      {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->vid);
-        currentRow.push_back(utils::midEllipsis(it->repackBufferBaseURL,40));//std::to_string(static_cast<unsigned long long>(it->totalFiles)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->userProvidedFiles)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFilesToRetrieve)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalBytesToRetrieve)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFilesToArchive)));//std::to_string(static_cast<unsigned long long>(it->totalSize)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalBytesToArchive)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->failedFilesToRetrieve)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->failedBytesToRetrieve)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->failedFilesToArchive)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->failedBytesToArchive)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastExpandedFseq)));//std::to_string(static_cast<unsigned long long>(it->filesArchived)));
-        currentRow.push_back(common::dataStructures::toString(it->status));
-        //currentRow.push_back("-");//it->creationLog.username);
-        //currentRow.push_back("-");//it->creationLog.host);
-        //currentRow.push_back("-");//timeToString(it->creationLog.time));
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 

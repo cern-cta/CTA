@@ -39,6 +39,9 @@ filename and then running \fBeos stagerm fxid:<fid-hex>\fP.
 .TP
 \fB\-h, \-\-help
 Prints the usage message.
+.TP
+\fB\-l LOGFILE, \-\-logfile LOGFILE
+Sets the path of the log file to \fBLOGFILE\fP. If not set then the default value of \fB/var/log/eos/fst/cta-fst-gcd\fP is used.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH FILES
@@ -48,7 +51,7 @@ The configuration file of the \fBcta-fst-gcd\fP daemon.
 
 .TP
 .B /var/log/eos/fst/cta-fst-gcd.log
-The log file of the \fBcta-fst-gcd\fP daemon.
+The default log file of the \fBcta-fst-gcd\fP daemon.  This can be overriden by using the \fB\-l\fP/\fB\-\-logfile\fP option.
 
 .SH AUTHOR
 \fBCTA\fP Team
