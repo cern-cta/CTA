@@ -243,11 +243,31 @@ set_property (TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPA
 install (TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
 
+add_executable(cta-catalogue-schema-verify
+  VerifySchemaCmd.cpp
+  VerifySchemaCmdLineArgs.cpp
+  VerifySchemaCmdMain.cpp
+  OracleCatalogueSchema.cpp
+  SqliteCatalogueSchema.cpp
+  PostgresCatalogueSchema.cpp
+  MysqlCatalogueSchema.cpp)
+
+target_link_libraries (cta-catalogue-schema-verify
+  ctacatalogue)
+
+set_property (TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+
+install (TARGETS cta-catalogue-schema-verify DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-verify.1cta DESTINATION /usr/share/man/man1)
+
+
 set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
   CreateAdminUserCmdLineArgs.cpp
   CreateAdminUserCmdLineArgsTest.cpp
   CreateSchemaCmdLineArgs.cpp
   CreateSchemaCmdLineArgsTest.cpp
+  VerifySchemaCmdLineArgs.cpp
+  VerifySchemaCmdLineArgsTest.cpp
   DropSchemaCmdLineArgs.cpp
   DropSchemaCmdLineArgsTest.cpp
   PollDatabaseCmdLineArgs.cpp
