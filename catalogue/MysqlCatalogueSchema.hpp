@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "CatalogueSchema.hpp"
+
 #include <string>
 #include <vector>
 
@@ -39,16 +41,11 @@ namespace catalogue {
  * The purpose of this class is to help IDEs by isolating the "non-compilable"
  * issues into a small cpp file.
  */
-struct MysqlCatalogueSchema {
+struct MysqlCatalogueSchema: public CatalogueSchema {
   /**
    * Constructor.
    */
   MysqlCatalogueSchema();
-
-  /**
-   * The schema.
-   */
-  const std::string sql;
 
   /**
    * The trigger.

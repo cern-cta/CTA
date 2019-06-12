@@ -27,7 +27,7 @@
 #
 # or:
 #
-#    mysql://username:passord@hostname[:port]/database
+#    mysql://username:password@hostname[:port]/database
 #
 # or:
 #

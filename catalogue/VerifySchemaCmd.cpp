@@ -94,8 +94,17 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     break;
   case rdbms::Login::DBTYPE_MYSQL:
     {
-       // TODO
-       //MysqlCatalogueSchema schema;
+      // TODO
+      MysqlCatalogueSchema schema;
+      std::cerr << "Checking table names..." << std::endl;
+      const auto schemaTableNames = schema.getSchemaTableNames();
+      const auto dbTableNames = conn.getTableNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
+      
+      std::cerr << "Checking index names..." << std::endl;
+      const auto schemaIndexNames = schema.getSchemaIndexNames();
+      const auto dbIndexNames = conn.getIndexNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
        //conn.executeNonQueries(schema.sql);
 
        // execute triggers
@@ -177,6 +186,10 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<
       }
     }
   }
+  if (status != VerifyStatus::WARNING && status != VerifyStatus::ERROR) {
+    std::cerr << "  OK: no problems found" << std::endl;
+    status = VerifyStatus::OK;
+  }
   return status;
 }
   
@@ -203,6 +216,10 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<
         status = VerifyStatus::WARNING;
       }
     }
+  }
+  if (status != VerifyStatus::WARNING && status != VerifyStatus::ERROR) {
+    std::cerr << "  OK: no problems found" << std::endl;
+    status = VerifyStatus::OK;
   }
   return status;
 }
