@@ -106,17 +106,19 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     }
     break;
   case rdbms::Login::DBTYPE_ORACLE:
-    {/*
+    {
       // TODO
       OracleCatalogueSchema schema;
+      std::cerr << "Checking table names..." << std::endl;
       const auto schemaTableNames = schema.getSchemaTableNames();
       const auto dbTableNames = conn.getTableNames();
       std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
 
+      std::cerr << "Checking index names..." << std::endl;
       const auto schemaIndexNames = schema.getSchemaIndexNames();
       const auto dbIndexNames = conn.getIndexNames();
       std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
-    */}
+    }
     break;
   case rdbms::Login::DBTYPE_NONE:
     throw exception::Exception("Cannot verify a catalogue without a database type");

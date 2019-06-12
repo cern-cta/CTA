@@ -24,7 +24,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OracleCatalogueSchema::OracleCatalogueSchema(): sql(
+OracleCatalogueSchema::OracleCatalogueSchema(): CatalogueSchema(
   // CTA_SQL_SCHEMA - The contents of oracle_catalogue_schema.cpp go here
   ) {
 }

@@ -18,33 +18,46 @@
 
 #pragma once
 
-#include "CatalogueSchema.hpp"
+#include "common/utils/Regex.hpp"
+#include "common/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <string>
+#include <list>
+
+// TODO
+#include <iostream>
 
 namespace cta {
 namespace catalogue {
 
 /**
- * Structure containing the SQL to create the schema of the in memory CTA
+ * Structure containing the common schema procedures of the CTA catalogue
  * database.
- *
- * The CMakeLists.txt file of this directory instructs cmake to generate
- * OracleCatalogueSchema.cpp from:
- *   - OracleCatalogueSchema.before_SQL.cpp
- *   - oracle_catalogue_schema.sql
- *
- * The OracleSchema.before_SQL.cpp file is not compilable and is therefore
- * difficult for Integrated Developent Environments (IDEs) to handle.
- *
- * The purpose of this class is to help IDEs by isolating the "non-compilable"
- * issues into a small cpp file.
  */
-struct OracleCatalogueSchema: public CatalogueSchema {
+struct CatalogueSchema {
   /**
    * Constructor.
    */
-  OracleCatalogueSchema();
+  CatalogueSchema(const std::string &sqlSchema);
+  
+  /**
+   * The schema.
+   */
+  const std::string sql;
+
+  /**
+   * TODO
+   * 
+   * @return 
+   */
+  std::list<std::string> getSchemaTableNames() const;
+  /**
+   * TODO
+   * 
+   * @return 
+   */
+  std::list<std::string> getSchemaIndexNames() const;
 };
 
 } // namespace catalogue

@@ -22,6 +22,8 @@
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+#include "CatalogueSchema.hpp"
+
 #include <string>
 #include <list>
 
@@ -46,66 +48,11 @@ namespace catalogue {
  * The purpose of this class is to help IDEs by isolating the "non-compilable"
  * issues into a small cpp file.
  */
-struct SqliteCatalogueSchema {
+struct SqliteCatalogueSchema: public CatalogueSchema {
   /**
    * Constructor.
    */
   SqliteCatalogueSchema();
-
-  /**
-   * The schema.
-   */
-  const std::string sql;
-  // TODO
-  std::list<std::string> getSchemaTableNames() const {  
-    std::list<std::string> schemaTables;
-    std::string::size_type searchPos = 0;
-    std::string::size_type findResult = std::string::npos;
-    try {
-      while(std::string::npos != (findResult = sql.find(';', searchPos))) {
-        // Calculate the length of the current statement without the trailing ';'
-        const std::string::size_type stmtLen = findResult - searchPos;
-        const std::string sqlStmt = utils::trimString(sql.substr(searchPos, stmtLen));
-        searchPos = findResult + 1;
-        
-        if(0 < sqlStmt.size()) { // Ignore empty statements
-          cta::utils::Regex tableNamesRegex("CREATE TABLE ([a-zA-Z_]+)");
-          auto tableName = tableNamesRegex.exec(sqlStmt);
-          if (2 == tableName.size()) {
-            schemaTables.push_back(tableName[1].c_str());
-          }
-        }
-      }
-    } catch(exception::Exception &ex) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    }
-    return schemaTables;
-  }
-  // TODO
-  std::list<std::string> getSchemaIndexNames() {  
-    std::list<std::string> schemaIndices;
-    std::string::size_type searchPos = 0;
-    std::string::size_type findResult = std::string::npos;
-    try {
-      while(std::string::npos != (findResult = sql.find(';', searchPos))) {
-        // Calculate the length of the current statement without the trailing ';'
-        const std::string::size_type stmtLen = findResult - searchPos;
-        const std::string sqlStmt = utils::trimString(sql.substr(searchPos, stmtLen));
-        searchPos = findResult + 1;
-        
-        if(0 < sqlStmt.size()) { // Ignore empty statements
-          cta::utils::Regex tableIndicesRegex("CREATE INDEX ([a-zA-Z_]+)");
-          auto indexName = tableIndicesRegex.exec(sqlStmt);
-          if (2 == indexName.size()) {
-            schemaIndices.push_back(indexName[1].c_str());
-          }
-        }
-      }
-    } catch(exception::Exception &ex) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    }
-    return schemaIndices;
-  }
 };
 
 } // namespace catalogue

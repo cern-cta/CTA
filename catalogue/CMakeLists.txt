@@ -27,6 +27,7 @@ set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
   CatalogueFactory.cpp
   CatalogueFactoryFactory.cpp
+  CatalogueSchema.cpp
   ChecksumTypeMismatch.cpp
   ChecksumValueMismatch.cpp
   CmdLineTool.cpp
@@ -247,6 +248,7 @@ add_executable(cta-catalogue-schema-verify
   VerifySchemaCmd.cpp
   VerifySchemaCmdLineArgs.cpp
   VerifySchemaCmdMain.cpp
+  CatalogueSchema.cpp
   OracleCatalogueSchema.cpp
   SqliteCatalogueSchema.cpp
   PostgresCatalogueSchema.cpp
