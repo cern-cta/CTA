@@ -72,17 +72,17 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   case rdbms::Login::DBTYPE_IN_MEMORY:
   case rdbms::Login::DBTYPE_SQLITE:
     {
-       // TODO
-       SqliteCatalogueSchema schema;
-       const auto schemaTableNames = schema.getSchemaTableNames();
-       const auto dbTableNames = conn.getTableNames();
-       std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
-       
-       const auto schemaIndexNames = schema.getSchemaIndexNames();
-       for (auto index: schemaIndexNames) {
-         std::cout << index << std::endl;
-       }
-       //conn.executeNonQueries(schema.sql);
+      // TODO
+      SqliteCatalogueSchema schema;
+      std::cerr << "Checking table names..." << std::endl;
+      const auto schemaTableNames = schema.getSchemaTableNames();
+      const auto dbTableNames = conn.getTableNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
+
+      std::cerr << "Checking index names..." << std::endl;
+      const auto schemaIndexNames = schema.getSchemaIndexNames();
+      const auto dbIndexNames = conn.getIndexNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
     }
     break;
   case rdbms::Login::DBTYPE_POSTGRESQL:
@@ -106,11 +106,17 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     }
     break;
   case rdbms::Login::DBTYPE_ORACLE:
-    {
+    {/*
       // TODO
-      // OracleCatalogueSchema schema;
-      // conn.executeNonQueries(schema.sql);
-    }
+      OracleCatalogueSchema schema;
+      const auto schemaTableNames = schema.getSchemaTableNames();
+      const auto dbTableNames = conn.getTableNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
+
+      const auto schemaIndexNames = schema.getSchemaIndexNames();
+      const auto dbIndexNames = conn.getIndexNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
+    */}
     break;
   case rdbms::Login::DBTYPE_NONE:
     throw exception::Exception("Cannot verify a catalogue without a database type");
@@ -155,7 +161,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<
   for(auto &tableName : schemaTableNames) {
     const bool schemaTableIsNotInDb = dbTableNames.end() == std::find(dbTableNames.begin(), dbTableNames.end(), tableName);
     if (schemaTableIsNotInDb) {
-      std::cerr << "ERROR: the schema table " << tableName << " not found in the DB" << std::endl;
+      std::cerr << "  ERROR: the schema table " << tableName << " not found in the DB" << std::endl;
       status = VerifyStatus::ERROR;
     }
   }
@@ -163,7 +169,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<
   for(auto &tableName : dbTableNames) {
     const bool dbTableIsNotInSchema = schemaTableNames.end() == std::find(schemaTableNames.begin(), schemaTableNames.end(), tableName);
     if (dbTableIsNotInSchema) {
-      std::cerr << "WARNING: the database table " << tableName << " not found in the schema" << std::endl;
+      std::cerr << "  WARNING: the database table " << tableName << " not found in the schema" << std::endl;
       if ( VerifyStatus::ERROR != status) {
         status = VerifyStatus::WARNING;
       }
@@ -172,5 +178,32 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<
   return status;
 }
   
+//------------------------------------------------------------------------------
+// verifyIndexNames
+//------------------------------------------------------------------------------
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<std::string> &schemaIndexNames, 
+  const std::list<std::string> &dbIndexNames) const {
+  VerifyStatus status = VerifyStatus::UNKNOWN;
+  // check for schema tables
+  for(auto &indexName : schemaIndexNames) {
+    const bool schemaIndexIsNotInDb = dbIndexNames.end() == std::find(dbIndexNames.begin(), dbIndexNames.end(), indexName);
+    if (schemaIndexIsNotInDb) {
+      std::cerr << "  ERROR: the schema index " << indexName << " not found in the DB" << std::endl;
+      status = VerifyStatus::ERROR;
+    }
+  }
+  // check for extra tables in DB
+  for(auto &indexName : dbIndexNames) {
+    const bool dbIndexIsNotInSchema = schemaIndexNames.end() == std::find(schemaIndexNames.begin(), schemaIndexNames.end(), indexName);
+    if (dbIndexIsNotInSchema) {
+      std::cerr << "  WARNING: the database index " << indexName << " not found in the schema" << std::endl;
+      if ( VerifyStatus::ERROR != status) {
+        status = VerifyStatus::WARNING;
+      }
+    }
+  }
+  return status;
+}
+
 } // namespace catalogue
 } // namespace cta

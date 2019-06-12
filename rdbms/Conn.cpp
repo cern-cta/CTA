@@ -182,6 +182,17 @@ std::list<std::string> Conn::getTableNames() const {
 }
 
 //------------------------------------------------------------------------------
+// getIndexNames
+//------------------------------------------------------------------------------
+std::list<std::string> Conn::getIndexNames() const {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getIndexNames();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
 // closeUnderlyingStmtsAndConn
 //------------------------------------------------------------------------------
 void Conn::closeUnderlyingStmtsAndConn() {

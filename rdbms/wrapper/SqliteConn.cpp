@@ -256,6 +256,35 @@ std::list<std::string> SqliteConn::getTableNames() {
 }
 
 //------------------------------------------------------------------------------
+// getIndexNames
+//------------------------------------------------------------------------------
+std::list<std::string> SqliteConn::getIndexNames() {
+  try {
+    const char *const sql =
+      "SELECT "
+        "NAME AS NAME "
+      "FROM "
+        "SQLITE_MASTER "
+      "WHERE "
+        "TYPE = 'index' "
+      "ORDER BY "
+        "NAME;";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    std::list<std::string> names;
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("NAME");
+      if(name) {
+        names.push_back(name.value());
+      }
+    }
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // isOpen
 //------------------------------------------------------------------------------
 bool SqliteConn::isOpen() const {

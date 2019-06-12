@@ -190,6 +190,34 @@ std::list<std::string> OcciConn::getTableNames() {
 }
 
 //------------------------------------------------------------------------------
+// getIndexNames
+//------------------------------------------------------------------------------
+std::list<std::string> OcciConn::getIndexNames() {
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "INDEX_NAME "
+      "FROM "
+        "USER_INDEXES "
+      "ORDER BY "
+        "INDEX_NAME";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("INDEX_NAME");
+      if(name) {
+        names.push_back(name.value());
+      }
+    }
+
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // getSequenceNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getSequenceNames() {

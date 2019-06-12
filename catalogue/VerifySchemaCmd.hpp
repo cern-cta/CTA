@@ -82,6 +82,15 @@ private:
    */
   VerifyStatus verifyTableNames(const std::list<std::string> &schemaTableNames, 
     const std::list<std::string> &dbTableNames) const;
+  
+  /**
+   * TODO
+   * @param 
+   * @param 
+   * @return 
+   */
+  VerifyStatus verifyIndexNames(const std::list<std::string> &schemaIndexNames, 
+    const std::list<std::string> &dbIndexNames) const;
 
 }; // class VerifySchemaCmd
 

@@ -106,6 +106,15 @@ public:
    * order.
    */
   std::list<std::string> getTableNames() override;
+  
+  /**
+   * Returns the names of all the indices in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the indices in the database schema in alphabetical
+   * order.
+   */
+  std::list<std::string> getIndexNames() override;
 
   /**
    * Returns true if this connection is open.

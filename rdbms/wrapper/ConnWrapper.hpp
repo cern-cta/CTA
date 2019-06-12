@@ -95,6 +95,15 @@ public:
    * order.
    */
   virtual std::list<std::string> getTableNames() = 0;
+  
+  /**
+   * Returns the names of all the indices in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the indices in the database schema in alphabetical
+   * order.
+   */
+  virtual std::list<std::string> getIndexNames() = 0;
 
   /**
    * Returns true if this connection is open.
