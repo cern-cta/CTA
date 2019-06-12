@@ -153,6 +153,15 @@ public:
    * order.
    */
   std::list<std::string> getTableNames() const;
+  
+  /**
+   * Returns the names of all the indices  in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the indices in the database schema in alphabetical
+   * order.
+   */
+  std::list<std::string> getIndexNames() const;
 
   /**
    * Closes the underlying cached database statements and their connection.

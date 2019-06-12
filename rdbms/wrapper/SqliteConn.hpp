@@ -111,6 +111,16 @@ public:
    * order.
    */
   std::list<std::string> getTableNames() override;
+  
+  
+  /**
+   * Returns the names of all the indices in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the indices in the database schema in alphabetical
+   * order.
+   */
+  std::list<std::string> getIndexNames() override;
 
   /**
    * Returns true if this connection is open.
@@ -130,7 +140,7 @@ public:
   std::list<std::string> getSequenceNames() override;
 
   /**
-   * This ia an SqliteConn specific method that prints the database schema to
+   * This is an SqliteConn specific method that prints the database schema to
    * the specified output stream.
    *
    * Please note that this method is intended to be used for debugging.  The
