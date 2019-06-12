@@ -24,7 +24,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MysqlCatalogueSchema::MysqlCatalogueSchema(): sql(
+MysqlCatalogueSchema::MysqlCatalogueSchema(): CatalogueSchema(
   // CTA_SQL_SCHEMA - The contents of sqlite_catalogue_schema.cpp go here
   ), sql_trigger(
   // CTA_SQL_TRIGGER - The contents of mysql_catalogue_schema_trigger.cpp go here

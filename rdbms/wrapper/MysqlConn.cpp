@@ -232,9 +232,30 @@ std::list<std::string> MysqlConn::getTableNames() {
 // getIndexNames
 //------------------------------------------------------------------------------
 std::list<std::string> MysqlConn::getIndexNames() {
-  std::list<std::string> names;
-  // TODO
-  return names;
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT DISTINCT "
+        "INDEX_NAME "
+      "FROM "
+        "INFORMATION_SCHEMA.STATISTICS "
+      "WHERE "
+        "Non_unique=1 "
+      "ORDER BY "
+        "INDEX_NAME";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("INDEX_NAME");
+      if(name) {
+        names.push_back(name.value());
+      }
+    }
+
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
