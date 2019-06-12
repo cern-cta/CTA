@@ -43,6 +43,8 @@ public:
    * Destructor.
    */
   ~VerifySchemaCmd() noexcept;
+  
+  enum class VerifyStatus { OK, WARNING, ERROR, UNKNOWN };
 
 private:
 
@@ -71,6 +73,15 @@ private:
    * @return True if the table exists.
    */
   bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
+  
+  /**
+   * TODO
+   * @param 
+   * @param 
+   * @return 
+   */
+  VerifyStatus verifyTableNames(const std::list<std::string> &schemaTableNames, 
+    const std::list<std::string> &dbTableNames) const;
 
 }; // class VerifySchemaCmd
 
