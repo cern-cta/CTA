@@ -27,6 +27,8 @@
 #include "rdbms/Login.hpp"
 #include "rdbms/AutocommitMode.hpp"
 
+#include <algorithm>
+
 namespace cta {
 namespace catalogue {
 
@@ -71,7 +73,15 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   case rdbms::Login::DBTYPE_SQLITE:
     {
        // TODO
-       //SqliteCatalogueSchema schema;
+       SqliteCatalogueSchema schema;
+       const auto schemaTableNames = schema.getSchemaTableNames();
+       const auto dbTableNames = conn.getTableNames();
+       std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
+       
+       const auto schemaIndexNames = schema.getSchemaIndexNames();
+       for (auto index: schemaIndexNames) {
+         std::cout << index << std::endl;
+       }
        //conn.executeNonQueries(schema.sql);
     }
     break;
@@ -135,5 +145,32 @@ void VerifySchemaCmd::printUsage(std::ostream &os) {
   VerifySchemaCmdLineArgs::printUsage(os);
 }
 
+//------------------------------------------------------------------------------
+// verifyTableNames
+//------------------------------------------------------------------------------
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<std::string> &schemaTableNames, 
+  const std::list<std::string> &dbTableNames) const {
+  VerifyStatus status = VerifyStatus::UNKNOWN;
+  // check for schema tables
+  for(auto &tableName : schemaTableNames) {
+    const bool schemaTableIsNotInDb = dbTableNames.end() == std::find(dbTableNames.begin(), dbTableNames.end(), tableName);
+    if (schemaTableIsNotInDb) {
+      std::cerr << "ERROR: the schema table " << tableName << " not found in the DB" << std::endl;
+      status = VerifyStatus::ERROR;
+    }
+  }
+  // check for extra tables in DB
+  for(auto &tableName : dbTableNames) {
+    const bool dbTableIsNotInSchema = schemaTableNames.end() == std::find(schemaTableNames.begin(), schemaTableNames.end(), tableName);
+    if (dbTableIsNotInSchema) {
+      std::cerr << "WARNING: the database table " << tableName << " not found in the schema" << std::endl;
+      if ( VerifyStatus::ERROR != status) {
+        status = VerifyStatus::WARNING;
+      }
+    }
+  }
+  return status;
+}
+  
 } // namespace catalogue
 } // namespace cta
