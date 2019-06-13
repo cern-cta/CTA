@@ -394,6 +394,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().bytesTransferred = d.bytesTransferredInSession;
       tmdi.existingOrNextMounts.back().filesTransferred = d.filesTransferredInSession;
       tmdi.existingOrNextMounts.back().latestBandwidth = d.latestBandwidth;
+      if (d.currentActivityAndWeight)
+        tmdi.existingOrNextMounts.back().activity = d.currentActivityAndWeight.value().activity;
     }
     if (activeMountTypes.count((int)d.nextMountType)) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
@@ -405,6 +407,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().bytesTransferred = 0;
       tmdi.existingOrNextMounts.back().filesTransferred = 0;
       tmdi.existingOrNextMounts.back().latestBandwidth = 0;
+      if (d.nextActivityAndWeight)
+        tmdi.existingOrNextMounts.back().activity = d.currentActivityAndWeight.value().activity;
     }
   }
   auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
@@ -2808,6 +2812,7 @@ void OStoreDB::setDriveDown(common::dataStructures::DriveState & driveState,
   driveState.desiredDriveState.forceDown=false;
   driveState.currentVid="";
   driveState.currentTapePool="";
+  driveState.currentActivityAndWeight = nullopt;
 }
 
 //------------------------------------------------------------------------------
@@ -2846,6 +2851,7 @@ void OStoreDB::setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveS
   driveState.driveStatus=targetStatus;
   driveState.currentVid="";
   driveState.currentTapePool="";
+  driveState.currentActivityAndWeight = nullopt;
 }
 
 //------------------------------------------------------------------------------
@@ -2879,6 +2885,7 @@ void OStoreDB::setDriveProbing(common::dataStructures::DriveState & driveState,
   driveState.driveStatus=inputs.status;
   driveState.currentVid="";
   driveState.currentTapePool="";
+  driveState.currentActivityAndWeight = nullopt;
 }
 
 //------------------------------------------------------------------------------
@@ -2891,8 +2898,7 @@ void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
     driveState.lastUpdateTime = inputs.reportTime;
     return;
   }
-  // If we are changing state, then all should be reset. We are not supposed to
-  // know the direction yet.
+  // If we are changing state, then all should be reset.
   driveState.sessionId=inputs.mountSessionId;
   driveState.bytesTransferredInSession=0;
   driveState.filesTransferredInSession=0;
@@ -2913,6 +2919,12 @@ void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
   driveState.driveStatus=common::dataStructures::DriveStatus::Starting;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  if (inputs.activityAndWeigh) {
+    common::dataStructures::DriveState::ActivityAndWeight aaw;
+    aaw.activity = inputs.activityAndWeigh.value().activity;
+    aaw.weight = inputs.activityAndWeigh.value().weight;
+    driveState.currentActivityAndWeight = aaw;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -3108,6 +3120,7 @@ void OStoreDB::setDriveCleaningUp(common::dataStructures::DriveState & driveStat
   driveState.driveStatus=common::dataStructures::DriveStatus::CleaningUp;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentActivityAndWeight = nullopt;
 }
 
 //------------------------------------------------------------------------------
@@ -3140,6 +3153,7 @@ void OStoreDB::setDriveShutdown(common::dataStructures::DriveState & driveState,
   driveState.driveStatus=common::dataStructures::DriveStatus::CleaningUp;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentActivityAndWeight = nullopt;
 }
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()

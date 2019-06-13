@@ -18,9 +18,13 @@
 
 #include "DriveState.hpp"
 #include "GenericObject.hpp"
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
+//------------------------------------------------------------------------------
+// DriveState::DriveState())
+//------------------------------------------------------------------------------
 DriveState::DriveState(GenericObject& go):
 ObjectOps<serializers::DriveState, serializers::DriveState_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
@@ -29,6 +33,9 @@ ObjectOps<serializers::DriveState, serializers::DriveState_t>(go.objectStore()) 
   getPayloadFromHeader();
 }
 
+//------------------------------------------------------------------------------
+// DriveState::garbageCollect())
+//------------------------------------------------------------------------------
 void DriveState::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc, cta::catalogue::Catalogue& catalogue) {
   // The drive state is easily replaceable. We just delete it on garbage collection.
   checkPayloadWritable();
@@ -40,6 +47,9 @@ void DriveState::garbageCollect(const std::string& presumedOwner, AgentReference
   lc.log(log::INFO, "In DriveState::garbageCollect(): Garbage collected and removed drive state object.");
 }
 
+//------------------------------------------------------------------------------
+// DriveState::initialize())
+//------------------------------------------------------------------------------
 void DriveState::initialize(const std::string & driveName) {
   // Setup underlying object with defaults from dataStructures::DriveState
   ObjectOps<serializers::DriveState, serializers::DriveState_t>::initialize();
@@ -52,14 +62,21 @@ void DriveState::initialize(const std::string & driveName) {
   m_payloadInterpreted = true;
 }
 
-
+//------------------------------------------------------------------------------
+// DriveState::DriveState())
+//------------------------------------------------------------------------------
 DriveState::DriveState(const std::string& address, Backend& os):
   ObjectOps<serializers::DriveState, serializers::DriveState_t>(os, address) { }
 
+//------------------------------------------------------------------------------
+// DriveState::DriveState())
+//------------------------------------------------------------------------------
 DriveState::DriveState(Backend& os):
   ObjectOps<serializers::DriveState, serializers::DriveState_t>(os) { }
 
-
+//------------------------------------------------------------------------------
+// DriveState::getState())
+//------------------------------------------------------------------------------
 cta::common::dataStructures::DriveState DriveState::getState() {
   cta::common::dataStructures::DriveState ret;
   ret.driveName                   = m_payload.drivename();
@@ -107,6 +124,9 @@ cta::common::dataStructures::DriveState DriveState::getState() {
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// DriveState::setState())
+//------------------------------------------------------------------------------
 void DriveState::setState(cta::common::dataStructures::DriveState& state) {
   // There should be no need to set the drive name.
   m_payload.set_host(state.host);
@@ -152,6 +172,19 @@ void DriveState::setState(cta::common::dataStructures::DriveState& state) {
     m_payload.clear_next_activity();
     m_payload.clear_next_activity_weight();
   }
+}
+
+//------------------------------------------------------------------------------
+// DriveState::dump())
+//------------------------------------------------------------------------------
+std::string DriveState::dump() {
+  checkPayloadReadable();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 }} // namespace cta::objectstore

@@ -475,9 +475,9 @@ optional<RetrieveActivityDescription> RetrieveRequest::getActivity() {
   if (m_payload.has_activity_weight()) {
     RetrieveActivityDescription activity;
     activity.priority = m_payload.activity_weight().priority();
-    activity.diskInstanceName = m_payload.activity_weight().activity();
+    activity.diskInstanceName = m_payload.activity_weight().disk_instance_name();
     activity.activity = m_payload.activity_weight().activity();
-    activity.priority = m_payload.activity_weight().weight();
+    activity.weight = m_payload.activity_weight().weight();
     activity.creationTime = m_payload.activity_weight().creation_time();
     ret = activity;
   }

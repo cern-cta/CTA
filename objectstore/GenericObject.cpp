@@ -187,6 +187,9 @@ std::string GenericObject::dump() {
     case serializers::DriveRegister_t:
       bodyDump = dumpWithType<DriveRegister>(this);
       break;
+    case serializers::DriveState_t:
+      bodyDump = dumpWithType<DriveState>(this);
+      break;
     case serializers::ArchiveQueue_t:
       bodyDump = dumpWithType<cta::objectstore::ArchiveQueue>(this);
       break;

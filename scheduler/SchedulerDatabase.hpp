@@ -575,9 +575,9 @@ public:
       // the tapepool. So for different tape pools, we do not order. Likewise, both mounts should have an activity to
       // be comparable
       if (activityNameAndWeightedMountCount && other.activityNameAndWeightedMountCount && tapePool == other.tapePool) {
-        if (activityNameAndWeightedMountCount.value().weightedMountCount > other.activityNameAndWeightedMountCount.value().weight)
+        if (activityNameAndWeightedMountCount.value().weightedMountCount > other.activityNameAndWeightedMountCount.value().weightedMountCount)
           return true;
-        if (activityNameAndWeightedMountCount.value().weightedMountCount < other.activityNameAndWeightedMountCount.value().weight)
+        if (activityNameAndWeightedMountCount.value().weightedMountCount < other.activityNameAndWeightedMountCount.value().weightedMountCount)
           return false;
       }
       if(minRequestAge < other.minRequestAge)

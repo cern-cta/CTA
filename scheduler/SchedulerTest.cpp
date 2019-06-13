@@ -162,7 +162,7 @@ public:
     const uint64_t minArchiveRequestAge = 2;
     const uint64_t retrievePriority = 3;
     const uint64_t minRetrieveRequestAge = 4;
-    const uint64_t maxDrivesAllowed = 5;
+    const uint64_t maxDrivesAllowed = 50;
     const std::string mountPolicyComment = "create mount group";
 
     ASSERT_TRUE(catalogue.getMountPolicies().empty());
@@ -2846,6 +2846,7 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     ASSERT_TRUE((bool)mount.get()->getActivity());
+    std::cout << i << ": " << mount.get()->getActivity().value() << std::endl;
     if (ea != Unknown) {
       std::string expectedActivity(ea==A?"A":"B"), activity(mount.get()->getActivity().value());
       ASSERT_EQ(expectedActivity, activity);
