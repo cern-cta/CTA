@@ -245,8 +245,31 @@ std::list<std::string> PostgresConn::getTableNames() {
 // getIndexNames
 //------------------------------------------------------------------------------
 std::list<std::string> PostgresConn::getIndexNames() {
-  std::list<std::string> names;
-  return names;
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "INDEXNAME "
+      "FROM "
+        "PG_INDEXES "
+      "WHERE "
+        "SCHEMANAME = 'public' "
+      "ORDER BY "
+        "INDEXNAME";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("INDEXNAME");
+      if(name) {
+        utils::toUpper(name.value());
+        names.push_back(name.value());
+      }
+    }
+
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

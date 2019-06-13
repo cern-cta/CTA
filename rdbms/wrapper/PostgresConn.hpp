@@ -109,10 +109,10 @@ public:
   
   /**
    * Returns the names of all the indices in the database schema in alphabetical
-   * order.
+   * order and in upper case.
    *
    * @return The names of all the indices in the database schema in alphabetical
-   * order.
+   * order and in upper case.
    */
   std::list<std::string> getIndexNames() override;
 

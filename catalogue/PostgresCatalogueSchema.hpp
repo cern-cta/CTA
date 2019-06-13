@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "CatalogueSchema.hpp"
+
 #include <string>
 
 namespace cta {
@@ -38,16 +40,11 @@ namespace catalogue {
  * The purpose of this class is to help IDEs by isolating the "non-compilable"
  * issues into a small cpp file.
  */
-struct PostgresCatalogueSchema {
+struct PostgresCatalogueSchema: public CatalogueSchema {
   /**
    * Constructor.
    */
   PostgresCatalogueSchema();
-
-  /**
-   * The schema.
-   */
-  const std::string sql;
 };
 
 } // namespace catalogue
