@@ -44,7 +44,7 @@ public:
    */
   ~VerifySchemaCmd() noexcept;
   
-  enum class VerifyStatus { OK, WARNING, ERROR, UNKNOWN };
+  enum class VerifyStatus { OK, INFO, ERROR, UNKNOWN };
 
 private:
 

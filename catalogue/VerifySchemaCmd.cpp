@@ -87,9 +87,17 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     break;
   case rdbms::Login::DBTYPE_POSTGRESQL:
     {
-       // TODO
-       // PostgresCatalogueSchema schema;
-       // conn.executeNonQueries(schema.sql);
+      // TODO
+      PostgresCatalogueSchema schema;
+      std::cerr << "Checking table names..." << std::endl;
+      const auto schemaTableNames = schema.getSchemaTableNames();
+      const auto dbTableNames = conn.getTableNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
+      
+      std::cerr << "Checking index names..." << std::endl;
+      const auto schemaIndexNames = schema.getSchemaIndexNames();
+      const auto dbIndexNames = conn.getIndexNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
     }
     break;
   case rdbms::Login::DBTYPE_MYSQL:
@@ -180,13 +188,13 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<
   for(auto &tableName : dbTableNames) {
     const bool dbTableIsNotInSchema = schemaTableNames.end() == std::find(schemaTableNames.begin(), schemaTableNames.end(), tableName);
     if (dbTableIsNotInSchema) {
-      std::cerr << "  WARNING: the database table " << tableName << " not found in the schema" << std::endl;
+      std::cerr << "  INFO: the database table " << tableName << " not found in the schema" << std::endl;
       if ( VerifyStatus::ERROR != status) {
-        status = VerifyStatus::WARNING;
+        status = VerifyStatus::INFO;
       }
     }
   }
-  if (status != VerifyStatus::WARNING && status != VerifyStatus::ERROR) {
+  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
     std::cerr << "  OK: no problems found" << std::endl;
     status = VerifyStatus::OK;
   }
@@ -211,13 +219,13 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<
   for(auto &indexName : dbIndexNames) {
     const bool dbIndexIsNotInSchema = schemaIndexNames.end() == std::find(schemaIndexNames.begin(), schemaIndexNames.end(), indexName);
     if (dbIndexIsNotInSchema) {
-      std::cerr << "  WARNING: the database index " << indexName << " not found in the schema" << std::endl;
+      std::cerr << "  INFO: the database index " << indexName << " not found in the schema" << std::endl;
       if ( VerifyStatus::ERROR != status) {
-        status = VerifyStatus::WARNING;
+        status = VerifyStatus::INFO;
       }
     }
   }
-  if (status != VerifyStatus::WARNING && status != VerifyStatus::ERROR) {
+  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
     std::cerr << "  OK: no problems found" << std::endl;
     status = VerifyStatus::OK;
   }
