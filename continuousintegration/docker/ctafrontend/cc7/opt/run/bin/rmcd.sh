@@ -26,7 +26,7 @@ CTA_RMCD_OPTIONS=/dev/smc
 EOF
 
   # install RPMs?
-  test -e /etc/buildtreeRunner || yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd
+  test -e /etc/buildtreeRunner || yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 
   # rmcd will be running as non root user, we need to fix a few things:
   # device access rights
@@ -41,7 +41,7 @@ EOF
 else
   # systemd is not available
   # install RPMs?
-  test -e /etc/buildtreeRunner || yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd
+  test -e /etc/buildtreeRunner || yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd cta-smc
 
   # to get rmcd logs to stdout
   tail -F /var/log/cta/cta-rmcd.log &
