@@ -93,6 +93,11 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     }
   }
 
+  if (nullptr == schema) {
+    exception::Exception ex;
+    ex.getMessage() << "The catalogue schema uninitialized";
+      throw ex;
+  }
   std::cerr << "Checking table names..." << std::endl;
   const auto schemaTableNames = schema->getSchemaTableNames();
   const auto dbTableNames = conn.getTableNames();
