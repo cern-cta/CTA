@@ -18,15 +18,8 @@
 
 #pragma once
 
-#include "common/utils/Regex.hpp"
-#include "common/utils/utils.hpp"
-#include "common/exception/Exception.hpp"
-
 #include <string>
 #include <list>
-
-// TODO
-#include <iostream>
 
 namespace cta {
 namespace catalogue {
@@ -37,9 +30,21 @@ namespace catalogue {
  */
 struct CatalogueSchema {
   /**
-   * Constructors.
+   * Constructor.
+   *
+   * @param sqlSchema The sql for the catalogue schema provided at compilation
+   *                  time.
    */
   CatalogueSchema(const std::string &sqlSchema);
+  
+  /**
+   * Constructor.
+   *
+   * @param sqlSchema The sql for the catalogue schema provided at compilation
+   * time.
+   * @param sqlTriggerSchema The sql for triggers in the catalogue schema provided
+   * at compilation time only for schemas that support triggers.
+   */
   CatalogueSchema(const std::string &sqlSchema, const std::string &sqlTriggerSchema);
   
   /**
@@ -53,27 +58,36 @@ struct CatalogueSchema {
   const std::string sql_trigger;
 
   /**
-   * TODO
-   * 
-   * @return 
+   * Returns the names of all the tables in the catalogue schema.
+   *
+   * @return The names of all the tables in the catalogue schema.
    */
   std::list<std::string> getSchemaTableNames() const;
+  
   /**
-   * TODO
-   * 
-   * @return 
+   * Returns the names of all the indexes in the catalogue schema.
+   *
+   * @return The names of all the indexes in the catalogue schema.
    */
   std::list<std::string> getSchemaIndexNames() const;
+  
   /**
-   * TODO
+   * Returns the names of all the sequences in the catalogue schema.
    * 
-   * @return 
+   * if the underlying database technologies does not supported sequences then
+   * this method simply returns an empty list.
+   *
+   * @return The names of all the sequences in the catalogue schema.
    */
   std::list<std::string> getSchemaSequenceNames() const;
+  
   /**
-   * TODO
+   * Returns the names of all the triggers in the catalogue schema.
    * 
-   * @return 
+   * if the underlying database technologies does not supported triggers then
+   * this method simply returns an empty list.*
+   * 
+   * @return The names of all the triggers in the catalogue schema.
    */
   std::list<std::string> getSchemaTriggerNames() const;
 };

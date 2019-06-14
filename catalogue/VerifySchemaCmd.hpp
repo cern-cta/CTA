@@ -75,37 +75,45 @@ private:
   bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
   
   /**
-   * TODO
-   * @param 
-   * @param 
-   * @return 
+   * Verifies table names in the database against the catalogue schema table names.
+   * Returns verification status as result.
+   * 
+   * @param schemaTableNames The list of the catalogue schema table names.
+   * @param dbTableNames The list of the database table names.
+   * @return The verification status code.
    */
   VerifyStatus verifyTableNames(const std::list<std::string> &schemaTableNames, 
     const std::list<std::string> &dbTableNames) const;
   
   /**
-   * TODO
-   * @param 
-   * @param 
-   * @return 
+   * Verifies index names in the database against the catalogue schema index names.
+   * Returns verification status as result.
+   * 
+   * @param schemaIndexNames The list of the catalogue schema index names.
+   * @param dbIndexNames The list of the database index names.
+   * @return The verification status code.
    */
   VerifyStatus verifyIndexNames(const std::list<std::string> &schemaIndexNames, 
     const std::list<std::string> &dbIndexNames) const;
   
   /**
-   * TODO
-   * @param 
-   * @param 
-   * @return 
+   * Verifies sequence names in the database against the catalogue schema sequence names.
+   * Returns verification status as result.
+   * 
+   * @param schemaSequenceNames The list of the catalogue schema sequence names.
+   * @param dbSequenceNames The list of the database sequence names.
+   * @return The verification status code.
    */
   VerifyStatus verifySequenceNames(const std::list<std::string> &schemaSequenceNames, 
     const std::list<std::string> &dbSequenceNames) const;
   
   /**
-   * TODO
-   * @param 
-   * @param 
-   * @return 
+   * Verifies trigger names in the database against the catalogue schema trigger names.
+   * Returns verification status as result.
+   * 
+   * @param schemaTriggerNames The list of the catalogue schema trigger names.
+   * @param dbTrgigerNames The list of the database trigger names.
+   * @return The verification status code.
    */
   VerifyStatus verifyTriggerNames(const std::list<std::string> &schemaTriggerNames, 
     const std::list<std::string> &dbTrgigerNames) const;
