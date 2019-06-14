@@ -121,6 +121,18 @@ public:
    * alphabetical order.
    */
   virtual std::list<std::string> getSequenceNames()  = 0;
+  
+  /**
+   * Returns the names of all the triggers in the database schema in
+   * alphabetical order.
+   *
+   * If the underlying database technologies does not supported triggers then
+   * this method simply returns an empty list.
+   *
+   * @return The names of all the triggers in the database schema in
+   * alphabetical order.
+   */
+  virtual std::list<std::string> getTriggerNames()  = 0;
 
 }; // class ConnWrapper
 

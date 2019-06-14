@@ -272,6 +272,34 @@ std::list<std::string> MysqlConn::getSequenceNames() {
   return std::list<std::string>();
 }
 
+//------------------------------------------------------------------------------
+// getTriggerNames
+//------------------------------------------------------------------------------
+std::list<std::string> MysqlConn::getTriggerNames() {
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "TRIGGER_NAME "
+      "FROM "
+        "INFORMATION_SCHEMA.TRIGGERS "
+      "ORDER BY "
+        "TRIGGER_NAME";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("TRIGGER_NAME");
+      if(name) {
+        names.push_back(name.value());
+      }
+    }
+
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 } // namespace wrapper
 } // namespace rdbms
 } // namespace cta

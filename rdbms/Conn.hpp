@@ -187,6 +187,18 @@ public:
    * alphabetical order.
    */
   std::list<std::string> getSequenceNames();
+  
+    /**
+   * Returns the names of all the triggers in the database schema in
+   * alphabetical order.
+   *
+   * If the underlying database technologies does not supported triggers then
+   * this method simply returns an empty list.
+   *
+   * @return The names of all the triggers in the database schema in
+   * alphabetical order.
+   */
+  std::list<std::string> getTriggerNames();
 
 private:
 
