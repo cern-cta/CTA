@@ -28,6 +28,7 @@
 #include "rdbms/AutocommitMode.hpp"
 
 #include <algorithm>
+#include <map>
 
 namespace cta {
 namespace catalogue {
@@ -98,6 +99,12 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     ex.getMessage() << "The catalogue schema uninitialized";
       throw ex;
   }
+  
+  const auto schemaVersion = schema->getSchemaVersion();
+  for (const auto &schemaInfo : schemaVersion) {
+    std::cerr << schemaInfo.first << ':' << schemaInfo.second << std::endl;
+  }
+  
   std::cerr << "Checking table names..." << std::endl;
   const auto schemaTableNames = schema->getSchemaTableNames();
   const auto dbTableNames = conn.getTableNames();
