@@ -20,6 +20,7 @@
 
 #include <string>
 #include <list>
+#include <map>
 
 namespace cta {
 namespace catalogue {
@@ -90,6 +91,12 @@ struct CatalogueSchema {
    * @return The names of all the triggers in the catalogue schema.
    */
   std::list<std::string> getSchemaTriggerNames() const;
+  
+  /**
+   * TODO
+   * @return 
+   */
+  std::map<std::string, uint64_t> getSchemaVersion() const;
 };
 
 } // namespace catalogue
