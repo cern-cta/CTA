@@ -37,14 +37,20 @@ namespace catalogue {
  */
 struct CatalogueSchema {
   /**
-   * Constructor.
+   * Constructors.
    */
   CatalogueSchema(const std::string &sqlSchema);
+  CatalogueSchema(const std::string &sqlSchema, const std::string &sqlTriggerSchema);
   
   /**
    * The schema.
    */
   const std::string sql;
+  
+  /**
+   * The trigger.
+   */
+  const std::string sql_trigger;
 
   /**
    * TODO
@@ -58,6 +64,18 @@ struct CatalogueSchema {
    * @return 
    */
   std::list<std::string> getSchemaIndexNames() const;
+  /**
+   * TODO
+   * 
+   * @return 
+   */
+  std::list<std::string> getSchemaSequenceNames() const;
+  /**
+   * TODO
+   * 
+   * @return 
+   */
+  std::list<std::string> getSchemaTriggerNames() const;
 };
 
 } // namespace catalogue

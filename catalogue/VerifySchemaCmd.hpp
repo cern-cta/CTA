@@ -91,7 +91,24 @@ private:
    */
   VerifyStatus verifyIndexNames(const std::list<std::string> &schemaIndexNames, 
     const std::list<std::string> &dbIndexNames) const;
-
+  
+  /**
+   * TODO
+   * @param 
+   * @param 
+   * @return 
+   */
+  VerifyStatus verifySequenceNames(const std::list<std::string> &schemaSequenceNames, 
+    const std::list<std::string> &dbSequenceNames) const;
+  
+  /**
+   * TODO
+   * @param 
+   * @param 
+   * @return 
+   */
+  VerifyStatus verifyTriggerNames(const std::list<std::string> &schemaTriggerNames, 
+    const std::list<std::string> &dbTrgigerNames) const;
 }; // class VerifySchemaCmd
 
 } // namespace catalogue

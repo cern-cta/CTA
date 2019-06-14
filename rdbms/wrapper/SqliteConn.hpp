@@ -140,6 +140,18 @@ public:
   std::list<std::string> getSequenceNames() override;
 
   /**
+   * Returns the names of all the triggers in the database schema in
+   * alphabetical order.
+   *
+   * If the underlying database technologies does not supported triggers then
+   * this method simply returns an empty list.
+   *
+   * @return The names of all the triggers in the database schema in
+   * alphabetical order.
+   */
+  std::list<std::string> getTriggerNames() override;
+  
+  /**
    * This is an SqliteConn specific method that prints the database schema to
    * the specified output stream.
    *

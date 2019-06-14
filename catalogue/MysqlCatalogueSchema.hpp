@@ -48,11 +48,6 @@ struct MysqlCatalogueSchema: public CatalogueSchema {
   MysqlCatalogueSchema();
 
   /**
-   * The trigger.
-   */
-  const std::string sql_trigger;
-
-  /**
    * Return a list of trigger commands
    */
   std::vector<std::string> triggers();

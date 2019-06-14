@@ -83,6 +83,16 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       const auto schemaIndexNames = schema.getSchemaIndexNames();
       const auto dbIndexNames = conn.getIndexNames();
       std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
+      
+      std::cerr << "Checking sequence names..." << std::endl;
+      const auto schemaSequenceNames = schema.getSchemaSequenceNames();
+      const auto dbSequenceNames = conn.getSequenceNames();
+      std::cerr << "error code: "<< static_cast<int>(verifySequenceNames(schemaSequenceNames, dbSequenceNames)) << std::endl;
+      
+      std::cerr << "Checking trigger names..." << std::endl;
+      const auto schemaTriggerNames = schema.getSchemaTriggerNames();
+      const auto dbTriggerNames = conn.getTriggerNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyTriggerNames(schemaTriggerNames, dbTriggerNames)) << std::endl;
     }
     break;
   case rdbms::Login::DBTYPE_POSTGRESQL:
@@ -98,6 +108,16 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       const auto schemaIndexNames = schema.getSchemaIndexNames();
       const auto dbIndexNames = conn.getIndexNames();
       std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
+      
+      std::cerr << "Checking sequence names..." << std::endl;
+      const auto schemaSequenceNames = schema.getSchemaSequenceNames();
+      const auto dbSequenceNames = conn.getSequenceNames();
+      std::cerr << "error code: "<< static_cast<int>(verifySequenceNames(schemaSequenceNames, dbSequenceNames)) << std::endl;
+      
+      std::cerr << "Checking trigger names..." << std::endl;
+      const auto schemaTriggerNames = schema.getSchemaTriggerNames();
+      const auto dbTriggerNames = conn.getTriggerNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyTriggerNames(schemaTriggerNames, dbTriggerNames)) << std::endl;
     }
     break;
   case rdbms::Login::DBTYPE_MYSQL:
@@ -113,13 +133,17 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       const auto schemaIndexNames = schema.getSchemaIndexNames();
       const auto dbIndexNames = conn.getIndexNames();
       std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
-       //conn.executeNonQueries(schema.sql);
-
-       // execute triggers
-       //auto triggers = schema.triggers();
-       //for (auto trigger: triggers) {
-       //  conn.executeNonQuery(trigger);
-       //}
+      
+      std::cerr << "Checking sequence names..." << std::endl;
+      const auto schemaSequenceNames = schema.getSchemaSequenceNames();
+      const auto dbSequenceNames = conn.getSequenceNames();
+      std::cerr << "error code: "<< static_cast<int>(verifySequenceNames(schemaSequenceNames, dbSequenceNames)) << std::endl;
+      
+      // execute triggers
+      std::cerr << "Checking trigger names..." << std::endl;
+      const auto schemaTriggerNames = schema.getSchemaTriggerNames();
+      const auto dbTriggerNames = conn.getTriggerNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyTriggerNames(schemaTriggerNames, dbTriggerNames)) << std::endl;
     }
     break;
   case rdbms::Login::DBTYPE_ORACLE:
@@ -135,6 +159,17 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       const auto schemaIndexNames = schema.getSchemaIndexNames();
       const auto dbIndexNames = conn.getIndexNames();
       std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
+      
+      std::cerr << "Checking sequence names..." << std::endl;
+      const auto schemaSequenceNames = schema.getSchemaSequenceNames();
+      const auto dbSequenceNames = conn.getSequenceNames();
+      std::cerr << "error code: "<< static_cast<int>(verifySequenceNames(schemaSequenceNames, dbSequenceNames)) << std::endl;
+      
+      // execute triggers
+      std::cerr << "Checking trigger names..." << std::endl;
+      const auto schemaTriggerNames = schema.getSchemaTriggerNames();
+      const auto dbTriggerNames = conn.getTriggerNames();
+      std::cerr << "error code: "<< static_cast<int>(verifyTriggerNames(schemaTriggerNames, dbTriggerNames)) << std::endl;
     }
     break;
   case rdbms::Login::DBTYPE_NONE:
@@ -220,6 +255,68 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<
     const bool dbIndexIsNotInSchema = schemaIndexNames.end() == std::find(schemaIndexNames.begin(), schemaIndexNames.end(), indexName);
     if (dbIndexIsNotInSchema) {
       std::cerr << "  INFO: the database index " << indexName << " not found in the schema" << std::endl;
+      if ( VerifyStatus::ERROR != status) {
+        status = VerifyStatus::INFO;
+      }
+    }
+  }
+  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
+    std::cerr << "  OK: no problems found" << std::endl;
+    status = VerifyStatus::OK;
+  }
+  return status;
+}
+
+//------------------------------------------------------------------------------
+// verifySequenceNames
+//------------------------------------------------------------------------------
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySequenceNames(const std::list<std::string> &schemaSequenceNames, 
+  const std::list<std::string> &dbSequenceNames) const {
+  VerifyStatus status = VerifyStatus::UNKNOWN;
+  // check for schema tables
+  for(auto &sequenceName : schemaSequenceNames) {
+    const bool schemaSequenceIsNotInDb = dbSequenceNames.end() == std::find(dbSequenceNames.begin(), dbSequenceNames.end(), sequenceName);
+    if (schemaSequenceIsNotInDb) {
+      std::cerr << "  ERROR: the schema sequence " << sequenceName << " not found in the DB" << std::endl;
+      status = VerifyStatus::ERROR;
+    }
+  }
+  // check for extra tables in DB
+  for(auto &sequenceName : dbSequenceNames) {
+    const bool dbSequenceIsNotInSchema = schemaSequenceNames.end() == std::find(schemaSequenceNames.begin(), schemaSequenceNames.end(), sequenceName);
+    if (dbSequenceIsNotInSchema) {
+      std::cerr << "  INFO: the database sequence " << sequenceName << " not found in the schema" << std::endl;
+      if ( VerifyStatus::ERROR != status) {
+        status = VerifyStatus::INFO;
+      }
+    }
+  }
+  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
+    std::cerr << "  OK: no problems found" << std::endl;
+    status = VerifyStatus::OK;
+  }
+  return status;
+}
+
+//------------------------------------------------------------------------------
+// verifyTriggerNames
+//------------------------------------------------------------------------------
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTriggerNames(const std::list<std::string> &schemaTriggerNames, 
+  const std::list<std::string> &dbTriggerNames) const {
+  VerifyStatus status = VerifyStatus::UNKNOWN;
+  // check for schema tables
+  for(auto &triggerName : schemaTriggerNames) {
+    const bool schemaTriggerIsNotInDb = dbTriggerNames.end() == std::find(dbTriggerNames.begin(), dbTriggerNames.end(), triggerName);
+    if (schemaTriggerIsNotInDb) {
+      std::cerr << "  ERROR: the schema trigger " << triggerName << " not found in the DB" << std::endl;
+      status = VerifyStatus::ERROR;
+    }
+  }
+  // check for extra tables in DB
+  for(auto &triggerName : dbTriggerNames) {
+    const bool dbTriggerIsNotInSchema = schemaTriggerNames.end() == std::find(schemaTriggerNames.begin(), schemaTriggerNames.end(), triggerName);
+    if (dbTriggerIsNotInSchema) {
+      std::cerr << "  INFO: the database trigger " << triggerName << " not found in the schema" << std::endl;
       if ( VerifyStatus::ERROR != status) {
         status = VerifyStatus::INFO;
       }

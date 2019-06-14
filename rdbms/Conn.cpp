@@ -226,5 +226,16 @@ std::list<std::string> Conn::getSequenceNames() {
   }
 }
 
+//------------------------------------------------------------------------------
+// getTriggerNames
+//------------------------------------------------------------------------------
+std::list<std::string> Conn::getTriggerNames() {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getTriggerNames();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
 } // namespace rdbms
 } // namespace cta
