@@ -67,110 +67,21 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     std::cerr << "Cannot verify the database schema because the CTA_CATALOGUE table does not exists" << std::endl;
     return 1;
   }
-
+  
+  std::unique_ptr<CatalogueSchema> schema;
   switch(login.dbType) {
   case rdbms::Login::DBTYPE_IN_MEMORY:
   case rdbms::Login::DBTYPE_SQLITE:
-    {
-      // TODO
-      SqliteCatalogueSchema schema;
-      std::cerr << "Checking table names..." << std::endl;
-      const auto schemaTableNames = schema.getSchemaTableNames();
-      const auto dbTableNames = conn.getTableNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
-
-      std::cerr << "Checking index names..." << std::endl;
-      const auto schemaIndexNames = schema.getSchemaIndexNames();
-      const auto dbIndexNames = conn.getIndexNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
-      
-      std::cerr << "Checking sequence names..." << std::endl;
-      const auto schemaSequenceNames = schema.getSchemaSequenceNames();
-      const auto dbSequenceNames = conn.getSequenceNames();
-      std::cerr << "error code: "<< static_cast<int>(verifySequenceNames(schemaSequenceNames, dbSequenceNames)) << std::endl;
-      
-      std::cerr << "Checking trigger names..." << std::endl;
-      const auto schemaTriggerNames = schema.getSchemaTriggerNames();
-      const auto dbTriggerNames = conn.getTriggerNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyTriggerNames(schemaTriggerNames, dbTriggerNames)) << std::endl;
-    }
+    schema.reset(new SqliteCatalogueSchema);
     break;
   case rdbms::Login::DBTYPE_POSTGRESQL:
-    {
-      // TODO
-      PostgresCatalogueSchema schema;
-      std::cerr << "Checking table names..." << std::endl;
-      const auto schemaTableNames = schema.getSchemaTableNames();
-      const auto dbTableNames = conn.getTableNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
-      
-      std::cerr << "Checking index names..." << std::endl;
-      const auto schemaIndexNames = schema.getSchemaIndexNames();
-      const auto dbIndexNames = conn.getIndexNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
-      
-      std::cerr << "Checking sequence names..." << std::endl;
-      const auto schemaSequenceNames = schema.getSchemaSequenceNames();
-      const auto dbSequenceNames = conn.getSequenceNames();
-      std::cerr << "error code: "<< static_cast<int>(verifySequenceNames(schemaSequenceNames, dbSequenceNames)) << std::endl;
-      
-      std::cerr << "Checking trigger names..." << std::endl;
-      const auto schemaTriggerNames = schema.getSchemaTriggerNames();
-      const auto dbTriggerNames = conn.getTriggerNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyTriggerNames(schemaTriggerNames, dbTriggerNames)) << std::endl;
-    }
+    schema.reset(new PostgresCatalogueSchema);
     break;
   case rdbms::Login::DBTYPE_MYSQL:
-    {
-      // TODO
-      MysqlCatalogueSchema schema;
-      std::cerr << "Checking table names..." << std::endl;
-      const auto schemaTableNames = schema.getSchemaTableNames();
-      const auto dbTableNames = conn.getTableNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
-      
-      std::cerr << "Checking index names..." << std::endl;
-      const auto schemaIndexNames = schema.getSchemaIndexNames();
-      const auto dbIndexNames = conn.getIndexNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
-      
-      std::cerr << "Checking sequence names..." << std::endl;
-      const auto schemaSequenceNames = schema.getSchemaSequenceNames();
-      const auto dbSequenceNames = conn.getSequenceNames();
-      std::cerr << "error code: "<< static_cast<int>(verifySequenceNames(schemaSequenceNames, dbSequenceNames)) << std::endl;
-      
-      // execute triggers
-      std::cerr << "Checking trigger names..." << std::endl;
-      const auto schemaTriggerNames = schema.getSchemaTriggerNames();
-      const auto dbTriggerNames = conn.getTriggerNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyTriggerNames(schemaTriggerNames, dbTriggerNames)) << std::endl;
-    }
+    schema.reset(new MysqlCatalogueSchema);
     break;
   case rdbms::Login::DBTYPE_ORACLE:
-    {
-      // TODO
-      OracleCatalogueSchema schema;
-      std::cerr << "Checking table names..." << std::endl;
-      const auto schemaTableNames = schema.getSchemaTableNames();
-      const auto dbTableNames = conn.getTableNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyTableNames(schemaTableNames, dbTableNames)) << std::endl;
-
-      std::cerr << "Checking index names..." << std::endl;
-      const auto schemaIndexNames = schema.getSchemaIndexNames();
-      const auto dbIndexNames = conn.getIndexNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyIndexNames(schemaIndexNames, dbIndexNames)) << std::endl;
-      
-      std::cerr << "Checking sequence names..." << std::endl;
-      const auto schemaSequenceNames = schema.getSchemaSequenceNames();
-      const auto dbSequenceNames = conn.getSequenceNames();
-      std::cerr << "error code: "<< static_cast<int>(verifySequenceNames(schemaSequenceNames, dbSequenceNames)) << std::endl;
-      
-      // execute triggers
-      std::cerr << "Checking trigger names..." << std::endl;
-      const auto schemaTriggerNames = schema.getSchemaTriggerNames();
-      const auto dbTriggerNames = conn.getTriggerNames();
-      std::cerr << "error code: "<< static_cast<int>(verifyTriggerNames(schemaTriggerNames, dbTriggerNames)) << std::endl;
-    }
+    schema.reset(new OracleCatalogueSchema);
     break;
   case rdbms::Login::DBTYPE_NONE:
     throw exception::Exception("Cannot verify a catalogue without a database type");
@@ -182,6 +93,32 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     }
   }
 
+  std::cerr << "Checking table names..." << std::endl;
+  const auto schemaTableNames = schema->getSchemaTableNames();
+  const auto dbTableNames = conn.getTableNames();
+  const VerifyStatus verifyTablesStatus = verifyTableNames(schemaTableNames, dbTableNames);
+
+  std::cerr << "Checking index names..." << std::endl;
+  const auto schemaIndexNames = schema->getSchemaIndexNames();
+  const auto dbIndexNames = conn.getIndexNames();
+  const VerifyStatus verifyIndexesStatus = verifyIndexNames(schemaIndexNames, dbIndexNames);
+
+  std::cerr << "Checking sequence names..." << std::endl;
+  const auto schemaSequenceNames = schema->getSchemaSequenceNames();
+  const auto dbSequenceNames = conn.getSequenceNames();
+  const VerifyStatus verifySequencesStatus = verifySequenceNames(schemaSequenceNames, dbSequenceNames);
+
+  std::cerr << "Checking trigger names..." << std::endl;
+  const auto schemaTriggerNames = schema->getSchemaTriggerNames();
+  const auto dbTriggerNames = conn.getTriggerNames();
+  const VerifyStatus verifyTriggersStatus = verifyTriggerNames(schemaTriggerNames, dbTriggerNames);
+  
+  if (verifyTablesStatus    == VerifyStatus::ERROR || 
+      verifyIndexesStatus   == VerifyStatus::ERROR ||
+      verifySequencesStatus == VerifyStatus::ERROR || 
+      verifyTriggersStatus  == VerifyStatus::ERROR ) {
+    return 1;
+  }
   return 0;
 }
 
@@ -230,7 +167,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<
     }
   }
   if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-    std::cerr << "  OK: no problems found" << std::endl;
+    std::cerr << "  OK" << std::endl;
     status = VerifyStatus::OK;
   }
   return status;
@@ -261,7 +198,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<
     }
   }
   if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-    std::cerr << "  OK: no problems found" << std::endl;
+    std::cerr << "  OK" << std::endl;
     status = VerifyStatus::OK;
   }
   return status;
@@ -292,7 +229,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySequenceNames(const std::li
     }
   }
   if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-    std::cerr << "  OK: no problems found" << std::endl;
+    std::cerr << "  OK" << std::endl;
     status = VerifyStatus::OK;
   }
   return status;
@@ -323,7 +260,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTriggerNames(const std::lis
     }
   }
   if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-    std::cerr << "  OK: no problems found" << std::endl;
+    std::cerr << "  OK" << std::endl;
     status = VerifyStatus::OK;
   }
   return status;

@@ -17,6 +17,9 @@
  */
 
 #include "catalogue/CatalogueSchema.hpp"
+#include "common/utils/Regex.hpp"
+#include "common/utils/utils.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace cta {
 namespace catalogue {

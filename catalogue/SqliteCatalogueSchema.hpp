@@ -18,17 +18,7 @@
 
 #pragma once
 
-#include "common/utils/Regex.hpp"
-#include "common/utils/utils.hpp"
-#include "common/exception/Exception.hpp"
-
 #include "CatalogueSchema.hpp"
-
-#include <string>
-#include <list>
-
-// TODO
-#include <iostream>
 
 namespace cta {
 namespace catalogue {
