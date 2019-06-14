@@ -137,8 +137,6 @@ The tape server daemon
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
 Requires: logrotate
-Requires: cta-common = %{version}-%{release}
-Requires: cta-lib = %{version}-%{release}
 Requires: xrootd-server
 %description -n cta-xrmcd
 CERN Tape Archive:
