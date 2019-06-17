@@ -45,9 +45,9 @@ include_directories(${CMAKE_BINARY_DIR}/XRootdSSiRmcd ${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-xsmc RmcdClient.cpp)
 target_link_libraries(cta-xsmc XrdSsi-4 XrdSsiLib XrdSsiPbRmcd XrdUtils)
 set_property(TARGET cta-xsmc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-install (TARGETS cta-xsmc DESTINATION /usr/bin)
-install (FILES cta-xsmc-mount.1cta DESTINATION /usr/share/man/man1)
-install (FILES cta-xsmc-dismount.1cta DESTINATION /usr/share/man/man1)
+#install (TARGETS cta-xsmc DESTINATION /usr/bin)
+#install (FILES cta-xsmc-mount.1cta DESTINATION /usr/share/man/man1)
+#install (FILES cta-xsmc-dismount.1cta DESTINATION /usr/share/man/man1)
 
 #
 # XRootD SSI plugin for Test Server

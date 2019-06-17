@@ -163,19 +163,6 @@ The xroot plugin
 %systemd_post cta-xrmcd.service
 %systemdDaemonReload
 
-%package -n cta-xsmc
-Summary: CERN Tape Archive: command line interface
-Group: Application/CTA
-Requires: cta-lib = %{version}-%{release}
-%description -n cta-xsmc
-CERN Tape Archive:
-The xroot plugin
-%files -n cta-xsmc
-%defattr(-,root,root)
-%attr(0755,root,root) %{_bindir}/cta-xsmc
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-xsmc-mount.1cta.gz
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-xsmc-dismount.1cta.gz
-
 %package -n cta-frontend
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
