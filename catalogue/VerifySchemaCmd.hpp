@@ -75,6 +75,18 @@ private:
   bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
   
   /**
+   * Verifies schema version values in the database against the catalogue schema
+   * version values.
+   * Returns verification status as result.
+   * 
+   * @param schemaVersion The map of the catalogue schema version values.
+   * @param schemaDbVersion The map of the database schema version values.
+   * @return The verification status code.
+   */
+  VerifyStatus verifySchemaVersion(const std::map<std::string, uint64_t> &schemaVersion, 
+    const std::map<std::string, uint64_t> &schemaDbVersion) const;
+  
+  /**
    * Verifies table names in the database against the catalogue schema table names.
    * Returns verification status as result.
    * 

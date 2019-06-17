@@ -5768,7 +5768,7 @@ std::map<std::string, uint64_t> RdbmsCatalogue::getSchemaVersion() const {
     const char *const sql =
       "SELECT "
         "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
-        "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR,"
+        "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR "
       "FROM "
         "CTA_CATALOGUE";
 

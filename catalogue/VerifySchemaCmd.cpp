@@ -22,10 +22,13 @@
 #include "catalogue/OracleCatalogueSchema.hpp"
 #include "catalogue/PostgresCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 #include "rdbms/AutocommitMode.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "Catalogue.hpp"
 
 #include <algorithm>
 #include <map>
@@ -68,7 +71,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     std::cerr << "Cannot verify the database schema because the CTA_CATALOGUE table does not exists" << std::endl;
     return 1;
   }
-  
+    
   std::unique_ptr<CatalogueSchema> schema;
   switch(login.dbType) {
   case rdbms::Login::DBTYPE_IN_MEMORY:
@@ -100,11 +103,14 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       throw ex;
   }
   
-  const auto schemaVersion = schema->getSchemaVersion();
-  for (const auto &schemaInfo : schemaVersion) {
-    std::cerr << schemaInfo.first << ':' << schemaInfo.second << std::endl;
-  }
-  
+  std::cerr << "Checking schema version..." << std::endl;
+  log::DummyLogger dummyLog("dummy", "dummy");
+  const auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, login, maxNbConns, maxNbConns);
+  const auto catalogue = catalogueFactory->create();  
+  const auto schemaDbVersion = catalogue->getSchemaVersion();
+  const auto schemaVersion = schema->getSchemaVersion(); 
+  const VerifyStatus verifySchemaStatus = verifySchemaVersion(schemaVersion, schemaDbVersion);
+
   std::cerr << "Checking table names..." << std::endl;
   const auto schemaTableNames = schema->getSchemaTableNames();
   const auto dbTableNames = conn.getTableNames();
@@ -125,7 +131,8 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const auto dbTriggerNames = conn.getTriggerNames();
   const VerifyStatus verifyTriggersStatus = verifyTriggerNames(schemaTriggerNames, dbTriggerNames);
   
-  if (verifyTablesStatus    == VerifyStatus::ERROR || 
+  if (verifySchemaStatus    == VerifyStatus::ERROR ||
+      verifyTablesStatus    == VerifyStatus::ERROR || 
       verifyIndexesStatus   == VerifyStatus::ERROR ||
       verifySequencesStatus == VerifyStatus::ERROR || 
       verifyTriggersStatus  == VerifyStatus::ERROR ) {
@@ -152,6 +159,34 @@ bool VerifySchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn
 //------------------------------------------------------------------------------
 void VerifySchemaCmd::printUsage(std::ostream &os) {
   VerifySchemaCmdLineArgs::printUsage(os);
+}
+
+//------------------------------------------------------------------------------
+// verifySchemaVersion
+//------------------------------------------------------------------------------
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySchemaVersion(const std::map<std::string, uint64_t> &schemaVersion, 
+  const std::map<std::string, uint64_t> &schemaDbVersion) const {
+  VerifyStatus status = VerifyStatus::UNKNOWN;
+  for (const auto &schemaInfo : schemaVersion) {
+    if (schemaDbVersion.count(schemaInfo.first)) {
+      if (schemaInfo.second != schemaDbVersion.at(schemaInfo.first)) {
+        std::cerr << "  ERROR: the schema version mismatch: SCHEMA[" 
+                  << schemaInfo.first << "] = "  << schemaInfo.second 
+                  << ", DB[" << schemaInfo.first << "] = " 
+                  << schemaDbVersion.at(schemaInfo.first) << std::endl;
+        status = VerifyStatus::ERROR;
+      }
+    } else {
+      std::cerr << "  ERROR: the schema version value for " << schemaInfo.first 
+                <<"  not found in the Catalogue DB" << std::endl;
+      status = VerifyStatus::ERROR;
+    }
+  }
+  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
+    std::cerr << "  OK" << std::endl;
+    status = VerifyStatus::OK;
+  }
+  return status;
 }
 
 //------------------------------------------------------------------------------
