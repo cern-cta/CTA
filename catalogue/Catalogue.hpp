@@ -73,7 +73,7 @@ namespace catalogue {
 
 /**
  * Abstract class defining the interface to the CTA catalogue responsible for
- * storing crticial information about archive files, tapes and tape files.
+ * storing critical information about archive files, tapes and tape files.
  */
 class Catalogue {
 public:
@@ -585,6 +585,14 @@ public:
    * Checks that the most trivial query goes through. Throws an exception if not.
    */
   virtual void ping() = 0;
+  
+  /**
+   * Returns the map of strings to uint64 for the  SCHEMA_VERSION_MAJOR
+   * and SCHEMA_VERSION_MINOR.
+   * 
+   * @return The map for SCHEMA_VERSION_MAJOR and SCHEMA_VERSION_MINOR  values.
+   */
+  virtual std::map<std::string, uint64_t> getSchemaVersion() const = 0;
 
   /**
    * Returns true if the specified tape pool exists.

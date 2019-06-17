@@ -5760,6 +5760,38 @@ void RdbmsCatalogue::ping() {
 }
 
 //------------------------------------------------------------------------------
+// getSchemaVersion
+//------------------------------------------------------------------------------
+std::map<std::string, uint64_t> RdbmsCatalogue::getSchemaVersion() const {
+  try {
+    std::map<std::string, uint64_t> schemaVersion;
+    const char *const sql =
+      "SELECT "
+        "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
+        "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR,"
+      "FROM "
+        "CTA_CATALOGUE";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    
+    if(rset.next()) {
+      schemaVersion.insert(std::make_pair("SCHEMA_VERSION_MAJOR", rset.columnUint64("SCHEMA_VERSION_MAJOR")));
+      schemaVersion.insert(std::make_pair("SCHEMA_VERSION_MINOR", rset.columnUint64("SCHEMA_VERSION_MINOR")));
+      return schemaVersion;
+    } else {
+      throw exception::Exception("SCHEMA_VERSION_MAJOR,SCHEMA_VERSION_MINOR not found in the CTA_CATALOGUE");
+    } 
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
 std::list<std::string> RdbmsCatalogue::getTableNames() const {
