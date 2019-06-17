@@ -587,6 +587,14 @@ public:
    * @return True if the query went through.
    */
   void ping() override;
+  
+  /**
+   * Returns the map of strings to uint64 for the  SCHEMA_VERSION_MAJOR
+   * and SCHEMA_VERSION_MINOR.
+   * 
+   * @return The map for SCHEMA_VERSION_MAJOR and SCHEMA_VERSION_MINOR  values.
+   */
+  std::map<std::string, uint64_t> getSchemaVersion() const override;
 
   /**
    * Returns the names of all the tables in the database schema in alphabetical
