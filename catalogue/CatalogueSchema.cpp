@@ -21,9 +21,6 @@
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 
-// TODO
-#include <iostream>
-
 namespace cta {
 namespace catalogue {
 

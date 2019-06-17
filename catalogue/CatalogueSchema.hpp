@@ -93,8 +93,10 @@ struct CatalogueSchema {
   std::list<std::string> getSchemaTriggerNames() const;
   
   /**
-   * TODO
-   * @return 
+   * Returns the map of strings to uint64 for the catalogue SCHEMA_VERSION_MAJOR
+   * and SCHEMA_VERSION_MINOR values.
+   * 
+   * @return The map for SCHEMA_VERSION_MAJOR and SCHEMA_VERSION_MINOR  values.
    */
   std::map<std::string, uint64_t> getSchemaVersion() const;
 };
