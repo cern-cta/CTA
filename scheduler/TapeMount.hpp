@@ -20,6 +20,7 @@
 
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
+#include "common/optional.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
 #include <string>
@@ -52,6 +53,14 @@ namespace cta {
      * @return The mount transaction id.
      */
     virtual std::string getMountTransactionId() const = 0;    
+    
+    /**
+     * Return the activity this mount is running for.
+     * 
+     * @return optional, populated with the activity name if appropriate.
+     */
+    
+    virtual optional<std::string> getActivity() const = 0;
 
     /**
      * Returns the mount transaction id.

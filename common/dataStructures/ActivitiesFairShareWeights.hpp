@@ -16,18 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RetrieveFileQueueCriteria.hpp"
-namespace cta {
-namespace common {
-namespace dataStructures {
-    
-RetrieveFileQueueCriteria& RetrieveFileQueueCriteria::operator=(const RetrieveFileQueueCriteria& other){
-    if(this != &other){
-        this->archiveFile = other.archiveFile;
-        this->mountPolicy = other.mountPolicy;
-        this->activitiesFairShareWeight = other.activitiesFairShareWeight;
-    }
-    return *this;
-}
+#pragma once
 
+#include <string>
+#include <map>
+
+namespace cta { namespace common { namespace dataStructures {
+
+struct ActivitiesFairShareWeights {
+  std::string diskInstance;
+  std::map<std::string, double> activitiesWeights;
+  /** set the weight for the activity, checking the value is in ]0, 1] */
+  void setWeightFromDouble(const std::string & activity, double weight);
+  /** set the weight for an activity, first checking the string can be fully converted to a double, and then */
+  void setWeightFromString(const std::string & activity, const std::string &sweight);
+};
+  
 }}}

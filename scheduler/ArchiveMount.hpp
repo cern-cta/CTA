@@ -83,6 +83,14 @@ namespace cta {
      * @return The mount transaction id.
      */
     std::string getMountTransactionId() const override;
+    
+    /**
+     * Return nullopt as activities are for retrieve mounts;
+     * 
+     * @return nullopt.
+     */
+    optional<std::string> getActivity() const override { return nullopt; }
+
 
     /**
      * Indicates that the mount was completed.

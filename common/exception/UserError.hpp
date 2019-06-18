@@ -43,3 +43,5 @@ public:
 
 } // namespace exception
 } // namespace cta
+
+#define CTA_GENERATE_USER_EXCEPTION_CLASS(A) class A: public cta::exception::UserError { using UserError::UserError; }

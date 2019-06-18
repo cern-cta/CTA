@@ -70,6 +70,14 @@ namespace cta {
     virtual std::string getVid() const;
     
     /**
+     * Returns the (optional) activity for this mount.
+     * 
+     * @return 
+     */
+    optional<std::string> getActivity() const override;
+
+    
+    /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.

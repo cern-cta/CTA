@@ -141,28 +141,11 @@ public:
   static const uint64_t c_maxShardSize = 25000;
 };
 
-class ArchiveQueueToTransferForUser: public ArchiveQueue {
-  using ArchiveQueue::ArchiveQueue;
-};
-
-class ArchiveQueueToReportForUser: public ArchiveQueue {
-  using ArchiveQueue::ArchiveQueue;
-};
-
-class ArchiveQueueFailed: public ArchiveQueue {
-  using ArchiveQueue::ArchiveQueue;
-};
-
-class ArchiveQueueToTransferForRepack: public ArchiveQueue{
-  using ArchiveQueue::ArchiveQueue;
-};
-
-class ArchiveQueueToReportToRepackForSuccess : public ArchiveQueue{
-  using ArchiveQueue::ArchiveQueue;
-};
-
-class ArchiveQueueToReportToRepackForFailure: public ArchiveQueue{
-  using ArchiveQueue::ArchiveQueue;
-};
+class ArchiveQueueToTransferForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
+class ArchiveQueueToReportForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
+class ArchiveQueueFailed: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
+class ArchiveQueueToTransferForRepack: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
+class ArchiveQueueToReportToRepackForSuccess : public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
+class ArchiveQueueToReportToRepackForFailure: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
   
 }}

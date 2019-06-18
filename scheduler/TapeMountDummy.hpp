@@ -35,6 +35,9 @@ class TapeMountDummy: public TapeMount {
   cta::common::dataStructures::MountType getMountType() const override {
     throw exception::Exception("In DummyTapeMount::getMountType() : not implemented");
   }
+  optional<std::string> getActivity() const override {
+    throw exception::Exception("In DummyTapeMount::getActivity() : not implemented");
+  }
   uint32_t getNbFiles() const override {
     throw exception::Exception("In DummyTapeMount::getNbFiles() : not implemented");
   }

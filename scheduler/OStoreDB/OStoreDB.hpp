@@ -29,6 +29,7 @@
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RetrieveActivityCountMap.hpp"
 #include "objectstore/RepackQueue.hpp"
 #include "objectstore/RepackRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
@@ -108,7 +109,7 @@ public:
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime) override;
+      time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
     virtual ~TapeMountDecisionInfo();
   private:
     TapeMountDecisionInfo (OStoreDB & oStoreDB);
@@ -135,7 +136,7 @@ public:
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime) override;
+      time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
     virtual ~TapeMountDecisionInfoNoLock();
   };
 
@@ -256,6 +257,7 @@ public:
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
     objectstore::RetrieveRequest::RepackInfo m_repackInfo;
+    optional<objectstore::RetrieveActivityDescription> m_activityDescription;
   };
   static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
 
@@ -294,7 +296,7 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
-  std::string queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
+  std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override;
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override;
@@ -547,6 +549,7 @@ private:
     double latestBandwidth;
     std::string vid;
     std::string tapepool;
+    optional<common::dataStructures::DriveState::ActivityAndWeight> activityAndWeigh;
   };
   /** Collection of smaller scale parts of reportDriveStats */
   struct ReportDriveStatsInputs {

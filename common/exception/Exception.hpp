@@ -121,8 +121,4 @@ protected:
 
 }} // namespace cta::exception
 
-#define CTA_GENERATE_EXCEPTION_CLASS(A)                          \
-class A: public cta::exception::Exception {                      \
-public:                                                          \
-  A(const std::string & w = ""): cta::exception::Exception(w) {} \
-}
+#define CTA_GENERATE_EXCEPTION_CLASS(A) class A: public cta::exception::Exception { using Exception::Exception; }

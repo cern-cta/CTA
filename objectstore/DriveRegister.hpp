@@ -77,7 +77,7 @@ public:
   void removeDrive(const std::string & driveName);
 
   /**
-   * JSON dump of the drive 
+   * JSON dump of the drive register
    * @return 
    */
   std::string dump();

@@ -158,7 +158,16 @@ queueForFailure:;
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
     jta.push_back({activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(), 
-      mp, (signed)m_payload.schedulerrequest().entrylog().time()});
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt});
+    if (m_payload.has_activity_weight()) {
+      RetrieveActivityDescription activityDescription;
+      activityDescription.priority = m_payload.activity_weight().priority();
+      activityDescription.diskInstanceName = m_payload.activity_weight().disk_instance_name();
+      activityDescription.activity = m_payload.activity_weight().activity();
+      activityDescription.weight = m_payload.activity_weight().weight();
+      activityDescription.creationTime = m_payload.activity_weight().creation_time();
+      jta.back().activityDescription = activityDescription;
+    }
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
     // We can now make the transition official.
@@ -217,7 +226,16 @@ queueForTransfer:;
     mp.deserialize(m_payload.mountpolicy());
     std::list<RetrieveQueue::JobToAdd> jta;
     jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
-      mp, (signed)m_payload.schedulerrequest().entrylog().time()});
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt});
+    if (m_payload.has_activity_weight()) {
+      RetrieveActivityDescription activityDescription;
+      activityDescription.priority = m_payload.activity_weight().priority();
+      activityDescription.diskInstanceName = m_payload.activity_weight().disk_instance_name();
+      activityDescription.activity = m_payload.activity_weight().activity();
+      activityDescription.weight = m_payload.activity_weight().weight();
+      activityDescription.creationTime = m_payload.activity_weight().creation_time();
+      jta.back().activityDescription = activityDescription;
+    }
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto jobsSummary=rq.getJobsSummary();
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
@@ -430,6 +448,40 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
     const uint32_t hardcodedReportRetries = 2;
     addJob(tf.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
   }
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::setActivityIfNeeded()
+//------------------------------------------------------------------------------
+void RetrieveRequest::setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest& retrieveRequest,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
+  checkPayloadWritable();
+  if (retrieveRequest.activity) {
+    auto * activity = m_payload.mutable_activity_weight();
+    activity->set_priority(criteria.mountPolicy.retrievePriority);
+    activity->set_activity(retrieveRequest.activity.value());
+    activity->set_disk_instance_name(criteria.activitiesFairShareWeight.diskInstance);
+    activity->set_weight(criteria.activitiesFairShareWeight.activitiesWeights.at(retrieveRequest.activity.value()));
+    activity->set_creation_time(retrieveRequest.creationLog.time);
+  }
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::getActivity()
+//------------------------------------------------------------------------------
+optional<RetrieveActivityDescription> RetrieveRequest::getActivity() {
+  checkPayloadReadable();
+  optional<RetrieveActivityDescription> ret;
+  if (m_payload.has_activity_weight()) {
+    RetrieveActivityDescription activity;
+    activity.priority = m_payload.activity_weight().priority();
+    activity.diskInstanceName = m_payload.activity_weight().disk_instance_name();
+    activity.activity = m_payload.activity_weight().activity();
+    activity.weight = m_payload.activity_weight().weight();
+    activity.creationTime = m_payload.activity_weight().creation_time();
+    ret = activity;
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------

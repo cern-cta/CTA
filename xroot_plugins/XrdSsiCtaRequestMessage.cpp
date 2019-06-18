@@ -494,6 +494,11 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
+   
+   // Activity value is a string. The parameter might be present or not.
+   try {
+     request.activity = notification.file().xattr().at("activity");
+   } catch (...) {}
 
    cta::utils::Timer t;
 
@@ -503,6 +508,10 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
+   try {
+     // Print out the received activity in the logs for the moment.
+     params.add("activity", notification.file().xattr().at("activity"));
+   } catch (...) {}
    m_lc.log(cta::log::INFO, "In RequestMessage::processPREPARE(): queued file for retrieve.");
 
    // Set response type
@@ -852,7 +861,7 @@ void RequestMessage::processDrive_Ls(cta::xrd::Response &response)
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> headers = {
          "library","drive","host","desired","request","status","since","vid","tapepool","files",
-         "MBytes","MB/s","session","age"
+         "MBytes","MB/s","session","priority","activity","age"
       };
       responseTable.push_back(headers);
 
@@ -919,6 +928,8 @@ void RequestMessage::processDrive_Ls(cta::xrd::Response &response)
             default:
                currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.sessionId)));
          }
+         currentRow.push_back(std::to_string(ds.currentPriority));
+         currentRow.push_back(ds.currentActivityAndWeight?ds.currentActivityAndWeight.value().activity: "-");
          currentRow.push_back(std::to_string(timeSinceLastUpdate_s) +
             (timeSinceLastUpdate_s > DRIVE_TIMEOUT ? " [STALE]" : ""));
          responseTable.push_back(currentRow);

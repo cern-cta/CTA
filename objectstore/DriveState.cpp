@@ -18,9 +18,13 @@
 
 #include "DriveState.hpp"
 #include "GenericObject.hpp"
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
+//------------------------------------------------------------------------------
+// DriveState::DriveState())
+//------------------------------------------------------------------------------
 DriveState::DriveState(GenericObject& go):
 ObjectOps<serializers::DriveState, serializers::DriveState_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
@@ -29,6 +33,9 @@ ObjectOps<serializers::DriveState, serializers::DriveState_t>(go.objectStore()) 
   getPayloadFromHeader();
 }
 
+//------------------------------------------------------------------------------
+// DriveState::garbageCollect())
+//------------------------------------------------------------------------------
 void DriveState::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc, cta::catalogue::Catalogue& catalogue) {
   // The drive state is easily replaceable. We just delete it on garbage collection.
   checkPayloadWritable();
@@ -40,47 +47,36 @@ void DriveState::garbageCollect(const std::string& presumedOwner, AgentReference
   lc.log(log::INFO, "In DriveState::garbageCollect(): Garbage collected and removed drive state object.");
 }
 
+//------------------------------------------------------------------------------
+// DriveState::initialize())
+//------------------------------------------------------------------------------
 void DriveState::initialize(const std::string & driveName) {
-  // Setup underlying object
+  // Setup underlying object with defaults from dataStructures::DriveState
   ObjectOps<serializers::DriveState, serializers::DriveState_t>::initialize();
   m_payload.set_drivename(driveName);
-  m_payload.set_host("");
-  m_payload.set_logicallibrary("");
-  m_payload.set_sessionid(0);
-  m_payload.set_bytestransferedinsession(0);
-  m_payload.set_filestransferedinsession(0);
-  m_payload.set_latestbandwidth(0);
-  m_payload.set_sessionstarttime(0);
-  m_payload.set_mountstarttime(0);
-  m_payload.set_transferstarttime(0);
-  m_payload.set_unloadstarttime(0);
-  m_payload.set_unmountstarttime(0);
-  m_payload.set_drainingstarttime(0);
-  // In the absence of info, we sent down now.
-  m_payload.set_downorupstarttime(::time(nullptr));
-  m_payload.set_probestarttime(0);
-  m_payload.set_cleanupstarttime(0);
-  m_payload.set_lastupdatetime(0);
-  m_payload.set_startstarttime(0);
-  m_payload.set_shutdowntime(0);
-  m_payload.set_mounttype((uint32_t)common::dataStructures::MountType::NoMount);
-  m_payload.set_drivestatus((uint32_t)common::dataStructures::DriveStatus::Down);
-  m_payload.set_desiredup(false);
-  m_payload.set_desiredforcedown(false);
-  m_payload.set_currentvid("");
-  m_payload.set_currenttapepool("");
+  cta::common::dataStructures::DriveState driveState;
+  driveState.driveName = driveName;
+  driveState.downOrUpStartTime = ::time(nullptr);
+  setState(driveState);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
 
-
+//------------------------------------------------------------------------------
+// DriveState::DriveState())
+//------------------------------------------------------------------------------
 DriveState::DriveState(const std::string& address, Backend& os):
   ObjectOps<serializers::DriveState, serializers::DriveState_t>(os, address) { }
 
+//------------------------------------------------------------------------------
+// DriveState::DriveState())
+//------------------------------------------------------------------------------
 DriveState::DriveState(Backend& os):
   ObjectOps<serializers::DriveState, serializers::DriveState_t>(os) { }
 
-
+//------------------------------------------------------------------------------
+// DriveState::getState())
+//------------------------------------------------------------------------------
 cta::common::dataStructures::DriveState DriveState::getState() {
   cta::common::dataStructures::DriveState ret;
   ret.driveName                   = m_payload.drivename();
@@ -108,9 +104,29 @@ cta::common::dataStructures::DriveState DriveState::getState() {
   ret.desiredDriveState.forceDown = m_payload.desiredforcedown();
   ret.currentVid                  = m_payload.currentvid();
   ret.currentTapePool             = m_payload.currenttapepool();
+  ret.currentPriority             = m_payload.current_priority();
+  if (m_payload.has_current_activity())
+    ret.currentActivityAndWeight = 
+      cta::common::dataStructures::DriveState::ActivityAndWeight{
+        m_payload.current_activity(), m_payload.current_activity_weight()};
+  if (m_payload.has_nextmounttype())
+    ret.nextMountType = (common::dataStructures::MountType) m_payload.nextmounttype();
+  if (m_payload.has_nexttapepool())
+    ret.nextTapepool = m_payload.nexttapepool();
+  if (m_payload.has_nextvid())
+    ret.nextVid = m_payload.nextvid();
+  if (m_payload.has_next_priority())
+    ret.nextPriority = m_payload.next_priority();
+  if (m_payload.has_next_activity())
+    ret.nextActivityAndWeight =
+        cta::common::dataStructures::DriveState::ActivityAndWeight{
+          m_payload.next_activity(), m_payload.next_activity_weight()};
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// DriveState::setState())
+//------------------------------------------------------------------------------
 void DriveState::setState(cta::common::dataStructures::DriveState& state) {
   // There should be no need to set the drive name.
   m_payload.set_host(state.host);
@@ -137,6 +153,38 @@ void DriveState::setState(cta::common::dataStructures::DriveState& state) {
   m_payload.set_desiredforcedown(state.desiredDriveState.forceDown);
   m_payload.set_currentvid(state.currentVid);
   m_payload.set_currenttapepool(state.currentTapePool);
+  m_payload.set_current_priority(state.currentPriority);
+  if (state.currentActivityAndWeight) {
+    m_payload.set_current_activity(state.currentActivityAndWeight.value().activity);
+    m_payload.set_current_activity_weight(state.currentActivityAndWeight.value().weight);
+  } else {
+    m_payload.clear_current_activity();
+    m_payload.clear_current_activity_weight();
+  }
+  m_payload.set_nextvid(state.nextVid);
+  m_payload.set_nexttapepool(state.nextTapepool);
+  m_payload.set_next_priority(state.nextPriority);
+  m_payload.set_nextmounttype((uint32_t)state.nextMountType);
+  if (state.nextActivityAndWeight) {
+    m_payload.set_next_activity(state.nextActivityAndWeight.value().activity);
+    m_payload.set_next_activity_weight(state.nextActivityAndWeight.value().weight);
+  } else {
+    m_payload.clear_next_activity();
+    m_payload.clear_next_activity_weight();
+  }
+}
+
+//------------------------------------------------------------------------------
+// DriveState::dump())
+//------------------------------------------------------------------------------
+std::string DriveState::dump() {
+  checkPayloadReadable();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 }} // namespace cta::objectstore

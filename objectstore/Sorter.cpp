@@ -159,7 +159,7 @@ void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueA
     Sorter::RetrieveJob job = std::get<0>(jobToAdd->jobToQueue);
     succeededJobs[job.jobDump.copyNb] = jobToAdd;
     previousOwner = job.previousOwner->getAgentAddress();
-    jobsToAdd.push_back({job.retrieveRequest.get(),job.jobDump.copyNb,job.fSeq,job.fileSize,job.mountPolicy,job.jobDump.status});
+    jobsToAdd.push_back({job.retrieveRequest.get(),job.jobDump.copyNb,job.fSeq,job.fileSize,job.mountPolicy,job.jobDump.status,job.activityDescription});
   }
   try{
     algo.referenceAndSwitchOwnershipIfNecessary(vid,previousOwner,queueAddress,jobsToAdd,lc);

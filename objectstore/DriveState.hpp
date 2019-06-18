@@ -45,6 +45,12 @@ public:
   // Data access
   cta::common::dataStructures::DriveState getState();
   void setState(cta::common::dataStructures::DriveState & state);
+  
+  /**
+   * JSON dump of the drive state
+   * @return 
+   */
+  std::string dump();
 };
 
 }} // namespace cta::objectstore

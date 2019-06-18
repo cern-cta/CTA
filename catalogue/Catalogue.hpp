@@ -175,6 +175,8 @@ public:
    * @param user The user for whom the file is to be retrieved.  This will be
    * used by the Catalogue to determine the mount policy to be used when
    * retrieving the file.
+   * @param activity The activity under which the user wants to start the retrieve
+   * The call will fail if the activity is set and unknown. 
    * @param lc The log context.
    *
    * @return The information required to queue the associated retrieve request(s).
@@ -183,6 +185,7 @@ public:
     const std::string &diskInstanceName,
     const uint64_t archiveFileId,
     const common::dataStructures::UserIdentity &user,
+    const optional<std::string> & activity,
     log::LogContext &lc) = 0;
 
   /**
@@ -481,6 +484,13 @@ public:
   virtual void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t maxDrivesAllowed) = 0;
   virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
 
+  virtual void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & acttivity,
+    double weight, const std::string & comment) = 0;
+  virtual void modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & acttivity,
+    double weight, const std::string & comment) = 0;
+  virtual void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & acttivity) = 0;
+  virtual std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const = 0;
+  
   /**
    * Returns the specified archive files.  Please note that the list of files
    * is ordered by archive file ID.
@@ -593,6 +603,9 @@ public:
   virtual bool tapeExists(const std::string &vid) const = 0;
 
 }; // class Catalogue
+
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringActivity);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnOutOfRangeActivityWeight);
 
 } // namespace catalogue
 } // namespace cta
