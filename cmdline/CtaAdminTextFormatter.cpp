@@ -24,23 +24,21 @@
 
 namespace cta { namespace admin {
 
-/*
- * Convert time to string
- *
- * NOTE: ctime is not thread-safe!
- */
-std::string timeToString(const time_t &time)
-{
-  std::string timeString(ctime(&time));
-  timeString.resize(timeString.size()-1); //remove newline
-  return timeString;
-}
-
-
 std::string TextFormatter::doubleToStr(double value, char unit) {
   std::stringstream ss;
   ss << std::fixed << std::setprecision(1) << value << unit;
   return ss.str();
+}
+
+
+std::string TextFormatter::timeToStr(const time_t &unixtime) {
+  struct tm timeTm;
+  localtime_r(&unixtime, &timeTm);
+
+  char timeStr[17]; // YYYY-MM-DD HH:MM
+  strftime(timeStr, 17, "%F %R", &timeTm);
+
+  return timeStr;
 }
 
 
@@ -141,7 +139,7 @@ void TextFormatter::print(const cta::admin::ArchiveFileLsItem &afls_item) {
     afls_item.af().storage_class(),
     afls_item.af().df().owner(),
     afls_item.af().df().group(),
-    afls_item.af().creation_time(),
+    timeToStr(afls_item.af().creation_time()),
     afls_item.tf().superseded_by_vid(),
     afls_item.tf().superseded_by_f_seq(),
     afls_item.af().df().path()
@@ -369,18 +367,18 @@ void TextFormatter::print(const cta::admin::TapeLsItem &tals_item) {
     tals_item.last_fseq(),
     tals_item.full(),
     tals_item.disabled(),
-    tals_item.has_label_log()        ? tals_item.label_log().drive()                       : "",
-    tals_item.has_label_log()        ? std::to_string(tals_item.label_log().time())        : "",
-    tals_item.has_last_written_log() ? tals_item.last_written_log().drive()                : "",
-    tals_item.has_last_written_log() ? std::to_string(tals_item.last_written_log().time()) : "",
-    tals_item.has_last_read_log()    ? tals_item.last_read_log().drive()                   : "",
-    tals_item.has_last_read_log()    ? std::to_string(tals_item.last_read_log().time())    : "",
+    tals_item.has_label_log()        ? tals_item.label_log().drive()                  : "",
+    tals_item.has_label_log()        ? timeToStr(tals_item.label_log().time())        : "",
+    tals_item.has_last_written_log() ? tals_item.last_written_log().drive()           : "",
+    tals_item.has_last_written_log() ? timeToStr(tals_item.last_written_log().time()) : "",
+    tals_item.has_last_read_log()    ? tals_item.last_read_log().drive()              : "",
+    tals_item.has_last_read_log()    ? timeToStr(tals_item.last_read_log().time())    : "",
     tals_item.creation_log().username(),
     tals_item.creation_log().host(),
-    tals_item.creation_log().time(),
+    timeToStr(tals_item.creation_log().time()),
     tals_item.last_modification_log().username(),
     tals_item.last_modification_log().host(),
-    tals_item.last_modification_log().time()
+    timeToStr(tals_item.last_modification_log().time())
   );
 }
 
@@ -470,10 +468,10 @@ void TextFormatter::print(const cta::admin::TapePoolLsItem &tpls_item)
     tpls_item.supply(),
     tpls_item.created().username(),
     tpls_item.created().host(),
-    timeToString(tpls_item.created().time()),
+    timeToStr(tpls_item.created().time()),
     tpls_item.modified().username(),
     tpls_item.modified().host(),
-    timeToString(tpls_item.modified().time()),
+    timeToStr(tpls_item.modified().time()),
     tpls_item.comment()
   );
 }

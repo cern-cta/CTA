@@ -113,6 +113,9 @@ private:
   //! Convert double to string with one decimal place precision and a suffix
   static std::string doubleToStr(double value, char unit);
 
+  //! Convert UNIX time to string
+  static std::string timeToStr(const time_t &unixtime);
+
   //! Convert data size in bytes to abbreviated string with appropriate size suffix (K/M/G/T/P/E)
   static std::string dataSizeToStr(uint64_t value);
 
