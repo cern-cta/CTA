@@ -45,29 +45,29 @@ public:
 
   // Output headers
   void printAfLsHeader();
-  static void printAfLsSummaryHeader();
-  static void printFrLsHeader();
-  static void printFrLsSummaryHeader();
-  static void printLpaHeader();
-  static void printLpaSummaryHeader();
-  static void printLprHeader();
-  static void printLprSummaryHeader();
-  static void printTpLsHeader();
-  static void printTapeLsHeader();
-  static void printRepackLsHeader();
+  void printAfLsSummaryHeader();
+  void printFrLsHeader();
+  void printFrLsSummaryHeader();
+  void printLpaHeader();
+  void printLpaSummaryHeader();
+  void printLprHeader();
+  void printLprSummaryHeader();
+  void printTapePoolLsHeader();
+  void printTapeLsHeader();
+  void printRepackLsHeader();
    
   // Output records
   void print(const ArchiveFileLsItem &afls_item);
-  static void print(const ArchiveFileLsSummary &afls_summary);
-  static void print(const FailedRequestLsItem &frls_item);
-  static void print(const FailedRequestLsSummary &frls_summary);
-  static void print(const ListPendingArchivesItem &lpa_item);
-  static void print(const ListPendingArchivesSummary &lpa_summary);
-  static void print(const ListPendingRetrievesItem &lpr_item);
-  static void print(const ListPendingRetrievesSummary &lpr_summary);
-  static void print(const TapePoolLsItem &tpls_item);
-  static void print(const TapeLsItem &tals_item);
-  static void print(const RepackLsItem &rels_item);
+  void print(const ArchiveFileLsSummary &afls_summary);
+  void print(const FailedRequestLsItem &frls_item);
+  void print(const FailedRequestLsSummary &frls_summary);
+  void print(const ListPendingArchivesItem &lpa_item);
+  void print(const ListPendingArchivesSummary &lpa_summary);
+  void print(const ListPendingRetrievesItem &lpr_item);
+  void print(const ListPendingRetrievesSummary &lpr_summary);
+  void print(const TapePoolLsItem &tpls_item);
+  void print(const TapeLsItem &tals_item);
+  void print(const RepackLsItem &rels_item);
 
 private:
   //! Add a line to the buffer
@@ -79,14 +79,14 @@ private:
     if(m_outputBuffer.size() >= m_bufLines) flush();
   }
 
-  //! Recursive variadic function to build a log string from an arbitrary number of items of arbitrary type
+  //! Recursive variadic method to build a log string from an arbitrary number of items of arbitrary type
   template<typename T, typename... Args>
   void buildVector(std::vector<std::string> &line, const T &item, Args... args) {
     buildVector(line, item);
     buildVector(line, args...);
   }
 
-  //! Base case function to add one item to the log
+  //! Base case method to add one item to the log, with specialisations by type
   template<typename T>
   void buildVector(std::vector<std::string> &line, const T &item) {
     line.push_back(std::to_string(item));

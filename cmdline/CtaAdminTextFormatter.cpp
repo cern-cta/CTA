@@ -92,8 +92,7 @@ void TextFormatter::printAfLsHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::ArchiveFileLsItem &afls_item)
-{
+void TextFormatter::print(const cta::admin::ArchiveFileLsItem &afls_item) {
   push_back(
     afls_item.af().archive_id(),
     afls_item.copy_nb(),
@@ -115,346 +114,333 @@ void TextFormatter::print(const cta::admin::ArchiveFileLsItem &afls_item)
   );
 }
 
-void TextFormatter::printAfLsSummaryHeader()
-{
-   std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
-             << TEXT_NORMAL << std::endl;
+void TextFormatter::printAfLsSummaryHeader() {
+  push_back(
+    "total files",
+    "total size"
+  );
 }
 
 void TextFormatter::print(const cta::admin::ArchiveFileLsSummary &afls_summary)
 {
-   std::cout << std::setfill(' ') << std::setw(13) << std::right << afls_summary.total_files() << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << afls_summary.total_size()  << ' '
-             << std::endl;
+  push_back(
+    afls_summary.total_files(),
+    afls_summary.total_size()
+  );
 }
 
-void TextFormatter::printFrLsHeader()
-{
-   std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(12) << std::right << "request type"   << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "copy no"        << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << "tapepool/vid"   << ' '
-             << std::setfill(' ') << std::setw(10) << std::right << "requester"      << ' '
-             << std::setfill(' ') << std::setw(6)  << std::right << "group"          << ' '
-                                                                 << "path"
-             << TEXT_NORMAL << std::endl;
+void TextFormatter::printFrLsHeader() {
+  push_back(
+    "request type",
+    "copy no",
+    "tapepool/vid",
+    "requester",
+    "group",
+    "path"
+  );
 }
 
-void TextFormatter::print(const cta::admin::FailedRequestLsItem &frls_item)
-{
-   std::string request_type;
-   std::string tapepool_vid;
+void TextFormatter::print(const cta::admin::FailedRequestLsItem &frls_item) {
+  std::string request_type;
+  std::string tapepool_vid;
 
-   switch(frls_item.request_type()) {
-      case admin::RequestType::ARCHIVE_REQUEST:
-         request_type = "archive";
-         tapepool_vid = frls_item.tapepool();
-         break;
-      case admin::RequestType::RETRIEVE_REQUEST:
-         request_type = "retrieve";
-         tapepool_vid = frls_item.tf().vid();
-         break;
-      default:
-         throw std::runtime_error("Unrecognised request type: " + std::to_string(frls_item.request_type()));
-   }
-
-   std::cout << std::setfill(' ') << std::setw(11) << std::right << request_type                      << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << frls_item.copy_nb()               << ' '
-             << std::setfill(' ') << std::setw(14) << std::right << tapepool_vid                      << ' '
-             << std::setfill(' ') << std::setw(10) << std::right << frls_item.requester().username()  << ' '
-             << std::setfill(' ') << std::setw(6)  << std::right << frls_item.requester().groupname() << ' '
-                                                                 << frls_item.af().df().path()
-             << std::endl;
-
-   for(auto &errLogMsg : frls_item.failurelogs()) {
-     std::cout << errLogMsg << std::endl;
-   }
-}
-
-void TextFormatter::printFrLsSummaryHeader()
-{
-   std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(12) << std::right << "request type"        << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << "total files"         << ' '
-             << std::setfill(' ') << std::setw(20) << std::right << "total size (bytes)"  << ' '
-             << TEXT_NORMAL << std::endl;
-}
-
-void TextFormatter::print(const cta::admin::FailedRequestLsSummary &frls_summary)
-{
-   std::string request_type =
-      frls_summary.request_type() == cta::admin::RequestType::ARCHIVE_REQUEST  ? "archive" :
-      frls_summary.request_type() == cta::admin::RequestType::RETRIEVE_REQUEST ? "retrieve" : "total";
-
-   std::cout << std::setfill(' ') << std::setw(11) << std::right << request_type               << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << frls_summary.total_files() << ' '
-             << std::setfill(' ') << std::setw(20) << std::right << frls_summary.total_size()  << ' '
-             << std::endl;
-}
-
-void TextFormatter::printLpaHeader()
-{
-   std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(18) << std::right << "tapepool"       << ' '
-             << std::setfill(' ') << std::setw(11) << std::right << "archive id"     << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "disk id"        << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "instance"       << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << "checksum type"  << ' '
-             << std::setfill(' ') << std::setw(14) << std::right << "checksum value" << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << "size"           << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "user"           << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
-             <<                                                     "path"
-             << TEXT_NORMAL << std::endl;
-}
-
-void TextFormatter::print(const cta::admin::ListPendingArchivesItem &lpa_item)
-{
-   std::cout << std::setfill(' ') << std::setw(18) << std::right << lpa_item.tapepool()           << ' '
-             << std::setfill(' ') << std::setw(11) << std::right << lpa_item.af().archive_id()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << lpa_item.af().storage_class() << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << lpa_item.copy_nb()            << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << lpa_item.af().disk_id()       << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << lpa_item.af().disk_instance() << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << lpa_item.af().cs().type()     << ' '
-             << std::setfill(' ') << std::setw(14) << std::right << lpa_item.af().cs().value()    << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << lpa_item.af().size()          << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << lpa_item.af().df().owner()    << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << lpa_item.af().df().group()    << ' '
-             <<                                                     lpa_item.af().df().path()
-             << std::endl;
-}
-
-void TextFormatter::printLpaSummaryHeader()
-{
-   std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(18) << std::right << "tapepool"    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
-             << TEXT_NORMAL << std::endl;
-}
-
-void TextFormatter::print(const cta::admin::ListPendingArchivesSummary &lpa_summary)
-{
-   std::cout << std::setfill(' ') << std::setw(18) << std::right << lpa_summary.tapepool()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << lpa_summary.total_files() << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << lpa_summary.total_size()  << ' '
-             << std::endl;
-}
-
-void TextFormatter::printLprHeader()
-{
-   std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(13) << std::right << "vid"        << ' '
-             << std::setfill(' ') << std::setw(11) << std::right << "archive id" << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "copy no"    << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "fseq"       << ' '
-             << std::setfill(' ') << std::setw(9)  << std::right << "block id"   << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << "size"       << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "user"       << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "group"      << ' '
-             <<                                                     "path"
-             << TEXT_NORMAL << std::endl;
-}
-
-void TextFormatter::print(const cta::admin::ListPendingRetrievesItem &lpr_item)
-{
-   std::cout << std::setfill(' ') << std::setw(13) << std::right << lpr_item.tf().vid()        << ' '
-             << std::setfill(' ') << std::setw(11) << std::right << lpr_item.af().archive_id() << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << lpr_item.copy_nb()         << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << lpr_item.tf().f_seq()      << ' '
-             << std::setfill(' ') << std::setw(9)  << std::right << lpr_item.tf().block_id()   << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << lpr_item.af().size()       << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << lpr_item.af().df().owner() << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << lpr_item.af().df().group() << ' '
-             <<                                                     lpr_item.af().df().path()
-             << std::endl;
-}
-
-void TextFormatter::printLprSummaryHeader()
-{
-   std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(13) << std::right << "vid"         << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
-             << TEXT_NORMAL << std::endl;
-}
-
-void TextFormatter::print(const cta::admin::ListPendingRetrievesSummary &lpr_summary)
-{
-   std::cout << std::setfill(' ') << std::setw(13) << std::right << lpr_summary.vid()         << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << lpr_summary.total_files() << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << lpr_summary.total_size()  << ' '
-             << std::endl;
-}
-
-void TextFormatter::printTpLsHeader()
-{
-   std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(18) << std::right << "name"        << ' '
-             << std::setfill(' ') << std::setw(10) << std::right << "vo"          << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "#tapes"      << ' '
-             << std::setfill(' ') << std::setw(9)  << std::right << "#partial"    << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << "#phys files" << ' '
-             << std::setfill(' ') << std::setw(5)  << std::right << "size"        << ' '
-             << std::setfill(' ') << std::setw(5)  << std::right << "used"        << ' '
-             << std::setfill(' ') << std::setw(6)  << std::right << "avail"       << ' '
-             << std::setfill(' ') << std::setw(6)  << std::right << "use%"        << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "encrypt"     << ' '
-             << std::setfill(' ') << std::setw(20) << std::right << "supply"      << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "c.user"      << ' '
-             << std::setfill(' ') << std::setw(25) << std::right << "c.host"      << ' '
-             << std::setfill(' ') << std::setw(24) << std::right << "c.time"      << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "m.user"      << ' '
-             << std::setfill(' ') << std::setw(25) << std::right << "m.host"      << ' '
-             << std::setfill(' ') << std::setw(24) << std::right << "m.time"      << ' '
-             <<                                                     "comment"     << ' '
-             << TEXT_NORMAL << std::endl;
-}
-
-void TextFormatter::printTapeLsHeader(){
-  std::cout << TEXT_RED
-            << std::setfill(' ') << std::setw(7) << std::right << "vid"              << ' '
-            << std::setfill(' ') << std::setw(10) << std::right << "media type"       << ' '
-            << std::setfill(' ') << std::setw(7)  << std::right << "vendor"           << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << "logical library"  << ' '
-            << std::setfill(' ') << std::setw(18) << std::right << "tapepool"         << ' '
-            << std::setfill(' ') << std::setw(10)  << std::right << "vo"               << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << "encryption key"   << ' '
-            << std::setfill(' ') << std::setw(12)  << std::right << "capacity"         << ' '
-            << std::setfill(' ') << std::setw(12)  << std::right << "occupancy"        << ' '
-            << std::setfill(' ') << std::setw(9)  << std::right << "last fseq"        << ' '
-            << std::setfill(' ') << std::setw(5)  << std::right << "full"             << ' '
-            << std::setfill(' ') << std::setw(8) << std::right << "disabled"         << ' '
-            << std::setfill(' ') << std::setw(12) << std::right << "label drive"      << ' '
-            << std::setfill(' ') << std::setw(12)  << std::right << "label time"       << ' '
-            << std::setfill(' ') << std::setw(12) << std::right << "last w drive"     << ' '
-            << std::setfill(' ') << std::setw(12) << std::right << "last w time"      << ' '
-            << std::setfill(' ') << std::setw(12) << std::right << "last r drive"     << ' '
-            << std::setfill(' ') << std::setw(12) << std::right << "last r time"      << ' '
-            << std::setfill(' ') << std::setw(20) << std::right << "c.user"           << ' '
-            << std::setfill(' ') << std::setw(25) << std::right << "c.host"           << ' '
-            << std::setfill(' ') << std::setw(13) << std::right << "c.time"           << ' '
-            << std::setfill(' ') << std::setw(20) << std::right << "m.user"           << ' '
-            << std::setfill(' ') << std::setw(25) << std::right << "m.host"           << ' '
-            << std::setfill(' ') << std::setw(13) << std::right << "m.time"           << ' '
-            <<                                                     "comment"          << ' '
-            << TEXT_NORMAL << std::endl;
-}
-
-
-void TextFormatter::print(const cta::admin::TapeLsItem &tals_item){
-  std::cout << std::setfill(' ') << std::setw(7) << std::right << tals_item.vid()        << ' '
-            << std::setfill(' ') << std::setw(10) << std::right << tals_item.media_type() << ' '
-            << std::setfill(' ') << std::setw(7)  << std::right << tals_item.vendor()     << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << tals_item.logical_library() << ' '
-            << std::setfill(' ') << std::setw(18) << std::right << tals_item.tapepool()         << ' '
-            << std::setfill(' ') << std::setw(10)  << std::right << tals_item.vo()               << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << tals_item.encryption_key()   << ' '
-            << std::setfill(' ') << std::setw(12)  << std::right << tals_item.capacity()         << ' '
-            << std::setfill(' ') << std::setw(12)  << std::right << tals_item.occupancy()       << ' '
-            << std::setfill(' ') << std::setw(9)  << std::right << tals_item.last_fseq()       << ' '
-            << std::setfill(' ') << std::setw(5)  << std::right << tals_item.full()           << ' '
-            << std::setfill(' ') << std::setw(8) << std::right << tals_item.disabled()         << ' ';
-  if(tals_item.has_label_log()){
-    std::cout << std::setfill(' ') << std::setw(12) << std::right << tals_item.label_log().drive() << ' '
-              << std::setfill(' ') << std::setw(12) << std::right << tals_item.label_log().time() << ' ';
-  } else {
-    std::cout << std::setfill(' ') << std::setw(12) << std::right << "-" << ' '
-              << std::setfill(' ') << std::setw(12) << std::right << "-" << ' ';
+  switch(frls_item.request_type()) {
+    case admin::RequestType::ARCHIVE_REQUEST:
+      request_type = "archive";
+      tapepool_vid = frls_item.tapepool();
+      break;
+    case admin::RequestType::RETRIEVE_REQUEST:
+      request_type = "retrieve";
+      tapepool_vid = frls_item.tf().vid();
+      break;
+    default:
+      throw std::runtime_error("Unrecognised request type: " + std::to_string(frls_item.request_type()));
   }
-  if(tals_item.has_last_written_log()){
-    std::cout << std::setfill(' ') << std::setw(12) << std::right << tals_item.last_written_log().drive() << ' '
-              << std::setfill(' ') << std::setw(12) << std::right << tals_item.last_written_log().time() << ' ';
-  } else {
-    std::cout << std::setfill(' ') << std::setw(12) << "-" << ' '
-              << std::setfill(' ') << std::setw(12) << "-" << ' ';
+
+  push_back(
+    request_type,
+    frls_item.copy_nb(),
+    tapepool_vid,
+    frls_item.requester().username(),
+    frls_item.requester().groupname(),
+    frls_item.af().df().path()
+  );
+
+  for(auto &errLogMsg : frls_item.failurelogs()) {
+    push_back(
+     "", "", "", "", "", errLogMsg
+    );
   }
-  if(tals_item.has_last_read_log()){
-    std::cout << std::setfill(' ') << std::setw(12) << std::right << tals_item.last_read_log().drive() << ' '
-              << std::setfill(' ') << std::setw(12) << std::right << tals_item.last_read_log().time() << ' ';
-  } else {
-    std::cout << std::setfill(' ') << std::setw(12) << std::right << "-" << ' '
-              << std::setfill(' ') << std::setw(12) << std::right << "-" << ' ';
-  }
-    std::cout << std::setfill(' ') << std::setw(20) << std::right << tals_item.creation_log().username()          << ' '
-              << std::setfill(' ') << std::setw(25) << std::right << tals_item.creation_log().host()          << ' '
-              << std::setfill(' ') << std::setw(13) << std::right << tals_item.creation_log().time()           << ' '
-              << std::setfill(' ') << std::setw(20) << std::right << tals_item.last_modification_log().username()        << ' '
-              << std::setfill(' ') << std::setw(25) << std::right << tals_item.last_modification_log().host()          << ' '
-              << std::setfill(' ') << std::setw(13) << std::right << tals_item.last_modification_log().time()           << ' '
-              << std::endl;
 }
 
-void TextFormatter::printRepackLsHeader(){
-  std::cout << TEXT_RED
-            << std::setfill(' ') << std::setw(7) << std::right << "vid"              << ' '
-            << std::setfill(' ') << std::setw(50) << std::right << "repackBufferURL"       << ' '
-            << std::setfill(' ') << std::setw(17)  << std::right << "userProvidedFiles"           << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << "totalFilesToRetrieve" << ' '
-            << std::setfill(' ') << std::setw(19) << std::right <<  "totalBytesToRetrieve" << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << "totalFilesToArchive"  << ' '
-            << std::setfill(' ') << std::setw(19) << std::right <<  "totalBytesToArchive"  << ' '
-            << std::setfill(' ') << std::setw(14)  << std::right << "retrievedFiles"               << ' '
-            << std::setfill(' ') << std::setw(13)  << std::right << "archivedFiles"   << ' '
-            << std::setfill(' ') << std::setw(21)  << std::right << "failedToRetrieveFiles"         << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << "failedToRetrieveBytes"        << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right <<  "failedToArchiveFiles"        << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right <<  "failedToArchiveBytes"             << ' '
-            << std::setfill(' ') << std::setw(16)  << std::right <<  "lastExpandedFSeq"             << ' '
-            <<                                                      "status"         << ' '
-            << TEXT_NORMAL << std::endl;
+void TextFormatter::printFrLsSummaryHeader() {
+  push_back(
+    "request type",
+    "total files",
+    "total size (bytes)"
+  );
 }
 
-void TextFormatter::print(const cta::admin::RepackLsItem &rels_item){
-  std::cout << std::setfill(' ') << std::setw(7) << std::right << rels_item.vid()           << ' '
-            << std::setfill(' ') << std::setw(50) << std::right << rels_item.repack_buffer_url()      << ' '
-            << std::setfill(' ') << std::setw(17)  << std::right << rels_item.user_provided_files()           << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << rels_item.total_files_to_retrieve() << ' '
-            << std::setfill(' ') << std::setw(19) << std::right <<  rels_item.total_bytes_to_retrieve() << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << rels_item.total_files_to_archive()  << ' '
-            << std::setfill(' ') << std::setw(19) << std::right <<  rels_item.total_bytes_to_archive()  << ' '
-            << std::setfill(' ') << std::setw(14)  << std::right << rels_item.retrieved_files()               << ' '
-            << std::setfill(' ') << std::setw(13)  << std::right << rels_item.archived_files()   << ' '
-            << std::setfill(' ') << std::setw(21)  << std::right << rels_item.failed_to_retrieve_files()        << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right << rels_item.failed_to_retrieve_bytes()        << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right <<  rels_item.failed_to_archive_files()       << ' '
-            << std::setfill(' ') << std::setw(20)  << std::right <<  rels_item.failed_to_retrieve_bytes()         << ' '
-            << std::setfill(' ') << std::setw(10)  << std::right <<  rels_item.last_expanded_fseq()             << ' '
-            << rels_item.status() << std::endl;
+void TextFormatter::print(const cta::admin::FailedRequestLsSummary &frls_summary) {
+  std::string request_type =
+    frls_summary.request_type() == cta::admin::RequestType::ARCHIVE_REQUEST  ? "archive" :
+    frls_summary.request_type() == cta::admin::RequestType::RETRIEVE_REQUEST ? "retrieve" : "total";
+
+  push_back(
+    request_type,
+    frls_summary.total_files(),
+    frls_summary.total_size()
+  );
+}
+
+void TextFormatter::printLpaHeader() {
+  push_back(
+    "tapepool",
+    "archive id",
+    "storage class",
+    "copy no",
+    "disk id",
+    "instance",
+    "checksum type",
+    "checksum value",
+    "size",
+    "user",
+    "group",
+    "path"
+  );
+}
+
+void TextFormatter::print(const cta::admin::ListPendingArchivesItem &lpa_item) {
+  push_back(
+    lpa_item.tapepool(),
+    lpa_item.af().archive_id(),
+    lpa_item.af().storage_class(),
+    lpa_item.copy_nb(),
+    lpa_item.af().disk_id(),
+    lpa_item.af().disk_instance(),
+    lpa_item.af().cs().type(),
+    lpa_item.af().cs().value(),
+    lpa_item.af().size(),
+    lpa_item.af().df().owner(),
+    lpa_item.af().df().group(),
+    lpa_item.af().df().path()
+  );
+}
+
+void TextFormatter::printLpaSummaryHeader() {
+  push_back(
+    "tapepool",
+    "total files",
+    "total size"
+  );
+}
+
+void TextFormatter::print(const cta::admin::ListPendingArchivesSummary &lpa_summary) {
+  push_back(
+    lpa_summary.tapepool(),
+    lpa_summary.total_files(),
+    lpa_summary.total_size()
+  );
+}
+
+void TextFormatter::printLprHeader() {
+  push_back(
+    "vid",
+    "archive id",
+    "copy no",
+    "fseq",
+    "block id",
+    "size",
+    "user",
+    "group",
+    "path"
+  );
+}
+
+void TextFormatter::print(const cta::admin::ListPendingRetrievesItem &lpr_item) {
+  push_back(
+    lpr_item.tf().vid(),
+    lpr_item.af().archive_id(),
+    lpr_item.copy_nb(),
+    lpr_item.tf().f_seq(),
+    lpr_item.tf().block_id(),
+    lpr_item.af().size(),
+    lpr_item.af().df().owner(),
+    lpr_item.af().df().group(),
+    lpr_item.af().df().path()
+  );
+}
+
+void TextFormatter::printLprSummaryHeader() {
+  push_back(
+    "vid",
+    "total files",
+    "total size"
+  );
+}
+
+void TextFormatter::print(const cta::admin::ListPendingRetrievesSummary &lpr_summary) {
+  push_back(
+    lpr_summary.vid(),
+    lpr_summary.total_files(),
+    lpr_summary.total_size()
+  );
+}
+
+void TextFormatter::printTapeLsHeader() {
+  push_back(
+    "vid",
+    "media type",
+    "vendor",
+    "logical library",
+    "tapepool",
+    "vo",
+    "encryption key",
+    "capacity",
+    "occupancy",
+    "last fseq",
+    "full",
+    "disabled",
+    "label drive",
+    "label time",
+    "last w drive",
+    "last w time",
+    "last r drive",
+    "last r time",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time"
+  );
+}
+
+void TextFormatter::print(const cta::admin::TapeLsItem &tals_item) {
+  push_back(
+    tals_item.vid(),
+    tals_item.media_type(),
+    tals_item.vendor(),
+    tals_item.logical_library(),
+    tals_item.tapepool(),
+    tals_item.vo(),
+    tals_item.encryption_key(),
+    tals_item.capacity(),
+    tals_item.occupancy(),
+    tals_item.last_fseq(),
+    tals_item.full(),
+    tals_item.disabled(),
+    tals_item.has_label_log()        ? tals_item.label_log().drive()                       : "-",
+    tals_item.has_label_log()        ? std::to_string(tals_item.label_log().time())        : "-",
+    tals_item.has_last_written_log() ? tals_item.last_written_log().drive()                : "-",
+    tals_item.has_last_written_log() ? std::to_string(tals_item.last_written_log().time()) : "-",
+    tals_item.has_last_read_log()    ? tals_item.last_read_log().drive()                   : "-",
+    tals_item.has_last_read_log()    ? std::to_string(tals_item.last_read_log().time())    : "-",
+    tals_item.creation_log().username(),
+    tals_item.creation_log().host(),
+    tals_item.creation_log().time(),
+    tals_item.last_modification_log().username(),
+    tals_item.last_modification_log().host(),
+    tals_item.last_modification_log().time()
+  );
+}
+
+void TextFormatter::printRepackLsHeader() {
+  push_back(
+    "vid",
+    "repackBufferURL",
+    "userProvidedFiles",
+    "totalFilesToRetrieve",
+    "totalBytesToRetrieve",
+    "totalFilesToArchive",
+    "totalBytesToArchive",
+    "retrievedFiles",
+    "archivedFiles",
+    "failedToRetrieveFiles",
+    "failedToRetrieveBytes",
+    "failedToArchiveFiles",
+    "failedToArchiveBytes",
+    "lastExpandedFSeq",
+    "status"
+  );
+}
+
+void TextFormatter::print(const cta::admin::RepackLsItem &rels_item) {
+  push_back(
+   rels_item.vid(),
+   rels_item.repack_buffer_url(),
+   rels_item.user_provided_files(),
+   rels_item.total_files_to_retrieve(),
+   rels_item.total_bytes_to_retrieve(),
+   rels_item.total_files_to_archive(),
+   rels_item.total_bytes_to_archive(),
+   rels_item.retrieved_files(),
+   rels_item.archived_files(),
+   rels_item.failed_to_retrieve_files(),
+   rels_item.failed_to_retrieve_bytes(),
+   rels_item.failed_to_archive_files(),
+   rels_item.failed_to_retrieve_bytes(),
+   rels_item.last_expanded_fseq()
+  );
+}
+
+void TextFormatter::printTapePoolLsHeader() {
+  push_back(
+    "name",
+    "vo",
+    "#tapes",
+    "#partial",
+    "#phys files",
+    "size",
+    "used",
+    "avail",
+    "use%",
+    "encrypt",
+    "supply",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
 }
 
 void TextFormatter::print(const cta::admin::TapePoolLsItem &tpls_item)
 {
-   std::string encrypt_str = tpls_item.encrypt() ? "true" : "false";
-   uint64_t avail = tpls_item.capacity_bytes() > tpls_item.data_bytes() ?
-      tpls_item.capacity_bytes()-tpls_item.data_bytes() : 0; 
-   double use_percent = tpls_item.capacity_bytes() > 0 ?
-      (static_cast<double>(tpls_item.data_bytes())/static_cast<double>(tpls_item.capacity_bytes()))*100.0 : 0.0;
+  auto capacity_str = std::to_string(tpls_item.capacity_bytes() / 1000000000) + "G";
+  auto data_str     = std::to_string(tpls_item.data_bytes()     / 1000000000) + "G";
 
-   std::cout << std::setfill(' ') << std::setw(18) << std::right << tpls_item.name()                          << ' '
-             << std::setfill(' ') << std::setw(10) << std::right << tpls_item.vo()                            << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << tpls_item.num_tapes()                     << ' '
-             << std::setfill(' ') << std::setw(9)  << std::right << tpls_item.num_partial_tapes()             << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << tpls_item.num_physical_files()            << ' '
-             << std::setfill(' ') << std::setw(4)  << std::right << tpls_item.capacity_bytes() / 1000000000   << "G "
-             << std::setfill(' ') << std::setw(4)  << std::right << tpls_item.data_bytes()     / 1000000000   << "G "
-             << std::setfill(' ') << std::setw(5)  << std::right << avail                      / 1000000000   << "G "
-             << std::setfill(' ') << std::setw(5)  << std::right << std::fixed << std::setprecision(1) << use_percent << "% "
-             << std::setfill(' ') << std::setw(8)  << std::right << encrypt_str                               << ' '
-             << std::setfill(' ') << std::setw(20) << std::right << tpls_item.supply()                        << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << tpls_item.created().username()            << ' '
-             << std::setfill(' ') << std::setw(25) << std::right << tpls_item.created().host()                << ' '
-             << std::setfill(' ') << std::setw(24) << std::right << timeToString(tpls_item.created().time())  << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << tpls_item.modified().username()           << ' '
-             << std::setfill(' ') << std::setw(25) << std::right << tpls_item.modified().host()               << ' '
-             << std::setfill(' ') << std::setw(24) << std::right << timeToString(tpls_item.modified().time()) << ' '
-             <<                                                     tpls_item.comment()
-             << std::endl;
+  uint64_t avail = tpls_item.capacity_bytes() > tpls_item.data_bytes() ?
+    tpls_item.capacity_bytes()-tpls_item.data_bytes() : 0; 
+  auto avail_str = std::to_string(avail / 1000000000) + "G";
+
+  double use_percent = tpls_item.capacity_bytes() > 0 ?
+    (static_cast<double>(tpls_item.data_bytes())/static_cast<double>(tpls_item.capacity_bytes()))*100.0 : 0.0;
+  std::stringstream use_percent_ss;
+  use_percent_ss << std::fixed << std::setprecision(1) << use_percent << "% ";
+
+  push_back(
+    tpls_item.name(),
+    tpls_item.vo(),
+    tpls_item.num_tapes(),
+    tpls_item.num_partial_tapes(),
+    tpls_item.num_physical_files(),
+    capacity_str,
+    data_str,
+    avail_str,
+    use_percent_ss.str(),
+    tpls_item.encrypt(),
+    tpls_item.supply(),
+    tpls_item.created().username(),
+    tpls_item.created().host(),
+    timeToString(tpls_item.created().time()),
+    tpls_item.modified().username(),
+    tpls_item.modified().host(),
+    timeToString(tpls_item.modified().time()),
+    tpls_item.comment()
+  );
 }
 
 }}
