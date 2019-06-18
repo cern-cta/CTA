@@ -12238,4 +12238,19 @@ TEST_P(cta_catalogue_CatalogueTest, ping) {
   m_catalogue->ping();
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getSchemaVersion) {
+  using namespace cta;
+
+  const std::map<std::string,uint64_t> schemaVersion = {
+    {"SCHEMA_VERSION_MAJOR", 0},
+    {"SCHEMA_VERSION_MINOR", 0}
+  };
+
+  const auto schemaDbVersion = m_catalogue->getSchemaVersion();
+  for (const auto &schemaInfo : schemaVersion) {
+    ASSERT_NO_THROW(schemaDbVersion.at(schemaInfo.first));
+    ASSERT_EQ(schemaInfo.second, schemaDbVersion.at(schemaInfo.first));
+  }
+}
+
 } // namespace unitTests
