@@ -81,23 +81,23 @@ private:
 
   //! Recursive variadic method to build a log string from an arbitrary number of items of arbitrary type
   template<typename T, typename... Args>
-  void buildVector(std::vector<std::string> &line, const T &item, Args... args) {
+  static void buildVector(std::vector<std::string> &line, const T &item, Args... args) {
     buildVector(line, item);
     buildVector(line, args...);
   }
 
   //! Base case method to add one item to the log
-  void buildVector(std::vector<std::string> &line, const std::string &item) {
+  static void buildVector(std::vector<std::string> &line, const std::string &item) {
     line.push_back(item);
   }
 
   //! Base case method to add one item to the log, overloaded for char*
-  void buildVector(std::vector<std::string> &line, const char *item) {
+  static void buildVector(std::vector<std::string> &line, const char *item) {
     line.push_back(std::string(item));
   }
 
   //! Base case method to add one item to the log, overloaded for bool
-  void buildVector(std::vector<std::string> &line, bool item) {
+  static void buildVector(std::vector<std::string> &line, bool item) {
     line.push_back(item ? "true" : "false");
   }
 
@@ -106,9 +106,12 @@ private:
    * (works for all integer and floating-point types)
    */
   template<typename T>
-  void buildVector(std::vector<std::string> &line, const T &item) {
+  static void buildVector(std::vector<std::string> &line, const T &item) {
     line.push_back(std::to_string(item));
   }
+
+  //! Convert data size in bytes to abbreviated string with appropriate size suffix (K/M/G/T/P/E)
+  static std::string getDataSize(uint64_t value);
 
   //! Flush buffer to stdout
   void flush();

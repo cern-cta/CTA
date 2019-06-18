@@ -37,6 +37,26 @@ std::string timeToString(const time_t &time)
 }
 
 
+std::string TextFormatter::getDataSize(uint64_t value) {
+  const std::vector<char> suffix = { 'E', 'P', 'T', 'G', 'M', 'K' };
+
+  // Simple case, values less than 1000 bytes don't take a suffix
+  if(value < 1000) return std::to_string(value);
+
+  // Find the correct scaling, starting at 1 EB and working down. I'm assuming we won't have
+  // zettabytes or yottabytes of data in a tapepool anytime soon.
+  uint64_t divisor;
+  int unit;
+  for(unit = 0, divisor = 1'000'000'000'000'000'000; value < divisor; divisor /= 1000, ++unit) ;
+
+  // Convert to format like "3.1G"
+  std::stringstream ss;
+  double val_d = static_cast<double>(value) / static_cast<double>(divisor);
+  ss << std::fixed << std::setprecision(1) << val_d << suffix[unit];
+
+  return ss.str();
+}
+
 void TextFormatter::flush() {
   if(m_outputBuffer.empty()) return;
 
@@ -176,11 +196,8 @@ void TextFormatter::print(const cta::admin::FailedRequestLsItem &frls_item) {
     frls_item.af().df().path()
   );
 
-  for(auto &errLogMsg : frls_item.failurelogs()) {
-    push_back(
-     "", "", "", "", "", errLogMsg
-    );
-  }
+  // Note: failure log messages are available in frls_item.failurelogs(). These are not currently
+  //       displayed in the text output, only in JSON.
 }
 
 void TextFormatter::printFrLsSummaryHeader() {
@@ -427,9 +444,6 @@ void TextFormatter::printTapePoolLsHeader() {
 
 void TextFormatter::print(const cta::admin::TapePoolLsItem &tpls_item)
 {
-  auto capacity_str = std::to_string(tpls_item.capacity_bytes() / 1000000000) + "G";
-  auto data_str     = std::to_string(tpls_item.data_bytes()     / 1000000000) + "G";
-
   uint64_t avail = tpls_item.capacity_bytes() > tpls_item.data_bytes() ?
     tpls_item.capacity_bytes()-tpls_item.data_bytes() : 0; 
   auto avail_str = std::to_string(avail / 1000000000) + "G";
@@ -445,8 +459,8 @@ void TextFormatter::print(const cta::admin::TapePoolLsItem &tpls_item)
     tpls_item.num_tapes(),
     tpls_item.num_partial_tapes(),
     tpls_item.num_physical_files(),
-    capacity_str,
-    data_str,
+    getDataSize(tpls_item.capacity_bytes()),
+    getDataSize(tpls_item.data_bytes()),
     avail_str,
     use_percent_ss.str(),
     tpls_item.encrypt(),
