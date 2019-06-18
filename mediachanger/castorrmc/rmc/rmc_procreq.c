@@ -110,7 +110,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	unmarshall_LONG (rbp, type);
 	unmarshall_LONG (rbp, startaddr);
 	unmarshall_LONG (rbp, nbelem);
-	snprintf (logbuf, CA_MAXVIDLEN+15, "findcart %s %d", template, nbelem);
+	snprintf (logbuf, sizeof(template)+15, "findcart %s %d", template, nbelem);
 	rmc_logreq (func, logbuf);
 
 	if (nbelem < 1) {

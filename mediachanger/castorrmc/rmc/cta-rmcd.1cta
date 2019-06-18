@@ -55,7 +55,7 @@ setenv RMC_PORT 5014
 .RE
 .LP
 an entry in
-.B /etc/castor/castor.conf
+.B /etc/cta/cta-rmcd.conf
 like:
 .RS
 .HP

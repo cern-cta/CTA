@@ -133,51 +133,6 @@ The tape server daemon
 %systemd_postun cta-taped.service
 %systemdDaemonReload
 
-%package -n cta-xrmcd
-Summary: CERN Tape Archive: Xrootd plugin
-Group: Application/CTA
-Requires: logrotate
-Requires: cta-common = %{version}-%{release}
-Requires: cta-lib = %{version}-%{release}
-Requires: xrootd-server
-%description -n cta-xrmcd
-CERN Tape Archive:
-The xroot plugin
-%files -n cta-xrmcd
-%defattr(0755,root,root)
-%{_libdir}/libXrdSsiRmcd.so*
-%attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-xrmcd
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-xrmcd.conf
-%attr(0644,cta,tape) /etc/systemd/system/cta-xrmcd.service
-%attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-xrmcd
-
-#xrmcd installs libraries so we need ldconfig.
-%post -n cta-xrmcd
-/sbin/ldconfig
-%systemd_post cta-xrmcd.service
-%systemdDaemonReload
-
-%preun -n cta-xrmcd
-%systemd_preun cta-xrmcd.service
-
-%postun -n cta-xrmcd
-/sbin/ldconfig
-%systemd_post cta-xrmcd.service
-%systemdDaemonReload
-
-%package -n cta-xsmc
-Summary: CERN Tape Archive: command line interface
-Group: Application/CTA
-Requires: cta-lib = %{version}-%{release}
-%description -n cta-xsmc
-CERN Tape Archive:
-The xroot plugin
-%files -n cta-xsmc
-%defattr(-,root,root)
-%attr(0755,root,root) %{_bindir}/cta-xsmc
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-xsmc-mount.1cta.gz
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-xsmc-dismount.1cta.gz
-
 %package -n cta-frontend
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
@@ -337,22 +292,19 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-database-poll.1cta.gz
 
 %package -n cta-rmcd
-Summary: Tools to faciliate working with rmcd and smc in cta
+Summary: The Remote Media Changer daemon (rmcd)
 Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 %description -n cta-rmcd
 CERN Tape Archive:
-Tools to faciliate working with rmcd and smc in cta
+The Remote Media Changer daemon (rmcd)
 %files -n cta-rmcd
 %defattr(-,root,root)
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-rmcd
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-rmcd.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-rmcd
-%attr(0755,root,root) %{_bindir}/cta-smc
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-rmcd.conf
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-smc.conf
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-smc.1cta.gz
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-rmcd
 %attr(0644,root,root) /etc/systemd/system/cta-rmcd.service
 
@@ -366,6 +318,18 @@ Tools to faciliate working with rmcd and smc in cta
 %postun -n cta-rmcd
 %systemd_postun cta-rmcd.service
 %systemdDaemonReload
+
+%package -n cta-smc
+Summary: The client of the Remote Media Changer Daemon (rmcd)
+Group: Application/CTA
+%description -n cta-smc
+CERN Tape Archive:
+The client of the Remote Media Changer Daemon (rmcd)
+%files -n cta-smc
+%defattr(-,root,root)
+%attr(0755,root,root) %{_bindir}/cta-smc
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-smc.conf
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-smc.1cta.gz
 
 %package -n cta-common
 Summary: CERN Tape Archive common items

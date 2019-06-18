@@ -45,9 +45,9 @@ include_directories(${CMAKE_BINARY_DIR}/XRootdSSiRmcd ${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-xsmc RmcdClient.cpp)
 target_link_libraries(cta-xsmc XrdSsi-4 XrdSsiLib XrdSsiPbRmcd XrdUtils)
 set_property(TARGET cta-xsmc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-install (TARGETS cta-xsmc DESTINATION /usr/bin)
-install (FILES cta-xsmc-mount.1cta DESTINATION /usr/share/man/man1)
-install (FILES cta-xsmc-dismount.1cta DESTINATION /usr/share/man/man1)
+#install (TARGETS cta-xsmc DESTINATION /usr/bin)
+#install (FILES cta-xsmc-mount.1cta DESTINATION /usr/share/man/man1)
+#install (FILES cta-xsmc-dismount.1cta DESTINATION /usr/share/man/man1)
 
 #
 # XRootD SSI plugin for Test Server
@@ -61,9 +61,9 @@ add_library(XrdSsiRmcd MODULE
 )
 target_link_libraries(XrdSsiRmcd XrdSsi-4 XrdSsiLib XrdSsiPbRmcd XrdUtils)
 set_property(TARGET XrdSsiRmcd APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-install(TARGETS XrdSsiRmcd DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+#install(TARGETS XrdSsiRmcd DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-install (FILES cta-xrmcd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
-install (FILES cta-xrmcd.logrotate DESTINATION /etc/logrotate.d RENAME cta-xrmcd)
-install (FILES cta-xrmcd.sysconfig DESTINATION /etc/sysconfig RENAME cta-xrmcd)
-install (FILES cta-xrmcd.service DESTINATION /etc/systemd/system)
+#install (FILES cta-xrmcd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+#install (FILES cta-xrmcd.logrotate DESTINATION /etc/logrotate.d RENAME cta-xrmcd)
+#install (FILES cta-xrmcd.sysconfig DESTINATION /etc/sysconfig RENAME cta-xrmcd)
+#install (FILES cta-xrmcd.service DESTINATION /etc/systemd/system)

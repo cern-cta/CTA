@@ -20,7 +20,7 @@
 			/* exit codes */
 
 #define	USERR	1
-#define PATH_CONF "cta-smc.conf"
+#define PATH_CONF "/etc/cta/cta-smc.conf"
 #define TEXT_RED    "\x1b[31;1m"
 #define TEXT_NORMAL "\x1b[0m"
 

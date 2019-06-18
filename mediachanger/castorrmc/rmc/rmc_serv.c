@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include "rmc_send_scsi_cmd.h"
 
-#define PATH_CONF "cta-rmcd.conf" 
+#define PATH_CONF "/etc/cta/cta-rmcd.conf"
 
 /* Forward declaration */
 static int rmc_getreq(const int s, int *const req_type, char *const req_data,
