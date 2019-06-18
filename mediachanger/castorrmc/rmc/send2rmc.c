@@ -17,7 +17,7 @@
 #include "rmc_constants.h"
 #include "serrno.h"
 
- #define PATH_CONF "cta-rmcd.conf"
+#define PATH_CONF "/etc/cta/cta-rmcd.conf"
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
 int send2rmc(

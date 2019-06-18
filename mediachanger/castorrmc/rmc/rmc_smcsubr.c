@@ -25,7 +25,7 @@
 #include "smc_constants.h"
 
 #define	RBT_XTRA_PROC 10
-#define PATH_CONF "cta-smc.conf"
+#define PATH_CONF "/etc/cta/cta-smc.conf"
 static struct smc_status smc_status;
 static const char *smc_msgaddr;
 
