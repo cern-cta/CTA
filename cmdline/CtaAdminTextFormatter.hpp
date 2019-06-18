@@ -86,18 +86,28 @@ private:
     buildVector(line, args...);
   }
 
-  //! Base case method to add one item to the log, with specialisations by type
-  template<typename T>
-  void buildVector(std::vector<std::string> &line, const T &item) {
-    line.push_back(std::to_string(item));
-  }
-
+  //! Base case method to add one item to the log
   void buildVector(std::vector<std::string> &line, const std::string &item) {
     line.push_back(item);
   }
 
+  //! Base case method to add one item to the log, overloaded for char*
   void buildVector(std::vector<std::string> &line, const char *item) {
     line.push_back(std::string(item));
+  }
+
+  //! Base case method to add one item to the log, overloaded for bool
+  void buildVector(std::vector<std::string> &line, bool item) {
+    line.push_back(item ? "true" : "false");
+  }
+
+  /*!
+   * Base case method to add one item to the log, with partial specialisation
+   * (works for all integer and floating-point types)
+   */
+  template<typename T>
+  void buildVector(std::vector<std::string> &line, const T &item) {
+    line.push_back(std::to_string(item));
   }
 
   //! Flush buffer to stdout
