@@ -37,7 +37,14 @@ std::string timeToString(const time_t &time)
 }
 
 
-std::string TextFormatter::getDataSize(uint64_t value) {
+std::string TextFormatter::doubleToStr(double value, char unit) {
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(1) << value << unit;
+  return ss.str();
+}
+
+
+std::string TextFormatter::dataSizeToStr(uint64_t value) {
   const std::vector<char> suffix = { 'E', 'P', 'T', 'G', 'M', 'K' };
 
   // Simple case, values less than 1000 bytes don't take a suffix
@@ -50,12 +57,10 @@ std::string TextFormatter::getDataSize(uint64_t value) {
   for(unit = 0, divisor = 1'000'000'000'000'000'000; value < divisor; divisor /= 1000, ++unit) ;
 
   // Convert to format like "3.1G"
-  std::stringstream ss;
   double val_d = static_cast<double>(value) / static_cast<double>(divisor);
-  ss << std::fixed << std::setprecision(1) << val_d << suffix[unit];
-
-  return ss.str();
+  return doubleToStr(val_d, suffix[unit]);
 }
+
 
 void TextFormatter::flush() {
   if(m_outputBuffer.empty()) return;
@@ -86,7 +91,8 @@ void TextFormatter::flush() {
       std::cout << std::setfill(' ')
                 << std::setw(colSize.at(c)+1)
                 << std::right
-                << l.at(c) << ' ';
+                << (l.at(c).empty() ? "-" : l.at(c))
+                << ' ';
     }
     if(is_header) { std::cout << TEXT_NORMAL; is_header = false; }
     std::cout << std::endl;
@@ -114,8 +120,8 @@ void TextFormatter::printAfLsHeader() {
     "owner",
     "group",
     "creation time",
-    "ss vid",
-    "ss fseq",
+    "sc vid", // superceded
+    "sc fseq",
     "path"
   );
 }
@@ -129,15 +135,15 @@ void TextFormatter::print(const cta::admin::ArchiveFileLsItem &afls_item) {
     afls_item.tf().block_id(),
     afls_item.af().disk_instance(),
     afls_item.af().disk_id(),
-    afls_item.af().size(),
+    dataSizeToStr(afls_item.af().size()),
     afls_item.af().cs().type(),
     afls_item.af().cs().value(),
     afls_item.af().storage_class(),
     afls_item.af().df().owner(),
     afls_item.af().df().group(),
     afls_item.af().creation_time(),
-    afls_item.tf().superseded_by_vid().size() ? afls_item.tf().superseded_by_vid() : "-",
-    afls_item.tf().superseded_by_vid().size() ? std::to_string(afls_item.tf().superseded_by_f_seq()) : "-",
+    afls_item.tf().superseded_by_vid(),
+    afls_item.tf().superseded_by_f_seq(),
     afls_item.af().df().path()
   );
 }
@@ -154,7 +160,7 @@ void TextFormatter::print(const cta::admin::ArchiveFileLsSummary &afls_summary)
 {
   push_back(
     afls_summary.total_files(),
-    afls_summary.total_size()
+    dataSizeToStr(afls_summary.total_size())
   );
 }
 
@@ -205,7 +211,7 @@ void TextFormatter::printFrLsSummaryHeader() {
   push_back(
     "request type",
     "total files",
-    "total size (bytes)"
+    "total size"
   );
 }
 
@@ -217,7 +223,7 @@ void TextFormatter::print(const cta::admin::FailedRequestLsSummary &frls_summary
   push_back(
     request_type,
     frls_summary.total_files(),
-    frls_summary.total_size()
+    dataSizeToStr(frls_summary.total_size())
   );
 }
 
@@ -249,7 +255,7 @@ void TextFormatter::print(const cta::admin::ListPendingArchivesItem &lpa_item) {
     lpa_item.af().disk_instance(),
     lpa_item.af().cs().type(),
     lpa_item.af().cs().value(),
-    lpa_item.af().size(),
+    dataSizeToStr(lpa_item.af().size()),
     lpa_item.af().df().owner(),
     lpa_item.af().df().group(),
     lpa_item.af().df().path()
@@ -269,7 +275,7 @@ void TextFormatter::print(const cta::admin::ListPendingArchivesSummary &lpa_summ
   push_back(
     lpa_summary.tapepool(),
     lpa_summary.total_files(),
-    lpa_summary.total_size()
+    dataSizeToStr(lpa_summary.total_size())
   );
 }
 
@@ -295,7 +301,7 @@ void TextFormatter::print(const cta::admin::ListPendingRetrievesItem &lpr_item) 
     lpr_item.copy_nb(),
     lpr_item.tf().f_seq(),
     lpr_item.tf().block_id(),
-    lpr_item.af().size(),
+    dataSizeToStr(lpr_item.af().size()),
     lpr_item.af().df().owner(),
     lpr_item.af().df().group(),
     lpr_item.af().df().path()
@@ -315,7 +321,7 @@ void TextFormatter::print(const cta::admin::ListPendingRetrievesSummary &lpr_sum
   push_back(
     lpr_summary.vid(),
     lpr_summary.total_files(),
-    lpr_summary.total_size()
+    dataSizeToStr(lpr_summary.total_size())
   );
 }
 
@@ -358,17 +364,17 @@ void TextFormatter::print(const cta::admin::TapeLsItem &tals_item) {
     tals_item.tapepool(),
     tals_item.vo(),
     tals_item.encryption_key(),
-    tals_item.capacity(),
-    tals_item.occupancy(),
+    dataSizeToStr(tals_item.capacity()),
+    dataSizeToStr(tals_item.occupancy()),
     tals_item.last_fseq(),
     tals_item.full(),
     tals_item.disabled(),
-    tals_item.has_label_log()        ? tals_item.label_log().drive()                       : "-",
-    tals_item.has_label_log()        ? std::to_string(tals_item.label_log().time())        : "-",
-    tals_item.has_last_written_log() ? tals_item.last_written_log().drive()                : "-",
-    tals_item.has_last_written_log() ? std::to_string(tals_item.last_written_log().time()) : "-",
-    tals_item.has_last_read_log()    ? tals_item.last_read_log().drive()                   : "-",
-    tals_item.has_last_read_log()    ? std::to_string(tals_item.last_read_log().time())    : "-",
+    tals_item.has_label_log()        ? tals_item.label_log().drive()                       : "",
+    tals_item.has_label_log()        ? std::to_string(tals_item.label_log().time())        : "",
+    tals_item.has_last_written_log() ? tals_item.last_written_log().drive()                : "",
+    tals_item.has_last_written_log() ? std::to_string(tals_item.last_written_log().time()) : "",
+    tals_item.has_last_read_log()    ? tals_item.last_read_log().drive()                   : "",
+    tals_item.has_last_read_log()    ? std::to_string(tals_item.last_read_log().time())    : "",
     tals_item.creation_log().username(),
     tals_item.creation_log().host(),
     tals_item.creation_log().time(),
@@ -405,15 +411,15 @@ void TextFormatter::print(const cta::admin::RepackLsItem &rels_item) {
    rels_item.repack_buffer_url(),
    rels_item.user_provided_files(),
    rels_item.total_files_to_retrieve(),
-   rels_item.total_bytes_to_retrieve(),
+   dataSizeToStr(rels_item.total_bytes_to_retrieve()),
    rels_item.total_files_to_archive(),
-   rels_item.total_bytes_to_archive(),
+   dataSizeToStr(rels_item.total_bytes_to_archive()),
    rels_item.retrieved_files(),
    rels_item.archived_files(),
    rels_item.failed_to_retrieve_files(),
-   rels_item.failed_to_retrieve_bytes(),
+   dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
    rels_item.failed_to_archive_files(),
-   rels_item.failed_to_retrieve_bytes(),
+   dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
    rels_item.last_expanded_fseq()
   );
 }
@@ -446,12 +452,9 @@ void TextFormatter::print(const cta::admin::TapePoolLsItem &tpls_item)
 {
   uint64_t avail = tpls_item.capacity_bytes() > tpls_item.data_bytes() ?
     tpls_item.capacity_bytes()-tpls_item.data_bytes() : 0; 
-  auto avail_str = std::to_string(avail / 1000000000) + "G";
 
   double use_percent = tpls_item.capacity_bytes() > 0 ?
     (static_cast<double>(tpls_item.data_bytes())/static_cast<double>(tpls_item.capacity_bytes()))*100.0 : 0.0;
-  std::stringstream use_percent_ss;
-  use_percent_ss << std::fixed << std::setprecision(1) << use_percent << "% ";
 
   push_back(
     tpls_item.name(),
@@ -459,10 +462,10 @@ void TextFormatter::print(const cta::admin::TapePoolLsItem &tpls_item)
     tpls_item.num_tapes(),
     tpls_item.num_partial_tapes(),
     tpls_item.num_physical_files(),
-    getDataSize(tpls_item.capacity_bytes()),
-    getDataSize(tpls_item.data_bytes()),
-    avail_str,
-    use_percent_ss.str(),
+    dataSizeToStr(tpls_item.capacity_bytes()),
+    dataSizeToStr(tpls_item.data_bytes()),
+    dataSizeToStr(avail),
+    doubleToStr(use_percent, '%'),
     tpls_item.encrypt(),
     tpls_item.supply(),
     tpls_item.created().username(),

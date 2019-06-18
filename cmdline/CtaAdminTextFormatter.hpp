@@ -110,8 +110,11 @@ private:
     line.push_back(std::to_string(item));
   }
 
+  //! Convert double to string with one decimal place precision and a suffix
+  static std::string doubleToStr(double value, char unit);
+
   //! Convert data size in bytes to abbreviated string with appropriate size suffix (K/M/G/T/P/E)
-  static std::string getDataSize(uint64_t value);
+  static std::string dataSizeToStr(uint64_t value);
 
   //! Flush buffer to stdout
   void flush();
