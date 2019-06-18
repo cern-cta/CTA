@@ -43,16 +43,16 @@ std::string TextFormatter::timeToStr(const time_t &unixtime) {
 
 
 std::string TextFormatter::dataSizeToStr(uint64_t value) {
-  const std::vector<char> suffix = { 'E', 'P', 'T', 'G', 'M', 'K' };
+  const std::vector<char> suffix = { 'K', 'M', 'G', 'T', 'P', 'E' };
 
   // Simple case, values less than 1000 bytes don't take a suffix
   if(value < 1000) return std::to_string(value);
 
-  // Find the correct scaling, starting at 1 EB and working down. I'm assuming we won't have
-  // zettabytes or yottabytes of data in a tapepool anytime soon.
-  uint64_t divisor;
+  // Find the correct scaling, starting at 1 KB and working up. I'm assuming we won't have zettabytes
+  // or yottabytes of data in a tapepool anytime soon.
   int unit;
-  for(unit = 0, divisor = 1'000'000'000'000'000'000; value < divisor; divisor /= 1000, ++unit) ;
+  uint64_t divisor;
+  for(unit = 0, divisor = 1000; unit < 6 && value >= divisor*1000; divisor *= 1000, ++unit) ;
 
   // Convert to format like "3.1G"
   double val_d = static_cast<double>(value) / static_cast<double>(divisor);

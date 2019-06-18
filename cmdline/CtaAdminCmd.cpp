@@ -32,8 +32,8 @@
 // global synchronisation flag
 std::atomic<bool> isHeaderSent(false);
 
-// initialise an output buffer of 5 lines
-cta::admin::TextFormatter formattedText(5);
+// initialise an output buffer of 1000 lines
+cta::admin::TextFormatter formattedText(1000);
 
 
 namespace XrdSsiPb {
