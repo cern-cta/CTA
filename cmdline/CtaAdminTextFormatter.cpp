@@ -24,9 +24,6 @@
 
 namespace cta { namespace admin {
 
-const std::string TextFormatter::TEXT_RED    = "\x1b[31;1m";
-const std::string TextFormatter::TEXT_NORMAL = "\x1b[0m";
-
 /*
  * Convert time to string
  *
@@ -43,6 +40,14 @@ std::string timeToString(const time_t &time)
 void TextFormatter::flush() {
   if(m_outputBuffer.empty()) return;
 
+  // Check if first line is a header requiring special formatting
+  bool is_header = false;
+  if(m_outputBuffer.front().size() == 1 && m_outputBuffer.front().front() == "HEADER") {
+    is_header = true;
+    m_outputBuffer.erase(m_outputBuffer.begin());
+    if(m_outputBuffer.empty()) return;
+  }
+
   auto numCols = m_outputBuffer.front().size();
   std::vector<unsigned int> colSize(numCols);
 
@@ -56,12 +61,14 @@ void TextFormatter::flush() {
 
   // Output columns
   for(auto &l : m_outputBuffer) {
+    if(is_header) { std::cout << TEXT_RED; }
     for(size_t c = 0; c < l.size(); ++c) {
       std::cout << std::setfill(' ')
                 << std::setw(colSize.at(c)+1)
                 << std::right
                 << l.at(c) << ' ';
     }
+    if(is_header) { std::cout << TEXT_NORMAL; is_header = false; }
     std::cout << std::endl;
   }
 
@@ -71,6 +78,7 @@ void TextFormatter::flush() {
 
 
 void TextFormatter::printAfLsHeader() {
+  push_back("HEADER");
   push_back(
     "archive id",
     "copy no",
@@ -115,6 +123,7 @@ void TextFormatter::print(const cta::admin::ArchiveFileLsItem &afls_item) {
 }
 
 void TextFormatter::printAfLsSummaryHeader() {
+  push_back("HEADER");
   push_back(
     "total files",
     "total size"
@@ -130,6 +139,7 @@ void TextFormatter::print(const cta::admin::ArchiveFileLsSummary &afls_summary)
 }
 
 void TextFormatter::printFrLsHeader() {
+  push_back("HEADER");
   push_back(
     "request type",
     "copy no",
@@ -174,6 +184,7 @@ void TextFormatter::print(const cta::admin::FailedRequestLsItem &frls_item) {
 }
 
 void TextFormatter::printFrLsSummaryHeader() {
+  push_back("HEADER");
   push_back(
     "request type",
     "total files",
@@ -194,6 +205,7 @@ void TextFormatter::print(const cta::admin::FailedRequestLsSummary &frls_summary
 }
 
 void TextFormatter::printLpaHeader() {
+  push_back("HEADER");
   push_back(
     "tapepool",
     "archive id",
@@ -228,6 +240,7 @@ void TextFormatter::print(const cta::admin::ListPendingArchivesItem &lpa_item) {
 }
 
 void TextFormatter::printLpaSummaryHeader() {
+  push_back("HEADER");
   push_back(
     "tapepool",
     "total files",
@@ -244,6 +257,7 @@ void TextFormatter::print(const cta::admin::ListPendingArchivesSummary &lpa_summ
 }
 
 void TextFormatter::printLprHeader() {
+  push_back("HEADER");
   push_back(
     "vid",
     "archive id",
@@ -272,6 +286,7 @@ void TextFormatter::print(const cta::admin::ListPendingRetrievesItem &lpr_item) 
 }
 
 void TextFormatter::printLprSummaryHeader() {
+  push_back("HEADER");
   push_back(
     "vid",
     "total files",
@@ -288,6 +303,7 @@ void TextFormatter::print(const cta::admin::ListPendingRetrievesSummary &lpr_sum
 }
 
 void TextFormatter::printTapeLsHeader() {
+  push_back("HEADER");
   push_back(
     "vid",
     "media type",
@@ -346,6 +362,7 @@ void TextFormatter::print(const cta::admin::TapeLsItem &tals_item) {
 }
 
 void TextFormatter::printRepackLsHeader() {
+  push_back("HEADER");
   push_back(
     "vid",
     "repackBufferURL",
@@ -385,6 +402,7 @@ void TextFormatter::print(const cta::admin::RepackLsItem &rels_item) {
 }
 
 void TextFormatter::printTapePoolLsHeader() {
+  push_back("HEADER");
   push_back(
     "name",
     "vo",

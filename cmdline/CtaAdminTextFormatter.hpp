@@ -100,13 +100,14 @@ private:
     line.push_back(std::string(item));
   }
 
-  void flush();                                            //!< Flush buffer to stdout
+  //! Flush buffer to stdout
+  void flush();
 
-  unsigned int m_bufLines;                                 //!< Number of text lines to buffer before flushing formatted output
-  std::vector<std::vector<std::string>> m_outputBuffer;    //!< Buffer for text output (not used for JSON)
+  unsigned int m_bufLines;                                          //!< Number of text lines to buffer before flushing formatted output
+  std::vector<std::vector<std::string>> m_outputBuffer;             //!< Buffer for text output (not used for JSON)
 
-  static const std::string TEXT_RED;                       //!< Terminal formatting code for red text
-  static const std::string TEXT_NORMAL;                    //!< Terminal formatting code for normal text
+  static constexpr const char* const TEXT_RED    = "\x1b[31;1m";    //!< Terminal formatting code for red text
+  static constexpr const char* const TEXT_NORMAL = "\x1b[0m";       //!< Terminal formatting code for normal text
 };
 
 }}
