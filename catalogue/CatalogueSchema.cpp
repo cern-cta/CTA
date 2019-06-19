@@ -37,6 +37,58 @@ CatalogueSchema::CatalogueSchema(const std::string &sqlSchema,
 }
 
 //------------------------------------------------------------------------------
+// getSchemaColumns
+//------------------------------------------------------------------------------
+std::map<std::string, std::string> CatalogueSchema::getSchemaColumns(const std::string &table) const {
+  std::map<std::string, std::string> schemaColumnNames;
+  std::string::size_type searchPos = 0;
+  std::string::size_type findResult = std::string::npos;
+  const std::string columnTypes = 
+    "NUMERIC|"
+    "INTEGER|"
+    "CHAR|"
+    "VARCHAR|"
+    "VARCHAR2";
+  
+  try {
+    while(std::string::npos != (findResult = sql.find(';', searchPos))) {
+      // Calculate the length of the current statement without the trailing ';'
+      const std::string::size_type stmtLen = findResult - searchPos;
+      const std::string sqlStmt = utils::trimString(sql.substr(searchPos, stmtLen));
+      searchPos = findResult + 1;
+
+      if(0 < sqlStmt.size()) { // Ignore empty statements
+        const std::string createTableSQL = "CREATE TABLE " + table + "\\(([a-zA-Z0-9_, \\)\\(]+)\\)";
+        cta::utils::Regex tableSqlRegex(createTableSQL.c_str());
+        auto tableSql = tableSqlRegex.exec(sqlStmt);
+        if (2 == tableSql.size()) {
+          tableSql[1] += ","; // hack for parsing 
+          // we use the same logic here as for trailing ';'
+          std::string::size_type searchPosComma = 0;
+          std::string::size_type findResultComma = std::string::npos;
+          while(std::string::npos != (findResultComma = tableSql[1].find(',', searchPosComma))) {
+            const std::string::size_type stmtLenComma = findResultComma - searchPosComma;
+            const std::string sqlStmtComma = utils::trimString(tableSql[1].substr(searchPosComma, stmtLenComma));
+            searchPosComma = findResultComma + 1;
+            if(0 < sqlStmtComma.size()) { // Ignore empty statements
+              const std::string columnSQL = "([a-zA-Z_]+) +(" + columnTypes + ")";
+              cta::utils::Regex columnSqlRegex(columnSQL.c_str());
+              auto columnSql = columnSqlRegex.exec(sqlStmtComma);
+              if (3 == columnSql.size()) {
+                schemaColumnNames.insert(std::make_pair(columnSql[1], columnSql[2]));
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+  return schemaColumnNames;
+}
+
+//------------------------------------------------------------------------------
 // getSchemaTableNames
 //------------------------------------------------------------------------------
 std::list<std::string> CatalogueSchema::getSchemaTableNames() const {  
