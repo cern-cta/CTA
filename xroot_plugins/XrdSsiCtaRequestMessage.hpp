@@ -156,7 +156,6 @@ private:
    void processArchiveRoute_Add      (cta::xrd::Response &response);
    void processArchiveRoute_Ch       (cta::xrd::Response &response);
    void processArchiveRoute_Rm       (cta::xrd::Response &response);
-   void processArchiveRoute_Ls       (cta::xrd::Response &response);
    void processDrive_Up              (cta::xrd::Response &response);
    void processDrive_Down            (cta::xrd::Response &response);
    void processDrive_Ls              (cta::xrd::Response &response);
@@ -175,7 +174,6 @@ private:
    void processMountPolicy_Ls        (cta::xrd::Response &response);
    void processRepack_Add            (cta::xrd::Response &response);
    void processRepack_Rm             (cta::xrd::Response &response);
-   //void processRepack_Ls             (cta::xrd::Response &response);
    void processRepack_Err            (cta::xrd::Response &response);
    void processRequesterMountRule_Add(cta::xrd::Response &response);
    void processRequesterMountRule_Ch (cta::xrd::Response &response);
@@ -206,6 +204,7 @@ private:
 
    admincmdstream_t processAdmin_Ls;
    admincmdstream_t processArchiveFile_Ls;
+   admincmdstream_t processArchiveRoute_Ls;
    admincmdstream_t processFailedRequest_Ls;
    admincmdstream_t processListPendingArchives;
    admincmdstream_t processListPendingRetrieves;

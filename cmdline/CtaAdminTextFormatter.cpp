@@ -181,6 +181,39 @@ void TextFormatter::print(const cta::admin::ArchiveFileLsItem &afls_item) {
   );
 }
 
+void TextFormatter::printArLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "instance",
+    "storage class",
+    "copy number",
+    "tapepool",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const cta::admin::ArchiveRouteLsItem &arls_item) {
+  push_back(
+    arls_item.instance(),
+    arls_item.storage_class(),
+    arls_item.copy_number(),
+    arls_item.tapepool(),
+    arls_item.creation_log().username(),
+    arls_item.creation_log().host(),
+    arls_item.creation_log().time(),
+    arls_item.last_modification_log().username(),
+    arls_item.last_modification_log().host(),
+    arls_item.last_modification_log().time(),
+    arls_item.comment()
+  );
+}
+
 void TextFormatter::printAfLsSummaryHeader() {
   push_back("HEADER");
   push_back(
