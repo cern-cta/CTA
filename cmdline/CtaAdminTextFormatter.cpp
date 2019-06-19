@@ -206,10 +206,10 @@ void TextFormatter::print(const cta::admin::ArchiveRouteLsItem &arls_item) {
     arls_item.tapepool(),
     arls_item.creation_log().username(),
     arls_item.creation_log().host(),
-    arls_item.creation_log().time(),
+    timeToStr(arls_item.creation_log().time()),
     arls_item.last_modification_log().username(),
     arls_item.last_modification_log().host(),
-    arls_item.last_modification_log().time(),
+    timeToStr(arls_item.last_modification_log().time()),
     arls_item.comment()
   );
 }
