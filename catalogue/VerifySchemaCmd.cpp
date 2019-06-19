@@ -166,27 +166,31 @@ void VerifySchemaCmd::printUsage(std::ostream &os) {
 //------------------------------------------------------------------------------
 VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySchemaVersion(const std::map<std::string, uint64_t> &schemaVersion, 
   const std::map<std::string, uint64_t> &schemaDbVersion) const {
-  VerifyStatus status = VerifyStatus::UNKNOWN;
-  for (const auto &schemaInfo : schemaVersion) {
-    if (schemaDbVersion.count(schemaInfo.first)) {
-      if (schemaInfo.second != schemaDbVersion.at(schemaInfo.first)) {
-        std::cerr << "  ERROR: the schema version mismatch: SCHEMA[" 
-                  << schemaInfo.first << "] = "  << schemaInfo.second 
-                  << ", DB[" << schemaInfo.first << "] = " 
-                  << schemaDbVersion.at(schemaInfo.first) << std::endl;
+  try {
+    VerifyStatus status = VerifyStatus::UNKNOWN;
+    for (const auto &schemaInfo : schemaVersion) {
+      if (schemaDbVersion.count(schemaInfo.first)) {
+        if (schemaInfo.second != schemaDbVersion.at(schemaInfo.first)) {
+          std::cerr << "  ERROR: the schema version mismatch: SCHEMA[" 
+                    << schemaInfo.first << "] = "  << schemaInfo.second 
+                    << ", DB[" << schemaInfo.first << "] = " 
+                    << schemaDbVersion.at(schemaInfo.first) << std::endl;
+          status = VerifyStatus::ERROR;
+        }
+      } else {
+        std::cerr << "  ERROR: the schema version value for " << schemaInfo.first 
+                  <<"  not found in the Catalogue DB" << std::endl;
         status = VerifyStatus::ERROR;
       }
-    } else {
-      std::cerr << "  ERROR: the schema version value for " << schemaInfo.first 
-                <<"  not found in the Catalogue DB" << std::endl;
-      status = VerifyStatus::ERROR;
     }
+    if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
+      std::cerr << "  OK" << std::endl;
+      status = VerifyStatus::OK;
+    }
+    return status;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
-  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-    std::cerr << "  OK" << std::endl;
-    status = VerifyStatus::OK;
-  }
-  return status;
 }
 
 //------------------------------------------------------------------------------
@@ -194,30 +198,32 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySchemaVersion(const std::ma
 //------------------------------------------------------------------------------
 VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<std::string> &schemaTableNames, 
   const std::list<std::string> &dbTableNames) const {
-  VerifyStatus status = VerifyStatus::UNKNOWN;
-  // check for schema tables
-  for(auto &tableName : schemaTableNames) {
-    const bool schemaTableIsNotInDb = dbTableNames.end() == std::find(dbTableNames.begin(), dbTableNames.end(), tableName);
-    if (schemaTableIsNotInDb) {
-      std::cerr << "  ERROR: the schema table " << tableName << " not found in the DB" << std::endl;
-      status = VerifyStatus::ERROR;
-    }
-  }
-  // check for extra tables in DB
-  for(auto &tableName : dbTableNames) {
-    const bool dbTableIsNotInSchema = schemaTableNames.end() == std::find(schemaTableNames.begin(), schemaTableNames.end(), tableName);
-    if (dbTableIsNotInSchema) {
-      std::cerr << "  INFO: the database table " << tableName << " not found in the schema" << std::endl;
-      if ( VerifyStatus::ERROR != status) {
-        status = VerifyStatus::INFO;
+  try {
+    VerifyStatus status = VerifyStatus::UNKNOWN;
+    for(auto &tableName : schemaTableNames) {
+      const bool schemaTableIsNotInDb = dbTableNames.end() == std::find(dbTableNames.begin(), dbTableNames.end(), tableName);
+      if (schemaTableIsNotInDb) {
+        std::cerr << "  ERROR: the schema table " << tableName << " not found in the DB" << std::endl;
+        status = VerifyStatus::ERROR;
       }
     }
+    for(auto &tableName : dbTableNames) {
+      const bool dbTableIsNotInSchema = schemaTableNames.end() == std::find(schemaTableNames.begin(), schemaTableNames.end(), tableName);
+      if (dbTableIsNotInSchema) {
+        std::cerr << "  INFO: the database table " << tableName << " not found in the schema" << std::endl;
+        if ( VerifyStatus::ERROR != status) {
+          status = VerifyStatus::INFO;
+        }
+      }
+    }
+    if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
+      std::cerr << "  OK" << std::endl;
+      status = VerifyStatus::OK;
+    }
+    return status;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
-  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-    std::cerr << "  OK" << std::endl;
-    status = VerifyStatus::OK;
-  }
-  return status;
 }
   
 //------------------------------------------------------------------------------
@@ -225,30 +231,32 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<
 //------------------------------------------------------------------------------
 VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<std::string> &schemaIndexNames, 
   const std::list<std::string> &dbIndexNames) const {
-  VerifyStatus status = VerifyStatus::UNKNOWN;
-  // check for schema tables
-  for(auto &indexName : schemaIndexNames) {
-    const bool schemaIndexIsNotInDb = dbIndexNames.end() == std::find(dbIndexNames.begin(), dbIndexNames.end(), indexName);
-    if (schemaIndexIsNotInDb) {
-      std::cerr << "  ERROR: the schema index " << indexName << " not found in the DB" << std::endl;
-      status = VerifyStatus::ERROR;
-    }
-  }
-  // check for extra tables in DB
-  for(auto &indexName : dbIndexNames) {
-    const bool dbIndexIsNotInSchema = schemaIndexNames.end() == std::find(schemaIndexNames.begin(), schemaIndexNames.end(), indexName);
-    if (dbIndexIsNotInSchema) {
-      std::cerr << "  INFO: the database index " << indexName << " not found in the schema" << std::endl;
-      if ( VerifyStatus::ERROR != status) {
-        status = VerifyStatus::INFO;
+  try {
+    VerifyStatus status = VerifyStatus::UNKNOWN;
+    for(auto &indexName : schemaIndexNames) {
+      const bool schemaIndexIsNotInDb = dbIndexNames.end() == std::find(dbIndexNames.begin(), dbIndexNames.end(), indexName);
+      if (schemaIndexIsNotInDb) {
+        std::cerr << "  ERROR: the schema index " << indexName << " not found in the DB" << std::endl;
+        status = VerifyStatus::ERROR;
       }
     }
+    for(auto &indexName : dbIndexNames) {
+      const bool dbIndexIsNotInSchema = schemaIndexNames.end() == std::find(schemaIndexNames.begin(), schemaIndexNames.end(), indexName);
+      if (dbIndexIsNotInSchema) {
+        std::cerr << "  INFO: the database index " << indexName << " not found in the schema" << std::endl;
+        if ( VerifyStatus::ERROR != status) {
+          status = VerifyStatus::INFO;
+        }
+      }
+    }
+    if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
+      std::cerr << "  OK" << std::endl;
+      status = VerifyStatus::OK;
+    }
+    return status;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
-  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-    std::cerr << "  OK" << std::endl;
-    status = VerifyStatus::OK;
-  }
-  return status;
 }
 
 //------------------------------------------------------------------------------
@@ -256,30 +264,32 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<
 //------------------------------------------------------------------------------
 VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySequenceNames(const std::list<std::string> &schemaSequenceNames, 
   const std::list<std::string> &dbSequenceNames) const {
-  VerifyStatus status = VerifyStatus::UNKNOWN;
-  // check for schema tables
-  for(auto &sequenceName : schemaSequenceNames) {
-    const bool schemaSequenceIsNotInDb = dbSequenceNames.end() == std::find(dbSequenceNames.begin(), dbSequenceNames.end(), sequenceName);
-    if (schemaSequenceIsNotInDb) {
-      std::cerr << "  ERROR: the schema sequence " << sequenceName << " not found in the DB" << std::endl;
-      status = VerifyStatus::ERROR;
-    }
-  }
-  // check for extra tables in DB
-  for(auto &sequenceName : dbSequenceNames) {
-    const bool dbSequenceIsNotInSchema = schemaSequenceNames.end() == std::find(schemaSequenceNames.begin(), schemaSequenceNames.end(), sequenceName);
-    if (dbSequenceIsNotInSchema) {
-      std::cerr << "  INFO: the database sequence " << sequenceName << " not found in the schema" << std::endl;
-      if ( VerifyStatus::ERROR != status) {
-        status = VerifyStatus::INFO;
+  try {
+    VerifyStatus status = VerifyStatus::UNKNOWN;
+    for(auto &sequenceName : schemaSequenceNames) {
+      const bool schemaSequenceIsNotInDb = dbSequenceNames.end() == std::find(dbSequenceNames.begin(), dbSequenceNames.end(), sequenceName);
+      if (schemaSequenceIsNotInDb) {
+        std::cerr << "  ERROR: the schema sequence " << sequenceName << " not found in the DB" << std::endl;
+        status = VerifyStatus::ERROR;
       }
     }
+    for(auto &sequenceName : dbSequenceNames) {
+      const bool dbSequenceIsNotInSchema = schemaSequenceNames.end() == std::find(schemaSequenceNames.begin(), schemaSequenceNames.end(), sequenceName);
+      if (dbSequenceIsNotInSchema) {
+        std::cerr << "  INFO: the database sequence " << sequenceName << " not found in the schema" << std::endl;
+        if ( VerifyStatus::ERROR != status) {
+          status = VerifyStatus::INFO;
+        }
+      }
+    }
+    if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
+      std::cerr << "  OK" << std::endl;
+      status = VerifyStatus::OK;
+    }
+    return status;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
-  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-    std::cerr << "  OK" << std::endl;
-    status = VerifyStatus::OK;
-  }
-  return status;
 }
 
 //------------------------------------------------------------------------------
@@ -287,30 +297,32 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySequenceNames(const std::li
 //------------------------------------------------------------------------------
 VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTriggerNames(const std::list<std::string> &schemaTriggerNames, 
   const std::list<std::string> &dbTriggerNames) const {
-  VerifyStatus status = VerifyStatus::UNKNOWN;
-  // check for schema tables
-  for(auto &triggerName : schemaTriggerNames) {
-    const bool schemaTriggerIsNotInDb = dbTriggerNames.end() == std::find(dbTriggerNames.begin(), dbTriggerNames.end(), triggerName);
-    if (schemaTriggerIsNotInDb) {
-      std::cerr << "  ERROR: the schema trigger " << triggerName << " not found in the DB" << std::endl;
-      status = VerifyStatus::ERROR;
-    }
-  }
-  // check for extra tables in DB
-  for(auto &triggerName : dbTriggerNames) {
-    const bool dbTriggerIsNotInSchema = schemaTriggerNames.end() == std::find(schemaTriggerNames.begin(), schemaTriggerNames.end(), triggerName);
-    if (dbTriggerIsNotInSchema) {
-      std::cerr << "  INFO: the database trigger " << triggerName << " not found in the schema" << std::endl;
-      if ( VerifyStatus::ERROR != status) {
-        status = VerifyStatus::INFO;
+  try {
+    VerifyStatus status = VerifyStatus::UNKNOWN;
+    for(auto &triggerName : schemaTriggerNames) {
+      const bool schemaTriggerIsNotInDb = dbTriggerNames.end() == std::find(dbTriggerNames.begin(), dbTriggerNames.end(), triggerName);
+      if (schemaTriggerIsNotInDb) {
+        std::cerr << "  ERROR: the schema trigger " << triggerName << " not found in the DB" << std::endl;
+        status = VerifyStatus::ERROR;
       }
     }
+    for(auto &triggerName : dbTriggerNames) {
+      const bool dbTriggerIsNotInSchema = schemaTriggerNames.end() == std::find(schemaTriggerNames.begin(), schemaTriggerNames.end(), triggerName);
+      if (dbTriggerIsNotInSchema) {
+        std::cerr << "  INFO: the database trigger " << triggerName << " not found in the schema" << std::endl;
+        if ( VerifyStatus::ERROR != status) {
+          status = VerifyStatus::INFO;
+        }
+      }
+    }
+    if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
+      std::cerr << "  OK" << std::endl;
+      status = VerifyStatus::OK;
+    }
+    return status;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
-  if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-    std::cerr << "  OK" << std::endl;
-    status = VerifyStatus::OK;
-  }
-  return status;
 }
 
 } // namespace catalogue
