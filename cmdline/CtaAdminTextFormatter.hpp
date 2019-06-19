@@ -44,6 +44,7 @@ public:
   }
 
   // Output headers
+  void printAdLsHeader();
   void printAfLsHeader();
   void printAfLsSummaryHeader();
   void printFrLsHeader();
@@ -57,6 +58,7 @@ public:
   void printRepackLsHeader();
    
   // Output records
+  void print(const AdminLsItem &adls_item);
   void print(const ArchiveFileLsItem &afls_item);
   void print(const ArchiveFileLsSummary &afls_summary);
   void print(const FailedRequestLsItem &frls_item);

@@ -153,7 +153,6 @@ private:
    void processAdmin_Add             (cta::xrd::Response &response);
    void processAdmin_Ch              (cta::xrd::Response &response);
    void processAdmin_Rm              (cta::xrd::Response &response);
-   void processAdmin_Ls              (cta::xrd::Response &response);
    void processArchiveRoute_Add      (cta::xrd::Response &response);
    void processArchiveRoute_Ch       (cta::xrd::Response &response);
    void processArchiveRoute_Rm       (cta::xrd::Response &response);
@@ -205,6 +204,7 @@ private:
     */
    typedef void admincmdstream_t(cta::xrd::Response &response, XrdSsiStream* &stream);
 
+   admincmdstream_t processAdmin_Ls;
    admincmdstream_t processArchiveFile_Ls;
    admincmdstream_t processFailedRequest_Ls;
    admincmdstream_t processListPendingArchives;
