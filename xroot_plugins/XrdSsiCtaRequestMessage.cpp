@@ -687,11 +687,7 @@ void RequestMessage::processAdmin_Ls(cta::xrd::Response &response, XrdSsiStream*
   // Create a XrdSsi stream object to return the results
   stream = new AdminLsStream(*this, m_catalogue, m_scheduler);
 
-  // Should the client display column headers?
-  if(has_flag(OptionBoolean::SHOW_HEADER)) {
-    response.set_show_header(HeaderType::ADMIN_LS);
-  }
-
+  response.set_show_header(HeaderType::ADMIN_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -704,11 +700,9 @@ void RequestMessage::processArchiveFile_Ls(cta::xrd::Response &response, XrdSsiS
   // Create a XrdSsi stream object to return the results
   stream = new ArchiveFileLsStream(*this, m_catalogue, m_scheduler);
 
-  // Should the client display column headers?
-  if(has_flag(OptionBoolean::SHOW_HEADER)) {
-    response.set_show_header(has_flag(OptionBoolean::SUMMARY) ? HeaderType::ARCHIVEFILE_LS_SUMMARY
-                                                              : HeaderType::ARCHIVEFILE_LS);
-  }
+  // Set correct column headers
+  response.set_show_header(has_flag(OptionBoolean::SUMMARY) ? HeaderType::ARCHIVEFILE_LS_SUMMARY
+                                                            : HeaderType::ARCHIVEFILE_LS);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -985,11 +979,9 @@ void RequestMessage::processFailedRequest_Ls(cta::xrd::Response &response, XrdSs
 
   stream = new FailedRequestLsStream(*this, m_catalogue, m_scheduler, m_scheddb, m_lc);
 
-  // Should the client display column headers?
-  if(has_flag(OptionBoolean::SHOW_HEADER)) {
-    response.set_show_header(has_flag(OptionBoolean::SUMMARY) ?
-      HeaderType::FAILEDREQUEST_LS_SUMMARY : HeaderType::FAILEDREQUEST_LS);
-  }
+  // Display the correct column headers
+  response.set_show_header(has_flag(OptionBoolean::SUMMARY) ? HeaderType::FAILEDREQUEST_LS_SUMMARY
+                                                            : HeaderType::FAILEDREQUEST_LS);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1088,11 +1080,9 @@ void RequestMessage::processListPendingArchives(cta::xrd::Response &response, Xr
   // Create a XrdSsi stream object to return the results
   stream = new ListPendingQueueStream<OStoreDB::ArchiveQueueItor_t>(*this, m_catalogue, m_scheduler, m_scheddb);
 
-  // Should the client display column headers?
-  if(has_flag(OptionBoolean::SHOW_HEADER)) {
-    response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGARCHIVES
-                                                               : HeaderType::LISTPENDINGARCHIVES_SUMMARY);
-  }
+  // Display the correct column headers
+  response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGARCHIVES
+                                                             : HeaderType::LISTPENDINGARCHIVES_SUMMARY);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1106,11 +1096,9 @@ void RequestMessage::processListPendingRetrieves(cta::xrd::Response &response, X
   // Create a XrdSsi stream object to return the results
   stream = new ListPendingQueueStream<OStoreDB::RetrieveQueueItor_t>(*this, m_catalogue, m_scheduler, m_scheddb);
 
-  // Should the client display column headers?
-  if(has_flag(OptionBoolean::SHOW_HEADER)) {
-    response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGRETRIEVES
-                                                               : HeaderType::LISTPENDINGRETRIEVES_SUMMARY);
-  }
+  // Display correct column headers
+  response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGRETRIEVES
+                                                             : HeaderType::LISTPENDINGRETRIEVES_SUMMARY);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1364,18 +1352,14 @@ void RequestMessage::processRepack_Rm(cta::xrd::Response &response)
 
 void RequestMessage::processRepack_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
   
   auto vid = getOptional(OptionString::VID);
 
   // Create a XrdSsi stream object to return the results
   stream = new RepackLsStream(m_scheduler, vid);
 
-  // Should the client display column headers?
-  if(has_flag(OptionBoolean::SHOW_HEADER)) {
-     response.set_show_header(HeaderType::REPACK_LS);
-  }
-
+  response.set_show_header(HeaderType::REPACK_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1383,30 +1367,10 @@ void RequestMessage::processRepack_Ls(cta::xrd::Response &response, XrdSsiStream
 
 void RequestMessage::processRepack_Err(cta::xrd::Response &response)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
-
-//   auto &vid = getRequired(OptionString::VID);
-//
-//   cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(vid);
-//
-//   if(!info.errors.empty())
-//   {
-//      std::vector<std::vector<std::string>> responseTable;
-//      std::vector<std::string> header = { "fseq","error message" };
-//      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-//      for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
-//         std::vector<std::string> currentRow;
-//         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
-//         currentRow.push_back(it->second);
-//         responseTable.push_back(currentRow);
-//      }
-//      cmdlineOutput << formatResponse(responseTable);
-//   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_message_txt("Not implemented");
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -1747,11 +1711,7 @@ void RequestMessage::processTape_Ls(cta::xrd::Response &response, XrdSsiStream* 
   // Create a XrdSsi stream object to return the results
   stream = new TapeLsStream(*this, m_catalogue, m_scheduler);
 
-  // Should the client display column headers?
-  if(has_flag(OptionBoolean::SHOW_HEADER)) {
-    response.set_show_header(HeaderType::TAPE_LS);
-  }
-
+  response.set_show_header(HeaderType::TAPE_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1840,9 +1800,7 @@ void RequestMessage::processTapePool_Ls(cta::xrd::Response &response, XrdSsiStre
   // Create a XrdSsi stream object to return the results
   stream = new TapePoolLsStream(*this, m_catalogue, m_scheduler);
 
-  // Should the client display column headers?
-  if(has_flag(OptionBoolean::SHOW_HEADER)) response.set_show_header(HeaderType::TAPEPOOL_LS);
-
+  response.set_show_header(HeaderType::TAPEPOOL_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
