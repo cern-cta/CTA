@@ -418,7 +418,8 @@ void TextFormatter::print(const cta::admin::RepackLsItem &rels_item) {
    dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
    rels_item.failed_to_archive_files(),
    dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
-   rels_item.last_expanded_fseq()
+   rels_item.last_expanded_fseq(),
+   rels_item.status()
   );
 }
 
