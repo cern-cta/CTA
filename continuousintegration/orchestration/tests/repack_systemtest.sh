@@ -89,7 +89,7 @@ echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPA
 admin_cta re add --vid ${VID_TO_REPACK} --justmove --bufferurl ${FULL_REPACK_BUFFER_URL}
 
 SECONDS_PASSED=0
-while test 0 = `admin_cta repack ls --vid ${VID_TO_REPACK} | grep -E "Complete|Failed" | wc -l`; do
+while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Complete" or .status == "Failed")' | wc -l`; do
   echo "Waiting for repack request on tape ${VID_TO_REPACK} to be complete: Seconds passed = $SECONDS_PASSED"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -99,7 +99,7 @@ while test 0 = `admin_cta repack ls --vid ${VID_TO_REPACK} | grep -E "Complete|F
     exit 1
   fi
 done
-if test 1 = `admin_cta repack ls --vid ${VID_TO_REPACK} | grep -E "Failed" | wc -l`; then
+if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Failed")' | wc -l`; then
     echo "Repack failed for tape ${VID_TO_REPACK}."
     exit 1
 fi
