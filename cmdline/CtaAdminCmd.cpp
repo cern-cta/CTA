@@ -71,6 +71,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
       std::cout << CtaAdminCmd::jsonDelim();
 
       switch(record.data_case()) {
+         case Data::kAdlsItem:      std::cout << Log::DumpProtobuf(&record.adls_item());    break;
          case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
          case Data::kAflsSummary:   std::cout << Log::DumpProtobuf(&record.afls_summary()); break;
          case Data::kFrlsItem:      std::cout << Log::DumpProtobuf(&record.frls_item());    break;
@@ -88,7 +89,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    }
    // Format results in a tabular format for a human
    else switch(record.data_case()) {
-         case Data::kAflsItem:      formattedText.print(record.afls_item());     break;
+         case Data::kAdlsItem:      formattedText.print(record.adls_item());    break;
+         case Data::kAflsItem:      formattedText.print(record.afls_item());    break;
          case Data::kAflsSummary:   formattedText.print(record.afls_summary()); break;
          case Data::kFrlsItem:      formattedText.print(record.frls_item());    break;
          case Data::kFrlsSummary:   formattedText.print(record.frls_summary()); break;
@@ -232,6 +234,7 @@ void CtaAdminCmd::send() const
          std::cout << response.message_txt();
          // Print streaming response header
          if(!isJson()) switch(response.show_header()) {
+            case HeaderType::ADMIN_LS:                     formattedText.printAdLsHeader(); break;
             case HeaderType::ARCHIVEFILE_LS:               formattedText.printAfLsHeader(); break;
             case HeaderType::ARCHIVEFILE_LS_SUMMARY:       formattedText.printAfLsSummaryHeader(); break;
             case HeaderType::FAILEDREQUEST_LS:             formattedText.printFrLsHeader(); break;

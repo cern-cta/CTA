@@ -24,6 +24,10 @@
 
 namespace cta { namespace admin {
 
+/**
+ ** Generic utility methods
+ **/
+
 std::string TextFormatter::doubleToStr(double value, char unit) {
   std::stringstream ss;
   ss << std::fixed << std::setprecision(1) << value << unit;
@@ -100,6 +104,37 @@ void TextFormatter::flush() {
   m_outputBuffer.clear();
 }
 
+
+/**
+ ** Output for specific commands
+ **/
+
+void TextFormatter::printAdLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "user",
+    "c.user",
+    "c.host", 
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const cta::admin::AdminLsItem &adls_item) {
+  push_back(
+    adls_item.user(),
+    adls_item.creation_log().username(),
+    adls_item.creation_log().host(),
+    timeToStr(adls_item.creation_log().time()),
+    adls_item.last_modification_log().username(),
+    adls_item.last_modification_log().host(),
+    timeToStr(adls_item.last_modification_log().time()),
+    adls_item.comment()
+  );
+}
 
 void TextFormatter::printAfLsHeader() {
   push_back("HEADER");

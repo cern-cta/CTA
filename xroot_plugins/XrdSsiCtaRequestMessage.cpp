@@ -25,6 +25,7 @@
 using XrdSsiPb::PbException;
 
 #include <cmdline/CtaAdminCmdParse.hpp>
+#include "XrdCtaAdminLs.hpp"
 #include "XrdCtaArchiveFileLs.hpp"
 #include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaListPendingQueue.hpp"
@@ -112,7 +113,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processAdmin_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS):
-               processAdmin_Ls(response);
+               processAdmin_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_LS):
                processArchiveFile_Ls(response, stream);
@@ -679,33 +680,19 @@ void RequestMessage::processAdmin_Rm(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processAdmin_Ls(cta::xrd::Response &response)
+void RequestMessage::processAdmin_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  // Create a XrdSsi stream object to return the results
+  stream = new AdminLsStream(*this, m_catalogue, m_scheduler);
 
-   std::list<cta::common::dataStructures::AdminUser> list= m_catalogue.getAdminUsers();
+  // Should the client display column headers?
+  if(has_flag(OptionBoolean::SHOW_HEADER)) {
+    response.set_show_header(HeaderType::ADMIN_LS);
+  }
 
-   if(!list.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "user","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->name);
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
