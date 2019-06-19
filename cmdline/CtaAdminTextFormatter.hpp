@@ -24,46 +24,109 @@
 namespace cta {
 namespace admin {
 
-class CtaAdminTextFormatter
+class TextFormatter
 {
 public:
-   // Output headers
-   static void printAfLsHeader();
-   static void printAfLsSummaryHeader();
-   static void printFrLsHeader();
-   static void printFrLsSummaryHeader();
-   static void printLpaHeader();
-   static void printLpaSummaryHeader();
-   static void printLprHeader();
-   static void printLprSummaryHeader();
-   static void printTpLsHeader();
-   static void printTapeLsHeader();
-   static void printRepackLsHeader();
+  /*!
+   * Constructor
+   *
+   * @param[in]  bufLines  Number of text lines to buffer before flushing formatted output
+   *                       (Not used for JSON output which does not need to be formatted
+   *                        so can be streamed directly)
+   */
+  TextFormatter(unsigned int bufLines = 1000) :
+    m_bufLines(bufLines) {
+    m_outputBuffer.reserve(bufLines);
+  }
+
+  ~TextFormatter() {
+    flush();
+  }
+
+  // Output headers
+  void printAfLsHeader();
+  void printAfLsSummaryHeader();
+  void printFrLsHeader();
+  void printFrLsSummaryHeader();
+  void printLpaHeader();
+  void printLpaSummaryHeader();
+  void printLprHeader();
+  void printLprSummaryHeader();
+  void printTapePoolLsHeader();
+  void printTapeLsHeader();
+  void printRepackLsHeader();
    
-   // Output records
-   static void print(const ArchiveFileLsItem &afls_item);
-   static void print(const ArchiveFileLsSummary &afls_summary);
-   static void print(const FailedRequestLsItem &frls_item);
-   static void print(const FailedRequestLsSummary &frls_summary);
-   static void print(const ListPendingArchivesItem &lpa_item);
-   static void print(const ListPendingArchivesSummary &lpa_summary);
-   static void print(const ListPendingRetrievesItem &lpr_item);
-   static void print(const ListPendingRetrievesSummary &lpr_summary);
-   static void print(const TapePoolLsItem &tpls_item);
-   static void print(const TapeLsItem &tals_item);
-   static void print(const RepackLsItem &rels_item);
+  // Output records
+  void print(const ArchiveFileLsItem &afls_item);
+  void print(const ArchiveFileLsSummary &afls_summary);
+  void print(const FailedRequestLsItem &frls_item);
+  void print(const FailedRequestLsSummary &frls_summary);
+  void print(const ListPendingArchivesItem &lpa_item);
+  void print(const ListPendingArchivesSummary &lpa_summary);
+  void print(const ListPendingRetrievesItem &lpr_item);
+  void print(const ListPendingRetrievesSummary &lpr_summary);
+  void print(const TapePoolLsItem &tpls_item);
+  void print(const TapeLsItem &tals_item);
+  void print(const RepackLsItem &rels_item);
 
 private:
-   // Static method to convert time to string
-   static std::string timeToString(const time_t &time)
-   {
-      std::string timeString(ctime(&time));
-      timeString.resize(timeString.size()-1); //remove newline
-      return timeString;
-   }
+  //! Add a line to the buffer
+  template<typename... Args>
+  void push_back(Args... args) {
+    std::vector<std::string> line;
+    buildVector(line, args...);
+    m_outputBuffer.push_back(line);
+    if(m_outputBuffer.size() >= m_bufLines) flush();
+  }
 
-   static constexpr const char* const TEXT_RED    = "\x1b[31;1m";     //!< Terminal formatting code for red text
-   static constexpr const char* const TEXT_NORMAL = "\x1b[0m";        //!< Terminal formatting code for normal text
+  //! Recursive variadic method to build a log string from an arbitrary number of items of arbitrary type
+  template<typename T, typename... Args>
+  static void buildVector(std::vector<std::string> &line, const T &item, Args... args) {
+    buildVector(line, item);
+    buildVector(line, args...);
+  }
+
+  //! Base case method to add one item to the log
+  static void buildVector(std::vector<std::string> &line, const std::string &item) {
+    line.push_back(item);
+  }
+
+  //! Base case method to add one item to the log, overloaded for char*
+  static void buildVector(std::vector<std::string> &line, const char *item) {
+    line.push_back(std::string(item));
+  }
+
+  //! Base case method to add one item to the log, overloaded for bool
+  static void buildVector(std::vector<std::string> &line, bool item) {
+    line.push_back(item ? "true" : "false");
+  }
+
+  /*!
+   * Base case method to add one item to the log, with partial specialisation
+   * (works for all integer and floating-point types)
+   */
+  template<typename T>
+  static void buildVector(std::vector<std::string> &line, const T &item) {
+    line.push_back(std::to_string(item));
+  }
+
+  //! Convert double to string with one decimal place precision and a suffix
+  static std::string doubleToStr(double value, char unit);
+
+  //! Convert UNIX time to string
+  static std::string timeToStr(const time_t &unixtime);
+
+  //! Convert data size in bytes to abbreviated string with appropriate size suffix (K/M/G/T/P/E)
+  static std::string dataSizeToStr(uint64_t value);
+
+  //! Flush buffer to stdout
+  void flush();
+
+  unsigned int m_bufLines;                                          //!< Number of text lines to buffer before flushing formatted output
+  std::vector<std::vector<std::string>> m_outputBuffer;             //!< Buffer for text output (not used for JSON)
+
+  static constexpr const char* const TEXT_RED    = "\x1b[31;1m";    //!< Terminal formatting code for red text
+  static constexpr const char* const TEXT_NORMAL = "\x1b[0m";       //!< Terminal formatting code for normal text
 };
 
 }}

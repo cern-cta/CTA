@@ -27,8 +27,13 @@
 #include <cmdline/CtaAdminTextFormatter.hpp>
 
 
-// global synchronisation flag between main thread and stream handler thread
+// GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
+
+// global synchronisation flag
 std::atomic<bool> isHeaderSent(false);
+
+// initialise an output buffer of 1000 lines
+cta::admin::TextFormatter formattedText(1000);
 
 
 namespace XrdSsiPb {
@@ -83,17 +88,17 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    }
    // Format results in a tabular format for a human
    else switch(record.data_case()) {
-         case Data::kAflsItem:      CtaAdminTextFormatter::print(record.afls_item());    break;
-         case Data::kAflsSummary:   CtaAdminTextFormatter::print(record.afls_summary()); break;
-         case Data::kFrlsItem:      CtaAdminTextFormatter::print(record.frls_item());    break;
-         case Data::kFrlsSummary:   CtaAdminTextFormatter::print(record.frls_summary()); break;
-         case Data::kLpaItem:       CtaAdminTextFormatter::print(record.lpa_item());     break;
-         case Data::kLpaSummary:    CtaAdminTextFormatter::print(record.lpa_summary());  break;
-         case Data::kLprItem:       CtaAdminTextFormatter::print(record.lpr_item());     break;
-         case Data::kLprSummary:    CtaAdminTextFormatter::print(record.lpr_summary());  break;
-         case Data::kTplsItem:      CtaAdminTextFormatter::print(record.tpls_item());    break;
-         case Data::kTalsItem:      CtaAdminTextFormatter::print(record.tals_item());    break;
-         case Data::kRelsItem:      CtaAdminTextFormatter::print(record.rels_item());    break;
+         case Data::kAflsItem:      formattedText.print(record.afls_item());     break;
+         case Data::kAflsSummary:   formattedText.print(record.afls_summary()); break;
+         case Data::kFrlsItem:      formattedText.print(record.frls_item());    break;
+         case Data::kFrlsSummary:   formattedText.print(record.frls_summary()); break;
+         case Data::kLpaItem:       formattedText.print(record.lpa_item());     break;
+         case Data::kLpaSummary:    formattedText.print(record.lpa_summary());  break;
+         case Data::kLprItem:       formattedText.print(record.lpr_item());     break;
+         case Data::kLprSummary:    formattedText.print(record.lpr_summary());  break;
+         case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
+         case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
+         case Data::kRelsItem:      formattedText.print(record.rels_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -227,17 +232,17 @@ void CtaAdminCmd::send() const
          std::cout << response.message_txt();
          // Print streaming response header
          if(!isJson()) switch(response.show_header()) {
-            case HeaderType::ARCHIVEFILE_LS:               CtaAdminTextFormatter::printAfLsHeader(); break;
-            case HeaderType::ARCHIVEFILE_LS_SUMMARY:       CtaAdminTextFormatter::printAfLsSummaryHeader(); break;
-            case HeaderType::FAILEDREQUEST_LS:             CtaAdminTextFormatter::printFrLsHeader(); break;
-            case HeaderType::FAILEDREQUEST_LS_SUMMARY:     CtaAdminTextFormatter::printFrLsSummaryHeader(); break;
-            case HeaderType::LISTPENDINGARCHIVES:          CtaAdminTextFormatter::printLpaHeader(); break;
-            case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  CtaAdminTextFormatter::printLpaSummaryHeader(); break;
-            case HeaderType::LISTPENDINGRETRIEVES:         CtaAdminTextFormatter::printLprHeader(); break;
-            case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: CtaAdminTextFormatter::printLprSummaryHeader(); break;
-            case HeaderType::TAPEPOOL_LS:                  CtaAdminTextFormatter::printTpLsHeader(); break;
-            case HeaderType::TAPE_LS:                      CtaAdminTextFormatter::printTapeLsHeader(); break;
-            case HeaderType::REPACK_LS:                    CtaAdminTextFormatter::printRepackLsHeader(); break;
+            case HeaderType::ARCHIVEFILE_LS:               formattedText.printAfLsHeader(); break;
+            case HeaderType::ARCHIVEFILE_LS_SUMMARY:       formattedText.printAfLsSummaryHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS:             formattedText.printFrLsHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS_SUMMARY:     formattedText.printFrLsSummaryHeader(); break;
+            case HeaderType::LISTPENDINGARCHIVES:          formattedText.printLpaHeader(); break;
+            case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  formattedText.printLpaSummaryHeader(); break;
+            case HeaderType::LISTPENDINGRETRIEVES:         formattedText.printLprHeader(); break;
+            case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: formattedText.printLprSummaryHeader(); break;
+            case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
+            case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;
+            case HeaderType::REPACK_LS:                    formattedText.printRepackLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }
