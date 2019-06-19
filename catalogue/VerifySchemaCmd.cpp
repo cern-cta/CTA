@@ -115,6 +115,15 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const auto schemaTableNames = schema->getSchemaTableNames();
   const auto dbTableNames = conn.getTableNames();
   const VerifyStatus verifyTablesStatus = verifyTableNames(schemaTableNames, dbTableNames);
+  
+  for (const auto &table: schemaTableNames) {
+    std::cerr << table << std::endl;
+    const auto columns = schema->getSchemaColumns(table);
+    
+    for (const auto &column : columns) {
+      std::cerr << "  " << column.first << " "  << column.second << std::endl;
+    }  
+  }
 
   std::cerr << "Checking index names..." << std::endl;
   const auto schemaIndexNames = schema->getSchemaIndexNames();
