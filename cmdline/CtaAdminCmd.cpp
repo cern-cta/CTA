@@ -239,6 +239,7 @@ void CtaAdminCmd::send() const
             case HeaderType::ADMIN_LS:                     formattedText.printAdLsHeader(); break;
             case HeaderType::ARCHIVEFILE_LS:               formattedText.printAfLsHeader(); break;
             case HeaderType::ARCHIVEFILE_LS_SUMMARY:       formattedText.printAfLsSummaryHeader(); break;
+            case HeaderType::ARCHIVEROUTE_LS:              formattedText.printArLsHeader(); break;
             case HeaderType::FAILEDREQUEST_LS:             formattedText.printFrLsHeader(); break;
             case HeaderType::FAILEDREQUEST_LS_SUMMARY:     formattedText.printFrLsSummaryHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES:          formattedText.printLpaHeader(); break;
