@@ -66,7 +66,7 @@ NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 
 echo "Preparing CTA configuration for tests"
   # verify the catalogue DB schema
-  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
+    kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
   for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
     kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
