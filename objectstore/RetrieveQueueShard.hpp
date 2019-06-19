@@ -53,6 +53,11 @@ public:
     uint64_t maxDrivesAllowed;
     time_t startTime;
     uint64_t fSeq;
+    struct ActivityDescription {
+      std::string diskInstanceName;
+      std::string activity;
+    };
+    optional<ActivityDescription> activityDescription;
   };
   std::list<JobInfo> dumpJobs();
   

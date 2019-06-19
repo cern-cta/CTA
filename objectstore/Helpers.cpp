@@ -613,7 +613,7 @@ void Helpers::getLockedAndFetchedDriveState(DriveState& driveState, ScopedExclus
       }
     } catch (DriveRegister::NoSuchDrive &) {
       // OK, we do need to create the drive status.
-      driveState.setAddress(agentReference.nextId(std::string ("DriveStatus-")+driveName));
+      driveState.setAddress(agentReference.nextId(std::string ("DriveState-")+driveName));
       driveState.initialize(driveName);
       agentReference.addToOwnership(driveState.getAddressIfSet(), be);
       driveState.setOwner(agentReference.getAgentAddress());

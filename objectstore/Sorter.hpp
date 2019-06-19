@@ -125,6 +125,7 @@ public:
     uint64_t fSeq;
     common::dataStructures::MountPolicy mountPolicy;
     cta::objectstore::JobQueueType jobQueueType;
+    optional<RetrieveActivityDescription> activityDescription;
   };
   
   /**

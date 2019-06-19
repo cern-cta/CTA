@@ -22,6 +22,7 @@
 #include "objectstore/cta.pb.h"
 #include "RetrieveRequest.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
+#include "RetrieveActivityCountMap.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -65,6 +66,7 @@ public:
     uint64_t fileSize;
     cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
+    optional<RetrieveActivityDescription> activityDescription; 
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   // This version will check for existence of the job in the queue before
@@ -82,6 +84,13 @@ public:
     uint64_t priority;
     uint64_t minRetrieveRequestAge;
     uint64_t maxDrivesAllowed;
+    struct ActivityCount {
+      std::string diskInstanceName;
+      std::string activity;
+      double weight;
+      uint64_t count;
+    };
+    std::list<ActivityCount> activityCounts;
   };
   JobsSummary getJobsSummary();
   struct JobDump {
@@ -148,36 +157,12 @@ private:
   uint64_t m_maxShardSize = c_defaultMaxShardSize;
 };
 
-class RetrieveQueueToTransferForUser : public RetrieveQueue {
-public:
-  template<typename...Ts> RetrieveQueueToTransferForUser(Ts&...args): RetrieveQueue(args...) {}
-};
-
-class RetrieveQueueToReportForUser : public RetrieveQueue {
-public:
-  template<typename...Ts> RetrieveQueueToReportForUser(Ts&...args): RetrieveQueue(args...) {}
-};
-
-class RetrieveQueueFailed : public RetrieveQueue {
-public:
-  template<typename...Ts> RetrieveQueueFailed(Ts&...args): RetrieveQueue(args...) {}
-};
-  
-class RetrieveQueueToReportToRepackForSuccess : public RetrieveQueue {
-public:
-  template<typename...Ts> RetrieveQueueToReportToRepackForSuccess(Ts&...args): RetrieveQueue(args...) {}
-};
-
-class RetrieveQueueToReportToRepackForFailure: public RetrieveQueue{
-public:
-  template<typename...Ts> RetrieveQueueToReportToRepackForFailure(Ts&...args): RetrieveQueue(args...) {}
-};
-
-class RetrieveQueueToTransferForRepack : public RetrieveQueue {
-public:
-  template<typename...Ts> RetrieveQueueToTransferForRepack(Ts&...args): RetrieveQueue(args...) {}
-};
-
+class RetrieveQueueToTransferForUser : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
+class RetrieveQueueToReportForUser : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
+class RetrieveQueueFailed : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
+class RetrieveQueueToReportToRepackForSuccess : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
+class RetrieveQueueToReportToRepackForFailure: public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
+class RetrieveQueueToTransferForRepack : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 
 }}
 

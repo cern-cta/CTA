@@ -69,8 +69,8 @@ RdbmsCatalogue::RdbmsCatalogue(
   m_groupMountPolicyCache(10),
   m_userMountPolicyCache(10),
   m_expectedNbArchiveRoutesCache(10),
-  m_isAdminCache(10) {
-}
+  m_isAdminCache(10),
+  m_activitiesFairShareWeights(10) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -3975,6 +3975,223 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 }
 
 //------------------------------------------------------------------------------
+// createActivitiesFairShareWeight
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, 
+    const std::string& diskInstanceName, const std::string& activity, double weight, const std::string & comment) {
+  try {
+    if (diskInstanceName.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create activity weight because the disk instance name is"
+        " an empty string");
+    }
+    
+    if (activity.empty()) {
+      throw UserSpecifiedAnEmptyStringActivity("Cannot create activity weight because the activity name is"
+        " an empty string");
+    }
+    
+    if (weight <= 0 || weight > 1) {
+      throw UserSpecifiedAnOutOfRangeActivityWeight("Cannot create activity because the activity weight is out of ]0, 1] range.");
+    }
+    
+    if (comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment("Cannot create activity weight because the comment is"
+        " an empty string");
+    }
+    
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "INSERT INTO ACTIVITIES_WEIGHTS ("
+        "DISK_INSTANCE_NAME,"
+        "ACTIVITY,"
+        "WEIGHT,"
+    
+        "USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME)"
+    
+      "VALUES ("
+        ":DISK_INSTANCE_NAME,"
+        ":ACTIVITY,"
+        ":WEIGHT,"
+
+        ":USER_COMMENT,"
+
+        ":CREATION_LOG_USER_NAME,"
+        ":CREATION_LOG_HOST_NAME,"
+        ":CREATION_LOG_TIME,"
+
+        ":LAST_UPDATE_USER_NAME,"
+        ":LAST_UPDATE_HOST_NAME,"
+        ":LAST_UPDATE_TIME)";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":ACTIVITY", activity);
+    stmt.bindString(":WEIGHT", std::to_string(weight));
+    
+    stmt.bindString(":USER_COMMENT", comment);
+
+    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
+    stmt.bindUint64(":CREATION_LOG_TIME", now);
+
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    
+    stmt.executeNonQuery();
+
+    conn.commit();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// modifyActivitiesFairShareWeight
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& activity, double weight, const std::string& comment) {
+  try {
+    if (diskInstanceName.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create activity weight because the disk instance name is"
+        " an empty string");
+    }
+    
+    if (activity.empty()) {
+      throw UserSpecifiedAnEmptyStringActivity("Cannot create activity weight because the activity name is"
+        " an empty string");
+    }
+    
+    if (weight <= 0 || weight > 1) {
+      throw UserSpecifiedAnOutOfRangeActivityWeight("Cannot create activity because the activity weight is out of ]0, 1] range.");
+    }
+    
+    if (comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment("Cannot modify activity weight because the comment is"
+        " an empty string");
+    }
+    
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE ACTIVITIES_WEIGHTS SET "
+        "WEIGHT = :WEIGHT,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME,"
+        "USER_COMMENT = :USER_COMMENT "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "ACTIVITY = :ACTIVITY";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":ACTIVITY", activity);
+    stmt.bindString(":WEIGHT", std::to_string(weight));
+    
+    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify activity fair share weight ") + activity + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// deleteActivitiesFairShareWeight
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& activity) {
+  try {
+    if (diskInstanceName.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create activity weight because the disk instance name is"
+        " an empty string");
+    }
+    
+    if (activity.empty()) {
+      throw UserSpecifiedAnEmptyStringActivity("Cannot create activity weight because the activity name is"
+        " an empty string");
+    }
+    
+    const char *const sql = "DELETE FROM ACTIVITIES_WEIGHTS WHERE DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND ACTIVITY = :ACTIVITY";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":ACTIVITY", activity);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot delete activity weight ") + activity + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getActivitiesFairShareWeights
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::ActivitiesFairShareWeights> RdbmsCatalogue::getActivitiesFairShareWeights() const {
+  try {
+    std::string sql =
+      "SELECT "
+        "ACTIVITIES_WEIGHTS.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "ACTIVITIES_WEIGHTS.ACTIVITY AS ACTIVITY,"
+        "ACTIVITIES_WEIGHTS.WEIGHT AS WEIGHT "
+      "FROM "
+        "ACTIVITIES_WEIGHTS";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+
+    std::map<std::string, common::dataStructures::ActivitiesFairShareWeights> activitiesMap;
+    while(rset.next()) {
+      common::dataStructures::ActivitiesFairShareWeights * activity;
+      auto diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
+      try {
+        activity = & activitiesMap.at(diskInstanceName);
+      } catch (std::out_of_range) {
+        activity = & activitiesMap[diskInstanceName];
+        activity->diskInstance = diskInstanceName;
+      }
+      activity->setWeightFromString(rset.columnString("ACTIVITY"), rset.columnString("WEIGHT"));
+    }
+    std::list<common::dataStructures::ActivitiesFairShareWeights> ret;
+    for (auto & dia: activitiesMap) {
+      ret.push_back(dia.second);
+    }
+    return ret;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // insertArchiveFile
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row) {
@@ -4694,55 +4911,60 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
   const std::string &diskInstanceName,
   const uint64_t archiveFileId,
   const common::dataStructures::UserIdentity &user,
+  const optional<std::string>& activity,
   log::LogContext &lc) {
   try {
     cta::utils::Timer t;
-    auto conn = m_connPool.getConn();
-    const auto getConnTime = t.secs(utils::Timer::resetCounter);
-    auto archiveFile = getArchiveFileToRetrieveByArchiveFileId(conn, archiveFileId);
-    const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
-    if(nullptr == archiveFile.get()) {
-      exception::UserError ex;
-      ex.getMessage() << "No tape files available for archive file with archive file ID " << archiveFileId;
-      throw ex;
-    }
-
-    if(diskInstanceName != archiveFile->diskInstance) {
-      exception::UserError ue;
-      ue.getMessage() << "Cannot retrieve file because the disk instance of the request does not match that of the"
-        " archived file: archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path <<
-        " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" << archiveFile->diskInstance;
-      throw ue;
-    }
-
-    t.reset();
-    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
-      user.group);
-     const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
-
-    log::ScopedParamContainer spc(lc);
-    spc.add("getConnTime", getConnTime)
-       .add("getArchiveFileTime", getArchiveFileTime)
-       .add("getMountPoliciesTime", getMountPoliciesTime);
-    lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
-
-    // Requester mount policies overrule requester group mount policies
-    common::dataStructures::MountPolicy mountPolicy;
-    if(!mountPolicies.requesterMountPolicies.empty()) {
-      mountPolicy = mountPolicies.requesterMountPolicies.front();
-    } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
-      mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
-    } else {
-      exception::UserError ue;
-      ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
-        " archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requester=" <<
-        diskInstanceName << ":" << user.name << ":" << user.group;
-      throw ue;
-    }
-
     common::dataStructures::RetrieveFileQueueCriteria criteria;
-    criteria.archiveFile = *archiveFile;
-    criteria.mountPolicy = mountPolicy;
+    {
+      auto conn = m_connPool.getConn();
+      const auto getConnTime = t.secs(utils::Timer::resetCounter);
+      auto archiveFile = getArchiveFileToRetrieveByArchiveFileId(conn, archiveFileId);
+      const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
+      if(nullptr == archiveFile.get()) {
+        exception::UserError ex;
+        ex.getMessage() << "No tape files available for archive file with archive file ID " << archiveFileId;
+        throw ex;
+      }
+
+      if(diskInstanceName != archiveFile->diskInstance) {
+        exception::UserError ue;
+        ue.getMessage() << "Cannot retrieve file because the disk instance of the request does not match that of the"
+          " archived file: archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path <<
+          " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" << archiveFile->diskInstance;
+        throw ue;
+      }
+
+      t.reset();
+      const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
+        user.group);
+       const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
+
+      log::ScopedParamContainer spc(lc);
+      spc.add("getConnTime", getConnTime)
+         .add("getArchiveFileTime", getArchiveFileTime)
+         .add("getMountPoliciesTime", getMountPoliciesTime);
+      lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
+
+      // Requester mount policies overrule requester group mount policies
+      common::dataStructures::MountPolicy mountPolicy;
+      if(!mountPolicies.requesterMountPolicies.empty()) {
+        mountPolicy = mountPolicies.requesterMountPolicies.front();
+      } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
+        mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
+      } else {
+        exception::UserError ue;
+        ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
+          " archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requester=" <<
+          diskInstanceName << ":" << user.name << ":" << user.group;
+        throw ue;
+      }
+
+
+      criteria.archiveFile = *archiveFile;
+      criteria.mountPolicy = mountPolicy;
+    }
+    criteria.activitiesFairShareWeight = getCachedActivitiesWeights(diskInstanceName);
     return criteria;
   } catch(exception::UserError &) {
     throw;
@@ -5269,6 +5491,58 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     }
 
     return archiveFile;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getCachedActivitiesWeights
+//------------------------------------------------------------------------------
+common::dataStructures::ActivitiesFairShareWeights 
+RdbmsCatalogue::getCachedActivitiesWeights(const std::string& diskInstance) const {
+  try {
+    auto getNonCachedValue = [&] {
+      auto conn = m_connPool.getConn();
+      return getActivitiesWeights(conn, diskInstance);
+    };
+    return m_activitiesFairShareWeights.getCachedValue(diskInstance, getNonCachedValue);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getActivitiesWeights
+//------------------------------------------------------------------------------
+common::dataStructures::ActivitiesFairShareWeights 
+RdbmsCatalogue::getActivitiesWeights(rdbms::Conn& conn, const std::string& diskInstanceName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "ACTIVITIES_WEIGHTS.ACTIVITY AS ACTIVITY,"
+        "ACTIVITIES_WEIGHTS.WEIGHT AS WEIGHT "
+      "FROM "
+        "ACTIVITIES_WEIGHTS "
+      "WHERE "
+        "ACTIVITIES_WEIGHTS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    auto rset = stmt.executeQuery();
+    common::dataStructures::ActivitiesFairShareWeights afsw;
+    afsw.diskInstance = diskInstanceName;
+    while (rset.next()) {
+      // The weight is a string encoded double with values in [0, 1], like in FTS.
+      // All the checks are performed in setWeightFromString().
+      afsw.setWeightFromString(rset.columnString("ACTIVITY"), rset.columnString("WEIGHT"));
+    }
+    return afsw;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

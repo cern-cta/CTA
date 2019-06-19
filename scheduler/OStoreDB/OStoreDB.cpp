@@ -31,6 +31,7 @@
 #include "objectstore/Sorter.hpp"
 #include "objectstore/Helpers.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
@@ -186,7 +187,7 @@ void OStoreDB::ping() {
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re, 
     log::LogContext & logContext) {
   utils::Timer t, t2;
-  // Walk the archive queues for user for statistics
+  // Walk the archive queues for USER for statistics
   for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
@@ -232,7 +233,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           .add("processingTime", processingTime);
     logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive for user queue.");
   }
-  // Walk the archive queues for user for statistics
+  // Walk the archive queues for REPACK for statistics
   for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForRepack)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
@@ -300,18 +301,56 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
-    if (rqueue.getJobsSummary().jobs) {
-      tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
-      auto & m = tmdi.potentialMounts.back();
-      m.vid = rqp.vid;
-      m.type = cta::common::dataStructures::MountType::Retrieve;
-      m.bytesQueued = rqueue.getJobsSummary().bytes;
-      m.filesQueued = rqueue.getJobsSummary().jobs;      
-      m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
-      m.priority = rqueue.getJobsSummary().priority;
-      m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
-      m.minRequestAge = rqueue.getJobsSummary().minRetrieveRequestAge;
-      m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
+    auto rqSummary = rqueue.getJobsSummary();
+    if (rqSummary.jobs) {
+      // Check if we have activities and if all the jobs are covered by one or not (possible mixed case).
+      bool jobsWithoutActivity = true;
+      if (rqSummary.activityCounts.size()) {
+        if (rqSummary.activityCounts.size() >= rqSummary.jobs)
+          jobsWithoutActivity = false;
+        // In all cases, we create one potential mount per activity
+        for (auto ac: rqSummary.activityCounts) {
+          tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+          auto & m = tmdi.potentialMounts.back();
+          m.vid = rqp.vid;
+          m.type = cta::common::dataStructures::MountType::Retrieve;
+          m.bytesQueued = rqueue.getJobsSummary().bytes;
+          m.filesQueued = rqueue.getJobsSummary().jobs;
+          m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
+          m.priority = rqueue.getJobsSummary().priority;
+          m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
+          m.minRequestAge = rqueue.getJobsSummary().minRetrieveRequestAge;
+          m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
+          m.tapePool = "";       // The tape pool is not know and will be determined by the caller.
+          m.vendor = "";         // The vendor is not known here, and will be determined by the caller.
+          m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
+          m.vo = "";             // The vo is not known here, and will be determined by the caller.
+          m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
+          m.activityNameAndWeightedMountCount = PotentialMount::ActivityNameAndWeightedMountCount();
+          m.activityNameAndWeightedMountCount.value().activity = ac.activity;
+          m.activityNameAndWeightedMountCount.value().weight = ac.weight;
+          m.activityNameAndWeightedMountCount.value().weightedMountCount = 0.0; // This value will be computed later by the caller.
+          m.activityNameAndWeightedMountCount.value().mountCount = 0; // This value will be computed later by the caller.
+        }
+      }
+      if (jobsWithoutActivity) {
+        tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+        auto & m = tmdi.potentialMounts.back();
+        m.vid = rqp.vid;
+        m.type = cta::common::dataStructures::MountType::Retrieve;
+        m.bytesQueued = rqueue.getJobsSummary().bytes;
+        m.filesQueued = rqueue.getJobsSummary().jobs;      
+        m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
+        m.priority = rqueue.getJobsSummary().priority;
+        m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
+        m.minRequestAge = rqueue.getJobsSummary().minRetrieveRequestAge;
+        m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
+        m.tapePool = "";       // The tape pool is not know and will be determined by the caller.
+        m.vendor = "";         // The vendor is not known here, and will be determined by the caller.
+        m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
+        m.vo = "";             // The vo is not known here, and will be determined by the caller.
+        m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
+      }
     } else {
       tmdi.queueTrimRequired = true;
     }
@@ -341,6 +380,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     (int)cta::common::dataStructures::DriveStatus::CleaningUp };
   std::set<int> activeMountTypes = {
     (int)cta::common::dataStructures::MountType::ArchiveForUser,
+    (int)cta::common::dataStructures::MountType::ArchiveForRepack,
     (int)cta::common::dataStructures::MountType::Retrieve,
     (int)cta::common::dataStructures::MountType::Label };
   for (const auto &d : driveStates) {
@@ -354,6 +394,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().bytesTransferred = d.bytesTransferredInSession;
       tmdi.existingOrNextMounts.back().filesTransferred = d.filesTransferredInSession;
       tmdi.existingOrNextMounts.back().latestBandwidth = d.latestBandwidth;
+      if (d.currentActivityAndWeight)
+        tmdi.existingOrNextMounts.back().activity = d.currentActivityAndWeight.value().activity;
     }
     if (activeMountTypes.count((int)d.nextMountType)) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
@@ -365,6 +407,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().bytesTransferred = 0;
       tmdi.existingOrNextMounts.back().filesTransferred = 0;
       tmdi.existingOrNextMounts.back().latestBandwidth = 0;
+      if (d.nextActivityAndWeight)
+        tmdi.existingOrNextMounts.back().activity = d.currentActivityAndWeight.value().activity;
     }
   }
   auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
@@ -517,7 +561,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
         const std::string& mediaType,
         const std::string& vendor,
         const uint64_t capacityInBytes,
-        time_t startTime) {
+        time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
@@ -1058,7 +1102,8 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
       );
       insertedElements.emplace_back(CaRQF::InsertedElement{
         &j.job->m_retrieveRequest, tf_it->copyNb, tf_it->fSeq, tf_it->compressedSize,
-        common::dataStructures::MountPolicy(), serializers::RetrieveJobStatus::RJS_Failed
+        common::dataStructures::MountPolicy(), serializers::RetrieveJobStatus::RJS_Failed,
+        j.job->m_activityDescription
       });
     }
     try {
@@ -1084,17 +1129,37 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 //------------------------------------------------------------------------------
 // OStoreDB::queueRetrieve()
 //------------------------------------------------------------------------------
-std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
+std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
   auto mutexForHelgrind = cta::make_unique<cta::threading::Mutex>();
   cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
-  auto *mutexForHelgrindAddr = mutexForHelgrind.release();
   cta::utils::Timer timer;
   // Get the best vid from the cache
   std::set<std::string> candidateVids;
   for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.vid);
   std::string bestVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
+  // Check that the activity is fine (if applying: disk instance uses them or it is sent).
+  if (rqst.activity || criteria.activitiesFairShareWeight.activitiesWeights.size()) {
+    // Activity is set. It should exist in the catlogue
+    if (rqst.activity) {
+      try {
+        criteria.activitiesFairShareWeight.activitiesWeights.at(rqst.activity.value());
+      } catch (std::out_of_range &) {
+        throw cta::exception::UserError(std::string("Unknown fair share activity \"") + rqst.activity.value() + "\" for disk instance \"" 
+            + criteria.activitiesFairShareWeight.diskInstance + "\"");
+      }
+    } else {
+      try {
+        criteria.activitiesFairShareWeight.activitiesWeights.at("default"); 
+        rqst.activity = "default";
+      } catch (std::out_of_range &) {
+        throw cta::exception::UserError(
+            std::string("Missing fair share activity \"default\"  while queuing with undefined activity for disk instance \"")
+            + criteria.activitiesFairShareWeight.diskInstance + "\"");
+      }
+    }
+  }
   // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
   uint64_t bestCopyNb;
   for (auto & tf: criteria.archiveFile.tapeFiles) {
@@ -1115,6 +1180,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   rReq->initialize();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
+  rReq->setActivityIfNeeded(rqst, criteria);
   rReq->setCreationTime(rqst.creationLog.time);
   // Find the job corresponding to the vid (and check we indeed have one).
   auto jobs = rReq->getJobs();
@@ -1158,6 +1224,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
           .add("insertionTime", insertionTime);
     delayIfNecessary(logContext);
     auto rReqPtr = rReq.release();
+    auto *mutexForHelgrindAddr = mutexForHelgrind.release();
     auto * et = new EnqueueingTask([rReqPtr, job, bestVid, mutexForHelgrindAddr, this]{
       std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
       std::unique_ptr<objectstore::RetrieveRequest> rReq(rReqPtr);
@@ -2745,6 +2812,7 @@ void OStoreDB::setDriveDown(common::dataStructures::DriveState & driveState,
   driveState.desiredDriveState.forceDown=false;
   driveState.currentVid="";
   driveState.currentTapePool="";
+  driveState.currentActivityAndWeight = nullopt;
 }
 
 //------------------------------------------------------------------------------
@@ -2783,6 +2851,7 @@ void OStoreDB::setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveS
   driveState.driveStatus=targetStatus;
   driveState.currentVid="";
   driveState.currentTapePool="";
+  driveState.currentActivityAndWeight = nullopt;
 }
 
 //------------------------------------------------------------------------------
@@ -2816,6 +2885,7 @@ void OStoreDB::setDriveProbing(common::dataStructures::DriveState & driveState,
   driveState.driveStatus=inputs.status;
   driveState.currentVid="";
   driveState.currentTapePool="";
+  driveState.currentActivityAndWeight = nullopt;
 }
 
 //------------------------------------------------------------------------------
@@ -2828,8 +2898,7 @@ void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
     driveState.lastUpdateTime = inputs.reportTime;
     return;
   }
-  // If we are changing state, then all should be reset. We are not supposed to
-  // know the direction yet.
+  // If we are changing state, then all should be reset.
   driveState.sessionId=inputs.mountSessionId;
   driveState.bytesTransferredInSession=0;
   driveState.filesTransferredInSession=0;
@@ -2850,6 +2919,12 @@ void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
   driveState.driveStatus=common::dataStructures::DriveStatus::Starting;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  if (inputs.activityAndWeigh) {
+    common::dataStructures::DriveState::ActivityAndWeight aaw;
+    aaw.activity = inputs.activityAndWeigh.value().activity;
+    aaw.weight = inputs.activityAndWeigh.value().weight;
+    driveState.currentActivityAndWeight = aaw;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -3045,6 +3120,7 @@ void OStoreDB::setDriveCleaningUp(common::dataStructures::DriveState & driveStat
   driveState.driveStatus=common::dataStructures::DriveStatus::CleaningUp;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentActivityAndWeight = nullopt;
 }
 
 //------------------------------------------------------------------------------
@@ -3077,6 +3153,7 @@ void OStoreDB::setDriveShutdown(common::dataStructures::DriveState & driveState,
   driveState.driveStatus=common::dataStructures::DriveStatus::CleaningUp;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentActivityAndWeight = nullopt;
 }
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
@@ -3140,7 +3217,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     inputs.latestBandwidth = 0;
     inputs.mountSessionId = am.mountInfo.mountId;
     inputs.reportTime = startTime;
-    inputs.status = common::dataStructures::DriveStatus::Mounting;
+    inputs.status = common::dataStructures::DriveStatus::Starting;
     inputs.vid = tape.vid;
     inputs.tapepool = tape.tapePool;
     log::LogContext lc(m_oStoreDB.m_logger);
@@ -3166,7 +3243,8 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
     const std::string& vid, const std::string & tapePool, const std::string driveName, 
     const std::string& logicalLibrary, const std::string& hostName,const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,const uint64_t capacityInBytes, time_t startTime) {
+    const std::string& vendor,const uint64_t capacityInBytes, time_t startTime, 
+    const optional<common::dataStructures::DriveState::ActivityAndWeight>& activityAndWeight) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to 
@@ -3198,6 +3276,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   rm.mountInfo.mediaType = mediaType;
   rm.mountInfo.vendor = vendor;
   rm.mountInfo.capacityInBytes = capacityInBytes;
+  if(activityAndWeight) rm.mountInfo.activity = activityAndWeight.value().activity;
   // Update the status of the drive in the registry
   {
     // Get hold of the drive registry
@@ -3212,9 +3291,10 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
     inputs.mountType = common::dataStructures::MountType::Retrieve;
     inputs.mountSessionId = rm.mountInfo.mountId;
     inputs.reportTime = startTime;
-    inputs.status = common::dataStructures::DriveStatus::Mounting;
+    inputs.status = common::dataStructures::DriveStatus::Starting;
     inputs.vid = rm.mountInfo.vid;
     inputs.tapepool = rm.mountInfo.tapePool;
+    inputs.activityAndWeigh = activityAndWeight;
     log::LogContext lc(m_oStoreDB.m_logger);
     m_oStoreDB.updateDriveStatus(driveInfo, inputs, lc);
   }
@@ -3527,7 +3607,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
       insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb, 
           req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq, req->archiveFile.fileSize,
           cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,
-          serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess});
+          serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess, req->m_activityDescription});
       requestToJobMap[&req->m_retrieveRequest] = req;
     }
     RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -4406,7 +4486,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
-        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
+        serializers::RetrieveJobStatus::RJS_Failed, m_activityDescription
       });
       m_retrieveRequest.commit();
       rel.release();
@@ -4472,7 +4553,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
-        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToTransferForUser
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToTransferForUser, 
+        m_activityDescription
       });
 
       CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -4535,7 +4617,8 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement{
-          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure
+          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
+          serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure, m_activityDescription
         });
         caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);
@@ -4553,7 +4636,8 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement{
-          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
+          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
+          serializers::RetrieveJobStatus::RJS_Failed, m_activityDescription
         });
         caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);

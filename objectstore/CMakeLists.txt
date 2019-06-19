@@ -29,7 +29,8 @@ set (CTAProtoFiles
 
 PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
-set (CTAProtoDependants objectstore/Agent.hpp
+set (CTAProtoDependants 
+  objectstore/Agent.hpp
   objectstore/ArchiveRequest.hpp
   objectstore/CreationLog.hpp
   objectstore/DriveRegister.hpp
@@ -39,6 +40,7 @@ set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/RepackIndex.hpp
   objectstore/RepackRequest.hpp
   objectstore/RepackQueue.hpp
+  objectstore/RetrieveActivityCountMap.hpp
   objectstore/RetrieveRequest.hpp
   objectstore/RootEntry.hpp
   objectstore/SchedulerGlobalLock.hpp
@@ -100,7 +102,8 @@ add_library (ctaobjectstore SHARED
   GarbageCollector.cpp
   SchedulerGlobalLock.cpp
   ValueCountMap.cpp
-  Helpers.cpp)
+  Helpers.cpp
+  RetrieveActivityCountMap.cpp)
 set_property(TARGET ctaobjectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaobjectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 

@@ -170,6 +170,8 @@ public:
    * @param user The user for whom the file is to be retrieved.  This will be
    * used by the Catalogue to determine the mount policy to be used when
    * retrieving the file.
+   * @param activity The activity under which the user wants to start the retrieve
+   * The call will fail if the activity is set and unknown. 
    * @param lc The log context.
    *
    * @return The information required to queue the associated retrieve request(s).
@@ -178,6 +180,7 @@ public:
     const std::string &diskInstanceName,
     const uint64_t archiveFileId,
     const common::dataStructures::UserIdentity &user,
+    const optional<std::string> & activity,
     log::LogContext &lc) override;
 
   /**
@@ -494,7 +497,15 @@ public:
   void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minRetrieveRequestAge) override;
   void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t maxDrivesAllowed) override;
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
+  
+  void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity,
+    double weight, const std::string & comment) override;
+  void modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity,
+    double weight, const std::string & comment) override;
+  void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity) override;
+  std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const override;
 
+  
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid
    * due to a user error.
@@ -1081,6 +1092,25 @@ protected:
     const uint64_t archiveFileId) const;
 
   /**
+   * Returns a cached version of the (possibly empty) activities to weight map
+   * for the given dsk instance.
+   * @param diskInstance
+   * @return activities to weight map (ActivitiesFairShareWeights)
+   */
+  common::dataStructures::ActivitiesFairShareWeights getCachedActivitiesWeights(
+    const std::string &diskInstanceName) const;
+  
+  /**
+   * Returns a the (possibly empty) activities to weight map for the given dsk instance.
+   * @param conn The database connection.
+   * @param diskInstance
+   * @return activities to weight map (ActivitiesFairShareWeights)
+   */
+  common::dataStructures::ActivitiesFairShareWeights getActivitiesWeights(
+    rdbms::Conn &conn,
+    const std::string &diskInstanceName) const;  
+  
+  /**
    * Returns the specified archive file.   A nullptr pointer is returned if
    * there is no corresponding row in the ARCHIVE_FILE table.  Please note that
    * a non-nullptr is returned if there is a row in the ARCHIVE_FILE table and
@@ -1270,6 +1300,11 @@ protected:
    * Cached version of isAdmin() results.
    */
   mutable TimeBasedCache<common::dataStructures::SecurityIdentity, bool> m_isAdminCache;
+  
+  /**
+   * Cached version of the activities to weight maps.
+   */
+  mutable TimeBasedCache<std::string, common::dataStructures::ActivitiesFairShareWeights> m_activitiesFairShareWeights;
 
 }; // class RdbmsCatalogue
 
