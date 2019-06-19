@@ -74,6 +74,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kAdlsItem:      std::cout << Log::DumpProtobuf(&record.adls_item());    break;
          case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
          case Data::kAflsSummary:   std::cout << Log::DumpProtobuf(&record.afls_summary()); break;
+         case Data::kArlsItem:      std::cout << Log::DumpProtobuf(&record.arls_item());    break;
          case Data::kFrlsItem:      std::cout << Log::DumpProtobuf(&record.frls_item());    break;
          case Data::kFrlsSummary:   std::cout << Log::DumpProtobuf(&record.frls_summary()); break;
          case Data::kLpaItem:       std::cout << Log::DumpProtobuf(&record.lpa_item());     break;
@@ -92,6 +93,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kAdlsItem:      formattedText.print(record.adls_item());    break;
          case Data::kAflsItem:      formattedText.print(record.afls_item());    break;
          case Data::kAflsSummary:   formattedText.print(record.afls_summary()); break;
+         case Data::kArlsItem:      formattedText.print(record.arls_item());    break;
          case Data::kFrlsItem:      formattedText.print(record.frls_item());    break;
          case Data::kFrlsSummary:   formattedText.print(record.frls_summary()); break;
          case Data::kLpaItem:       formattedText.print(record.lpa_item());     break;

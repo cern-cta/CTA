@@ -27,6 +27,7 @@ using XrdSsiPb::PbException;
 #include <cmdline/CtaAdminCmdParse.hpp>
 #include "XrdCtaAdminLs.hpp"
 #include "XrdCtaArchiveFileLs.hpp"
+#include "XrdCtaArchiveRouteLs.hpp"
 #include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaListPendingQueue.hpp"
 #include "XrdCtaTapePoolLs.hpp"
@@ -128,7 +129,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processArchiveRoute_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS):
-               processArchiveRoute_Ls(response);
+               processArchiveRoute_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_UP):
                processDrive_Up(response);
@@ -763,35 +764,15 @@ void RequestMessage::processArchiveRoute_Rm(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processArchiveRoute_Ls(cta::xrd::Response &response)
+void RequestMessage::processArchiveRoute_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  // Create a XrdSsi stream object to return the results
+  stream = new ArchiveRouteLsStream(*this, m_catalogue, m_scheduler);
 
-   std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue.getArchiveRoutes();
-
-   if(!list.empty()) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->diskInstanceName);
-         currentRow.push_back(it->storageClassName);
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->copyNb)));
-         currentRow.push_back(it->tapePoolName);
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::ARCHIVEROUTE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 

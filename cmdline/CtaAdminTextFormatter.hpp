@@ -47,6 +47,7 @@ public:
   void printAdLsHeader();
   void printAfLsHeader();
   void printAfLsSummaryHeader();
+  void printArLsHeader();
   void printFrLsHeader();
   void printFrLsSummaryHeader();
   void printLpaHeader();
@@ -61,6 +62,7 @@ public:
   void print(const AdminLsItem &adls_item);
   void print(const ArchiveFileLsItem &afls_item);
   void print(const ArchiveFileLsSummary &afls_summary);
+  void print(const ArchiveRouteLsItem &afls_item);
   void print(const FailedRequestLsItem &frls_item);
   void print(const FailedRequestLsSummary &frls_summary);
   void print(const ListPendingArchivesItem &lpa_item);
