@@ -148,7 +148,8 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
-      "USAGESTATS"
+      "USAGESTATS",
+      "EXPERIMENTS"
     };
     dropDatabaseTables(conn, tablesToDrop);
   } catch(exception::Exception &ex) {
@@ -178,7 +179,8 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
-      "USAGESTATS"
+      "USAGESTATS",
+      "EXPERIMENTS"
     };
     dropDatabaseTables(conn, tablesToDrop);
 
@@ -245,7 +247,8 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
-      "USAGESTATS"
+      "USAGESTATS",
+      "EXPERIMENTS"
     };
 
     dropDatabaseTables(conn, tablesToDrop);
@@ -278,7 +281,8 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
-      "USAGESTATS"
+      "USAGESTATS",
+      "EXPERIMENTS"
     };
 
     dropDatabaseTables(conn, tablesToDrop);
