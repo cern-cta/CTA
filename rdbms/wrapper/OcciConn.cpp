@@ -165,8 +165,33 @@ void OcciConn::rollback() {
 // getColumns
 //------------------------------------------------------------------------------
 std::map<std::string, std::string> OcciConn::getColumns(const std::string &tableName) {
-  std::map<std::string, std::string> columnNamesAndTypes;
-  return columnNamesAndTypes;
+  try {
+    std::map<std::string, std::string> columnNamesAndTypes;
+    const std::string sql =
+      "SELECT "
+        "COLUMN_NAME, "
+        "DATA_TYPE "
+      "FROM "
+        "USER_TAB_COLUMNS "
+      "WHERE "
+        "TABLE_NAME = '" + tableName +"'";
+
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("COLUMN_NAME");
+      auto type = rset->columnOptionalString("DATA_TYPE");
+      if(name && type) {
+         if ("NUMBER" == type.value()) {
+           type = "NUMERIC";
+         }
+        columnNamesAndTypes.insert(std::make_pair(name.value(), type.value()));
+      }
+    }
+    return columnNamesAndTypes;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }         
 }
 
 //------------------------------------------------------------------------------
