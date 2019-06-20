@@ -227,6 +227,14 @@ void SqliteConn::printSchema(std::ostream &os) {
 }
 
 //------------------------------------------------------------------------------
+// getColumns
+//------------------------------------------------------------------------------
+std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tableName) {
+  std::map<std::string, std::string> columnNamesAndTypes;
+  return columnNamesAndTypes;
+}
+
+//------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
 std::list<std::string> SqliteConn::getTableNames() {

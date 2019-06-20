@@ -301,6 +301,13 @@ namespace utils {
    * @param In/out parameter: The string to be converted.
    */
   void toUpper(std::string &str);
+  
+  /**
+   * Converts the specified string to lowercase.
+   *
+   * @param In/out parameter: The string to be converted.
+   */
+  void toLower(std::string &str);
 
   /**
    * Gets the short host name from the system

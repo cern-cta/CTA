@@ -19,6 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/wrapper/Mysql.hpp"
 #include "rdbms/wrapper/MysqlConn.hpp"
@@ -201,6 +202,41 @@ void MysqlConn::rollback() {
   }
 }
 
+//------------------------------------------------------------------------------
+// getColumns
+//------------------------------------------------------------------------------
+std::map<std::string, std::string> MysqlConn::getColumns(const std::string &tableName) {
+ try {
+    std::map<std::string, std::string> columnNamesAndTypes;
+    const std::string sql =
+      "SELECT "
+        "COLUMN_NAME, "
+        "DATA_TYPE "
+      "FROM "
+        "INFORMATION_SCHEMA.COLUMNS "
+      "WHERE "
+        "TABLE_NAME = '" + tableName +"'";
+
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("COLUMN_NAME");
+      auto type = rset->columnOptionalString("DATA_TYPE");
+      if(name && type) {
+        utils::toUpper(type.value());
+        if ("DECIMAL" == type.value()) {
+          type = "NUMERIC" ;
+        }
+        columnNamesAndTypes.insert(std::make_pair(name.value(), type.value()));
+      }
+    }
+
+    return columnNamesAndTypes;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+  
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
