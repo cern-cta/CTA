@@ -19,6 +19,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/utils/utils.hpp"
+#include "common/utils/Regex.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/wrapper/Sqlite.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
@@ -230,8 +232,49 @@ void SqliteConn::printSchema(std::ostream &os) {
 // getColumns
 //------------------------------------------------------------------------------
 std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tableName) {
-  std::map<std::string, std::string> columnNamesAndTypes;
-  return columnNamesAndTypes;
+  try {
+    std::map<std::string, std::string> columnNamesAndTypes;
+    const std::string sql =
+      "SELECT "
+        "SQL AS SQL "
+      "FROM "
+        "SQLITE_MASTER "
+      "WHERE "
+        "TBL_NAME = '" + tableName +"' "
+      "AND "
+      "TYPE = 'table';";
+    const std::string columnTypes = 
+    "NUMERIC|"
+    "INTEGER|"
+    "CHAR|"
+    "VARCHAR|"
+    "VARCHAR2";
+    
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    if (rset->next()) {
+      auto tableSql = rset->columnOptionalString("SQL").value();     
+      tableSql += std::string(","); // hack for parsing          
+      std::string::size_type searchPosComma = 0;
+      std::string::size_type findResultComma = std::string::npos;
+      while(std::string::npos != (findResultComma = tableSql.find(',', searchPosComma))) {
+        const std::string::size_type stmtLenComma = findResultComma - searchPosComma;
+        const std::string sqlStmtComma = utils::trimString(tableSql.substr(searchPosComma, stmtLenComma));
+        searchPosComma = findResultComma + 1;
+        if(0 < sqlStmtComma.size()) { // Ignore empty statements
+          const std::string columnSQL = "([a-zA-Z_]+) +(" + columnTypes + ")";
+          cta::utils::Regex columnSqlRegex(columnSQL.c_str());
+          auto columnSql = columnSqlRegex.exec(sqlStmtComma);
+          if (3 == columnSql.size()) {
+            columnNamesAndTypes.insert(std::make_pair(columnSql[1], columnSql[2]));
+          }
+        }
+      }     
+    }
+    return columnNamesAndTypes;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  } 
 }
 
 //------------------------------------------------------------------------------
