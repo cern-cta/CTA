@@ -147,7 +147,8 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "TAPE_POOL",
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
-      "ACTIVITIES_WEIGHTS"};
+      "ACTIVITIES_WEIGHTS",
+      "USAGESTATS"};
     dropDatabaseTables(conn, tablesToDrop);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
