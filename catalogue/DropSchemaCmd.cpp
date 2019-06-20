@@ -148,7 +148,8 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
-      "USAGESTATS"};
+      "USAGESTATS"
+    };
     dropDatabaseTables(conn, tablesToDrop);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -176,7 +177,9 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "TAPE_POOL",
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
-      "ACTIVITIES_WEIGHTS"};
+      "ACTIVITIES_WEIGHTS",
+      "USAGESTATS"
+    };
     dropDatabaseTables(conn, tablesToDrop);
 
     std::list<std::string> triggersToDrop = {
@@ -241,7 +244,8 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "TAPE_POOL",
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
-      "ACTIVITIES_WEIGHTS"
+      "ACTIVITIES_WEIGHTS",
+      "USAGESTATS"
     };
 
     dropDatabaseTables(conn, tablesToDrop);
@@ -273,7 +277,8 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "TAPE_POOL",
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
-      "ACTIVITIES_WEIGHTS"
+      "ACTIVITIES_WEIGHTS",
+      "USAGESTATS"
     };
 
     dropDatabaseTables(conn, tablesToDrop);
