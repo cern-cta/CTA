@@ -559,6 +559,23 @@ TEST_F(cta_UtilsTest, adler32_buf_of_character_1) {
   ASSERT_EQ((uint32_t)0x320032, utils::getAdler32(&buf, 1));
 }
 
+TEST_F(cta_UtilsTest, toUpper) {
+  using namespace cta;
+
+  std::string testStr = "testStr123-";
+
+  ASSERT_NO_THROW(utils::toUpper(testStr));
+  ASSERT_EQ(testStr, "TESTSTR123-");
+}
+
+TEST_F(cta_UtilsTest, toLower) {
+  using namespace cta;
+
+  std::string testStr = "TESTsTR123-";
+
+  ASSERT_NO_THROW(utils::toLower(testStr));
+  ASSERT_EQ(testStr, "teststr123-");
+}
 
 /**
  * Tests the good day senario of passing a multi-column string to the

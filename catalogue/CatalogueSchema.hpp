@@ -69,10 +69,10 @@ struct CatalogueSchema {
    * Returns the names of all the column and their type as a map for the given 
    * table in the catalogue schema.
    *
-   * @param table The table name to get the columns.
+   * @param tableName The table name to get the columns.
    * @return The map of types by name of all the columns for the given table in the catalogue schema.
    */
-  std::map<std::string, std::string> getSchemaColumns(const std::string &table) const;
+  std::map<std::string, std::string> getSchemaColumns(const std::string &tableName) const;
   
   /**
    * Returns the names of all the indexes in the catalogue schema.

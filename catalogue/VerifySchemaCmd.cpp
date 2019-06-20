@@ -119,8 +119,8 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   for (const auto &table: schemaTableNames) {
     std::cerr << table << std::endl;
     const auto columns = schema->getSchemaColumns(table);
-    
-    for (const auto &column : columns) {
+    const auto dbColumns = conn.getColumns(table);
+    for (const auto &column : dbColumns) {
       std::cerr << "  " << column.first << " "  << column.second << std::endl;
     }  
   }

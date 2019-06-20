@@ -171,6 +171,17 @@ void Conn::rollback() {
 } 
 
 //------------------------------------------------------------------------------
+// getSchemaColumns
+//------------------------------------------------------------------------------
+std::map<std::string, std::string> Conn::getColumns(const std::string &tableName) const {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getColumns(tableName);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+  
+//------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
 std::list<std::string> Conn::getTableNames() const {

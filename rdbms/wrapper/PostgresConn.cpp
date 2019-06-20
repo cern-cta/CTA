@@ -198,6 +198,46 @@ std::list<std::string> PostgresConn::getSequenceNames() {
 }
 
 //------------------------------------------------------------------------------
+// getColumns
+//------------------------------------------------------------------------------
+std::map<std::string, std::string> PostgresConn::getColumns(const std::string &tableName) {
+  try {
+    std::map<std::string, std::string> columnNamesAndTypes;
+    auto lowercaseTableName = tableName;
+    utils::toLower(lowercaseTableName); // postgres work with lowercase
+    const std::string sql =
+      "SELECT "
+        "COLUMN_NAME, "
+        "DATA_TYPE "
+      "FROM "
+        "INFORMATION_SCHEMA.COLUMNS "
+      "WHERE "
+        "TABLE_NAME = '" + lowercaseTableName +"'";
+
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("COLUMN_NAME");
+      auto type = rset->columnOptionalString("DATA_TYPE");
+      if(name && type) {
+        utils::toUpper(name.value());
+        utils::toUpper(type.value());
+        if ("CHARACTER VARYING" == type.value()) {
+          type = "VARCHAR" ;
+        } else if ("CHARACTER" == type.value()) {
+          type = "CHAR";
+        }
+        columnNamesAndTypes.insert(std::make_pair(name.value(), type.value()));
+      }
+    }
+
+    return columnNamesAndTypes;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  } 
+}
+
+//------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
 std::list<std::string> PostgresConn::getTableNames() {
