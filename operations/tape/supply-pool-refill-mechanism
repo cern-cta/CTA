@@ -80,7 +80,9 @@ else:
 # Iterate over the extracted CTA tape pools and re-fill them with supply tapes as needed
 for tapepool in tapepools:
     logging.info("Tape pool: " + tapepool["name"] + " which should have at least: " + tapepool["numPartialTapes"] + " partial tape(s) is supplied from: " + tapepool["supply"])
+
     if (tapepool["numPartialTapes"] and tapepool["supply"]):
+
         # Check if re-filling is actually needed
         currentpartialtapes = len([tape for tape in extract_tapes("ALL", tapepool["name"])])
         if (currentpartialtapes < int(tapepool["numPartialTapes"])):
@@ -89,14 +91,14 @@ for tapepool in tapepools:
             logging.info("Tape pool: " + tapepool["name"] + " already has: " + format(currentpartialtapes) + " partial tape(s) available, skipping")
             continue
 
-        # Prepare the eligible supply tapes from a given supply pool
+        # Prepare the eligible supply tapes from a given supply pool(s)
         supplytapes = []
         for supplypool in tapepool["supply"].split(separator):
             supplytapes.extend([tape for tape in extract_tapes("ALL", supplypool)])
         shuffle(supplytapes) # Randomize it (so that tapes are picked at random from multiple pools)
 
+        # Move the required number of supply tapes to the given tape pool (if any eligible tapes were identified)
         if len(supplytapes):
-            # Move the required number of supply tapes to the given tape pool
             logging.info("Identified: " + format(len(supplytapes)) + " supply tapes, moving " + format(int(tapepool["numPartialTapes"]) - currentpartialtapes) + " to the pool: " + tapepool["name"])
             for i in range(int(tapepool["numPartialTapes"]) - currentpartialtapes):
                 command = ["/usr/bin/cta-admin", "tape", "ch", "--vid", supplytapes[i], "--tapepool", tapepool["name"]]
