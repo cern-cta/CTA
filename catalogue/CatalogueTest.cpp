@@ -39,6 +39,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
+#include "common/Constants.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
@@ -12242,8 +12243,8 @@ TEST_P(cta_catalogue_CatalogueTest, getSchemaVersion) {
   using namespace cta;
 
   const std::map<std::string,uint64_t> schemaVersion = {
-    {"SCHEMA_VERSION_MAJOR", 0},
-    {"SCHEMA_VERSION_MINOR", 0}
+    {"SCHEMA_VERSION_MAJOR", CTA_SCHEMA_VERSION_MAJOR},
+    {"SCHEMA_VERSION_MINOR", CTA_SCHEMA_VERSION_MINOR}
   };
 
   const auto schemaDbVersion = m_catalogue->getSchemaVersion();
