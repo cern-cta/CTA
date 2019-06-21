@@ -27,6 +27,8 @@
 namespace cta {
 
 const int CA_MAXVIDLEN = 6; // maximum length for a VID
+const int CTA_SCHEMA_VERSION_MAJOR = 0;
+const int CTA_SCHEMA_VERSION_MINOR = 0;
 
 } // namespace cta
 
