@@ -20,7 +20,8 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-
+#include <common/dataStructures/DriveStatusSerDeser.hpp>
+#include <common/dataStructures/MountTypeSerDeser.hpp>
 
 namespace cta { namespace xrd {
 
@@ -109,8 +110,8 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_drive_name(dr.driveName);
     dr_item->set_host(dr.host);
     dr_item->set_desired_drive_state(dr.desiredDriveState.up ? DriveLsItem::UP : DriveLsItem::DOWN);
-    dr_item->set_mount_type(static_cast<uint32_t>(dr.mountType));
-    dr_item->set_drive_status(dr.driveStatus);
+    dr_item->set_mount_type(MountTypeToProtobuf(dr.mountType));
+    dr_item->set_drive_status(DriveStatusToProtobuf(dr.driveStatus));
     dr_item->set_vid(dr.currentVid);
     dr_item->set_tapepool(dr.currentTapePool);
     dr_item->set_files_transferred_in_session(dr.filesTransferredInSession);

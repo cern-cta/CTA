@@ -20,8 +20,8 @@
 #include <iostream>
 #include <iomanip>
 #include <cmdline/CtaAdminTextFormatter.hpp>
-#include <common/dataStructures/DriveStatus.hpp>
-#include <common/dataStructures/MountType.hpp>
+#include <common/dataStructures/DriveStatusSerDeser.hpp>
+#include <common/dataStructures/MountTypeSerDeser.hpp>
 
 namespace cta {
 namespace admin {
@@ -257,12 +257,10 @@ void TextFormatter::printDriveLsHeader() {
 
 void TextFormatter::print(const DriveLsItem &drls_item)
 {
-  using namespace cta::common::dataStructures;
+  //using namespace cta::common::dataStructures;
 
   const int DRIVE_TIMEOUT = 600; // Time after which a drive will be marked as STALE
 
-  std::string mountType;
-  std::string driveStatus;
   std::string driveStatusSince;
   std::string filesTransferredInSession;
   std::string bytesTransferredInSession;
@@ -270,22 +268,20 @@ void TextFormatter::print(const DriveLsItem &drls_item)
   std::string sessionId;
   std::string timeSinceLastUpdate;
 
-  mountType   = toString(static_cast<MountType>(drls_item.mount_type()));
-  driveStatus = toString(static_cast<DriveStatus>(drls_item.drive_status()));
 
-  if(drls_item.drive_status() != DriveStatus::Unknown) {
+  if(drls_item.drive_status() != DriveLsItem::UNKNOWN_DRIVE_STATUS) {
     driveStatusSince = std::to_string(drls_item.drive_status_since());
   }
 
-  if(drls_item.drive_status() == DriveStatus::Transferring) {
+  if(drls_item.drive_status() == DriveLsItem::TRANSFERRING) {
     filesTransferredInSession = std::to_string(drls_item.files_transferred_in_session());
     bytesTransferredInSession = dataSizeToStr(drls_item.bytes_transferred_in_session());
     latestBandwidth = std::to_string(drls_item.latest_bandwidth());
   }
 
-  if(drls_item.drive_status() != DriveStatus::Up &&
-     drls_item.drive_status() != DriveStatus::Down &&
-     drls_item.drive_status() != DriveStatus::Unknown) {
+  if(drls_item.drive_status() != DriveLsItem::UP &&
+     drls_item.drive_status() != DriveLsItem::DOWN &&
+     drls_item.drive_status() != DriveLsItem::UNKNOWN_DRIVE_STATUS) {
     sessionId = std::to_string(drls_item.session_id());
   }
 
@@ -296,9 +292,9 @@ void TextFormatter::print(const DriveLsItem &drls_item)
     drls_item.logical_library(),
     drls_item.drive_name(),
     drls_item.host(),
-    drls_item.desired_drive_state() == DriveLsItem::UP ? "Up" : "Down",
-    mountType,
-    driveStatus,
+    (drls_item.desired_drive_state() == DriveLsItem::UP ? "Up" : "Down"),
+    toString(ProtobufToMountType(drls_item.mount_type())),
+    toString(ProtobufToDriveStatus(drls_item.drive_status())),
     driveStatusSince,
     drls_item.vid(),
     drls_item.tapepool(),
