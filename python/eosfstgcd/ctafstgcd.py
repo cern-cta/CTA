@@ -118,7 +118,7 @@ class RealEos:
 
     return result
 
-  def stagerrm(self, fxid, subdir):
+  def stagerrm(self, fxid):
     mgmurl = "root://{}".format(self.mgmhost)
     cmd = "eos {} stagerrm fxid:{}".format(mgmurl, fxid)
     env = os.environ.copy()
@@ -131,8 +131,8 @@ class RealEos:
       raise Exception("Failed to execute '{}': {}".format(cmd, err))
     stdout,stderr = process.communicate()
 
-    if 0 == process.returncode:
-      self.log.info("subdir={} executed='{}'".format(subdir, cmd))
+    if 0 != process.returncode:
+      raise Exception("'{}' returned non zero: returncode={}".format(cmd, process.returncode))
 
 class SpaceTracker:
   '''Calculates the amount of effective free space in the file system of a given
@@ -238,12 +238,6 @@ class Gc:
     self.config = config
 
     self.localfilesystempaths = []
-    self.nbfilesconsideredsincelastreport = 0
-    self.nbshouldfreespace = 0
-    self.nboldfilesincelastreport = 0
-    self.nbstagerrmssincelastreport = 0
-    self.stagerrmbytessincelastreport = 0
-    self.nbfilesbeforereport = 10000
     self.spacetrackers = SpaceTrackers(self.log, disk, self.config.queryperiodsecs)
 
     self.log.info("Config: logfile={}".format(self.config.logfile))
@@ -258,13 +252,6 @@ class Gc:
     spacetracker = self.spacetrackers.gettracker(subdir)
     totalfreebytes = spacetracker.getfreebytes()
     shouldfreespace = totalfreebytes < self.config.minfreebytes
-    deltafreebytes = 0
-
-    self.nbfilesconsideredsincelastreport = self.nbfilesconsideredsincelastreport + 1
-    if shouldfreespace:
-      self.nbshouldfreespace = self.nbshouldfreespace + 1
-    else:
-      deltafreebytes = totalfreebytes - self.config.minfreebytes
 
     if shouldfreespace:
       fullpath = os.path.join(subdir,fstfile)
@@ -279,24 +266,14 @@ class Gc:
         now = time.time()
         agesecs = now - filesizeandctime.ctime
         if agesecs > self.config.gcagesecs:
-          self.nboldfilesincelastreport = self.nboldfilesincelastreport + 1
-
-          self.eos.stagerrm(fstfile, subdir)
-          spacetracker.stagerrmqueued(filesizeandctime.sizebytes)
-
-          self.nbstagerrmssincelastreport = self.nbstagerrmssincelastreport + 1
-          self.stagerrmbytessincelastreport = self.stagerrmbytessincelastreport + filesizeandctime.sizebytes
-
-    if self.nbfilesbeforereport == self.nbfilesconsideredsincelastreport:
-      self.log.info(
-        'Report: nbfiles={}, nbshouldfreespace={}, nbold={}, nbstagerrm={}, stagerrmbytes={}, deltafreebytes={}'
-        .format(self.nbfilesconsideredsincelastreport, self.nbshouldfreespace, self.nboldfilesincelastreport,
-           self.nbstagerrmssincelastreport, self.stagerrmbytessincelastreport, deltafreebytes))
-      self.nbfilesconsideredsincelastreport = 0
-      self.nbshouldfreespace = 0
-      self.nboldfilesincelastreport = 0
-      self.nbstagerrmssincelastreport = 0
-      self.stagerrmbytessincelastreport = 0
+          try:
+            bytesrequiredbefore = self.config.minfreebytes - totalfreebytes
+            self.eos.stagerrm(fstfile)
+            spacetracker.stagerrmqueued(filesizeandctime.sizebytes)
+            self.log.info("stagerrm: subdir={}, fxid={}, bytesrequiredbefore={}, filesizebytes={}"
+              .format(subdir, fstfile, bytesrequiredbefore, filesizeandctime.sizebytes))
+          except Exception as err:
+            self.log.error(err)
 
   def processfssubdir(self, subdir):
     fstfiles = [f for f in self.disk.listdir(subdir)

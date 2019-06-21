@@ -117,7 +117,7 @@ class MockEos:
     self.nbfsls = self.nbfsls + 1
     return self.filesystems
 
-  def stagerrm(self, fxid, subdir):
+  def stagerrm(self, fxid):
     self.nbstagerrm = self.nbstagerrm + 1
 
 class RealDiskCase(unittest.TestCase):
