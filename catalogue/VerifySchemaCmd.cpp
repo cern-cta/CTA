@@ -116,14 +116,8 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const auto dbTableNames = conn.getTableNames();
   const VerifyStatus verifyTablesStatus = verifyTableNames(schemaTableNames, dbTableNames);
   
-  for (const auto &table: schemaTableNames) {
-    std::cerr << table << std::endl;
-    const auto columns = schema->getSchemaColumns(table);
-    const auto dbColumns = conn.getColumns(table);
-    for (const auto &column : dbColumns) {
-      std::cerr << "  " << column.first << " "  << column.second << std::endl;
-    }  
-  }
+  std::cerr << "Checking columns in tables..." << std::endl;
+  const VerifyStatus verifyColumnsStatus = verifyColumns(schemaTableNames, dbTableNames, *schema, conn);
 
   std::cerr << "Checking index names..." << std::endl;
   const auto schemaIndexNames = schema->getSchemaIndexNames();
@@ -144,7 +138,8 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       verifyTablesStatus    == VerifyStatus::ERROR || 
       verifyIndexesStatus   == VerifyStatus::ERROR ||
       verifySequencesStatus == VerifyStatus::ERROR || 
-      verifyTriggersStatus  == VerifyStatus::ERROR ) {
+      verifyTriggersStatus  == VerifyStatus::ERROR ||
+      verifyColumnsStatus   == VerifyStatus::ERROR ) {
     return 1;
   }
   return 0;
@@ -190,6 +185,59 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySchemaVersion(const std::ma
         std::cerr << "  ERROR: the schema version value for " << schemaInfo.first 
                   <<"  not found in the Catalogue DB" << std::endl;
         status = VerifyStatus::ERROR;
+      }
+    }
+    if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
+      std::cerr << "  OK" << std::endl;
+      status = VerifyStatus::OK;
+    }
+    return status;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// verifyColumns
+//------------------------------------------------------------------------------
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyColumns(const std::list<std::string> &schemaTableNames,
+  const std::list<std::string> &dbTableNames, const CatalogueSchema &schema,
+  const rdbms::Conn &conn) const {
+  try {
+    VerifyStatus status = VerifyStatus::UNKNOWN;
+    for(auto &tableName : schemaTableNames) {
+      const bool schemaTableIsInDb = dbTableNames.end() != std::find(dbTableNames.begin(), dbTableNames.end(), tableName);
+      if (schemaTableIsInDb) {
+        const auto schemaColumns = schema.getSchemaColumns(tableName);
+        const auto dbColumns = conn.getColumns(tableName);
+        // first check database columns are present the schema catalogue
+        for (const auto &dbColumn : dbColumns) {
+          if (!schemaColumns.count(dbColumn.first)) {
+            std::cerr << "  ERROR: the DB column " << dbColumn.first
+                      <<" not found in the catalogue schema" << std::endl;
+            status = VerifyStatus::ERROR;
+          }
+        }
+        // second check schema columns against the database catalogue
+        for (const auto &schemaColumn : schemaColumns) {
+            if (dbColumns.count(schemaColumn.first)) {
+            if (schemaColumn.second != dbColumns.at(schemaColumn.first)) {
+              std::cerr << "  ERROR: type mismatch for the column: DB[" 
+                        << schemaColumn.first << "] = "  << dbColumns.at(schemaColumn.first) 
+                        << ", SCHEMA[" << schemaColumn.first << "] = " 
+                        << schemaColumn.second << std::endl;
+              status = VerifyStatus::ERROR;
+            }
+          } else {
+            std::cerr << "  ERROR: the schema column " << schemaColumn.first 
+                      <<" not found in the DB" << std::endl;
+            status = VerifyStatus::ERROR;
+          }
+        }
+      } else {
+        std::cerr << "  ERROR: the schema table " << tableName 
+                  <<" not found in the DB" << std::endl;
+        status = VerifyStatus::ERROR; 
       }
     }
     if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
