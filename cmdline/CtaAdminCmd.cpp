@@ -75,6 +75,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
          case Data::kAflsSummary:   std::cout << Log::DumpProtobuf(&record.afls_summary()); break;
          case Data::kArlsItem:      std::cout << Log::DumpProtobuf(&record.arls_item());    break;
+         case Data::kDrlsItem:      std::cout << Log::DumpProtobuf(&record.drls_item());    break;
          case Data::kFrlsItem:      std::cout << Log::DumpProtobuf(&record.frls_item());    break;
          case Data::kFrlsSummary:   std::cout << Log::DumpProtobuf(&record.frls_summary()); break;
          case Data::kLpaItem:       std::cout << Log::DumpProtobuf(&record.lpa_item());     break;
@@ -94,6 +95,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kAflsItem:      formattedText.print(record.afls_item());    break;
          case Data::kAflsSummary:   formattedText.print(record.afls_summary()); break;
          case Data::kArlsItem:      formattedText.print(record.arls_item());    break;
+         case Data::kDrlsItem:      formattedText.print(record.drls_item());    break;
          case Data::kFrlsItem:      formattedText.print(record.frls_item());    break;
          case Data::kFrlsSummary:   formattedText.print(record.frls_summary()); break;
          case Data::kLpaItem:       formattedText.print(record.lpa_item());     break;
@@ -236,19 +238,20 @@ void CtaAdminCmd::send() const
          std::cout << response.message_txt();
          // Print streaming response header
          if(!isJson()) switch(response.show_header()) {
-            case HeaderType::ADMIN_LS:                     formattedText.printAdLsHeader(); break;
-            case HeaderType::ARCHIVEFILE_LS:               formattedText.printAfLsHeader(); break;
-            case HeaderType::ARCHIVEFILE_LS_SUMMARY:       formattedText.printAfLsSummaryHeader(); break;
-            case HeaderType::ARCHIVEROUTE_LS:              formattedText.printArLsHeader(); break;
-            case HeaderType::FAILEDREQUEST_LS:             formattedText.printFrLsHeader(); break;
-            case HeaderType::FAILEDREQUEST_LS_SUMMARY:     formattedText.printFrLsSummaryHeader(); break;
-            case HeaderType::LISTPENDINGARCHIVES:          formattedText.printLpaHeader(); break;
-            case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  formattedText.printLpaSummaryHeader(); break;
-            case HeaderType::LISTPENDINGRETRIEVES:         formattedText.printLprHeader(); break;
-            case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: formattedText.printLprSummaryHeader(); break;
-            case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
-            case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;
+            case HeaderType::ADMIN_LS:                     formattedText.printAdminLsHeader(); break;
+            case HeaderType::ARCHIVEFILE_LS:               formattedText.printArchiveFileLsHeader(); break;
+            case HeaderType::ARCHIVEFILE_LS_SUMMARY:       formattedText.printArchiveFileLsSummaryHeader(); break;
+            case HeaderType::ARCHIVEROUTE_LS:              formattedText.printArchiveRouteLsHeader(); break;
+            case HeaderType::DRIVE_LS:                     formattedText.printDriveLsHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS:             formattedText.printFailedRequestLsHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS_SUMMARY:     formattedText.printFailedRequestLsSummaryHeader(); break;
+            case HeaderType::LISTPENDINGARCHIVES:          formattedText.printListPendingArchivesHeader(); break;
+            case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  formattedText.printListPendingArchivesSummaryHeader(); break;
+            case HeaderType::LISTPENDINGRETRIEVES:         formattedText.printListPendingRetrievesHeader(); break;
+            case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: formattedText.printListPendingRetrievesSummaryHeader(); break;
             case HeaderType::REPACK_LS:                    formattedText.printRepackLsHeader(); break;
+            case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;
+            case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }

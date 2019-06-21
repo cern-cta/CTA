@@ -20,9 +20,11 @@
 #include <iostream>
 #include <iomanip>
 #include <cmdline/CtaAdminTextFormatter.hpp>
+#include <common/dataStructures/DriveStatus.hpp>
+#include <common/dataStructures/MountType.hpp>
 
-
-namespace cta { namespace admin {
+namespace cta {
+namespace admin {
 
 /**
  ** Generic utility methods
@@ -109,7 +111,7 @@ void TextFormatter::flush() {
  ** Output for specific commands
  **/
 
-void TextFormatter::printAdLsHeader() {
+void TextFormatter::printAdminLsHeader() {
   push_back("HEADER");
   push_back(
     "user",
@@ -123,7 +125,7 @@ void TextFormatter::printAdLsHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::AdminLsItem &adls_item) {
+void TextFormatter::print(const AdminLsItem &adls_item) {
   push_back(
     adls_item.user(),
     adls_item.creation_log().username(),
@@ -136,7 +138,7 @@ void TextFormatter::print(const cta::admin::AdminLsItem &adls_item) {
   );
 }
 
-void TextFormatter::printAfLsHeader() {
+void TextFormatter::printArchiveFileLsHeader() {
   push_back("HEADER");
   push_back(
     "archive id",
@@ -159,7 +161,7 @@ void TextFormatter::printAfLsHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::ArchiveFileLsItem &afls_item) {
+void TextFormatter::print(const ArchiveFileLsItem &afls_item) {
   push_back(
     afls_item.af().archive_id(),
     afls_item.copy_nb(),
@@ -181,7 +183,23 @@ void TextFormatter::print(const cta::admin::ArchiveFileLsItem &afls_item) {
   );
 }
 
-void TextFormatter::printArLsHeader() {
+void TextFormatter::printArchiveFileLsSummaryHeader() {
+  push_back("HEADER");
+  push_back(
+    "total files",
+    "total size"
+  );
+}
+
+void TextFormatter::print(const ArchiveFileLsSummary &afls_summary)
+{
+  push_back(
+    afls_summary.total_files(),
+    dataSizeToStr(afls_summary.total_size())
+  );
+}
+
+void TextFormatter::printArchiveRouteLsHeader() {
   push_back("HEADER");
   push_back(
     "instance",
@@ -198,7 +216,7 @@ void TextFormatter::printArLsHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::ArchiveRouteLsItem &arls_item) {
+void TextFormatter::print(const ArchiveRouteLsItem &arls_item) {
   push_back(
     arls_item.instance(),
     arls_item.storage_class(),
@@ -214,23 +232,87 @@ void TextFormatter::print(const cta::admin::ArchiveRouteLsItem &arls_item) {
   );
 }
 
-void TextFormatter::printAfLsSummaryHeader() {
+
+void TextFormatter::printDriveLsHeader() {
   push_back("HEADER");
   push_back(
-    "total files",
-    "total size"
+    "library",
+    "drive",
+    "host",
+    "desired",
+    "request",
+    "status",
+    "since",
+    "vid",
+    "tapepool",
+    "files",
+    "data",
+    "MB/s",
+    "session",
+    "priority",
+    "activity",
+    "age"
   );
 }
 
-void TextFormatter::print(const cta::admin::ArchiveFileLsSummary &afls_summary)
+void TextFormatter::print(const DriveLsItem &drls_item)
 {
+  using namespace cta::common::dataStructures;
+
+  const int DRIVE_TIMEOUT = 600; // Time after which a drive will be marked as STALE
+
+  std::string mountType;
+  std::string driveStatus;
+  std::string driveStatusSince;
+  std::string filesTransferredInSession;
+  std::string bytesTransferredInSession;
+  std::string latestBandwidth;
+  std::string sessionId;
+  std::string timeSinceLastUpdate;
+
+  mountType   = toString(static_cast<MountType>(drls_item.mount_type()));
+  driveStatus = toString(static_cast<DriveStatus>(drls_item.drive_status()));
+
+  if(drls_item.drive_status() != DriveStatus::Unknown) {
+    driveStatusSince = std::to_string(drls_item.drive_status_since());
+  }
+
+  if(drls_item.drive_status() == DriveStatus::Transferring) {
+    filesTransferredInSession = std::to_string(drls_item.files_transferred_in_session());
+    bytesTransferredInSession = dataSizeToStr(drls_item.bytes_transferred_in_session());
+    latestBandwidth = std::to_string(drls_item.latest_bandwidth());
+  }
+
+  if(drls_item.drive_status() != DriveStatus::Up &&
+     drls_item.drive_status() != DriveStatus::Down &&
+     drls_item.drive_status() != DriveStatus::Unknown) {
+    sessionId = std::to_string(drls_item.session_id());
+  }
+
+  timeSinceLastUpdate = std::to_string(drls_item.time_since_last_update()) +
+    (drls_item.time_since_last_update() > DRIVE_TIMEOUT ? " [STALE]" : "");
+
   push_back(
-    afls_summary.total_files(),
-    dataSizeToStr(afls_summary.total_size())
+    drls_item.logical_library(),
+    drls_item.drive_name(),
+    drls_item.host(),
+    drls_item.desired_drive_state() == DriveLsItem::UP ? "Up" : "Down",
+    mountType,
+    driveStatus,
+    driveStatusSince,
+    drls_item.vid(),
+    drls_item.tapepool(),
+    filesTransferredInSession,
+    bytesTransferredInSession,
+    latestBandwidth,
+    sessionId,
+    drls_item.current_priority(),
+    drls_item.current_activity(),
+    timeSinceLastUpdate
   );
 }
 
-void TextFormatter::printFrLsHeader() {
+void TextFormatter::printFailedRequestLsHeader() {
   push_back("HEADER");
   push_back(
     "request type",
@@ -242,7 +324,7 @@ void TextFormatter::printFrLsHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::FailedRequestLsItem &frls_item) {
+void TextFormatter::print(const FailedRequestLsItem &frls_item) {
   std::string request_type;
   std::string tapepool_vid;
 
@@ -272,7 +354,7 @@ void TextFormatter::print(const cta::admin::FailedRequestLsItem &frls_item) {
   //       displayed in the text output, only in JSON.
 }
 
-void TextFormatter::printFrLsSummaryHeader() {
+void TextFormatter::printFailedRequestLsSummaryHeader() {
   push_back("HEADER");
   push_back(
     "request type",
@@ -281,10 +363,10 @@ void TextFormatter::printFrLsSummaryHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::FailedRequestLsSummary &frls_summary) {
+void TextFormatter::print(const FailedRequestLsSummary &frls_summary) {
   std::string request_type =
-    frls_summary.request_type() == cta::admin::RequestType::ARCHIVE_REQUEST  ? "archive" :
-    frls_summary.request_type() == cta::admin::RequestType::RETRIEVE_REQUEST ? "retrieve" : "total";
+    frls_summary.request_type() == RequestType::ARCHIVE_REQUEST  ? "archive" :
+    frls_summary.request_type() == RequestType::RETRIEVE_REQUEST ? "retrieve" : "total";
 
   push_back(
     request_type,
@@ -293,7 +375,7 @@ void TextFormatter::print(const cta::admin::FailedRequestLsSummary &frls_summary
   );
 }
 
-void TextFormatter::printLpaHeader() {
+void TextFormatter::printListPendingArchivesHeader() {
   push_back("HEADER");
   push_back(
     "tapepool",
@@ -311,7 +393,7 @@ void TextFormatter::printLpaHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::ListPendingArchivesItem &lpa_item) {
+void TextFormatter::print(const ListPendingArchivesItem &lpa_item) {
   push_back(
     lpa_item.tapepool(),
     lpa_item.af().archive_id(),
@@ -328,7 +410,7 @@ void TextFormatter::print(const cta::admin::ListPendingArchivesItem &lpa_item) {
   );
 }
 
-void TextFormatter::printLpaSummaryHeader() {
+void TextFormatter::printListPendingArchivesSummaryHeader() {
   push_back("HEADER");
   push_back(
     "tapepool",
@@ -337,7 +419,7 @@ void TextFormatter::printLpaSummaryHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::ListPendingArchivesSummary &lpa_summary) {
+void TextFormatter::print(const ListPendingArchivesSummary &lpa_summary) {
   push_back(
     lpa_summary.tapepool(),
     lpa_summary.total_files(),
@@ -345,7 +427,7 @@ void TextFormatter::print(const cta::admin::ListPendingArchivesSummary &lpa_summ
   );
 }
 
-void TextFormatter::printLprHeader() {
+void TextFormatter::printListPendingRetrievesHeader() {
   push_back("HEADER");
   push_back(
     "vid",
@@ -360,7 +442,7 @@ void TextFormatter::printLprHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::ListPendingRetrievesItem &lpr_item) {
+void TextFormatter::print(const ListPendingRetrievesItem &lpr_item) {
   push_back(
     lpr_item.tf().vid(),
     lpr_item.af().archive_id(),
@@ -374,7 +456,7 @@ void TextFormatter::print(const cta::admin::ListPendingRetrievesItem &lpr_item) 
   );
 }
 
-void TextFormatter::printLprSummaryHeader() {
+void TextFormatter::printListPendingRetrievesSummaryHeader() {
   push_back("HEADER");
   push_back(
     "vid",
@@ -383,11 +465,52 @@ void TextFormatter::printLprSummaryHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::ListPendingRetrievesSummary &lpr_summary) {
+void TextFormatter::print(const ListPendingRetrievesSummary &lpr_summary) {
   push_back(
     lpr_summary.vid(),
     lpr_summary.total_files(),
     dataSizeToStr(lpr_summary.total_size())
+  );
+}
+
+void TextFormatter::printRepackLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "vid",
+    "repackBufferURL",
+    "userProvidedFiles",
+    "totalFilesToRetrieve",
+    "totalBytesToRetrieve",
+    "totalFilesToArchive",
+    "totalBytesToArchive",
+    "retrievedFiles",
+    "archivedFiles",
+    "failedToRetrieveFiles",
+    "failedToRetrieveBytes",
+    "failedToArchiveFiles",
+    "failedToArchiveBytes",
+    "lastExpandedFSeq",
+    "status"
+  );
+}
+
+void TextFormatter::print(const RepackLsItem &rels_item) {
+  push_back(
+   rels_item.vid(),
+   rels_item.repack_buffer_url(),
+   rels_item.user_provided_files(),
+   rels_item.total_files_to_retrieve(),
+   dataSizeToStr(rels_item.total_bytes_to_retrieve()),
+   rels_item.total_files_to_archive(),
+   dataSizeToStr(rels_item.total_bytes_to_archive()),
+   rels_item.retrieved_files(),
+   rels_item.archived_files(),
+   rels_item.failed_to_retrieve_files(),
+   dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
+   rels_item.failed_to_archive_files(),
+   dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
+   rels_item.last_expanded_fseq(),
+   rels_item.status()
   );
 }
 
@@ -421,7 +544,7 @@ void TextFormatter::printTapeLsHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::TapeLsItem &tals_item) {
+void TextFormatter::print(const TapeLsItem &tals_item) {
   push_back(
     tals_item.vid(),
     tals_item.media_type(),
@@ -450,47 +573,6 @@ void TextFormatter::print(const cta::admin::TapeLsItem &tals_item) {
   );
 }
 
-void TextFormatter::printRepackLsHeader() {
-  push_back("HEADER");
-  push_back(
-    "vid",
-    "repackBufferURL",
-    "userProvidedFiles",
-    "totalFilesToRetrieve",
-    "totalBytesToRetrieve",
-    "totalFilesToArchive",
-    "totalBytesToArchive",
-    "retrievedFiles",
-    "archivedFiles",
-    "failedToRetrieveFiles",
-    "failedToRetrieveBytes",
-    "failedToArchiveFiles",
-    "failedToArchiveBytes",
-    "lastExpandedFSeq",
-    "status"
-  );
-}
-
-void TextFormatter::print(const cta::admin::RepackLsItem &rels_item) {
-  push_back(
-   rels_item.vid(),
-   rels_item.repack_buffer_url(),
-   rels_item.user_provided_files(),
-   rels_item.total_files_to_retrieve(),
-   dataSizeToStr(rels_item.total_bytes_to_retrieve()),
-   rels_item.total_files_to_archive(),
-   dataSizeToStr(rels_item.total_bytes_to_archive()),
-   rels_item.retrieved_files(),
-   rels_item.archived_files(),
-   rels_item.failed_to_retrieve_files(),
-   dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
-   rels_item.failed_to_archive_files(),
-   dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
-   rels_item.last_expanded_fseq(),
-   rels_item.status()
-  );
-}
-
 void TextFormatter::printTapePoolLsHeader() {
   push_back("HEADER");
   push_back(
@@ -515,7 +597,7 @@ void TextFormatter::printTapePoolLsHeader() {
   );
 }
 
-void TextFormatter::print(const cta::admin::TapePoolLsItem &tpls_item)
+void TextFormatter::print(const TapePoolLsItem &tpls_item)
 {
   uint64_t avail = tpls_item.capacity_bytes() > tpls_item.data_bytes() ?
     tpls_item.capacity_bytes()-tpls_item.data_bytes() : 0; 

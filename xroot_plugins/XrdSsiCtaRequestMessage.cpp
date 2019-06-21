@@ -25,16 +25,16 @@
 using XrdSsiPb::PbException;
 
 #include <cmdline/CtaAdminCmdParse.hpp>
+#include "XrdSsiCtaRequestMessage.hpp"
 #include "XrdCtaAdminLs.hpp"
 #include "XrdCtaArchiveFileLs.hpp"
 #include "XrdCtaArchiveRouteLs.hpp"
+#include "XrdCtaDriveLs.hpp"
 #include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaListPendingQueue.hpp"
-#include "XrdCtaTapePoolLs.hpp"
-#include "XrdSsiCtaRequestMessage.hpp"
-#include "XrdCtaTapeLs.hpp"
 #include "XrdCtaRepackLs.hpp"
-
+#include "XrdCtaTapeLs.hpp"
+#include "XrdCtaTapePoolLs.hpp"
 
 namespace cta {
 namespace xrd {
@@ -138,7 +138,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processDrive_Down(response);
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS):
-               processDrive_Ls(response);
+               processDrive_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM):
                processDrive_Rm(response);
@@ -801,112 +801,15 @@ void RequestMessage::processDrive_Down(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processDrive_Ls(cta::xrd::Response &response)
+void RequestMessage::processDrive_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   const int DRIVE_TIMEOUT = 600;
+  // Create a XrdSsi stream object to return the results
+  stream = new DriveLsStream(*this, m_catalogue, m_scheduler, m_cliIdentity, m_lc);
 
-   std::stringstream cmdlineOutput;
-
-   // Dump all drives unless we specified a drive
-   bool hasRegex   = false;
-   bool driveFound = false;
-
-   auto driveRegexOpt = getOptional(OptionString::DRIVE, &hasRegex);
-   std::string driveRegexStr = hasRegex ? '^' + driveRegexOpt.value() + '$' : ".";
-   utils::Regex driveRegex(driveRegexStr.c_str());
-
-   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
-   if (!driveStates.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> headers = {
-         "library","drive","host","desired","request","status","since","vid","tapepool","files",
-         "MBytes","MB/s","session","priority","activity","age"
-      };
-      responseTable.push_back(headers);
-
-      typedef decltype(*driveStates.begin()) dStateVal_t;
-      driveStates.sort([](const dStateVal_t &a, const dStateVal_t &b){ return a.driveName < b.driveName; });
-
-      for (auto ds: driveStates)
-      {
-         if(!driveRegex.has_match(ds.driveName)) continue;
-         driveFound = true;
-
-         auto timeSinceLastUpdate_s = time(nullptr) - ds.lastUpdateTime;
-
-         std::vector<std::string> currentRow;
-         currentRow.push_back(ds.logicalLibrary);
-         currentRow.push_back(ds.driveName);
-         currentRow.push_back(ds.host);
-         currentRow.push_back(ds.desiredDriveState.up ? "Up" : "Down");
-         currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
-         currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
-
-         // print the time spent in the current state
-         unsigned long long drive_time = time(nullptr);
-
-         switch(ds.driveStatus) {
-            using namespace cta::common::dataStructures;
-
-            case DriveStatus::Probing:           drive_time -= ds.probeStartTime;    break;
-            case DriveStatus::Up:
-            case DriveStatus::Down:              drive_time -= ds.downOrUpStartTime; break;
-            case DriveStatus::Starting:          drive_time -= ds.startStartTime;    break;
-            case DriveStatus::Mounting:          drive_time -= ds.mountStartTime;    break;
-            case DriveStatus::Transferring:      drive_time -= ds.transferStartTime; break;
-            case DriveStatus::CleaningUp:        drive_time -= ds.cleanupStartTime;  break;
-            case DriveStatus::Unloading:         drive_time -= ds.unloadStartTime;   break;
-            case DriveStatus::Unmounting:        drive_time -= ds.unmountStartTime;  break;
-            case DriveStatus::DrainingToDisk:    drive_time -= ds.drainingStartTime; break;
-            case DriveStatus::Shutdown:          drive_time -= ds.shutdownTime;      break;
-            case DriveStatus::Unknown:           break;
-         }
-         currentRow.push_back(ds.driveStatus == cta::common::dataStructures::DriveStatus::Unknown ? "-" :
-            std::to_string(drive_time));
-
-         currentRow.push_back(ds.currentVid == "" ? "-" : ds.currentVid);
-         currentRow.push_back(ds.currentTapePool == "" ? "-" : ds.currentTapePool);
-
-         switch (ds.driveStatus) {
-            case cta::common::dataStructures::DriveStatus::Transferring:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.filesTransferredInSession)));
-               currentRow.push_back(bytesToMbString(ds.bytesTransferredInSession));
-               currentRow.push_back(bytesToMbString(ds.latestBandwidth));
-               break;
-            default:
-               currentRow.push_back("-");
-               currentRow.push_back("-");
-               currentRow.push_back("-");
-         }
-         switch(ds.driveStatus) {
-            case cta::common::dataStructures::DriveStatus::Up:
-            case cta::common::dataStructures::DriveStatus::Down:
-            case cta::common::dataStructures::DriveStatus::Unknown:
-               currentRow.push_back("-");
-               break;
-            default:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.sessionId)));
-         }
-         currentRow.push_back(std::to_string(ds.currentPriority));
-         currentRow.push_back(ds.currentActivityAndWeight?ds.currentActivityAndWeight.value().activity: "-");
-         currentRow.push_back(std::to_string(timeSinceLastUpdate_s) +
-            (timeSinceLastUpdate_s > DRIVE_TIMEOUT ? " [STALE]" : ""));
-         responseTable.push_back(currentRow);
-      }
-
-      if (hasRegex && !driveFound) {
-         throw cta::exception::UserError(std::string("No such drive: ") + driveRegexOpt.value());
-      }
-
-      m_option_bool[OptionBoolean::SHOW_HEADER] = true;
-      cmdlineOutput<< formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::DRIVE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 

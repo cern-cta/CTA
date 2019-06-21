@@ -44,34 +44,36 @@ public:
   }
 
   // Output headers
-  void printAdLsHeader();
-  void printAfLsHeader();
-  void printAfLsSummaryHeader();
-  void printArLsHeader();
-  void printFrLsHeader();
-  void printFrLsSummaryHeader();
-  void printLpaHeader();
-  void printLpaSummaryHeader();
-  void printLprHeader();
-  void printLprSummaryHeader();
-  void printTapePoolLsHeader();
-  void printTapeLsHeader();
+  void printAdminLsHeader();
+  void printArchiveFileLsHeader();
+  void printArchiveFileLsSummaryHeader();
+  void printArchiveRouteLsHeader();
+  void printDriveLsHeader();
+  void printFailedRequestLsHeader();
+  void printFailedRequestLsSummaryHeader();
+  void printListPendingArchivesHeader();
+  void printListPendingArchivesSummaryHeader();
+  void printListPendingRetrievesHeader();
+  void printListPendingRetrievesSummaryHeader();
   void printRepackLsHeader();
+  void printTapeLsHeader();
+  void printTapePoolLsHeader();
    
   // Output records
   void print(const AdminLsItem &adls_item);
   void print(const ArchiveFileLsItem &afls_item);
   void print(const ArchiveFileLsSummary &afls_summary);
   void print(const ArchiveRouteLsItem &afls_item);
+  void print(const DriveLsItem &drls_item);
   void print(const FailedRequestLsItem &frls_item);
   void print(const FailedRequestLsSummary &frls_summary);
   void print(const ListPendingArchivesItem &lpa_item);
   void print(const ListPendingArchivesSummary &lpa_summary);
   void print(const ListPendingRetrievesItem &lpr_item);
   void print(const ListPendingRetrievesSummary &lpr_summary);
-  void print(const TapePoolLsItem &tpls_item);
-  void print(const TapeLsItem &tals_item);
   void print(const RepackLsItem &rels_item);
+  void print(const TapeLsItem &tals_item);
+  void print(const TapePoolLsItem &tpls_item);
 
 private:
   //! Add a line to the buffer

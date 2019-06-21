@@ -70,7 +70,6 @@ int AdminLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   for(bool is_buffer_full = false; !m_adminList.empty() && !is_buffer_full; m_adminList.pop_front()) {
     Data record;
 
-    // TapePool
     auto &ad      = m_adminList.front();
     auto  ad_item = record.mutable_adls_item();
 
