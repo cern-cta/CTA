@@ -507,7 +507,7 @@ public:
   
 private:
   CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
-  const size_t c_repackReportBatchSize = 500;
+  const size_t c_repackReportBatchSize = 4000;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);

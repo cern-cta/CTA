@@ -563,6 +563,14 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // value in case of crash.
     repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq - 1, maxAddedFSeq, totalStatsFile, lc);
     timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
+    {
+      if(!stopExpansion && archiveFilesForCatalogue.hasMore()){
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid",repackInfo.vid);
+        timingList.addToLog(params);
+        lc.log(log::INFO,"Max number of files expanded reached ("+std::to_string(c_defaultMaxNbFilesForRepack)+"), doing some reporting before continuing expansion.");
+      }
+    }
   }
   log::ScopedParamContainer params(lc);
   params.add("tapeVid",repackInfo.vid);
