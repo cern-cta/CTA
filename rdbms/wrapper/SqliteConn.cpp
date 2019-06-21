@@ -262,7 +262,7 @@ std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tab
         const std::string sqlStmtComma = utils::trimString(tableSql.substr(searchPosComma, stmtLenComma));
         searchPosComma = findResultComma + 1;
         if(0 < sqlStmtComma.size()) { // Ignore empty statements
-          const std::string columnSQL = "([a-zA-Z_]+) +(" + columnTypes + ")";
+          const std::string columnSQL = "([a-zA-Z_0-9]+) +(" + columnTypes + ")";
           cta::utils::Regex columnSqlRegex(columnSQL.c_str());
           auto columnSql = columnSqlRegex.exec(sqlStmtComma);
           if (3 == columnSql.size()) {
