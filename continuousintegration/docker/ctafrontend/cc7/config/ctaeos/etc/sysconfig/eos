@@ -53,3 +53,5 @@ export EOS_TTY_BROADCAST_LISTEN_LOGFILE="/var/log/eos/mgm/xrdlog.mgm"
 # define the log file regex you want to broad cast to all consoles
 export EOS_TTY_BROACAST_EGREP="\"CRIT|ALERT|EMERG|PROGRESS\""
 
+# define the fst delete rate
+export EOS_FST_DELETE_QUERY_INTERVAL=5

@@ -252,9 +252,9 @@ fi
 echo "###"
 echo "${TAPEONLY}/${ARCHIVED} on tape only"
 echo "###"
-#echo "Sleeping 400 seconds to allow MGM-FST communication to settle after disk copy deletion."
-#sleep 400
-#echo "###"
+echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
+sleep 10
+echo "###"
 
 
 if [[ $TAPEAWAREGC == 1 ]]; then
