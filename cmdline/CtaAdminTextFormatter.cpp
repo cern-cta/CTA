@@ -371,6 +371,37 @@ void TextFormatter::print(const FailedRequestLsSummary &frls_summary) {
   );
 }
 
+void TextFormatter::printGroupMountRuleLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "instance",
+    "group",
+    "policy",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const GroupMountRuleLsItem &gmrls_item) {
+  push_back(
+    gmrls_item.disk_instance(),
+    gmrls_item.group_mount_rule(),
+    gmrls_item.mount_policy(),
+    gmrls_item.creation_log().username(),
+    gmrls_item.creation_log().host(),
+    timeToStr(gmrls_item.creation_log().time()),
+    gmrls_item.last_modification_log().username(),
+    gmrls_item.last_modification_log().host(),
+    timeToStr(gmrls_item.last_modification_log().time()),
+    gmrls_item.comment()
+  );
+}
+
 void TextFormatter::printListPendingArchivesHeader() {
   push_back("HEADER");
   push_back(

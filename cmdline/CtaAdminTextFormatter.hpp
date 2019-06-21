@@ -51,6 +51,7 @@ public:
   void printDriveLsHeader();
   void printFailedRequestLsHeader();
   void printFailedRequestLsSummaryHeader();
+  void printGroupMountRuleLsHeader();
   void printListPendingArchivesHeader();
   void printListPendingArchivesSummaryHeader();
   void printListPendingRetrievesHeader();
@@ -67,6 +68,7 @@ public:
   void print(const DriveLsItem &drls_item);
   void print(const FailedRequestLsItem &frls_item);
   void print(const FailedRequestLsSummary &frls_summary);
+  void print(const GroupMountRuleLsItem &gmrls_item);
   void print(const ListPendingArchivesItem &lpa_item);
   void print(const ListPendingArchivesSummary &lpa_summary);
   void print(const ListPendingRetrievesItem &lpr_item);

@@ -78,6 +78,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kDrlsItem:      std::cout << Log::DumpProtobuf(&record.drls_item());    break;
          case Data::kFrlsItem:      std::cout << Log::DumpProtobuf(&record.frls_item());    break;
          case Data::kFrlsSummary:   std::cout << Log::DumpProtobuf(&record.frls_summary()); break;
+         case Data::kGmrlsItem:     std::cout << Log::DumpProtobuf(&record.gmrls_item());   break;
          case Data::kLpaItem:       std::cout << Log::DumpProtobuf(&record.lpa_item());     break;
          case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
          case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
@@ -98,6 +99,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kDrlsItem:      formattedText.print(record.drls_item());    break;
          case Data::kFrlsItem:      formattedText.print(record.frls_item());    break;
          case Data::kFrlsSummary:   formattedText.print(record.frls_summary()); break;
+         case Data::kGmrlsItem:     formattedText.print(record.gmrls_item());   break;
          case Data::kLpaItem:       formattedText.print(record.lpa_item());     break;
          case Data::kLpaSummary:    formattedText.print(record.lpa_summary());  break;
          case Data::kLprItem:       formattedText.print(record.lpr_item());     break;
@@ -245,6 +247,7 @@ void CtaAdminCmd::send() const
             case HeaderType::DRIVE_LS:                     formattedText.printDriveLsHeader(); break;
             case HeaderType::FAILEDREQUEST_LS:             formattedText.printFailedRequestLsHeader(); break;
             case HeaderType::FAILEDREQUEST_LS_SUMMARY:     formattedText.printFailedRequestLsSummaryHeader(); break;
+            case HeaderType::GROUPMOUNTRULE_LS:            formattedText.printGroupMountRuleLsHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES:          formattedText.printListPendingArchivesHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  formattedText.printListPendingArchivesSummaryHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES:         formattedText.printListPendingRetrievesHeader(); break;

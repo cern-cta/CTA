@@ -162,7 +162,6 @@ private:
    void processGroupMountRule_Add    (cta::xrd::Response &response);
    void processGroupMountRule_Ch     (cta::xrd::Response &response);
    void processGroupMountRule_Rm     (cta::xrd::Response &response);
-   void processGroupMountRule_Ls     (cta::xrd::Response &response);
    void processLogicalLibrary_Add    (cta::xrd::Response &response);
    void processLogicalLibrary_Ch     (cta::xrd::Response &response);
    void processLogicalLibrary_Rm     (cta::xrd::Response &response);
@@ -206,6 +205,7 @@ private:
    admincmdstream_t processArchiveRoute_Ls;
    admincmdstream_t processDrive_Ls;
    admincmdstream_t processFailedRequest_Ls;
+   admincmdstream_t processGroupMountRule_Ls;
    admincmdstream_t processListPendingArchives;
    admincmdstream_t processListPendingRetrieves;
    admincmdstream_t processTapePool_Ls;

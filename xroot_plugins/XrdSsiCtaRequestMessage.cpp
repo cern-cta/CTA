@@ -31,6 +31,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaArchiveRouteLs.hpp"
 #include "XrdCtaDriveLs.hpp"
 #include "XrdCtaFailedRequestLs.hpp"
+#include "XrdCtaGroupMountRuleLs.hpp"
 #include "XrdCtaListPendingQueue.hpp"
 #include "XrdCtaRepackLs.hpp"
 #include "XrdCtaTapeLs.hpp"
@@ -156,7 +157,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processGroupMountRule_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS):
-               processGroupMountRule_Ls(response);
+               processGroupMountRule_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_LISTPENDINGARCHIVES, AdminCmd::SUBCMD_NONE):
                processListPendingArchives(response, stream);
@@ -923,36 +924,14 @@ void RequestMessage::processGroupMountRule_Rm(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processGroupMountRule_Ls(cta::xrd::Response &response)
+void RequestMessage::processGroupMountRule_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  stream = new GroupMountRuleLsStream(*this, m_catalogue, m_scheduler);
 
-   std::list<cta::common::dataStructures::RequesterGroupMountRule> list = m_catalogue.getRequesterGroupMountRules();
-
-   if(!list.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "instance","group","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++)
-      {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->diskInstance);
-         currentRow.push_back(it->name);
-         currentRow.push_back(it->mountPolicy);
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::GROUPMOUNTRULE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
