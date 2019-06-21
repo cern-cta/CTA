@@ -58,7 +58,7 @@ std::map<std::string, std::string> CatalogueSchema::getSchemaColumns(const std::
       searchPos = findResult + 1;
 
       if(0 < sqlStmt.size()) { // Ignore empty statements
-        const std::string createTableSQL = "CREATE TABLE " + tableName + "\\(([a-zA-Z0-9_, '\\)\\(]+)\\)";
+        const std::string createTableSQL = "CREATE TABLE " + tableName + "[ ]*\\(([a-zA-Z0-9_, '\\)\\(]+)\\)";
         cta::utils::Regex tableSqlRegex(createTableSQL.c_str());
         auto tableSql = tableSqlRegex.exec(sqlStmt);
         if (2 == tableSql.size()) {
@@ -71,7 +71,7 @@ std::map<std::string, std::string> CatalogueSchema::getSchemaColumns(const std::
             const std::string sqlStmtComma = utils::trimString(tableSql[1].substr(searchPosComma, stmtLenComma));
             searchPosComma = findResultComma + 1;
             if(0 < sqlStmtComma.size()) { // Ignore empty statements
-              const std::string columnSQL = "([a-zA-Z_]+) +(" + columnTypes + ")";
+              const std::string columnSQL = "([a-zA-Z_0-9]+) +(" + columnTypes + ")";        
               cta::utils::Regex columnSqlRegex(columnSQL.c_str());
               auto columnSql = columnSqlRegex.exec(sqlStmtComma);
               if (3 == columnSql.size()) {
@@ -103,7 +103,7 @@ std::list<std::string> CatalogueSchema::getSchemaTableNames() const {
       searchPos = findResult + 1;
 
       if(0 < sqlStmt.size()) { // Ignore empty statements
-        cta::utils::Regex tableNamesRegex("CREATE TABLE ([a-zA-Z_]+)");
+        cta::utils::Regex tableNamesRegex("CREATE TABLE ([a-zA-Z_0-9]+)");
         auto tableName = tableNamesRegex.exec(sqlStmt);
         if (2 == tableName.size()) {
           schemaTables.push_back(tableName[1].c_str());

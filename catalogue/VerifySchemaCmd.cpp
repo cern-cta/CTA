@@ -214,7 +214,8 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyColumns(const std::list<std
         for (const auto &dbColumn : dbColumns) {
           if (!schemaColumns.count(dbColumn.first)) {
             std::cerr << "  ERROR: the DB column " << dbColumn.first
-                      <<" not found in the catalogue schema" << std::endl;
+                      << " for table " << tableName 
+                      << " not found in the catalogue schema" << std::endl;
             status = VerifyStatus::ERROR;
           }
         }
@@ -225,18 +226,20 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyColumns(const std::list<std
               std::cerr << "  ERROR: type mismatch for the column: DB[" 
                         << schemaColumn.first << "] = "  << dbColumns.at(schemaColumn.first) 
                         << ", SCHEMA[" << schemaColumn.first << "] = " 
-                        << schemaColumn.second << std::endl;
+                        << schemaColumn.second 
+                        << " for table " << tableName << std::endl;
               status = VerifyStatus::ERROR;
             }
           } else {
             std::cerr << "  ERROR: the schema column " << schemaColumn.first 
-                      <<" not found in the DB" << std::endl;
+                      << " not found in the DB" 
+                      << " for table " << tableName << std::endl;
             status = VerifyStatus::ERROR;
           }
         }
       } else {
         std::cerr << "  ERROR: the schema table " << tableName 
-                  <<" not found in the DB" << std::endl;
+                  << " not found in the DB" << std::endl;
         status = VerifyStatus::ERROR; 
       }
     }
