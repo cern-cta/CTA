@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/CmdLineTool.hpp"
+#include "catalogue/CatalogueSchema.hpp"
 #include "rdbms/Conn.hpp"
 
 namespace cta {
@@ -85,6 +86,23 @@ private:
    */
   VerifyStatus verifySchemaVersion(const std::map<std::string, uint64_t> &schemaVersion, 
     const std::map<std::string, uint64_t> &schemaDbVersion) const;
+  
+  /**
+   * Verifies columns in the database according their description in
+   * the catalogue schema. This method verifies tables in the database which
+   * are present in the catalogue schema and also checks if some tables are
+   * missed in the database.
+   * Returns verification status as result.
+   * 
+   * @param schemaTableNames The list of the catalogue schema table names.
+   * @param dbTableNames The list of the database table names.
+   * @param schema The reference to the catalogue schema.
+   * @param conn The reference to the database connection.
+   * @return The verification status code.
+   */
+  VerifyStatus verifyColumns(const std::list<std::string> &schemaTableNames, 
+    const std::list<std::string> &dbTableNames, const CatalogueSchema &schema,
+    const rdbms::Conn &conn) const;
   
   /**
    * Verifies table names in the database against the catalogue schema table names.
