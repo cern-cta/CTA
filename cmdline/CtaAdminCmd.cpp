@@ -83,9 +83,10 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
          case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
          case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
-         case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
-         case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
          case Data::kRelsItem:      std::cout << Log::DumpProtobuf(&record.rels_item());    break;
+         case Data::kRmrlsItem:     std::cout << Log::DumpProtobuf(&record.rmrls_item());   break;
+         case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
+         case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -104,9 +105,10 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLpaSummary:    formattedText.print(record.lpa_summary());  break;
          case Data::kLprItem:       formattedText.print(record.lpr_item());     break;
          case Data::kLprSummary:    formattedText.print(record.lpr_summary());  break;
-         case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
-         case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
          case Data::kRelsItem:      formattedText.print(record.rels_item());    break;
+         case Data::kRmrlsItem:     formattedText.print(record.rmrls_item());   break;
+         case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
+         case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -253,6 +255,7 @@ void CtaAdminCmd::send() const
             case HeaderType::LISTPENDINGRETRIEVES:         formattedText.printListPendingRetrievesHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: formattedText.printListPendingRetrievesSummaryHeader(); break;
             case HeaderType::REPACK_LS:                    formattedText.printRepackLsHeader(); break;
+            case HeaderType::REQUESTERMOUNTRULE_LS:        formattedText.printRequesterMountRuleLsHeader(); break;
             case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;
             case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
             case HeaderType::NONE:

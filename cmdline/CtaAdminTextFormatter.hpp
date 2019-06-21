@@ -57,6 +57,7 @@ public:
   void printListPendingRetrievesHeader();
   void printListPendingRetrievesSummaryHeader();
   void printRepackLsHeader();
+  void printRequesterMountRuleLsHeader();
   void printTapeLsHeader();
   void printTapePoolLsHeader();
    
@@ -74,6 +75,7 @@ public:
   void print(const ListPendingRetrievesItem &lpr_item);
   void print(const ListPendingRetrievesSummary &lpr_summary);
   void print(const RepackLsItem &rels_item);
+  void print(const RequesterMountRuleLsItem &rmrls_item);
   void print(const TapeLsItem &tals_item);
   void print(const TapePoolLsItem &tpls_item);
 

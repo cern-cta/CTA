@@ -541,6 +541,37 @@ void TextFormatter::print(const RepackLsItem &rels_item) {
   );
 }
 
+void TextFormatter::printRequesterMountRuleLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "instance",
+    "username",
+    "policy",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const RequesterMountRuleLsItem &rmrls_item) {
+  push_back(
+    rmrls_item.disk_instance(),
+    rmrls_item.requester_mount_rule(),
+    rmrls_item.mount_policy(),
+    rmrls_item.creation_log().username(),
+    rmrls_item.creation_log().host(),
+    timeToStr(rmrls_item.creation_log().time()),
+    rmrls_item.last_modification_log().username(),
+    rmrls_item.last_modification_log().host(),
+    timeToStr(rmrls_item.last_modification_log().time()),
+    rmrls_item.comment()
+  );
+}
+
 void TextFormatter::printTapeLsHeader() {
   push_back("HEADER");
   push_back(

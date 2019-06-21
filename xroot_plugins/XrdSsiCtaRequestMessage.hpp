@@ -176,7 +176,6 @@ private:
    void processRequesterMountRule_Add(cta::xrd::Response &response);
    void processRequesterMountRule_Ch (cta::xrd::Response &response);
    void processRequesterMountRule_Rm (cta::xrd::Response &response);
-   void processRequesterMountRule_Ls (cta::xrd::Response &response);
    void processShowQueues            (cta::xrd::Response &response);
    void processStorageClass_Add      (cta::xrd::Response &response);
    void processStorageClass_Ch       (cta::xrd::Response &response);
@@ -208,6 +207,7 @@ private:
    admincmdstream_t processGroupMountRule_Ls;
    admincmdstream_t processListPendingArchives;
    admincmdstream_t processListPendingRetrieves;
+   admincmdstream_t processRequesterMountRule_Ls;
    admincmdstream_t processTapePool_Ls;
    admincmdstream_t processTape_Ls;
    admincmdstream_t processRepack_Ls;
