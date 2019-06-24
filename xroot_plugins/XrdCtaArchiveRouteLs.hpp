@@ -70,7 +70,6 @@ int ArchiveRouteLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   for(bool is_buffer_full = false; !m_archiveRouteList.empty() && !is_buffer_full; m_archiveRouteList.pop_front()) {
     Data record;
 
-    // TapePool
     auto &ar      = m_archiveRouteList.front();
     auto  ar_item = record.mutable_arls_item();
 

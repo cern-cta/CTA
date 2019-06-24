@@ -75,15 +75,22 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
          case Data::kAflsSummary:   std::cout << Log::DumpProtobuf(&record.afls_summary()); break;
          case Data::kArlsItem:      std::cout << Log::DumpProtobuf(&record.arls_item());    break;
+         case Data::kDrlsItem:      std::cout << Log::DumpProtobuf(&record.drls_item());    break;
          case Data::kFrlsItem:      std::cout << Log::DumpProtobuf(&record.frls_item());    break;
          case Data::kFrlsSummary:   std::cout << Log::DumpProtobuf(&record.frls_summary()); break;
+         case Data::kGmrlsItem:     std::cout << Log::DumpProtobuf(&record.gmrls_item());   break;
          case Data::kLpaItem:       std::cout << Log::DumpProtobuf(&record.lpa_item());     break;
          case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
          case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
          case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
-         case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
-         case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
+         case Data::kLllsItem:      std::cout << Log::DumpProtobuf(&record.llls_item());    break;
+         case Data::kMplsItem:      std::cout << Log::DumpProtobuf(&record.mpls_item());    break;
          case Data::kRelsItem:      std::cout << Log::DumpProtobuf(&record.rels_item());    break;
+         case Data::kRmrlsItem:     std::cout << Log::DumpProtobuf(&record.rmrls_item());   break;
+         case Data::kSqItem:        std::cout << Log::DumpProtobuf(&record.sq_item());      break;
+         case Data::kSclsItem:      std::cout << Log::DumpProtobuf(&record.scls_item());    break;
+         case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
+         case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -94,15 +101,22 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kAflsItem:      formattedText.print(record.afls_item());    break;
          case Data::kAflsSummary:   formattedText.print(record.afls_summary()); break;
          case Data::kArlsItem:      formattedText.print(record.arls_item());    break;
+         case Data::kDrlsItem:      formattedText.print(record.drls_item());    break;
          case Data::kFrlsItem:      formattedText.print(record.frls_item());    break;
          case Data::kFrlsSummary:   formattedText.print(record.frls_summary()); break;
+         case Data::kGmrlsItem:     formattedText.print(record.gmrls_item());   break;
          case Data::kLpaItem:       formattedText.print(record.lpa_item());     break;
          case Data::kLpaSummary:    formattedText.print(record.lpa_summary());  break;
          case Data::kLprItem:       formattedText.print(record.lpr_item());     break;
          case Data::kLprSummary:    formattedText.print(record.lpr_summary());  break;
-         case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
-         case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
+         case Data::kLllsItem:      formattedText.print(record.llls_item());    break;
+         case Data::kMplsItem:      formattedText.print(record.mpls_item());    break;
          case Data::kRelsItem:      formattedText.print(record.rels_item());    break;
+         case Data::kRmrlsItem:     formattedText.print(record.rmrls_item());   break;
+         case Data::kSqItem:        formattedText.print(record.sq_item());      break;
+         case Data::kSclsItem:      formattedText.print(record.scls_item());    break;
+         case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
+         case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -236,19 +250,26 @@ void CtaAdminCmd::send() const
          std::cout << response.message_txt();
          // Print streaming response header
          if(!isJson()) switch(response.show_header()) {
-            case HeaderType::ADMIN_LS:                     formattedText.printAdLsHeader(); break;
-            case HeaderType::ARCHIVEFILE_LS:               formattedText.printAfLsHeader(); break;
-            case HeaderType::ARCHIVEFILE_LS_SUMMARY:       formattedText.printAfLsSummaryHeader(); break;
-            case HeaderType::ARCHIVEROUTE_LS:              formattedText.printArLsHeader(); break;
-            case HeaderType::FAILEDREQUEST_LS:             formattedText.printFrLsHeader(); break;
-            case HeaderType::FAILEDREQUEST_LS_SUMMARY:     formattedText.printFrLsSummaryHeader(); break;
-            case HeaderType::LISTPENDINGARCHIVES:          formattedText.printLpaHeader(); break;
-            case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  formattedText.printLpaSummaryHeader(); break;
-            case HeaderType::LISTPENDINGRETRIEVES:         formattedText.printLprHeader(); break;
-            case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: formattedText.printLprSummaryHeader(); break;
-            case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
-            case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;
+            case HeaderType::ADMIN_LS:                     formattedText.printAdminLsHeader(); break;
+            case HeaderType::ARCHIVEFILE_LS:               formattedText.printArchiveFileLsHeader(); break;
+            case HeaderType::ARCHIVEFILE_LS_SUMMARY:       formattedText.printArchiveFileLsSummaryHeader(); break;
+            case HeaderType::ARCHIVEROUTE_LS:              formattedText.printArchiveRouteLsHeader(); break;
+            case HeaderType::DRIVE_LS:                     formattedText.printDriveLsHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS:             formattedText.printFailedRequestLsHeader(); break;
+            case HeaderType::FAILEDREQUEST_LS_SUMMARY:     formattedText.printFailedRequestLsSummaryHeader(); break;
+            case HeaderType::GROUPMOUNTRULE_LS:            formattedText.printGroupMountRuleLsHeader(); break;
+            case HeaderType::LISTPENDINGARCHIVES:          formattedText.printListPendingArchivesHeader(); break;
+            case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  formattedText.printListPendingArchivesSummaryHeader(); break;
+            case HeaderType::LISTPENDINGRETRIEVES:         formattedText.printListPendingRetrievesHeader(); break;
+            case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: formattedText.printListPendingRetrievesSummaryHeader(); break;
+            case HeaderType::LOGICALLIBRARY_LS:            formattedText.printLogicalLibraryLsHeader(); break;
+            case HeaderType::MOUNTPOLICY_LS:               formattedText.printMountPolicyLsHeader(); break;
             case HeaderType::REPACK_LS:                    formattedText.printRepackLsHeader(); break;
+            case HeaderType::REQUESTERMOUNTRULE_LS:        formattedText.printRequesterMountRuleLsHeader(); break;
+            case HeaderType::SHOWQUEUES:                   formattedText.printShowQueuesHeader(); break;
+            case HeaderType::STORAGECLASS_LS:              formattedText.printStorageClassLsHeader(); break;
+            case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;
+            case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }

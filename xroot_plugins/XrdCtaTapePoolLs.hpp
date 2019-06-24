@@ -70,7 +70,6 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   for(bool is_buffer_full = false; !m_tapePoolList.empty() && !is_buffer_full; m_tapePoolList.pop_front()) {
     Data record;
 
-    // TapePool
     auto &tp      = m_tapePoolList.front();
     auto  tp_item = record.mutable_tpls_item();
 

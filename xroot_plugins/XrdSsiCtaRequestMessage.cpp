@@ -1,7 +1,7 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
  * @brief          XRootD EOS Notification handler
- * @copyright      Copyright 2017 CERN
+ * @copyright      Copyright 2019 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -16,25 +16,26 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iomanip> // for setw
-
-#include <common/utils/utils.hpp>
-#include <common/utils/Regex.hpp>
-
 #include <XrdSsiPbException.hpp>
 using XrdSsiPb::PbException;
 
 #include <cmdline/CtaAdminCmdParse.hpp>
+#include "XrdSsiCtaRequestMessage.hpp"
 #include "XrdCtaAdminLs.hpp"
 #include "XrdCtaArchiveFileLs.hpp"
 #include "XrdCtaArchiveRouteLs.hpp"
+#include "XrdCtaDriveLs.hpp"
 #include "XrdCtaFailedRequestLs.hpp"
+#include "XrdCtaGroupMountRuleLs.hpp"
 #include "XrdCtaListPendingQueue.hpp"
-#include "XrdCtaTapePoolLs.hpp"
-#include "XrdSsiCtaRequestMessage.hpp"
-#include "XrdCtaTapeLs.hpp"
+#include "XrdCtaLogicalLibraryLs.hpp"
+#include "XrdCtaMountPolicyLs.hpp"
 #include "XrdCtaRepackLs.hpp"
-
+#include "XrdCtaRequesterMountRuleLs.hpp"
+#include "XrdCtaShowQueues.hpp"
+#include "XrdCtaTapeLs.hpp"
+#include "XrdCtaStorageClassLs.hpp"
+#include "XrdCtaTapePoolLs.hpp"
 
 namespace cta {
 namespace xrd {
@@ -44,40 +45,12 @@ const char* const TEXT_RED    = "\x1b[31;1m";
 const char* const TEXT_NORMAL = "\x1b[0m\n";
 
 
-
 /*
  * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
  */
 constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
    return (cmd << 16) + subcmd;
 }
-
-
-
-/*
- * Helper function to convert time to string
- */
-static std::string timeToString(const time_t &time)
-{
-   std::string timeString(ctime(&time));
-   timeString.resize(timeString.size()-1); //remove newline
-   return timeString;
-}
-
-
-
-/*
- * Helper function to convert bytes to Mb and return the result as a string
- */
-static std::string bytesToMbString(uint64_t bytes)
-{
-   long double mBytes = static_cast<long double>(bytes)/(1000.0*1000.0);
-
-   std::ostringstream oss;
-   oss << std::setprecision(2) << std::fixed << mBytes;
-   return oss.str();
-}
-
 
 
 void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Response &response, XrdSsiStream* &stream)
@@ -138,7 +111,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processDrive_Down(response);
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS):
-               processDrive_Ls(response);
+               processDrive_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM):
                processDrive_Rm(response);
@@ -156,7 +129,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processGroupMountRule_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS):
-               processGroupMountRule_Ls(response);
+               processGroupMountRule_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_LISTPENDINGARCHIVES, AdminCmd::SUBCMD_NONE):
                processListPendingArchives(response, stream);
@@ -174,7 +147,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processLogicalLibrary_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS):
-               processLogicalLibrary_Ls(response);
+               processLogicalLibrary_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD):
                processMountPolicy_Add(response);
@@ -186,7 +159,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processMountPolicy_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS):
-               processMountPolicy_Ls(response);
+               processMountPolicy_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD):
                processRepack_Add(response);
@@ -210,10 +183,10 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processRequesterMountRule_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS):
-               processRequesterMountRule_Ls(response);
+               processRequesterMountRule_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE):
-               processShowQueues(response);
+               processShowQueues(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_ADD):
                processStorageClass_Add(response);
@@ -225,7 +198,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processStorageClass_Rm(response);
                break;
             case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS):
-               processStorageClass_Ls(response);
+               processStorageClass_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD):
                processTape_Add(response);
@@ -801,112 +774,15 @@ void RequestMessage::processDrive_Down(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processDrive_Ls(cta::xrd::Response &response)
+void RequestMessage::processDrive_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   const int DRIVE_TIMEOUT = 600;
+  // Create a XrdSsi stream object to return the results
+  stream = new DriveLsStream(*this, m_catalogue, m_scheduler, m_cliIdentity, m_lc);
 
-   std::stringstream cmdlineOutput;
-
-   // Dump all drives unless we specified a drive
-   bool hasRegex   = false;
-   bool driveFound = false;
-
-   auto driveRegexOpt = getOptional(OptionString::DRIVE, &hasRegex);
-   std::string driveRegexStr = hasRegex ? '^' + driveRegexOpt.value() + '$' : ".";
-   utils::Regex driveRegex(driveRegexStr.c_str());
-
-   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
-   if (!driveStates.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> headers = {
-         "library","drive","host","desired","request","status","since","vid","tapepool","files",
-         "MBytes","MB/s","session","priority","activity","age"
-      };
-      responseTable.push_back(headers);
-
-      typedef decltype(*driveStates.begin()) dStateVal_t;
-      driveStates.sort([](const dStateVal_t &a, const dStateVal_t &b){ return a.driveName < b.driveName; });
-
-      for (auto ds: driveStates)
-      {
-         if(!driveRegex.has_match(ds.driveName)) continue;
-         driveFound = true;
-
-         auto timeSinceLastUpdate_s = time(nullptr) - ds.lastUpdateTime;
-
-         std::vector<std::string> currentRow;
-         currentRow.push_back(ds.logicalLibrary);
-         currentRow.push_back(ds.driveName);
-         currentRow.push_back(ds.host);
-         currentRow.push_back(ds.desiredDriveState.up ? "Up" : "Down");
-         currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
-         currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
-
-         // print the time spent in the current state
-         unsigned long long drive_time = time(nullptr);
-
-         switch(ds.driveStatus) {
-            using namespace cta::common::dataStructures;
-
-            case DriveStatus::Probing:           drive_time -= ds.probeStartTime;    break;
-            case DriveStatus::Up:
-            case DriveStatus::Down:              drive_time -= ds.downOrUpStartTime; break;
-            case DriveStatus::Starting:          drive_time -= ds.startStartTime;    break;
-            case DriveStatus::Mounting:          drive_time -= ds.mountStartTime;    break;
-            case DriveStatus::Transferring:      drive_time -= ds.transferStartTime; break;
-            case DriveStatus::CleaningUp:        drive_time -= ds.cleanupStartTime;  break;
-            case DriveStatus::Unloading:         drive_time -= ds.unloadStartTime;   break;
-            case DriveStatus::Unmounting:        drive_time -= ds.unmountStartTime;  break;
-            case DriveStatus::DrainingToDisk:    drive_time -= ds.drainingStartTime; break;
-            case DriveStatus::Shutdown:          drive_time -= ds.shutdownTime;      break;
-            case DriveStatus::Unknown:           break;
-         }
-         currentRow.push_back(ds.driveStatus == cta::common::dataStructures::DriveStatus::Unknown ? "-" :
-            std::to_string(drive_time));
-
-         currentRow.push_back(ds.currentVid == "" ? "-" : ds.currentVid);
-         currentRow.push_back(ds.currentTapePool == "" ? "-" : ds.currentTapePool);
-
-         switch (ds.driveStatus) {
-            case cta::common::dataStructures::DriveStatus::Transferring:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.filesTransferredInSession)));
-               currentRow.push_back(bytesToMbString(ds.bytesTransferredInSession));
-               currentRow.push_back(bytesToMbString(ds.latestBandwidth));
-               break;
-            default:
-               currentRow.push_back("-");
-               currentRow.push_back("-");
-               currentRow.push_back("-");
-         }
-         switch(ds.driveStatus) {
-            case cta::common::dataStructures::DriveStatus::Up:
-            case cta::common::dataStructures::DriveStatus::Down:
-            case cta::common::dataStructures::DriveStatus::Unknown:
-               currentRow.push_back("-");
-               break;
-            default:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.sessionId)));
-         }
-         currentRow.push_back(std::to_string(ds.currentPriority));
-         currentRow.push_back(ds.currentActivityAndWeight?ds.currentActivityAndWeight.value().activity: "-");
-         currentRow.push_back(std::to_string(timeSinceLastUpdate_s) +
-            (timeSinceLastUpdate_s > DRIVE_TIMEOUT ? " [STALE]" : ""));
-         responseTable.push_back(currentRow);
-      }
-
-      if (hasRegex && !driveFound) {
-         throw cta::exception::UserError(std::string("No such drive: ") + driveRegexOpt.value());
-      }
-
-      m_option_bool[OptionBoolean::SHOW_HEADER] = true;
-      cmdlineOutput<< formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::DRIVE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -1020,36 +896,14 @@ void RequestMessage::processGroupMountRule_Rm(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processGroupMountRule_Ls(cta::xrd::Response &response)
+void RequestMessage::processGroupMountRule_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  stream = new GroupMountRuleLsStream(*this, m_catalogue, m_scheduler);
 
-   std::list<cta::common::dataStructures::RequesterGroupMountRule> list = m_catalogue.getRequesterGroupMountRules();
-
-   if(!list.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "instance","group","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++)
-      {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->diskInstance);
-         currentRow.push_back(it->name);
-         currentRow.push_back(it->mountPolicy);
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::GROUPMOUNTRULE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -1134,34 +988,15 @@ void RequestMessage::processLogicalLibrary_Rm(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processLogicalLibrary_Ls(cta::xrd::Response &response)
+void RequestMessage::processLogicalLibrary_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  // Create a XrdSsi stream object to return the results
+  stream = new LogicalLibraryLsStream(*this, m_catalogue, m_scheduler);
 
-   std::list<cta::common::dataStructures::LogicalLibrary> list = m_catalogue.getLogicalLibraries();
-
-   if(!list.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "name","disabled","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->name);
-         currentRow.push_back(std::to_string(it->isDisabled));
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::LOGICALLIBRARY_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -1235,39 +1070,15 @@ void RequestMessage::processMountPolicy_Rm(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processMountPolicy_Ls(cta::xrd::Response &response)
+void RequestMessage::processMountPolicy_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  // Create a XrdSsi stream object to return the results
+  stream = new MountPolicyLsStream(*this, m_catalogue, m_scheduler);
 
-   std::list<cta::common::dataStructures::MountPolicy> list= m_catalogue.getMountPolicies();
-
-   if(!list.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "mount policy","a.priority","a.minAge","r.priority","r.minAge","max drives","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++)
-      {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->name);
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archivePriority)));
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archiveMinRequestAge)));
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrievePriority)));
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrieveMinRequestAge)));
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->maxDrivesAllowed)));
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::MOUNTPOLICY_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -1407,100 +1218,27 @@ void RequestMessage::processRequesterMountRule_Rm(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processRequesterMountRule_Ls(cta::xrd::Response &response)
+void RequestMessage::processRequesterMountRule_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  stream = new RequesterMountRuleLsStream(*this, m_catalogue, m_scheduler);
 
-   std::list<cta::common::dataStructures::RequesterMountRule> list = m_catalogue.getRequesterMountRules();
-
-   if(!list.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "instance","username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->diskInstance);
-         currentRow.push_back(it->name);
-         currentRow.push_back(it->mountPolicy);
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::REQUESTERMOUNTRULE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
-void RequestMessage::processShowQueues(cta::xrd::Response &response)
+void RequestMessage::processShowQueues(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  // Create a XrdSsi stream object to return the results
+  stream = new ShowQueuesStream(*this, m_catalogue, m_scheduler, m_lc);
 
-   auto queuesAndMounts = m_scheduler.getQueuesAndMountSummaries(m_lc);
-
-   if(!queuesAndMounts.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "type","tapepool","logical library","vid","files queued","MBytes queued","oldest age","priority",
-         "min age","max drives","cur. mounts","cur. files","cur. MBytes","MB/s","next mounts","tapes capacity",
-         "files on tapes","MBytes on tapes","full tapes","empty tapes","disabled tapes","writables tapes"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
-      for (auto & q: queuesAndMounts)
-      {
-         const uint64_t MBytes = 1000 * 1000;
-
-         std::vector<std::string> currentRow;
-         currentRow.push_back(common::dataStructures::toString(q.mountType));
-         currentRow.push_back(q.tapePool);
-         currentRow.push_back(q.logicalLibrary);
-         currentRow.push_back(q.vid);
-         currentRow.push_back(std::to_string(q.filesQueued));
-         currentRow.push_back(bytesToMbString(q.bytesQueued));
-         currentRow.push_back(std::to_string(q.oldestJobAge));
-         if (common::dataStructures::MountType::ArchiveForUser == q.mountType) {
-            currentRow.push_back(std::to_string(q.mountPolicy.archivePriority));
-            currentRow.push_back(std::to_string(q.mountPolicy.archiveMinRequestAge));
-            currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
-         } else if (common::dataStructures::MountType::Retrieve == q.mountType) {
-            currentRow.push_back(std::to_string(q.mountPolicy.retrievePriority));
-            currentRow.push_back(std::to_string(q.mountPolicy.retrieveMinRequestAge));
-            currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
-         } else {
-            currentRow.push_back("-");
-            currentRow.push_back("-");
-            currentRow.push_back("-");
-         }
-         currentRow.push_back(std::to_string(q.currentMounts));
-         currentRow.push_back(std::to_string(q.currentFiles));
-         currentRow.push_back(bytesToMbString(q.currentBytes));
-         currentRow.push_back(bytesToMbString(q.latestBandwidth));
-         currentRow.push_back(std::to_string(q.nextMounts));
-         currentRow.push_back(std::to_string(q.tapesCapacity/MBytes));
-         currentRow.push_back(std::to_string(q.filesOnTapes));
-         currentRow.push_back(bytesToMbString(q.dataOnTapes));
-         currentRow.push_back(std::to_string(q.fullTapes));
-         currentRow.push_back(std::to_string(q.emptyTapes));
-         currentRow.push_back(std::to_string(q.disabledTapes));
-         currentRow.push_back(std::to_string(q.writableTapes));
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::SHOWQUEUES);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -1558,35 +1296,15 @@ void RequestMessage::processStorageClass_Rm(cta::xrd::Response &response)
 
 
 
-void RequestMessage::processStorageClass_Ls(cta::xrd::Response &response)
+void RequestMessage::processStorageClass_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  // Create a XrdSsi stream object to return the results
+  stream = new StorageClassLsStream(*this, m_catalogue, m_scheduler);
 
-   std::list<cta::common::dataStructures::StorageClass> list = m_catalogue.getStorageClasses();
-
-   if(!list.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "instance","storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->diskInstance);
-         currentRow.push_back(it->name);
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbCopies)));
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_show_header(HeaderType::STORAGECLASS_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -1820,52 +1538,6 @@ std::string RequestMessage::setDriveState(const std::string &regex, DriveState d
 
    return cmdlineOutput.str();
 }
-
-
-
-std::string RequestMessage::formatResponse(const std::vector<std::vector<std::string>> &responseTable) const
-{
-   bool has_header = has_flag(cta::admin::OptionBoolean::SHOW_HEADER);
-
-   if(responseTable.empty() || responseTable.at(0).empty()) return "";
-
-   std::vector<int> columnSizes;
-
-   for(uint j = 0; j < responseTable.at(0).size(); j++) { //for each column j
-      uint columnSize = 0;
-      for(uint i = 0; i<responseTable.size(); i++) { //for each row i
-         if(responseTable.at(i).at(j).size() > columnSize) {
-            columnSize = responseTable.at(i).at(j).size();
-         }
-      }
-      columnSizes.push_back(columnSize);//loops here
-   }
-   std::stringstream responseSS;
-   for(auto row = responseTable.cbegin(); row != responseTable.cend(); row++) {
-      if(has_header && row == responseTable.cbegin()) responseSS << "\x1b[31;1m";
-      for(uint i = 0; i<row->size(); i++) {
-         responseSS << std::string(i ? "  " : "") << std::setw(columnSizes.at(i)) << row->at(i);
-      }
-      if(has_header && row == responseTable.cbegin()) responseSS << "\x1b[0m" << std::endl;
-      else responseSS << std::endl;
-   }
-   return responseSS.str();
-}
-
-
-
-void RequestMessage::addLogInfoToResponseRow(std::vector<std::string> &responseRow,
-                                             const cta::common::dataStructures::EntryLog &creationLog,
-                                             const cta::common::dataStructures::EntryLog &lastModificationLog) const
-{
-   responseRow.push_back(creationLog.username);
-   responseRow.push_back(creationLog.host);
-   responseRow.push_back(timeToString(creationLog.time));
-   responseRow.push_back(lastModificationLog.username);
-   responseRow.push_back(lastModificationLog.host);
-   responseRow.push_back(timeToString(lastModificationLog.time));
-}
-
 
 
 void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
