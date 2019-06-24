@@ -34,6 +34,9 @@ import time
 class UserError(Exception):
   pass
 
+class StagerrmError(Exception):
+  pass
+
 class NoMgmHost(UserError):
   pass
 
@@ -137,7 +140,7 @@ class RealEos:
     stdout,stderr = process.communicate()
 
     if 0 != process.returncode:
-      raise Exception("'{}' returned non zero: returncode={}".format(cmd, process.returncode))
+      raise StagerrmError("'{}' returned non zero: returncode={}".format(cmd, process.returncode))
 
 class SpaceTracker:
   '''Calculates the amount of effective free space in the file system of a given
@@ -277,6 +280,8 @@ class Gc:
             spacetracker.stagerrmqueued(filesizeandctime.sizebytes)
             self.log.info("stagerrm: subdir={}, fxid={}, bytesrequiredbefore={}, filesizebytes={}"
               .format(subdir, fstfile, bytesrequiredbefore, filesizeandctime.sizebytes))
+          except StagerrmError as err:
+            self.log.info(err)
           except Exception as err:
             self.log.error(err)
 
