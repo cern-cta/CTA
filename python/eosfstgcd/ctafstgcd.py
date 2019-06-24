@@ -281,7 +281,7 @@ class Gc:
             self.log.info("stagerrm: subdir={}, fxid={}, bytesrequiredbefore={}, filesizebytes={}"
               .format(subdir, fstfile, bytesrequiredbefore, filesizeandctime.sizebytes))
           except StagerrmError as err:
-            self.log.info(err)
+            pass
           except Exception as err:
             self.log.error(err)
 
