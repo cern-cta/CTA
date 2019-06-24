@@ -20,6 +20,7 @@ import argparse
 import ConfigParser
 import datetime
 import distutils
+import errno
 import getpass
 import logging
 import logging.config
@@ -66,7 +67,11 @@ class RealDisk:
 
       return filesizeandctime
     except Exception as err:
-      raise Exception("Failed to stat file: path={}: {}".format(path, err))
+      # The file may have been deleted by the FST just before the stat
+      if err.errno == errno.ENOENT:
+        return None
+      else:
+        raise Exception("Failed to stat file: path={}: {}".format(path, err))
 
   def getfreebytes(self, path):
     statvfs = None
