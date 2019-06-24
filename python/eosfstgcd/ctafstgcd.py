@@ -302,8 +302,21 @@ class Gc:
         self.processfile(subdir, fstfile)
 
   def processfs(self, path):
-    fssubdirs = [os.path.join(path, f) for f in self.disk.listdir(path)
-      if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isdir(os.path.join(path, f))]
+    fsfiles = []
+    try:
+      fsfiles = self.disk.listdir(path)
+    except Exception as err:
+      self.log.error("Failed to list contents of filesystem: path={}: {}".format(path, err))
+      return
+
+    fssubdirs = []
+    try:
+      fssubdirs = [os.path.join(path, f) for f in fsfiles
+        if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isdir(os.path.join(path, f))]
+    except Exception as err:
+      self.log.error("Failed to determine sub directories of filesystem: path={}: {}".format(path, err))
+      return
+
     for fssubdir in fssubdirs:
       self.processfssubdir(fssubdir)
 
