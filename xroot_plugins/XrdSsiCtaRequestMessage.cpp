@@ -1,7 +1,7 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
  * @brief          XRootD EOS Notification handler
- * @copyright      Copyright 2017 CERN
+ * @copyright      Copyright 2019 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -15,11 +15,6 @@
  *                 You should have received a copy of the GNU General Public License
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <iomanip> // for setw
-
-#include <common/utils/utils.hpp>
-#include <common/utils/Regex.hpp>
 
 #include <XrdSsiPbException.hpp>
 using XrdSsiPb::PbException;
@@ -50,26 +45,12 @@ const char* const TEXT_RED    = "\x1b[31;1m";
 const char* const TEXT_NORMAL = "\x1b[0m\n";
 
 
-
 /*
  * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
  */
 constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
    return (cmd << 16) + subcmd;
 }
-
-
-
-/*
- * Helper function to convert time to string
- */
-static std::string timeToString(const time_t &time)
-{
-   std::string timeString(ctime(&time));
-   timeString.resize(timeString.size()-1); //remove newline
-   return timeString;
-}
-
 
 
 void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Response &response, XrdSsiStream* &stream)
@@ -1557,52 +1538,6 @@ std::string RequestMessage::setDriveState(const std::string &regex, DriveState d
 
    return cmdlineOutput.str();
 }
-
-
-
-std::string RequestMessage::formatResponse(const std::vector<std::vector<std::string>> &responseTable) const
-{
-   bool has_header = has_flag(cta::admin::OptionBoolean::SHOW_HEADER);
-
-   if(responseTable.empty() || responseTable.at(0).empty()) return "";
-
-   std::vector<int> columnSizes;
-
-   for(uint j = 0; j < responseTable.at(0).size(); j++) { //for each column j
-      uint columnSize = 0;
-      for(uint i = 0; i<responseTable.size(); i++) { //for each row i
-         if(responseTable.at(i).at(j).size() > columnSize) {
-            columnSize = responseTable.at(i).at(j).size();
-         }
-      }
-      columnSizes.push_back(columnSize);//loops here
-   }
-   std::stringstream responseSS;
-   for(auto row = responseTable.cbegin(); row != responseTable.cend(); row++) {
-      if(has_header && row == responseTable.cbegin()) responseSS << "\x1b[31;1m";
-      for(uint i = 0; i<row->size(); i++) {
-         responseSS << std::string(i ? "  " : "") << std::setw(columnSizes.at(i)) << row->at(i);
-      }
-      if(has_header && row == responseTable.cbegin()) responseSS << "\x1b[0m" << std::endl;
-      else responseSS << std::endl;
-   }
-   return responseSS.str();
-}
-
-
-
-void RequestMessage::addLogInfoToResponseRow(std::vector<std::string> &responseRow,
-                                             const cta::common::dataStructures::EntryLog &creationLog,
-                                             const cta::common::dataStructures::EntryLog &lastModificationLog) const
-{
-   responseRow.push_back(creationLog.username);
-   responseRow.push_back(creationLog.host);
-   responseRow.push_back(timeToString(creationLog.time));
-   responseRow.push_back(lastModificationLog.username);
-   responseRow.push_back(lastModificationLog.host);
-   responseRow.push_back(timeToString(lastModificationLog.time));
-}
-
 
 
 void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
