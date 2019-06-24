@@ -503,7 +503,7 @@ void TextFormatter::print(const ListPendingRetrievesSummary &lpr_summary) {
 void TextFormatter::printLogicalLibraryLsHeader() {
   push_back("HEADER");
   push_back(
-    "name",
+    "library",
     "disabled",
     "c.user",
     "c.host",
@@ -741,7 +741,7 @@ void TextFormatter::printTapeLsHeader() {
     "vid",
     "media type",
     "vendor",
-    "logical library",
+    "library",
     "tapepool",
     "vo",
     "encryption key",
