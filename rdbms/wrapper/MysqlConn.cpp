@@ -208,16 +208,17 @@ void MysqlConn::rollback() {
 std::map<std::string, std::string> MysqlConn::getColumns(const std::string &tableName) {
  try {
     std::map<std::string, std::string> columnNamesAndTypes;
-    const std::string sql =
+    const char *const sql =
       "SELECT "
         "COLUMN_NAME, "
         "DATA_TYPE "
       "FROM "
         "INFORMATION_SCHEMA.COLUMNS "
       "WHERE "
-        "TABLE_NAME = '" + tableName +"'";
+        "TABLE_NAME = :TABLE_NAME";
 
     auto stmt = createStmt(sql);
+    stmt->bindString(":TABLE_NAME", tableName);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("COLUMN_NAME");

@@ -234,13 +234,13 @@ void SqliteConn::printSchema(std::ostream &os) {
 std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tableName) {
   try {
     std::map<std::string, std::string> columnNamesAndTypes;
-    const std::string sql =
+    const char *const sql =
       "SELECT "
         "SQL AS SQL "
       "FROM "
         "SQLITE_MASTER "
       "WHERE "
-        "TBL_NAME = '" + tableName +"' "
+        "TBL_NAME = :TABLE_NAME "
       "AND "
       "TYPE = 'table';";
     const std::string columnTypes = 
@@ -251,6 +251,7 @@ std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tab
     "VARCHAR2";
     
     auto stmt = createStmt(sql);
+    stmt->bindString(":TABLE_NAME", tableName);
     auto rset = stmt->executeQuery();
     if (rset->next()) {
       auto tableSql = rset->columnOptionalString("SQL").value();     

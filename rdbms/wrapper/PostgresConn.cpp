@@ -205,16 +205,17 @@ std::map<std::string, std::string> PostgresConn::getColumns(const std::string &t
     std::map<std::string, std::string> columnNamesAndTypes;
     auto lowercaseTableName = tableName;
     utils::toLower(lowercaseTableName); // postgres work with lowercase
-    const std::string sql =
+    const char *const sql =
       "SELECT "
         "COLUMN_NAME, "
         "DATA_TYPE "
       "FROM "
         "INFORMATION_SCHEMA.COLUMNS "
       "WHERE "
-        "TABLE_NAME = '" + lowercaseTableName +"'";
+        "TABLE_NAME = :TABLE_NAME";
 
     auto stmt = createStmt(sql);
+    stmt->bindString(":TABLE_NAME", lowercaseTableName);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("COLUMN_NAME");
