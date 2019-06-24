@@ -34,6 +34,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaGroupMountRuleLs.hpp"
 #include "XrdCtaListPendingQueue.hpp"
 #include "XrdCtaLogicalLibraryLs.hpp"
+#include "XrdCtaMountPolicyLs.hpp"
 #include "XrdCtaRepackLs.hpp"
 #include "XrdCtaRequesterMountRuleLs.hpp"
 #include "XrdCtaShowQueues.hpp"
@@ -1093,7 +1094,7 @@ void RequestMessage::processMountPolicy_Ls(cta::xrd::Response &response, XrdSsiS
   using namespace cta::admin;
 
   // Create a XrdSsi stream object to return the results
-  stream = new LogicalLibraryLsStream(*this, m_catalogue, m_scheduler);
+  stream = new MountPolicyLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(HeaderType::MOUNTPOLICY_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);

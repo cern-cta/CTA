@@ -521,10 +521,10 @@ void TextFormatter::print(const LogicalLibraryLsItem &llls_item) {
     llls_item.is_disabled(),
     llls_item.creation_log().username(),
     llls_item.creation_log().host(),
-    llls_item.creation_log().time(),
+    timeToStr(llls_item.creation_log().time()),
     llls_item.last_modification_log().username(),
     llls_item.last_modification_log().host(),
-    llls_item.last_modification_log().time(),
+    timeToStr(llls_item.last_modification_log().time()),
     llls_item.comment()
   );
 }
@@ -558,10 +558,10 @@ void TextFormatter::print(const MountPolicyLsItem &mpls_item) {
     mpls_item.max_drives_allowed(),
     mpls_item.creation_log().username(),
     mpls_item.creation_log().host(),
-    mpls_item.creation_log().time(),
+    timeToStr(mpls_item.creation_log().time()),
     mpls_item.last_modification_log().username(),
     mpls_item.last_modification_log().host(),
-    mpls_item.last_modification_log().time(),
+    timeToStr(mpls_item.last_modification_log().time()),
     mpls_item.comment()
   );
 }
@@ -727,10 +727,10 @@ void TextFormatter::print(const StorageClassLsItem &scls_item) {
     scls_item.nb_copies(),
     scls_item.creation_log().username(),
     scls_item.creation_log().host(),
-    scls_item.creation_log().time(),
+    timeToStr(scls_item.creation_log().time()),
     scls_item.last_modification_log().username(),
     scls_item.last_modification_log().host(),
-    scls_item.last_modification_log().time(),
+    timeToStr(scls_item.last_modification_log().time()),
     scls_item.comment()
   );
 }
