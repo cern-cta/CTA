@@ -92,6 +92,7 @@ class MockDisk:
     return self.filesizeandctime
 
   def getfreebytes(self, path):
+    print("getfreebytes() path={}".format(path))
     self.nbgetfreebytes = self.nbgetfreebytes + 1
     return self.freebytes
 
@@ -310,7 +311,7 @@ class GcTestCase(unittest.TestCase):
     runonlyonce = True
     gc.run(runonlyonce)
 
-    self.assertEqual(1, disk.nblistdir)
+    self.assertEqual(1, disk.nblistdir) # ls of fs
     self.assertEqual(0, disk.nbisdir)
     self.assertEqual(0, disk.nbisfile)
     self.assertEqual(0, disk.nbgetfreebytes)
@@ -318,7 +319,51 @@ class GcTestCase(unittest.TestCase):
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(0, eos.nbstagerrm)
 
-  def test_run_only_once_one_fs_one_subdir(self):
+  def test_run_only_once_one_fs_one_subdir_no_free_space(self):
+    mocksubdir = MockTreeNode("12345678")
+    mockfs = MockTreeNode("filesystem1", [mocksubdir])
+    mocktree = MockTreeNode("/", [mockfs])
+    disk = MockDisk(mocktree, self.freebytes, self.filesizeandctime)
+
+    filesystem1 = {
+      "path" : "/filesystem1",
+      "host" : self.fqdn
+    }
+    filesystems = [filesystem1]
+    eos = MockEos(filesystems)
+
+    self.assertEqual(0, disk.nblistdir)
+    self.assertEqual(0, disk.nbisdir)
+    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(0, disk.nbgetfreebytes)
+    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(0, eos.nbfsls)
+    self.assertEqual(0, eos.nbstagerrm)
+
+    self.config.minfreebytes = self.freebytes + 1
+
+    gc = ctafstgcd.Gc(self.log, self.fqdn, disk, eos, self.config)
+
+    self.assertEqual(0, disk.nblistdir)
+    self.assertEqual(0, disk.nbisdir)
+    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(0, disk.nbgetfreebytes)
+    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(0, eos.nbfsls)
+    self.assertEqual(0, eos.nbstagerrm)
+
+    runonlyonce = True
+    gc.run(runonlyonce)
+
+    self.assertEqual(2, disk.nblistdir) # ls of fs and subdir
+    self.assertEqual(1, disk.nbisdir)
+    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(1, disk.nbgetfreebytes) # subdir
+    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(1, eos.nbfsls)
+    self.assertEqual(0, eos.nbstagerrm)
+
+  def test_run_only_once_one_fs_one_subdir_free_space(self):
     mocksubdir = MockTreeNode("12345678")
     mockfs = MockTreeNode("filesystem1", [mocksubdir])
     mocktree = MockTreeNode("/", [mockfs])
@@ -352,10 +397,10 @@ class GcTestCase(unittest.TestCase):
     runonlyonce = True
     gc.run(runonlyonce)
 
-    self.assertEqual(2, disk.nblistdir)
+    self.assertEqual(1, disk.nblistdir)
     self.assertEqual(1, disk.nbisdir)
     self.assertEqual(0, disk.nbisfile)
-    self.assertEqual(0, disk.nbgetfreebytes)
+    self.assertEqual(1, disk.nbgetfreebytes) # subdir
     self.assertEqual(0, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(0, eos.nbstagerrm)
@@ -395,10 +440,10 @@ class GcTestCase(unittest.TestCase):
     runonlyonce = True
     gc.run(runonlyonce)
 
-    self.assertEqual(2, disk.nblistdir)
+    self.assertEqual(1, disk.nblistdir)
     self.assertEqual(1, disk.nbisdir)
-    self.assertEqual(1, disk.nbisfile)
-    self.assertEqual(1, disk.nbgetfreebytes)
+    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(1, disk.nbgetfreebytes) # subdir
     self.assertEqual(0, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(0, eos.nbstagerrm)
@@ -443,7 +488,7 @@ class GcTestCase(unittest.TestCase):
     self.assertEqual(2, disk.nblistdir)
     self.assertEqual(1, disk.nbisdir)
     self.assertEqual(1, disk.nbisfile)
-    self.assertEqual(1, disk.nbgetfreebytes)
+    self.assertEqual(2, disk.nbgetfreebytes) # subdir and file
     self.assertEqual(1, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(0, eos.nbstagerrm)
@@ -491,10 +536,58 @@ class GcTestCase(unittest.TestCase):
     self.assertEqual(2, disk.nblistdir)
     self.assertEqual(1, disk.nbisdir)
     self.assertEqual(1, disk.nbisfile)
-    self.assertEqual(1, disk.nbgetfreebytes)
+    self.assertEqual(2, disk.nbgetfreebytes) # subdir and file
     self.assertEqual(1, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(1, eos.nbstagerrm)
+
+  def test_run_only_once_one_fs_one_subdir_one_file_free_space_old_file(self):
+    mockfile = MockTreeNode("90abcdef")
+    mocksubdir = MockTreeNode("12345678", [mockfile])
+    mockfs = MockTreeNode("filesystem1", [mocksubdir])
+    mocktree = MockTreeNode("/", [mockfs])
+    filesizeandctime = ctafstgcd.FileSizeAndCtime()
+    filesizeandctime.sizebytes = 1000
+    filesizeandctime.ctime = time.time() - self.config.gcagesecs - 1
+    disk = MockDisk(mocktree, self.freebytes, filesizeandctime)
+
+    filesystem1 = {
+      "path" : "/filesystem1",
+      "host" : self.fqdn
+    }
+    filesystems = [filesystem1]
+    eos = MockEos(filesystems)
+
+    self.assertEqual(0, disk.nblistdir)
+    self.assertEqual(0, disk.nbisdir)
+    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(0, disk.nbgetfreebytes)
+    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(0, eos.nbfsls)
+    self.assertEqual(0, eos.nbstagerrm)
+
+    self.config.minfreebytes = self.freebytes
+
+    gc = ctafstgcd.Gc(self.log, self.fqdn, disk, eos, self.config)
+
+    self.assertEqual(0, disk.nblistdir)
+    self.assertEqual(0, disk.nbisdir)
+    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(0, disk.nbgetfreebytes)
+    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(0, eos.nbfsls)
+    self.assertEqual(0, eos.nbstagerrm)
+
+    runonlyonce = True
+    gc.run(runonlyonce)
+
+    self.assertEqual(1, disk.nblistdir)
+    self.assertEqual(1, disk.nbisdir)
+    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(1, disk.nbgetfreebytes)
+    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(1, eos.nbfsls)
+    self.assertEqual(0, eos.nbstagerrm)
 
 if __name__ == '__main__':
   suites = []
