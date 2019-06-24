@@ -281,8 +281,13 @@ class Gc:
             self.log.error(err)
 
   def processfssubdir(self, subdir):
-    fstfiles = [f for f in self.disk.listdir(subdir)
-      if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isfile(os.path.join(subdir, f))]
+    subdirfiles = []
+    try:
+      subdirfiles = self.disk.listdir(subdir)
+    except Exception as err:
+      self.log.error("Failed to list contents of sub directory: subdir={}: {}".format(subdir, err))
+
+    fstfiles = [f for f in subdirfiles if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isfile(os.path.join(subdir, f))]
     for fstfile in fstfiles:
       self.processfile(subdir, fstfile)
 
