@@ -1,6 +1,6 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
- * @brief          CTA Archive Route Ls stream implementation
+ * @brief          CTA Group Mount Rule Ls stream implementation
  * @copyright      Copyright 2019 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
-  std::list<cta::common::dataStructures::RequesterGroupMountRule> m_groupMountRuleList;    //!< List of archive routes from the catalogue
+  std::list<cta::common::dataStructures::RequesterGroupMountRule> m_groupMountRuleList;    //!< List of group mount rules from the catalogue
 
   static constexpr const char* const LOG_SUFFIX  = "GroupMountRuleLsStream";               //!< Identifier for log messages
 };

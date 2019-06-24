@@ -83,8 +83,12 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
          case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
          case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
+         case Data::kLllsItem:      std::cout << Log::DumpProtobuf(&record.llls_item());    break;
+         case Data::kMplsItem:      std::cout << Log::DumpProtobuf(&record.mpls_item());    break;
          case Data::kRelsItem:      std::cout << Log::DumpProtobuf(&record.rels_item());    break;
          case Data::kRmrlsItem:     std::cout << Log::DumpProtobuf(&record.rmrls_item());   break;
+         case Data::kSqItem:        std::cout << Log::DumpProtobuf(&record.sq_item());      break;
+         case Data::kSclsItem:      std::cout << Log::DumpProtobuf(&record.scls_item());    break;
          case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
          case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
          default:
@@ -105,8 +109,12 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLpaSummary:    formattedText.print(record.lpa_summary());  break;
          case Data::kLprItem:       formattedText.print(record.lpr_item());     break;
          case Data::kLprSummary:    formattedText.print(record.lpr_summary());  break;
+         case Data::kLllsItem:      formattedText.print(record.llls_item());    break;
+         case Data::kMplsItem:      formattedText.print(record.mpls_item());    break;
          case Data::kRelsItem:      formattedText.print(record.rels_item());    break;
          case Data::kRmrlsItem:     formattedText.print(record.rmrls_item());   break;
+         case Data::kSqItem:        formattedText.print(record.sq_item());      break;
+         case Data::kSclsItem:      formattedText.print(record.scls_item());    break;
          case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
          case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
          default:
@@ -254,8 +262,12 @@ void CtaAdminCmd::send() const
             case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  formattedText.printListPendingArchivesSummaryHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES:         formattedText.printListPendingRetrievesHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: formattedText.printListPendingRetrievesSummaryHeader(); break;
+            case HeaderType::LOGICALLIBRARY_LS:            formattedText.printLogicalLibraryLsHeader(); break;
+            case HeaderType::MOUNTPOLICY_LS:               formattedText.printMountPolicyLsHeader(); break;
             case HeaderType::REPACK_LS:                    formattedText.printRepackLsHeader(); break;
             case HeaderType::REQUESTERMOUNTRULE_LS:        formattedText.printRequesterMountRuleLsHeader(); break;
+            case HeaderType::SHOWQUEUES:                   formattedText.printShowQueuesHeader(); break;
+            case HeaderType::STORAGECLASS_LS:              formattedText.printStorageClassLsHeader(); break;
             case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;
             case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
             case HeaderType::NONE:

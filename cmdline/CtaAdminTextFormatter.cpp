@@ -500,6 +500,72 @@ void TextFormatter::print(const ListPendingRetrievesSummary &lpr_summary) {
   );
 }
 
+void TextFormatter::printLogicalLibraryLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "name",
+    "disabled",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const LogicalLibraryLsItem &llls_item) {
+  push_back(
+    llls_item.name(),
+    llls_item.is_disabled(),
+    llls_item.creation_log().username(),
+    llls_item.creation_log().host(),
+    llls_item.creation_log().time(),
+    llls_item.last_modification_log().username(),
+    llls_item.last_modification_log().host(),
+    llls_item.last_modification_log().time(),
+    llls_item.comment()
+  );
+}
+
+void TextFormatter::printMountPolicyLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "mount policy",
+    "a.priority",
+    "a.minAge",
+    "r.priority",
+    "r.minAge",
+    "max drives",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const MountPolicyLsItem &mpls_item) {
+  push_back(
+    mpls_item.name(),
+    mpls_item.archive_priority(),
+    mpls_item.archive_min_request_age(),
+    mpls_item.retrieve_priority(),
+    mpls_item.retrieve_min_request_age(),
+    mpls_item.max_drives_allowed(),
+    mpls_item.creation_log().username(),
+    mpls_item.creation_log().host(),
+    mpls_item.creation_log().time(),
+    mpls_item.last_modification_log().username(),
+    mpls_item.last_modification_log().host(),
+    mpls_item.last_modification_log().time(),
+    mpls_item.comment()
+  );
+}
+
 void TextFormatter::printRepackLsHeader() {
   push_back("HEADER");
   push_back(
@@ -569,6 +635,103 @@ void TextFormatter::print(const RequesterMountRuleLsItem &rmrls_item) {
     rmrls_item.last_modification_log().host(),
     timeToStr(rmrls_item.last_modification_log().time()),
     rmrls_item.comment()
+  );
+}
+
+void TextFormatter::printShowQueuesHeader() {
+  push_back("HEADER");
+  push_back(
+    "type",
+    "tapepool",
+    "logical library",
+    "vid",
+    "files queued",
+    "data queued",
+    "oldest age",
+    "priority",
+    "min age",
+    "max drives",
+    "cur. mounts",
+    "cur. files",
+    "cur. data",
+    "MB/s",
+    "next mounts",
+    "tapes capacity",
+    "files on tapes",
+    "data on tapes",
+    "full tapes",
+    "empty tapes",
+    "disabled tapes",
+    "writable tapes"
+  );
+}
+
+void TextFormatter::print(const ShowQueuesItem &sq_item) {
+  std::string priority;
+  std::string minAge;
+  std::string maxDrivesAllowed;
+
+  if(sq_item.mount_type() == ARCHIVE_FOR_USER ||
+     sq_item.mount_type() == RETRIEVE) {
+    priority         = std::to_string(sq_item.priority());
+    minAge           = std::to_string(sq_item.min_age());
+    maxDrivesAllowed = std::to_string(sq_item.max_drives());
+  }
+
+  push_back(
+    toString(ProtobufToMountType(sq_item.mount_type())),
+    sq_item.tapepool(),
+    sq_item.logical_library(),
+    sq_item.vid(),
+    sq_item.queued_files(),
+    dataSizeToStr(sq_item.queued_bytes()),
+    sq_item.oldest_age(),
+    priority,
+    minAge,
+    maxDrivesAllowed,
+    sq_item.cur_mounts(),
+    sq_item.cur_files(),
+    dataSizeToStr(sq_item.cur_bytes()),
+    sq_item.bytes_per_second() / 1000000,
+    sq_item.next_mounts(),
+    dataSizeToStr(sq_item.tapes_capacity()),
+    sq_item.tapes_files(),
+    dataSizeToStr(sq_item.tapes_bytes()),
+    sq_item.full_tapes(),
+    sq_item.empty_tapes(),
+    sq_item.disabled_tapes(),
+    sq_item.writable_tapes()
+  );
+}
+
+void TextFormatter::printStorageClassLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "instance",
+    "storage class",
+    "number of copies",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const StorageClassLsItem &scls_item) {
+  push_back(
+    scls_item.disk_instance(),
+    scls_item.name(),
+    scls_item.nb_copies(),
+    scls_item.creation_log().username(),
+    scls_item.creation_log().host(),
+    scls_item.creation_log().time(),
+    scls_item.last_modification_log().username(),
+    scls_item.last_modification_log().host(),
+    scls_item.last_modification_log().time(),
+    scls_item.comment()
   );
 }
 

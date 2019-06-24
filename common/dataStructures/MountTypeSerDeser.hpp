@@ -24,34 +24,34 @@
 namespace cta {
 namespace admin {
 
-common::dataStructures::MountType ProtobufToMountType(DriveLsItem::MountType mountType) {
+common::dataStructures::MountType ProtobufToMountType(MountType mountType) {
   using namespace common::dataStructures;
 
   switch(mountType) {
-    case DriveLsItem::NO_MOUNT:              return MountType::NoMount;
-    case DriveLsItem::ARCHIVE_FOR_USER:      return MountType::ArchiveForUser;
-    case DriveLsItem::ARCHIVE_FOR_REPACK:    return MountType::ArchiveForRepack;
-    case DriveLsItem::ARCHIVE_ALL_TYPES:     return MountType::ArchiveAllTypes;
-    case DriveLsItem::RETRIEVE:              return MountType::Retrieve;
-    case DriveLsItem::LABEL:                 return MountType::Label;
-    case DriveLsItem::UNKNOWN_MOUNT_TYPE:
+    case NO_MOUNT:              return common::dataStructures::MountType::NoMount;
+    case ARCHIVE_FOR_USER:      return common::dataStructures::MountType::ArchiveForUser;
+    case ARCHIVE_FOR_REPACK:    return common::dataStructures::MountType::ArchiveForRepack;
+    case ARCHIVE_ALL_TYPES:     return common::dataStructures::MountType::ArchiveAllTypes;
+    case RETRIEVE:              return common::dataStructures::MountType::Retrieve;
+    case LABEL:                 return common::dataStructures::MountType::Label;
+    case UNKNOWN_MOUNT_TYPE:
     default:
       throw std::runtime_error("In ProtobufToMountType(): unknown mount type " + std::to_string(mountType));
   }
 }
 
-DriveLsItem::MountType MountTypeToProtobuf(common::dataStructures::MountType mountType) {
+MountType MountTypeToProtobuf(common::dataStructures::MountType mountType) {
   using namespace common::dataStructures;
 
   switch(mountType) {
-    case MountType::NoMount:                 return DriveLsItem::NO_MOUNT;
-    case MountType::ArchiveForUser:          return DriveLsItem::ARCHIVE_FOR_USER;
-    case MountType::ArchiveForRepack:        return DriveLsItem::ARCHIVE_FOR_REPACK;
-    case MountType::ArchiveAllTypes:         return DriveLsItem::ARCHIVE_ALL_TYPES;
-    case MountType::Retrieve:                return DriveLsItem::RETRIEVE;
-    case MountType::Label:                   return DriveLsItem::LABEL;
+    case common::dataStructures::MountType::NoMount:             return NO_MOUNT;
+    case common::dataStructures::MountType::ArchiveForUser:      return ARCHIVE_FOR_USER;
+    case common::dataStructures::MountType::ArchiveForRepack:    return ARCHIVE_FOR_REPACK;
+    case common::dataStructures::MountType::ArchiveAllTypes:     return ARCHIVE_ALL_TYPES;
+    case common::dataStructures::MountType::Retrieve:            return RETRIEVE;
+    case common::dataStructures::MountType::Label:               return LABEL;
   }
-  return DriveLsItem::UNKNOWN_MOUNT_TYPE;
+  return UNKNOWN_MOUNT_TYPE;
 }
 
 }} // cta::admin

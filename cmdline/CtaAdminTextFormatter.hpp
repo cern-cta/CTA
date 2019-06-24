@@ -56,8 +56,12 @@ public:
   void printListPendingArchivesSummaryHeader();
   void printListPendingRetrievesHeader();
   void printListPendingRetrievesSummaryHeader();
+  void printLogicalLibraryLsHeader();
+  void printMountPolicyLsHeader();
   void printRepackLsHeader();
   void printRequesterMountRuleLsHeader();
+  void printShowQueuesHeader();
+  void printStorageClassLsHeader();
   void printTapeLsHeader();
   void printTapePoolLsHeader();
    
@@ -74,8 +78,12 @@ public:
   void print(const ListPendingArchivesSummary &lpa_summary);
   void print(const ListPendingRetrievesItem &lpr_item);
   void print(const ListPendingRetrievesSummary &lpr_summary);
+  void print(const LogicalLibraryLsItem &llls_item);
+  void print(const MountPolicyLsItem &mpls_item);
   void print(const RepackLsItem &rels_item);
   void print(const RequesterMountRuleLsItem &rmrls_item);
+  void print(const ShowQueuesItem &sq_item);
+  void print(const StorageClassLsItem &scls_item);
   void print(const TapeLsItem &tals_item);
   void print(const TapePoolLsItem &tpls_item);
 
