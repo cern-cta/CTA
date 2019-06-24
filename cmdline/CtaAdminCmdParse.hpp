@@ -248,7 +248,6 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    // hasOption options
    { "--checkchecksum",         OptionBoolean::CHECK_CHECKSUM },
    { "--extended",              OptionBoolean::EXTENDED },
-   { "--header",                OptionBoolean::SHOW_HEADER },
    { "--justarchive",           OptionBoolean::JUSTARCHIVE },
    { "--justmove",              OptionBoolean::JUSTMOVE },
    { "--justaddcopies",         OptionBoolean::JUSTADDCOPIES },
@@ -373,7 +372,6 @@ const Option opt_firstfseq            { Option::OPT_UINT, "--firstfseq",        
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
 const Option opt_force_flag           { Option::OPT_FLAG, "--force",                 "-f",   "" };
 const Option opt_group                { Option::OPT_STR,  "--group",                 "-g",   " <group>" };
-const Option opt_header               { Option::OPT_FLAG, "--header",                "-h",   "" };
 const Option opt_hostname_alias       { Option::OPT_STR,  "--name",                  "-n",   " <host_name>",
                                         "--hostname" };
 const Option opt_input                { Option::OPT_STR,  "--input",                 "-i",   " <\"zero\" or \"urandom\">" };
@@ -430,10 +428,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_ADD   }, { opt_username, opt_comment }},
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_CH    }, { opt_username, opt_comment }},
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_RM    }, { opt_username }},
-   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
+   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_ARCHIVEFILE,          AdminCmd::SUBCMD_LS    },
-      { opt_header.optional(), opt_archivefileid.optional(), opt_diskid.optional(), opt_copynb.optional(),
+      { opt_archivefileid.optional(), opt_diskid.optional(), opt_copynb.optional(),
         opt_vid.optional(), opt_tapepool.optional(), opt_owner.optional(), opt_group.optional(),
         opt_storageclass.optional(), opt_path.optional(), opt_instance.optional(), opt_all.optional(),
         opt_summary.optional() }},
@@ -443,7 +441,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_CH    },
       { opt_instance, opt_storageclass, opt_copynb, opt_tapepool.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_RM    }, { opt_instance, opt_storageclass, opt_copynb }},
-   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
+   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_UP    }, { opt_drivename_cmd }},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_DOWN  }, { opt_drivename_cmd, opt_force_flag.optional() }},
@@ -451,7 +449,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_RM    }, { opt_drivename_cmd, opt_force_flag.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_LS    },
-      { opt_header.optional(), opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(),
+      { opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(),
         opt_vid.optional(), opt_log.optional(), opt_summary.optional() }},
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_SHOW  }, { opt_copynb.optional() }},
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_RETRY }, { opt_copynb.optional() }},
@@ -462,20 +460,20 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_CH    },
       { opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias }},
-   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
+   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_LISTPENDINGARCHIVES,  AdminCmd::SUBCMD_NONE  },
-      { opt_header.optional(), opt_tapepool.optional(), opt_extended.optional() }},
+      { opt_tapepool.optional(), opt_extended.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE  },
-      { opt_header.optional(), opt_vid.optional(), opt_extended.optional() }},
+      { opt_vid.optional(), opt_extended.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   },
       { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_CH    },
       { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_RM    }, { opt_logicallibrary_alias }},
-   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
+   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_ADD   },
       { opt_mountpolicy_alias, opt_archivepriority, opt_minarchiverequestage, opt_retrievepriority,
@@ -485,12 +483,12 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_retrievepriority.optional(), opt_minretrieverequestage.optional(), opt_maxdrivesallowed.optional(),
         opt_comment.optional() }},
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_RM    }, { opt_mountpolicy_alias }},
-   {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
+   {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ADD   },
       { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl, opt_justmove.optional(), opt_justaddcopies.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
-   {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_header.optional(), opt_vid.optional() }},
+   {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_vid.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_ADD   },
@@ -498,16 +496,16 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_CH    },
       { opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias }},
-   {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
+   {{ AdminCmd::CMD_REQUESTERMOUNTRULE,   AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_SHOWQUEUES,           AdminCmd::SUBCMD_NONE  }, { opt_header.optional() }},
+   {{ AdminCmd::CMD_SHOWQUEUES,           AdminCmd::SUBCMD_NONE  }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_ADD   },
       { opt_instance, opt_storageclass_alias, opt_copynb, opt_comment }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_CH    },
       { opt_instance, opt_storageclass_alias, opt_copynb.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_RM    }, { opt_instance, opt_storageclass_alias }},
-   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
+   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_ADD   },
       { opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_capacity, opt_disabled, opt_full,
@@ -519,7 +517,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RECLAIM }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LS    },
-      { opt_header.optional(), opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(),
+      { opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(),
         opt_logicallibrary.optional(), opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(),
         opt_disabled.optional(), opt_full.optional(), opt_all.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
@@ -531,7 +529,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(),
         opt_supply.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM    }, { opt_tapepool_alias }},
-   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
+   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { }},
 };
 
 
