@@ -393,10 +393,9 @@ def parseconf(conffile):
 
   conffp = open(conffile)
 
-  parser = ConfigParser.ConfigParser()
-  parser.readfp(conffp)
-
   try:
+    parser = ConfigParser.ConfigParser()
+    parser.readfp(conffp)
     config = GcConfig()
     config.logfile = parser.get('main', 'logfile')
     config.mgmhost = parser.get('main', 'mgmhost')
