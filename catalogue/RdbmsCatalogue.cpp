@@ -1946,6 +1946,13 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &conn,
   const TapeSearchCriteria &searchCriteria) const {
+  if(isSetAndEmpty(searchCriteria.vid)) throw exception::UserError("VID cannot be an empty string");
+  if(isSetAndEmpty(searchCriteria.mediaType)) throw exception::UserError("Media type cannot be an empty string");
+  if(isSetAndEmpty(searchCriteria.vendor)) throw exception::UserError("Vendor cannot be an empty string");
+  if(isSetAndEmpty(searchCriteria.logicalLibrary)) throw exception::UserError("Logical library cannot be an empty string");
+  if(isSetAndEmpty(searchCriteria.tapePool)) throw exception::UserError("Tape pool cannot be an empty string");
+  if(isSetAndEmpty(searchCriteria.vo)) throw exception::UserError("Virtual organisation cannot be an empty string");
+
   try {
     std::list<common::dataStructures::Tape> tapes;
     std::string sql =
@@ -5863,6 +5870,13 @@ uint64_t RdbmsCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::string &
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+}
+
+//------------------------------------------------------------------------------
+// isSetAndEmpty
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::isSetAndEmpty(const optional<std::string> &optionalStr) const {
+  return optionalStr && optionalStr->empty();
 }
 
 } // namespace catalogue

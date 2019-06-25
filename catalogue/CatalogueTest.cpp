@@ -3162,6 +3162,42 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = "";
+    ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.mediaType = "";
+    ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vendor = "";
+    ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.logicalLibrary = "";
+    ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.tapePool = "";
+    ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vo = "";
+    ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = "vid1";
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());

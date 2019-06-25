@@ -1281,6 +1281,14 @@ protected:
   uint64_t getNbTapesInPool(rdbms::Conn &conn, const std::string &name) const;
 
   /**
+   * Returns true if the specified optional string is both set and empty.
+   *
+   * @param optionalStr The optional string.
+   * @return True if the specified optional string is both set and empty.
+   */
+  bool isSetAndEmpty(const optional<std::string> &optionalStr) const;
+
+  /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
    */
