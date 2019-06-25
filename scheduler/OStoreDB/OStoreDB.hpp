@@ -432,6 +432,7 @@ public:
        * in order to save a read in the most common case (only one job), and trigger immediate deletion of
        * the request after succeeding/failing. */
       std::map<uint32_t, objectstore::serializers::ArchiveJobStatus> archiveJobsStatusMap;
+      cta::objectstore::AgentReference * owner;
       std::shared_ptr<SR> subrequest;
       common::dataStructures::ArchiveFile archiveFile;
       typename SR::RepackInfo repackInfo;

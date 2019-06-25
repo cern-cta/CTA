@@ -111,7 +111,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
   atfrl.release();
   //Get the future
   cta::objectstore::Sorter::MapArchive allArchiveJobs = sorter.getAllArchive();
-  std::list<std::tuple<cta::objectstore::Sorter::ArchiveJob,std::future<void>>> allFutures;
+  std::list<std::tuple<cta::objectstore::SorterArchiveJob,std::future<void>>> allFutures;
   
   for(auto& kv: allArchiveJobs){
     for(auto& job: kv.second){
@@ -624,7 +624,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   }
   
   cta::objectstore::Sorter::MapArchive allArchiveJobs = sorter.getAllArchive();
-  std::list<std::tuple<cta::objectstore::Sorter::ArchiveJob,std::future<void>>> allFuturesArchive;
+  std::list<std::tuple<cta::objectstore::SorterArchiveJob,std::future<void>>> allFuturesArchive;
   ASSERT_EQ(allArchiveJobs.size(),2);
   for(auto& kv: allArchiveJobs){
     for(auto& job: kv.second){
@@ -769,10 +769,10 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
 
   
   
-  Sorter::SorterArchiveRequest request;
-  std::list<Sorter::ArchiveJob>& jobs = request.archiveJobs;
+  SorterArchiveRequest request;
+  std::list<SorterArchiveJob>& jobs = request.archiveJobs;
   jobs.emplace_back();
-  Sorter::ArchiveJob& job1 = jobs.back();
+  SorterArchiveJob& job1 = jobs.back();
   job1.archiveRequest = std::make_shared<cta::objectstore::ArchiveRequest>(ar);
   job1.archiveFile = aFile;
   job1.jobDump.copyNb = 1;
@@ -785,7 +785,7 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
   job1.previousOwner = &agentRef;
   
   jobs.emplace_back();
-  Sorter::ArchiveJob& job2 = jobs.back();
+  SorterArchiveJob& job2 = jobs.back();
   job2.archiveRequest = std::make_shared<cta::objectstore::ArchiveRequest>(ar);
   job2.archiveFile = aFile;
   job2.jobDump.copyNb = 2;
@@ -801,7 +801,7 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
   sorter.insertArchiveRequest(request,agentRef,lc);
   
   cta::objectstore::Sorter::MapArchive allArchiveJobs = sorter.getAllArchive();
-  std::list<std::tuple<cta::objectstore::Sorter::ArchiveJob,std::future<void>>> allFuturesArchive;
+  std::list<std::tuple<cta::objectstore::SorterArchiveJob,std::future<void>>> allFuturesArchive;
   ASSERT_EQ(allArchiveJobs.size(),1);
   for(auto& kv: allArchiveJobs){
     for(auto& job: kv.second){

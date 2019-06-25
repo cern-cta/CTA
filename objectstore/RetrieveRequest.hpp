@@ -33,6 +33,7 @@
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/LifecycleTimings.hpp"
 #include "AgentReference.hpp"
+#include "SorterArchiveJob.hpp"
 
 namespace cta { 
   namespace objectstore {

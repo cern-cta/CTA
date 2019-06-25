@@ -1705,6 +1705,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
       auto & sr = privateRet->m_subrequestList.back();
       sr.repackInfo = j.repackInfo;
       sr.archiveFile = j.archiveFile;
+      sr.owner = m_agentReference;
       sr.subrequest.reset(j.retrieveRequest.release());
       repackRequestAddresses.insert(j.repackInfo.repackRequestAddress);
     }
@@ -1892,6 +1893,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
   struct SuccessfullyTranformedRequest {
     std::shared_ptr<objectstore::ArchiveRequest> archiveRequest;
     SubrequestInfo & subrequestInfo;
+    SorterArchiveRequest sorterArchiveRequest;
   };
   std::list<SuccessfullyTranformedRequest> successfullyTransformedSubrequests;
   uint64_t nbTransformedSubrequest = 0;
@@ -1945,11 +1947,26 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
               .add("subrequestAddress", atar.subrequestInfo.subrequest->getAddressIfSet());
         timingList.addToLog(params);
         lc.log(log::INFO, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(), turned successful retrieve request in archive request.");
+        SorterArchiveRequest sorterArchiveRequest;
+        for(auto & copyNbToArchive: atar.subrequestInfo.repackInfo.copyNbsToRearchive){
+          SorterArchiveJob sorterArchiveJob;
+          sorterArchiveJob.archiveFile = atar.subrequestInfo.archiveFile;
+          sorterArchiveJob.archiveRequest = std::make_shared<objectstore::ArchiveRequest>(
+                atar.subrequestInfo.subrequest->getAddressIfSet(),
+                m_oStoreDb.m_objectStore);
+          sorterArchiveJob.jobDump.copyNb = copyNbToArchive;
+          sorterArchiveJob.jobDump.tapePool = atar.subrequestInfo.repackInfo.archiveRouteMap[copyNbToArchive];
+          sorterArchiveJob.jobQueueType = cta::objectstore::JobQueueType::JobsToTransferForRepack;
+          sorterArchiveJob.mountPolicy = common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack;
+          sorterArchiveJob.previousOwner = atar.subrequestInfo.owner;
+          sorterArchiveRequest.archiveJobs.push_back(sorterArchiveJob);
+        }
         successfullyTransformedSubrequests.push_back(SuccessfullyTranformedRequest{
           std::make_shared<objectstore::ArchiveRequest>(
               atar.subrequestInfo.subrequest->getAddressIfSet(),
               m_oStoreDb.m_objectStore), 
-          atar.subrequestInfo
+          atar.subrequestInfo,
+          sorterArchiveRequest
         });
       } catch (exception::Exception & ex) {
         // We failed to archive the file (to create the request, in fact). So all the copyNbs 
@@ -2041,14 +2058,9 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
   // 3. We now just need to queue the freshly created archive jobs into their respective queues
   {
     objectstore::Sorter sorter(*m_oStoreDb.m_agentReference, m_oStoreDb.m_objectStore, m_oStoreDb.m_catalogue);
-    std::list<std::unique_ptr<objectstore::ScopedExclusiveLock>> locks;
-    // TODO: swich to "lockfree" sorter interface.
     for (auto &sts: successfullyTransformedSubrequests) {
-      locks.push_back(cta::make_unique<objectstore::ScopedExclusiveLock>(*sts.archiveRequest));
-      sts.archiveRequest->fetch();
-      sorter.insertArchiveRequest(sts.archiveRequest, *m_oStoreDb.m_agentReference, lc);
+      sorter.insertArchiveRequest(sts.sorterArchiveRequest, *m_oStoreDb.m_agentReference, lc);
     }
-    locks.clear();
     sorter.flushAll(lc);
   }
   timingList.insertAndReset("archiveRequestsQueueingTime", t);
