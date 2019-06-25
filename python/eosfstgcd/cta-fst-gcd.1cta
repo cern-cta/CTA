@@ -40,18 +40,24 @@ filename and then running \fBeos stagerm fxid:<fid-hex>\fP.
 \fB\-h, \-\-help
 Prints the usage message.
 .TP
-\fB\-l LOGFILE, \-\-logfile LOGFILE
-Sets the path of the log file to \fBLOGFILE\fP. If not set then the default value of \fB/var/log/eos/fst/cta-fst-gcd\fP is used.
+\fB\-c CONFIG, \-\-config CONFIG
+Sets the path of the configuration file.  If not set then the default value of
+\fB/etc/cta/cta-fst-gcd.conf\fP is used.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH FILES
 .TP
 .B /etc/cta/cta-fst-gcd.conf
-The configuration file of the \fBcta-fst-gcd\fP daemon.
-
+The default configuration file of the \fBcta-fst-gcd\fP daemon.  This can be
+overriden using the \fB\-c\fP/\fB\-\-config\fP option.
+.TP
+.B /etc/cta/cta-fst-gcd.conf.example\fB
+The example configuration file that documents the available configuration
+parameters.
 .TP
 .B /var/log/eos/fst/cta-fst-gcd.log
-The default log file of the \fBcta-fst-gcd\fP daemon.  This can be overriden by using the \fB\-l\fP/\fB\-\-logfile\fP option.
+The default log file of the \fBcta-fst-gcd\fP daemon.  This can be overriden by
+modifying \fBcta-fst-gcd.conf\fP accordingly.
 
 .SH AUTHOR
 \fBCTA\fP Team
