@@ -662,6 +662,7 @@ void TextFormatter::printShowQueuesHeader() {
     "full tapes",
     "empty tapes",
     "disabled tapes",
+    "rdonly tapes",
     "writable tapes"
   );
 }
@@ -700,6 +701,7 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
     sq_item.full_tapes(),
     sq_item.empty_tapes(),
     sq_item.disabled_tapes(),
+    sq_item.rdonly_tapes(),
     sq_item.writable_tapes()
   );
 }
@@ -750,6 +752,7 @@ void TextFormatter::printTapeLsHeader() {
     "last fseq",
     "full",
     "disabled",
+    "rdonly",      
     "label drive",
     "label time",
     "last w drive",
@@ -779,6 +782,7 @@ void TextFormatter::print(const TapeLsItem &tals_item) {
     tals_item.last_fseq(),
     tals_item.full(),
     tals_item.disabled(),
+    tals_item.rdonly(),
     tals_item.has_label_log()        ? tals_item.label_log().drive()                  : "",
     tals_item.has_label_log()        ? timeToStr(tals_item.label_log().time())        : "",
     tals_item.has_last_written_log() ? tals_item.last_written_log().drive()           : "",

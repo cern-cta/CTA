@@ -123,13 +123,14 @@ namespace unitTests {
     const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
     const bool disabledValue = true;
     const bool fullValue = false;
+    const bool readOnlyValue = false;
     const std::string createTapeComment = "Create tape";
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
 
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo, 2, true, supply, "Create tape pool");
     m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-      disabledValue, fullValue, createTapeComment);
+      disabledValue, fullValue, readOnlyValue, createTapeComment);
 
     cta::common::dataStructures::StorageClass storageClass;
     storageClass.diskInstance = "disk_instance";
@@ -273,13 +274,14 @@ namespace unitTests {
     const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
     const bool disabledValue = true;
     const bool fullValue = false;
+    const bool readOnlyValue = false;
     const std::string createTapeComment = "Create tape";
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
 
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
     m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-      disabledValue, fullValue, createTapeComment);
+      disabledValue, fullValue, readOnlyValue, createTapeComment);
 
     cta::common::dataStructures::StorageClass storageClass;
     storageClass.diskInstance = "disk_instance";

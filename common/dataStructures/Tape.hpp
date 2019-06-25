@@ -62,6 +62,7 @@ struct Tape {
 
   bool full;
   bool disabled;
+  bool readOnly;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;

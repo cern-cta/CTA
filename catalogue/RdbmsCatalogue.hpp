@@ -140,7 +140,7 @@ public:
   /**
    * Returns the list of tapes that can be written to by a tape drive in the
    * specified logical library, in other words tapes that are labelled, not
-   * disabled, not full and are in the specified logical library.
+   * disabled, not full, not read-only and are in the specified logical library.
    *
    * @param logicalLibraryName The name of the logical library.
    * @return The list of tapes for writing.
@@ -291,6 +291,7 @@ public:
     const uint64_t capacityInBytes,
     const bool disabled,
     const bool full,
+    const bool readOnly,
     const std::string &comment) override;
 
   void deleteTape(const std::string &vid) override;
@@ -374,7 +375,27 @@ public:
    * @param fullValue Set to true if the tape is full.
    */
   void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) override;
-
+  
+  /**
+   * Sets the read-only status of the specified tape.
+   *
+   * Please note that this method is to be called by the CTA front-end in
+   * response to a command from the CTA command-line interface (CLI).
+   *
+   * @param admin The administrator.
+   * @param vid The volume identifier of the tape to be marked as read-only.
+   * @param readOnlyValue Set to true if the tape is read-only.
+   */
+  void setTapeReadOnly(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool readOnlyValue) override;
+  
+  /**
+   * This method notifies the CTA catalogue to set the specified tape read-only
+   * in case of a problem.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void setTapeReadOnlyOnError(const std::string &vid) override;
+  
   void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) override;
   void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) override;
 

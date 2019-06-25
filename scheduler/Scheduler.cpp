@@ -1323,7 +1323,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
           mountOrQueue.emptyTapes++;
         if (t.disabled) mountOrQueue.disabledTapes++;
         if (t.full) mountOrQueue.fullTapes++;
-        if (!t.full && !t.disabled) mountOrQueue.writableTapes++;
+        if (t.readOnly) mountOrQueue.readOnlyTapes++;
+        if (!t.full && !t.disabled && !t.readOnly) mountOrQueue.writableTapes++;
       }
     } else if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
       // Get info for this tape.
@@ -1341,7 +1342,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         mountOrQueue.emptyTapes++;
       if (t.disabled) mountOrQueue.disabledTapes++;
       if (t.full) mountOrQueue.fullTapes++;
-      if (!t.full && !t.disabled) mountOrQueue.writableTapes++;
+      if (t.readOnly) mountOrQueue.readOnlyTapes++;
+      if (!t.full && !t.disabled && !t.readOnly) mountOrQueue.writableTapes++;
       mountOrQueue.tapePool = t.tapePoolName;
     }
   }
