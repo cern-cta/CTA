@@ -364,22 +364,6 @@ eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\
 # test0002 retrieved
 # test0003 retrieved
 
-echo "CHECKING sys.retrieves HAS BEEN RESET FOR EACH RETRIEVED FILE"
-for RETRIEVED_FILE in `cat ${STATUS_FILE} | grep retrieved | awk '{print $1;}'`; do
-  RETRIEVED_FILE_FULL_PATH=${EOS_DIR}/${RETRIEVED_FILE}
-
-  SYS_RETRIEVES_ATTR_GET=`eos root://${EOSINSTANCE} attr get sys.retrieves ${RETRIEVED_FILE_FULL_PATH}`
-  if ! echo ${SYS_RETRIEVES_ATTR_GET} | egrep -q '^sys.retrieves='; then
-    die "Failed to get value of sys.retrieves for retrieved file ${RETRIEVED_FILE_FULL_PATH}"
-  fi
-
-  SYS_RETRIEVES_VALUE=`echo ${SYS_RETRIEVES_ATTR_GET} | tr '"' ' ' | awk '{print $NF;}'`
-  if test "0" != "${SYS_RETRIEVES_VALUE}"; then
-    die "ERROR sys.retrieves for ${RETRIEVED_FILE_FULL_PATH} is ${SYS_RETRIEVES_VALUE} when it should have been reset to 0"
-  fi
-done
-echo "sys.retrieves HAS BEEN SUCCESSFULLY RESET TO 0 FOR ALL RETRIEVED FILES"
-
 DELETED=0
 if [[ $REMOVE == 1 ]]; then
   echo "Waiting for files to be removed from EOS and tapes"
