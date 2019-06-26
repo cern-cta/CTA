@@ -20,6 +20,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cmdline/CtaAdminTextFormatter.hpp>
+#include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include <common/dataStructures/DriveStatusSerDeser.hpp>
 #include <common/dataStructures/MountTypeSerDeser.hpp>
 
@@ -162,6 +163,22 @@ void TextFormatter::printArchiveFileLsHeader() {
 }
 
 void TextFormatter::print(const ArchiveFileLsItem &afls_item) {
+  using namespace cta::checksum;
+
+  std::string checksumType("NONE");
+  std::string checksumValue;
+
+  ChecksumBlob csb;
+  ProtobufToChecksumBlob(afls_item.af().csb(), csb);
+
+  // Files can have multiple checksums of different types. Display only the first checksum here. All
+  // checksums will be listed in JSON.
+  if(!csb.empty()) {
+    auto cs_it = csb.getMap().begin();
+    checksumType = ChecksumTypeName.at(cs_it->first);
+    checksumValue = "0x" + ChecksumBlob::ByteArrayToHex(cs_it->second);
+  }
+
   push_back(
     afls_item.af().archive_id(),
     afls_item.copy_nb(),
@@ -171,11 +188,11 @@ void TextFormatter::print(const ArchiveFileLsItem &afls_item) {
     afls_item.af().disk_instance(),
     afls_item.af().disk_id(),
     dataSizeToStr(afls_item.af().size()),
-    afls_item.af().cs().type(),
-    afls_item.af().cs().value(),
+    checksumType,
+    checksumValue,
     afls_item.af().storage_class(),
-    afls_item.af().df().owner(),
-    afls_item.af().df().group(),
+    afls_item.af().df().owner_id().uid(),
+    afls_item.af().df().owner_id().gid(),
     timeToStr(afls_item.af().creation_time()),
     afls_item.tf().superseded_by_vid(),
     afls_item.tf().superseded_by_f_seq(),
@@ -421,6 +438,22 @@ void TextFormatter::printListPendingArchivesHeader() {
 }
 
 void TextFormatter::print(const ListPendingArchivesItem &lpa_item) {
+  using namespace cta::checksum;
+
+  std::string checksumType("NONE");
+  std::string checksumValue;
+
+  ChecksumBlob csb;
+  ProtobufToChecksumBlob(lpa_item.af().csb(), csb);
+
+  // Files can have multiple checksums of different types. Display only the first checksum here. All
+  // checksums will be listed in JSON.
+  if(!csb.empty()) {
+    auto cs_it = csb.getMap().begin();
+    checksumType = ChecksumTypeName.at(cs_it->first);
+    checksumValue = "0x" + ChecksumBlob::ByteArrayToHex(cs_it->second);
+  }
+
   push_back(
     lpa_item.tapepool(),
     lpa_item.af().archive_id(),
@@ -428,11 +461,11 @@ void TextFormatter::print(const ListPendingArchivesItem &lpa_item) {
     lpa_item.copy_nb(),
     lpa_item.af().disk_id(),
     lpa_item.af().disk_instance(),
-    lpa_item.af().cs().type(),
-    lpa_item.af().cs().value(),
+    checksumType,
+    checksumValue,
     dataSizeToStr(lpa_item.af().size()),
-    lpa_item.af().df().owner(),
-    lpa_item.af().df().group(),
+    lpa_item.af().df().owner_id().uid(),
+    lpa_item.af().df().owner_id().gid(),
     lpa_item.af().df().path()
   );
 }
@@ -477,8 +510,8 @@ void TextFormatter::print(const ListPendingRetrievesItem &lpr_item) {
     lpr_item.tf().f_seq(),
     lpr_item.tf().block_id(),
     dataSizeToStr(lpr_item.af().size()),
-    lpr_item.af().df().owner(),
-    lpr_item.af().df().group(),
+    lpr_item.af().df().owner_id().uid(),
+    lpr_item.af().df().owner_id().gid(),
     lpr_item.af().df().path()
   );
 }
