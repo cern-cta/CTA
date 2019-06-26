@@ -32,6 +32,7 @@
 #include "RetrieveRequestDump.hpp"
 #include "disk/DiskFileImplementations.hpp"
 #include "disk/RadosStriperPool.hpp"
+#include "OStoreDB/OStoreDB.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -595,12 +596,68 @@ Scheduler::RepackReportBatch Scheduler::getNextRepackReportBatch(log::LogContext
   return ret;
 }
 
+
+//------------------------------------------------------------------------------
+// Scheduler::getRepackReportBatches
+//------------------------------------------------------------------------------
 std::list<Scheduler::RepackReportBatch> Scheduler::getRepackReportBatches(log::LogContext &lc){
   std::list<Scheduler::RepackReportBatch> ret;
   for(auto& reportBatch: m_db.getRepackReportBatches(lc)){
     Scheduler::RepackReportBatch report;
     report.m_DbBatch.reset(reportBatch.release());
     ret.push_back(std::move(report));
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getNextSuccessfulRetrieveRepackReportBatch
+//------------------------------------------------------------------------------
+Scheduler::RepackReportBatch Scheduler::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext &lc){
+  Scheduler::RepackReportBatch ret;
+  try{
+    ret.m_DbBatch.reset(m_db.getNextSuccessfulRetrieveRepackReportBatch(lc).release());
+  } catch (OStoreDB::NoRepackReportBatchFound &){
+    ret.m_DbBatch = nullptr;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getNextFailedRetrieveRepackReportBatch
+//------------------------------------------------------------------------------
+Scheduler::RepackReportBatch Scheduler::getNextFailedRetrieveRepackReportBatch(log::LogContext &lc){
+  Scheduler::RepackReportBatch ret;
+  try{
+    ret.m_DbBatch.reset(m_db.getNextFailedRetrieveRepackReportBatch(lc).release());
+  } catch (OStoreDB::NoRepackReportBatchFound &){
+    ret.m_DbBatch = nullptr;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getNextSuccessfulArchiveRepackReportBatch
+//------------------------------------------------------------------------------
+Scheduler::RepackReportBatch Scheduler::getNextSuccessfulArchiveRepackReportBatch(log::LogContext &lc){
+  Scheduler::RepackReportBatch ret;
+  try{
+    ret.m_DbBatch.reset(m_db.getNextSuccessfulArchiveRepackReportBatch(lc).release());
+  } catch (OStoreDB::NoRepackReportBatchFound &){
+    ret.m_DbBatch = nullptr;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getNextFailedArchiveRepackReportBatch
+//------------------------------------------------------------------------------
+Scheduler::RepackReportBatch Scheduler::getNextFailedArchiveRepackReportBatch(log::LogContext &lc){
+  Scheduler::RepackReportBatch ret;
+  try{
+    ret.m_DbBatch.reset(m_db.getNextFailedArchiveRepackReportBatch(lc).release());
+  } catch (OStoreDB::NoRepackReportBatchFound &){
+    ret.m_DbBatch = nullptr;
   }
   return ret;
 }

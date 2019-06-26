@@ -506,13 +506,13 @@ public:
   
   std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) override;
   
-private:
-  CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
-  const size_t c_repackReportBatchSize = 4000;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc);
+  CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
+private:
+  const size_t c_repackReportBatchSize = 4000;
 public:
 
   /* === Drive state handling  ============================================== */

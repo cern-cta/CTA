@@ -23,6 +23,7 @@ set (CTA_SCHEDULER_SRC_FILES
   OStoreDB/OStoreDBWithAgent.cpp
   LabelMount.cpp
   DiskReportRunner.cpp
+  RepackReportThread.cpp
   RepackRequestManager.cpp)
 
 find_package(Protobuf3 REQUIRED)

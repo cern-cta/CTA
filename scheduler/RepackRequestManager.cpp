@@ -18,9 +18,12 @@
 
 #include "RepackRequestManager.hpp"
 #include "Scheduler.hpp"
+#include "common/make_unique.hpp"
+#include "OStoreDB/OStoreDB.hpp"
+#include "RepackReportThread.hpp"
 
 namespace cta {
-
+  
 void RepackRequestManager::runOnePass(log::LogContext& lc) {
   // We give ourselves a budget of 30s for those operations...
   utils::Timer t;
@@ -48,10 +51,18 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
   }
   
   {
+    RetrieveSuccessesRepackReportThread rsrrt(m_scheduler,lc);
+    rsrrt.run();
+    ArchiveSuccessesRepackReportThread asrrt(m_scheduler,lc);
+    asrrt.run();
+    RetrieveFailedRepackReportThread rfrrt(m_scheduler,lc);
+    rfrrt.run();
+    ArchiveFailedRepackReportThread afrrt(m_scheduler,lc);
+    afrrt.run();
     // Do all round of repack subrequest reporting (heavy lifting is done internally).
-    for(auto& reportBatch: m_scheduler.getRepackReportBatches(lc)){
+    /*for(auto& reportBatch: m_scheduler.getRepackReportBatches(lc)){
       reportBatch.report(lc);
-    }
+    }*/
   }
   
 }

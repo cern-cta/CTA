@@ -493,6 +493,14 @@ public:
    */
   virtual std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext & lc) = 0;
   
+  virtual std::unique_ptr<RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext &lc) = 0;
+  
+  virtual std::unique_ptr<RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext &lc) = 0;
+  
+  virtual std::unique_ptr<RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext &lc) = 0;
+  
+  virtual std::unique_ptr<RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc) = 0;
+  
   /**
    * Return all batches of subrequests from the database to be reported to repack.
    * @param lc log context
