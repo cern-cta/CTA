@@ -480,7 +480,7 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
           << " fileSize: " << it->fileSize
-          << " checksumBlob: " << it->second.checksumBlob //this shouldn't be here: repeated field
+          << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
           << " supersededByVid: " << it->supersededByVid
           << " supersededByFSeq: " << it->supersededByFSeq;
@@ -546,7 +546,7 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
         << " fileSize: " << it->fileSize
-        << " checksumBlob: " << it->second.checksumBlob //this shouldn't be here: repeated field
+        << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
         << " supersededByVid: " << it->supersededByVid
         << " supersededByFSeq: " << it->supersededByFSeq;

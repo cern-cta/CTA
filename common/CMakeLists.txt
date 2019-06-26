@@ -73,7 +73,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/TestSourceType.cpp
   dataStructures/UpdateFileInfoRequest.cpp
   dataStructures/UpdateFileStorageClassRequest.cpp
-  dataStructures/VerifyInfo.cpp
   dataStructures/WriteTestResult.cpp
   dataStructures/utils.cpp
   checksum/ChecksumBlob.cpp

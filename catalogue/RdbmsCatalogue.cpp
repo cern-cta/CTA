@@ -5221,7 +5221,7 @@ void RdbmsCatalogue::insertTapeFile(
       stmt.bindString(":VID", tapeFile.vid);
       stmt.bindUint64(":FSEQ", tapeFile.fSeq);
       stmt.bindUint64(":BLOCK_ID", tapeFile.blockId);
-      stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES", tapeFile.compressedSize);
+      stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES", tapeFile.fileSize);
       stmt.bindUint64(":COPY_NB", tapeFile.copyNb);
       stmt.bindUint64(":CREATION_TIME", now);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
