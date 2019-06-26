@@ -922,7 +922,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         << " fSeq: " << it->fSeq
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
-        << " fileSize: " << it->compressedSize
+        << " fileSize: " << it->fileSize
         << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
         << " supersededByVid: " << it->supersededByVid

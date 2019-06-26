@@ -20,6 +20,7 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include <common/checksum/ChecksumBlobSerDeser.hpp>
 
 
 namespace cta { namespace xrd {
@@ -119,11 +120,10 @@ int ArchiveFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       af->set_disk_instance(archiveFile.diskInstance);
       af->set_disk_id(archiveFile.diskFileId);
       af->set_size(archiveFile.fileSize);
-      af->mutable_cs()->set_type(archiveFile.checksumType);
-      af->mutable_cs()->set_value(archiveFile.checksumValue);
+      checksum::ChecksumBlobToProtobuf(archiveFile.checksumBlob, *(af->mutable_csb()));
       af->set_storage_class(archiveFile.storageClass);
-      af->mutable_df()->set_owner(archiveFile.diskFileInfo.owner);
-      af->mutable_df()->set_group(archiveFile.diskFileInfo.group);
+      af->mutable_df()->mutable_owner_id()->set_uid(archiveFile.diskFileInfo.owner_uid);
+      af->mutable_df()->mutable_owner_id()->set_gid(archiveFile.diskFileInfo.gid);
       af->mutable_df()->set_path(archiveFile.diskFileInfo.path);
       af->set_creation_time(archiveFile.creationTime);
 

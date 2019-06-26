@@ -2608,19 +2608,18 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     diskFileInfo.path += std::to_string(i);
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="ADLER32";
-    request.checksumValue="1234abcd";
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.diskFileID += std::to_string(i);
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -2696,9 +2695,8 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
       std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
       archiveJob->tapeFile.blockId = 1;
       archiveJob->tapeFile.fSeq = 1;
-      archiveJob->tapeFile.checksumType = "ADLER32";
-      archiveJob->tapeFile.checksumValue = "1234abcd";
-      archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
+      archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+      archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
       archiveJob->tapeFile.copyNb = 1;
       archiveJob->validate();
       std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
@@ -2747,8 +2745,8 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     for (auto i:fileRange) {
       cta::common::dataStructures::RetrieveRequest request;
