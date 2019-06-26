@@ -10498,7 +10498,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob         = file1Written.checksumBlob;
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
@@ -11002,7 +11002,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
+  file2Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
