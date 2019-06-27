@@ -147,7 +147,9 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(scheduler)
   add_subdirectory(tapeserver)
   add_subdirectory(XRootdSSiRmcd)
-  
+
+  add_subdirectory(migration/CTA)
+
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in
     ${CMAKE_BINARY_DIR}/version.h)
