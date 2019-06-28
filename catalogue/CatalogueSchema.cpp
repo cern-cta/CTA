@@ -48,7 +48,11 @@ std::map<std::string, std::string> CatalogueSchema::getSchemaColumns(const std::
     "INTEGER|"
     "CHAR|"
     "VARCHAR|"
-    "VARCHAR2";
+    "VARCHAR2|"
+    "BLOB|"
+    "BYTEA|"
+    "VARBINARY|"
+    "RAW";
   
   try {
     while(std::string::npos != (findResult = sql.find(';', searchPos))) {
