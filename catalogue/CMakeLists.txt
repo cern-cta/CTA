@@ -258,10 +258,9 @@ add_executable(cta-catalogue-schema-verify
   PostgresCatalogueSchema.cpp
   MysqlCatalogueSchema.cpp)
 
-target_link_libraries (cta-catalogue-schema-verify
-  ctacatalogue)
-
-set_property (TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+target_link_libraries(cta-catalogue-schema-verify ctacatalogue)
+set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS cta-catalogue-schema-verify DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-verify.1cta DESTINATION /usr/share/man/man1)
