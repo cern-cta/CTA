@@ -208,7 +208,11 @@ fi
 
   echo "Waiting for the basic file transfer test to succeed (workaround for the booted/online issue )"
   for ((i=0; i<300; i++)); do
-    xrdcp /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile && break
+    # xrdcp --force to overwrite testFile if it was already created in the previous loop
+    # but xrdcp failed for another reason
+    xrdcp --force /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile && break
+    # If the file exists the loop exited on a successfull xrdcp, otherwise it exited upon timeout and all xrdcp failed
+    eos rm ${EOS_TMP_DIR}/testFile
     echo -n "."
     sleep 1
   done
