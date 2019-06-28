@@ -259,7 +259,7 @@ add_executable(cta-catalogue-schema-verify
   MysqlCatalogueSchema.cpp)
 
 target_link_libraries(cta-catalogue-schema-verify ctacatalogue)
-set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS cta-catalogue-schema-verify DESTINATION /usr/bin)
