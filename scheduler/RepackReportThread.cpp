@@ -23,15 +23,32 @@ namespace cta {
   }
   
   void RepackReportThread::run() {
-    m_runTimer.reset();
+    utils::Timer totalTime;
     bool moreBatch = true;
-    while(m_runTimer.secs() < 30.0 && moreBatch){
+    log::ScopedParamContainer params(m_lc);
+    params.add("reportingType",getReportingType());
+    uint64_t numberOfBatchReported = 0;
+    while(totalTime.secs() < c_maxTimeToReport && moreBatch){
+      utils::Timer t;
+      log::TimingList tl;
       cta::Scheduler::RepackReportBatch reportBatch = getNextRepackReportBatch(m_lc);
-      if(!reportBatch.empty()){
+      tl.insertAndReset("getNextRepackReportBatchTime",t);
+      if(!reportBatch.empty()) {
         reportBatch.report(m_lc);
+        numberOfBatchReported++;
+        tl.insertAndReset("reportingTime",t);
+        log::ScopedParamContainer paramsReport(m_lc);
+        tl.addToLog(paramsReport);
+        m_lc.log(log::INFO,"In RepackReportThread::run(), reported a batch of reports.");
       } else {
         moreBatch = false;
       }
+    }
+    if(numberOfBatchReported > 0){
+      params.add("numberOfBatchReported",numberOfBatchReported);
+      params.add("totalRunTime",totalTime.secs());
+      params.add("moreBatchToDo",moreBatch);
+      m_lc.log(log::INFO,"In RepackReportThread::run(), exiting.");
     }
   }
   

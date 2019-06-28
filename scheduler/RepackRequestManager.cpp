@@ -29,7 +29,6 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
   utils::Timer t;
   log::TimingList timingList;
   // First expand any request to expand
-  // TODO: implement expansion
   // Next promote requests to ToExpand if needed
   
   //Putting pending repack request into the RepackQueueToExpand queue
@@ -59,10 +58,6 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
     rfrrt.run();
     ArchiveFailedRepackReportThread afrrt(m_scheduler,lc);
     afrrt.run();
-    // Do all round of repack subrequest reporting (heavy lifting is done internally).
-    /*for(auto& reportBatch: m_scheduler.getRepackReportBatches(lc)){
-      reportBatch.report(lc);
-    }*/
   }
   
 }
