@@ -1103,7 +1103,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
       insertedElements.emplace_back(CaRQF::InsertedElement{
         &j.job->m_retrieveRequest, tf_it->copyNb, tf_it->fSeq, tf_it->compressedSize,
         common::dataStructures::MountPolicy(), serializers::RetrieveJobStatus::RJS_Failed,
-        j.job->m_activityDescription
+        j.job->m_activityDescription, j.job->m_diskSystemName
       });
     }
     try {
@@ -1129,8 +1129,10 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 //------------------------------------------------------------------------------
 // OStoreDB::queueRetrieve()
 //------------------------------------------------------------------------------
+
 std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
-  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, log::LogContext &logContext) {
+    const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, 
+    const optional<std::string> diskSystemName, log::LogContext& logContext) {
   assertAgentAddressSet();
   auto mutexForHelgrind = cta::make_unique<cta::threading::Mutex>();
   cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
@@ -1182,6 +1184,7 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
   rReq->setRetrieveFileQueueCriteria(criteria);
   rReq->setActivityIfNeeded(rqst, criteria);
   rReq->setCreationTime(rqst.creationLog.time);
+  if (diskSystemName) rReq->setDiskSystemName(diskSystemName.value());
   // Find the job corresponding to the vid (and check we indeed have one).
   auto jobs = rReq->getJobs();
   objectstore::RetrieveRequest::JobDump job;
@@ -3439,9 +3442,8 @@ const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo(
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::getNextJobBatch()
 //------------------------------------------------------------------------------
-std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMount::
-getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext &logContext)
-{
+std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMount::getNextJobBatch(uint64_t filesRequested, 
+    uint64_t bytesRequested, disk::DiskSystemList& diskSystemList, log::LogContext& logContext) {
   typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
@@ -3607,7 +3609,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
       insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb, 
           req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq, req->archiveFile.fileSize,
           cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,
-          serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess, req->m_activityDescription});
+          serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess, req->m_activityDescription, req->m_diskSystemName});
       requestToJobMap[&req->m_retrieveRequest] = req;
     }
     RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -4487,7 +4489,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
         &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
-        serializers::RetrieveJobStatus::RJS_Failed, m_activityDescription
+        serializers::RetrieveJobStatus::RJS_Failed, m_activityDescription, m_diskSystemName
       });
       m_retrieveRequest.commit();
       rel.release();
@@ -4554,7 +4556,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
         &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToTransferForUser, 
-        m_activityDescription
+        m_activityDescription, m_diskSystemName
       });
 
       CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -4618,7 +4620,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement{
           &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
-          serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure, m_activityDescription
+          serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure, m_activityDescription, m_diskSystemName
         });
         caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);
@@ -4637,7 +4639,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement{
           &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
-          serializers::RetrieveJobStatus::RJS_Failed, m_activityDescription
+          serializers::RetrieveJobStatus::RJS_Failed, m_activityDescription, m_diskSystemName
         });
         caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);

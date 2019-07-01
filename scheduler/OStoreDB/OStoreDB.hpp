@@ -217,7 +217,8 @@ public:
     OStoreDB & m_oStoreDB;
   public:
     const MountInfo & getMountInfo() override;
-    std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
+    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
+      disk::DiskSystemList& diskSystemList, log::LogContext& logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
@@ -258,6 +259,7 @@ public:
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
     objectstore::RetrieveRequest::RepackInfo m_repackInfo;
     optional<objectstore::RetrieveActivityDescription> m_activityDescription;
+    optional<std::string> m_diskSystemName;
   };
   static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
 
@@ -296,8 +298,9 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
-  std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override;
+  std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst, 
+    const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, 
+    const optional<std::string> diskSystemName, log::LogContext& logContext) override;
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override;
   

@@ -422,6 +422,7 @@ message RetrieveRequest {
   required bool isrepack = 9157;
   optional RetrieveRequestRepackInfo repack_info = 9158;
   optional LifecycleTimings lifecycle_timings = 9159;
+  optional string disk_system_name = 9161;
 }
 
 message ValueCountPair {
@@ -476,6 +477,7 @@ message RetrieveJobPointer {
   // For activity (if present), we need disk instance and activity name (priority is always provided)
   optional string disk_instance_name = 3109;
   optional string activity = 3110;
+  optional string destination_disk_system_name = 3111;
 }
 
 message RetrieveQueueShardPointer {

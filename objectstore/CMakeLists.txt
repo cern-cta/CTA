@@ -75,12 +75,12 @@ add_library (ctaobjectstore SHARED
   ArchiveQueueToTransferForRepackAlgorithms.cpp
   RetrieveQueue.cpp
   RetrieveQueueShard.cpp
-  RetrieveQueueToTransferAlgorithms.cpp
+  RetrieveQueueToTransferForUserAlgorithms.cpp
+  RetrieveQueueToTransferForRepackAlgorithms.cpp
   RetrieveQueueToReportAlgorithms.cpp
   RetrieveQueueFailedAlgorithms.cpp
   RetrieveQueueToReportToRepackForSuccessAlgorithms.cpp
   RetrieveQueueToReportToRepackForFailureAlgorithms.cpp
-  RetrieveQueueToTransferForRepackAlgorithms.cpp
   JobQueueType.cpp
   Sorter.cpp
   ArchiveRequest.cpp

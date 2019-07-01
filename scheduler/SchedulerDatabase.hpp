@@ -38,6 +38,7 @@
 #include "common/log/LogContext.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "disk/DiskSystem.hpp"
 
 #include <list>
 #include <limits>
@@ -267,11 +268,13 @@ public:
    * @param rqst The request.
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to quue the request.
+   * @param diskSystemName optional disk system name if the destination matches a declared one.
    * @param logContext context allowing logging db operation
    * @return the selected vid (mostly for logging)
    */
   virtual std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest &rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) = 0;
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName,
+    log::LogContext &logContext) = 0;
 
   /**
    * Returns all of the existing retrieve jobs grouped by tape and then
@@ -355,7 +358,7 @@ public:
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, log::LogContext& logContext) = 0;
+      uint64_t bytesRequested, disk::DiskSystemList & diskSystemList, log::LogContext& logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;

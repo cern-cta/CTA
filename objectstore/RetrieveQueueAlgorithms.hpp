@@ -45,6 +45,7 @@ struct ContainerTraits<RetrieveQueue,C>
     cta::common::dataStructures::MountPolicy policy;
     serializers::RetrieveJobStatus status;
     optional<RetrieveActivityDescription> activityDescription;
+    optional<std::string> diskSystemName;
     typedef std::list<InsertedElement> list;
   };
 
@@ -59,6 +60,8 @@ struct ContainerTraits<RetrieveQueue,C>
     std::string errorReportURL;
     SchedulerDatabase::RetrieveJob::ReportType reportType;
     RetrieveRequest::RepackInfo repackInfo;
+    optional<RetrieveQueue::JobDump::ActivityDescription> activity;
+    optional<std::string> diskSystemName;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
@@ -279,7 +282,7 @@ addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemC
   std::list<RetrieveQueue::JobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription});
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription, e.diskSystemName});
   }
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -292,7 +295,7 @@ addReferencesIfNecessaryAndCommit(Container& cont, typename InsertedElement::lis
   std::list<RetrieveQueue::JobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription});
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription, e.diskSystemName});
   }
   cont.addJobsIfNecessaryAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -387,6 +390,11 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       e.archiveFile = u.get()->getArchiveFile();
       e.rr = u.get()->getRetrieveRequest();
       e.repackInfo = u.get()->getRepackInfo();
+      auto & rad = u.get()->getRetrieveActivityDescription();
+      if (rad) {
+        e.activity = RetrieveQueue::JobDump::ActivityDescription{ rad.value().diskInstanceName, rad.value().activity };
+      }
+      e.diskSystemName = u.get()->getDiskSystemName();
       switch(u.get()->getJobStatus()) {
         case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:
           e.reportType = SchedulerDatabase::RetrieveJob::ReportType::FailureReport;
@@ -492,7 +500,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
       common::dataStructures::ArchiveFile(),
       common::dataStructures::RetrieveRequest(),
       "", SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired,
-      RetrieveRequest::RepackInfo()
+      RetrieveRequest::RepackInfo(), cjfq.activity, cjfq.diskSystemName
     });
     ret.summary.files++;
   }

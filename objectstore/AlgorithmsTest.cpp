@@ -78,7 +78,7 @@ void fillRetrieveRequests(
     rqc.mountPolicy.retrievePriority = 1;
     requestPtrs.emplace_back(new cta::objectstore::RetrieveRequest(rrAddr, be));
     requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser>::InsertedElement{
-      requestPtrs.back().get(), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransferForUser, cta::nullopt
+      requestPtrs.back().get(), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransferForUser, cta::nullopt, cta::nullopt
     });
     auto &rr = *requests.back().retrieveRequest;
     rr.initialize();

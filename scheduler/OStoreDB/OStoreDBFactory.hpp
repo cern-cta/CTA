@@ -202,9 +202,11 @@ public:
     return m_OStoreDB.getRetrieveQueueStatistics(criteria, vidsToConsider);
   }
 
-  std::string queueRetrieve(common::dataStructures::RetrieveRequest& rqst,
-    const common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override {
-    return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
+  
+  std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst, 
+      const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, 
+      const optional<std::string> diskSystemName, log::LogContext& logContext) override {
+    return m_OStoreDB.queueRetrieve(rqst, criteria, diskSystemName, logContext);
   }
   
 

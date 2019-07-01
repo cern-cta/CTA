@@ -69,7 +69,16 @@ RetrieveQueue::CandidateJobList RetrieveQueueShard::getCandidateJobList(uint64_t
   ret.remainingFilesAfterCandidates = m_payload.retrievejobs_size();
   for (auto & j: m_payload.retrievejobs()) {
     if (!retrieveRequestsToSkip.count(j.address())) {
-      ret.candidates.push_back({j.address(), (uint16_t)j.copynb(), j.size()});
+      ret.candidates.push_back({j.address(), (uint16_t)j.copynb(), j.size(), nullopt, nullopt});
+      if (j.has_activity()) {
+        RetrieveQueue::JobDump::ActivityDescription ad;
+        ad.activity = j.activity();
+        ad.diskInstanceName = j.disk_instance_name();
+        ret.candidates.back().activity = ad;
+      }
+      if (j.has_destination_disk_system_name()) {
+        ret.candidates.back().diskSystemName = j.destination_disk_system_name();
+      }
       ret.candidateBytes += j.size();
       ret.candidateFiles ++;
     }
@@ -104,7 +113,9 @@ auto RetrieveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) 
           ret.removedJobs.back().size = j.size();
           ret.removedJobs.back().startTime = j.starttime();
           if (j.has_activity())
-            ret.removedJobs.back().activityDescription = JobInfo::ActivityDescription{ j.disk_instance_name(), j.activity() };
+            ret.removedJobs.back().activityDescription = RetrieveQueue::JobDump::ActivityDescription{ j.disk_instance_name(), j.activity() };
+          if (j.has_destination_disk_system_name())
+            ret.removedJobs.back().diskSystemName = j.destination_disk_system_name();
           ret.bytesRemoved += j.size();
           totalSize -= j.size();
           ret.jobsRemoved++;
@@ -139,9 +150,12 @@ auto RetrieveQueueShard::dumpJobs() -> std::list<JobInfo> {
   std::list<JobInfo> ret;
   for (auto &j: m_payload.retrievejobs()) {
     ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
-        j.minretrieverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(), j.fseq(), nullopt});
+        j.minretrieverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(), j.fseq(), nullopt, nullopt});
     if (j.has_activity()) {
-      ret.back().activityDescription = JobInfo::ActivityDescription{ j.disk_instance_name(), j.activity() };
+      ret.back().activityDescription = RetrieveQueue::JobDump::ActivityDescription{ j.disk_instance_name(), j.activity() };
+    }
+    if (j.has_destination_disk_system_name()) {
+      ret.back().diskSystemName = j.destination_disk_system_name();
     }
   }
   return ret;

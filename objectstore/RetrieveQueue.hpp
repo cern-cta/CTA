@@ -66,7 +66,8 @@ public:
     uint64_t fileSize;
     cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
-    optional<RetrieveActivityDescription> activityDescription; 
+    optional<RetrieveActivityDescription> activityDescription;
+    optional<std::string> diskSystemName;
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   // This version will check for existence of the job in the queue before
@@ -97,6 +98,12 @@ public:
     std::string address;
     uint32_t copyNb;
     uint64_t size;
+    struct ActivityDescription {
+      std::string diskInstanceName;
+      std::string activity;
+    };
+    optional<ActivityDescription> activity;
+    optional<std::string> diskSystemName;
   };
   std::list<JobDump> dumpJobs();
   struct CandidateJobList {

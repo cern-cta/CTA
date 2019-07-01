@@ -531,7 +531,7 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
     }
     shardsDumps.emplace_back(std::list<JobDump>());
     for (auto & j: s->dumpJobs()) {
-      shardsDumps.back().emplace_back(JobDump({j.address, j.copyNb, j.size}));
+      shardsDumps.back().emplace_back(JobDump({j.address, j.copyNb, j.size, j.activityDescription, j.diskSystemName}));
     }
   nextShard:
     s++;
@@ -606,7 +606,7 @@ auto RetrieveQueue::dumpJobs() -> std::list<JobDump> {
       goto nextShard;
     }
     for (auto & j: s->dumpJobs()) {
-      ret.emplace_back(JobDump{j.address, j.copyNb, j.size});
+      ret.emplace_back(JobDump{j.address, j.copyNb, j.size, j.activityDescription, j.diskSystemName});
     }
   nextShard:
     s++; sf++;

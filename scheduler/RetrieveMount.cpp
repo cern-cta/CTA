@@ -110,7 +110,7 @@ std::string cta::RetrieveMount::getMediaType() const
 }
 
 //------------------------------------------------------------------------------
-// getVo()
+// getVendor()
 //------------------------------------------------------------------------------
 std::string cta::RetrieveMount::getVendor() const
 {
@@ -121,6 +121,9 @@ std::string cta::RetrieveMount::getVendor() const
     return sVendor.str();
 }
 
+//------------------------------------------------------------------------------
+// getCapacityInBytes()
+//------------------------------------------------------------------------------
 uint64_t cta::RetrieveMount::getCapacityInBytes() const {
     if(!m_dbMount.get())
         throw exception::Exception("In cta::RetrieveMount::getVendor(): got NULL dbMount");
@@ -134,9 +137,12 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
     log::LogContext& logContext) {
   if (!m_sessionRunning)
     throw SessionNotRunning("In RetrieveMount::getNextJobBatch(): trying to get job from complete/not started session");
+  // Get the current file systems list from the catalogue
+  disk::DiskSystemList diskSystemList;
+  if (m_catalogue) diskSystemList = m_catalogue->getDiskSystems();
   // Try and get a new job from the DB
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> dbJobBatch(m_dbMount->getNextJobBatch(filesRequested,
-      bytesRequested, logContext));
+      bytesRequested, diskSystemList, logContext));
   std::list<std::unique_ptr<RetrieveJob>> ret;
   // We prepare the response
   for (auto & sdrj: dbJobBatch) {
@@ -225,6 +231,17 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
 //------------------------------------------------------------------------------
 cta::disk::DiskReporter* cta::RetrieveMount::createDiskReporter(std::string& URL) {
   return m_reporterFactory.createDiskReporter(URL);
+}
+
+//------------------------------------------------------------------------------
+// setCatalogue()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::setCatalogue(catalogue::Catalogue* catalogue) {
+  if (m_catalogue)
+    throw exception::Exception("In RetrieveMount::setCatalogue(): catalogue already set.");
+  if (!catalogue)
+    throw exception::Exception("In RetrieveMount::setCatalogue(): trying to set a null catalogue.");
+  m_catalogue = catalogue;
 }
 
 //------------------------------------------------------------------------------

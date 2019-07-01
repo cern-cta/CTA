@@ -24,6 +24,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "disk/DiskReporterFactory.hpp"
+#include "catalogue/Catalogue.hpp"
 
 #include <memory>
 #include <queue>
@@ -192,6 +193,12 @@ namespace cta {
     disk::DiskReporter * createDiskReporter(std::string & URL);
     
     /**
+     * Passes a reference to the catalogue, used for disk space back pressure 
+     * @param catalogue
+     */
+    void setCatalogue(catalogue::Catalogue *catalogue);
+    
+    /**
      * Destructor.
      */
     virtual ~RetrieveMount() throw();
@@ -202,6 +209,11 @@ namespace cta {
      * The database representation of this mount.
      */
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> m_dbMount;
+    
+    /**
+     * A reference to the catalogue
+     */
+    catalogue::Catalogue * m_catalogue = nullptr;
     
     /**
      * Internal tracking of the session completion

@@ -158,7 +158,7 @@ queueForFailure:;
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
     jta.push_back({activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(), 
-      mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt});
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt, nullopt});
     if (m_payload.has_activity_weight()) {
       RetrieveActivityDescription activityDescription;
       activityDescription.priority = m_payload.activity_weight().priority();
@@ -226,7 +226,7 @@ queueForTransfer:;
     mp.deserialize(m_payload.mountpolicy());
     std::list<RetrieveQueue::JobToAdd> jta;
     jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
-      mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt});
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName()});
     if (m_payload.has_activity_weight()) {
       RetrieveActivityDescription activityDescription;
       activityDescription.priority = m_payload.activity_weight().priority();
@@ -481,6 +481,25 @@ optional<RetrieveActivityDescription> RetrieveRequest::getActivity() {
     activity.creationTime = m_payload.activity_weight().creation_time();
     ret = activity;
   }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::setDiskSystemName()
+//------------------------------------------------------------------------------
+void RetrieveRequest::setDiskSystemName(const std::string& diskSystemName) {
+  checkPayloadWritable();
+  m_payload.set_disk_system_name(diskSystemName);
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::getDiskSystemName()
+//------------------------------------------------------------------------------
+optional<std::string> RetrieveRequest::getDiskSystemName() {
+  checkPayloadReadable();
+  optional<std::string> ret;
+  if (m_payload.has_disk_system_name())
+    ret = m_payload.disk_system_name();
   return ret;
 }
 
@@ -852,6 +871,15 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
             af.deserialize(payload.archivefile());
             retRef.m_archiveFile = af;
             retRef.m_jobStatus = j.status();
+            if (payload.has_activity_weight()) {
+              retRef.m_retrieveActivityDescription = RetrieveActivityDescription{
+                payload.activity_weight().priority(), payload.activity_weight().disk_instance_name(),
+                payload.activity_weight().activity(), payload.activity_weight().creation_time(),
+                payload.activity_weight().weight(), 0
+              };
+            }
+            if (payload.has_disk_system_name())
+              retRef.m_diskSystemName = payload.disk_system_name();
             RetrieveRequest::updateLifecycleTiming(payload,j);
             LifecycleTimingsSerDeser lifeCycleSerDeser;
             lifeCycleSerDeser.deserialize(payload.lifecycle_timings());
@@ -900,6 +928,20 @@ const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncJobOwnerUpdater
 //------------------------------------------------------------------------------
 const RetrieveRequest::RepackInfo& RetrieveRequest::AsyncJobOwnerUpdater::getRepackInfo() {
   return m_repackInfo;
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveActivityDescription()
+//------------------------------------------------------------------------------
+const optional<RetrieveActivityDescription>& RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveActivityDescription() {
+  return m_retrieveActivityDescription;
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncJobOwnerUpdater::getDiskSystemName()
+//------------------------------------------------------------------------------
+const optional<std::string>& RetrieveRequest::AsyncJobOwnerUpdater::getDiskSystemName() {
+  return m_diskSystemName;
 }
 
 //------------------------------------------------------------------------------

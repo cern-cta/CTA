@@ -211,8 +211,15 @@ void Scheduler::queueRetrieve(
   // Get the queue criteria
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
   queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, request.activity, lc);
+  // Get DiskSystem list.
+  auto diskSystemList = m_catalogue.getDiskSystems();
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
-  std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
+  // Determine disk system for this request, if any.
+  optional<std::string> diskSystemName;
+  try {
+    diskSystemName = diskSystemList.getFSNAme(request.dstURL);
+  } catch (std::out_of_range&) {}
+  std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, diskSystemName, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)

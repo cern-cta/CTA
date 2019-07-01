@@ -53,11 +53,8 @@ public:
     uint64_t maxDrivesAllowed;
     time_t startTime;
     uint64_t fSeq;
-    struct ActivityDescription {
-      std::string diskInstanceName;
-      std::string activity;
-    };
-    optional<ActivityDescription> activityDescription;
+    optional<RetrieveQueue::JobDump::ActivityDescription> activityDescription;
+    optional<std::string> diskSystemName;
   };
   std::list<JobInfo> dumpJobs();
   
