@@ -505,6 +505,8 @@ public:
   void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity) override;
   std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const override;
 
+  cta::disk::DiskSystemList getDiskSystems() const override;
+
   
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid

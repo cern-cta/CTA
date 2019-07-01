@@ -4199,6 +4199,13 @@ std::list<common::dataStructures::ActivitiesFairShareWeights> RdbmsCatalogue::ge
 }
 
 //------------------------------------------------------------------------------
+// getDiskSystems
+//------------------------------------------------------------------------------
+cta::disk::DiskSystemList RdbmsCatalogue::getDiskSystems() const {
+  return cta::disk::DiskSystemList();
+}
+
+//------------------------------------------------------------------------------
 // insertArchiveFile
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row) {

@@ -361,6 +361,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getActivitiesFairShareWeights();}, m_maxTriesToConnect);
   }
 
+  cta::disk::DiskSystemList getDiskSystems() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getDiskSystems();}, m_maxTriesToConnect);
+  }
+
 
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);

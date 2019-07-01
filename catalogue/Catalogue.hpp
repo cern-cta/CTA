@@ -59,6 +59,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/optional.hpp"
+#include "disk/DiskSystem.hpp"
 
 #include <list>
 #include <map>
@@ -491,6 +492,8 @@ public:
   virtual void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & acttivity) = 0;
   virtual std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const = 0;
   
+  
+  virtual cta::disk::DiskSystemList getDiskSystems() const = 0;
   /**
    * Returns the specified archive files.  Please note that the list of files
    * is ordered by archive file ID.

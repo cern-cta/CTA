@@ -47,7 +47,7 @@ Regex::~Regex() {
     ::regfree(&m_re);
 }
 
-std::vector<std::string> Regex::exec(const std::string &s) {
+std::vector<std::string> Regex::exec(const std::string &s) const {
   regmatch_t matches[100];
   if (REG_NOMATCH != ::regexec(&m_re, s.c_str(), 100, matches, 0)) {
     std::vector<std::string> ret;

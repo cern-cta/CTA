@@ -35,7 +35,7 @@ class Regex {
     /*!
      * Return a list of matching substrings
      */
-    std::vector<std::string> exec(const std::string &s);
+    std::vector<std::string> exec(const std::string &s) const;
 
     /*!
      * Return true if there is at least one matching substring
