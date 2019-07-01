@@ -1693,7 +1693,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     Carqtrtrfs::PopCriteria criteria;
-    criteria.files = c_repackReportBatchSize;
+    criteria.files = c_repackRetrieveReportBatchSize;
     auto jobs = algo.popNextBatch(queueList.front().vid, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackRetrieveSuccessesReportBatch> privateRet;
@@ -1738,7 +1738,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextFailedRet
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     CaRqtrtrff::PopCriteria criteria;
-    criteria.files = c_repackReportBatchSize;
+    criteria.files = c_repackRetrieveReportBatchSize;
     auto jobs = algo.popNextBatch(queueList.front().vid, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackRetrieveFailureReportBatch> privateRet;
@@ -1782,7 +1782,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     Caaqtrtrfs::PopCriteria criteria;
-    criteria.files = c_repackReportBatchSize;
+    criteria.files = c_repackArchiveReportBatchSize;
     auto jobs = algo.popNextBatch(queueList.front().tapePool, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackArchiveSuccessesReportBatch> privateRet;
@@ -1824,7 +1824,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextFailedArc
     if (queueList.empty()) throw NoRepackReportBatchFound("In OStoreDB::getNextFailedArchiveRepackReportBatch(): no queue found.");
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     Caaqtrtrff::PopCriteria criteria;
-    criteria.files = c_repackReportBatchSize;
+    criteria.files = c_repackArchiveReportBatchSize;
     auto jobs = algo.popNextBatch(queueList.front().tapePool, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackArchiveFailureReportBatch> privateRet;

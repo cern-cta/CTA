@@ -512,7 +512,8 @@ public:
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc);
   CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
 private:
-  const size_t c_repackReportBatchSize = 500;
+  const size_t c_repackArchiveReportBatchSize = 500;
+  const size_t c_repackRetrieveReportBatchSize = 4000;
 public:
 
   /* === Drive state handling  ============================================== */
