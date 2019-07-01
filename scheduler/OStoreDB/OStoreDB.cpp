@@ -3212,6 +3212,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   am.mountInfo.vendor = vendor;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   am.mountInfo.capacityInBytes = capacityInBytes;
+  am.mountInfo.mountType = type;
   m_schedulerGlobalLock->commit();
   am.mountInfo.tapePool = tape.tapePool;
   am.mountInfo.logicalLibrary = logicalLibrary;
@@ -3225,7 +3226,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     driveInfo.logicalLibrary=logicalLibrary;
     driveInfo.host=hostName;
     ReportDriveStatusInputs inputs;
-    inputs.mountType = common::dataStructures::MountType::ArchiveForUser;
+    inputs.mountType = type;// common::dataStructures::MountType::ArchiveForUser;
     inputs.byteTransferred = 0;
     inputs.filesTransferred = 0;
     inputs.latestBandwidth = 0;
@@ -3678,7 +3679,7 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   driveInfo.logicalLibrary=mountInfo.logicalLibrary;
   driveInfo.host=mountInfo.host;
   ReportDriveStatusInputs inputs;
-  inputs.mountType = common::dataStructures::MountType::ArchiveForUser;
+  inputs.mountType = m_queueType == JobQueueType::JobsToTransferForUser ? common::dataStructures::MountType::ArchiveForUser : common::dataStructures::MountType::ArchiveForRepack;
   inputs.mountSessionId = mountInfo.mountId;
   inputs.reportTime = completionTime;
   inputs.status = status;

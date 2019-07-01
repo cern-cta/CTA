@@ -705,7 +705,7 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
   std::string minAge;
   std::string maxDrivesAllowed;
 
-  if(sq_item.mount_type() == ARCHIVE_FOR_USER ||
+  if(sq_item.mount_type() == ARCHIVE_FOR_USER || sq_item.mount_type() == ARCHIVE_FOR_REPACK || 
      sq_item.mount_type() == RETRIEVE) {
     priority         = std::to_string(sq_item.priority());
     minAge           = std::to_string(sq_item.min_age());

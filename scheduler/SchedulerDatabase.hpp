@@ -157,6 +157,7 @@ public:
       std::string host;
       uint64_t mountId;
       uint64_t capacityInBytes;
+      cta::common::dataStructures::MountType mountType;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,

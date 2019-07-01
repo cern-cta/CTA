@@ -1333,6 +1333,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid, vid_to_tapeinfo);
     switch (pm.type) {
     case common::dataStructures::MountType::ArchiveForUser:
+    case common::dataStructures::MountType::ArchiveForRepack:
       summary.mountPolicy.archivePriority = pm.priority;
       summary.mountPolicy.archiveMinRequestAge = pm.minRequestAge;
       summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
@@ -1357,6 +1358,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid, vid_to_tapeinfo);
     switch (em.type) {
     case common::dataStructures::MountType::ArchiveForUser:
+    case common::dataStructures::MountType::ArchiveForRepack:
     case common::dataStructures::MountType::Retrieve:
       if (em.currentMount) 
         summary.currentMounts++;
@@ -1373,7 +1375,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   mountDecisionInfo.reset();
   // Add the tape information where useful (archive queues).
   for (auto & mountOrQueue: ret) {
-    if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType) {
+    if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType || common::dataStructures::MountType::ArchiveForRepack==mountOrQueue.mountType) {
       // Get all the tape for this pool
       cta::catalogue::TapeSearchCriteria tsc;
       tsc.tapePool = mountOrQueue.tapePool;

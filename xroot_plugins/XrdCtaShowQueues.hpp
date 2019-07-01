@@ -77,6 +77,7 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto  sq_item = record.mutable_sq_item();
 
     switch(sq.mountType) {
+      case common::dataStructures::MountType::ArchiveForRepack:
       case common::dataStructures::MountType::ArchiveForUser:
         sq_item->set_priority(sq.mountPolicy.archivePriority);
         sq_item->set_min_age(sq.mountPolicy.archiveMinRequestAge);
