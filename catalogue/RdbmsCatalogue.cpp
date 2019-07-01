@@ -22,9 +22,16 @@
 #include "catalogue/RdbmsCatalogueGetArchiveFilesForRepackItor.hpp"
 #include "catalogue/retryOnLostConnection.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
+#include "catalogue/UserSpecifiedANonExistentDiskSystem.hpp"
+#include "catalogue/UserSpecifiedANonEmptyDiskSystemAfterDelete.hpp"
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringDiskSystemName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringFileRegexp.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringFreeSpaceQueryURL.hpp"
+#include "catalogue/UserSpecifiedAZeroRefreshInterval.hpp"
+#include "catalogue/UserSpecifiedAZeroTargetedFreeSpace.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringDiskInstanceName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringMediaType.hpp"
@@ -1881,6 +1888,45 @@ bool RdbmsCatalogue::tapeExists(rdbms::Conn &conn, const std::string &vid) const
         "VID = :VID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// diskSystemExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::diskSystemExists(const std::string &name) const {
+  try {
+    auto conn = m_connPool.getConn();
+    return diskSystemExists(conn, name);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// diskSystemExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::diskSystemExists(rdbms::Conn &conn, const std::string &name) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME "
+      "FROM "
+        "DISK_SYSTEM "
+      "WHERE "
+        "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISK_SYSTEM_NAME", name);
     auto rset = stmt.executeQuery();
     return rset.next();
   } catch(exception::UserError &) {
@@ -4199,10 +4245,189 @@ std::list<common::dataStructures::ActivitiesFairShareWeights> RdbmsCatalogue::ge
 }
 
 //------------------------------------------------------------------------------
-// getDiskSystems
+// getAllDiskSystems
 //------------------------------------------------------------------------------
-cta::disk::DiskSystemList RdbmsCatalogue::getDiskSystems() const {
-  return cta::disk::DiskSystemList();
+common::dataStructures::DiskSystemList RdbmsCatalogue::getAllDiskSystems() const {
+  try {
+    common::dataStructures::DiskSystemList diskSystemList;
+    std::string sql =
+      "SELECT "
+        "DISK_SYSTEM.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
+        "DISK_SYSTEM.FILE_REGEXP AS FILE_REGEXP,"
+        "DISK_SYSTEM.FREE_SPACE_QUERY_URL AS FREE_SPACE_QUERY_URL,"
+        "DISK_SYSTEM.REFRESH_INTERVAL AS REFRESH_INTERVAL,"
+        "DISK_SYSTEM.TARGETED_FREE_SPACE AS TARGETED_FREE_SPACE,"
+        
+        "DISK_SYSTEM.USER_COMMENT AS USER_COMMENT,"
+
+        "DISK_SYSTEM.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "DISK_SYSTEM.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "DISK_SYSTEM.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "DISK_SYSTEM.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "DISK_SYSTEM.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "DISK_SYSTEM.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "DISK_SYSTEM";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+
+    auto rset = stmt.executeQuery();
+    while (rset.next()) {
+      common::dataStructures::DiskSystem diskSystem;
+      diskSystem.name = rset.columnString("DISK_SYSTEM_NAME");
+      diskSystem.fileRegexp = rset.columnString("FILE_REGEXP");
+      diskSystem.freeSpaceQueryURL = rset.columnString("FREE_SPACE_QUERY_URL");
+      diskSystem.refreshInterval =  rset.columnUint64("REFRESH_INTERVAL");
+      diskSystem.targetedFreeSpace =  rset.columnUint64("TARGETED_FREE_SPACE");
+      diskSystem.comment = rset.columnString("USER_COMMENT");
+      diskSystem.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      diskSystem.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      diskSystem.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      diskSystem.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      diskSystem.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      diskSystem.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+      diskSystemList.push_back(diskSystem);     
+    }
+    return diskSystemList;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createDiskSystem
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::createDiskSystem(
+  const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name,
+  const std::string &fileRegexp,
+  const std::string &freeSpaceQueryURL,
+  const uint64_t refreshInterval,
+  const uint64_t targetedFreeSpace,
+  const std::string &comment) {
+ try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot create disk system because the name is an empty string");
+    }
+    if(fileRegexp.empty()) {
+      throw UserSpecifiedAnEmptyStringFileRegexp("Cannot create disk system because the file regexp is an empty string");
+    }
+    if(freeSpaceQueryURL.empty()) {
+      throw UserSpecifiedAnEmptyStringFreeSpaceQueryURL("Cannot create disk system because the free space query URL is an empty string");
+    }
+    if(0 == refreshInterval) {
+      throw UserSpecifiedAZeroRefreshInterval("Cannot create disk system because the refresh interval is zero");
+    }
+    if(0 == targetedFreeSpace) {
+      throw UserSpecifiedAZeroTargetedFreeSpace("Cannot create disk system because the targeted free space is zero");
+    }
+    if(comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment("Cannot create disk system because the comment is an empty string");
+    }
+
+    auto conn = m_connPool.getConn();
+    if(diskSystemExists(conn, name)) {
+      throw exception::UserError(std::string("Cannot create disk system ") + name +
+        " because a disk system with the same name identifier already exists");
+    }
+    
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "INSERT INTO DISK_SYSTEM("
+        "DISK_SYSTEM_NAME,"
+        "FILE_REGEXP,"
+        "FREE_SPACE_QUERY_URL,"
+        "REFRESH_INTERVAL,"
+        "TARGETED_FREE_SPACE,"
+
+        "USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME)"
+      "VALUES("
+        ":DISK_SYSTEM_NAME,"
+        ":FILE_REGEXP,"
+        ":FREE_SPACE_QUERY_URL,"
+        ":REFRESH_INTERVAL,"
+        ":TARGETED_FREE_SPACE,"
+  
+        ":USER_COMMENT,"
+
+        ":CREATION_LOG_USER_NAME,"
+        ":CREATION_LOG_HOST_NAME,"
+        ":CREATION_LOG_TIME,"
+
+        ":LAST_UPDATE_USER_NAME,"
+        ":LAST_UPDATE_HOST_NAME,"
+        ":LAST_UPDATE_TIME)";
+    auto stmt = conn.createStmt(sql);
+
+    stmt.bindString(":DISK_SYSTEM_NAME", name);
+    stmt.bindString(":FILE_REGEXP", fileRegexp);
+    stmt.bindString(":FREE_SPACE_QUERY_URL", freeSpaceQueryURL);
+    stmt.bindUint64(":REFRESH_INTERVAL", refreshInterval);
+    stmt.bindUint64(":TARGETED_FREE_SPACE", targetedFreeSpace);
+
+    stmt.bindString(":USER_COMMENT", comment);
+
+    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
+    stmt.bindUint64(":CREATION_LOG_TIME", now);
+
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+
+    stmt.executeNonQuery();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }  
+}
+
+//------------------------------------------------------------------------------
+// deleteDiskSystem
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteDiskSystem(const std::string &name) {
+    try {
+    const char *const delete_sql =
+      "DELETE "
+      "FROM "
+        "DISK_SYSTEM "
+      "WHERE "
+        "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(delete_sql);
+    stmt.bindString(":DISK_SYSTEM_NAME", name);
+    stmt.executeNonQuery();
+
+    // The delete statement will effect no rows and will not raise an error if
+    // either the tape does not exist or if it still has tape files
+    if(0 == stmt.getNbAffectedRows()) {
+      if(diskSystemExists(conn, name)) {
+        throw UserSpecifiedANonEmptyDiskSystemAfterDelete(std::string("Cannot delete disk system ") + name + " for unknown reason");
+      } else {
+        throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot delete disk system ") + name + " because it does not exist");
+      }
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------

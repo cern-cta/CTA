@@ -149,7 +149,8 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
       "USAGESTATS",
-      "EXPERIMENTS"
+      "EXPERIMENTS",
+      "DISK_SYSTEM"
     };
     dropDatabaseTables(conn, tablesToDrop);
   } catch(exception::Exception &ex) {
@@ -180,7 +181,8 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
       "USAGESTATS",
-      "EXPERIMENTS"
+      "EXPERIMENTS",
+      "DISK_SYSTEM"
     };
     dropDatabaseTables(conn, tablesToDrop);
 
@@ -248,7 +250,8 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
       "USAGESTATS",
-      "EXPERIMENTS"
+      "EXPERIMENTS",
+      "DISK_SYSTEM"
     };
 
     dropDatabaseTables(conn, tablesToDrop);
@@ -282,7 +285,8 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
       "USAGESTATS",
-      "EXPERIMENTS"
+      "EXPERIMENTS",
+      "DISK_SYSTEM"
     };
 
     dropDatabaseTables(conn, tablesToDrop);

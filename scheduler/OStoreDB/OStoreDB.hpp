@@ -218,7 +218,7 @@ public:
   public:
     const MountInfo & getMountInfo() override;
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
-      disk::DiskSystemList& diskSystemList, log::LogContext& logContext) override;
+      common::dataStructures::DiskSystemList& diskSystemList, log::LogContext& logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;

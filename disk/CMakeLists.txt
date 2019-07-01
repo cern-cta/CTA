@@ -27,7 +27,6 @@ add_library(ctadisk SHARED
   EOSReporter.cpp
   DiskFile.cpp
   RadosStriperPool.cpp
-  DiskSystem.cpp
 )
 
 target_link_libraries (ctadisk XrdCl cryptopp radosstriper)

@@ -41,6 +41,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/DeleteArchiveRequest.cpp
   dataStructures/DesiredDriveState.cpp
   dataStructures/DiskFileInfo.cpp
+  dataStructures/DiskSystem.cpp
   dataStructures/DriveState.cpp
   dataStructures/DriveStatus.cpp
   dataStructures/EntryLog.cpp

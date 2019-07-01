@@ -54,8 +54,15 @@ set (CATALOGUE_LIB_SRC_FILES
   TapeForWriting.cpp
   UserSpecifiedANonEmptyTape.cpp
   UserSpecifiedANonExistentTape.cpp
+  UserSpecifiedANonExistentDiskSystem.cpp
+  UserSpecifiedANonEmptyDiskSystemAfterDelete.cpp
   UserSpecifiedAnEmptyStringComment.cpp
   UserSpecifiedAnEmptyStringDiskInstanceName.cpp
+  UserSpecifiedAnEmptyStringDiskSystemName.cpp
+  UserSpecifiedAnEmptyStringFileRegexp.cpp
+  UserSpecifiedAnEmptyStringFreeSpaceQueryURL.cpp
+  UserSpecifiedAZeroRefreshInterval.cpp
+  UserSpecifiedAZeroTargetedFreeSpace.cpp
   UserSpecifiedAnEmptyStringLogicalLibraryName.cpp
   UserSpecifiedAnEmptyStringMediaType.cpp
   UserSpecifiedAnEmptyStringStorageClassName.cpp

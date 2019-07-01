@@ -361,10 +361,16 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getActivitiesFairShareWeights();}, m_maxTriesToConnect);
   }
 
-  cta::disk::DiskSystemList getDiskSystems() const override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getDiskSystems();}, m_maxTriesToConnect);
+  common::dataStructures::DiskSystemList getAllDiskSystems() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getAllDiskSystems();}, m_maxTriesToConnect);
   }
-
+  
+  void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp, const std::string &freeSpaceQueryURL, const uint64_t refreshInterval, const uint64_t targetedFreeSpace, const std::string &comment)  override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createDiskSystem(admin, name, fileRegexp, freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);}, m_maxTriesToConnect);
+  }
+  void deleteDiskSystem(const std::string &name) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteDiskSystem(name);}, m_maxTriesToConnect);
+  }
 
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
@@ -409,6 +415,10 @@ public:
   bool tapeExists(const std::string &vid) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeExists(vid);}, m_maxTriesToConnect);
   }
+
+  bool diskSystemExists(const std::string &name) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->diskSystemExists(name);}, m_maxTriesToConnect);
+  }; 
 
 protected:
 

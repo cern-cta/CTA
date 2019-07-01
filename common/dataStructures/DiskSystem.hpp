@@ -21,13 +21,16 @@
 #include <string>
 #include <list>
 #include "common/utils/Regex.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 
-namespace cta { namespace disk {
+namespace cta {
+namespace common {
+namespace dataStructures {
 
 /**
  * Description of a disk system as defined by operators.
  * Defines:
- *  -  a name used an index
+ *  - a name used an index
  *  - a regular expression allowing matching destination URLs for this disk system
  *  - a query URL that describes a method to query the free space from the filesystem
  *  - a refresh interval (seconds) defining how long do we use a 
@@ -40,6 +43,10 @@ struct DiskSystem {
   std::string freeSpaceQueryURL;
   uint64_t refreshInterval;
   uint64_t targetedFreeSpace;
+  
+  cta::common::dataStructures::EntryLog creationLog;
+  cta::common::dataStructures::EntryLog lastModificationLog;
+  std::string comment;
 };
 
 class DiskSystemList: public std::list<DiskSystem> {
@@ -62,5 +69,6 @@ private:
   
 };
 
-
-}} // namespace cta::disk
+} // namespace dataStructures
+} // namespace common
+} // namespace cta

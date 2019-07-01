@@ -212,7 +212,7 @@ void Scheduler::queueRetrieve(
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
   queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, request.activity, lc);
   // Get DiskSystem list.
-  auto diskSystemList = m_catalogue.getDiskSystems();
+  auto diskSystemList = m_catalogue.getAllDiskSystems();
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   // Determine disk system for this request, if any.
   optional<std::string> diskSystemName;

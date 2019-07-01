@@ -3443,7 +3443,7 @@ const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo(
 // OStoreDB::RetrieveMount::getNextJobBatch()
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMount::getNextJobBatch(uint64_t filesRequested, 
-    uint64_t bytesRequested, disk::DiskSystemList& diskSystemList, log::LogContext& logContext) {
+    uint64_t bytesRequested, common::dataStructures::DiskSystemList& diskSystemList, log::LogContext& logContext) {
   typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);

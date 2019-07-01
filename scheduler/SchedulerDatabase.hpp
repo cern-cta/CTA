@@ -33,12 +33,12 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/dataStructures/DiskSystem.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "disk/DiskSystem.hpp"
 
 #include <list>
 #include <limits>
@@ -358,7 +358,7 @@ public:
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, disk::DiskSystemList & diskSystemList, log::LogContext& logContext) = 0;
+      uint64_t bytesRequested, common::dataStructures::DiskSystemList & diskSystemList, log::LogContext& logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
