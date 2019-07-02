@@ -209,8 +209,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setLogicalLibraryDisabled(admin, name, disabledValue);}, m_maxTriesToConnect);
   }
 
-  void createTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType, const std::string &vendor, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, const bool disabled, const bool full, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->createTape(admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes, disabled, full, comment);}, m_maxTriesToConnect);
+  void createTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType, const std::string &vendor, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, const bool disabled, const bool full, const bool readOnly, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createTape(admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes, disabled, full, readOnly, comment);}, m_maxTriesToConnect);
   }
 
   void deleteTape(const std::string &vid) override {
@@ -259,6 +259,14 @@ public:
 
   void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeFull(admin, vid, fullValue);}, m_maxTriesToConnect);
+  }
+  
+  void setTapeReadOnly(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool readOnlyValue) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeReadOnly(admin, vid, readOnlyValue);}, m_maxTriesToConnect);
+  }
+  
+  void setTapeReadOnlyOnError(const std::string &vid) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeReadOnlyOnError(vid);}, m_maxTriesToConnect);
   }
 
   void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) override {

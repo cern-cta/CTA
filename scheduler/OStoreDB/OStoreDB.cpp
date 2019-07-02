@@ -1692,7 +1692,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     Carqtrtrfs::PopCriteria criteria;
-    criteria.files = c_repackReportBatchSize;
+    criteria.files = c_repackRetrieveReportBatchSize;
     auto jobs = algo.popNextBatch(queueList.front().vid, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackRetrieveSuccessesReportBatch> privateRet;
@@ -1704,13 +1704,14 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
       auto & sr = privateRet->m_subrequestList.back();
       sr.repackInfo = j.repackInfo;
       sr.archiveFile = j.archiveFile;
+      sr.owner = m_agentReference;
       sr.subrequest.reset(j.retrieveRequest.release());
       repackRequestAddresses.insert(j.repackInfo.repackRequestAddress);
     }
     // As we are popping from a single report queue, all requests should concern only one repack request.
     if (repackRequestAddresses.size() != 1) {
       std::stringstream err;
-      err << "In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): reports for several repack requests in the same queue. ";
+      err << "In OStoreDB::getNextSuccessfulArchiveRepackReportBatch(): reports for several repack requests in the same queue. ";
       for (auto & rr: repackRequestAddresses) { err << rr << " "; }
       throw exception::Exception(err.str());
     }
@@ -1736,7 +1737,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextFailedRet
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     CaRqtrtrff::PopCriteria criteria;
-    criteria.files = c_repackReportBatchSize;
+    criteria.files = c_repackRetrieveReportBatchSize;
     auto jobs = algo.popNextBatch(queueList.front().vid, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackRetrieveFailureReportBatch> privateRet;
@@ -1780,7 +1781,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     Caaqtrtrfs::PopCriteria criteria;
-    criteria.files = c_repackReportBatchSize;
+    criteria.files = c_repackArchiveReportBatchSize;
     auto jobs = algo.popNextBatch(queueList.front().tapePool, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackArchiveSuccessesReportBatch> privateRet;
@@ -1808,7 +1809,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
     
     return std::unique_ptr<SchedulerDatabase::RepackReportBatch>(privateRet.release());
   }
-  throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): no report found.");
+  throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulArchiveRepackReportBatch(): no report found.");
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc){
@@ -1822,7 +1823,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextFailedArc
     if (queueList.empty()) throw NoRepackReportBatchFound("In OStoreDB::getNextFailedArchiveRepackReportBatch(): no queue found.");
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     Caaqtrtrff::PopCriteria criteria;
-    criteria.files = c_repackReportBatchSize;
+    criteria.files = c_repackArchiveReportBatchSize;
     auto jobs = algo.popNextBatch(queueList.front().tapePool, criteria, lc);
     if(jobs.elements.empty()) continue;
     std::unique_ptr<RepackArchiveFailureReportBatch> privateRet;
@@ -1891,8 +1892,10 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
   struct SuccessfullyTranformedRequest {
     std::shared_ptr<objectstore::ArchiveRequest> archiveRequest;
     SubrequestInfo & subrequestInfo;
+    SorterArchiveRequest sorterArchiveRequest;
   };
   std::list<SuccessfullyTranformedRequest> successfullyTransformedSubrequests;
+  uint64_t nbTransformedSubrequest = 0;
   {
     objectstore::RepackRequest::SubrequestStatistics::List failedArchiveSSL;
     std::list<SubrequestInfo *> failedSubrequests;
@@ -1936,17 +1939,33 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
     for (auto &atar: asyncTransformsAndReqs) {
       try {
         atar.transformer->wait();
+        nbTransformedSubrequest++;
         // Log the transformation
         log::ScopedParamContainer params(lc);
         params.add("fileId", atar.subrequestInfo.archiveFile.archiveFileID)
               .add("subrequestAddress", atar.subrequestInfo.subrequest->getAddressIfSet());
         timingList.addToLog(params);
         lc.log(log::INFO, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(), turned successful retrieve request in archive request.");
+        SorterArchiveRequest sorterArchiveRequest;
+        for(auto & copyNbToArchive: atar.subrequestInfo.repackInfo.copyNbsToRearchive){
+          SorterArchiveJob sorterArchiveJob;
+          sorterArchiveJob.archiveFile = atar.subrequestInfo.archiveFile;
+          sorterArchiveJob.archiveRequest = std::make_shared<objectstore::ArchiveRequest>(
+                atar.subrequestInfo.subrequest->getAddressIfSet(),
+                m_oStoreDb.m_objectStore);
+          sorterArchiveJob.jobDump.copyNb = copyNbToArchive;
+          sorterArchiveJob.jobDump.tapePool = atar.subrequestInfo.repackInfo.archiveRouteMap[copyNbToArchive];
+          sorterArchiveJob.jobQueueType = cta::objectstore::JobQueueType::JobsToTransferForRepack;
+          sorterArchiveJob.mountPolicy = common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack;
+          sorterArchiveJob.previousOwner = atar.subrequestInfo.owner;
+          sorterArchiveRequest.archiveJobs.push_back(sorterArchiveJob);
+        }
         successfullyTransformedSubrequests.push_back(SuccessfullyTranformedRequest{
           std::make_shared<objectstore::ArchiveRequest>(
               atar.subrequestInfo.subrequest->getAddressIfSet(),
               m_oStoreDb.m_objectStore), 
-          atar.subrequestInfo
+          atar.subrequestInfo,
+          sorterArchiveRequest
         });
       } catch (exception::Exception & ex) {
         // We failed to archive the file (to create the request, in fact). So all the copyNbs 
@@ -2038,18 +2057,14 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
   // 3. We now just need to queue the freshly created archive jobs into their respective queues
   {
     objectstore::Sorter sorter(*m_oStoreDb.m_agentReference, m_oStoreDb.m_objectStore, m_oStoreDb.m_catalogue);
-    std::list<std::unique_ptr<objectstore::ScopedExclusiveLock>> locks;
-    // TODO: swich to "lockfree" sorter interface.
     for (auto &sts: successfullyTransformedSubrequests) {
-      locks.push_back(cta::make_unique<objectstore::ScopedExclusiveLock>(*sts.archiveRequest));
-      sts.archiveRequest->fetch();
-      sorter.insertArchiveRequest(sts.archiveRequest, *m_oStoreDb.m_agentReference, lc);
+      sorter.insertArchiveRequest(sts.sorterArchiveRequest, *m_oStoreDb.m_agentReference, lc);
     }
-    locks.clear();
     sorter.flushAll(lc);
   }
   timingList.insertAndReset("archiveRequestsQueueingTime", t);
   log::ScopedParamContainer params(lc);
+  params.add("numberOfTransformedSubrequests",nbTransformedSubrequest);
   timingList.addToLog(params);
   lc.log(log::INFO,"In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): Processed a batch of reports.");
 }
@@ -4215,6 +4230,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   };
   Deleters::List deletersList;
   JobOwnerUpdaters::List jobOwnerUpdatersList;
+  cta::objectstore::serializers::ArchiveJobStatus newStatus = getNewStatus();
   for (auto &sri: m_subrequestList) {
     bufferURL = sri.repackInfo.fileBufferURL;
     bool moreJobsToDo = false;
@@ -4231,7 +4247,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       try {
         jobOwnerUpdatersList.push_back(JobOwnerUpdaters{std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> (
               ar.asyncUpdateJobOwner(sri.archivedCopyNb, "", m_oStoreDb.m_agentReference->getAgentAddress(),
-              getNewStatus())), 
+              newStatus)), 
             sri});
       } catch (cta::exception::Exception & ex) {
         // Log the error
@@ -4297,7 +4313,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       params.add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
             .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL);
-      lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async deleted file.");
+      lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): async deleted file.");
     } catch (const cta::exception::Exception& ex){
       // Log the error
       log::ScopedParamContainer params(lc);
@@ -4305,7 +4321,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
             .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
             .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
             .add("exceptionMsg", ex.getMessageValue());
-      lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async file not deleted.");
+      lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async file not deleted.");
     }
   }
   if(repackRequestStatus == objectstore::serializers::RepackRequestStatus::RRS_Complete){
@@ -4318,12 +4334,12 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       directory->rmdir();
       log::ScopedParamContainer params(lc);
       params.add("repackRequestAddress", m_repackRequest.getAddressIfSet());
-      lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): deleted the "+directoryPath+" directory");
+      lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): deleted the "+directoryPath+" directory");
     } catch (const cta::exception::Exception &ex){
       log::ScopedParamContainer params(lc);
       params.add("repackRequestAddress", m_repackRequest.getAddressIfSet())
             .add("exceptionMsg", ex.getMessageValue());
-      lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): failed to remove the "+directoryPath+" directory");
+      lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the "+directoryPath+" directory");
     }
   }
   for (auto & jou: jobOwnerUpdatersList) {
@@ -4332,14 +4348,14 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       log::ScopedParamContainer params(lc);
       params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet());
-      lc.log(log::INFO, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async updated job.");
+      lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): async updated job.");
     } catch (cta::exception::Exception & ex) {
       // Log the error
       log::ScopedParamContainer params(lc);
       params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
             .add("exceptionMsg", ex.getMessageValue());
-      lc.log(log::ERR, "In OStoreDB::RepackArchiveFailureReportBatch::report(): async job update.");
+      lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async job update.");
     }    
   }
   timingList.insertAndReset("asyncUpdateOrDeleteCompletionTime", t);
@@ -4350,6 +4366,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   timingList.insertAndReset("ownershipRemoval", t);
   log::ScopedParamContainer params(lc);
   timingList.addToLog(params);
+  params.add("archiveReportType",( newStatus == cta::objectstore::serializers::ArchiveJobStatus::AJS_Complete) ? "ArchiveSuccesses" : "ArchiveFailures");
   lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): reported a batch of jobs.");
 }
 

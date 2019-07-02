@@ -1732,6 +1732,7 @@ void RdbmsCatalogue::createTape(
   const uint64_t capacityInBytes,
   const bool disabled,
   const bool full,
+  const bool readOnly,      
   const std::string &comment) {
   try {
     if(vid.empty()) {
@@ -1789,6 +1790,7 @@ void RdbmsCatalogue::createTape(
         "LAST_FSEQ,"
         "IS_DISABLED,"
         "IS_FULL,"
+        "IS_READ_ONLY,"
 
         "USER_COMMENT,"
 
@@ -1810,6 +1812,7 @@ void RdbmsCatalogue::createTape(
         ":LAST_FSEQ,"
         ":IS_DISABLED,"
         ":IS_FULL,"
+        ":IS_READ_ONLY,"
 
         ":USER_COMMENT,"
 
@@ -1832,6 +1835,7 @@ void RdbmsCatalogue::createTape(
     stmt.bindUint64(":LAST_FSEQ", 0);
     stmt.bindBool(":IS_DISABLED", disabled);
     stmt.bindBool(":IS_FULL", full);
+    stmt.bindBool(":IS_READ_ONLY", readOnly);
 
     stmt.bindString(":USER_COMMENT", comment);
 
@@ -1969,6 +1973,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2001,7 +2006,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.vo ||
        searchCriteria.capacityInBytes ||
        searchCriteria.disabled ||
-       searchCriteria.full) {
+       searchCriteria.full ||
+       searchCriteria.readOnly) {
       sql += " WHERE ";
     }
 
@@ -2051,6 +2057,11 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " TAPE.IS_FULL = :IS_FULL";
       addedAWhereConstraint = true;
     }
+    if(searchCriteria.readOnly) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE.IS_READ_ONLY = :IS_READ_ONLY";
+      addedAWhereConstraint = true;
+    }
 
     sql += " ORDER BY TAPE.VID";
 
@@ -2065,6 +2076,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.disabled) stmt.bindBool(":IS_DISABLED", searchCriteria.disabled.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
+    if(searchCriteria.readOnly) stmt.bindBool(":IS_READ_ONLY", searchCriteria.readOnly.value());
 
     auto rset = stmt.executeQuery();
     while (rset.next()) {
@@ -2082,6 +2094,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.disabled = rset.columnBool("IS_DISABLED");
       tape.full = rset.columnBool("IS_FULL");
+      tape.readOnly = rset.columnBool("IS_READ_ONLY");
 
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -2127,6 +2140,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2194,6 +2208,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.disabled = rset.columnBool("IS_DISABLED");
       tape.full = rset.columnBool("IS_FULL");
+      tape.readOnly = rset.columnBool("IS_READ_ONLY");
 
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -2243,6 +2258,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"    
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2286,6 +2302,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.disabled = rset.columnBool("IS_DISABLED");
       tape.full = rset.columnBool("IS_FULL");
+      tape.readOnly = rset.columnBool("IS_READ_ONLY");
 
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -2758,6 +2775,67 @@ void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
     const char *const sql =
       "UPDATE TAPE SET "
         "IS_FULL = '1' "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if (0 == stmt.getNbAffectedRows()) {
+      throw exception::Exception(std::string("Tape ") + vid + " does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setTapeReadOnly
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setTapeReadOnly(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
+  const bool readOnlyValue) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "IS_READ_ONLY = :IS_READ_ONLY,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindBool(":IS_READ_ONLY", readOnlyValue);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setTapeReadOnlyOnError
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setTapeReadOnlyOnError(const std::string &vid) {
+  try {
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "IS_READ_ONLY = '1' "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
@@ -5160,6 +5238,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
 //      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
         "IS_DISABLED = '0' AND "
         "IS_FULL = '0' AND "
+        "IS_READ_ONLY = '0' AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
 
     auto conn = m_connPool.getConn();

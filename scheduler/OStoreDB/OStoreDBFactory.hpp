@@ -158,6 +158,22 @@ public:
     return m_OStoreDB.getNextRepackReportBatch(lc);
   }
   
+  std::unique_ptr<RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) override {
+    return m_OStoreDB.getNextSuccessfulRetrieveRepackReportBatch(lc);
+  }
+  
+  std::unique_ptr<RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) override {
+    return m_OStoreDB.getNextSuccessfulArchiveRepackReportBatch(lc);
+  }
+  
+  std::unique_ptr<RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) override {
+    return m_OStoreDB.getNextFailedRetrieveRepackReportBatch(lc);
+  }
+  
+  std::unique_ptr<RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext& lc) override {
+    return m_OStoreDB.getNextFailedArchiveRepackReportBatch(lc);
+  }
+  
   std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) override {
     return m_OStoreDB.getRepackReportBatches(lc);
   }

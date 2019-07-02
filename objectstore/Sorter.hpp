@@ -36,6 +36,7 @@
 #include "Algorithms.hpp"
 #include "ArchiveQueueAlgorithms.hpp"
 #include "RetrieveQueueAlgorithms.hpp"
+#include "SorterArchiveJob.hpp"
 
 namespace cta { namespace objectstore {  
   
@@ -56,26 +57,6 @@ public:
   //std::string = containerIdentifier
   typedef std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr<ArchiveJobQueueInfo>>> MapArchive;
   typedef std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr<RetrieveJobQueueInfo>>> MapRetrieve;
-  
-  /**
-   * This structure holds the necessary data to queue a job taken from the ArchiveRequest that needs to be queued.
-   */
-  struct ArchiveJob{
-    std::shared_ptr<ArchiveRequest> archiveRequest;
-    ArchiveRequest::JobDump jobDump;
-    common::dataStructures::ArchiveFile archiveFile;
-    AgentReferenceInterface * previousOwner;
-    common::dataStructures::MountPolicy mountPolicy;
-    cta::objectstore::JobQueueType jobQueueType;
-  };
-  
-  /**
-   * This structure holds the datas the user have to 
-   * give to insert an ArchiveRequest without any fetch needed on the Request
-   */
-  struct SorterArchiveRequest{
-    std::list<ArchiveJob> archiveJobs;
-  };
   
   /* Archive-related methods */
   /**
@@ -220,7 +201,7 @@ private:
   /* Archive-related methods */
   void queueArchiveRequests(const std::string tapePool, const JobQueueType jobQueueType, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& requests, log::LogContext &lc);
   
-  void insertArchiveJob(const ArchiveJob& job); 
+  void insertArchiveJob(const SorterArchiveJob& job); 
   
   void dispatchArchiveAlgorithm(const std::string tapePool, const JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& archiveJobsInfos, log::LogContext &lc);
 
@@ -230,7 +211,7 @@ private:
 };
 
 struct ArchiveJobQueueInfo{
-  std::tuple<Sorter::ArchiveJob,std::promise<void>> jobToQueue;
+  std::tuple<SorterArchiveJob,std::promise<void>> jobToQueue;
   //TODO : Job reporting
 };
 

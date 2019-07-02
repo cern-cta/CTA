@@ -1290,9 +1290,10 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    auto &capacity       = getRequired(OptionUInt64::CAPACITY);
    auto &disabled       = getRequired(OptionBoolean::DISABLED);
    auto &full           = getRequired(OptionBoolean::FULL);
+   auto &readOnly       = getRequired(OptionBoolean::READ_ONLY);
    auto  comment        = getOptional(OptionString::COMMENT);
 
-   m_catalogue.createTape(m_cliIdentity, vid, mediaType, vendor, logicallibrary, tapepool, capacity, disabled, full, comment ? comment.value() : "-");
+   m_catalogue.createTape(m_cliIdentity, vid, mediaType, vendor, logicallibrary, tapepool, capacity, disabled, full, readOnly, comment ? comment.value() : "-");
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1313,6 +1314,7 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    auto  encryptionkey  = getOptional(OptionString::ENCRYPTION_KEY);
    auto  disabled       = getOptional(OptionBoolean::DISABLED);
    auto  full           = getOptional(OptionBoolean::FULL);
+   auto  readOnly       = getOptional(OptionBoolean::READ_ONLY);
 
    if(mediaType) {
       m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
@@ -1340,6 +1342,9 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    }
    if(full) {
       m_catalogue.setTapeFull(m_cliIdentity, vid, full.value());
+   }
+   if(readOnly) {
+      m_catalogue.setTapeReadOnly(m_cliIdentity, vid, readOnly.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
