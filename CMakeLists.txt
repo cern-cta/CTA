@@ -180,7 +180,7 @@ endif (${COMPILE_PACKAGING} STREQUAL "1")
 configure_file(tests/valgrind.suppr tests/valgrind.suppr COPYONLY)
 configure_file(tests/helgrind.suppr tests/helgrind.suppr COPYONLY)
 set(VALGRIND valgrind)
-set(VALGRIND_OPTS --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --max-threads=1000)
+set(VALGRIND_OPTS --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --max-threads=1000)
 set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=tests/valgrind.suppr)
 string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
 
