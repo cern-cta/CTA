@@ -459,6 +459,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.diskFileInfo.owner_uid = DISK_FILE_SOME_USER;
+      rReq.diskFileInfo.gid = DISK_FILE_SOME_GROUP;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -664,6 +666,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.diskFileInfo.owner_uid = DISK_FILE_SOME_USER;
+      rReq.diskFileInfo.gid = DISK_FILE_SOME_GROUP;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -838,6 +842,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.diskFileInfo.owner_uid = DISK_FILE_SOME_USER;
+      rReq.diskFileInfo.gid = DISK_FILE_SOME_GROUP;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
 
@@ -1048,6 +1054,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.diskFileInfo.owner_uid = DISK_FILE_SOME_USER;
+      rReq.diskFileInfo.gid = DISK_FILE_SOME_GROUP;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -1195,6 +1203,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.diskFileInfo.owner_uid = DISK_FILE_SOME_USER;
+      rReq.diskFileInfo.gid = DISK_FILE_SOME_GROUP;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
