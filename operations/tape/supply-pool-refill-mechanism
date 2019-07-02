@@ -46,11 +46,12 @@ from subprocess import STDOUT, check_output
 
 timeout = 10	# how many seconds to wait for the external command to finish
 separator = ","	# characted which separates multiple tape pools in the CTA "supply" column
+ctaadmin = "/usr/bin/cta-admin"
 
 # Configure logging
 logfile = sys.argv[0] + ".log"
 logging.basicConfig (
-    level    = logging.INFO,				# only messages with log level above this are logged
+    level    = logging.DEBUG,				# only messages with log level above this are logged
     format   = "[%(levelname)-5.5s] %(message)s",	# format of the logging (can be very complex - see the manual)
     handlers = [
         logging.FileHandler(logfile), 			# log to a logfile
@@ -66,7 +67,7 @@ logging.basicConfig (
 # Extract eligible (not DISABLED, not FULL and NOT in a DISABLED library) tapes from a given tape pool
 def extract_eligible_tapes(disabledlibraries, tapepool):
     tapes = []
-    command = ["/usr/bin/cta-admin", "--json", "tape", "ls", "--tapepool", tapepool, "--disabled", "false", "--full", "false"]
+    command = [ctaadmin, "--json", "tape", "ls", "--tapepool", tapepool, "--disabled", "false", "--full", "false"]
     try:
         logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
         output = check_output(command, stderr = STDOUT, timeout = timeout).decode("UTF-8")
@@ -88,7 +89,7 @@ def extract_eligible_tapes(disabledlibraries, tapepool):
 ##########
 
 # Extract the list of all tape pools from CTA (in the JSON format)
-command = ["/usr/bin/cta-admin", "--json", "tapepool", "ls"]
+command = [ctaadmin, "--json", "tapepool", "ls"]
 try:
     logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
     output = check_output(command, stderr = STDOUT, timeout = timeout).decode("UTF-8")
@@ -103,7 +104,7 @@ else:
 #logging.debug("List of extracted tape pools from CTA: " + format(tapepools))
 
 # Extract the list of DISABLED tape libraries from CTA (in the JSON format)
-command = ["/usr/bin/cta-admin", "--json", "logicallibrary", "ls"]
+command = [ctaadmin, "--json", "logicallibrary", "ls"]
 try:
     logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
     output = check_output(command, stderr = STDOUT, timeout = timeout).decode("UTF-8")
@@ -140,7 +141,7 @@ for tapepool in tapepools:
         if len(supplytapes):
             logging.info("Identified: " + format(len(supplytapes)) + " supply tapes, moving random " + format(int(tapepool["numPartialTapes"]) - currentpartialtapes) + " to the pool: " + tapepool["name"])
             for i in range(int(tapepool["numPartialTapes"]) - currentpartialtapes):
-                command = ["/usr/bin/cta-admin", "tape", "ch", "--vid", supplytapes[i], "--tapepool", tapepool["name"]]
+                command = [ctaadmin, "tape", "ch", "--vid", supplytapes[i], "--tapepool", tapepool["name"]]
                 try:
                     logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
 #                    output = check_output(command, stderr = STDOUT, timeout = timeout).decode("UTF-8")
