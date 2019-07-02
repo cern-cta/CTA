@@ -16,11 +16,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Logic:
+# * CTA tape pool should have at least X partial tapes available for writing
+# * Eligible partial tapes are those that are not DISABLED, not FULL and not
+#   in a DISABLED logical tape library
+# * If the number of eligible partial tapes for a given pool falls below the
+#   configured limit, the pool needs to be re-supplied with fresh tapes
+# * Fresh supply tapes are taken from tape pools defined in the "supply" column
+# * Supply tape pools can be separated by a separator (usually comma)
+# * There is no distinction between what is a supply pool and what is not, if
+#   a pool has a value in the "supply" column, tapes are taken from there.
+#   Because of this, irregularities, cyclical loops and other misconfiguration
+#   are possible - please be careful
+# * This script is intended to run every 15 minutes
+#
+# Author: Vladimir Bahyl - 7/2019
+
 import sys
 import json
 import logging
 from random import shuffle
-from subprocess import STDOUT, check_output, CalledProcessError
+from subprocess import STDOUT, check_output
 
 ##########
 #
@@ -34,7 +50,7 @@ separator = ","	# characted which separates multiple tape pools in the CTA "supp
 # Configure logging
 logfile = sys.argv[0] + ".log"
 logging.basicConfig (
-    level    = logging.DEBUG,				# only messages with log level above this are logged
+    level    = logging.INFO,				# only messages with log level above this are logged
     format   = "[%(levelname)-5.5s] %(message)s",	# format of the logging (can be very complex - see the manual)
     handlers = [
         logging.FileHandler(logfile), 			# log to a logfile
@@ -48,11 +64,9 @@ logging.basicConfig (
 ##########
 
 # Extract eligible (not DISABLED, not FULL and NOT in a DISABLED library) tapes from a given tape pool
-def extract_tapes(tapelibrary, tapepool):
+def extract_eligible_tapes(disabledlibraries, tapepool):
     tapes = []
     command = ["/usr/bin/cta-admin", "--json", "tape", "ls", "--tapepool", tapepool, "--disabled", "false", "--full", "false"]
-    if ((tapelibrary) and (tapelibrary != "ALL")):
-        command.extend(["--logicallibrary", tapelibrary])
     try:
         logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
         output = check_output(command, stderr = STDOUT, timeout = timeout).decode("UTF-8")
@@ -60,11 +74,10 @@ def extract_tapes(tapelibrary, tapepool):
         logging.error(format(error))
         sys.exit(-1)
 
-    if output == "]": output = "" # TEMPORARY UNTIL --json FIXED !!!
     if output:
-        tapes = [line["vid"] for line in json.loads(output)]
+        tapes = [line["vid"] for line in json.loads(output) if not line["logicalLibrary"] in disabledlibraries]
     else:
-        logging.warn("No eligible tapes extracted from the tape pool: " + tapepool)
+        logging.warn("No eligible tapes identified in the tape pool: " + tapepool)
 
     return tapes
 
@@ -74,7 +87,7 @@ def extract_tapes(tapelibrary, tapepool):
 #
 ##########
 
-# Extract the list of all tape pools in CTA in JSON format
+# Extract the list of all tape pools from CTA (in the JSON format)
 command = ["/usr/bin/cta-admin", "--json", "tapepool", "ls"]
 try:
     logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
@@ -87,35 +100,45 @@ if output:
 else:
     logging.error("List of CTA tape pools is empty, nothing to do, exiting")
     sys.exit(0)
+#logging.debug("List of extracted tape pools from CTA: " + format(tapepools))
 
-# Extract the list of DISABLED tape libraries
-# LATER as --json not yet implemented
-
-#logging.debug("List of extracted tape pools from CTA:\n" + format(tapepools))
+# Extract the list of DISABLED tape libraries from CTA (in the JSON format)
+command = ["/usr/bin/cta-admin", "--json", "logicallibrary", "ls"]
+try:
+    logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
+    output = check_output(command, stderr = STDOUT, timeout = timeout).decode("UTF-8")
+except Exception as error:
+    logging.error(format(error))
+    sys.exit(-1)
+if output:
+    disabledlibraries = [line["name"] for line in json.loads(output) if line["isDisabled"] ]
+else:
+    logging.info("No DISABLED logical tape libraries detected, considering tapes from all libraries")
+if disabledlibraries: logging.warn("List of DISABLED logical tape libraries: " + format(disabledlibraries))
 
 # Iterate over the extracted CTA tape pools and re-fill them with supply tapes as needed
 for tapepool in tapepools:
-    logging.info("Tape pool: " + tapepool["name"] + " which should have at least: " + tapepool["numPartialTapes"] + " partial tape(s) is supplied from: " + tapepool["supply"])
+    logging.info("Tape pool: " + tapepool["name"] + " which should have at least: " + tapepool["numPartialTapes"] + " eligible partial tape(s) is supplied from: " + tapepool["supply"])
 
     if (tapepool["numPartialTapes"] and tapepool["supply"]):
 
         # Check if re-filling is actually needed
-        currentpartialtapes = len([tape for tape in extract_tapes("ALL", tapepool["name"])])
+        currentpartialtapes = len([tape for tape in extract_eligible_tapes(disabledlibraries, tapepool["name"])])
         if (currentpartialtapes < int(tapepool["numPartialTapes"])):
-            logging.info("Tape pool: " + tapepool["name"] + " only has: " + format(currentpartialtapes) + " partial tape(s) available, re-filling")
+            logging.info("Tape pool: " + tapepool["name"] + " only has: " + format(currentpartialtapes) + " eligible partial tape(s) available, re-filling")
         else:
-            logging.info("Tape pool: " + tapepool["name"] + " already has: " + format(currentpartialtapes) + " partial tape(s) available, skipping")
+            logging.info("Tape pool: " + tapepool["name"] + " already has: " + format(currentpartialtapes) + " eligible partial tape(s) available, skipping")
             continue
 
         # Prepare the eligible supply tapes from a given supply pool(s)
         supplytapes = []
         for supplypool in tapepool["supply"].split(separator):
-            supplytapes.extend([tape for tape in extract_tapes("ALL", supplypool)])
+            supplytapes.extend([tape for tape in extract_eligible_tapes(disabledlibraries, supplypool)])
         shuffle(supplytapes) # Randomize it (so that tapes are picked at random from multiple pools)
 
         # Move the required number of supply tapes to the given tape pool (if any eligible tapes were identified)
         if len(supplytapes):
-            logging.info("Identified: " + format(len(supplytapes)) + " supply tapes, moving " + format(int(tapepool["numPartialTapes"]) - currentpartialtapes) + " to the pool: " + tapepool["name"])
+            logging.info("Identified: " + format(len(supplytapes)) + " supply tapes, moving random " + format(int(tapepool["numPartialTapes"]) - currentpartialtapes) + " to the pool: " + tapepool["name"])
             for i in range(int(tapepool["numPartialTapes"]) - currentpartialtapes):
                 command = ["/usr/bin/cta-admin", "tape", "ch", "--vid", supplytapes[i], "--tapepool", tapepool["name"]]
                 try:
@@ -129,4 +152,4 @@ for tapepool in tapepools:
             logging.warn("Unable to re-fill the tape pool: " + tapepool["name"] + ", no eligible supply tapes identified")
 
     else:
-        logging.warn("Unable to re-fill the tape pool: " + tapepool["name"] + " because either the number of partial tapes: " + tapepool["numPartialTapes"] + " or the supply pool: " + tapepool["supply"] + " is not properly configured")
+        logging.warn("Unable to re-fill the tape pool: " + tapepool["name"] + " because either the number of eligible partial tapes: " + tapepool["numPartialTapes"] + " or the supply pool: " + tapepool["supply"] + " is not properly configured")
