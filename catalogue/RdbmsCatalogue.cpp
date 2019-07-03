@@ -1143,9 +1143,9 @@ void RdbmsCatalogue::modifyTapePoolSupply(const common::dataStructures::Security
         " string");
     }
 
-    if(supply.empty()) {
-      throw UserSpecifiedAnEmptyStringSupply("Cannot modify tape pool because the new supply value is an empty"
-        " string");
+    optional<std::string> optionalSupply;
+    if(!supply.empty()) {
+      optionalSupply = supply;
     }
 
     const time_t now = time(nullptr);
@@ -1159,7 +1159,7 @@ void RdbmsCatalogue::modifyTapePoolSupply(const common::dataStructures::Security
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":SUPPLY", supply);
+    stmt.bindOptionalString(":SUPPLY", optionalSupply);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
