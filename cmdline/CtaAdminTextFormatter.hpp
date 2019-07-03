@@ -64,6 +64,7 @@ public:
   void printStorageClassLsHeader();
   void printTapeLsHeader();
   void printTapePoolLsHeader();
+  void printDiskSystemLsHeader();
    
   // Output records
   void print(const AdminLsItem &adls_item);
@@ -86,6 +87,8 @@ public:
   void print(const StorageClassLsItem &scls_item);
   void print(const TapeLsItem &tals_item);
   void print(const TapePoolLsItem &tpls_item);
+  void print(const DiskSystemLsItem &dsls_item);
+  
 
 private:
   //! Add a line to the buffer

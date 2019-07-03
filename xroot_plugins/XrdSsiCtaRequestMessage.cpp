@@ -36,6 +36,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaTapeLs.hpp"
 #include "XrdCtaStorageClassLs.hpp"
 #include "XrdCtaTapePoolLs.hpp"
+#include "XrdCtaDiskSystemLs.hpp"
 
 namespace cta {
 namespace xrd {
@@ -230,7 +231,16 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS):
                processTapePool_Ls(response, stream);
                break;
-
+            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS):
+               processDiskSystem_Ls(response, stream);
+               break;   
+            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_ADD):
+               processDiskSystem_Add(response);
+               break;
+            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM):
+               processDiskSystem_Rm(response);
+               break;  
+               
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -1504,6 +1514,45 @@ void RequestMessage::processTapePool_Ls(cta::xrd::Response &response, XrdSsiStre
 }
 
 
+
+void RequestMessage::processDiskSystem_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
+{
+  using namespace cta::admin;
+
+  // Create a XrdSsi stream object to return the results
+  stream = new DiskSystemLsStream(*this, m_catalogue, m_scheduler);
+
+  response.set_show_header(HeaderType::DISKSYSTEM_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskSystem_Add(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+
+  const auto &name              = getRequired(OptionString::DISK_SYSTEM);
+  const auto &fileRegexp        = getRequired(OptionString::FILE_REGEXP);
+  const auto &freeSpaceQueryURL = getRequired(OptionString::FREE_SPACE_QUERY_URL);
+  const auto &refreshInterval   = getRequired(OptionUInt64::REFRESH_INTERVAL);
+  const auto &targetedFreeSpace = getRequired(OptionUInt64::TARGETED_FREE_SPACE);
+  const auto &comment           = getRequired(OptionString::COMMENT);
+   
+  m_catalogue.createDiskSystem(m_cliIdentity, name, fileRegexp, freeSpaceQueryURL,
+    refreshInterval, targetedFreeSpace, comment);
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskSystem_Rm(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+
+  const auto &name = getRequired(OptionString::DISK_SYSTEM);
+
+  m_catalogue.deleteDiskSystem(name);
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
 
 std::string RequestMessage::setDriveState(const std::string &regex, DriveState drive_state)
 {
