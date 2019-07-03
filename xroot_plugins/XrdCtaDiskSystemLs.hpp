@@ -21,7 +21,7 @@
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
 
-#include "common/dataStructures/DiskSystem.hpp"
+#include "disk/DiskSystem.hpp"
 
 
 namespace cta { namespace xrd {
@@ -53,7 +53,7 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
-  cta::common::dataStructures::DiskSystemList m_diskSystemList;             //!< List of disk systems from the catalogue
+  cta::disk::DiskSystemList m_diskSystemList;             //!< List of disk systems from the catalogue
 
   static constexpr const char* const LOG_SUFFIX  = "DiskSystemLsStream";    //!< Identifier for log messages
 };
