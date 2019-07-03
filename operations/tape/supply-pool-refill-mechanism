@@ -52,7 +52,7 @@ ctaadmin = "/usr/bin/cta-admin"
 # Configure logging
 logfile = sys.argv[0] + ".log"
 logging.basicConfig (
-    level    = logging.DEBUG,				# only messages with log level above this are logged
+    level    = logging.INFO,				# only messages with log level above this are logged (DEBUG, INFO, WARN, ERROR)
     format   = "[%(levelname)-5.5s] %(message)s",	# format of the logging (can be very complex - see the manual)
     handlers = [
         logging.FileHandler(logfile), 			# log to a logfile
@@ -143,14 +143,17 @@ for tapepool in tapepools:
         if len(supplytapes):
             logging.info("Identified: " + format(len(supplytapes)) + " supply tapes, moving random " + format(int(tapepool["numPartialTapes"]) - currentpartialtapes) + " to the pool: " + tapepool["name"])
             for i in range(int(tapepool["numPartialTapes"]) - currentpartialtapes):
-                command = [ctaadmin, "tape", "ch", "--vid", supplytapes[i], "--tapepool", tapepool["name"]]
-                try:
-                    logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
-#                    output = check_output(command, stderr = STDOUT, timeout = timeout).decode("UTF-8")
-                except Exception as error:
-                    logging.error(format(error))
-                    sys.exit(-1)
-                logging.info("Tape: " + format(supplytapes[i]) + " moved to the pool: " + tapepool["name"])
+                if i < len(supplytapes):
+                    command = [ctaadmin, "tape", "ch", "--vid", supplytapes[i], "--tapepool", tapepool["name"]]
+                    try:
+                        logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
+#                        output = check_output(command, stderr = STDOUT, timeout = timeout).decode("UTF-8")
+                    except Exception as error:
+                        logging.error(format(error))
+                        sys.exit(-1)
+                    logging.info("Tape: " + format(supplytapes[i]) + " moved to the pool: " + tapepool["name"])
+                else:
+                    logging.warn("Unable to completely re-fill the tape pool: " + tapepool["name"] + ", run out of supply tapes")
         else:
             logging.warn("Unable to re-fill the tape pool: " + tapepool["name"] + ", no eligible supply tapes identified")
 
