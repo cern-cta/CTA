@@ -25,6 +25,7 @@
 #include "OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/range.hpp"
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
@@ -300,6 +301,87 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   moutInfo.reset(nullptr);
 }
 
+
+TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
+  using namespace cta;
+#ifndef STDOUT_LOGGING
+  cta::log::DummyLogger dl("", "");
+#else
+  cta::log::StdoutLogger dl("", "");
+#endif
+  cta::log::LogContext lc(dl);
+
+  cta::SchedulerDatabase &db = getDb();
+
+  // Create the disk system list
+  cta::disk::DiskSystemList diskSystemList;
+  diskSystemList.push_back(cta::disk::DiskSystem{"ds-A", "$root://a.disk.system/", "query:todo", 60, 10UL*1000*1000*1000});
+  diskSystemList.push_back(cta::disk::DiskSystem{"ds-B", "$root://b.disk.system/", "query:todo", 60, 10UL*1000*1000*1000});
+  
+  // Inject 10 retrieve jobs to the db.
+  const size_t filesToDo = 10;
+  std::list<std::future<void>> jobInsertions;
+  std::list<std::function<void()>> lambdas;
+  for (auto i: cta::range<size_t>(filesToDo)) {
+    lambdas.emplace_back(
+    [i,&db,&lc](){
+      cta::common::dataStructures::RetrieveRequest rr;
+      cta::log::LogContext locallc=lc;
+      cta::common::dataStructures::RetrieveFileQueueCriteria rfqc;
+      rfqc.mountPolicy.name = "mountPolicy";
+      rfqc.mountPolicy.archivePriority = 1;
+      rfqc.mountPolicy.archiveMinRequestAge = 0;
+      rfqc.mountPolicy.retrievePriority = 1;
+      rfqc.mountPolicy.retrieveMinRequestAge = 0;
+      rfqc.mountPolicy.maxDrivesAllowed = 10;
+      rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
+      rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      rfqc.mountPolicy.comment = "comment";
+      rfqc.archiveFile.fileSize = 1000;
+      rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+      rfqc.archiveFile.tapeFiles.back().fSeq = i;
+      rfqc.archiveFile.tapeFiles.back().vid = "vid";
+      rr.creationLog = { "user", "host", time(nullptr)};
+      uuid_t fileUUID;
+      uuid_generate(fileUUID);
+      char fileUUIDStr[37];
+      uuid_unparse(fileUUID, fileUUIDStr);
+      rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
+      rr.diskFileInfo.owner = "user";
+      rr.diskFileInfo.group = "group";
+      rr.requester = { "user", "group" };
+      rr.dstURL = std::string ("root://") + (i%2?"b":"a") + "disk.system/" + std::to_string(i);
+      std::string dsName = (i%2?"ds-B":"ds-A");
+      db.queueRetrieve(rr, rfqc, dsName, locallc);
+    });
+    jobInsertions.emplace_back(std::async(std::launch::async,lambdas.back()));
+  }
+  for (auto &j: jobInsertions) { j.get(); }
+  jobInsertions.clear();
+  lambdas.clear();
+  db.waitSubthreadsComplete();
+
+  // Then load all archive jobs into memory
+  // Create mount.
+  auto moutInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1, moutInfo->potentialMounts.size());
+  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
+  auto rjb = rm->getNextJobBatch(20,20*1000,diskSystemList, lc);
+  ASSERT_EQ(filesToDo, rjb.size());
+  std::list <cta::SchedulerDatabase::RetrieveJob*> jobBatch;
+  for (auto &rj: rjb) {
+    rj->asyncSetSuccessful();
+    ASSERT_TRUE((bool)rj->diskSystemName);
+    ASSERT_EQ(rj->archiveFile.tapeFiles.front().fSeq%2?"ds-B":"ds-A", rj->diskSystemName.value());
+    jobBatch.emplace_back(rj.get());
+  }
+  rm->flushAsyncSuccessReports(jobBatch, lc);
+  rjb.clear();
+  ASSERT_EQ(0, rm->getNextJobBatch(20,20*1000,diskSystemList, lc).size());
+  rm->complete(time(nullptr));
+  rm.reset(nullptr);
+  moutInfo.reset(nullptr);
+}
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;

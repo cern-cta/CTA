@@ -379,6 +379,7 @@ public:
     } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::RetrieveRequest retrieveRequest;
+    optional<std::string> diskSystemName;
     uint32_t selectedCopyNb;
     bool isRepack = false;
     /** Set the job successful (async). Wait() and end of report happen in RetrieveMount::flushAsyncSuccessReports() */

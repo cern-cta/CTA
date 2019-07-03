@@ -3454,6 +3454,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
   {
     std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), m_oStoreDB, this));
     rj->archiveFile = j.archiveFile;
+    rj->diskSystemName = j.diskSystemName;
     rj->retrieveRequest = j.rr;
     rj->selectedCopyNb = j.copyNb;
     rj->isRepack = j.repackInfo.isRepack;
