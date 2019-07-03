@@ -36,6 +36,7 @@ import sys
 import json
 import logging
 from random import shuffle
+from datetime import datetime
 from subprocess import STDOUT, check_output
 
 ##########
@@ -87,6 +88,7 @@ def extract_eligible_tapes(disabledlibraries, tapepool):
 # MAIN
 #
 ##########
+logging.info("Current time: " + format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
 # Extract the list of all tape pools from CTA (in the JSON format)
 command = [ctaadmin, "--json", "tapepool", "ls"]
