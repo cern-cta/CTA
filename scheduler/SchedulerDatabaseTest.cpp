@@ -183,7 +183,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
     });
     jobInsertions.emplace_back(std::async(std::launch::async,lambdas.back()));
   }
-  for (auto &j: jobInsertions) { j.wait(); }
+  for (auto &j: jobInsertions) { j.get(); }
   jobInsertions.clear();
   lambdas.clear();
   db.waitSubthreadsComplete();
@@ -263,7 +263,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
     });
     jobInsertions.emplace_back(std::async(std::launch::async,lambdas.back()));
   }  
-  for (auto &j: jobInsertions) { j.wait(); }
+  for (auto &j: jobInsertions) { j.get(); }
   jobInsertions.clear();
   lambdas.clear();
   
