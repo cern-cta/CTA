@@ -27,6 +27,8 @@
 #include "Helpers.hpp"
 #include "common/utils/utils.hpp"
 #include "LifecycleTimingsSerDeser.hpp"
+#include "Sorter.hpp"
+#include "AgentWrapper.hpp"
 #include <google/protobuf/util/json_util.h>
 #include <cmath>
 
@@ -84,21 +86,65 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   using serializers::RetrieveJobStatus;
   std::set<std::string> candidateVids;
   for (auto &j: m_payload.jobs()) {
-    if (j.status() == RetrieveJobStatus::RJS_ToTransferForUser) {
-      // Find the job details in tape file
-      for (auto &tf: m_payload.archivefile().tapefiles()) {
-        if (tf.copynb() == j.copynb()) {
-          candidateVids.insert(tf.vid());
-          goto found;
+    switch(j.status()){
+      case RetrieveJobStatus::RJS_ToTransferForUser:
+        // Find the job details in tape file
+        for (auto &tf: m_payload.archivefile().tapefiles()) {
+          if (tf.copynb() == j.copynb()) {
+            candidateVids.insert(tf.vid());
+            goto found;
+          }
         }
-      }
-      {
-        std::stringstream err;
-        err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << j.copynb();
-        throw exception::Exception(err.str());
-      }
-    found:;
+        {
+          std::stringstream err;
+          err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << j.copynb();
+          throw exception::Exception(err.str());
+        }
+        break;
+      case RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
+      case RetrieveJobStatus::RJS_ToReportToRepackForFailure:
+        //We don't have any vid to find, we just need to
+        //Requeue it into RetrieveQueueToReportToRepackForSuccess or into the RetrieveQueueToReportToRepackForFailure (managed by the sorter)
+        for (auto &tf: m_payload.archivefile().tapefiles()) {
+          if (tf.copynb() == j.copynb()) {
+            Sorter sorter(agentReference,m_objectStore,catalogue);
+            std::shared_ptr<RetrieveRequest> rr = std::make_shared<RetrieveRequest>(*this);
+            cta::objectstore::Agent agentRR(getOwner(),m_objectStore);
+            cta::objectstore::AgentWrapper agentRRWrapper(agentRR);
+            sorter.insertRetrieveRequest(rr,agentRRWrapper,cta::optional<uint32_t>(tf.copynb()),lc);
+            std::string retrieveQueueAddress = rr->getRepackInfo().repackRequestAddress;
+            this->m_exclusiveLock->release();
+            cta::objectstore::Sorter::MapRetrieve allRetrieveJobs = sorter.getAllRetrieve();
+            std::list<std::tuple<cta::objectstore::Sorter::RetrieveJob,std::future<void>>> allFutures;
+            cta::utils::Timer t;
+            cta::log::TimingList tl;
+            for(auto& kv: allRetrieveJobs){
+              for(auto& job: kv.second){
+                allFutures.emplace_back(std::make_tuple(std::get<0>(job->jobToQueue),std::get<1>(job->jobToQueue).get_future()));
+              }
+            }
+            sorter.flushAll(lc);
+            tl.insertAndReset("sorterFlushingTime",t);
+            for(auto& future: allFutures){
+              //Throw an exception in case of failure
+              std::get<1>(future).get();
+            }
+            log::ScopedParamContainer params(lc);
+            params.add("jobObject", getAddressIfSet())
+                  .add("fileId", m_payload.archivefile().archivefileid())
+                  .add("queueObject", retrieveQueueAddress)
+                  .add("copynb", tf.copynb())
+                  .add("tapeVid", tf.vid());
+            tl.addToLog(params);
+            lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the repack retrieve request.");
+            return;
+          }
+        }
+        break;
+      default:
+        break;
     }
+    found:;
   }
   std::string bestVid;
   // If no tape file is a candidate, we just need to skip to queueing to the failed queue

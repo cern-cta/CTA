@@ -3623,7 +3623,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
           cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,
           serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess, req->m_activityDescription});
       requestToJobMap[&req->m_retrieveRequest] = req;
-    }
+       }
     RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     try {
       rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.first, insertedRequests, lc);
