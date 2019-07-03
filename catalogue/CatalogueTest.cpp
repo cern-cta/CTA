@@ -11755,9 +11755,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFileRegexp) {
     const auto creationLog = diskSystem.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const auto lastModificationLog = diskSystem.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
@@ -11876,9 +11873,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFreeSpaceQueryURL) {
     const auto creationLog = diskSystem.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const auto lastModificationLog = diskSystem.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
@@ -11997,9 +11991,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemRefreshInterval) {
     const auto creationLog = diskSystem.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const auto lastModificationLog = diskSystem.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
@@ -12118,9 +12109,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemTargetedFreeSpace) {
     const auto creationLog = diskSystem.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const auto lastModificationLog = diskSystem.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
@@ -12239,9 +12227,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemComment) {
     const auto creationLog = diskSystem.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const auto lastModificationLog = diskSystem.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
   }
 }
 
