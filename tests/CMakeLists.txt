@@ -101,6 +101,8 @@ add_executable(cta-systemTests
   system_tests.cpp
   ${GMOCK_SRC})
 
+set_property (TARGET cta-systemTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+
 target_link_libraries(cta-systemTests
   systemTestHelperTests
   cta-tapedSystemTests
