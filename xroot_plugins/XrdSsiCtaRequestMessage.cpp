@@ -240,6 +240,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM):
                processDiskSystem_Rm(response);
                break;  
+            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH):
+               processDiskSystem_Ch(response);
+               break;  
                
             default:
                throw PbException("Admin command pair <" +
@@ -1541,6 +1544,36 @@ void RequestMessage::processDiskSystem_Add(cta::xrd::Response &response)
     refreshInterval, targetedFreeSpace, comment);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskSystem_Ch(cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   const auto &name              = getRequired(OptionString::DISK_SYSTEM);
+   const auto &fileRegexp        = getOptional(OptionString::FILE_REGEXP);
+   const auto &freeSpaceQueryURL = getOptional(OptionString::FREE_SPACE_QUERY_URL);
+   const auto  refreshInterval   = getOptional(OptionUInt64::REFRESH_INTERVAL);
+   const auto  targetedFreeSpace = getOptional(OptionUInt64::TARGETED_FREE_SPACE);
+   const auto  comment           = getOptional(OptionString::COMMENT);
+   
+   if(comment) {
+      m_catalogue.modifyDiskSystemComment(m_cliIdentity, name, comment.value());
+   }
+   if(fileRegexp) {
+      m_catalogue.modifyDiskSystemFileRegexp(m_cliIdentity, name, fileRegexp.value());
+   }
+   if(freeSpaceQueryURL) {
+      m_catalogue.modifyDiskSystemFreeSpaceQueryURL(m_cliIdentity, name, freeSpaceQueryURL.value());
+   }
+   if(refreshInterval) {
+      m_catalogue.modifyDiskSystemRefreshInterval(m_cliIdentity, name, refreshInterval.value());
+   }
+   if(targetedFreeSpace) {
+      m_catalogue.modifyDiskSystemTargetedFreeSpace(m_cliIdentity, name, targetedFreeSpace.value());
+   }
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 void RequestMessage::processDiskSystem_Rm(cta::xrd::Response &response)

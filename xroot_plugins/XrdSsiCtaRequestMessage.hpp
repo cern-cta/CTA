@@ -185,6 +185,7 @@ private:
   void processTapePool_Ch           (cta::xrd::Response &response);
   void processTapePool_Rm           (cta::xrd::Response &response);
   void processDiskSystem_Add        (cta::xrd::Response &response);
+  void processDiskSystem_Ch         (cta::xrd::Response &response);
   void processDiskSystem_Rm         (cta::xrd::Response &response);
   
   /*!

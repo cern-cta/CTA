@@ -352,7 +352,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "rm", "ls" } }},
+   { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" } }},
 };
 
 
@@ -546,6 +546,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_ADD   },
       { opt_disksystem, opt_file_regexp, opt_free_space_query_url, opt_refresh_interval, opt_targeted_free_space,
         opt_comment }},
+   {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_CH    },
+      { opt_disksystem, opt_file_regexp.optional(), opt_free_space_query_url.optional(), opt_refresh_interval.optional(),
+        opt_targeted_free_space.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_RM    }, { opt_disksystem }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_LS    }, { }},
 };
