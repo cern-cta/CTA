@@ -55,7 +55,7 @@
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
-#include "common/dataStructures/DiskSystem.hpp"
+#include "disk/DiskSystem.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -498,7 +498,7 @@ public:
    * @return The disk systems.
    * requester group.
    */
-  virtual common::dataStructures::DiskSystemList getAllDiskSystems() const = 0;
+  virtual disk::DiskSystemList getAllDiskSystems() const = 0;
   
   /**
    * Creates a disk system.

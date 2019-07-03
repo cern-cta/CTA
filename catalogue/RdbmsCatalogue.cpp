@@ -4247,9 +4247,9 @@ std::list<common::dataStructures::ActivitiesFairShareWeights> RdbmsCatalogue::ge
 //------------------------------------------------------------------------------
 // getAllDiskSystems
 //------------------------------------------------------------------------------
-common::dataStructures::DiskSystemList RdbmsCatalogue::getAllDiskSystems() const {
+disk::DiskSystemList RdbmsCatalogue::getAllDiskSystems() const {
   try {
-    common::dataStructures::DiskSystemList diskSystemList;
+    disk::DiskSystemList diskSystemList;
     std::string sql =
       "SELECT "
         "DISK_SYSTEM.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
@@ -4275,7 +4275,7 @@ common::dataStructures::DiskSystemList RdbmsCatalogue::getAllDiskSystems() const
 
     auto rset = stmt.executeQuery();
     while (rset.next()) {
-      common::dataStructures::DiskSystem diskSystem;
+      disk::DiskSystem diskSystem;
       diskSystem.name = rset.columnString("DISK_SYSTEM_NAME");
       diskSystem.fileRegexp = rset.columnString("FILE_REGEXP");
       diskSystem.freeSpaceQueryURL = rset.columnString("FREE_SPACE_QUERY_URL");

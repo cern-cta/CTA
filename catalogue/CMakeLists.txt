@@ -165,7 +165,7 @@ set_property(TARGET ctainmemorycatalogueunittests PROPERTY SOVERSION "${CTA_SOVE
 set_property(TARGET ctainmemorycatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctainmemorycatalogueunittests
-  ctacatalogue)
+  ctacatalogue ctadisk)
 
 install (TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

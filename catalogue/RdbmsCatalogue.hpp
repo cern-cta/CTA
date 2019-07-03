@@ -511,7 +511,7 @@ public:
    * @return The disk systems.
    * requester group.
    */
-  common::dataStructures::DiskSystemList getAllDiskSystems() const override;
+  disk::DiskSystemList getAllDiskSystems() const override;
   
   /**
    * Creates a disk system.

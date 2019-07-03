@@ -315,8 +315,10 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
 
   // Create the disk system list
   cta::disk::DiskSystemList diskSystemList;
-  diskSystemList.push_back(cta::disk::DiskSystem{"ds-A", "$root://a.disk.system/", "query:todo", 60, 10UL*1000*1000*1000});
-  diskSystemList.push_back(cta::disk::DiskSystem{"ds-B", "$root://b.disk.system/", "query:todo", 60, 10UL*1000*1000*1000});
+  diskSystemList.push_back(cta::disk::DiskSystem{"ds-A", "$root://a.disk.system/", "query:todo", 60, 10UL*1000*1000*1000,
+      common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
+  diskSystemList.push_back(cta::disk::DiskSystem{"ds-B", "$root://b.disk.system/", "query:todo", 60, 10UL*1000*1000*1000,
+      common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
   
   // Inject 10 retrieve jobs to the db.
   const size_t filesToDo = 10;

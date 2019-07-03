@@ -21,8 +21,7 @@
 #include <algorithm>
 
 namespace cta {
-namespace common {
-namespace dataStructures {
+namespace disk {
 
 const DiskSystem& DiskSystemList::at(const std::string& name) {
   auto dsi = std::find_if(begin(), end(), [&](const DiskSystem& ds){ return ds.name == name;});
@@ -50,6 +49,4 @@ std::string DiskSystemList::getFSNAme(const std::string& fileURL) {
   
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}} // namespace cta::disk

@@ -18,14 +18,12 @@
 
 #pragma once
 
-#include <string>
-#include <list>
 #include "common/utils/Regex.hpp"
 #include "common/dataStructures/EntryLog.hpp"
+#include <string>
+#include <list>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta { namespace disk {
 
 /**
  * Description of a disk system as defined by operators.
@@ -43,7 +41,6 @@ struct DiskSystem {
   std::string freeSpaceQueryURL;
   uint64_t refreshInterval;
   uint64_t targetedFreeSpace;
-  
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
   std::string comment;
@@ -69,6 +66,5 @@ private:
   
 };
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}} // namespace cta::common
+

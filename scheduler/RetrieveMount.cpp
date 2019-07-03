@@ -138,7 +138,7 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
   if (!m_sessionRunning)
     throw SessionNotRunning("In RetrieveMount::getNextJobBatch(): trying to get job from complete/not started session");
   // Get the current file systems list from the catalogue
-  common::dataStructures::DiskSystemList diskSystemList;
+  disk::DiskSystemList diskSystemList;
   if (m_catalogue) diskSystemList = m_catalogue->getAllDiskSystems();
   // Try and get a new job from the DB
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> dbJobBatch(m_dbMount->getNextJobBatch(filesRequested,

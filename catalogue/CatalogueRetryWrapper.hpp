@@ -361,7 +361,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getActivitiesFairShareWeights();}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::DiskSystemList getAllDiskSystems() const override {
+  disk::DiskSystemList getAllDiskSystems() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getAllDiskSystems();}, m_maxTriesToConnect);
   }
   
