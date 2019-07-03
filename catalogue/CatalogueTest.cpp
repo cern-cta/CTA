@@ -11702,6 +11702,611 @@ TEST_P(cta_catalogue_CatalogueTest, deleteDiskSystem_non_existant) {
   ASSERT_THROW(m_catalogue->deleteDiskSystem("non_exsitant_disk_system"), catalogue::UserSpecifiedANonExistentDiskSystem);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFileRegexp) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+    
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedFileRegexp = "modified_fileRegexp";
+  m_catalogue->modifyDiskSystemFileRegexp(m_admin, name, modifiedFileRegexp);
+
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(modifiedFileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFileRegexp_emptyStringDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "";
+  const std::string modifiedFileRegexp = "modified_fileRegexp";
+  ASSERT_THROW(m_catalogue->modifyDiskSystemFileRegexp(m_admin, diskSystemName, modifiedFileRegexp),
+    catalogue::UserSpecifiedAnEmptyStringDiskSystemName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFileRegexp_nonExistentDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "dummyDiskSystemName";
+  const std::string modifiedFileRegexp = "modified_fileRegexp";
+  ASSERT_THROW(m_catalogue->modifyDiskSystemFileRegexp(m_admin, diskSystemName, modifiedFileRegexp),
+    catalogue::UserSpecifiedANonExistentDiskSystem);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFileRegexp_emptyStringFileRegexp) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+ const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedFileRegexp = "";
+  ASSERT_THROW(m_catalogue->modifyDiskSystemFileRegexp(m_admin, name, modifiedFileRegexp),
+    catalogue::UserSpecifiedAnEmptyStringFileRegexp);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFreeSpaceQueryURL) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+    
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedFreeSpaceQueryURL = "modified_freeSpaceQueryURL";
+  m_catalogue->modifyDiskSystemFreeSpaceQueryURL(m_admin, name, modifiedFreeSpaceQueryURL);
+
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(modifiedFreeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFreeSpaceQueryURL_emptyStringDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "";
+  const std::string modifiedFreeSpaceQueryURL = "modified_freeSpaceQueryURL";
+  ASSERT_THROW(m_catalogue->modifyDiskSystemFreeSpaceQueryURL(m_admin, diskSystemName, modifiedFreeSpaceQueryURL),
+    catalogue::UserSpecifiedAnEmptyStringDiskSystemName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFreeSpaceQueryURL_nonExistentDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "dummyDiskSystemName";
+  const std::string modifiedFreeSpaceQueryURL = "modified_freeSpaceQueryURL";
+  ASSERT_THROW(m_catalogue->modifyDiskSystemFreeSpaceQueryURL(m_admin, diskSystemName, modifiedFreeSpaceQueryURL),
+    catalogue::UserSpecifiedANonExistentDiskSystem);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFreeSpaceQueryURL_emptyStringFreeSpaceQueryURL) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+ const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedFreeSpaceQueryURL = "";
+  ASSERT_THROW(m_catalogue->modifyDiskSystemFreeSpaceQueryURL(m_admin, name, modifiedFreeSpaceQueryURL),
+    catalogue::UserSpecifiedAnEmptyStringFreeSpaceQueryURL);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemRefreshInterval) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+    
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedRefreshInterval = 128;
+  m_catalogue->modifyDiskSystemRefreshInterval(m_admin, name, modifiedRefreshInterval);
+
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(modifiedRefreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemRefreshInterval_emptyStringDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "";
+  const uint64_t modifiedRefreshInterval = 128;
+  ASSERT_THROW(m_catalogue->modifyDiskSystemRefreshInterval(m_admin, diskSystemName, modifiedRefreshInterval),
+    catalogue::UserSpecifiedAnEmptyStringDiskSystemName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemRefreshInterval_nonExistentDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "dummyDiskSystemName";
+  const uint64_t modifiedRefreshInterval = 128;
+  ASSERT_THROW(m_catalogue->modifyDiskSystemRefreshInterval(m_admin, diskSystemName, modifiedRefreshInterval),
+    catalogue::UserSpecifiedANonExistentDiskSystem);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemRefreshInterval_zeroRefreshInterval) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+ const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedRefreshInterval = 0;
+  ASSERT_THROW(m_catalogue->modifyDiskSystemRefreshInterval(m_admin, name, modifiedRefreshInterval),
+    catalogue::UserSpecifiedAZeroRefreshInterval);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemTargetedFreeSpace) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+    
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedTargetedFreeSpace = 128;
+  m_catalogue->modifyDiskSystemTargetedFreeSpace(m_admin, name, modifiedTargetedFreeSpace);
+
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(modifiedTargetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemTargetedFreeSpace_emptyStringDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "";
+  const uint64_t modifiedTargetedFreeSpace = 128;
+  ASSERT_THROW(m_catalogue->modifyDiskSystemTargetedFreeSpace(m_admin, diskSystemName, modifiedTargetedFreeSpace),
+    catalogue::UserSpecifiedAnEmptyStringDiskSystemName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemTargetedFreeSpace_nonExistentDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "dummyDiskSystemName";
+  const uint64_t modifiedTargetedFreeSpace = 128;
+  ASSERT_THROW(m_catalogue->modifyDiskSystemTargetedFreeSpace(m_admin, diskSystemName, modifiedTargetedFreeSpace),
+    catalogue::UserSpecifiedANonExistentDiskSystem);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemTargetedFreeSpace_zeroTargetedFreeSpace) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+ const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedTargetedFreeSpace = 0;
+  ASSERT_THROW(m_catalogue->modifyDiskSystemTargetedFreeSpace(m_admin, name, modifiedTargetedFreeSpace),
+    catalogue::UserSpecifiedAZeroTargetedFreeSpace);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+    
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedComment = "modified_comment";
+  m_catalogue->modifyDiskSystemComment(m_admin, name, modifiedComment);
+
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(modifiedComment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemComment_emptyStringDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "";
+  const std::string modifiedComment = "modified_comment";
+  ASSERT_THROW(m_catalogue->modifyDiskSystemComment(m_admin, diskSystemName, modifiedComment),
+    catalogue::UserSpecifiedAnEmptyStringDiskSystemName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemComment_nonExistentDiskSystemName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+  const std::string diskSystemName = "dummyDiskSystemName";
+  const std::string modifiedComment = "modified_comment";
+  ASSERT_THROW(m_catalogue->modifyDiskSystemComment(m_admin, diskSystemName, modifiedComment),
+    catalogue::UserSpecifiedANonExistentDiskSystem);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemCommentL_emptyStringComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
+
+ const std::string name = "disk_system_name";
+  const std::string fileRegexp = "file_regexp";
+  const std::string freeSpaceQueryURL = "free_space_query_url";
+  const uint64_t refreshInterval = 32;
+  const uint64_t targetedFreeSpace = 64;
+  const std::string comment = "disk system comment";
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+    freeSpaceQueryURL, refreshInterval, targetedFreeSpace, comment);
+  
+  {
+    const auto diskSystemList = m_catalogue->getAllDiskSystems();
+    ASSERT_EQ(1, diskSystemList.size());
+
+    const auto &diskSystem = diskSystemList.front();
+    ASSERT_EQ(name, diskSystem.name);
+    ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
+    ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
+    ASSERT_EQ(refreshInterval, diskSystem.refreshInterval);
+    ASSERT_EQ(targetedFreeSpace, diskSystem.targetedFreeSpace);
+    ASSERT_EQ(comment, diskSystem.comment);
+
+    const auto creationLog = diskSystem.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskSystem.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedComment = "";
+  ASSERT_THROW(m_catalogue->modifyDiskSystemComment(m_admin, name, modifiedComment),
+    catalogue::UserSpecifiedAnEmptyStringComment);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   using namespace cta;
 

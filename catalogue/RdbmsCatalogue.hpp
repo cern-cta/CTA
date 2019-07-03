@@ -543,7 +543,18 @@ public:
    * 
    * @param name The name of the disk system.
    */
-   void deleteDiskSystem(const std::string &name) override;
+  void deleteDiskSystem(const std::string &name) override;
+   
+  void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &fileRegexp) override;
+  void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &freeSpaceQueryURL) override;
+  void modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t refreshInterval) override;
+  void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t targetedFreeSpace) override;
+  void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &comment) override;
   
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid

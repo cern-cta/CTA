@@ -4430,6 +4430,211 @@ void RdbmsCatalogue::deleteDiskSystem(const std::string &name) {
   }
 }
 
+void RdbmsCatalogue::modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &fileRegexp) {
+  try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
+        " because the disk system name is an empty string");
+    }
+    if(fileRegexp.empty()) {
+      throw UserSpecifiedAnEmptyStringFileRegexp("Cannot modify disk system "
+        "because the new fileRegexp is an empty string");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE DISK_SYSTEM SET "
+        "FILE_REGEXP = :FILE_REGEXP,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":FILE_REGEXP", fileRegexp);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":DISK_SYSTEM_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &freeSpaceQueryURL) {
+  try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
+        " because the disk system name is an empty string");
+    }
+    if(freeSpaceQueryURL.empty()) {
+      throw UserSpecifiedAnEmptyStringFreeSpaceQueryURL("Cannot modify disk system "
+        "because the new freeSpaceQueryURL is an empty string");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE DISK_SYSTEM SET "
+        "FREE_SPACE_QUERY_URL = :FREE_SPACE_QUERY_URL,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":FREE_SPACE_QUERY_URL", freeSpaceQueryURL);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":DISK_SYSTEM_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }  
+}
+
+void RdbmsCatalogue::modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const uint64_t refreshInterval) {
+    try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
+        " because the disk system name is an empty string");
+    }
+    if(0 == refreshInterval) {
+      throw UserSpecifiedAZeroRefreshInterval("Cannot modify disk system "
+        "because the new refresh interval has zero value");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE DISK_SYSTEM SET "
+        "REFRESH_INTERVAL = :REFRESH_INTERVAL,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":REFRESH_INTERVAL", refreshInterval);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":DISK_SYSTEM_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const uint64_t targetedFreeSpace) {
+      try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
+        " because the disk system name is an empty string");
+    }
+    if(0 == targetedFreeSpace) {
+      throw UserSpecifiedAZeroTargetedFreeSpace("Cannot modify disk system "
+        "because the new targeted free space has zero value");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE DISK_SYSTEM SET "
+        "TARGETED_FREE_SPACE = :TARGETED_FREE_SPACE,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":TARGETED_FREE_SPACE", targetedFreeSpace);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":DISK_SYSTEM_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &comment) {
+  try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
+        " because the disk system name is an empty string");
+    }
+    if(comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment("Cannot modify disk system "
+        "because the new comment is an empty string");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE DISK_SYSTEM SET "
+        "USER_COMMENT = :USER_COMMENT,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":DISK_SYSTEM_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }  
+}
+
 //------------------------------------------------------------------------------
 // insertArchiveFile
 //------------------------------------------------------------------------------

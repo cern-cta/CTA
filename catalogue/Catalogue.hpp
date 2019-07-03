@@ -530,8 +530,19 @@ public:
    * 
    * @param name The name of the disk system.
    */
-   virtual void deleteDiskSystem(const std::string &name) = 0;
+  virtual void deleteDiskSystem(const std::string &name) = 0;
   
+  virtual void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &fileRegexp) = 0;
+  virtual void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &freeSpaceQueryURL) = 0;
+  virtual void modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t refreshInterval) = 0;
+  virtual void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t targetedFreeSpace) = 0;
+  virtual void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &comment) = 0;
+      
   /**
    * Returns the specified archive files.  Please note that the list of files
    * is ordered by archive file ID.
