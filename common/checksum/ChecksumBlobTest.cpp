@@ -38,6 +38,14 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   ASSERT_EQ(checksumBlob.empty(), true);
   ASSERT_EQ(checksumBlob.size(), 0);
 
+  // Checksum type not in blob
+  ASSERT_THROW(checksumBlob.at(NONE),    ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(ADLER32), ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(CRC32),   ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(CRC32C),  ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(MD5),     ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(SHA1),    ChecksumTypeMismatch);
+
   // valid insertions
   checksumBlob.insert(NONE, "");                      // 0 bits
   ASSERT_EQ(checksumBlob.size(), 1);
