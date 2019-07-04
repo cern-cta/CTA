@@ -4329,7 +4329,14 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
     stmt.bindUint64(":DISK_FILE_GID", row.diskFileGid);
     stmt.bindUint64(":SIZE_IN_BYTES", row.size);
     stmt.bindBlob  (":CHECKSUM_BLOB", row.checksumBlob.serialize());
-    stmt.bindBlob  (":CHECKSUM_ADLER32", "0x" + checksum::ChecksumBlob::ByteArrayToHex(row.checksumBlob.at(checksum::ADLER32)));
+    // Keep transition ADLER32 checksum up-to-date if it exists
+    std::string adler32str;
+    try {
+      adler32str = checksum::ChecksumBlob::ByteArrayToHex(row.checksumBlob.at(checksum::ADLER32));
+    } catch(exception::ChecksumTypeMismatch &ex) {
+      adler32str = "0";
+    }
+    stmt.bindBlob  (":CHECKSUM_ADLER32", "0x" + adler32str);
     stmt.bindString(":STORAGE_CLASS_NAME", row.storageClassName);
     stmt.bindUint64(":CREATION_TIME", now);
     stmt.bindUint64(":RECONCILIATION_TIME", now);

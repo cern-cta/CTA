@@ -135,7 +135,14 @@ public:
    * Return the checksum for the specified key
    */
   std::string at(ChecksumType type) const {
-    return m_cs.at(type);
+    try {
+      return m_cs.at(type);
+    } catch(std::out_of_range) {
+      std::stringstream ss;
+      ss << ChecksumTypeName.at(type) << " checksum not found. Checksum blob contents: "
+         << *this;
+      throw exception::ChecksumTypeMismatch(ss.str());
+    }
   }
 
   /*!
