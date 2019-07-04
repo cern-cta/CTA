@@ -61,7 +61,7 @@ MysqlConn::MysqlConn(const std::string& host,
 
   if (mysql_real_connect(m_mysqlConn, host.c_str(),
                          user.c_str(), passwd.c_str(), db.c_str(), port, 
-                         NULL, 0) == NULL) {
+                         NULL, CLIENT_FOUND_ROWS) == NULL) {
     unsigned int rc = mysql_errno(m_mysqlConn);
     std::string msg = mysql_error(m_mysqlConn);
     throw exception::Exception(std::string(" errno: ") + std::to_string(rc) + " " +  msg);
