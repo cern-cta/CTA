@@ -382,6 +382,7 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
@@ -424,7 +425,11 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumBlob.deserialize(selectRset.columnBlob("CHECKSUM_BLOB"));
+        if(selectRset.columnBlob("CHECKSUM_BLOB").empty()) {
+          archiveFile->checksumBlob.insert(checksum::ADLER32, selectRset.columnUint64("CHECKSUM_ADLER32"));
+        } else {
+          archiveFile->checksumBlob.deserialize(selectRset.columnBlob("CHECKSUM_BLOB"));
+        }
         archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");

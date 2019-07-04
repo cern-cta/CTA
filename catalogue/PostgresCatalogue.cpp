@@ -81,6 +81,7 @@ namespace {
     rdbms::wrapper::PostgresColumn diskFileGroup;
     rdbms::wrapper::PostgresColumn size;
     rdbms::wrapper::PostgresColumn checksumBlob;
+    rdbms::wrapper::PostgresColumn checksumAdler32;
     rdbms::wrapper::PostgresColumn storageClassName;
     rdbms::wrapper::PostgresColumn creationTime;
     rdbms::wrapper::PostgresColumn reconciliationTime;
@@ -100,6 +101,7 @@ namespace {
       diskFileGroup("DISK_FILE_GID", nbRows),
       size("SIZE_IN_BYTES", nbRows),
       checksumBlob("CHECKSUM_BLOB", nbRows),
+      checksumAdler32("CHECKSUM_ADLER32", nbRows),
       storageClassName("STORAGE_CLASS_NAME", nbRows),
       creationTime("CREATION_TIME", nbRows),
       reconciliationTime("RECONCILIATION_TIME", nbRows) {
@@ -509,6 +511,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
         "CHECKSUM_BLOB,"
+        "CHECKSUM_ADLER32,"
         "STORAGE_CLASS_NAME,"
         "CREATION_TIME,"
         "RECONCILIATION_TIME) "
@@ -521,6 +524,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         ":DISK_FILE_GID,"
         ":SIZE_IN_BYTES,"
         ":CHECKSUM_BLOB,"
+        ":CHECKSUM_ADLER32,"
         ":STORAGE_CLASS_NAME,"
         ":CREATION_TIME,"
         ":RECONCILIATION_TIME";
@@ -552,6 +556,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
         "CHECKSUM_BLOB,"
+        "CHECKSUM_ADLER32,"
         "STORAGE_CLASS_ID,"
         "CREATION_TIME,"
         "RECONCILIATION_TIME) "
@@ -564,6 +569,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "A.DISK_FILE_GID,"
         "A.SIZE_IN_BYTES,"
         "A.CHECKSUM_BLOB," 
+        "A.CHECKSUM_ADLER32," 
         "S.STORAGE_CLASS_ID,"
         "A.CREATION_TIME,"
         "A.RECONCILIATION_TIME "
@@ -603,7 +609,8 @@ std::map<uint64_t, PostgresCatalogue::FileSizeAndChecksum> PostgresCatalogue::se
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB "
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32 "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN TEMP_TAPE_FILE_BATCH ON "
@@ -625,7 +632,11 @@ std::map<uint64_t, PostgresCatalogue::FileSizeAndChecksum> PostgresCatalogue::se
 
       FileSizeAndChecksum fileSizeAndChecksum;
       fileSizeAndChecksum.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      fileSizeAndChecksum.checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
+      if(rset.columnBlob("CHECKSUM_BLOB").empty()) {
+        fileSizeAndChecksum.checksumBlob.insert(checksum::ADLER32, rset.columnUint64("CHECKSUM_ADLER32"));
+      } else {          
+        fileSizeAndChecksum.checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
+      }
 
       fileSizesAndChecksums[archiveFileId] = fileSizeAndChecksum;
     }
@@ -689,6 +700,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
@@ -733,7 +745,11 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumBlob.deserialize(selectRset.columnBlob("CHECKSUM_BLOB"));
+        if(selectRset.columnBlob("CHECKSUM_BLOB").empty()) {
+          archiveFile->checksumBlob.insert(checksum::ADLER32, selectRset.columnUint64("CHECKSUM_ADLER32"));
+        } else {          
+          archiveFile->checksumBlob.deserialize(selectRset.columnBlob("CHECKSUM_BLOB"));
+        }
         archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");

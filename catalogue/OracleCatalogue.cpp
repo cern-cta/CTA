@@ -82,6 +82,7 @@ namespace {
     rdbms::wrapper::OcciColumn diskFileGroup;
     rdbms::wrapper::OcciColumn size;
     rdbms::wrapper::OcciColumn checksumBlob;
+    rdbms::wrapper::OcciColumn checksumAdler32;
     rdbms::wrapper::OcciColumn storageClassName;
     rdbms::wrapper::OcciColumn creationTime;
     rdbms::wrapper::OcciColumn reconciliationTime;
@@ -101,6 +102,7 @@ namespace {
       diskFileGroup("DISK_FILE_GID", nbRows),
       size("SIZE_IN_BYTES", nbRows),
       checksumBlob("CHECKSUM_BLOB", nbRows),
+      checksumAdler32("CHECKSUM_ADLER32", nbRows),
       storageClassName("STORAGE_CLASS_NAME", nbRows),
       creationTime("CREATION_TIME", nbRows),
       reconciliationTime("RECONCILIATION_TIME", nbRows) {
@@ -558,6 +560,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
         "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
         "CHECKSUM_BLOB,"
+        "CHECKSUM_ADLER32,"
         "STORAGE_CLASS_ID,"
         "CREATION_TIME,"
         "RECONCILIATION_TIME)"
@@ -570,6 +573,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
         ":DISK_FILE_GID,"
         ":SIZE_IN_BYTES,"
         ":CHECKSUM_BLOB,"
+        ":CHECKSUM_ADLER32,"
         "STORAGE_CLASS_ID,"
         ":CREATION_TIME,"
         ":RECONCILIATION_TIME "
@@ -590,6 +594,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
     occiStmt.setColumn(archiveFileBatch.diskFileGroup);
     occiStmt.setColumn(archiveFileBatch.size);
     occiStmt.setColumn(archiveFileBatch.checksumBlob, oracle::occi::OCCI_SQLT_VBI);
+    occiStmt.setColumn(archiveFileBatch.checksumAdler32);
     occiStmt.setColumn(archiveFileBatch.storageClassName);
     occiStmt.setColumn(archiveFileBatch.creationTime);
     occiStmt.setColumn(archiveFileBatch.reconciliationTime);
@@ -664,7 +669,8 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB "
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32 "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN TEMP_TAPE_FILE_BATCH ON "
@@ -686,8 +692,11 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
 
       FileSizeAndChecksum fileSizeAndChecksum;
       fileSizeAndChecksum.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      fileSizeAndChecksum.checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
-
+      if(rset.columnBlob("CHECKSUM_BLOB").empty()) {
+        fileSizeAndChecksum.checksumBlob.insert(checksum::ADLER32, rset.columnUint64("CHECKSUM_ADLER32"));
+      } else {          
+        fileSizeAndChecksum.checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
+      }
       fileSizesAndChecksums[archiveFileId] = fileSizeAndChecksum;
     }
 
@@ -758,6 +767,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
@@ -804,7 +814,11 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumBlob.deserialize(selectRset.columnBlob("CHECKSUM_BLOB"));
+        if(selectRset.columnBlob("CHECKSUM_BLOB").empty()) {
+          archiveFile->checksumBlob.insert(checksum::ADLER32, selectRset.columnUint64("CHECKSUM_ADLER32"));
+        } else {          
+          archiveFile->checksumBlob.deserialize(selectRset.columnBlob("CHECKSUM_BLOB"));
+        }
         archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");
