@@ -495,6 +495,16 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
       archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
       archiveFileBatch.size.setFieldValue(i, event.size);
       archiveFileBatch.checksumBlob.setFieldByteA(conn, i, event.checksumBlob.serialize());
+      // Keep transition ADLER32 checksum up-to-date if it exists
+      std::string adler32str;
+      try {
+        std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(event.checksumBlob.at(checksum::ADLER32));
+        uint32_t adler32 = strtoul(adler32hex.c_str(), 0, 16);
+        adler32str = std::to_string(adler32);
+      } catch(exception::ChecksumTypeMismatch &ex) {
+        adler32str = "0";
+      }
+      archiveFileBatch.checksumAdler32.setFieldValue(i, adler32str);
       archiveFileBatch.storageClassName.setFieldValue(i, event.storageClassName);
       archiveFileBatch.creationTime.setFieldValue(i, now);
       archiveFileBatch.reconciliationTime.setFieldValue(i, now);
@@ -540,6 +550,7 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
     postgresStmt.setColumn(archiveFileBatch.diskFileGroup);
     postgresStmt.setColumn(archiveFileBatch.size);
     postgresStmt.setColumn(archiveFileBatch.checksumBlob);
+    postgresStmt.setColumn(archiveFileBatch.checksumAdler32);
     postgresStmt.setColumn(archiveFileBatch.storageClassName);
     postgresStmt.setColumn(archiveFileBatch.creationTime);
     postgresStmt.setColumn(archiveFileBatch.reconciliationTime);

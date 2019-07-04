@@ -322,8 +322,6 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
       insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error
-    } catch(...) {
-      throw;
     }
 
     const time_t now = time(nullptr);

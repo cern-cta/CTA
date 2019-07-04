@@ -4086,7 +4086,7 @@ void RdbmsCatalogue::createActivitiesFairShareWeight(const common::dataStructure
     
     const time_t now = time(nullptr);
     const char *const sql =
-      "INSERT INTO ACTIVITIES_WEIGHTS ("
+      "INSERT INTO ACTIVITIES_WEIGHTS("
         "DISK_INSTANCE_NAME,"
         "ACTIVITY,"
         "WEIGHT,"
@@ -4330,13 +4330,14 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
     stmt.bindUint64(":SIZE_IN_BYTES", row.size);
     stmt.bindBlob  (":CHECKSUM_BLOB", row.checksumBlob.serialize());
     // Keep transition ADLER32 checksum up-to-date if it exists
-    std::string adler32str;
+    uint32_t adler32;
     try {
-      adler32str = checksum::ChecksumBlob::ByteArrayToHex(row.checksumBlob.at(checksum::ADLER32));
+      std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(row.checksumBlob.at(checksum::ADLER32));
+      adler32 = strtoul(adler32hex.c_str(), 0, 16);
     } catch(exception::ChecksumTypeMismatch &ex) {
-      adler32str = "0";
+      adler32 = 0;
     }
-    stmt.bindBlob  (":CHECKSUM_ADLER32", "0x" + adler32str);
+    stmt.bindUint64(":CHECKSUM_ADLER32", adler32);
     stmt.bindString(":STORAGE_CLASS_NAME", row.storageClassName);
     stmt.bindUint64(":CREATION_TIME", now);
     stmt.bindUint64(":RECONCILIATION_TIME", now);
