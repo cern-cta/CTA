@@ -1,5 +1,10 @@
 ###########################################################
-xrootd.fslib libXrdEosMgm.so
+# A prepare request with the Prep_EVICT flag can only call
+# XrdMgmOfs::prepare() if XRootD believes an alternative
+# Prepare plugin is present.  "xrootd.fslib -2" invokes
+# XrdSfsGetFileSystem2() which tells XRootD that such
+# a plugin is present.
+xrootd.fslib -2 libXrdEosMgm.so
 xrootd.seclib libXrdSec.so
 xrootd.async off nosf
 xrootd.chksum adler32
