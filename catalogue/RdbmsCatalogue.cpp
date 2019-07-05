@@ -4518,11 +4518,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
       archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
       archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      if(rset.columnBlob("CHECKSUM_BLOB").empty()) {
-        archiveFile.checksumBlob.insert(checksum::ADLER32, rset.columnUint64("CHECKSUM_ADLER32"));
-      } else {
-        archiveFile.checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
-      }
+      archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
       archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
       archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
       archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5463,11 +5459,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        if(rset.columnBlob("CHECKSUM_BLOB").empty()) {
-          archiveFile->checksumBlob.insert(checksum::ADLER32, rset.columnUint64("CHECKSUM_ADLER32"));
-        } else {          
-          archiveFile->checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
-        }
+        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5558,11 +5550,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        if(rset.columnBlob("CHECKSUM_BLOB").empty()) {
-          archiveFile->checksumBlob.insert(checksum::ADLER32, rset.columnUint64("CHECKSUM_ADLER32"));
-        } else {          
-          archiveFile->checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
-        }
+        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5706,11 +5694,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        if(rset.columnBlob("CHECKSUM_BLOB").empty()) {
-          archiveFile->checksumBlob.insert(checksum::ADLER32, rset.columnUint64("CHECKSUM_ADLER32"));
-        } else {          
-          archiveFile->checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
-        }
+        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5805,11 +5789,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        if(rset.columnBlob("CHECKSUM_BLOB").empty()) {
-          archiveFile->checksumBlob.insert(checksum::ADLER32, rset.columnUint64("CHECKSUM_ADLER32"));
-        } else {          
-          archiveFile->checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
-        }
+        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");

@@ -701,14 +701,9 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
           "Found duplicate archive file identifier in batch of files written to tape: archiveFileId=" << archiveFileId;
         throw ex;
       }
-
       FileSizeAndChecksum fileSizeAndChecksum;
       fileSizeAndChecksum.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      if(rset.columnBlob("CHECKSUM_BLOB").empty()) {
-        fileSizeAndChecksum.checksumBlob.insert(checksum::ADLER32, rset.columnUint64("CHECKSUM_ADLER32"));
-      } else {          
-        fileSizeAndChecksum.checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
-      }
+      fileSizeAndChecksum.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
       fileSizesAndChecksums[archiveFileId] = fileSizeAndChecksum;
     }
 
@@ -826,11 +821,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        if(selectRset.columnBlob("CHECKSUM_BLOB").empty()) {
-          archiveFile->checksumBlob.insert(checksum::ADLER32, selectRset.columnUint64("CHECKSUM_ADLER32"));
-        } else {          
-          archiveFile->checksumBlob.deserialize(selectRset.columnBlob("CHECKSUM_BLOB"));
-        }
+        archiveFile->checksumBlob.deserializeOrSetAdler32(selectRset.columnBlob("CHECKSUM_BLOB"), selectRset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");

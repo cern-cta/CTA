@@ -105,6 +105,11 @@ public:
   void deserialize(const std::string &bytearray);
 
   /*!
+   * Deserialize from a byte array. In case of an invalid byte array, use the supplied Adler32 value instead.
+   */
+  void deserializeOrSetAdler32(const std::string &bytearray, uint32_t adler32);
+
+  /*!
    * Serialise to a byte array
    */
   std::string serialize() const;
