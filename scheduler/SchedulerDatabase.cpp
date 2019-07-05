@@ -32,4 +32,13 @@ SchedulerDatabase::RepackRequestStatistics::RepackRequestStatistics() {
     operator [](s) = 0;
 }
 
+void SchedulerDatabase::DiskSpaceReservationRequest::addRequest(const std::string& diskSystemName, uint64_t size) {
+  try {
+    m_spaceMap.at(diskSystemName) += size;
+  } catch (std::out_of_range &) {
+    m_spaceMap[diskSystemName] = size;
+  }
+}
+
+
 } //namespace cta

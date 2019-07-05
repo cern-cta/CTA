@@ -233,6 +233,10 @@ namespace cta {
     /** An initialized-once factory for archive reports (indirectly used by ArchiveJobs) */
     disk::DiskReporterFactory m_reporterFactory;
     
+    /**
+     * Internal tracking of the full disk systems. It is one strike out (for the mount duration).
+     */
+    std::set<std::string> m_fullDiskSystems;
 
   }; // class RetrieveMount
 

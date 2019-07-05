@@ -22,6 +22,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 #include <string>
 #include <list>
+#include <set>
 
 namespace cta { namespace disk {
 
@@ -64,6 +65,19 @@ private:
   
   std::list<PointerAndRegex> m_pointersAndRegexes;
   
+};
+
+struct DiskSystemFreeSpace {
+  uint64_t freeSize;
+  time_t fetchTime;
+};
+
+class DiskSystemFreeSpaceList: public std::map<std::string, DiskSystemFreeSpace> {
+public:
+  DiskSystemFreeSpaceList(DiskSystemList &diskSystemList): m_systemList(diskSystemList) {}
+  void fetchFileSystemFreeSpace(const std::set<std::string> &fileSystems);
+private:
+  DiskSystemList &m_systemList;
 };
 
 }} // namespace cta::common

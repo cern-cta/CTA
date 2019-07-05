@@ -592,3 +592,20 @@ message RepackRequestQueuePointer {
 message RepackQueue {
   repeated RepackRequestQueuePointer repackrequestpointers = 12200;
 }
+
+message DiskSystemSpaceReservation {
+  required string holder = 12500;
+  required uint64 size = 12501;
+}
+
+message DiskSystemSpace {
+  required string name = 12300;
+  required uint64 free_space = 12301;
+  required uint64 last_measurement_time = 12302;
+  required uint64 targeted_free_space = 12303;
+  repeated DiskSystemSpaceReservation reservations =12304;
+}
+
+message DiskSystemSpaceRegistry {
+  repeated DiskSystemSpace disk_systems = 12400;
+}

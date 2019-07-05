@@ -319,6 +319,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
       common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
   diskSystemList.push_back(cta::disk::DiskSystem{"ds-B", "$root://b.disk.system/", "query:todo", 60, 10UL*1000*1000*1000,
       common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
+  std::set<std::string> fullDiskSystems;
   
   // Inject 10 retrieve jobs to the db.
   const size_t filesToDo = 10;
@@ -368,7 +369,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   auto moutInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, moutInfo->potentialMounts.size());
   auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
-  auto rjb = rm->getNextJobBatch(20,20*1000,diskSystemList, lc);
+  auto rjb = rm->getNextJobBatch(20,20*1000,fullDiskSystems, lc);
   ASSERT_EQ(filesToDo, rjb.size());
   std::list <cta::SchedulerDatabase::RetrieveJob*> jobBatch;
   for (auto &rj: rjb) {
@@ -379,7 +380,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   }
   rm->flushAsyncSuccessReports(jobBatch, lc);
   rjb.clear();
-  ASSERT_EQ(0, rm->getNextJobBatch(20,20*1000,diskSystemList, lc).size());
+  ASSERT_EQ(0, rm->getNextJobBatch(20,20*1000,fullDiskSystems, lc).size());
   rm->complete(time(nullptr));
   rm.reset(nullptr);
   moutInfo.reset(nullptr);
