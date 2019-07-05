@@ -88,19 +88,6 @@ struct TapeFileWritten: public TapeItemWritten {
    */
   checksum::ChecksumBlob checksumBlob;
 
-  /*
-   * Redundant copy of ADLER32 checksum
-   *
-   * This is required for the CASTOR migration. CASTOR only has Adler32 checksums, which are stored as
-   * a 32-bit unsigned integer. We keep this in CTA to avoid the expense of converting all checksums
-   * into the ChecksumBlob format during the migration (this requires every row in the ARCHIVE_FILE
-   * table to be read and re-written, and the operation cannot be batched).
-   *
-   * This can be deprecated at some future time when all CASTOR tapes have been imported, and every
-   * file has a valid checksumBlob.
-   */
-  uint32_t checksumAdler32;
-
   /**
    * The name of the file's storage class.
    */
