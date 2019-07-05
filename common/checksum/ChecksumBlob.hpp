@@ -105,6 +105,11 @@ public:
   void deserialize(const std::string &bytearray);
 
   /*!
+   * Deserialize from a byte array. In case of an invalid byte array, use the supplied Adler32 value instead.
+   */
+  void deserializeOrSetAdler32(const std::string &bytearray, uint32_t adler32);
+
+  /*!
    * Serialise to a byte array
    */
   std::string serialize() const;
@@ -135,7 +140,14 @@ public:
    * Return the checksum for the specified key
    */
   std::string at(ChecksumType type) const {
-    return m_cs.at(type);
+    try {
+      return m_cs.at(type);
+    } catch(std::out_of_range) {
+      std::stringstream ss;
+      ss << ChecksumTypeName.at(type) << " checksum not found. Checksum blob contents: "
+         << *this;
+      throw exception::ChecksumTypeMismatch(ss.str());
+    }
   }
 
   /*!

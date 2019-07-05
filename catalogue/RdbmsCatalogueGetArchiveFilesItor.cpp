@@ -47,7 +47,7 @@ namespace {
     archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
     archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    archiveFile.checksumBlob.deserialize(rset.columnBlob("CHECKSUM_BLOB"));
+    archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
     archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
     archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
     archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -97,6 +97,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"

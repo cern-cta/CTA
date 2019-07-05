@@ -105,8 +105,19 @@ size_t ChecksumBlob::length() const {
 
 void ChecksumBlob::deserialize(const std::string &bytearray) {
   common::ChecksumBlob p_csb;
-  p_csb.ParseFromString(bytearray);
+  if(!p_csb.ParseFromString(bytearray)) {
+    throw exception::Exception("ChecksumBlob: deserialization failed");
+  }
   ProtobufToChecksumBlob(p_csb, *this);
+}
+
+void ChecksumBlob::deserializeOrSetAdler32(const std::string &bytearray, uint32_t adler32) {
+  common::ChecksumBlob p_csb;
+  if(p_csb.ParseFromString(bytearray)) {
+    ProtobufToChecksumBlob(p_csb, *this);
+  } else {
+    insert(ADLER32, adler32);
+  }
 }
 
 std::string ChecksumBlob::HexToByteArray(std::string hexString) {
