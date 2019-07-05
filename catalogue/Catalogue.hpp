@@ -284,7 +284,7 @@ public:
 
   /**
    * Creates a tape which is assumed to have logical block protection (LBP)
-   * enabled.
+   * enabled and isFromCastor disabled.
    */
   virtual void createTape(
     const common::dataStructures::SecurityIdentity &admin,
@@ -381,6 +381,14 @@ public:
    * @param vid The volume identifier of the tape.
    */
   virtual void setTapeReadOnlyOnError(const std::string &vid) = 0;
+  
+  /**
+   * This method notifies the CTA catalogue to set the specified tape is from CASTOR.
+   * This method only for unitTests and MUST never be called in CTA!!! 
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  virtual void setTapeIsFromCastorInUnitTests(const std::string &vid) = 0;
 
   virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) = 0;
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) = 0;

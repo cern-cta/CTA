@@ -997,6 +997,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -2599,6 +2600,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3011,6 +3013,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3191,6 +3194,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_TRUE(disabled == tape.disabled);
       ASSERT_TRUE(full == tape.full);
       ASSERT_TRUE(readOnly == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -3388,6 +3392,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_TRUE(disabled == tape.disabled);
       ASSERT_TRUE(full == tape.full);
       ASSERT_TRUE(readOnly == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -3468,6 +3473,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3551,6 +3557,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3622,6 +3629,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   ASSERT_TRUE(disabledValue == tape.disabled);
   ASSERT_TRUE(fullValue == tape.full);
   ASSERT_TRUE(readOnlyValue == tape.readOnly);
+  ASSERT_FALSE(tape.isFromCastor);
   ASSERT_EQ(comment, tape.comment);
   ASSERT_FALSE(tape.labelLog);
   ASSERT_FALSE(tape.lastReadLog);
@@ -3689,6 +3697,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3743,6 +3752,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3812,6 +3822,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3842,6 +3853,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3897,6 +3909,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3928,6 +3941,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3985,6 +3999,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4016,6 +4031,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4087,6 +4103,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4118,6 +4135,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4193,6 +4211,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4225,6 +4244,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4291,6 +4311,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4324,6 +4345,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4390,6 +4412,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4422,6 +4445,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_TRUE((bool)tape.labelLog);
     ASSERT_EQ(labelDrive, tape.labelLog.value().drive);
@@ -4489,6 +4513,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4521,6 +4546,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4588,6 +4614,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4620,6 +4647,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_TRUE((bool)tape.lastReadLog);
@@ -4687,6 +4715,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4718,6 +4747,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4783,6 +4813,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4814,6 +4845,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4879,6 +4911,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4910,6 +4943,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4938,6 +4972,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_FALSE(tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4977,7 +5012,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
-  const bool readOnlyValue = true;
+  const bool readOnlyValue = false;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -5003,6 +5038,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -5033,7 +5069,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue);
+    ASSERT_TRUE(tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -5099,6 +5136,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -5130,6 +5168,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_TRUE(tape.disabled);
     ASSERT_FALSE(tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -5139,6 +5178,134 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->setTapeIsFromCastorInUnitTests(vid);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_TRUE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+  
+  // do it twice
+  m_catalogue->setTapeIsFromCastorInUnitTests(vid);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_TRUE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }  
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastor_nonExistentTape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+
+  ASSERT_THROW(m_catalogue->setTapeIsFromCastorInUnitTests(vid), exception::Exception);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled_nonExistentTape) {
@@ -5287,6 +5454,43 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_read_only_tape) {
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
 
   ASSERT_EQ(0, tapes.size());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_is_from_castor_tape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = false;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+   disabledValue, fullValue, readOnlyValue, comment);
+  m_catalogue->tapeLabelled(vid, "tape_drive");
+  {
+    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+    ASSERT_EQ(1, tapes.size());
+  }
+  {
+    m_catalogue->setTapeIsFromCastorInUnitTests(vid);
+    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+    ASSERT_EQ(0, tapes.size());
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tapes) {
@@ -7375,6 +7579,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -7401,6 +7606,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -7626,6 +7832,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -7652,6 +7859,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -8160,6 +8368,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -8187,6 +8396,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -9097,6 +9307,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -9124,6 +9335,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -9816,6 +10028,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -9842,6 +10055,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10038,6 +10252,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10064,6 +10279,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10256,6 +10472,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10451,6 +10668,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10477,6 +10695,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10631,6 +10850,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10657,6 +10877,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10808,6 +11029,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10834,6 +11056,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10986,6 +11209,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -11012,6 +11236,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -11288,6 +11513,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -11314,6 +11540,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
       ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -11671,6 +11898,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -11705,6 +11933,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_FALSE(tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -11760,6 +11989,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -11823,6 +12053,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -11915,6 +12146,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -11953,6 +12185,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -11989,6 +12222,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12048,6 +12282,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12141,6 +12376,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12210,6 +12446,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12307,6 +12544,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12373,6 +12611,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_TRUE(tape.disabled);
     ASSERT_FALSE(tape.full);
     ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);

@@ -155,6 +155,7 @@ common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &co
       "IS_DISABLED AS IS_DISABLED,"
       "IS_FULL AS IS_FULL,"
       "IS_READ_ONLY AS IS_READ_ONLY,"
+      "IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
       "LABEL_DRIVE AS LABEL_DRIVE,"
       "LABEL_TIME AS LABEL_TIME,"
@@ -198,6 +199,7 @@ common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &co
     tape.disabled = rset.columnBool("IS_DISABLED");
     tape.full = rset.columnBool("IS_FULL");
     tape.readOnly = rset.columnBool("IS_READ_ONLY");
+    tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
     tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
     tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");

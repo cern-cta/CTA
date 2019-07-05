@@ -396,6 +396,14 @@ public:
    */
   void setTapeReadOnlyOnError(const std::string &vid) override;
   
+  /**
+   * This method notifies the CTA catalogue to set the specified tape is from CASTOR.
+   * This method only for unitTests and MUST never be called in CTA!!! 
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void setTapeIsFromCastorInUnitTests(const std::string &vid) override;
+  
   void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) override;
   void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) override;
 
