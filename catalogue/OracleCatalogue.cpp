@@ -527,6 +527,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskFileGroup.setFieldLenToValueLen(i, event.diskFileGid);
       archiveFileBatch.size.setFieldLenToValueLen(i, event.size);
       archiveFileBatch.checksumBlob.setFieldLen(i, 2 + event.checksumBlob.length());
+      archiveFileBatch.checksumAdler32.setFieldLenToValueLen(i, event.checksumAdler32);
       archiveFileBatch.storageClassName.setFieldLenToValueLen(i, event.storageClassName);
       archiveFileBatch.creationTime.setFieldLenToValueLen(i, now);
       archiveFileBatch.reconciliationTime.setFieldLenToValueLen(i, now);
@@ -544,6 +545,17 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
       archiveFileBatch.size.setFieldValue(i, event.size);
       archiveFileBatch.checksumBlob.setFieldValueToRaw(i, event.checksumBlob.serialize());
+      // Keep transition ADLER32 checksum up-to-date if it exists
+      uint32_t adler32;
+      try {
+        std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(event.checksumBlob.at(checksum::ADLER32));
+        adler32 = strtoul(adler32hex.c_str(), 0, 16);
+      } catch(exception::ChecksumTypeMismatch &ex) {
+        // No ADLER32 checksum exists in the checksumBlob
+        adler32 = 0;
+      }
+      archiveFileBatch.checksumAdler32.setFieldValue(i, adler32);
+
       archiveFileBatch.storageClassName.setFieldValue(i, event.storageClassName);
       archiveFileBatch.creationTime.setFieldValue(i, now);
       archiveFileBatch.reconciliationTime.setFieldValue(i, now);
