@@ -63,7 +63,9 @@ struct Tape {
   bool full;
   bool disabled;
   bool readOnly;
-  bool isFromCastor;
+  bool isFromCastor;  
+  uint64_t readMountCount;
+  uint64_t writeMountCount;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;

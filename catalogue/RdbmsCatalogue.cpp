@@ -1989,6 +1989,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 
         "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
         "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+            
+        "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
+        "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
         "TAPE.USER_COMMENT AS USER_COMMENT,"
 
@@ -2102,10 +2105,13 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       tape.full = rset.columnBool("IS_FULL");
       tape.readOnly = rset.columnBool("IS_READ_ONLY");
       tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
-
+      
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
       tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+      
+      tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
+      tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
       tape.comment = rset.columnString("USER_COMMENT");
       tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -2158,6 +2164,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
 
         "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
         "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+            
+        "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
+        "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
         "TAPE.USER_COMMENT AS USER_COMMENT,"
 
@@ -2222,6 +2231,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
       tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+      
+      tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
+      tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
       tape.comment = rset.columnString("USER_COMMENT");
       tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -2278,6 +2290,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
 
         "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
         "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+                            
+        "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
+        "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
         "TAPE.USER_COMMENT AS USER_COMMENT,"
 
@@ -2318,6 +2333,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
       tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+      
+      tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
+      tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
       tape.comment = rset.columnString("USER_COMMENT");
       tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -2687,12 +2705,13 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
 // tapeMountedForArchive
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
-  try {
+  try {  
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
         "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME = :LAST_WRITE_TIME "
+        "LAST_WRITE_TIME = :LAST_WRITE_TIME, "
+        "WRITE_MOUNT_COUNT = WRITE_MOUNT_COUNT + 1 "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
@@ -2722,7 +2741,8 @@ void RdbmsCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::s
     const char *const sql =
       "UPDATE TAPE SET "
         "LAST_READ_DRIVE = :LAST_READ_DRIVE,"
-        "LAST_READ_TIME = :LAST_READ_TIME "
+        "LAST_READ_TIME = :LAST_READ_TIME, "
+        "READ_MOUNT_COUNT = READ_MOUNT_COUNT + 1 "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
