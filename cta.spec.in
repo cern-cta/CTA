@@ -58,6 +58,7 @@ BuildRequires: mariadb-devel
 BuildRequires: postgresql-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
+BuildRequires: grpc, grpc-devel, grpc-static, grpc-plugins
 %{?systemd_requires}
 BuildRequires: systemd
 # only build debug info if you're building the whole code
