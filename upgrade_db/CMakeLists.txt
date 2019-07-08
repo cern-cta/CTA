@@ -19,7 +19,8 @@ cmake_minimum_required (VERSION 2.6)
 include_directories(${XRD_SSI_PB_DIR}/include ${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
 
 # Upgrade DB tool
-add_executable(upgrade-db UpgradeDB.cpp)
-target_link_libraries(upgrade-db ctacatalogue)
+add_executable(cta-upgrade-db UpgradeDB.cpp)
+target_link_libraries(cta-upgrade-db ctacatalogue)
+set_property(TARGET cta-upgrade-db APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
-install(TARGETS upgrade-db DESTINATION usr/bin)
+install(TARGETS cta-upgrade-db DESTINATION usr/bin)
