@@ -22,4 +22,4 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XROOTD_INCLUDE_DIR} ${XROOTD_INC
 add_executable(upgrade-db UpgradeDB.cpp)
 target_link_libraries(upgrade-db ctacatalogue)
 
-#install(TARGETS upgrade-db DESTINATION usr/bin)
+install(TARGETS upgrade-db DESTINATION usr/bin)
