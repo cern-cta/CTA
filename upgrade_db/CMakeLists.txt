@@ -16,6 +16,8 @@
 
 cmake_minimum_required (VERSION 2.6)
 
+find_package(Protobuf3 REQUIRED)
+
 include_directories(${XRD_SSI_PB_DIR}/include ${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
 
 # Upgrade DB tool
