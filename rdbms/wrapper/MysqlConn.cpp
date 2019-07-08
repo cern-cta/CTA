@@ -55,9 +55,10 @@ MysqlConn::MysqlConn(const std::string& host,
     throw exception::Exception(std::string(" errno: ") + std::to_string(rc) + " " +  msg);
   }
 
-  // we can use mysql_options() to change the connect options
-
   // connect
+
+  // setting the CLIENT_FOUND_ROWS flag so that the reported number of rows
+  // affected by a DML statement matches that of Oracle, PostgreSQL and SQLite
 
   if (mysql_real_connect(m_mysqlConn, host.c_str(),
                          user.c_str(), passwd.c_str(), db.c_str(), port, 
