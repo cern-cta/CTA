@@ -148,7 +148,8 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(tapeserver)
   add_subdirectory(XRootdSSiRmcd)
 
-  add_subdirectory(migration/CTA)
+  add_subdirectory(upgrade_db)
+  add_subdirectory(migration/gRPC)
 
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in

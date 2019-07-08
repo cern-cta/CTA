@@ -1,5 +1,5 @@
 # The CERN Tape Archive (CTA) project
-# Copyright 2018 CERN
+# Copyright 2019 CERN
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,18 +16,33 @@
 cmake_minimum_required(VERSION 2.6)
 
 find_package(Protobuf3 REQUIRED)
-set(PROTOBUF3_INCLUDE_PATH ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
-file(GLOB ProtoFiles "${PROTOBUF3_INCLUDE_PATH}/*.proto")
+find_package(GRPC REQUIRED)
 
-PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+include_directories(${PROTOBUF3_INCLUDE_DIRS})
+
+# Select protobuf files
+set(PROTOBUF_EOS_CTA_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
+file(GLOB ProtoFilesEosCta "${PROTOBUF_EOS_CTA_DIR}/*.proto")
+set(PROTOBUF_MIGRATION_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf_grpc)
+file(GLOB ProtoFilesMigration "${PROTOBUF_MIGRATION_DIR}/*.proto")
+
+# Compile protobufs
+set(PROTOBUF3_INCLUDE_PATH ${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF_MIGRATION_DIR})
+PROTOBUF3_GENERATE_CPP(ProtoSourcesEosCta ProtoHeadersEosCta ${ProtoFilesEosCta})
+PROTOBUF3_GENERATE_CPP(ProtoSourcesMigration ProtoHeadersMigration ${ProtoFilesMigration})
+
+# Compile gRPC code
+set(GRPC_PROTOBUF_PATH "${CMAKE_BINARY_DIR}/eos_cta/")
+grpc_generate_cpp(ProtoGrpcSourcesMigration ProtoGrpcHeadersMigration ${GRPC_PROTOBUF_PATH} ${ProtoFilesMigration})
 
 set_source_files_properties(
-  ${ProtoSources} ${ProtoHeaders}
-  PROPERTIES GENERATED 1)
+  ${ProtoSourcesEosCta} ${ProtoHeadersEosCta}
+  ${ProtoSourcesMigration} ${ProtoHeadersMigration}
+  ${ProtoGrpcSourcesMigration} ${ProtoGrpcHeadersMigration}
+  PROPERTIES GENERATED TRUE)
 
-foreach(PROTO_SRC ${ProtoSources})
+foreach(PROTO_SRC ${ProtoSourcesEosCta} ${ProtoSourcesMigration} ${ProtoGrpcSourcesMigration})
   set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
-
   # Add -Wno-narrowing -Wno-implicit-fallthrough compiler flags if using gcc version 7 or greater
   if(CMAKE_COMPILER_IS_GNUCC)
     if(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
@@ -35,9 +50,15 @@ foreach(PROTO_SRC ${ProtoSources})
     endif(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
   endif(CMAKE_COMPILER_IS_GNUCC)
 endforeach(PROTO_SRC)
-set(CTA_FRONT_END_MESSAGES_SRC_FILES ${ProtoSources})
 
-include_directories(${PROTOBUF3_INCLUDE_DIRS})
-add_library(XrdSsiPbEosCta ${CTA_FRONT_END_MESSAGES_SRC_FILES})
-set_target_properties(XrdSsiPbEosCta PROPERTIES LINKER_LANGUAGE CXX)
+add_library(XrdSsiPbEosCta ${ProtoSourcesEosCta})
+set_target_properties(XrdSsiPbEosCta PROPERTIES
+  LINKER_LANGUAGE CXX
+  POSITION_INDEPENDENT_CODE TRUE)
 target_link_libraries(XrdSsiPbEosCta ${PROTOBUF3_LIBRARIES})
+
+add_library(EosMigration ${ProtoSourcesMigration} ${ProtoGrpcSourcesMigration})
+set_target_properties(EosMigration PROPERTIES
+  LINKER_LANGUAGE CXX
+  POSITION_INDEPENDENT_CODE TRUE)
+target_link_libraries(EosMigration ${PROTOBUF3_GRPC_LIBRARIES})
