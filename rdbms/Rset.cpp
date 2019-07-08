@@ -167,7 +167,15 @@ bool Rset::next() {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: "
       "This result set is invalid");
   }
-  return m_impl->next();
+
+  const bool aRowHasBeenRetrieved = m_impl->next();
+
+  // Release resources of result set when its end has been reached
+  if(!aRowHasBeenRetrieved) {
+    m_impl.reset(nullptr);
+  }
+
+  return aRowHasBeenRetrieved;
 }
 
 //------------------------------------------------------------------------------
