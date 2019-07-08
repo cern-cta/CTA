@@ -35,6 +35,7 @@ target_link_libraries(cta-unitTests
   ctainmemorystmtunittests
   ctaobjectstore
   ctaobjectstoreunittests
+  ctardbmsunittests
   ctardbmswrapperunittests
   ctaschedulerunittests
   ctatapeserverdaemonunittests
