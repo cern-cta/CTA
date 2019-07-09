@@ -134,6 +134,10 @@ ELSE(DEFINED PackageOnly)
   set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/xrootd-ssi-protobuf-interface)
 
   add_subdirectory(eos_cta)
+
+  add_subdirectory(upgrade_db)
+  add_subdirectory(migration)
+
   add_subdirectory(cmdline)
   add_subdirectory(xroot_plugins)
 
@@ -147,9 +151,6 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(scheduler)
   add_subdirectory(tapeserver)
   add_subdirectory(XRootdSSiRmcd)
-
-  add_subdirectory(upgrade_db)
-  add_subdirectory(migration)
 
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in
