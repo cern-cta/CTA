@@ -339,9 +339,17 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         }
         // Small parenthesis for non transfer cases.
         if (candidateVids.empty()) {
-          // The request might need to be added to the failed to report of failed queue/container.
+          //If the queueType of the RetrieveRequest is FailedJobs or JobsToReportToUser, it needs to be requeued in a queue identified by the vid of the tape
+          //If queueType is JobsToReportToRepackForSuccess or JobsToReportToRepackForFailure, it needs to be requeued in a queue identified by the RepackRequest's address
           try {
-            retrieveQueuesAndRequests[std::make_tuple(rr->getArchiveFile().tapeFiles.begin()->vid, rr->getQueueType())].emplace_back(rr);
+            std::string vid = rr->getArchiveFile().tapeFiles.begin()->vid;
+            if(rr->getQueueType() != JobQueueType::FailedJobs && rr->getQueueType() != JobQueueType::JobsToReportToUser){
+              retrieveQueuesAndRequests[std::make_tuple(rr->getRepackInfo().repackRequestAddress, rr->getQueueType(),vid)].emplace_back(rr);
+            } else {
+              // The request has failed, might need to be added to the failed to report of failed queue/container.
+              retrieveQueuesAndRequests[std::make_tuple(vid, rr->getQueueType(),vid)].emplace_back(rr);
+            }
+            break;
           } catch (cta::exception::Exception & ex) {
             log::ScopedParamContainer params3(lc);
             params3.add("fileId", rr->getArchiveFile().archiveFileID)
@@ -362,7 +370,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
           otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
           break;
         }
-        retrieveQueuesAndRequests[std::make_tuple(vid, JobQueueType::JobsToTransferForUser)].emplace_back(rr);
+        retrieveQueuesAndRequests[std::make_tuple(vid, JobQueueType::JobsToTransferForUser,vid)].emplace_back(rr);
         log::ScopedParamContainer params3(lc);
         // Find copyNb for logging
         size_t copyNb = std::numeric_limits<size_t>::max();
@@ -373,8 +381,8 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
                .add("tapeVid", vid)
                .add("fSeq", fSeq);
         lc.log(log::INFO, "Selected vid to be requeued for retrieve request.");
-        break;
       }
+      break;
       default:
         // For other objects, we will not implement any optimization and simply call
         // their individual garbageCollect method.
@@ -520,9 +528,10 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
   // 2) Get the retrieve requests done. They are simpler as retrieve requests are fully owned.
   // Then should hence not have changes since we pre-fetched them.
   for (auto & retriveQueueIdAndReqs: retrieveQueuesAndRequests) {
-    std::string vid;
+    std::string containerIdentifier;
     JobQueueType queueType;
-    std::tie(vid, queueType) = retriveQueueIdAndReqs.first;
+    std::string vid;
+    std::tie(containerIdentifier, queueType, vid) = retriveQueueIdAndReqs.first;
     auto & requestsList = retriveQueueIdAndReqs.second;
     while (requestsList.size()) {
       decltype (retriveQueueIdAndReqs.second) currentJobBatch;
@@ -545,7 +554,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       // Get the retrieve queue and add references to the jobs to it.
       RetrieveQueue rq(objectStore);
       ScopedExclusiveLock rql;
-      Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,rql, agentReference, vid, queueType, lc);
+      Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,rql, agentReference, containerIdentifier, queueType, lc);
       queueLockFetchTime = t.secs(utils::Timer::resetCounter);
       auto jobsSummary=rq.getJobsSummary();
       filesBefore=jobsSummary.jobs;
@@ -557,9 +566,9 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       for (auto & rr: currentJobBatch) {
         // Determine the copy number and feed the queue with it.
         for (auto &tf: rr->getArchiveFile().tapeFiles) {
-          if (tf.vid == vid) {
+            if (tf.vid == vid) {
             jta.push_back({tf.copyNb, tf.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize, 
-                rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity()});
+                 rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity()});
           }
         }
       }

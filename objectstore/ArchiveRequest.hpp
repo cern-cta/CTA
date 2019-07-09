@@ -83,6 +83,13 @@ public:
      * success/failure scenario. */
     serializers::ArchiveJobStatus nextStatus;
   };
+  const std::set<serializers::ArchiveJobStatus> c_statusesImplyingQueueing = {serializers::ArchiveJobStatus::AJS_ToTransferForUser, serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer,
+      serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure, serializers::ArchiveJobStatus::AJS_Failed,
+      serializers::ArchiveJobStatus::AJS_ToTransferForRepack, serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure,
+      serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess
+  };
+  const std::set<serializers::ArchiveJobStatus> c_statusesImplyingQueueingByRepackRequestAddress {serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure,
+      serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess};
 private:
   /**
    * Determine and set the new status of the job and determine whether and where the request should be queued 

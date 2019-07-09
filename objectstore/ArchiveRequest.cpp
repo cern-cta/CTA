@@ -381,12 +381,10 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
   auto * jl = m_payload.mutable_jobs();
   bool anythingGarbageCollected=false;
   using serializers::ArchiveJobStatus;
-  std::set<ArchiveJobStatus> statusesImplyingQueueing ({ArchiveJobStatus::AJS_ToTransferForUser, ArchiveJobStatus::AJS_ToReportToUserForTransfer,
-      ArchiveJobStatus::AJS_ToReportToUserForFailure, ArchiveJobStatus::AJS_Failed});
   for (auto j=jl->begin(); j!=jl->end(); j++) {
     auto owner=j->owner();
     auto status=j->status();
-    if ( statusesImplyingQueueing.count(status) && owner==presumedOwner) {
+    if ( c_statusesImplyingQueueing.count(status) && owner==presumedOwner) {
       // The job is in a state which implies queuing.
       std::string queueObject="Not defined yet";
       anythingGarbageCollected=true;
@@ -396,7 +394,13 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
         ScopedExclusiveLock aql;
-        Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), getQueueType(status), lc);
+        std::string containerId;
+        if(!c_statusesImplyingQueueingByRepackRequestAddress.count(status)){
+          containerId = j->tapepool();
+        } else {
+          containerId = m_payload.repack_info().repack_request_address();
+        }
+        Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(aq, aql, agentReference, containerId, getQueueType(status), lc);
         queueObject=aq.getAddressIfSet();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();

@@ -153,7 +153,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   // filter on tape availability.
   try {
     // If we have to fetch the status of the tapes and queued for the non-disabled vids.
-    auto bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore);
+    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore);
     goto queueForTransfer;
   } catch (Helpers::NoTapeAvailableForRetrieve &) {}
 queueForFailure:;
@@ -195,11 +195,11 @@ queueForFailure:;
       err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << activeCopyNb;
       throw exception::Exception(err.str());
     }
-  failedVidFound:;
+  failedVidFound:;qqq
     // We now need to grab the failed queue and queue the request.
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
-    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, JobQueueType::JobsToReportToUser, lc);
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, getQueueType(), lc);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
