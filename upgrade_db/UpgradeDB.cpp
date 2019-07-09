@@ -195,6 +195,7 @@ void UpgradeDB::populateChecksumBlob() {
     }
     std::string sql("UPDATE ARCHIVE_FILE SET CHECKSUM_BLOB = hextoraw('");
     sql += blob_str + "') WHERE ARCHIVE_FILE_ID = " + archiveFileId;
+    // this should be a separate DB object
     m_ctadb.execute(sql);
 
     if(!m_ctadb.nextRow()) break;
@@ -245,24 +246,6 @@ void UpgradeDB::removeAdler32() {
 void UpgradeDB::populateAdler32() {
   std::string sql("UPDATE ARCHIVE_FILE SET CHECKSUM_ADLER32=TO_NUMBER(SUBSTR(CHECKSUM_VALUE, 3, 8), 'XXXXXXXX')");
   m_ctadb.execute(sql);
-#if 0
-  m_ctadb.query("SELECT ARCHIVE_FILE_ID, CHECKSUM_VALUE FROM ARCHIVE_FILE");
-
-  // Get the list of checksums
-  while(!m_ctadb.isQueryEmpty()) {
-    using namespace checksum;
-
-    auto archiveFileId = m_ctadb.getResultColumnString("ARCHIVE_FILE_ID");
-    auto checksumValue = m_ctadb.getResultColumnString("CHECKSUM_VALUE");
-    uint32_t checksumAdler32 = strtoul(checksumValue.c_str(), 0, 16);
-
-    std::string sql("UPDATE ARCHIVE_FILE SET CHECKSUM_ADLER32 = ");
-    sql += std::to_string(checksumAdler32) + " WHERE ARCHIVE_FILE_ID = " + archiveFileId;
-    m_ctadb.execute(sql);
-
-    if(!m_ctadb.nextRow()) break;
-  }
-#endif
 
   // Validate checksums
   std::cerr << "validating checksums...";
@@ -289,7 +272,7 @@ void throwUsage(const std::string &program, const std::string &error_txt)
   std::stringstream help;
 
   help << program << ": " << error_txt << std::endl
-       << "Usage: " << program << " [--config <config_file>] [--rename-logical] [--undo-rename-logical] [--add-uid-gid] [--remove-uid-gid] [--add-checksum-blob] [--populate-checksum-blob] [--remove-checksum-blob] [--add-adler32] [--remove-adler32]";
+       << "Usage: " << program << " [--config <config_file>] [--rename-logical] [--undo-rename-logical] [--add-uid-gid] [--remove-uid-gid] [--add-checksum-blob] [--remove-checksum-blob] [--add-adler32] [--remove-adler32]";
 
   throw std::runtime_error(help.str());
 }
@@ -321,7 +304,7 @@ int main(int argc, const char* argv[])
       else if(option == "--add-uid-gid") addUidGid = true;
       else if(option == "--remove-uid-gid") removeUidGid = true;
       else if(option == "--add-checksum-blob") addChecksumBlob = true;
-      else if(option == "--populate-checksum-blob") populateChecksumBlob = true;
+      //else if(option == "--populate-checksum-blob") populateChecksumBlob = true;
       else if(option == "--remove-checksum-blob") removeChecksumBlob = true;
       else if(option == "--add-adler32") addAdler32 = true;
       else if(option == "--remove-adler32") removeAdler32 = true;
