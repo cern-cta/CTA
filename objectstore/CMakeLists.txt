@@ -115,7 +115,6 @@ set(ObjectStoreUnitTests
   BackendTest.cpp
   RootEntryTest.cpp
   RetrieveQueueTest.cpp
-  RetrieveRequestTest.cpp
   GarbageCollectorTest.cpp
   AlgorithmsTest.cpp
   SorterTest.cpp
