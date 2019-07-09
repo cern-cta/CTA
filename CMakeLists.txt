@@ -149,7 +149,7 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(XRootdSSiRmcd)
 
   add_subdirectory(upgrade_db)
-  #add_subdirectory(migration/gRPC)
+  add_subdirectory(migration)
 
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in
