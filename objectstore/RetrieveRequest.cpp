@@ -195,7 +195,7 @@ queueForFailure:;
       err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << activeCopyNb;
       throw exception::Exception(err.str());
     }
-  failedVidFound:;qqq
+  failedVidFound:;
     // We now need to grab the failed queue and queue the request.
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
