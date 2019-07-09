@@ -62,6 +62,10 @@ public:
     return m_rSet.columnString(col);
   }
 
+  uint64_t getResultColumnUint64(const std::string &col) const {
+    return m_rSet.columnUint64(col);
+  }
+
   std::string getResultColumnBlob(const std::string &col) const {
     return m_rSet.columnBlob(col);
   }
