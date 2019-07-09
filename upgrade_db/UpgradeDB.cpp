@@ -243,6 +243,9 @@ void UpgradeDB::removeAdler32() {
 }
 
 void UpgradeDB::populateAdler32() {
+  std::string sql("UPDATE ARCHIVE_FILE SET CHECKSUM_ADLER32=TO_NUMBER(SUBSTR(CHECKSUM_VALUE, 3, 8), 'XXXXXXXX')");
+  m_ctadb.execute(sql);
+#if 0
   m_ctadb.query("SELECT ARCHIVE_FILE_ID, CHECKSUM_VALUE FROM ARCHIVE_FILE");
 
   // Get the list of checksums
@@ -259,8 +262,10 @@ void UpgradeDB::populateAdler32() {
 
     if(!m_ctadb.nextRow()) break;
   }
+#endif
 
   // Validate checksums
+  std::cerr << "validating checksums...";
   m_ctadb.query("SELECT CHECKSUM_VALUE, CHECKSUM_ADLER32 FROM ARCHIVE_FILE");
   while(!m_ctadb.isQueryEmpty()) {
     using namespace checksum;
