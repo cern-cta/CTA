@@ -23,7 +23,7 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 # Select protobuf files
 set(PROTOBUF_EOS_CTA_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
 file(GLOB ProtoFilesEosCta "${PROTOBUF_EOS_CTA_DIR}/*.proto")
-set(PROTOBUF_MIGRATION_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf_grpc)
+set(PROTOBUF_MIGRATION_DIR ${PROJECT_SOURCE_DIR}/migration/grpc-proto/protobuf)
 file(GLOB ProtoFilesMigration "${PROTOBUF_MIGRATION_DIR}/*.proto")
 
 # Compile protobufs
