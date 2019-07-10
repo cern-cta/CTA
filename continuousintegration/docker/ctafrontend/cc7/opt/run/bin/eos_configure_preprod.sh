@@ -13,6 +13,7 @@ eos attr set sys.workflow.sync::closew.default="proto" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::archived.default="proto" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::archive_failed.default="proto" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::prepare.default="proto" ${PREPROD_DIR}
+eos attr set sys.workflow.sync::abort_prepare.default="proto" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::closew.retrieve_written="proto" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::retrieve_failed.default="proto" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::delete.default="proto" ${PREPROD_DIR}
