@@ -1,1 +1,10 @@
-21 6 * * * root /usr/local/bin/cta-supply-pool-refill-mechanism >> /var/log/cta-supply-pool-refill-mechanism.log
+# This crontab entry will run the CTA tape pool re-supply script every 10 minutes.
+#
+# The purpose of that script is to re-fill the tape pools with empty tapes according to defined configuration.
+#
+# Vladimir Bahyl - 7/2019
+#
+
+MAILTO=tape-operations@cern.ch
+
+*/10 * * * * root /usr/local/bin/cta-pool-supply >> /var/log/cta-pool-supply.log 2>&1

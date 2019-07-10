@@ -1,11 +1,12 @@
-Summary: Daily tape mount statistics report for TSMOD
-Name: CERN-CC-tape-mount-statistics
-Version: 1.3
+Summary: CTA supply re-fill mechanism
+Name: cta-pool-supply
+Version: 1.0
 Release: 1
 License: GPL
 Buildroot: /tmp/%{name}-%{version}
 BuildArch: noarch
-Group: Application/TSMOD
+Group: Application/CTA
+Requires: python36 cta-cli
 Source: %{name}-%{version}.tgz
 
 %description
@@ -20,7 +21,7 @@ It should be run at most twice per day.
 
 TSMOD = Tape Service Manager on Duty
 
-Author: Vladimir Bahyl - 11/2014
+Author: Vladimir Bahyl - 7/2019
 %prep
 
 %setup -c
@@ -32,8 +33,8 @@ cd $RPM_BUILD_ROOT
 mkdir -p usr/local/bin etc/cron.d
 name=`echo %{name} |sed 's/CERN-CC-//'`
 
-install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/tape-mount-statistics.sh	usr/local/bin/tape-mount-statistics.sh
-install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/tape-mount-statistics.cron	etc/cron.d/tape-mount-statistics.cron
+install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/cta-pool-supply	usr/local/bin/cta-pool-supply
+install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/cta-pool-supply.cron	etc/cron.d/cta-pool-supply.cron
 
 %post
 
@@ -42,5 +43,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-/usr/local/bin/tape-mount-statistics.sh
-/etc/cron.d/tape-mount-statistics.cron
+/usr/local/bin/cta-pool-supply
+/etc/cron.d/cta-pool-supply.cron
+/var/log/cta-pool-supply.log
