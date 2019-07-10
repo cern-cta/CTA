@@ -2672,6 +2672,11 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
 void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &encryptionKey) {
   try {
+    optional<std::string> optionalEncryptionKey;
+    if(!encryptionKey.empty()) {
+      optionalEncryptionKey = encryptionKey;
+    }
+
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
@@ -2683,7 +2688,7 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":ENCRYPTION_KEY", encryptionKey);
+    stmt.bindOptionalString(":ENCRYPTION_KEY", optionalEncryptionKey);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
