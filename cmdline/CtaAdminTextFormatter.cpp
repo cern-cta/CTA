@@ -785,19 +785,23 @@ void TextFormatter::printTapeLsHeader() {
     "last fseq",
     "full",
     "disabled",
-    "rdonly",      
+    "rdonly",
+    "from castor",
     "label drive",
     "label time",
     "last w drive",
     "last w time",
+    "w mounts",
     "last r drive",
     "last r time",
+    "r mounts",
     "c.user",
     "c.host",
     "c.time",
     "m.user",
     "m.host",
-    "m.time"
+    "m.time",
+    "comment"
   );
 }
 
@@ -816,18 +820,22 @@ void TextFormatter::print(const TapeLsItem &tals_item) {
     tals_item.full(),
     tals_item.disabled(),
     tals_item.rdonly(),
+    tals_item.from_castor(),
     tals_item.has_label_log()        ? tals_item.label_log().drive()                  : "",
     tals_item.has_label_log()        ? timeToStr(tals_item.label_log().time())        : "",
     tals_item.has_last_written_log() ? tals_item.last_written_log().drive()           : "",
     tals_item.has_last_written_log() ? timeToStr(tals_item.last_written_log().time()) : "",
+    tals_item.write_mount_count(),
     tals_item.has_last_read_log()    ? tals_item.last_read_log().drive()              : "",
     tals_item.has_last_read_log()    ? timeToStr(tals_item.last_read_log().time())    : "",
+    tals_item.read_mount_count(),
     tals_item.creation_log().username(),
     tals_item.creation_log().host(),
     timeToStr(tals_item.creation_log().time()),
     tals_item.last_modification_log().username(),
     tals_item.last_modification_log().host(),
-    timeToStr(tals_item.last_modification_log().time())
+    timeToStr(tals_item.last_modification_log().time()),
+    tals_item.comment()
   );
 }
 

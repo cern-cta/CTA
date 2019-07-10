@@ -110,6 +110,9 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tape_item->set_full(tape.full);
     tape_item->set_disabled(tape.disabled);
     tape_item->set_rdonly(tape.readOnly);
+    tape_item->set_from_castor(tape.isFromCastor);
+    tape_item->set_read_mount_count(tape.readMountCount);
+    tape_item->set_write_mount_count(tape.writeMountCount);
 
     if(tape.labelLog) {
       ::cta::common::TapeLog * labelLog = tape_item->mutable_label_log();
@@ -134,6 +137,7 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     lastModificationLog->set_username(tape.lastModificationLog.username);
     lastModificationLog->set_host(tape.lastModificationLog.host);
     lastModificationLog->set_time(tape.lastModificationLog.time);
+    tape_item->set_comment(tape.comment);
     
     is_buffer_full = streambuf->Push(record);
   }
