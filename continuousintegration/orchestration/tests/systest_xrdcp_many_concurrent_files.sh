@@ -78,7 +78,7 @@ for ((i=0; i<${#TAPES[@]}; i++)); do
     --vid ${VID}                                                    \
     --disabled false                                                \
     --full false                                                    \
-    --rdonly false                                                  \
+    --readonly false                                                \
     --comment "ctasystest"
 done
 
