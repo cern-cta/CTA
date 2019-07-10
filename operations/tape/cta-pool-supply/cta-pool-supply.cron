@@ -1,0 +1,1 @@
+21 6 * * * root /usr/local/bin/cta-supply-pool-refill-mechanism >> /var/log/cta-supply-pool-refill-mechanism.log
