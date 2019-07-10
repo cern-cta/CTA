@@ -50,24 +50,31 @@ public:
 
   void query(const std::string &sqlString) {
     auto sql = m_conn.createStmt(sqlString);
-    m_rSet = sql.executeQuery();
-    m_queryIsEmpty = !m_rSet.next();
+    m_rSet = std::make_unique<rdbms::Rset>(sql.executeQuery());
+    m_queryIsEmpty = !m_rSet->next();
+  }
+
+  void reset() {
+    m_rSet.reset();
+    m_queryIsEmpty = true;
   }
 
   bool nextRow() {
-    return m_rSet.next();
+    if(m_rSet->next()) return true;
+    reset();
+    return false;
   }
 
   std::string getResultColumnString(const std::string &col) const {
-    return m_rSet.columnString(col);
+    return m_rSet->columnString(col);
   }
 
   uint64_t getResultColumnUint64(const std::string &col) const {
-    return m_rSet.columnUint64(col);
+    return m_rSet->columnUint64(col);
   }
 
   std::string getResultColumnBlob(const std::string &col) const {
-    return m_rSet.columnBlob(col);
+    return m_rSet->columnBlob(col);
   }
 
   bool isQueryEmpty() const {
@@ -77,7 +84,7 @@ public:
 private:
   static std::unique_ptr<rdbms::ConnPool> m_connPool;    //!< The pool of connections to the database
   rdbms::Conn m_conn;                                    //!< The connection we are using
-  rdbms::Rset m_rSet;                                    //!< Result set for the last query executed
+  std::unique_ptr<rdbms::Rset> m_rSet;                   //!< Result set for the last query executed
   bool m_queryIsEmpty;                                   //!< Track whether the last query had an empty result set
 };
 
