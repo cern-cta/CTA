@@ -331,9 +331,9 @@ done
 
 TO_STAGERRM=$(cat ${STATUS_FILE} | wc -l)
 
-echo "$(date +%s): $TO_STAGERRM files to be stagerrm'ed from EOS"
+echo "$(date +%s): $TO_STAGERRM files to be stagerrm'ed from EOS using 'xrdfs prepare -e'"
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 eos root://${EOSINSTANCE} stagerrm   > /dev/null
+cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOSINSTANCE} prepare -e > /dev/null
 
 
 LEFTOVER=0
@@ -342,7 +342,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 
 STAGERRMED=$((${TO_STAGERRM}-${LEFTOVER}))
-echo "$(date +%s): $STAGERRMED files stagerrmed from EOS"
+echo "$(date +%s): $STAGERRMED files stagerrmed from EOS 'xrdfs prepare -e'"
 
 LASTCOUNT=${STAGERRMED}
 
