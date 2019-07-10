@@ -16,19 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Logic:
-# * CTA tape pool should have at least X partial tapes available for writing
-# * Eligible partial tapes are those that are not DISABLED, not FULL and not
-#   in a DISABLED logical tape library
-# * If the number of eligible partial tapes for a given pool falls below the
-#   configured limit, the pool needs to be re-supplied with fresh tapes
-# * Fresh supply tapes are taken from tape pools defined in the "supply" column
-# * Supply tape pools can be separated by a separator (usually comma)
+# LOGIC:
+#
+# * CTA tape pools should have at least X partial tapes available for writing.
+# * Eligible partial tapes are those that are not DISABLED, not READONLY,
+#   not FULL and not in a DISABLED logical tape library.
+# * If the number of eligible partial tapes of a given tape pool falls below the
+#   configured limit, the pool needs to be re-supplied with fresh tapes.
+# * Fresh supply tapes are taken from tape pools defined in the "supply" column.
+# * There can be multiple supply tape pools and they can be separated by
+#   a separator (usually comma).
 # * There is no distinction between what is a supply pool and what is not, if
-#   a pool has a value in the "supply" column, tapes are taken from there.
+#   a pool has a value in the "supply" column, tapes are taken from that pool.
 #   Because of this, irregularities, cyclical loops and other misconfiguration
-#   are possible - please be careful
-# * This script is intended to run every 15 minutes
+#   are possible - please be careful.
+# * This script is intended to run every 15 minutes.
 #
 # Author: Vladimir Bahyl - 7/2019
 
@@ -88,7 +90,7 @@ def extract_eligible_tapes(disabledlibraries, tapepool):
 # MAIN
 #
 ##########
-logging.info("Current time: " + format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+logging.info("--- Starting at: " + format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
 # Extract the list of all tape pools from CTA (in the JSON format)
 command = [ctaadmin, "--json", "tapepool", "ls"]
@@ -159,3 +161,5 @@ for tapepool in tapepools:
 
     else:
         logging.warn("Unable to re-fill the tape pool: " + tapepool["name"] + " because either the number of eligible partial tapes: " + tapepool["numPartialTapes"] + " or the supply pool: " + tapepool["supply"] + " is not properly configured")
+
+logging.info("--- Finished processing all tape pools\n")
