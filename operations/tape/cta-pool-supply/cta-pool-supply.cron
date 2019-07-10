@@ -3,8 +3,10 @@
 # The purpose of that script is to re-fill the tape pools with empty tapes
 # according to defined configuration. More documentation inside of the script.
 #
+# The script need to be properly authenticated in order to run CTA commands.
+#
 # Vladimir Bahyl - 7/2019
 
 MAILTO=tape-operations@cern.ch
 
-*/15 * * * * root /usr/local/bin/cta-pool-supply >> /var/log/cta-pool-supply.log 2>&1
+#*/15 * * * * root /usr/local/bin/cta-pool-supply >> /var/log/cta-pool-supply.log 2>&1
