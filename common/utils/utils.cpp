@@ -36,7 +36,7 @@
 #include <sys/utsname.h>
 #include <sys/prctl.h>
 #include <iomanip>
-#include <xrootd/XrdClient/XrdClientUrlInfo.hh>
+#include <xrootd/XrdCl/XrdClURL.hh>
 
 using cta::exception::Exception;
 
@@ -847,8 +847,8 @@ std::string getCurrentLocalTime() {
 }
 
 std::string extractPathFromXrootdPath(const std::string& path){
-  XrdClientUrlInfo urlInfo(path.c_str());
-  return std::string(urlInfo.File.c_str());
+  XrdCl::URL urlInfo(path.c_str());
+  return urlInfo.GetPath();
 }
 
 //------------------------------------------------------------------------------

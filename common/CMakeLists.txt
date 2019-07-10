@@ -165,7 +165,6 @@ target_link_libraries (ctacommon
   z
   cap
   XrdCl
-  ${XROOTD_XRDCLIENT_LIB}
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
