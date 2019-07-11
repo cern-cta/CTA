@@ -16,10 +16,9 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <memory>
+#include <common/make_unique.hpp>
 #include <rdbms/Login.hpp>
 #include <rdbms/ConnPool.hpp>
-
 
 
 namespace cta {
@@ -50,7 +49,7 @@ public:
 
   void query(const std::string &sqlString) {
     auto sql = m_conn.createStmt(sqlString);
-    m_rSet = std::make_unique<rdbms::Rset>(sql.executeQuery());
+    m_rSet = cta::make_unique<rdbms::Rset>(sql.executeQuery());
     m_queryIsEmpty = !m_rSet->next();
   }
 
