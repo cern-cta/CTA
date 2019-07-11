@@ -23,7 +23,7 @@
 #include <XrdSsiPbConfig.hpp>
 #include <common/exception/Exception.hpp>
 #include <common/checksum/ChecksumBlob.hpp>
-#include "OracleDbConn.hpp"
+#include <migration/gRPC/OracleDbConn.hpp>
 
 namespace cta {
 namespace migration {
