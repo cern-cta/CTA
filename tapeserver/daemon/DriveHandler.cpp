@@ -1091,7 +1091,8 @@ int DriveHandler::runChild() {
       driveHandlerProxy,
       capUtils,
       dataTransferConfig,
-      scheduler);
+      scheduler,
+      *catalogue);
 
     auto ret = dataTransferSession.execute();
     agentHeartbeat.stopAndWaitThread();

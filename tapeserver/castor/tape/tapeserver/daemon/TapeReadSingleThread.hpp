@@ -69,7 +69,8 @@ public:
           const bool useLbp,
           const bool useRAO,
           const std::string & externalEncryptionKeyScript,
-          const cta::RetrieveMount &retrieveMount);
+          const cta::RetrieveMount &retrieveMount,
+          cta::catalogue::Catalogue &catalogue);
    
   /**
    * Set the task injector. Has to be done that way (and not in the constructor)
@@ -159,6 +160,10 @@ private:
    * on which we are reading
    */
   const cta::RetrieveMount& m_retrieveMount;
+  /**
+   * Reference to the catalogue interface
+   */
+  cta::catalogue::Catalogue &m_catalogue;
   
   /// Helper virtual function to access the watchdog from parent class
   virtual void countTapeLogError(const std::string & error) { 

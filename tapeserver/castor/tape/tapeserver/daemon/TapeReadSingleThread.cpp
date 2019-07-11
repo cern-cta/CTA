@@ -38,7 +38,8 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   const bool useLbp,
   const bool useRAO,
   const std::string & externalEncryptionKeyScript,
-  const cta::RetrieveMount& retrieveMount) :
+  const cta::RetrieveMount& retrieveMount,
+  cta::catalogue::Catalogue &catalogue) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
     capUtils, lc, externalEncryptionKeyScript),
   m_maxFilesRequest(maxFilesRequest),
@@ -46,7 +47,8 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   m_rrp(rrp),
   m_useLbp(useLbp),
   m_useRAO(useRAO),
-  m_retrieveMount(retrieveMount){}
+  m_retrieveMount(retrieveMount),
+  m_catalogue(catalogue){}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -300,7 +302,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         scoped.add("useLbp", m_useLbp);
         scoped.add("detectedLbp", rs->isTapeWithLbp());
         if (rs->isTapeWithLbp() && !m_useLbp) {
-          m_logContext.log(cta::log::WARNING, "Tapserver started without LBP support"
+          m_logContext.log(cta::log::WARNING, "Tapeserver started without LBP support"
           " but the tape with LBP label mounted");
         }
         switch(m_drive.getLbpToUse()) {
@@ -319,6 +321,17 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       }
       m_initialProcess.reportState(cta::tape::session::SessionState::Running,
         cta::tape::session::SessionType::Retrieve);
+
+      try {
+        m_catalogue.tapeMountedForRetrieve(m_volInfo.vid, m_drive.config.unitName); 
+      } catch (cta::exception::Exception &ex) {
+        cta::log::ScopedParamContainer scoped(m_logContext);
+        params.add("tapeVid", m_volInfo.vid)
+              .add("tapeDrive", m_drive.config.unitName);
+        m_logContext.log(cta::log::WARNING,
+          "Failed to update catalogue for the tape mounted for retrieve.");
+      }
+
       m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       // Then we will loop on the tasks as they get from 
       // the task injector

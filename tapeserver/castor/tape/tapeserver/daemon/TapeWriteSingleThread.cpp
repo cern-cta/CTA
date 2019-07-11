@@ -38,7 +38,8 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         cta::server::ProcessCap &capUtils,
         uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush,
         const bool useLbp, const std::string & externalEncryptionKeyScript,
-        const cta::ArchiveMount & archiveMount):
+        const cta::ArchiveMount & archiveMount,
+        cta::catalogue::Catalogue &catalogue):
         TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo, 
           capUtils, lc, externalEncryptionKeyScript),
         m_filesBeforeFlush(filesBeforeFlush),
@@ -49,7 +50,8 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         m_compress(true),
         m_useLbp(useLbp),
         m_watchdog(mwd),
-        m_archiveMount(archiveMount){}
+        m_archiveMount(archiveMount),
+        m_catalogue(catalogue){}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -397,6 +399,17 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 
       m_initialProcess.reportState(cta::tape::session::SessionState::Running,
         cta::tape::session::SessionType::Archive);
+      
+      try {
+        m_catalogue.tapeMountedForArchive(m_volInfo.vid, m_drive.config.unitName); 
+      } catch (cta::exception::Exception &ex) {
+        cta::log::ScopedParamContainer scoped(m_logContext);
+        params.add("tapeVid", m_volInfo.vid)
+              .add("tapeDrive", m_drive.config.unitName);
+        m_logContext.log(cta::log::WARNING,
+          "Failed to update catalogue for the tape mounted for archive.");
+      }
+      
       uint64_t bytes=0;
       uint64_t files=0;
       m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
