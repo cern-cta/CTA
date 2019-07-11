@@ -54,7 +54,7 @@ ctaadmin = "/usr/bin/cta-admin"
 # Configure logging
 logfile = sys.argv[0] + ".log"
 logging.basicConfig (
-    level    = logging.INFO,				# only messages with log level above this are logged (DEBUG, INFO, WARN, ERROR)
+    level    = logging.DEBUG,				# only messages with log level above this are logged (DEBUG, INFO, WARN, ERROR)
     format   = "[%(levelname)-5.5s] %(message)s",	# format of the logging (can be very complex - see the manual)
     handlers = [
         logging.FileHandler(logfile), 			# log to a logfile
@@ -67,10 +67,10 @@ logging.basicConfig (
 #
 ##########
 
-# Extract eligible (not DISABLED, not FULL and NOT in a DISABLED library) tapes from a given tape pool
+# Extract eligible (not DISABLED, not READONLY, not FULL and NOT in a DISABLED library) tapes from a given tape pool
 def extract_eligible_tapes(disabledlibraries, tapepool):
     tapes = []
-    command = [ctaadmin, "--json", "tape", "ls", "--tapepool", tapepool, "--disabled", "false", "--full", "false"]
+    command = [ctaadmin, "--json", "tape", "ls", "--tapepool", tapepool, "--disabled", "false", "--readonly", "false", "--full", "false"]
     try:
         logging.debug("Executing command " + format(command) + " with timeout of " + format(timeout) + " seconds")
         output = check_output(command, stderr = STDOUT, timeout = timeout).decode("UTF-8")
@@ -90,7 +90,7 @@ def extract_eligible_tapes(disabledlibraries, tapepool):
 # MAIN
 #
 ##########
-logging.info("--- Starting at: " + format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+logging.info("--- Starting processing all tape pools at: " + format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
 # Extract the list of all tape pools from CTA (in the JSON format)
 command = [ctaadmin, "--json", "tapepool", "ls"]
@@ -125,7 +125,7 @@ if disabledlibraries: logging.warn("List of DISABLED logical tape libraries: " +
 for tapepool in tapepools:
     logging.info("Tape pool: " + tapepool["name"] + " which should have at least: " + tapepool["numPartialTapes"] + " eligible partial tape(s) is supplied from: " + tapepool["supply"])
 
-    if (tapepool["numPartialTapes"] and tapepool["supply"]):
+    if (tapepool["supply"]):
 
         # Check if re-filling is actually needed
         currentpartialtapes = len([tape for tape in extract_eligible_tapes(disabledlibraries, tapepool["name"])])
@@ -157,9 +157,9 @@ for tapepool in tapepools:
                 else:
                     logging.warn("Unable to completely re-fill the tape pool: " + tapepool["name"] + ", run out of supply tapes")
         else:
-            logging.warn("Unable to re-fill the tape pool: " + tapepool["name"] + ", no eligible supply tapes identified")
+            logging.warn("Unable to re-fill the tape pool: " + tapepool["name"] + ", no eligible supply tapes identified in the supply pool(s): " + format(tapepool["supply"]))
 
     else:
-        logging.warn("Unable to re-fill the tape pool: " + tapepool["name"] + " because either the number of eligible partial tapes: " + tapepool["numPartialTapes"] + " or the supply pool: " + tapepool["supply"] + " is not properly configured")
+        logging.warn("Unable to re-fill the tape pool: " + tapepool["name"] + " because the supply pool: " + tapepool["supply"] + " is not properly configured")
 
-logging.info("--- Finished processing all tape pools\n")
+logging.info("--- Finished processing all tape pools at: " + format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + "\n")
