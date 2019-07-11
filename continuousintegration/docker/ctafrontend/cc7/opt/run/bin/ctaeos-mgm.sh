@@ -174,8 +174,7 @@ fi
   eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
   eos mkdir ${CTA_PROC_DIR}
   eos mkdir ${CTA_WF_DIR}
-  eos attr set CTA_TapeFsId=${TAPE_FS_ID} ${CTA_WF_DIR}
-  
+
   # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
   # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
   # this is achieved through the ACLs.
@@ -186,10 +185,6 @@ fi
 
   eos attr set CTA_StorageClass=ctaStorageClass ${CTA_TEST_DIR}
     
-  # hack before it is fixed in EOS
-    TAPE_FS_ID_TOSET=`eos attr ls ${CTA_WF_DIR} | grep CTA_TapeFsId= | tr '"' ' ' | cut -d ' ' -f 2`
-    eos attr set CTA_TapeFsId=${TAPE_FS_ID_TOSET} ${CTA_TEST_DIR}
-
   # Link the attributes of CTA worklow directory to the test directory
   eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR}
 
