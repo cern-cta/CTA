@@ -2379,6 +2379,42 @@ uint64_t RdbmsCatalogue::getNbNonSupersededFilesOnTape(rdbms::Conn& conn, const 
 }
 
 
+//------------------------------------------------------------------------------
+// getNbFilesOnTape
+//------------------------------------------------------------------------------
+uint64_t RdbmsCatalogue::getNbFilesOnTape(const std::string& vid) const {
+  try {
+    auto conn = m_connPool.getConn();
+    return getNbFilesOnTape(conn, vid);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+//getNbFilesOnTape
+//------------------------------------------------------------------------------
+uint64_t RdbmsCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::string& vid) const {
+  try {
+    const char *const sql = 
+    "SELECT COUNT(*) AS NB_FILES FROM TAPE_FILE "
+    "WHERE VID = :VID ";
+    
+    auto stmt = conn.createStmt(sql);
+    
+    stmt.bindString(":VID", vid);
+    auto rset = stmt.executeQuery();
+    rset.next();
+    return rset.columnUint64("NB_FILES");
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) const {
   try {
     const char * const sql = 
@@ -2446,6 +2482,38 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
       throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because there is at least one tape"
             " file in the catalogue that is on the tape");
     }
+  } catch (exception::UserError& ue) {
+    throw;
+  }
+  catch (exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkTapeForLabel
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::checkTapeForLabel(const std::string &vid) {
+   try{
+    auto conn = m_connPool.getConn();
+    
+    TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = vid;
+    const auto tapes = getTapes(conn, searchCriteria);
+
+    if(tapes.empty()) {
+      throw exception::UserError(std::string("Cannot label tape ") + vid + 
+                                             " because it does not exist");
+    } 
+    //The tape exists checks any files on it
+    const uint64_t nbFilesOnTape = getNbFilesOnTape(conn, vid);
+    if( 0 != nbFilesOnTape) {
+      throw exception::UserError(std::string("Cannot label tape ") + vid + 
+                                             " because it has " +
+                                             std::to_string(nbFilesOnTape) + 
+                                             " file(s)");  
+    } 
   } catch (exception::UserError& ue) {
     throw;
   }

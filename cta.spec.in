@@ -123,6 +123,9 @@ The tape server daemon
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-taped
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-taped.service
 
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-label.1cta.gz
+%attr(0755,root,root) %{_bindir}/cta-tape-label
+
 %post -n cta-taped
 %systemd_post cta-taped.service
 %systemdDaemonReload
@@ -251,6 +254,7 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libctadaemonunittests.so*
 %{_libdir}/libctamediachangerunittests.so*
 %{_libdir}/libctadiskunittests.so*
+%{_libdir}/libctatapelabelunittests.so*
 %{_bindir}/cta-systemTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
@@ -346,6 +350,18 @@ The client of the Remote Media Changer Daemon (rmcd)
 %attr(0755,root,root) %{_bindir}/cta-smc
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-smc.conf
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-smc.1cta.gz
+
+%package -n cta-tape-label
+Summary: The command-line tool for pre-labelling a CTA tape.
+Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
+%description -n cta-tape-label
+CERN Tape Archive:
+The command-line tool for pre-labelling a CTA tape.
+%files -n cta-tape-label
+%defattr(-,root,root)
+%attr(0755,root,root) %{_bindir}/cta-tape-label
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-label.1cta.gz
 
 %package -n cta-common
 Summary: CERN Tape Archive common items

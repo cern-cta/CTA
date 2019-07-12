@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/file/Structures.hpp"
-#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"

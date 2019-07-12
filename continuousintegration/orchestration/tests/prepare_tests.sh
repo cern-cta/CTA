@@ -135,6 +135,20 @@ echo "Preparing CTA configuration for tests"
      --name powerusers                                                  \
      --mountpolicy ctasystest --comment "ctasystest"
 
+echo "Labeling tapes:"
+  # add all tapes
+  for ((i=0; i<${#TAPES[@]}; i++)); do
+    VID=${TAPES[${i}]}
+    echo "  cta-tape-label --vid ${VID}"
+    # for debug use
+      # kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --debug
+    kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} 
+    if [ $? -ne 0 ]; then
+      echo "ERROR: failed to label the tape ${VID}"
+      exit 1
+    fi
+  done
+
 echo "Setting drive up: ${DRIVENAMES[${driveslot}]}"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive up ${DRIVENAMES[${driveslot}]}
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls

@@ -336,13 +336,40 @@ public:
    * @param vid The volume identifier of the tape to be reclaimed.
    */
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override;
-   /**
+  
+  /**
+   * Checks the specified tape for the tape label command.
+   *
+   * This method checks if the tape is safe to be labeled and will throw an 
+   * exception if the specified tape does not ready to be labeled.
+   *
+   * @param vid The volume identifier of the tape to be checked.
+   */
+  void checkTapeForLabel(const std::string &vid) override;
+  
+  /**
    * Returns the number of non superseded files contained in the tape identified by its vid
    * @param conn the database connection
    * @param vid the vid in which we will count non superseded files
    * @return the number of non superseded files on the vid
    */
   uint64_t getNbNonSupersededFilesOnTape(rdbms::Conn &conn, const std::string &vid) const;
+  
+  /**
+   * Returns the number of any files contained in the tape identified by its vid
+   * @param vid the vid in which we will count non superseded files
+   * @return the number of files on the tape
+   */
+  uint64_t getNbFilesOnTape(const std::string &vid) const override;
+  
+  /**
+   * Returns the number of any files contained in the tape identified by its vid
+   * @param conn the database connection
+   * @param vid the vid in which we will count non superseded files
+   * @return the number of files on the tape
+   */
+  uint64_t getNbFilesOnTape(rdbms::Conn &conn, const std::string &vid) const;
+  
   /**
    * Delete all the tape files of the VID passed in parameter
    * @param conn the database connection

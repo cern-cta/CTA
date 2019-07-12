@@ -43,6 +43,7 @@ target_link_libraries(cta-unitTests
   ctatapeserverfileunittests
   ctatapeserverscsiunittests
   ctadiskunittests
+  ctatapelabelunittests
   gtest
   pthread)
 

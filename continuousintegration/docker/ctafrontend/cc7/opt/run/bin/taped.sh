@@ -8,7 +8,7 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable castor
 
   # Install missing RPMs
-  yum -y install mt-st lsscsi sg3_utils cta-taped cta-debuginfo ceph-common
+  yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common
 fi
 
 echo "Using this configuration for library:"

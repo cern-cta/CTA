@@ -346,6 +346,23 @@ public:
    * @param vid The volume identifier of the tape to be reclaimed.
    */
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) = 0;
+  
+  /**
+   * Checks the specified tape for the tape label command.
+   *
+   * This method checks if the tape is safe to be labeled and will throw an 
+   * exception if the specified tape does not ready to be labeled.
+   *
+   * @param vid The volume identifier of the tape to be checked.
+   */
+  virtual void checkTapeForLabel(const std::string &vid) = 0;
+  
+  /**
+   * Returns the number of any files contained in the tape identified by its vid
+   * @param vid the vid in which we will count non superseded files
+   * @return the number of files on the tape
+   */
+  virtual uint64_t getNbFilesOnTape(const std::string &vid) const = 0 ;
 
   virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) = 0;
   virtual void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) = 0;
