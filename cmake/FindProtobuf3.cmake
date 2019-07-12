@@ -15,8 +15,8 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
-set(PROTOBUF3_ROOT=/usr)
-#set(PROTOBUF3_ROOT=/opt/eos)
+set(PROTOBUF3_ROOT /usr)
+#set(PROTOBUF3_ROOT /opt/eos)
 
 set(PROTOBUF3_RPATH ${PROTOBUF3_ROOT}/lib64/protobuf3)
 message(STATUS "PROTOBUF3_RPATH=${PROTOBUF3_RPATH}")
