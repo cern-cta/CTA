@@ -93,7 +93,6 @@ private:
   AgentReference & m_ourAgentReference;
   AgentRegister m_agentRegister;
   std::map<std::string, AgentWatchdog * > m_watchedAgents;
-  //void garbageCollectArchiveRequests(Agent& agent, OwnedObjectSorter &ownedObjectSorter,log::LogContext & lc);
 };
   
 }}
