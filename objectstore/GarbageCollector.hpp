@@ -56,8 +56,8 @@ public:
   /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
     * one batch per queue. */
   struct OwnedObjectSorter {
-    // TODO: tuple[0] = containerIdentifier (tapepool or Repack Request's address), tuple[1]=jobQueueType, tuple[2]=tapepoolOfTheJob
-    std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
+    //tuple[0] = containerIdentifier (tapepool or Repack Request's address), tuple[1]=jobQueueType, tuple[2]=tapepoolOfTheJob
+    std::map<std::tuple<std::string, JobQueueType ,std::string>, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
     //tuple[0] = containerIdentifier (vid or Repack Request's address), tuple[1]=jobQueueType, tuple[2]=vidOfTheJob
     std::map<std::tuple<std::string, JobQueueType,std::string>, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
     std::list<std::shared_ptr<GenericObject>> otherObjects;
@@ -76,6 +76,15 @@ public:
     void lockFetchAndUpdateOtherObjects(Agent & agent, AgentReference & agentReference, Backend & objectStore,
         cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
     //Sorter& getSorter();
+    
+    std::string dispatchArchiveAlgorithms(std::list<std::shared_ptr<ArchiveRequest>> &jobs,const JobQueueType& jobQueueType, const std::string& containerIdentifier,
+        const std::string& tapepool,std::set<std::string> & jobsIndividuallyGCed, 
+        Agent& agent, AgentReference& agentReference, Backend & objectstore, log::LogContext &lc);
+    
+    template<typename ArchiveSpecificQueue>
+    void executeArchiveAlgorithm(std::list<std::shared_ptr<ArchiveRequest>> &jobs,std::string &queueAddress, const std::string& containerIdentifier, const std::string& tapepool, 
+        std::set<std::string> & jobsIndividuallyGCed, Agent& agent, AgentReference& agentReference, 
+        Backend &objectStore, log::LogContext& lc);
   };
   
 private:

@@ -1645,9 +1645,9 @@ TEST(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   }
   
   {
-    // TODO : Implement the garbage collection of Archive requests with the new Repack Statuses
-    /*cta::objectstore::AgentReference agentRefToReportForUserForFailure("ToReportToUserForFailure", dl);
-    cta::objectstore::Agent agentToReportToUserForFailure(agentRefToReportForUserForFailure.getAgentAddress(), be);
+    //Test the AJS_ToReportToUserForFailure Garbage collection
+    cta::objectstore::AgentReference agentRefToReportToUserForFailure("ToReportToUserForFailure", dl);
+    cta::objectstore::Agent agentToReportToUserForFailure(agentRefToReportToUserForFailure.getAgentAddress(), be);
     agentToReportToUserForFailure.initialize();
     agentToReportToUserForFailure.setTimeout_us(0);
     agentToReportToUserForFailure.insertAndRegisterSelf(lc);
@@ -1661,28 +1661,222 @@ TEST(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     
     cta::objectstore::ScopedExclusiveLock sel(ar);
     ar.fetch();
-    ar.setJobOwner(2,agentRefToReportForUserForFailure.getAgentAddress());
+    ar.setJobOwner(2,agentRefToReportToUserForFailure.getAgentAddress());
     ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure);
     ar.commit();
     sel.release();
     
-    agentRefToReportForUserForFailure.addToOwnership(ar.getAddressIfSet(),be);
+    agentRefToReportToUserForFailure.addToOwnership(ar.getAddressIfSet(),be);
 
     gc.runOnePass(lc);
     
     //The Archive Request should be queued in the ArchiveQueueToReportToUserForFailure
-    re.fetchNoLock();
-    cta::objectstore::ArchiveQueue aqToReportToUserForFailure(re.getArchiveQueueAddress(tapePool, cta::objectstore::JobQueueType::JobsToReportToUser), be);
-    
-    aqToReportToUserForFailure.fetchNoLock();
-    
-    auto jobs = aqToReportToUserForFailure.dumpJobs();
-    ASSERT_EQ(1,jobs.size());
+    {
+      re.fetchNoLock();
+      cta::objectstore::ArchiveQueue aqToReportToUserForFailure(re.getArchiveQueueAddress(tapePool, cta::objectstore::JobQueueType::JobsToReportToUser), be);
 
-    auto& job = jobs.front();
-    ASSERT_EQ(2,job.copyNb);
-    ASSERT_EQ(ar.getJobOwner(2),aqToReportToUserForFailure.getAddressIfSet());
-    */
+      aqToReportToUserForFailure.fetchNoLock();
+
+      auto jobs = aqToReportToUserForFailure.dumpJobs();
+      ASSERT_EQ(1,jobs.size());
+
+      auto& job = jobs.front();
+      ASSERT_EQ(2,job.copyNb);
+      
+      ar.fetchNoLock();
+      ASSERT_EQ(ar.getJobOwner(2),aqToReportToUserForFailure.getAddressIfSet());
+    }
+  }
+  
+  {
+    //Test the AJS_ToReportToUserForTransfer Garbage collection
+    cta::objectstore::AgentReference agentRefToReportToUserForTransfer("ToReportToUserForTransfer", dl);
+    cta::objectstore::Agent agentToReportToUserForTransfer(agentRefToReportToUserForTransfer.getAgentAddress(), be);
+    agentToReportToUserForTransfer.initialize();
+    agentToReportToUserForTransfer.setTimeout_us(0);
+    agentToReportToUserForTransfer.insertAndRegisterSelf(lc);
+  
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, cta::objectstore::JobQueueType::JobsToReportToUser), be);
+    cta::objectstore::ScopedExclusiveLock aql(aq);
+    aq.fetch();
+    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aql.release();
+    
+    
+    cta::objectstore::ScopedExclusiveLock sel(ar);
+    ar.fetch();
+    ar.setJobOwner(2,agentRefToReportToUserForTransfer.getAgentAddress());
+    ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
+    ar.commit();
+    sel.release();
+    
+    agentRefToReportToUserForTransfer.addToOwnership(ar.getAddressIfSet(),be);
+
+    gc.runOnePass(lc);
+    
+    //The Archive Request should be queued in the ArchiveQueueToReportToUserForFailure
+    {
+      re.fetchNoLock();
+      cta::objectstore::ArchiveQueue aqToReportToUserForTransfer(re.getArchiveQueueAddress(tapePool, cta::objectstore::JobQueueType::JobsToReportToUser), be);
+
+      aqToReportToUserForTransfer.fetchNoLock();
+
+      auto jobs = aqToReportToUserForTransfer.dumpJobs();
+      ASSERT_EQ(1,jobs.size());
+
+      auto& job = jobs.front();
+      ASSERT_EQ(2,job.copyNb);
+      
+      ar.fetchNoLock();
+      ASSERT_EQ(ar.getJobOwner(2),aqToReportToUserForTransfer.getAddressIfSet());
+    }
+  }
+  
+  {
+    //Test the garbage collection of an AJS_Failed job
+    cta::objectstore::AgentReference agentRefFailed("Failed", dl);
+    cta::objectstore::Agent agentFailed(agentRefFailed.getAgentAddress(), be);
+    agentFailed.initialize();
+    agentFailed.setTimeout_us(0);
+    agentFailed.insertAndRegisterSelf(lc);
+  
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, cta::objectstore::JobQueueType::JobsToReportToUser), be);
+    cta::objectstore::ScopedExclusiveLock aql(aq);
+    aq.fetch();
+    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aql.release();
+    
+    
+    cta::objectstore::ScopedExclusiveLock sel(ar);
+    ar.fetch();
+    ar.setJobOwner(2,agentRefFailed.getAgentAddress());
+    ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_Failed);
+    ar.commit();
+    sel.release();
+    
+    agentRefFailed.addToOwnership(ar.getAddressIfSet(),be);
+
+    gc.runOnePass(lc);
+    
+    //The Archive Request should be queued in the ArchiveQueueFailed
+    {
+      re.fetchNoLock();
+      cta::objectstore::ArchiveQueue aqFailed(re.getArchiveQueueAddress(tapePool, cta::objectstore::JobQueueType::FailedJobs), be);
+
+      aqFailed.fetchNoLock();
+
+      auto jobs = aqFailed.dumpJobs();
+      ASSERT_EQ(1,jobs.size());
+
+      auto& job = jobs.front();
+      ASSERT_EQ(2,job.copyNb);
+      
+      ar.fetchNoLock();
+      ASSERT_EQ(ar.getJobOwner(2),aqFailed.getAddressIfSet());
+    }
+  }
+  
+  //Add Repack informations to test the garbage collection of Archive Requests for Repack
+  //Create a repack info object for the garbage collection of Jobs ToReportToRepackForSuccess and ToReportToRepackForFailure
+  cta::objectstore::ArchiveRequest::RepackInfo ri;
+  ri.isRepack = true;
+  ri.fSeq = 1;
+  ri.fileBufferURL = "testFileBufferURL";
+  ri.repackRequestAddress = "repackRequestAddress";
+  
+  {
+    cta::objectstore::ScopedExclusiveLock sel(ar);
+    ar.fetch();
+    ar.setRepackInfo(ri);
+    ar.commit();
+  }
+  
+  {
+    //Test the Garbage collection of an AJS_ToReportToRepackForSuccess job
+    cta::objectstore::AgentReference agentRefToReportToRepackForSuccess("ToReportToUserForTransfer", dl);
+    cta::objectstore::Agent agentToReportToRepackForSuccess(agentRefToReportToRepackForSuccess.getAgentAddress(), be);
+    agentToReportToRepackForSuccess.initialize();
+    agentToReportToRepackForSuccess.setTimeout_us(0);
+    agentToReportToRepackForSuccess.insertAndRegisterSelf(lc);
+  
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, cta::objectstore::JobQueueType::FailedJobs), be);
+    cta::objectstore::ScopedExclusiveLock aql(aq);
+    aq.fetch();
+    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aql.release();
+    
+    
+    cta::objectstore::ScopedExclusiveLock sel(ar);
+    ar.fetch();
+    ar.setJobOwner(2,agentRefToReportToRepackForSuccess.getAgentAddress());
+    ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess);
+    ar.commit();
+    sel.release();
+    
+    agentRefToReportToRepackForSuccess.addToOwnership(ar.getAddressIfSet(),be);
+
+    gc.runOnePass(lc);
+    
+    //The Archive Request should be queued in the ArchiveQueueToReportToRepackForSuccess
+    {
+      re.fetchNoLock();
+      cta::objectstore::ArchiveQueue aqToReportToRepackForSuccess(re.getArchiveQueueAddress(ri.repackRequestAddress, cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess), be);
+
+      aqToReportToRepackForSuccess.fetchNoLock();
+
+      auto jobs = aqToReportToRepackForSuccess.dumpJobs();
+      ASSERT_EQ(1,jobs.size());
+
+      auto& job = jobs.front();
+      ASSERT_EQ(2,job.copyNb);
+      
+      ar.fetchNoLock();
+      ASSERT_EQ(ar.getJobOwner(2),aqToReportToRepackForSuccess.getAddressIfSet());
+    }
+  }
+  
+  {
+    //Test the garbage collection of an AJS_ToReportToRepackForFailure job
+    cta::objectstore::AgentReference agentRefToReportToRepackForFailure("ToReportToRepackForFailure", dl);
+    cta::objectstore::Agent agentToReportToRepackForFailure(agentRefToReportToRepackForFailure.getAgentAddress(), be);
+    agentToReportToRepackForFailure.initialize();
+    agentToReportToRepackForFailure.setTimeout_us(0);
+    agentToReportToRepackForFailure.insertAndRegisterSelf(lc);
+  
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(ri.repackRequestAddress, cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess), be);
+    cta::objectstore::ScopedExclusiveLock aql(aq);
+    aq.fetch();
+    aq.removeJobsAndCommit({ar.getAddressIfSet()});
+    aql.release();
+    
+    
+    cta::objectstore::ScopedExclusiveLock sel(ar);
+    ar.fetch();
+    ar.setJobOwner(2,agentRefToReportToRepackForFailure.getAgentAddress());
+    ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure);
+    ar.commit();
+    sel.release();
+    
+    agentRefToReportToRepackForFailure.addToOwnership(ar.getAddressIfSet(),be);
+
+    gc.runOnePass(lc);
+    
+    //The Archive Request should be queued in the ArchiveQueueToReportToRepackForFailure
+    {
+      re.fetchNoLock();
+      cta::objectstore::ArchiveQueue aqToReportToRepackForFailure(re.getArchiveQueueAddress(ri.repackRequestAddress, cta::objectstore::JobQueueType::JobsToReportToRepackForFailure), be);
+
+      aqToReportToRepackForFailure.fetchNoLock();
+
+      auto jobs = aqToReportToRepackForFailure.dumpJobs();
+      ASSERT_EQ(1,jobs.size());
+
+      auto& job = jobs.front();
+      ASSERT_EQ(2,job.copyNb);
+      
+      ar.fetchNoLock();
+      ASSERT_EQ(ar.getJobOwner(2),aqToReportToRepackForFailure.getAddressIfSet());
+    }
   }
 }
 
