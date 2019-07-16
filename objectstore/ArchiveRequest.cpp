@@ -689,7 +689,7 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
             return oh.SerializeAsString();
           }
         }
-      } else { // Repack case, the report policy is different (report all jobs). So we just the job's status.
+      } else { // Repack case, the report policy is different (report all jobs). So we just change the job's status.
         for (auto j: *payload.mutable_jobs()) {
           if (j.copynb() == copyNumber) {
             j.set_status(serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess);
