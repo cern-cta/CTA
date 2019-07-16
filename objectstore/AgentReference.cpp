@@ -25,6 +25,7 @@
 #include <sstream>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
 #include <iomanip>
 
 namespace cta { namespace objectstore {
@@ -36,7 +37,9 @@ m_logger(logger) {
   m_nextId=0;
   std::stringstream aid;
   // Get time
-  time_t now = time(0);
+  struct timeval tv;
+  ::gettimeofday(&tv,NULL);
+  time_t now = tv.tv_sec;
   struct tm localNow;
   localtime_r(&now, &localNow);
   // Get hostname
@@ -52,7 +55,8 @@ m_logger(logger) {
     << std::setw(2) << localNow.tm_mday << "-"
     << std::setw(2) << localNow.tm_hour << ":"
     << std::setw(2) << localNow.tm_min << ":"
-    << std::setw(2) << localNow.tm_sec << "-"
+    << std::setw(2) << localNow.tm_sec << ":"
+    << tv.tv_usec << "-"
     << id;
   m_agentAddress = aid.str();
   // Initialize the serialization token for queued actions (lock will make helgrind 
