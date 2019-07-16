@@ -823,7 +823,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   if (!currentStatus) {
     std::stringstream err;
     err << "In ArchiveRequest::updateJobStatus(): copynb not found : " << copyNumberUpdated
-        << "exiing ones: ";
+        << "existing ones: ";
     for (auto &j: jl) err << j.copynb() << "  ";
     throw cta::exception::Exception(err.str());
   }

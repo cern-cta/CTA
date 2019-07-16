@@ -77,6 +77,7 @@ public:
         cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
     //Sorter& getSorter();
     
+  private:
     std::string dispatchArchiveAlgorithms(std::list<std::shared_ptr<ArchiveRequest>> &jobs,const JobQueueType& jobQueueType, const std::string& containerIdentifier,
         const std::string& tapepool,std::set<std::string> & jobsIndividuallyGCed, 
         Agent& agent, AgentReference& agentReference, Backend & objectstore, log::LogContext &lc);
