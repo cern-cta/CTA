@@ -238,6 +238,77 @@ fi
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
 
+SPACE_QUERY_PERIOD_SECS=10
+if sudo eos space config default space.tapeawaregc.spacequeryperiodsecs=${SPACE_QUERY_PERIOD_SECS}; then
+  echo "Set default space.tapeawaregc.spacequeryperiodsecs to ${SPACE_QUERY_PERIOD_SECS}"
+else
+  echo "Failed to set default space.tapeawaregc.spacequeryperiodsecs to ${SPACE_QUERY_PERIOD_SECS}"
+  exit 1
+fi
+
+FREE_BYTES_DEFAULT_FS_RW=0
+FREE_BYTES_TIMEOUT_SECS=60
+FREE_BYTES_WAIT_SECS=0
+while true; do
+  FREE_BYTES_DEFAULT_FS_RW=`sudo eos ns stat | grep ' tgc freebytes default ' | awk '{print $NF;}'`
+  echo `date`" FREE_BYTES_DEFAULT_FS_RW=${FREE_BYTES_DEFAULT_FS_RW}"
+  if test ${FREE_BYTES_DEFAULT_FS_RW} -gt 0; then
+    break;
+  fi
+  sleep 1
+  let FREE_BYTES_WAIT_SECS=FREE_BYTES_WAIT_SECS+1
+  if test ${FREE_BYTES_WAIT_SECS} -ge ${FREE_BYTES_TIMEOUT_SECS}; then
+    echo "Timed out waiting for 'tgc freebytes default' to be greater than 0"
+    exit 1
+  fi
+done
+
+EOS_FS_1=`sudo eos fs ls -m | grep ' id=1 '`
+if test x != "x${EOS_FS_1}"; then
+    echo "Found EOS file system with ID 1"
+else
+  echo "Could not find EOS file system with ID 1"
+  exit 1
+fi
+
+if echo ${EOS_FS_1} | grep ' configstatus=rw '; then
+  echo "The config status of EOS file system with ID 1 is 'rw'"
+else
+  echo "The config status of EOS file system with ID 1 is not 'rw'"
+  exit 1
+fi
+
+if sudo eos fs config 1 configstatus=off; then
+  echo "Configured EOS file system with ID 1 to be 'off'"
+else
+  echo "Failed to configure EOS file system with ID 1 to be 'off'"
+  exit 1
+fi
+
+FREE_BYTES_DEFAULT_FS_OFF=0
+FREE_BYTES_TIMEOUT_SECS=60
+FREE_BYTES_WAIT_SECS=0
+while true; do
+  FREE_BYTES_DEFAULT_FS_OFF=`sudo eos ns stat | grep ' tgc freebytes default ' | awk '{print $NF;}'`
+  echo `date`" FREE_BYTES_DEFAULT_FS_OFF=${FREE_BYTES_DEFAULT_FS_OFF}"
+  if test ${FREE_BYTES_DEFAULT_FS_OFF} -lt ${FREE_BYTES_DEFAULT_FS_RW}; then
+    break
+  fi
+  sleep 1
+  let FREE_BYTES_WAIT_SECS=FREE_BYTES_WAIT_SECS+1
+  if test ${FREE_BYTES_WAIT_SECS} -ge ${FREE_BYTES_TIMEOUT_SECS}; then
+    echo "Timed out waiting for 'tgc freebytes default' to be less than ${FREE_BYTES_DEFAULT_FS_RW}"
+    exit 1
+  fi
+done
+
+if sudo eos fs config 1 configstatus=rw; then
+  echo "Configured EOS file system with ID 1 to be 'rw'"
+else
+  echo "Failed to configure EOS file system with ID 1 to be 'rw'"
+  exit 1
+fi
+
 touch /EOSOK
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
@@ -246,4 +317,9 @@ else
   # Add a DNS cache on the client as kubernetes DNS complains about `Nameserver limits were exceeded`
   yum install -y systemd-resolved
   systemctl start systemd-resolved
+fi
+
+if ! sudo eos ns stat | grep ' tgc freebytes default '; then
+  echo "Could not find 'tgc freebytes default' in the output of 'eos ns stat'"
+  exit 1
 fi
