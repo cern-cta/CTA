@@ -147,6 +147,12 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    } catch (std::bad_cast &) {
       // If not, never mind
    }
+   
+   //Initialize the repack buffer URL
+   auto repackBufferURLConf = config.getOptionValueStr("cta.repack.repack_buffer_url");
+   if(repackBufferURLConf.first){
+     m_repackBufferURL = repackBufferURLConf.second;
+   }
   
    // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
    auto aht = new cta::objectstore::AgentHeartbeatThread(m_backendPopulator->getAgentReference(), *m_backend, *m_log);

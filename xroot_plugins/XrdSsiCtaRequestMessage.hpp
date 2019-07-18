@@ -36,6 +36,7 @@ public:
     m_scheddb  (service->getSchedDb()),
     m_catalogue(service->getCatalogue()),
     m_scheduler(service->getScheduler()),
+    m_repackBufferURL(service->getRepackBufferURL()),	    
     m_lc       (service->getLogContext()) {
       m_cliIdentity.username = client.name;
       m_cliIdentity.host     = client.host;
@@ -264,6 +265,7 @@ private:
   cta::OStoreDBWithAgent                               &m_scheddb;            //!< Reference to CTA ObjectStore
   cta::catalogue::Catalogue                            &m_catalogue;          //!< Reference to CTA Catalogue
   cta::Scheduler                                       &m_scheduler;          //!< Reference to CTA Scheduler
+  optional<std::string>				        m_repackBufferURL;    //!< Repack buffer URL
   cta::log::LogContext                                  m_lc;                 //!< CTA Log Context
   std::map<cta::admin::OptionBoolean::Key, bool>        m_option_bool;        //!< Boolean options
   std::map<cta::admin::OptionUInt64::Key, uint64_t>     m_option_uint64;      //!< UInt64 options

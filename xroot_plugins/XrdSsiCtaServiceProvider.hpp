@@ -103,6 +103,8 @@ public:
     * Get the log context for this Service
     */
    cta::log::LogContext getLogContext() const { return cta::log::LogContext(*m_log); }
+   
+   cta::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
 
 private:
    /*!
@@ -138,6 +140,7 @@ private:
    std::unique_ptr<cta::catalogue::Catalogue>          m_catalogue;           //!< CTA catalogue of tapes and tape files
    std::unique_ptr<cta::Scheduler>                     m_scheduler;           //!< The scheduler
    std::unique_ptr<cta::log::Logger>                   m_log;                 //!< The logger
+   cta::optional<std::string>		               m_repackBufferURL;     //!< The repack buffer URL
    UniquePtrAgentHeartbeatThread                       m_agentHeartbeat;      //!< Agent heartbeat thread
 
    static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";    //!< Identifier for log messages

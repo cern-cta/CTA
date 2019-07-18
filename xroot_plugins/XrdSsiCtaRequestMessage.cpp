@@ -1070,10 +1070,19 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
    }
    
    auto buff = getOptional(OptionString::BUFFERURL);
-   if (buff)
+   if (buff){
+     //The buffer is provided by the user
      bufferURL = buff.value();
-   else
-     throw cta::exception::UserError("Must specify the buffer URL using --bufferurl option.");
+   }
+   else {
+     //Buffer is not provided by the user, try to get the one from the configuration file
+     if(m_repackBufferURL){
+       bufferURL = m_repackBufferURL.value();
+     } else {
+       //Buffer is neither provided by the user, neither provided by the frontend configuration file, exception
+       throw cta::exception::UserError("Must specify the buffer URL using --bufferurl option or using the frontend configuration file.");
+     }
+   }
 
    // Expand, repack, or both ?
    cta::common::dataStructures::RepackInfo::Type type;
