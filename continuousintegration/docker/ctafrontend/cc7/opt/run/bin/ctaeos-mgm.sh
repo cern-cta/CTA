@@ -309,6 +309,23 @@ else
   exit 1
 fi
 
+FREE_BYTES_DEFAULT_FS_RW=0
+FREE_BYTES_TIMEOUT_SECS=60
+FREE_BYTES_WAIT_SECS=0
+while true; do
+  FREE_BYTES_DEFAULT_FS_RW=`sudo eos ns stat | grep ' tgc freebytes default ' | awk '{print $NF;}'`
+  echo `date`" FREE_BYTES_DEFAULT_FS_RW=${FREE_BYTES_DEFAULT_FS_RW}"
+  if test ${FREE_BYTES_DEFAULT_FS_RW} -gt ${FREE_BYTES_DEFAULT_FS_OFF}; then
+    break;
+  fi
+  sleep 1
+  let FREE_BYTES_WAIT_SECS=FREE_BYTES_WAIT_SECS+1
+  if test ${FREE_BYTES_WAIT_SECS} -ge ${FREE_BYTES_TIMEOUT_SECS}; then
+    echo "Timed out waiting for 'tgc freebytes default' to be greater than ${FREE_BYTES_DEFAULT_FS_OFF}"
+    exit 1
+  fi
+done
+
 touch /EOSOK
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
