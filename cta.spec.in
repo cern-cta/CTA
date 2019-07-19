@@ -123,9 +123,6 @@ The tape server daemon
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-taped
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-taped.service
 
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-label.1cta.gz
-%attr(0755,root,root) %{_bindir}/cta-tape-label
-
 %post -n cta-taped
 %systemd_post cta-taped.service
 %systemdDaemonReload
@@ -355,13 +352,16 @@ The client of the Remote Media Changer Daemon (rmcd)
 Summary: The command-line tool for pre-labelling a CTA tape.
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
+Requires(post): /usr/sbin/setcap
 %description -n cta-tape-label
 CERN Tape Archive:
 The command-line tool for pre-labelling a CTA tape.
 %files -n cta-tape-label
 %defattr(-,root,root)
-%attr(0755,root,root) %{_bindir}/cta-tape-label
+%attr(0750,cta,tape) %{_bindir}/cta-tape-label
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-label.1cta.gz
+%post -n cta-tape-label
+/usr/sbin/setcap cap_sys_rawio+ep  %{_bindir}/cta-tape-label
 
 %package -n cta-common
 Summary: CERN Tape Archive common items
