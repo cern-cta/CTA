@@ -76,10 +76,10 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv)
   params.push_back(cta::log::Param("force", boolToStr(m_force)));
   m_log(cta::log::INFO, "Label session started", params);
   
+  readAndSetConfiguration(getUsername(), cmdLineArgs.m_vid, cmdLineArgs.m_oldLabel);
+   
   const std::string capabilities("cap_sys_rawio+ep");
   setProcessCapabilities(capabilities);
- 
-  readAndSetConfiguration(getUsername(), cmdLineArgs.m_vid, cmdLineArgs.m_oldLabel);
   
   m_catalogue->checkTapeForLabel(m_vid);
   
