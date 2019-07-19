@@ -18,7 +18,6 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueTest.hpp"
-#include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"

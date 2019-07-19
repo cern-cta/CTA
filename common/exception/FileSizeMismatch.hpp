@@ -36,12 +36,14 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  FileSizeMismatch(const std::string &context = "", const bool embedBacktrace = true);
+  FileSizeMismatch(const std::string &context = "", const bool embedBacktrace = true):
+    cta::exception::Exception(context, embedBacktrace) {
+  }
 
   /**
    * Destructor.
    */
-  ~FileSizeMismatch() override;
+  ~FileSizeMismatch() override {}
 }; // class FileSizeMismatch
 
 } // namespace catalogue

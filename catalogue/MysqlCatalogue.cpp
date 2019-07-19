@@ -17,7 +17,6 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/MysqlCatalogueSchema.hpp"
 #include "catalogue/MysqlCatalogue.hpp"
 #include "common/exception/DatabaseConstraintError.hpp"

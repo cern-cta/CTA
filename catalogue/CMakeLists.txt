@@ -36,7 +36,6 @@ set (CATALOGUE_LIB_SRC_FILES
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
-  FileSizeMismatch.cpp
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
   MysqlCatalogue.cpp

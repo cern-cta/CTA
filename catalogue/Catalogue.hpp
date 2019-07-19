@@ -19,7 +19,6 @@
 #pragma once
 
 #include "catalogue/ArchiveFileItor.hpp"
-#include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "catalogue/TapeFileWritten.hpp"
@@ -56,6 +55,7 @@
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
+#include "common/exception/FileSizeMismatch.hpp"
 #include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
