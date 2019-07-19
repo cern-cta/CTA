@@ -17,11 +17,11 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/retryOnLostConnection.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
+#include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -341,7 +341,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       }
       
       if (expectedFSeq != event.fSeq) {
-        exception::Exception ex;
+        exception::TapeFseqMismatch ex;
         ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
           event.fSeq;
         throw ex;

@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/ArchiveFileItor.hpp"
+#include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "catalogue/TapeFileWritten.hpp"
@@ -55,6 +56,7 @@
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
+#include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -149,6 +151,8 @@ public:
    * Notifies the catalogue that the specified files have been written to tape.
    *
    * @param events The tape file written events.
+   * @throw TapeFseqMismatch If an unexpected tape file sequence number is encountered.
+   * @throw FileSizeMismatch If an unexpected tape file size is encountered.
    */
   virtual void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) = 0;
 
