@@ -64,8 +64,7 @@ namespace daemon {
       cta::tape::daemon::TapedProxy & initialProcess,
       cta::server::ProcessCap &capUtils,
       const DataTransferConfig & castorConf,
-      cta::Scheduler &scheduler,
-      cta::catalogue::Catalogue &catalogue);
+      cta::Scheduler &scheduler);
 
     /**
      * Execute the session and return the type of action to be performed
@@ -147,10 +146,6 @@ namespace daemon {
      * The scheduler, i.e. the local interface to the Objectstore DB
      */
     cta::Scheduler &m_scheduler;
-    /**
-     * Reference to the catalogue interface
-     */
-    cta::catalogue::Catalogue &m_catalogue;
 
     /**
      * Returns the string representation of the specified mount type

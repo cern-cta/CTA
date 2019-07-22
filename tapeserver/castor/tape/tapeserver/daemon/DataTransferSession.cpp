@@ -55,8 +55,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     cta::tape::daemon::TapedProxy & initialProcess,
     cta::server::ProcessCap & capUtils,
     const DataTransferConfig & castorConf,
-    cta::Scheduler & scheduler,
-    cta::catalogue::Catalogue &catalogue): 
+    cta::Scheduler & scheduler): 
     m_log(log),
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),
@@ -65,8 +64,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     m_mc(mc),
     m_intialProcess(initialProcess),
     m_capUtils(capUtils),
-    m_scheduler(scheduler),
-    m_catalogue(catalogue)
+    m_scheduler(scheduler)
     {
 }
 
@@ -238,8 +236,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     
     TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
         m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc,rrp,
-        m_castorConf.useLbp, m_castorConf.useRAO, m_castorConf.externalEncryptionKeyScript,*retrieveMount,
-        m_catalogue);
+        m_castorConf.useLbp, m_castorConf.useRAO, m_castorConf.externalEncryptionKeyScript,*retrieveMount);
     DiskWriteThreadPool dwtp(m_castorConf.nbDiskThreads,
         rrp,
         rwd,
@@ -341,8 +338,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         m_castorConf.maxBytesBeforeFlush,
         m_castorConf.useLbp,
         m_castorConf.externalEncryptionKeyScript,
-        *archiveMount,
-        m_catalogue);
+        *archiveMount);
  
     DiskReadThreadPool drtp(m_castorConf.nbDiskThreads,
         m_castorConf.bulkRequestMigrationMaxFiles,

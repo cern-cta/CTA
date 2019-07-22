@@ -70,8 +70,7 @@ public:
     cta::server::ProcessCap &capUtils,
     uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush, const bool useLbp,
     const std::string & externalEncryptionKeyScript,
-    const cta::ArchiveMount & archiveMount,
-    cta::catalogue::Catalogue &catalogue);
+    const cta::ArchiveMount & archiveMount);
   
   /**
    * 
@@ -197,11 +196,6 @@ private:
    * and the density of the tape
    */
   const cta::ArchiveMount & m_archiveMount;
-  
-  /**
-   * Reference to the catalogue interface
-   */
-  cta::catalogue::Catalogue & m_catalogue;
   
 protected:
   /***
