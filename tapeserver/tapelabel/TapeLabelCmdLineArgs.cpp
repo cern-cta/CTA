@@ -127,7 +127,14 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
 void TapeLabelCmdLineArgs::printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    "    cta-tape-label --vid/-v VID [--oldlabel/-o VID] [--help/-h] [--debug/-d] [--force/-f]" << std::endl;
+    "  cta-tape-label [options] --vid/-v VID" << std::endl <<
+    "Where:" << std::endl <<
+    "  -v, --vid        The VID of the tape to be labeled" << std::endl <<
+    "Options:" <<std::endl <<
+    "  -o, --oldlabel   The vid of the current tape label on the tape if it is not the same as VID" << std::endl <<
+    "  -h, --help       Print this help message and exit" << std::endl <<
+    "  -d, --debug      Print more logs for label operations" << std::endl <<
+    "  -f, --force      Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  
 }
 
 } // namespace tapelabel

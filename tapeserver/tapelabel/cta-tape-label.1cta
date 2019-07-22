@@ -17,17 +17,16 @@
 .SH NAME
 cta-tape-label \- Pre-label a CTA tape
 .SH SYNOPSIS
-.BI "cta-tape-label --vid/-v VID [--oldlabel/-o VID] [--help/-h] [--debug/-d] [--force/-f]"
+.BI "cta-tape-label [options] --vid/-v VID"
 
 .SH DESCRIPTION
 \fBcta-tape-label\fP is a command-line tool for pre-labelling a CTA tape.
+
+\fBcta-tape-label\fP writes CTA label to the tape with specified \fBVID\fP. 
 .SH OPTIONS
 .TP
-\fB\-v, \-\-vid
-Volume ID of the tape. This option is mandatory.
-.TP
 \fB\-o, \-\-oldlabel
-Volume ID of the tape that is aready on the tape. Needs to be set if the tape has any label.
+Volume ID from the tape label if the tape non-blank. Needs to be set if the tape has any vid in the label differ from VID.
 .TP
 \fB\-h, \-\-help
 Prints the usage message.
@@ -36,7 +35,7 @@ Prints the usage message.
 Prints more logs for label operations.
 .TP
 \fB\-f, \-\-force
-Force labeling for not-blank tapes without label checks.
+Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH EXAMPLES
