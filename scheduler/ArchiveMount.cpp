@@ -43,7 +43,7 @@ cta::ArchiveMount::ArchiveMount(catalogue::Catalogue & catalogue,
 // getMountType
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountType cta::ArchiveMount::getMountType() const {
-  return cta::common::dataStructures::MountType::ArchiveForUser;
+  return m_dbMount->mountInfo.mountType;
 }
 
 //------------------------------------------------------------------------------
