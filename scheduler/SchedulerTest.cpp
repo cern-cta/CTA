@@ -2100,7 +2100,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
     
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
@@ -2342,7 +2342,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
     
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
@@ -2414,7 +2414,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       std::unique_ptr<cta::TapeMount> mount;
       mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
       ASSERT_NE(nullptr, mount.get());
-      ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+      ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
       std::unique_ptr<cta::ArchiveMount> archiveMount;
       archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
       ASSERT_NE(nullptr, archiveMount.get());
