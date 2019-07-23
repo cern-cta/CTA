@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "scheduler/TapeMountDummy.hpp"
+#include "catalogue/DummyCatalogue.hpp"
 #include <gtest/gtest.h>
 
 namespace unitTests{
@@ -45,7 +46,7 @@ namespace unitTests{
   
   class TestingRetrieveMount: public cta::RetrieveMount {
   public:
-    TestingRetrieveMount(std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm): RetrieveMount(std::move(dbrm)) {
+    TestingRetrieveMount(cta::catalogue::Catalogue &catalogue, std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm): RetrieveMount(catalogue, std::move(dbrm)) {
     }
   };
   
@@ -100,7 +101,8 @@ namespace unitTests{
     cta::log::LogContext lc(log);
     
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount);
-    TestingRetrieveMount trm(std::move(dbrm));
+    std::unique_ptr<cta::catalogue::Catalogue> catalogue(new cta::catalogue::DummyCatalogue);
+    TestingRetrieveMount trm(*catalogue, std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);    
     
     RecallMemoryManager mm(10,100,lc);

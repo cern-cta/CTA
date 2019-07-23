@@ -279,6 +279,25 @@ void cta::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daem
 }
 
 //------------------------------------------------------------------------------
+// setTapeMounted()
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::setTapeMounted(cta::log::LogContext& logContext) const {
+  utils::Timer t;    
+  log::ScopedParamContainer spc(logContext);
+  try {
+    m_catalogue.tapeMountedForArchive(m_dbMount->getMountInfo().vid, m_dbMount->getMountInfo().drive);
+    auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
+    spc.add("catalogueTime", catalogueTime);
+    logContext.log(log::INFO, "In ArchiveMount::setTapeMounted(): success.");
+  } catch (cta::exception::Exception &ex) {
+    auto catalogueTimeFailed = t.secs(cta::utils::Timer::resetCounter);
+    spc.add("catalogueTime", catalogueTimeFailed);
+    logContext.log(cta::log::WARNING,
+      "Failed to update catalogue for the tape mounted for archive.");
+  }    
+}
+
+//------------------------------------------------------------------------------
 // setTapeFull()
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::setTapeFull() {

@@ -24,6 +24,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "disk/DiskReporterFactory.hpp"
+#include "catalogue/Catalogue.hpp"
 
 #include <memory>
 #include <queue>
@@ -37,18 +38,19 @@ namespace cta {
    */
   class RetrieveMount: public TapeMount {
     friend class Scheduler;
-  protected:
+  protected:    
     /**
-     * Trivial constructor
+     * Constructor.
+     * @param catalogue The file catalogue interface.
      */
-    RetrieveMount();
+    RetrieveMount(cta::catalogue::Catalogue &catalogue);
     
     /**
      * Constructor.
-     *
+     * @param catalogue The file catalogue interface.
      * @param dbMount The database representation of this mount.
      */
-    RetrieveMount(std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount);
+    RetrieveMount(cta::catalogue::Catalogue &catalogue, std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount);
 
   public:
 
@@ -131,7 +133,13 @@ namespace cta {
      * Report a tape session statistics
      */
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats);
-
+    
+    /**
+     * Report a tape mounted event
+     * @param logContext
+     */
+    virtual void setTapeMounted(log::LogContext &logContext) const;
+    
     /**
      * Indicates that the disk thread of the mount was completed. This
      * will implicitly trigger the transition from DrainingToDisk to Up if necessary.
@@ -221,6 +229,10 @@ namespace cta {
     /** An initialized-once factory for archive reports (indirectly used by ArchiveJobs) */
     disk::DiskReporterFactory m_reporterFactory;
     
+    /**
+     * A pointer to the file catalogue.
+     */
+    cta::catalogue::Catalogue &m_catalogue; 
 
   }; // class RetrieveMount
 

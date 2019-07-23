@@ -23,15 +23,16 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveMount::RetrieveMount():
-  m_sessionRunning(false) {}
+cta::RetrieveMount::RetrieveMount(cta::catalogue::Catalogue &catalogue): m_sessionRunning(false), m_catalogue(catalogue) {
+}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveMount::RetrieveMount(
+  cta::catalogue::Catalogue &catalogue,
   std::unique_ptr<SchedulerDatabase::RetrieveMount> dbMount): 
-  m_sessionRunning(false) {
+  m_sessionRunning(false), m_catalogue(catalogue) {
   m_dbMount.reset(dbMount.release());
 }
 
@@ -279,6 +280,25 @@ void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
   m_dbMount->setTapeSessionStats(stats);
+}
+
+//------------------------------------------------------------------------------
+// setTapeMounted()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::setTapeMounted(cta::log::LogContext& logContext) const {
+  utils::Timer t;    
+  log::ScopedParamContainer spc(logContext);
+  try {
+    m_catalogue.tapeMountedForRetrieve(m_dbMount->getMountInfo().vid, m_dbMount->getMountInfo().drive);
+    auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
+    spc.add("catalogueTime", catalogueTime);
+    logContext.log(log::INFO, "In RetrieveMount::setTapeMounted(): success.");
+  } catch (cta::exception::Exception &ex) {
+    auto catalogueTimeFailed = t.secs(cta::utils::Timer::resetCounter);
+    spc.add("catalogueTime", catalogueTimeFailed);
+    logContext.log(cta::log::WARNING,
+      "Failed to update catalogue for the tape mounted for retrieve.");
+  }    
 }
 
 //------------------------------------------------------------------------------

@@ -1240,8 +1240,8 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             m->activityNameAndWeightedMountCount.value().activity,
             m->activityNameAndWeightedMountCount.value().weight };
         }
-        std::unique_ptr<RetrieveMount> internalRet (
-          new RetrieveMount(mountInfo->createRetrieveMount(m->vid, 
+        std::unique_ptr<RetrieveMount> internalRet(new RetrieveMount(m_catalogue));
+        internalRet->m_dbMount.reset(mountInfo->createRetrieveMount(m->vid, 
             m->tapePool,
             driveName,
             logicalLibraryName, 
@@ -1250,7 +1250,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             m->mediaType,
             m->vendor,
             m->capacityInBytes,
-            time(NULL), actvityAndWeight)));
+            time(NULL), actvityAndWeight).release());
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;

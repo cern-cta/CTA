@@ -41,12 +41,15 @@ namespace cta {
 
     /**
      * Constructor.
+     * 
+     * @param catalogue The file catalogue interface.
      */
     ArchiveMount(catalogue::Catalogue & catalogue);
 
     /**
      * Constructor.
      *
+     * @param catalogue The file catalogue interface. 
      * @param dbMount The database representation of this mount.
      */
     ArchiveMount(catalogue::Catalogue & catalogue, std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbMount);
@@ -112,6 +115,12 @@ namespace cta {
      * Report a tape session statistics
      */
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+    
+    /**
+     * Report a tape mounted event
+     * @param logContext
+     */
+    void setTapeMounted(log::LogContext &logContext) const override;
     
     /**
      * Report that the tape is full.

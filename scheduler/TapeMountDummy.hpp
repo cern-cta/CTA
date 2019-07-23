@@ -58,6 +58,7 @@ class TapeMountDummy: public TapeMount {
 
   void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {}
   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
+  void setTapeMounted(log::LogContext &logContext) const override {};
 };
 
 }

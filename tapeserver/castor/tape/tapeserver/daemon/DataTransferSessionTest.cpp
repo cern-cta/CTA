@@ -601,7 +601,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       // Write the file to tape
       const uint64_t archiveFileSize = 1000;
       cta::MockArchiveMount mam(catalogue);
-      cta::MockRetrieveMount mrm;
+      cta::MockRetrieveMount mrm(catalogue);
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = 1000 + fseq;

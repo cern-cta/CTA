@@ -146,7 +146,8 @@ namespace unitTests
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
     
-    cta::MockRetrieveMount trm;
+    auto catalogue = cta::catalogue::DummyCatalogue();
+    cta::MockRetrieveMount trm(catalogue);
     trm.createRetrieveJobs(nbJobs);
     //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
     
@@ -206,8 +207,8 @@ namespace unitTests
     cta::log::LogContext lc(log);
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
-    
-    cta::MockRetrieveMount trm;
+    auto catalogue = cta::catalogue::DummyCatalogue();
+    cta::MockRetrieveMount trm(catalogue);
     trm.createRetrieveJobs(0);
     //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
     
