@@ -204,25 +204,33 @@ bool ContainerTraits<ArchiveQueue,C>::
 trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock,
   const ContainerIdentifier & cId, log::LogContext& lc)
 {
+  log::TimingList tl;
+  cta::utils::Timer t;
   if (!cont.isEmpty())  return false;
   // The current implementation is done unlocked.
   contLock.release();
+  tl.insertAndReset("queueUnlockTime",t);
   try {
     // The queue should be removed as it is empty.
     ContainerTraits<ArchiveQueue,C>::QueueType queueType;
     RootEntry re(cont.m_objectStore);
     ScopedExclusiveLock rexl(re);
+    tl.insertAndReset("rootEntryLockTime",t);
     re.fetch();
+    tl.insertAndReset("rootEntryFetchTime",t);
     re.removeArchiveQueueAndCommit(cId, queueType.value, lc);
+    tl.insertAndReset("rootEntryRemoveArchiveQueueAndCommitTime",t);
     log::ScopedParamContainer params(lc);
     params.add("tapepool", cId)
           .add("queueObject", cont.getAddressIfSet());
+    tl.addToLog(params);
     lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
   } catch (cta::exception::Exception &ex) {
     log::ScopedParamContainer params(lc);
     params.add("tapepool", cId)
           .add("queueObject", cont.getAddressIfSet())
           .add("Message", ex.getMessageValue());
+    tl.addToLog(params);
     lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
   }
   //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
@@ -244,12 +252,16 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
 {
   // Try and get access to a queue.
   size_t attemptCount = 0;
+  log::TimingList tl;
   retry:
+  cta::utils::Timer t;
   objectstore::RootEntry re(cont.m_objectStore);
   re.fetchNoLock();
+  tl.insertAndReset("rootEntryFetchNoLockTime",t);
   std::string aqAddress;
   ContainerTraits<ArchiveQueue,C>::QueueType queueType;
   auto aql = re.dumpArchiveQueues(queueType.value);
+  tl.insertAndReset("rootEntryDumpArchiveQueueTime",t);
   for (auto & aqp : aql) {
     if (aqp.tapePool == cId)
       aqAddress = aqp.address;
@@ -259,33 +271,45 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   cont.setAddress(aqAddress);
   //findQueueTime += localFindQueueTime = t.secs(utils::Timer::resetCounter);
   try {
-    if (contLock.isLocked()) contLock.release();
+    if (contLock.isLocked()) {
+      contLock.release();
+      tl.insertAndReset("queueUnlockTime",t);
+    }
+    t.reset();
     contLock.lock(cont);
+    tl.insertAndReset("queueLockTime",t);
     cont.fetch();
+    tl.insertAndReset("queueFetchTime",t);
     //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
   } catch (cta::exception::Exception & ex) {
     // The queue is now absent. We can remove its reference in the root entry.
     // A new queue could have been added in the mean time, and be non-empty.
     // We will then fail to remove from the RootEntry (non-fatal).
     ScopedExclusiveLock rexl(re);
+    tl.insertAndReset("rootEntryLockTime",t);
     re.fetch();
+    tl.insertAndReset("rootEntryFetchTime",t);
     try {
       re.removeArchiveQueueAndCommit(cId, queueType.value, lc);
+      tl.insertAndReset("rootEntryRemoveArchiveQueueAndCommitTime",t);
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());
+      tl.addToLog(params);
       lc.log(log::INFO, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): de-referenced missing queue from root entry");
     } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
+      tl.addToLog(params);
       lc.log(log::INFO, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchArchiveQueue & ex) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());
+      tl.addToLog(params);
       lc.log(log::DEBUG, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry: already done.");
     }
     //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
