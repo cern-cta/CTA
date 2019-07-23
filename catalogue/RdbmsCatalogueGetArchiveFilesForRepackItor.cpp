@@ -62,7 +62,14 @@ namespace {
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
       tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
-
+      cta::optional<std::string> supersededByVid = rset.columnOptionalString("SUPERSEDED_BY_VID");
+      if(supersededByVid){
+        tapeFile.supersededByVid = supersededByVid.value();
+      }
+      cta::optional<uint64_t> supersededByFSeq = rset.columnOptionalUint64("SUPERSEDED_BY_FSEQ");
+      if(supersededByFSeq){
+        tapeFile.supersededByFSeq = supersededByFSeq.value();
+      }
       archiveFile.tapeFiles.push_back(tapeFile);
     }
 
@@ -104,6 +111,8 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
         "TAPE_COPY.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_COPY.COPY_NB AS COPY_NB,"
         "TAPE_COPY.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
+        "TAPE_COPY.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID, "
+        "TAPE_COPY.SUPERSEDED_BY_FSEQ AS SUPERSEDED_BY_FSEQ, "
         "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "TAPE_FILE REPACK_TAPE "
@@ -119,6 +128,10 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
         "REPACK_TAPE.VID = :VID "
       "AND "
         "REPACK_TAPE.FSEQ >= :START_FSEQ "
+     "AND "
+        "REPACK_TAPE.SUPERSEDED_BY_VID IS NULL "
+      "AND "
+        "REPACK_TAPE.SUPERSEDED_BY_FSEQ IS NULL "
       "ORDER BY REPACK_TAPE.FSEQ";
 
     m_conn = connPool.getConn();

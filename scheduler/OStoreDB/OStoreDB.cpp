@@ -2185,7 +2185,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
   for (auto rsr: repackSubrequests) fSeqs.insert(rsr.fSeq);
   auto subrequestsNames = m_repackRequest.getOrPrepareSubrequestInfo(fSeqs, *m_oStoreDB.m_agentReference);
   m_repackRequest.setTotalStats(totalStatsFiles);
-  uint64_t fSeq = std::max(maxFSeqLowBound+1, maxAddedFSeq + 1);
+  uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
   m_repackRequest.setLastExpandedFSeq(fSeq);
   // We make sure the references to subrequests exist persistently before creating them.
   m_repackRequest.commit();
@@ -2197,6 +2197,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
   // Try to create the retrieve subrequests (owned by this process, to be queued in a second step)
   // subrequests can already fail at that point if we cannot find a copy on a valid tape.
   std::list<uint64_t> failedFSeqs;
+  objectstore::RepackRequest::StatsValues failedCreationStats;
   uint64_t failedFiles = 0;
   uint64_t failedBytes = 0;
   // First loop: we will issue the async insertions of the subrequests.
@@ -2231,8 +2232,8 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         }
       } catch (std::out_of_range &) {
         failedFSeqs.emplace_back(rsr.fSeq);
-        failedFiles++;
-        failedBytes += rsr.archiveFile.fileSize;
+        failedCreationStats.files++;
+        failedCreationStats.bytes += rsr.archiveFile.fileSize;
         log::ScopedParamContainer params(lc);
         params.add("fileID", rsr.archiveFile.archiveFileID)
               .add("diskInstance", rsr.archiveFile.diskInstance)
@@ -2302,8 +2303,8 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
       {
         // Count the failure for this subrequest. 
         failedFSeqs.emplace_back(rsr.fSeq);
-        failedFiles++;
-        failedBytes += rsr.archiveFile.fileSize;
+        failedCreationStats.files++;
+        failedCreationStats.bytes += rsr.archiveFile.fileSize;
         log::ScopedParamContainer params(lc);
         params.add("fileId", rsr.archiveFile.archiveFileID)
               .add("repackVid", repackInfo.vid)
@@ -2325,8 +2326,8 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         // We can fail to serialize here...
         // Count the failure for this subrequest. 
         failedFSeqs.emplace_back(rsr.fSeq);
-        failedFiles++;
-        failedBytes += rsr.archiveFile.fileSize;
+        failedCreationStats.files++;
+        failedCreationStats.bytes += rsr.archiveFile.fileSize;
         failedFSeqs.emplace_back(rsr.fSeq);
         log::ScopedParamContainer params(lc);
         params.add("fileId", rsr.archiveFile)
@@ -2363,8 +2364,8 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
     } catch (exception::Exception & ex) {
       // Count the failure for this subrequest. 
       failedFSeqs.emplace_back(aii.rsr.fSeq);
-      failedFiles++;
-      failedBytes += aii.rsr.archiveFile.fileSize;
+      failedCreationStats.files++;
+      failedCreationStats.bytes += aii.rsr.archiveFile.fileSize;
       log::ScopedParamContainer params(lc);
       params.add("fileId", aii.rsr.archiveFile)
             .add("repackVid", repackInfo.vid)
@@ -2374,6 +2375,14 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
       lc.log(log::ERR,
           "In OStoreDB::RepackRequest::addSubrequests(): could not asyncInsert the subrequest.");
     }
+  }
+  if(failedFSeqs.size()){
+    log::ScopedParamContainer params(lc);
+    params.add("files", failedCreationStats.files);
+    params.add("bytes", failedCreationStats.bytes);
+    m_repackRequest.reportRetrieveCreationFailures(failedCreationStats);
+    m_repackRequest.commit();
+    lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubRequests(), reported the failed creation of Retrieve Requests to the Repack request");
   }
   // We now have created the subrequests. Time to enqueue.
   {

@@ -503,6 +503,15 @@ auto RepackRequest::getStats() -> std::map<StatsType, StatsValues> {
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// RepackRequest::reportRetrieveCreationFailures()
+//------------------------------------------------------------------------------
+void RepackRequest::reportRetrieveCreationFailures(const StatsValues& failedRetrieveCreation){
+  checkPayloadWritable();
+  m_payload.set_failedtoretrievebytes(m_payload.failedtoretrievebytes() + failedRetrieveCreation.bytes);
+  m_payload.set_failedtoretrievefiles(m_payload.failedtoretrievefiles() + failedRetrieveCreation.files);
+  setStatus();
+}
 
 //------------------------------------------------------------------------------
 // RepackRequest::garbageCollect()

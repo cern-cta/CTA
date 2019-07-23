@@ -474,24 +474,28 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   timingList.insertAndReset("fillTotalStatsFileBeforeExpandTime",t);
   cta::catalogue::ArchiveFileItor archiveFilesForCatalogue = m_catalogue.getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
   timingList.insertAndReset("catalogueGetArchiveFilesForRepackItorTime",t);
+  
   std::stringstream dirBufferURL;
   dirBufferURL << repackInfo.repackBufferBaseURL << "/" << repackInfo.vid << "/";
-  cta::disk::DirectoryFactory dirFactory;
-  std::unique_ptr<cta::disk::Directory> dir;
-  dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
   std::set<std::string> filesInDirectory;
-  if(dir->exist()){
-    filesInDirectory = dir->getFilesName();
-  } else {
-    dir->mkdir();
+  if(archiveFilesForCatalogue.hasMore()){
+    //We only create the folder if there are some files to Repack
+    cta::disk::DirectoryFactory dirFactory;
+    std::unique_ptr<cta::disk::Directory> dir;
+    dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
+    if(dir->exist()){
+      filesInDirectory = dir->getFilesName();
+    } else {
+      dir->mkdir();
+    }
   }
   double elapsedTime = 0;
   bool stopExpansion = false;
+  repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
   while(archiveFilesForCatalogue.hasMore() && !stopExpansion) {
     size_t filesCount = 0;
     uint64_t maxAddedFSeq = 0;
     std::list<SchedulerDatabase::RepackRequest::Subrequest> retrieveSubrequests;
-    repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
     while(filesCount < c_defaultMaxNbFilesForRepack && !stopExpansion && archiveFilesForCatalogue.hasMore())
     {
       filesCount++;
@@ -507,14 +511,19 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::MoveOnly) {
         // determine which fSeq(s) (normally only one) lives on this tape.
         for (auto & tc: archiveFile.tapeFiles) if (tc.vid == repackInfo.vid) {
-          retrieveSubRequest.copyNbsToRearchive.insert(tc.copyNb);
           // We make the (reasonable) assumption that the archive file only has one copy on this tape.
           // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
           // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
           // restart of expansion.
-          retrieveSubRequest.fSeq = std::min(tc.fSeq, retrieveSubRequest.fSeq);
-          totalStatsFile.totalFilesToArchive += 1;
-          totalStatsFile.totalBytesToArchive += retrieveSubRequest.archiveFile.fileSize;
+          if(tc.supersededByVid.empty()){
+            //We want to Archive the "active" copies on the tape, thus the copies that are not superseded by another
+            //we want to Retrieve the "active" fSeq
+            totalStatsFile.totalFilesToArchive += 1;
+            totalStatsFile.totalBytesToArchive += retrieveSubRequest.archiveFile.fileSize;
+            retrieveSubRequest.copyNbsToRearchive.insert(tc.copyNb);
+            retrieveSubRequest.fSeq = tc.fSeq;
+          }
+          //retrieveSubRequest.fSeq = (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) ? tc.fSeq : std::max(tc.fSeq, retrieveSubRequest.fSeq);
         }
       }
       std::stringstream fileName;
@@ -560,7 +569,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted). 
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
-    repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq - 1, maxAddedFSeq, totalStatsFile, lc);
+    repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq, maxAddedFSeq, totalStatsFile, lc);
     timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
     {
       if(!stopExpansion && archiveFilesForCatalogue.hasMore()){
