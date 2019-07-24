@@ -307,6 +307,8 @@ directory metadata into the EOS namespace.
 %files -n cta-migration-tools
 %attr(0755,root,root) %{_bindir}/eos-import-dirs
 %attr(0755,root,root) %{_bindir}/eos-import-files
+%attr(0755,root,root) %{_bindir}/eos-test-dir-inject
+%attr(0755,root,root) %{_bindir}/eos-test-inject.sh
 
 %package -n cta-rmcd
 Summary: The Remote Media Changer daemon (rmcd)
