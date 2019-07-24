@@ -1,0 +1,225 @@
+#!/usr/bin/python36
+
+import argparse
+import sys
+import os
+sys.path.append('/usr/local/lib/python')
+import TapeAdmin
+
+
+opt_verbose, opt_drive, opt_vid, opt_check = None, None, None, None
+
+my_name = sys.argv[0].split('/')[-1]    # Get rid of "/usr/local/bin" and take only the final part
+
+mt = '/bin/mt'
+
+args, lib, device = None, None, None
+
+operation = None
+
+cta_smc = '/usr/bin/cta-smc'
+
+
+def load_args():
+    usage = None
+    if operation == 'mount':
+        usage = '\ntape-mount -V <vid> [-D <drive_name>] [-v] [-c]\n' + \
+                'tape-mount --vid <vid> [--drivename <drive_name>] [--verbose] [--check]'
+    elif operation == 'unmount':
+        usage = '\ntape-unmount [-V <vid>] [-D <drive_name>] [-v] [-c]\n' + \
+                'tape-unmount [--vid <vid>] [--drivename <drive_name>] [--verbose] [--check]'
+
+    parser = argparse.ArgumentParser(
+        description='A script to mount or unmount a tape on the local drive',
+        usage=usage
+    )
+
+    # Required argument -V if the operation is to MOUNT
+    if operation == 'mount':
+        required_named = parser.add_argument_group('required arguments')
+        required_named.add_argument('-V', '--vid', type=str, help='The volume ID to mount/unmount')
+    # Optional argument -V if the operation is to UNMOUNT
+    elif operation == 'unmount':
+        parser.add_argument('-V', '--vid', type=str, help='The volume ID to mount/unmount')
+
+
+    # Optional arguments
+    parser.add_argument('-D', '--drive', type=str, help='The drive to be used. This is an optional parameter, '
+                        'this script will use the first drive from TPCONFIG if none is specified.')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Be verbose')
+    parser.add_argument('-c', '--check', action='store_true', help='Check if the correct tape is mounted by reading '
+                                                                   'the VOL1 label.')
+
+    global opt_vid, opt_drive, opt_verbose, opt_check
+    global args
+    args = parser.parse_args()
+
+    opt_vid = args.vid
+    opt_drive = args.drive
+    opt_verbose = args.verbose
+    opt_check = args.check
+
+    if not opt_drive:
+        opt_drive = TapeAdmin.get_first_drive()
+
+    if operation == 'mount' and not opt_vid:
+        parser.print_usage()
+        exit(0)
+
+    if operation == 'unmount' and not opt_vid:
+        opt_vid = TapeAdmin.get_tape_vid_inside_drive(opt_drive)
+
+    # Get the library and the device
+    global lib, device
+    lib = TapeAdmin.get_library(opt_drive)
+    device = TapeAdmin.get_device(opt_drive)
+
+
+def define_mount_or_unmount_operation():
+    """
+    Defines if the operation to do is mount or unmount, depending on the name of the called script
+    """
+    global operation
+    if 'unmount' in sys.argv[0]:
+        operation = 'unmount'
+    elif 'mount' in sys.argv[0]:
+        operation = 'mount'
+
+
+def get_drive():
+    """
+    Checks the drive to exist if the opt_drive was given. Otherwise, assigns the 1st drive found in TPCONFIG
+    """
+    global opt_drive
+    if opt_drive:
+        if TapeAdmin.is_drive_known(opt_drive):
+            if opt_verbose:
+                TapeAdmin.debug(my_name, 'using specified drive: ' + opt_drive)
+            return
+        TapeAdmin.abort(my_name, 'drive ' + opt_drive + ' not found in TPCONFIG')
+    else:
+        opt_drive = TapeAdmin.get_first_drive()
+        if opt_verbose:
+            TapeAdmin.debug(my_name, 'no drive specified, taking the one found in TPCONFIG: ' + opt_drive)
+
+
+def do_VOL1_check():
+    if opt_check and operation == 'mount':
+        # Rewind
+        cmd = mt + ' -f ' + device + ' rewind'
+        if opt_verbose:
+            TapeAdmin.debug(my_name, 'running ' + cmd)
+            if TapeAdmin.run_cmd(cmd).returncode != 0:
+                TapeAdmin.abort(my_name, 'rewind failed')
+            elif opt_verbose:
+                TapeAdmin.debug(my_name, 'rewind of ' + opt_vid + ': OK')
+
+        # Read VOL1
+        file = '/tmp/' + opt_vid + '-' + str(os.getuid()) + 'vol1'
+        # Remove past temp file
+        cmd = 'rm -f ' + file + ' >/dev/null 2>&1'
+        TapeAdmin.run_cmd(cmd)
+
+        if TapeAdmin.do_VOL1_check(device, file, opt_vid) == 'ok':
+            if opt_verbose:
+                TapeAdmin.debug(my_name, 'VOL1 contains ' + opt_vid + ': OK')
+        else:
+            TapeAdmin.warning(my_name, 'VOL1 check FAILED for tape ' + opt_vid + ' after mount operation')
+        TapeAdmin.run_cmd('rm -f ' + file + ' >/dev/null 2>&1')    # Remove temp file
+
+
+def check_tape_location_if_mount():
+    """
+    Checks if the tape is in the proper state for mount
+    """
+    location = TapeAdmin.tape_queryvolume(opt_vid, opt_verbose)
+    if operation == 'mount' and location != 'HOME':
+        TapeAdmin.abort(my_name, 'tape ' + opt_vid + ' is NOT in its HOME slot. Its location is ' + location)
+
+
+def do_previous_drive_checks():
+    """
+    Checks if the current status of the drive is suitable for doing mount or unmount, respectively
+    """
+    # Do previous unmount checks
+    if operation == 'unmount':
+        if TapeAdmin.is_drive_free(opt_drive):
+            TapeAdmin.abort(my_name, 'there is no tape inside ' + opt_drive + ': drive is FREE')
+        elif opt_vid and not TapeAdmin.get_tape_vid_inside_drive(opt_drive) == opt_vid:
+            TapeAdmin.abort(my_name, 'the specified tape ' + opt_vid + ' is not in the specified drive ' + opt_drive)
+        elif not TapeAdmin.is_tape_ejected(opt_drive):
+            cmd = mt + ' -f ' + device + ' eject'
+            if opt_verbose:
+                TapeAdmin.debug(my_name, 'tape drive ' + opt_drive + ' has the tape ' +
+                               TapeAdmin.get_tape_vid_inside_drive(opt_drive) + ' still inside. Ejecting...')
+                TapeAdmin.debug(my_name, 'running ' + cmd)
+            TapeAdmin.run_cmd(cmd)
+        else:
+            if opt_verbose:
+                TapeAdmin.debug(my_name, 'tape drive ' + opt_drive + ' has the tape ' +
+                               TapeAdmin.get_tape_vid_inside_drive(opt_drive) + ' in an EJECTED state')
+
+    # Do previous mount checks
+    elif operation == 'mount':
+        if not TapeAdmin.is_drive_free(opt_drive):
+            if TapeAdmin.is_tape_ejected(opt_drive):
+                TapeAdmin.abort(my_name, 'tape drive ' + opt_drive + ' is not free, tape ' +
+                                TapeAdmin.get_tape_vid_inside_drive(opt_drive) + ' is EJECTED in it')
+            else:
+                TapeAdmin.abort(my_name, 'tape drive ' + opt_drive + ' is not free, tape ' +
+                                TapeAdmin.get_tape_vid_inside_drive(opt_drive) + ' is MOUNTED inside')
+
+
+def execute_mount_unmount_command_IBM():
+    # Finally execute the proper command (mount/unmount)
+    if operation == 'mount':
+        cmd = cta_smc + ' -m -V ' + opt_vid + ' -D ' + TapeAdmin.get_ordinal(opt_drive)
+        if opt_verbose:
+            TapeAdmin.debug(my_name, 'running ' + cmd)
+        TapeAdmin.run_cmd(cmd)
+
+        if TapeAdmin.is_drive_free(opt_drive):
+            TapeAdmin.abort(my_name, 'drive ' + opt_drive + ' is still free after mount operation: ERROR')
+        tape_mounted = TapeAdmin.get_tape_vid_inside_drive(opt_drive)
+        if tape_mounted != opt_vid:
+            TapeAdmin.abort(my_name, 'wrong tape mounted inside drive ' + opt_drive +
+                            ' (expected: ' + opt_vid + '; mounted instead: ' + tape_mounted + ')')
+        TapeAdmin.info(my_name, 'mount of tape ' + opt_vid + ' inside drive ' + opt_drive + ': OK')
+
+    elif operation == 'unmount':
+        cmd = cta_smc + ' -d -V ' + opt_vid + ' -D ' + TapeAdmin.get_ordinal(opt_drive) + ' 2>/dev/null'
+        if opt_verbose:
+            TapeAdmin.debug(my_name, 'running ' + cmd)
+        TapeAdmin.run_cmd(cmd)
+        if TapeAdmin.is_drive_free(opt_drive):
+            TapeAdmin.info(my_name, 'unmount of tape ' + opt_vid + ' from drive ' + opt_drive + ': OK')
+        if not TapeAdmin.is_drive_free(opt_drive):
+            TapeAdmin.info(my_name, 'unmount of tape ' + opt_vid + ' inside drive ' + opt_drive + ': ERROR')
+
+
+def mount_or_unmount():
+    if lib.startswith('IBM'):
+        execute_mount_unmount_command_IBM()
+
+    else:
+        TapeAdmin.abort(my_name, 'unknown library "' + lib + '"')
+
+
+if __name__ == '__main__':
+    TapeAdmin.request_kinit_permissions(TapeAdmin.info)
+    define_mount_or_unmount_operation()
+    load_args()
+    get_drive()
+    do_previous_drive_checks()
+
+    if operation == 'mount':
+        are_tape_and_drive_in_the_same_lib, lib_tape, lib_drive = \
+            TapeAdmin.are_tape_and_drive_in_the_same_lib(opt_vid, opt_drive, opt_verbose)
+        if not are_tape_and_drive_in_the_same_lib:
+            TapeAdmin.abort(my_name, 'different libraries (drive=' + lib_drive + ' | tape=' + lib_tape + ')')
+        if opt_verbose:
+            TapeAdmin.debug(my_name, 'same library (' + lib_drive + '): OK')
+
+    check_tape_location_if_mount()
+    mount_or_unmount()
+    do_VOL1_check()
