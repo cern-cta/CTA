@@ -1,6 +1,6 @@
 SPECFILE = cta-cern-tape-utils.spec
 
-FILES = tape-config-generate
+FILES = tape-config-generate TapeAdmin.py tape-mount
 
 rpmtopdir := $(shell rpm --eval %_topdir)
 rpmbuild  := $(shell [ -x /usr/bin/rpmbuild ] && echo rpmbuild || echo rpm)
