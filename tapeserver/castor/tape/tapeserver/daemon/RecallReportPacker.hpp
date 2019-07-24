@@ -239,6 +239,11 @@ private:
    * The limit for successful reports to trigger flush.
    */
   const unsigned int RECALL_REPORT_PACKER_FLUSH_SIZE = 500;
+  
+  /*
+   * The time limit for successful reports to trigger flush.
+   */
+  const double RECALL_REPORT_PACKER_FLUSH_TIME = 180;
 };
 
 }}}}

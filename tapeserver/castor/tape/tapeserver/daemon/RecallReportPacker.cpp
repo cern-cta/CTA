@@ -236,6 +236,7 @@ void RecallReportPacker::WorkerThread::run(){
   bool endFound = false;
   
   std::list <std::unique_ptr<Report>> reportedSuccessfully;
+  cta::utils::Timer t;
   while(1) {
     std::string debugType;
     std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
@@ -265,8 +266,11 @@ void RecallReportPacker::WorkerThread::run(){
       // m_parent.fullCheckAndFinishAsyncExecute will execute the shared half of the
       // request updates (individual, asynchronous is done in rep->execute(m_parent);
       if (typeid(*rep) == typeid(RecallReportPacker::ReportSuccessful) 
-          && m_parent.m_successfulRetrieveJobs.size() >= m_parent.RECALL_REPORT_PACKER_FLUSH_SIZE)
+          && (m_parent.m_successfulRetrieveJobs.size() >= m_parent.RECALL_REPORT_PACKER_FLUSH_SIZE || t.secs() >= m_parent.RECALL_REPORT_PACKER_FLUSH_TIME )){
+        m_parent.m_lc.log(cta::log::INFO,"m_parent.fullCheckAndFinishAsyncExecute()");
         m_parent.fullCheckAndFinishAsyncExecute();
+        t.reset();
+      }
     } catch(const cta::exception::Exception& e){
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
