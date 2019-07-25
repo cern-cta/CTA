@@ -21,6 +21,7 @@
 #include "AgentReference.hpp"
 #include "RepackQueueAlgorithms.hpp"
 #include "Algorithms.hpp"
+#include "MountPolicySerDeser.hpp"
 #include <google/protobuf/util/json_util.h>
 #include <iostream>
 
@@ -175,6 +176,19 @@ void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::T
   setTotalFileToArchive(totalStatsFiles.totalFilesToArchive);
   setTotalBytesToArchive(totalStatsFiles.totalBytesToArchive);
   setTotalBytesToRetrieve(totalStatsFiles.totalBytesToRetrieve);
+}
+
+void RepackRequest::setMountPolicy(const common::dataStructures::MountPolicy& mp){
+  checkPayloadWritable();
+  MountPolicySerDeser mpSerDeser(mp);
+  mpSerDeser.serialize(*m_payload.mutable_mount_policy());
+}
+
+common::dataStructures::MountPolicy RepackRequest::getMountPolicy(){
+  checkPayloadReadable();
+  MountPolicySerDeser mpSerDeser;
+  mpSerDeser.deserialize(m_payload.mount_policy());
+  return mpSerDeser;
 }
 
 void RepackRequest::setStatus(){

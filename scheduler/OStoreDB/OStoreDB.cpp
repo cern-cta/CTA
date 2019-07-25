@@ -1401,7 +1401,7 @@ OStoreDB::RetrieveQueueItor_t* OStoreDB::getRetrieveJobItorPtr(const std::string
 // OStoreDB::queueRepack()
 //------------------------------------------------------------------------------
 void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
-    common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) {
+    common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy& mountPolicy, log::LogContext & lc) {
   // Prepare the repack request object in memory.
   assertAgentAddressSet();
   cta::utils::Timer t;
@@ -1412,6 +1412,7 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   rr->setVid(vid);
   rr->setType(repackType);
   rr->setBufferURL(bufferURL);
+  rr->setMountPolicy(mountPolicy);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
   try {
     Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
@@ -1863,7 +1864,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
   // As usual there are many opportunities for failure.
   utils::Timer t;
   log::TimingList timingList;
-  
+  cta::common::dataStructures::MountPolicy mountPolicy;
   // 1) Update statistics. As the repack request is protected against double reporting, we can release its lock
   // before the next step.
   {
@@ -1880,6 +1881,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
     objectstore::ScopedExclusiveLock rrl(m_repackRequest);
     timingList.insertAndReset("successStatsLockTime", t);
     m_repackRequest.fetch();
+    mountPolicy = m_repackRequest.getMountPolicy();
     timingList.insertAndReset("successStatsFetchTime", t);
     m_repackRequest.reportRetriveSuccesses(ssl);
     timingList.insertAndReset("successStatsUpdateTime", t);
@@ -1956,7 +1958,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
           sorterArchiveJob.jobDump.copyNb = copyNbToArchive;
           sorterArchiveJob.jobDump.tapePool = atar.subrequestInfo.repackInfo.archiveRouteMap[copyNbToArchive];
           sorterArchiveJob.jobQueueType = cta::objectstore::JobQueueType::JobsToTransferForRepack;
-          sorterArchiveJob.mountPolicy = common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack;
+          sorterArchiveJob.mountPolicy = mountPolicy;
           sorterArchiveJob.previousOwner = atar.subrequestInfo.owner;
           sorterArchiveRequest.archiveJobs.push_back(sorterArchiveJob);
         }
@@ -2187,6 +2189,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
   m_repackRequest.setTotalStats(totalStatsFiles);
   uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
   m_repackRequest.setLastExpandedFSeq(fSeq);
+  common::dataStructures::MountPolicy mountPolicy = m_repackRequest.getMountPolicy();
   // We make sure the references to subrequests exist persistently before creating them.
   m_repackRequest.commit();
   // We keep holding the repack request lock: we need to ensure de deleted boolean of each subrequest does
@@ -2258,7 +2261,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
       // Set the queueing parameters
       common::dataStructures::RetrieveFileQueueCriteria fileQueueCriteria;
       fileQueueCriteria.archiveFile = rsr.archiveFile;
-      fileQueueCriteria.mountPolicy = common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack;
+      fileQueueCriteria.mountPolicy = mountPolicy;
       rr->setRetrieveFileQueueCriteria(fileQueueCriteria);
       // Decide of which vid we are going to retrieve from. Here, if we can retrieve from the repack VID, we
       // will set the initial recall on it. Retries will we requeue to best VID as usual if needed.
@@ -3579,11 +3582,13 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
   // We will wait on the asynchronously started reports of jobs, queue the retrieve jobs
   // for report and remove them from ownership.
   // 1) Check the async update result.
+  common::dataStructures::MountPolicy mountPolicy;
   for (auto & sDBJob: jobsBatch) {
     auto osdbJob = castFromSchedDBJob(sDBJob);
     if (osdbJob->isRepack) {
       try {
         osdbJob->m_jobSucceedForRepackReporter->wait();
+        mountPolicy = osdbJob->m_jobSucceedForRepackReporter->m_MountPolicy;
         jobsToRequeueForRepackMap[osdbJob->m_repackInfo.repackRequestAddress].emplace_back(osdbJob);
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
@@ -3630,7 +3635,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     for (auto & req: repackRequestQueue.second) {
       insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb, 
           req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq, req->archiveFile.fileSize,
-          cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,
+          mountPolicy,
           serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess, req->m_activityDescription});
       requestToJobMap[&req->m_retrieveRequest] = req;
        }

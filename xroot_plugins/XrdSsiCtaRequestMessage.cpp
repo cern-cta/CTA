@@ -1083,6 +1083,28 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
        throw cta::exception::UserError("Must specify the buffer URL using --bufferurl option or using the frontend configuration file.");
      }
    }
+   
+   typedef common::dataStructures::MountPolicy MountPolicy;
+   MountPolicy mountPolicy = MountPolicy::s_defaultMountPolicyForRepack;
+   
+   auto mountPolicyProvidedByUserOpt = getOptional(OptionString::MOUNT_POLICY);
+   if(mountPolicyProvidedByUserOpt){
+     //The user specified a mount policy name for this repack request
+     std::string mountPolicyProvidedByUser = mountPolicyProvidedByUserOpt.value();
+     //Get the mountpolicy from the catalogue
+     typedef std::list<common::dataStructures::MountPolicy> MountPolicyList;
+     MountPolicyList mountPolicies = m_catalogue.getMountPolicies();
+     MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(),[mountPolicyProvidedByUser](const common::dataStructures::MountPolicy & mp){
+       return mp.name == mountPolicyProvidedByUser;
+     });
+     if(repackMountPolicyItor != mountPolicies.end()){
+       //The mount policy exists
+       mountPolicy = *repackMountPolicyItor;
+     } else {
+       //The mount policy does not exist, throw a user error
+       throw cta::exception::UserError("The mount policy name provided does not match any existing mount policy.");
+     }
+   }
 
    // Expand, repack, or both ?
    cta::common::dataStructures::RepackInfo::Type type;
@@ -1099,7 +1121,7 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
 
    // Process each item in the list
    for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL,  type, m_lc);
+      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL,  type, mountPolicy , m_lc);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

@@ -1052,7 +1052,7 @@ void RetrieveRequest::AsyncJobDeleter::wait() {
 RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReportSucceedForRepack(uint32_t copyNb)
 {
   std::unique_ptr<AsyncJobSucceedForRepackReporter> ret(new AsyncJobSucceedForRepackReporter);
-  ret->m_updaterCallback = [copyNb](const std::string &in)->std::string{ 
+  ret->m_updaterCallback = [&ret,copyNb](const std::string &in)->std::string{ 
         // We have a locked and fetched object, so we just need to work on its representation.
         cta::objectstore::serializers::ObjectHeader oh;
         if (!oh.ParseFromString(in)) {
@@ -1085,6 +1085,7 @@ RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReport
             return oh.SerializeAsString();
           }
         }
+        ret->m_MountPolicy.deserialize(payload.mountpolicy());
         throw cta::exception::Exception("In RetrieveRequest::asyncReportSucceedForRepack::lambda(): copyNb not found");
     };
     ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(),ret->m_updaterCallback));

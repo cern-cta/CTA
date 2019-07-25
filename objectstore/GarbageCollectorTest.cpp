@@ -720,6 +720,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestPending) {
     repackRequest.setVid("VIDTest");
     repackRequest.setBufferURL("test/buffer/url");
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
+    repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
     repackRequest.insert();
   }
   {
@@ -800,6 +801,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestToExpand) {
     repackRequest.setVid("VID2Test");
     repackRequest.setBufferURL("test/buffer/url");
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
+    repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
     repackRequest.insert();
   }
   {
@@ -880,6 +882,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
     repackRequest.setBufferURL("test/buffer/url");
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setExpandFinished(false);
+    repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
     repackRequest.insert();
   }
   {
@@ -961,6 +964,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     repackRequest.setBufferURL("test/buffer/url");
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setExpandFinished(true);
+    repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
     repackRequest.insert();
   }
   cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);
@@ -1059,6 +1063,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestStarting) {
     repackRequest.setBufferURL("test/buffer/url");
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setExpandFinished(true);
+    repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
     repackRequest.insert();
   }
   cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);

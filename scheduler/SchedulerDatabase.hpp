@@ -388,7 +388,7 @@ public:
 
   /*============ Repack management: user side ================================*/
   virtual void queueRepack(const std::string & vid, const std::string & bufferURL,
-      common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) = 0;
+      common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext & lc) = 0;
   virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
   virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
   virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;

@@ -576,6 +576,7 @@ message RepackRequest {
   //the expansion of the RepackRequest is done or not
   required bool is_expand_finished = 11561;
   required bool is_expand_started = 11562;
+  required MountPolicy mount_policy = 11563;
   repeated RepackSubRequestPointer subrequests = 11570;
 }
 

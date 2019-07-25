@@ -48,6 +48,9 @@ public:
   void setExpandStarted(const bool expandStarted);
   void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles getTotalStatsFile();
+  void setMountPolicy(const common::dataStructures::MountPolicy &mp);
+  common::dataStructures::MountPolicy getMountPolicy();
+  
   /**
    * Automatically set the new status of the Repack Request
    * regarding multiple parameters

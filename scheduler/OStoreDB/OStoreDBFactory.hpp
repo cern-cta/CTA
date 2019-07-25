@@ -224,8 +224,8 @@ public:
   }
   
 
-  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, log::LogContext& lc) override {
-    m_OStoreDB.queueRepack(vid, bufferURL, repackType, lc);
+  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext& lc) override {
+    m_OStoreDB.queueRepack(vid, bufferURL, repackType, mountPolicy, lc);
   }
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
