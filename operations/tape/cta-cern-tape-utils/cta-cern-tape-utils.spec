@@ -9,6 +9,8 @@ Group: Application/CTA
 Requires: python36 cta-cli
 Source: %{name}-%{version}.tgz
 
+%global __python %{__python3}
+
 %description
 CTA CERN specific tape utilities:
  - generate /etc/cta/TPCONFIG file from TOMS framework
@@ -34,7 +36,7 @@ install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/tape-config-generate	$RPM_BUILD
 install -m 644 -p $RPM_BUILD_DIR/%{name}-%{version}/TapeAdmin.py	$RPM_BUILD_ROOT/usr/local/lib/python
 
 install -m 755 -p $RPM_BUILD_DIR/%{name}-%{version}/tape-mount		$RPM_BUILD_ROOT/usr/local/bin/tape-mount
-ln -s $RPM_BUILD_ROOT/usr/local/bin/tape-mount				$RPM_BUILD_ROOT/usr/local/bin/tape-unmount
+ln -s tape-mount							$RPM_BUILD_ROOT/usr/local/bin/tape-unmount
 
 %post
 
@@ -45,7 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 /usr/local/bin/tape-config-generate
 /usr/local/lib/python/TapeAdmin.py
-/usr/local/lib/python/TapeAdmin.pyc
-/usr/local/lib/python/TapeAdmin.pyo
+/usr/local/lib/python/__pycache__/TapeAdmin.cpython-36.opt-1.pyc
+/usr/local/lib/python/__pycache__/TapeAdmin.cpython-36.pyc
+#/usr/local/lib/python/TapeAdmin.pyc
+#/usr/local/lib/python/TapeAdmin.pyo
 /usr/local/bin/tape-mount
 /usr/local/bin/tape-unmount
