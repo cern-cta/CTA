@@ -20,7 +20,6 @@ CTA CERN specific tape utilities:
  - tape drive test
 
 Author: David Fernandez Alvarez, Vladimir Bahyl - 8/2019
-%prep
 
 %setup -c
 
@@ -31,16 +30,15 @@ cd $RPM_BUILD_ROOT
 mkdir -p usr/local/bin usr/local/sbin usr/local/lib/python3.6
 name=`echo %{name} |sed 's/CERN-CC-//'`
 
-install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/tape-config-generate				$RPM_BUILD_ROOT/usr/local/bin/tape-config-generate
-install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/tape-drive-configure-SCSI-mode-pages-CERN.sh	$RPM_BUILD_ROOT/usr/local/sbin/tape-drive-configure-SCSI-mode-pages-CERN.sh
+install -m 755 -p $RPM_BUILD_DIR/%{name}-%{version}/tape-config-generate				$RPM_BUILD_ROOT/usr/local/bin/tape-config-generate
+install -m 755 -p $RPM_BUILD_DIR/%{name}-%{version}/tape-drive-configure-SCSI-mode-pages-CERN.sh	$RPM_BUILD_ROOT/usr/local/sbin/tape-drive-configure-SCSI-mode-pages-CERN.sh
 
 install -m 644 -p $RPM_BUILD_DIR/%{name}-%{version}/TapeAdmin.py				$RPM_BUILD_ROOT/usr/local/lib/python3.6
 
 install -m 755 -p $RPM_BUILD_DIR/%{name}-%{version}/tape-mount					$RPM_BUILD_ROOT/usr/local/bin/tape-mount
 ln -s tape-mount										$RPM_BUILD_ROOT/usr/local/bin/tape-unmount
-install -m 755 -p $RPM_BUILD_DIR/%{name}-%{version}/tape-label					$RPM_BUILD_ROOT/usr/local/bin/tape-label
 
-%post
+install -m 755 -p $RPM_BUILD_DIR/%{name}-%{version}/tape-label					$RPM_BUILD_ROOT/usr/local/bin/tape-label
 
 %clean
 rm -rf $RPM_BUILD_ROOT
