@@ -62,7 +62,7 @@ void RetrieveQueueShard::garbageCollect(const std::string& presumedOwner, AgentR
   throw exception::Exception("In RetrieveQueueShard::garbageCollect(): garbage collection should not be necessary for this type of object.");
 }
 
-RetrieveQueue::CandidateJobList RetrieveQueueShard::getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip) {
+RetrieveQueue::CandidateJobList RetrieveQueueShard::getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> & retrieveRequestsToSkip, const std::set<std::string> & diskSystemsToSkip) {
   checkPayloadReadable();
   RetrieveQueue::CandidateJobList ret;
   ret.remainingBytesAfterCandidates = m_payload.retrievejobstotalsize();

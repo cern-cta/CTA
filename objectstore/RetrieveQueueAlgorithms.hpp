@@ -455,6 +455,7 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PopCriteri
     files -= pes.files;
     return *this;
   }
+  std::set<std::string> diskSystemsToSkip;
 };
 
 template<>
@@ -486,12 +487,18 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PoppedElem
 
 template<typename C>
 auto ContainerTraits<RetrieveQueue,C>::
-getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elementsToSkip,
   log::LogContext &lc) -> PoppedElementsBatch
 {
   PoppedElementsBatch ret;
 
-  auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
+  auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files,
+    elementsToSkip, 
+    // This parameter is needed only in the specialized version: 
+    // auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::getPoppingElementsCandidates
+    // We provide an empty set here.
+    std::set<std::string>()
+  );
   for(auto &cjfq : candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement{
       cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),

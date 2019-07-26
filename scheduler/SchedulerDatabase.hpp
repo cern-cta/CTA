@@ -349,27 +349,7 @@ public:
     std::map<std::string, uint64_t> m_spaceMap;
   };
   
-private:
-  class ProblemDiskSystemList: public exception::Exception {
-    using cta::exception::Exception::Exception;
-  public:
-    const std::set<std::string> &getDiskSsytems() { return m_outdatedDiskSystems; }
-    void addDiskSystem(const std::string &diskSystenName) { m_outdatedDiskSystems.insert(diskSystenName); }
-  private:
-    std::set<std::string> m_outdatedDiskSystems;
-  };
-  
 public:
-  /** An exception allowing the reservation function to de called again with up to date free space information from the 
-   * disk systems.*/
-  class OutdatedDiskSystemInformation: public ProblemDiskSystemList { using ProblemDiskSystemList::ProblemDiskSystemList; };
-  
-  /** An exception allowing the reservation system to report disk systems for which the free space could not be reserved */
-  class FullDiskSystem: public ProblemDiskSystemList { using ProblemDiskSystemList::ProblemDiskSystemList; };
-  
-  /** Clear all reservation for an agent. Used at agent cleanup and garbage collection time, so not in retrieve mount context. */
-  void clearDiskReservation(const std::string);
-  
   class RetrieveMount {
   public:
     struct MountInfo {
@@ -387,17 +367,8 @@ public:
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, const std::set<std::string> &fullDiskSystems, log::LogContext& logContext) = 0;
-    virtual void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> & jobBatch) = 0;
-  
-    /* Mount-level disk reservation functions. */
-    /** Attempt to reserve, can throw OutdatedDiskSystemInformation or FullDiskSystem. Does NOT proceed with any reservation
-     * in case of throw. */
-    virtual void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation) = 0;
-
-    /** Release some space for an agent and destination. */
-    virtual void releaseDiskSpace(const std::string &reservingAgent, const std::string &diskSystemName, uint64_t size) = 0;
-    
+      uint64_t bytesRequested, cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, log::LogContext& logContext) = 0;
+//    virtual void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> & jobBatch, log::LogContext& logContext) = 0; 
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;

@@ -218,10 +218,14 @@ public:
   public:
     const MountInfo & getMountInfo() override;
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
-      const std::set<std::string> &fullDiskSystems, log::LogContext& logContext) override;
-    void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> >& jobBatch) override;
-    void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation) override;
-    void releaseDiskSpace(const std::string& reservingAgent, const std::string& diskSystemName, uint64_t size) override;
+      cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, log::LogContext& logContext) override;
+  private:
+    void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> >& jobBatch,
+      log::LogContext& logContext);
+    std::map<std::string, uint64_t> getExistingDrivesReservations(); 
+    void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation);
+    std::set<std::string> m_diskSystemsToSkip;
+  public:
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;

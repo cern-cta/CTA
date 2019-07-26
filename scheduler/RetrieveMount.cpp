@@ -141,35 +141,40 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
   // Get the current file systems list from the catalogue
   disk::DiskSystemList diskSystemList;
   if (m_catalogue) diskSystemList = m_catalogue->getAllDiskSystems();
-  // Try and get a new job from the DB
-  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> dbJobBatch;
-  { 
-    retryBatchAllocation:
-    dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, m_fullDiskSystems, logContext);
-    // Compute the necessary space in each targeted disk system.
-    SchedulerDatabase::DiskSpaceReservationRequest diskSpaceReservationRequest;
-    std::map<std::string, uint64_t> spaceMap;
-    for (auto &j: dbJobBatch)
-      if (j->diskSystemName)
-        diskSpaceReservationRequest.addRequest(j->diskSystemName.value(), j->archiveFile.fileSize);
-    // Reserve the space.
-    // We will update this information on-demand during iterations if needed. 
-    disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList(diskSystemList);
-    retrySpaceAllocation:
-    try {
-      m_dbMount->reserveDiskSpace(diskSpaceReservationRequest);
-    } catch (SchedulerDatabase::OutdatedDiskSystemInformation &odsi) {
-      // Update information for missing/outdated disk systems.
-      diskSystemFreeSpaceList.fetchFileSystemFreeSpace(odsi.getDiskSsytems());
-      goto retrySpaceAllocation;
-    } catch (SchedulerDatabase::FullDiskSystem &fds) {
-      // Mark the disk systems as full for the mount. Re-queue all requests, repeat the pop attempt.
-      for (auto &ds: fds.getDiskSsytems()) m_fullDiskSystems.insert(ds);
-      m_dbMount->requeueJobBatch(dbJobBatch);
-      dbJobBatch.clear();
-      goto retryBatchAllocation;
-    }
-  }
+  // TODO: the diskSystemFreeSpaceList could be made a member of the retrieve mount and cache the fetched values, limiting the re-querying
+  // of the disk systems free space.
+  disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList (diskSystemList);
+  // Try and get a new job from the DB. The DB mount (in memory object) is taking care of reserving the free space for the popped 
+  // elements and query the disk systems, via the diskSystemFreeSpaceList object.
+  auto dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, diskSystemFreeSpaceList, logContext);
+//  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> dbJobBatch;
+//  { 
+//    retryBatchAllocation:
+//    dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, diskSystemFreeSpaceList, logContext);
+//    // Compute the necessary space in each targeted disk system.
+//    SchedulerDatabase::DiskSpaceReservationRequest diskSpaceReservationRequest;
+//    std::map<std::string, uint64_t> spaceMap;
+//    for (auto &j: dbJobBatch)
+//      if (j->diskSystemName)
+//        diskSpaceReservationRequest.addRequest(j->diskSystemName.value(), j->archiveFile.fileSize);
+//    // Reserve the space.
+//    // We will update this information on-demand during iterations if needed. 
+//    disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList(diskSystemList);
+//    retrySpaceAllocation:
+//    try {
+//      m_dbMount->reserveDiskSpace(diskSpaceReservationRequest);
+//    } catch (SchedulerDatabase::OutdatedDiskSystemInformation &odsi) {
+//      // Update information for missing/outdated disk systems.
+//      diskSystemFreeSpaceList.fetchFileSystemFreeSpace(odsi.getDiskSsytems());
+//      goto retrySpaceAllocation;
+//    } catch (SchedulerDatabase::FullDiskSystem &fds) {
+//      // Mark the disk systems as full for the mount. Re-queue all requests, repeat the pop attempt.
+//      for (auto &ds: fds.getDiskSsytems()) m_fullDiskSystems.insert(ds);
+//      m_dbMount->requeueJobBatch(dbJobBatch, logContext);
+//      dbJobBatch.clear();
+//      goto retryBatchAllocation;
+//    }
+//  }
   std::list<std::unique_ptr<RetrieveJob>> ret;
   // We prepare the response
   for (auto & sdrj: dbJobBatch) {

@@ -36,10 +36,7 @@ namespace unitTests{
   
   class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
     const MountInfo & getMountInfo() override { throw std::runtime_error("Not implemented"); }
-    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, const std::set<std::string> &fullDiskSystems, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
-    void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> >& jobBatch) override { throw std::runtime_error("Not implemented");}
-    void reserveDiskSpace(const cta::SchedulerDatabase::DiskSpaceReservationRequest& diskSpaceReservation) override { throw std::runtime_error("Not implemented");}
-    void releaseDiskSpace(const std::string& reservingAgent, const std::string& diskSystemName, uint64_t size) override { throw std::runtime_error("Not implemented");}
+    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
 
     void complete(time_t completionTime) override { throw std::runtime_error("Not implemented"); }
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override { throw std::runtime_error("Not implemented"); }

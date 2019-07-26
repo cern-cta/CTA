@@ -41,12 +41,12 @@ addToLog(log::ScopedParamContainer &params) const {
 
 template<>
 auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::
-getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elementsToSkip,
   log::LogContext &lc) -> PoppedElementsBatch
 {
   PoppedElementsBatch ret;
 
-  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
+  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elementsToSkip, unfulfilledCriteria.diskSystemsToSkip);
   for(auto &cjfq : candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement{
       cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),

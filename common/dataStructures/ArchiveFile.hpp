@@ -64,7 +64,7 @@ struct ArchiveFile {
   std::string storageClass;
   DiskFileInfo diskFileInfo;
   /**
-   * This map represents the non-necessarily-exhaustive set of tape copies 
+   * This list represents the non-necessarily-exhaustive set of tape copies 
    * to be listed by the operator. For example, if the listing requested is 
    * for a single tape, the map will contain only one element. 
    */

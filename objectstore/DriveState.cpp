@@ -175,6 +175,70 @@ void DriveState::setState(cta::common::dataStructures::DriveState& state) {
 }
 
 //------------------------------------------------------------------------------
+// DriveState::getDiskSpaceReservations())
+//------------------------------------------------------------------------------
+std::map<std::string, uint64_t> DriveState::getDiskSpaceReservations() {
+  checkHeaderReadable();
+  std::map<std::string, uint64_t>  ret;
+  for (auto &dsr: m_payload.disk_space_reservations()) {
+    ret[dsr.disk_system_name()] = dsr.reserved_bytes();
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// DriveState::addDiskSpaceReservation())
+//------------------------------------------------------------------------------
+void DriveState::addDiskSpaceReservation(const std::string& diskSystemName, uint64_t bytes) {
+  checkPayloadWritable();
+  for (auto dsr: *m_payload.mutable_disk_space_reservations()) {
+    if (dsr.disk_system_name() == diskSystemName) {
+      dsr.set_reserved_bytes(dsr.reserved_bytes() + bytes);
+      return;
+    }
+  }
+  auto * newDsr = m_payload.mutable_disk_space_reservations()->Add();
+  newDsr->set_disk_system_name(diskSystemName);
+  newDsr->set_reserved_bytes(bytes);
+}
+
+//------------------------------------------------------------------------------
+// DriveState::substractDiskSpaceReservation())
+//------------------------------------------------------------------------------
+void DriveState::substractDiskSpaceReservation(const std::string& diskSystemName, uint64_t bytes) {
+  checkPayloadWritable();
+  size_t index=0;
+  for (auto dsr: *m_payload.mutable_disk_space_reservations()) {
+    if (dsr.disk_system_name() == diskSystemName) {
+      if (bytes > dsr.reserved_bytes())
+        throw NegativeDiskSpaceReservationReached(
+          "In DriveState::substractDiskSpaceReservation(): we would reach a negative reservation size.");
+      dsr.set_reserved_bytes(dsr.reserved_bytes() - bytes);
+      if (!dsr.reserved_bytes()) {
+        // We can remove this entry from the list.
+        auto * mdsr = m_payload.mutable_disk_space_reservations();
+        mdsr->SwapElements(index, mdsr->size()-1);
+        mdsr->RemoveLast();
+      }
+      return;
+    } else {
+      ++index;
+    }
+  }
+  if (bytes)
+    throw NegativeDiskSpaceReservationReached(
+      "In DriveState::substractDiskSpaceReservation(): Trying to substract bytes without previous reservation.");
+}
+
+//------------------------------------------------------------------------------
+// DriveState::resetDiskSpaceReservation())
+//------------------------------------------------------------------------------
+void DriveState::resetDiskSpaceReservation() {
+  checkPayloadWritable();
+  m_payload.mutable_disk_space_reservations()->Clear();
+}
+
+//------------------------------------------------------------------------------
 // DriveState::dump())
 //------------------------------------------------------------------------------
 std::string DriveState::dump() {

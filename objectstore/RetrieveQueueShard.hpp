@@ -112,7 +112,8 @@ public:
    */
   RemovalResult removeJobs(const std::list<std::string> & jobsToRemove);
   
-  RetrieveQueue::CandidateJobList getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip);
+  RetrieveQueue::CandidateJobList getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles,
+    const std::set<std::string> & retrieveRequestsToSkip, const std::set<std::string> & diskSystemsToSkip);
   
   /** Re compute summaries in case they do not match the array content. */
   void rebuild();

@@ -2365,18 +2365,18 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
     }
   }
   // We now have created the subrequests. Time to enqueue.
+  // TODO: the lock/fetch could be parallelized
   {
     objectstore::Sorter sorter(*m_oStoreDB.m_agentReference, m_oStoreDB.m_objectStore, m_oStoreDB.m_catalogue);
-    std::list<std::unique_ptr<objectstore::ScopedExclusiveLock>> locks;
+    std::list<objectstore::ScopedExclusiveLock> locks;
     for (auto &is: asyncInsertedSubrequestInfoList) {
-      locks.push_back(cta::make_unique<objectstore::ScopedExclusiveLock>(*is.request));
+      locks.emplace_back(*is.request);
       is.request->fetch();
       sorter.insertRetrieveRequest(is.request, *m_oStoreDB.m_agentReference, is.activeCopyNb, lc);
     }
     locks.clear();
     sorter.flushAll(lc);
   }
-  
 }
 
 //------------------------------------------------------------------------------
@@ -2402,6 +2402,9 @@ void OStoreDB::RepackRequest::fail() {
   m_repackRequest.commit();
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequest::requeueInToExpandQueue()
+//------------------------------------------------------------------------------
 void OStoreDB::RepackRequest::requeueInToExpandQueue(log::LogContext& lc){
   ScopedExclusiveLock rrl(m_repackRequest);
   m_repackRequest.fetch();
@@ -2418,6 +2421,9 @@ void OStoreDB::RepackRequest::requeueInToExpandQueue(log::LogContext& lc){
   rqteAlgo.referenceAndSwitchOwnership(nullopt, previousOwner, insertedElements, lc);
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequest::setExpandStartedAndChangeStatus()
+//------------------------------------------------------------------------------
 void OStoreDB::RepackRequest::setExpandStartedAndChangeStatus(){
   ScopedExclusiveLock rrl(m_repackRequest);
   m_repackRequest.fetch();
@@ -2426,6 +2432,9 @@ void OStoreDB::RepackRequest::setExpandStartedAndChangeStatus(){
   m_repackRequest.commit();
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequest::fillLastExpandedFSeqAndTotalStatsFile()
+//------------------------------------------------------------------------------
 void OStoreDB::RepackRequest::fillLastExpandedFSeqAndTotalStatsFile(uint64_t& fSeq, TotalStatsFiles& totalStatsFiles) {
   ScopedExclusiveLock rrl(m_repackRequest);
   m_repackRequest.fetch();
@@ -3443,12 +3452,30 @@ const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo(
 // OStoreDB::RetrieveMount::getNextJobBatch()
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMount::getNextJobBatch(uint64_t filesRequested, 
-    uint64_t bytesRequested, const std::set<std::string> &fullDiskSystems, log::LogContext& logContext) {
+    uint64_t bytesRequested, cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, log::LogContext& logContext) {
+  // Pop a batch of files to retrieve and, for the ones having a documented disk system name, reserve the space
+  // that they will require. In case we cannot allocate the space for some of them, mark the destination filesystem as
+  // full and stop popping from it, after requeueing the jobs.
   typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
+  popCriteria.diskSystemsToSkip = m_diskSystemsToSkip;
   auto jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
-  // We can construct the return value
+  // Try and allocate data for the popped jobs.
+  // Compute the necessary space in each targeted disk system.
+  SchedulerDatabase::DiskSpaceReservationRequest diskSpaceReservationRequest;
+  std::map<std::string, uint64_t> spaceMap;
+  for (auto &j: jobs.elements)
+      if (j.diskSystemName)
+        diskSpaceReservationRequest.addRequest(j.diskSystemName.value(), j.archiveFile.fileSize);
+  // Get the existing reservation map from the other drives.
+  auto otherDrivesReservations = getExistingDrivesReservations();
+  // Get the free space from disk systems involved.
+  
+  // If any file system does not have enough space, make it as full, requeue all (slight but rare inefficiency) 
+  // and retry the pop.
+  
+  // Else, we can construct the return value (we did not hit any full disk system.
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   for(auto &j : jobs.elements)
   {
@@ -3464,6 +3491,71 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
     ret.emplace_back(std::move(rj));
   }
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::requeueJobBatch()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> >& jobBatch,
+    log::LogContext& logContext) {
+  objectstore::Sorter sorter(*m_oStoreDB.m_agentReference, m_oStoreDB.m_objectStore, m_oStoreDB.m_catalogue);
+  std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
+  std::list<objectstore::ScopedExclusiveLock> locks;
+  for (auto & j: jobBatch) {
+    cta::OStoreDB::RetrieveJob *rj = cta::OStoreDB::castFromSchedDBJob(j.get());
+    auto rr = std::make_shared<objectstore::RetrieveRequest>(rj->m_retrieveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
+    rrlist.push_back(rr);
+    locks.emplace_back(*rr);
+    rr->fetch();
+    sorter.insertRetrieveRequest(rr, *m_oStoreDB.m_agentReference, rj->selectedCopyNb, logContext);
+  }
+  locks.clear();
+  rrlist.clear();
+  sorter.flushAll(logContext);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::getExistingDrivesReservations()
+//------------------------------------------------------------------------------
+std::map<std::string, uint64_t> OStoreDB::RetrieveMount::getExistingDrivesReservations() {
+  objectstore::RootEntry re(m_oStoreDB.m_objectStore);
+  re.fetchNoLock();
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_oStoreDB.m_objectStore);
+  dr.fetchNoLock();
+  auto driveAddresses = dr.getDriveAddresses();
+  std::list <objectstore::DriveState> dsList;
+  std::list <std::unique_ptr<objectstore::DriveState::AsyncLockfreeFetcher>> dsFetchers;
+  for (auto &d: driveAddresses) {
+    dsList.emplace_back(d.driveStateAddress, m_oStoreDB.m_objectStore);
+    dsFetchers.emplace_back(dsList.back().asyncLockfreeFetch());
+  }
+  auto dsf = dsFetchers.begin();
+  std::map<std::string, uint64_t> ret;
+  for (auto &d: dsList) {
+    try {
+      (*dsf)->wait();
+      dsf++;
+      for (auto &dsr: d.getDiskSpaceReservations()) {
+        try {
+          ret.at(dsr.first) += dsr.second;
+        } catch (std::out_of_range &) {
+          ret[dsr.first] = dsr.second;
+        }
+      }
+    } catch (objectstore::Backend::NoSuchObject) {
+      // If the drive status is not there, we just skip it.
+      dsf++;
+    }
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::reserveDiskSpace()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation) {
+  // Try and add our reservation to the disk
+  throw exception::Exception("In OStoreDB::RetrieveMount::reserveDiskSpace(): not implemented.");
 }
 
 //------------------------------------------------------------------------------
