@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 import sys
 import os
-sys.path.append('/usr/local/lib/python')
+sys.path.append('/usr/local/lib/python3.6')
 import TapeAdmin
 
 lock_file           = '/tmp/tape-label.lock'

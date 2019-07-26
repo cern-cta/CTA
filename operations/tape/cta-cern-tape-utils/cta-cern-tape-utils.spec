@@ -28,13 +28,13 @@ Author: David Fernandez Alvarez, Vladimir Bahyl - 8/2019
 [ -d $RPM_BUILD_ROOT ] && rm -rf $RPM_BUILD_ROOT
 mkdir $RPM_BUILD_ROOT
 cd $RPM_BUILD_ROOT
-mkdir -p usr/local/bin usr/local/sbin usr/local/lib/python
+mkdir -p usr/local/bin usr/local/sbin usr/local/lib/python3.6
 name=`echo %{name} |sed 's/CERN-CC-//'`
 
 install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/tape-config-generate				$RPM_BUILD_ROOT/usr/local/bin/tape-config-generate
 install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/tape-drive-configure-SCSI-mode-pages-CERN.sh	$RPM_BUILD_ROOT/usr/local/sbin/tape-drive-configure-SCSI-mode-pages-CERN.sh
 
-install -m 644 -p $RPM_BUILD_DIR/%{name}-%{version}/TapeAdmin.py				$RPM_BUILD_ROOT/usr/local/lib/python
+install -m 644 -p $RPM_BUILD_DIR/%{name}-%{version}/TapeAdmin.py				$RPM_BUILD_ROOT/usr/local/lib/python3.6
 
 install -m 755 -p $RPM_BUILD_DIR/%{name}-%{version}/tape-mount					$RPM_BUILD_ROOT/usr/local/bin/tape-mount
 ln -s tape-mount										$RPM_BUILD_ROOT/usr/local/bin/tape-unmount
@@ -49,11 +49,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 /usr/local/bin/tape-config-generate
 /usr/local/sbin/tape-drive-configure-SCSI-mode-pages-CERN.sh
-/usr/local/lib/python/TapeAdmin.py
-/usr/local/lib/python/__pycache__/TapeAdmin.cpython-36.opt-1.pyc
-/usr/local/lib/python/__pycache__/TapeAdmin.cpython-36.pyc
-#/usr/local/lib/python/TapeAdmin.pyc
-#/usr/local/lib/python/TapeAdmin.pyo
+/usr/local/lib/python3.6/TapeAdmin.py
+/usr/local/lib/python3.6/__pycache__/TapeAdmin.cpython-36.opt-1.pyc
+/usr/local/lib/python3.6/__pycache__/TapeAdmin.cpython-36.pyc
 /usr/local/bin/tape-mount
 /usr/local/bin/tape-unmount
 /usr/local/bin/tape-label

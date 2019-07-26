@@ -3,7 +3,7 @@
 import argparse
 import sys
 import os
-sys.path.append('/usr/local/lib/python')
+sys.path.append('/usr/local/lib/python3.6')
 import TapeAdmin
 
 
