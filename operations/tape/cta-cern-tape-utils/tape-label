@@ -1,0 +1,510 @@
+#!/usr/bin/python36
+
+import atexit
+import time
+import argparse
+from pathlib import Path
+import sys
+import os
+sys.path.append('/usr/local/lib/python')
+import TapeAdmin
+
+lock_file           = '/tmp/tape-label.lock'
+my_name             = 'tape-label'
+
+cta_admin_tape_json = '/usr/bin/cta-admin --json tape'
+cta_tape_label      = '/usr/bin/cta-tape-label'
+
+log_file_path       = '/tmp/tape-label.log'
+
+# This timeout is used for the delay between the end of tplabel and the end of the dismount
+not_free_timeout = 60
+
+args = None
+opt_vid, opt_drive, opt_file, opt_srcp, opt_dstp, opt_limit, opt_timeout, opt_force, opt_skip_simple_errors = \
+    None, None, None, None, None, None, None, None, None
+
+tapes_to_label = list()         # List
+tapes_labeled = list()          # List
+tapes_unlabeled = dict()        # Dict, because we show the tape and the reason for its failure
+
+pool_prefixes_ok_for_labeling = ['tolabel_', 'erase_', 'test_']
+
+
+def lock():
+    """
+    Creates a lock file with the name of the host that created it, to prevent other hosts to run this script while
+    another instance of it is running
+    :return: 0 if operation was succesful; not-0 otherwise (file already existed or operation failed)
+    """
+    the_lock_file = Path(lock_file)
+    if the_lock_file.is_file():  # If lock file already exists
+        return 1
+    return TapeAdmin.run_cmd('whoami > ' + lock_file).returncode
+
+
+def unlock():
+    """
+    Deletes the lock file
+    :return: 0 if operation was succesful; not-0 otherwise
+    """
+    the_lock_file = Path(lock_file)
+    if the_lock_file.is_file():
+        return TapeAdmin.run_cmd('rm ' + lock_file)
+
+
+def abort_and_unlock(msg):
+    """
+    Aborts the script and performs the unlock() function. Logs the abort message
+    :param msg: The message to show on abort
+    """
+    unlock()
+    write_to_log('ABORT: ' + msg)
+    TapeAdmin.abort(my_name, msg)
+
+
+def write_to_log(msg, show_time_and_script_name=True):
+    """
+    Creates the log file if it didn't exist and prints a message to it
+    :param msg: The message to append to the log file
+    :param show_time_and_script_name: Specifies if only the message will be printed to log, or with the name and time
+    """
+    if not TapeAdmin.is_root():  # We don't want root to own the log file because it will limit permissions
+        the_log_file = Path(log_file_path)
+        if not the_log_file.is_file():
+            if TapeAdmin.run_cmd('/bin/touch ' + log_file_path).returncode != 0:
+                TapeAdmin.abort(my_name, "can't create log file " + log_file_path)
+            if TapeAdmin.run_cmd('/bin/chmod 666 ' + log_file_path).returncode != 0:
+                TapeAdmin.abort(my_name, "can't set permissions for log file " + log_file_path)
+        try:
+            log = open(log_file_path, mode='a')
+            if show_time_and_script_name:
+                log.write(TapeAdmin.now() + ' ' + my_name + ' ' + msg + '\n')
+            else:
+                log.write(msg + '\n')
+            try:
+                log.close()
+            except IOError as e:
+                print('Cannot close ' + log_file_path + ': ' + str(e))
+        except IOError as e:
+            print('Cannot append to ' + log_file_path + ': ' + str(e))
+
+
+def load_args():
+    """
+    Loads the options for all possible script arguments
+    """
+    parser = argparse.ArgumentParser(description="a script to label tapes in CTA",
+                                     usage='\ntape-label -V <vid> | -f <filename> | -s <poolname> [-l <limit>] '
+                                           '[-d <poolname>] [-t <timeout>] [-D <drive name>]'
+                                           '\ntape-label --vid <vid> | --file <filename> | --srcpool <poolname> '
+                                           '[--limit <limit>] [--dstpool <poolname>] [--force] [--timeout <timeout>] '
+                                           '[--drive <drive name>] [--skip-simple-errors]')
+
+    # Required arguments
+    required_named = parser.add_argument_group("required arguments")
+    required_named.add_argument('-V', '--vid', type=str, help='The volume ID to label.')
+    required_named.add_argument('-f', '--filename', type=str, help='A file containing a list of volume IDs to be '
+                                'labeled. The format of the file is one VID per line.')
+    required_named.add_argument('-s', '--srcpool', type=str, help='The source pool from which tapes are taken '
+                                'for labeling. ')
+
+    # Optional arguments
+    parser.add_argument('-l', '--limit', type=int, help='The maximum number of tapes to label.')
+    parser.add_argument('-d', '--dstpool', type=str, help='The destination pool where tapes are put after labeling. ')
+    parser.add_argument('-t', '--timeout', type=int, help='Defines the timeout when waiting for a drive to become '
+                        'free. The value is given in seconds. This option can be '
+                        'helpful if many tapes are labeled in one go. The default value is 60 seconds.')
+    parser.add_argument('--force', action='store_true', help='Passes the force flag (--force) to the tplabel command')
+    parser.add_argument('-D', '--drive', type=str, help='The drive to be used. The script will use the first drive '
+                        'from TPCONFIG if none is specified.')
+    parser.add_argument('--skip-simple-errors', action='store_true', help='Do not abort the script if a non-critical '
+                        'failure occurs in labeling one of the tapes. Instead, continue and label all the specified '
+                        'tapes remaining')
+
+    # Assign the variables to the options
+    global opt_vid, opt_drive, opt_file, opt_srcp, opt_dstp, opt_limit, opt_timeout, opt_force, opt_skip_simple_errors
+    global args
+    args = parser.parse_args()
+
+    opt_vid = args.vid
+    opt_drive = args.drive
+    opt_file = args.filename
+    opt_srcp = args.srcpool
+    opt_dstp = args.dstpool
+    opt_limit = args.limit
+    opt_timeout = args.timeout
+    opt_force = args.force
+    opt_skip_simple_errors = args.skip_simple_errors
+
+    # At least one mandatory argument shall be specified
+    if not opt_vid and not opt_file and not opt_srcp:
+        parser.print_usage()
+        exit(0)
+
+    if opt_limit:
+        if opt_limit < 1:
+            msg = 'Wrong limit value (' + str(opt_limit) + '). Must be higher than 0'
+            write_to_log('ABORT: ' + msg)
+            TapeAdmin.abort(my_name, msg)
+    else:
+        opt_limit = 0
+
+    if opt_timeout:
+        global not_free_timeout
+        if opt_timeout > 0:
+            not_free_timeout = opt_timeout
+        else:
+            msg = 'Wrong timeout value, must be higher than 0'
+            write_to_log('ABORT: ' + msg)
+            TapeAdmin.abort(my_name, msg)
+
+    if not opt_drive:
+        opt_drive = TapeAdmin.get_first_drive()
+    if not TapeAdmin.is_drive_known(opt_drive):
+        msg = 'drive ' + opt_drive + ' not found in TPCONFIG'
+        write_to_log('ABORT: ' + msg)
+        TapeAdmin.abort(my_name, msg)
+
+    if opt_force:
+        opt_force = ' --force'
+    else:
+        opt_force = ''
+
+
+def assemble_tapes_to_label():
+    """
+    Gets the specified set of tapes to label, either by name, file or source pool
+    """
+    if opt_vid:
+        tapes_to_label.append(opt_vid)
+
+    if opt_file:
+        try:
+            with open(opt_file, mode='r') as the_file:
+                for line in the_file:
+                    if not line.startswith('#'):  # If it is not a comment
+                        vid = line.rstrip()
+                        tapes_to_label.append(vid)
+            the_file.close()
+        except FileNotFoundError:
+            write_to_log('ABORT: file not found: ' + opt_file)
+            abort_and_unlock('file not found: ' + opt_file)
+
+    if opt_srcp:
+        if not TapeAdmin.pool_exists(opt_srcp):
+            msg = 'source pool not found: ' + opt_srcp
+            write_to_log('ABORT: ' + msg)
+            abort_and_unlock(msg)
+        cmd = f'{cta_admin_tape_json} ls --tapepool {opt_srcpool}'
+        cta_admin_call = TapeAdmin.run_cmd(cmd)
+        if cta_admin_call.returncode != 0:
+            msg = f'execution of command [{cmd}] failed with result: {cta_admin_call.stderr}'
+            write_to_log('ERROR: ' + msg)
+            TapeAdmin.error(my_name, msg)
+        for tape_info in cta_admin_call.stdout:  # For tape_info (dict) in the list of tapes
+            a_tape_vid = tape_info['vid']
+            tapes_to_label.append(a_tape_vid)
+
+    if not tapes_to_label:
+        write_to_log('ABORT: no tapes to label found')
+        abort_and_unlock('no tapes to label found')
+
+
+def is_pool_name_ok_to_label(the_pool_name: str):
+    """
+    Checks if a pool name is valid for its tape to be labeled
+    :param the_pool_name: The pool name
+    :return: True if pool name is ok for labeling; False otherwise
+    """
+    for prefix in pool_prefixes_ok_for_labeling:
+        if the_pool_name.startswith(prefix):
+            return True
+    return False
+
+
+def show_label_summary():
+    """
+    Prints and logs the summary of the execution of this tape-label script. Shows the labeled and unlabeled tapes
+    """
+    text = ''
+
+    if tapes_labeled:
+        text += '\n' + '-'*37 + ' (TAPES LABELED) ' + '-'*37 + '\n'
+        for i, vid in enumerate(tapes_labeled):
+            text += str(i+1) + ') ' + vid
+            if i != len(tapes_labeled)-1:
+                text += '\n'
+            if vid in tapes_to_label:
+                tapes_to_label.remove(vid)  # Remove the labeled tapes from tapes_to_label for the summary
+
+    if tapes_unlabeled:
+        text += '\n' + '-'*37+ ' (TAPES NOT LABELED) ' + '-'*37 + '\n'
+        for i, vid in enumerate(tapes_unlabeled):
+            text += str(i+1) + ') ' + vid + ' (' + tapes_unlabeled[vid] + ')'
+            if i != len(tapes_unlabeled)-1:
+                text += '\n'
+            if vid in tapes_to_label:       # Remove the unlabeled tapes from tapes_to_label for the summary
+                tapes_to_label.remove(vid)
+
+    if tapes_to_label:
+        text += '\n' + '-' * 37 + ' (TAPES TO LABEL) ' + '-' * 37 + '\n'
+        for i, vid in enumerate(tapes_to_label):
+            text += str(i + 1) + ') ' + vid
+            if i != len(tapes_to_label)-1:
+                text += '\n'
+
+    if tapes_labeled or tapes_unlabeled or tapes_to_label:
+        print('\n' + '#'*35 + ' (TAPE LABEL SUMMARY) ' + '#'*35 + text + '\n')
+        write_to_log('\n' + '#'*35 + ' (TAPE LABEL SUMMARY) ' + '#'*35 + text + '\n', show_time_and_script_name=False)
+
+
+def abort_if_root():
+    """
+    Aborts if the script is run as root
+    """
+    if TapeAdmin.is_root():
+        TapeAdmin.abort(my_name, 'must not be ROOT to run this script')
+
+
+if __name__ == '__main__':
+
+    atexit.register(show_label_summary)  # Whatever happens, summary will be printed at the end (if tapes gathered)
+    atexit.register(unlock)     # Whatever happens, the lock file will be erased at the end of the script (if exists)
+
+    load_args()
+
+    # New line separating the executions of the script
+    write_to_log('', show_time_and_script_name=False)
+
+    write_to_log('EXECUTED COMMAND: ' + ' '.join(str(cmd_item) for cmd_item in sys.argv))
+
+    abort_if_root()
+
+    TapeAdmin.info(my_name, 'log file can be found in: ' + log_file_path)
+
+    # Initial checks
+    if lock() != 0:
+        write_to_log('ABORT: could not create lock file (' + lock_file + ')')
+        TapeAdmin.abort(my_name, 'could not create lock file (' + lock_file + ')')
+    if opt_srcp and not is_pool_name_ok_to_label(opt_srcp):
+        abort_and_unlock('source pool name (' + opt_srcp + ') not accepted')
+    if opt_dstp and not TapeAdmin.pool_exists(opt_dstp):
+        abort_and_unlock('destination pool (' + opt_dstp + ') does not exist')
+
+    assemble_tapes_to_label()
+
+    # Label the tapes
+    tape_counter = 0
+    for volume_id in tapes_to_label:
+        # Renew KINIT permissions ticket or request a new one
+        TapeAdmin.request_kinit_permissions(write_to_log)
+
+        # Print which tape are we processing and how many more tapes remain (apart from the current one)
+        tapes_remaining = len(tapes_to_label) - (tape_counter+1)
+        if opt_limit and opt_limit < len(tapes_to_label):
+            tapes_remaining = opt_limit - (tape_counter+1)
+        TapeAdmin.info(my_name, 'processing tape ' + volume_id + '. Tapes remaining after this one: ' + str(tapes_remaining))
+        write_to_log('processing tape ' + volume_id + '. Tapes remaining after this one: ' + str(tapes_remaining))
+
+        # Check if tape exists
+        tape_info_dict = TapeAdmin.get_tape_info(volume_id)
+        if not tape_info_dict:
+            TapeAdmin.error(my_name, 'no tape info available for ' + volume_id)
+            write_to_log('no tape info available for ' + volume_id)
+            tapes_unlabeled[volume_id] = 'no tape info available, wrong volume ID?'
+            # Increase tape counter and check break condition
+            tape_counter += 1
+            if opt_limit and tape_counter >= opt_limit:
+                break
+            continue
+
+        # # Is host dedicated?
+        # if not TapeAdmin.is_host_dedicated():
+        #     abort_and_unlock('label host not dedicated')
+
+        # Tape must NOT be disabled
+        if tape_info_dict['disabled']:
+            msg = "tape " + volume_id + " is DISABLED. It can't be labeled"
+            TapeAdmin.error(my_name, msg)
+            write_to_log(msg)
+            tapes_unlabeled[volume_id] = 'tape is DISABLED'
+            # Increase tape counter and check break condition
+            tape_counter += 1
+            if opt_limit and tape_counter >= opt_limit:
+                break
+            continue
+
+        # Is pool name OK?
+        pool_name = TapeAdmin.get_tape_pool(volume_id)
+        if not is_pool_name_ok_to_label(pool_name):
+            tapes_unlabeled[volume_id] = 'pool name "' + pool_name + '" is not accepted. Valid prefixes are: ' + \
+                                         str(pool_prefixes_ok_for_labeling)
+            # If we specified to skip simple (not critical) errors, we just continue with the script execution
+            if opt_skip_simple_errors:
+                TapeAdmin.error(my_name, 'pool name "' + pool_name + '" for tape [' + volume_id + '] not accepted')
+                tape_counter += 1
+                if opt_limit and tape_counter >= opt_limit:
+                    break
+                continue
+            # Else, we abort the script and remove the lock file
+            abort_and_unlock('pool name (' + pool_name + ') for tape (' + volume_id + ') not accepted')
+
+        # Are tape and drive in the same lib?
+        if TapeAdmin.are_tape_and_drive_in_the_same_lib(volume_id, opt_drive, opt_verbose=False):
+            write_to_log('same library (' + TapeAdmin.get_library(opt_drive) + '): OK')
+        else:
+            msg = 'different libraries (drive=' + TapeAdmin.get_library(opt_drive) + \
+                  ' | tape=' + str(tape_info_dict['logicalLibrary']) + '): SKIPPING'
+            write_to_log('ABORT: ' + msg)
+            abort_and_unlock(msg)
+
+        # Is tape empty?
+        if not TapeAdmin.is_tape_empty(volume_id):
+            TapeAdmin.error(my_name, 'tape ' + volume_id + ' is not empty. SKIPPING...\n(This could also be caused '
+                            'due to the lack of KINIT permissions. Please check before continuing)')
+            write_to_log('ERROR: tape ' + volume_id + ' is not empty. SKIPPING...\n(This could also be caused '
+                         'due to the lack of KINIT permissions. Please check before continuing)')
+            tapes_unlabeled[volume_id] = 'tape not empty, or lack of KINIT permissions'
+            continue
+
+        # Is drive free?
+        # Although tplabel may returned already, the drive may be still occupied. hence, wait some seconds...
+        TapeAdmin.info(my_name, 'waiting for the drive to be free (max. ' + str(not_free_timeout) + ' seconds)...')
+        write_to_log('waiting for the drive to be free (max. ' + str(not_free_timeout) + ' seconds)...')
+        waited = 0
+        free = False
+        while waited < not_free_timeout:
+            if not TapeAdmin.is_drive_free(opt_drive):
+                time.sleep(1)
+                waited += 1
+            else:
+                free = True
+                break
+        if not free:
+            abort_and_unlock('drive not free')
+
+        # --------------------------------- DD APPROACH - Override by cta-tape-label ---------------------------------
+
+        # # All checks passed, so label the tape (first, we have to MOUNT it)
+        # msg = f'mounting tape {volume_id} inside drive {opt_drive}...'
+        # TapeAdmin.info(my_name, msg)
+        # write_to_log(msg)
+        # tape_mount_call = TapeAdmin.run_cmd(f'tape-mount --vid {volume_id}')
+        # if tape_mount_call.returncode != 0:
+        #     msg = f'mount of tape {volume_id} inside drive {opt_drive} failed'
+        #     tapes_unlabeled[volume_id] = tape_mount_call.stderr.split('\n')[0].split('- '[1])   # Erase date, get msg
+        #     write_to_log(f'ERROR: {msg}')
+        #     abort_and_unlock(msg)
+        #
+        # # We write the label content into a temporary file
+        # label_content = f'VOL1{volume_id}{" "*27}CASTOR{" "*36}3'
+        # label_file_path = '/tmp/label.file'
+        # cmd = f'echo -n "{label_content}" > {label_file_path}'
+        # TapeAdmin.info(my_name, 'running: ' + cmd)
+        # write_to_log('running: ' + cmd)
+        # TapeAdmin.run_cmd(cmd)
+        #
+        # device = TapeAdmin.get_device(opt_drive)
+        #
+        # # We run the DD command with the input as the file with the label content in it
+        # cmd = f'dd if={label_file_path} of={device} bs=80 count=1 2>&1'
+        # TapeAdmin.info(my_name, 'running: ' + cmd)
+        # write_to_log('running: ' + cmd)
+        # tplabel_result = TapeAdmin.run_cmd(cmd)
+        # tplabel_return_code = tplabel_result.returncode
+        # tplabel_result_stdout = tplabel_result.stdout.rstrip()
+        #
+        # os.unlink(label_file_path)
+        #
+        # if tplabel_return_code != 0:
+        #     tapes_unlabeled[volume_id] = tplabel_result_stdout.split('\n')[0]
+        #     write_to_log('ERROR: tape ' + volume_id + ' not labeled: ' + '\n' + tplabel_result_stdout)
+        #     TapeAdmin.error(my_name, 'tape ' + volume_id + ' not labeled: ' + '\n' + tplabel_result_stdout)
+        # else:
+        #     tapes_labeled.append(volume_id)
+        #
+        #     # Make a note into the VMGR serial number field that the tape is LBP enabled now
+        #     # This will be removed later once all tapes have been LBP enabled
+        #     custom_now = TapeAdmin.now().replace('-', '').replace(':', '').replace(' ', '')[:-2]
+        #     cmd = cta_admin_tape_json + " ch --vid " + volume_id + " --sn 'LBPon" + custom_now + "'"
+        #     TapeAdmin.info(my_name, 'running: ' + cmd)
+        #     write_to_log('running: ' + cmd)
+        #     if TapeAdmin.run_cmd(cmd).returncode != 0:
+        #         msg = 'failed to execute command: ' + cmd
+        #         write_to_log(msg)
+        #         TapeAdmin.error(my_name, msg)
+        #
+        #     # Remove the VMGR tag for the given tape. The idea is that the tag should identify the encryption key
+        #     # used (if any). WARNING: This does not check the content of the tag value before deleting it
+        #     # nor the command's return value.
+        #     TapeAdmin.info(my_name, 'removing encryption key ID '
+        #                             '(i.e. VMGR tag (expect: "No such file or directory" if no tag))')
+        #     write_to_log('removing encryption key ID (i.e. VMGR tag (expect: "No such file or directory" if no tag))')
+        #     encryption_key = '-'
+        #     cmd = cta_admin_tape_json + f' ch --encryptionkey {encryption_key} --vid ' + volume_id + ' 2>&1'
+        #     # Don't control this return code, but the stdout/stderr:
+        #     vmgrdeltag_stdout = TapeAdmin.run_cmd(cmd).stdout.rstrip()
+        #     write_to_log(vmgrdeltag_stdout)
+        #     TapeAdmin.info(my_name, vmgrdeltag_stdout)
+        #
+        #     TapeAdmin.info(my_name, 'labeled tape ' + volume_id)
+        #     write_to_log('labeled tape ' + volume_id)
+        #
+        #     # Move labeled tapes to destination pool (if given)
+        #     if opt_dstp:
+        #         TapeAdmin.info(my_name, 'changing tape ' + volume_id + ' to pool ' + opt_dstp)
+        #         write_to_log('changing tape ' + volume_id + ' to pool ' + opt_dstp)
+        #         cmd = cta_admin_tape_json + ' ch --tapepool ' + opt_dstp + ' --vid ' + volume_id
+        #         if TapeAdmin.run_cmd(cmd).returncode != 0:
+        #             msg = 'failed to execute command: ' + cmd
+        #             write_to_log(msg)
+        #             TapeAdmin.error(my_name, msg)
+        #
+        # # Unmount tape
+        # msg = f'unmounting tape {volume_id}...'
+        # TapeAdmin.info(my_name, msg)
+        # write_to_log(msg)
+        # tape_unmount_call = TapeAdmin.run_cmd(f'tape-unmount')
+        # if tape_unmount_call.returncode != 0:
+        #     msg = f'unmount of tape {volume_id} inside drive {opt_drive} failed'
+        #     tapes_unlabeled[volume_id] = tape_mount_call.stderr.split('\n')[0].split('- '[1])  # Erase date, get msg
+        #     write_to_log(f'ERROR: {msg}')
+        #     abort_and_unlock(msg)
+
+        # All checks passed, so label the tape
+        msg = f'Proceeding to label tape {volume_id}...'
+        TapeAdmin.info(my_name, msg)
+        write_to_log(msg)
+
+        cmd = f'{cta_tape_label} --vid {volume_id} {opt_force} 2>&1'
+        msg = f'executing command: {cmd}'
+        TapeAdmin.info(my_name, msg)
+        write_to_log(msg)
+        cta_tape_label_call = TapeAdmin.run_cmd(cmd)
+
+        if cta_tape_label_call.returncode != 0:
+            msg = f'tape-label of tape {volume_id} failed when executing {cta_tape_label} command'
+            tapes_unlabeled[volume_id] = msg
+            write_to_log(f'ERROR: {msg}')
+            abort_and_unlock(msg)
+
+        else:
+            tapes_labeled.append(volume_id)
+            msg = f'labeled tape {volume_id}'
+            TapeAdmin.info(my_name, msg)
+            write_to_log(msg)
+
+        # Move labeled tape to destination pool (if given)
+        if opt_dstp:
+            TapeAdmin.info(my_name, 'changing tape ' + volume_id + ' to pool ' + opt_dstp)
+            write_to_log('changing tape ' + volume_id + ' to pool ' + opt_dstp)
+            cmd = cta_admin_tape_json + ' ch --tapepool ' + opt_dstp + ' --vid ' + volume_id
+            if TapeAdmin.run_cmd(cmd).returncode != 0:
+                msg = 'failed to execute command: ' + cmd
+                write_to_log(msg)
+                TapeAdmin.error(my_name, msg)
+
+        tape_counter += 1
+        if opt_limit and tape_counter >= opt_limit:
+            break
