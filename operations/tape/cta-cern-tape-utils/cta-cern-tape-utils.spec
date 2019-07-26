@@ -28,11 +28,11 @@ Author: David Fernandez Alvarez, Vladimir Bahyl - 8/2019
 [ -d $RPM_BUILD_ROOT ] && rm -rf $RPM_BUILD_ROOT
 mkdir $RPM_BUILD_ROOT
 cd $RPM_BUILD_ROOT
-mkdir -p usr/local/bin usr/local/lib/python
+mkdir -p usr/local/bin usr/local/sbin usr/local/lib/python
 name=`echo %{name} |sed 's/CERN-CC-//'`
 
 install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/tape-config-generate				$RPM_BUILD_ROOT/usr/local/bin/tape-config-generate
-install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/tape-drive-configure-SCSI-mode-pages-CERN.sh	$RPM_BUILD_ROOT/usr/local/sbin
+install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/tape-drive-configure-SCSI-mode-pages-CERN.sh	$RPM_BUILD_ROOT/usr/local/sbin/tape-drive-configure-SCSI-mode-pages-CERN.sh
 
 install -m 644 -p $RPM_BUILD_DIR/%{name}-%{version}/TapeAdmin.py				$RPM_BUILD_ROOT/usr/local/lib/python
 
