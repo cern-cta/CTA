@@ -56,7 +56,9 @@ set (CATALOGUE_LIB_SRC_FILES
   SqliteCatalogue.cpp
   SqliteCatalogueFactory.cpp
   TapeForWriting.cpp
+  UserSpecifiedANonEmptyLogicalLibrary.cpp
   UserSpecifiedANonEmptyTape.cpp
+  UserSpecifiedANonExistentLogicalLibrary.cpp
   UserSpecifiedANonExistentTape.cpp
   UserSpecifiedAnEmptyStringComment.cpp
   UserSpecifiedAnEmptyStringDiskInstanceName.cpp

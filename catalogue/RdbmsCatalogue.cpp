@@ -22,7 +22,9 @@
 #include "catalogue/RdbmsCatalogueGetArchiveFilesForRepackItor.hpp"
 #include "catalogue/retryOnLostConnection.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
+#include "catalogue/UserSpecifiedANonEmptyLogicalLibrary.hpp"
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
+#include "catalogue/UserSpecifiedANonExistentLogicalLibrary.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringDiskInstanceName.hpp"
@@ -1580,14 +1582,28 @@ bool RdbmsCatalogue::logicalLibraryExists(rdbms::Conn &conn, const std::string &
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
   try {
-    const char *const sql = "DELETE FROM LOGICAL_LIBRARY WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+    const char *const sql =
+      "DELETE "
+      "FROM LOGICAL_LIBRARY "
+      "WHERE "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME_1 AND "
+        "NOT EXISTS (SELECT LOGICAL_LIBRARY_NAME FROM TAPE WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME_2)";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME_1", name);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME_2", name);
     stmt.executeNonQuery();
 
+    // The delete statement will effect no rows and will not raise an error if
+    // either the logical library does not exist or if it still contains tapes
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot delete logical-library ") + name + " because it does not exist");
+      if(logicalLibraryExists(conn, name)) {
+        throw UserSpecifiedANonEmptyLogicalLibrary(std::string("Cannot delete logical library ") + name +
+          " because it contains one or more tapes");
+      } else {
+        throw UserSpecifiedANonExistentLogicalLibrary(std::string("Cannot delete logical library ") + name +
+          " because it does not exist");
+      }
     }
   } catch(exception::UserError &) {
     throw;
