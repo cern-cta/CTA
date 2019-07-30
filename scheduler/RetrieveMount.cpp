@@ -251,7 +251,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
     }
-    const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an standard exception";
+    const std::string msg_error="In RetrieveMount::reportJobsBatchWritten(): got an standard exception";
     logContext.log(cta::log::ERR, msg_error);
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
     // will be retried.

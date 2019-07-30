@@ -226,6 +226,8 @@ public:
     void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
     std::set<std::string> m_diskSystemsToSkip;
   public:
+    /// Public but non overriding function used by retrieve jobs (on failure to transfer):
+    void releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;

@@ -2750,6 +2750,19 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
       throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
   }
   ds.setState(driveState);
+  // If the drive is a state incompatible with space reservation, make sure there is none:
+  switch (inputs.status) {
+  case DriveStatus::CleaningUp:
+  case DriveStatus::Down:
+  case DriveStatus::Shutdown:
+  case DriveStatus::Unknown:
+  case DriveStatus::Unloading:
+  case DriveStatus::Unmounting:
+  case DriveStatus::Up:
+    ds.resetDiskSpaceReservation();
+  default:
+    break;
+  }
   ds.commit();
 }
 
@@ -3593,6 +3606,17 @@ void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::releaseDiskSpace()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveMount::releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+  // Try add our reservation to the drive status.
+  objectstore::DriveState ds(m_oStoreDB.m_objectStore);
+  objectstore::ScopedExclusiveLock dsl;
+  Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_oStoreDB.m_agentReference, mountInfo.drive, lc, Helpers::CreateIfNeeded::doNotCreate);
+  for (auto const & dsr: diskSpaceReservation) ds.substractDiskSpaceReservation(dsr.first, dsr.second);
+  ds.commit();
+}
+//------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::complete()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveMount::complete(time_t completionTime) {
@@ -3683,9 +3707,11 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
   std::map<std::string, std::list<OStoreDB::RetrieveJob*>> jobsToRequeueForRepackMap;
   // We will wait on the asynchronously started reports of jobs, queue the retrieve jobs
   // for report and remove them from ownership.
+  SchedulerDatabase::DiskSpaceReservationRequest diskSpaceReservationRequest;
   // 1) Check the async update result.
   for (auto & sDBJob: jobsBatch) {
     auto osdbJob = castFromSchedDBJob(sDBJob);
+    if (osdbJob->diskSystemName) diskSpaceReservationRequest.addRequest(osdbJob->diskSystemName.value(), osdbJob->archiveFile.fileSize);
     if (osdbJob->isRepack) {
       try {
         osdbJob->m_jobSucceedForRepackReporter->wait();
@@ -3726,6 +3752,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
       }
     }
   }
+  releaseDiskSpace(diskSpaceReservationRequest, lc);
   // 2) Queue the retrieve requests for repack.
   for (auto & repackRequestQueue: jobsToRequeueForRepackMap) {
     typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> RQTRTRFSAlgo;
@@ -4531,6 +4558,13 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
   if (!m_jobOwned)
     throw JobNotOwned("In OStoreDB::RetrieveJob::failTransfer: cannot fail a job not owned");
 
+  // Remove the space reservation for this job as we are done with it (if needed).
+  if (diskSystemName) {
+    SchedulerDatabase::DiskSpaceReservationRequest dsrr;
+    dsrr.addRequest(diskSystemName.value(), archiveFile.fileSize);
+    m_retrieveMount->releaseDiskSpace(dsrr, lc);
+  }
+    
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rel(m_retrieveRequest);
   m_retrieveRequest.fetch();
