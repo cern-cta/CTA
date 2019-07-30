@@ -68,16 +68,19 @@ private:
 };
 
 struct DiskSystemFreeSpace {
-  uint64_t freeSize;
+  uint64_t freeSpace;
+  uint64_t targetedFreeSpace;
   time_t fetchTime;
 };
 
 class DiskSystemFreeSpaceList: public std::map<std::string, DiskSystemFreeSpace> {
 public:
   DiskSystemFreeSpaceList(DiskSystemList &diskSystemList): m_systemList(diskSystemList) {}
-  void fetchFileSystemFreeSpace(const std::set<std::string> &fileSystems);
+  void fetchDiskSystemFreeSpace(const std::set<std::string> &diskSystems);
 private:
   DiskSystemList &m_systemList;
+  uint64_t fetchEosFreeSpace(const std::string & instanceAddress);
+  uint64_t fetchConstantFreeSpace(const std::string & instanceAddress);
 };
 
 }} // namespace cta::common

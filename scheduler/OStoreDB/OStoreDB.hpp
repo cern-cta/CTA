@@ -220,10 +220,10 @@ public:
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, log::LogContext& logContext) override;
   private:
-    void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> >& jobBatch,
+    void requeueJobBatch(std::list<std::unique_ptr<OStoreDB::RetrieveJob> >& jobBatch,
       log::LogContext& logContext);
     std::map<std::string, uint64_t> getExistingDrivesReservations(); 
-    void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation);
+    void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
     std::set<std::string> m_diskSystemsToSkip;
   public:
     void complete(time_t completionTime) override;

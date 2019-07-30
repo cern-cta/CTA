@@ -34,9 +34,9 @@ SchedulerDatabase::RepackRequestStatistics::RepackRequestStatistics() {
 
 void SchedulerDatabase::DiskSpaceReservationRequest::addRequest(const std::string& diskSystemName, uint64_t size) {
   try {
-    m_spaceMap.at(diskSystemName) += size;
+    at(diskSystemName) += size;
   } catch (std::out_of_range &) {
-    m_spaceMap[diskSystemName] = size;
+    operator[](diskSystemName) = size;
   }
 }
 

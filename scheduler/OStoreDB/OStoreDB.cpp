@@ -3456,26 +3456,57 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
   // Pop a batch of files to retrieve and, for the ones having a documented disk system name, reserve the space
   // that they will require. In case we cannot allocate the space for some of them, mark the destination filesystem as
   // full and stop popping from it, after requeueing the jobs.
+  bool failedAllocation = false;
+  SchedulerDatabase::DiskSpaceReservationRequest diskSpaceReservationRequest;
   typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-  RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
-  popCriteria.diskSystemsToSkip = m_diskSystemsToSkip;
-  auto jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
-  // Try and allocate data for the popped jobs.
-  // Compute the necessary space in each targeted disk system.
-  SchedulerDatabase::DiskSpaceReservationRequest diskSpaceReservationRequest;
-  std::map<std::string, uint64_t> spaceMap;
-  for (auto &j: jobs.elements)
-      if (j.diskSystemName)
-        diskSpaceReservationRequest.addRequest(j.diskSystemName.value(), j.archiveFile.fileSize);
-  // Get the existing reservation map from the other drives.
-  auto otherDrivesReservations = getExistingDrivesReservations();
-  // Get the free space from disk systems involved.
-  
-  // If any file system does not have enough space, make it as full, requeue all (slight but rare inefficiency) 
-  // and retry the pop.
-  
-  // Else, we can construct the return value (we did not hit any full disk system.
+  RQAlgos::PoppedElementsBatch jobs;
+  retryPop:
+  {
+    RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
+    popCriteria.diskSystemsToSkip = m_diskSystemsToSkip;
+    jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
+    // Try and allocate data for the popped jobs.
+    // Compute the necessary space in each targeted disk system.
+    std::map<std::string, uint64_t> spaceMap;
+    for (auto &j: jobs.elements)
+        if (j.diskSystemName)
+          diskSpaceReservationRequest.addRequest(j.diskSystemName.value(), j.archiveFile.fileSize);
+    // Get the existing reservation map from drives (including this drive's previous pending reservations).
+    auto otherDrivesReservations = getExistingDrivesReservations();
+    // Get the free space from disk systems involved.
+    std::set<std::string> diskSystemNames;
+    for (auto const & dsrr: diskSpaceReservationRequest) diskSystemNames.insert(dsrr.first);
+    diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames);
+    // If any file system does not have enough space, mark it as full for this mount, requeue all (slight but rare inefficiency) 
+    // and retry the pop.
+    for (auto const & ds: diskSystemNames) {
+      if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds) + diskSystemFreeSpace.at(ds).targetedFreeSpace) {
+        m_diskSystemsToSkip.insert(ds);
+        failedAllocation = true;
+        log::ScopedParamContainer params(logContext);
+        params.add("diskSystemName", ds)
+              .add("freeSpace", diskSystemFreeSpace.at(ds).freeSpace)
+              .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
+              .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace);
+        logContext.log(log::WARNING, "In OStoreDB::RetrieveMount::getNextJobBatch(): could not allocated disk space for job batch.");
+      }  
+    }
+  }
+  if (failedAllocation) {
+    std::list<std::unique_ptr<OStoreDB::RetrieveJob>> rjl;
+    for (auto & jle: jobs.elements) rjl.emplace_back(new OStoreDB::RetrieveJob(jle.retrieveRequest->getAddressIfSet(), m_oStoreDB, this));
+    requeueJobBatch(rjl, logContext);
+    rjl.clear();
+    // Clean up for the next round of popping
+    jobs.summary.files=0;
+    jobs.elements.clear();
+    failedAllocation = false;
+    diskSpaceReservationRequest.clear();
+    goto retryPop;
+  }
+  this->reserveDiskSpace(diskSpaceReservationRequest, logContext);
+  // Allocation went fine, we can construct the return value (we did not hit any full disk system.
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   for(auto &j : jobs.elements)
   {
@@ -3496,18 +3527,17 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::requeueJobBatch()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> >& jobBatch,
+void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<OStoreDB::RetrieveJob> >& jobBatch,
     log::LogContext& logContext) {
   objectstore::Sorter sorter(*m_oStoreDB.m_agentReference, m_oStoreDB.m_objectStore, m_oStoreDB.m_catalogue);
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
   for (auto & j: jobBatch) {
-    cta::OStoreDB::RetrieveJob *rj = cta::OStoreDB::castFromSchedDBJob(j.get());
-    auto rr = std::make_shared<objectstore::RetrieveRequest>(rj->m_retrieveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
+    auto rr = std::make_shared<objectstore::RetrieveRequest>(j->m_retrieveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
     rrlist.push_back(rr);
     locks.emplace_back(*rr);
     rr->fetch();
-    sorter.insertRetrieveRequest(rr, *m_oStoreDB.m_agentReference, rj->selectedCopyNb, logContext);
+    sorter.insertRetrieveRequest(rr, *m_oStoreDB.m_agentReference, j->selectedCopyNb, logContext);
   }
   locks.clear();
   rrlist.clear();
@@ -3553,9 +3583,13 @@ std::map<std::string, uint64_t> OStoreDB::RetrieveMount::getExistingDrivesReserv
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::reserveDiskSpace()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation) {
-  // Try and add our reservation to the disk
-  throw exception::Exception("In OStoreDB::RetrieveMount::reserveDiskSpace(): not implemented.");
+void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+  // Try add our reservation to the drive status.
+  objectstore::DriveState ds(m_oStoreDB.m_objectStore);
+  objectstore::ScopedExclusiveLock dsl;
+  Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_oStoreDB.m_agentReference, mountInfo.drive, lc, Helpers::CreateIfNeeded::doNotCreate);
+  for (auto const & dsr: diskSpaceReservation) ds.addDiskSpaceReservation(dsr.first, dsr.second);
+  ds.commit();
 }
 
 //------------------------------------------------------------------------------

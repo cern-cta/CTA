@@ -342,11 +342,8 @@ public:
 
   class RetrieveJob;
   
-  class DiskSpaceReservationRequest {
-  public:
+  struct DiskSpaceReservationRequest: public std::map<std::string, uint64_t> {
     void addRequest(const std::string &diskSystemName, uint64_t size);
-  private:
-    std::map<std::string, uint64_t> m_spaceMap;
   };
   
 public:
