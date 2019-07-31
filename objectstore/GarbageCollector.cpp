@@ -330,7 +330,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         // Get the list of vids for non failed tape files.
         std::set<std::string> candidateVids;
         for (auto & j: rr->dumpJobs()) {
-          if(j.status==RetrieveJobStatus::RJS_ToTransferForUser) {
+          if(j.status==RetrieveJobStatus::RJS_ToTransfer) {
             for (auto &tf: rr->getArchiveFile().tapeFiles) {
               if ((tf.copyNb == j.copyNb) && (tf.supersededByVid.empty()))
                 candidateVids.insert(tf.vid);

@@ -165,12 +165,11 @@ private:
   uint64_t m_maxShardSize = c_defaultMaxShardSize;
 };
 
-class RetrieveQueueToTransferForUser : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
+class RetrieveQueueToTransfer : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 class RetrieveQueueToReportForUser : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 class RetrieveQueueFailed : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 class RetrieveQueueToReportToRepackForSuccess : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 class RetrieveQueueToReportToRepackForFailure: public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
-class RetrieveQueueToTransferForRepack : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 
 }}
 

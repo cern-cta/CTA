@@ -359,12 +359,11 @@ message ArchiveRequest {
 // of the request.
 
 enum RetrieveJobStatus {
-  RJS_ToTransferForUser = 1;
+  RJS_ToTransfer = 1;
   RJS_ToReportToUserForFailure = 997;
   RJS_Failed = 998;
   RJS_ToReportToRepackForSuccess = 1002; //For Retrieve request created by a Repack request
   RJS_ToReportToRepackForFailure = 1003;
-  RJS_ToTransferForRepack = 1004;
 }
 
 message SchedulerRetrieveRequest {

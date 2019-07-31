@@ -21,10 +21,10 @@
 namespace cta { namespace objectstore {
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::c_containerTypeName = "RetrieveQueueToTransferForUser";
+const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::c_containerTypeName = "RetrieveQueueToTransfer";
 
 template<>
-auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::
+auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
 getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
   ret.bytes = poppedElement.bytes;
@@ -33,14 +33,14 @@ getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
 }
 
 template<>
-void ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PoppedElementsBatch::
+void ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) const {
   params.add("bytes", summary.bytes)
         .add("files", summary.files);
 }
 
 template<>
-auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::
+auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
 getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elementsToSkip,
   log::LogContext &lc) -> PoppedElementsBatch
 {

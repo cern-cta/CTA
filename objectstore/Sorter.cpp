@@ -185,7 +185,7 @@ void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const JobQueueType
       this->executeRetrieveAlgorithm<RetrieveQueueToReportForUser>(vid,queueAddress,jobs,lc);
     break;
     case JobQueueType::JobsToTransferForUser:
-      this->executeRetrieveAlgorithm<RetrieveQueueToTransferForUser>(vid,queueAddress,jobs,lc);
+      this->executeRetrieveAlgorithm<RetrieveQueueToTransfer>(vid,queueAddress,jobs,lc);
       break;
     case JobQueueType::JobsToReportToRepackForSuccess:
       this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForSuccess>(vid,queueAddress,jobs,lc);
@@ -193,8 +193,6 @@ void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const JobQueueType
     case JobQueueType::JobsToReportToRepackForFailure:
       this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForFailure>(vid,queueAddress,jobs,lc);
       break;
-    case JobQueueType::JobsToTransferForRepack:
-      this->executeRetrieveAlgorithm<RetrieveQueueToTransferForRepack>(vid, queueAddress,jobs,lc);
       break;
     case JobQueueType::FailedJobs:
       break;
@@ -308,7 +306,7 @@ std::set<std::string> Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAcc
   using serializers::RetrieveJobStatus;
   std::set<std::string> candidateVids;
   for(auto& j: requestAccessor.getJobs()){
-    if(j.status == RetrieveJobStatus::RJS_ToTransferForUser){
+    if(j.status == RetrieveJobStatus::RJS_ToTransfer){
       candidateVids.insert(requestAccessor.getArchiveFile().tapeFiles.at(j.copyNb).vid);
     }
   }

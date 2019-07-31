@@ -3471,7 +3471,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
   // full and stop popping from it, after requeueing the jobs.
   bool failedAllocation = false;
   SchedulerDatabase::DiskSpaceReservationRequest diskSpaceReservationRequest;
-  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> RQAlgos;
+  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PoppedElementsBatch jobs;
   retryPop:
@@ -4680,7 +4680,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
     }
 
     case NextStep::EnqueueForTransferForUser: {
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> CaRqtr;
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> CaRqtr;
 
       // Algorithms suppose the objects are not locked
       auto  retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
@@ -4689,7 +4689,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       std::set<std::string> candidateVids;
       for(auto &tf : af.tapeFiles) {
-        if(m_retrieveRequest.getJobStatus(tf.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransferForUser)
+        if(m_retrieveRequest.getJobStatus(tf.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransfer)
           candidateVids.insert(tf.vid);
       }
       if(candidateVids.empty()) {
@@ -4716,7 +4716,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
-        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToTransferForUser, 
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToTransfer, 
         m_activityDescription, m_diskSystemName
       });
 

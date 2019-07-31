@@ -445,7 +445,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
 // RetrieveQueue full specialisations for ContainerTraits.
 
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PopCriteria {
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria {
   uint64_t files;
   uint64_t bytes;
   PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
@@ -459,7 +459,7 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PopCriteri
 };
 
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PoppedElementsSummary {
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSummary {
   uint64_t files;
   uint64_t bytes;
   PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
@@ -518,7 +518,7 @@ template<typename C>
 const std::string ContainerTraits<RetrieveQueue,C>::c_identifierType = "tapeVid";
   
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::QueueType{
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::QueueType{
     objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForUser;
 };
 

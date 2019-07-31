@@ -84,7 +84,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   using serializers::RetrieveJobStatus;
   std::set<std::string> candidateVids;
   for (auto &j: m_payload.jobs()) {
-    if (j.status() == RetrieveJobStatus::RJS_ToTransferForUser) {
+    if (j.status() == RetrieveJobStatus::RJS_ToTransfer) {
       // Find the job details in tape file
       for (auto &tf: m_payload.archivefile().tapefiles()) {
         if (tf.copynb() == j.copynb()) {
@@ -114,7 +114,7 @@ queueForFailure:;
   {
     // If there is no candidate, we fail the jobs that are not yet, and queue the request as failed (on any VID).
     for (auto & j: *m_payload.mutable_jobs()) {
-      if (j.status() == RetrieveJobStatus::RJS_ToTransferForUser) {
+      if (j.status() == RetrieveJobStatus::RJS_ToTransfer) {
         j.set_status(RetrieveJobStatus::RJS_Failed);
     log::ScopedParamContainer params(lc);
         params.add("fileId", m_payload.archivefile().archivefileid())
@@ -302,7 +302,7 @@ void RetrieveRequest::addJob(uint32_t copyNb, uint16_t maxRetriesWithinMount, ui
   tf->set_totalretries(0);
   tf->set_maxreportretries(maxReportRetries);
   tf->set_totalreportretries(0);
-  tf->set_status(serializers::RetrieveJobStatus::RJS_ToTransferForUser);
+  tf->set_status(serializers::RetrieveJobStatus::RJS_ToTransfer);
 }
 
 //------------------------------------------------------------------------------
@@ -329,7 +329,7 @@ auto RetrieveRequest::addTransferFailure(uint32_t copyNumber, uint64_t mountId, 
     }
     if(j.totalretries() < j.maxtotalretries()) {
       EnqueueingNextStep ret;
-        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransferForUser;
+        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransfer;
       if(j.retrieswithinmount() < j.maxretrieswithinmount())
         // Job can try again within this mount
         ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransferForUser;
@@ -573,10 +573,10 @@ bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId,
     if (j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure);
       for (auto & j2: m_payload.jobs()) 
-        if (j2.status() == serializers::RetrieveJobStatus::RJS_ToTransferForUser) return false;
+        if (j2.status() == serializers::RetrieveJobStatus::RJS_ToTransfer) return false;
       return true;
     } else {
-      j.set_status(serializers::RetrieveJobStatus::RJS_ToTransferForUser);
+      j.set_status(serializers::RetrieveJobStatus::RJS_ToTransfer);
       return false;
     }
   }
@@ -644,7 +644,7 @@ JobQueueType RetrieveRequest::getQueueType() {
   for (auto &j: m_payload.jobs()) {
     // Any job is to be transfered => To transfer
     switch(j.status()) {
-    case serializers::RetrieveJobStatus::RJS_ToTransferForUser:
+    case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return JobQueueType::JobsToTransferForUser;
       break;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
@@ -656,8 +656,6 @@ JobQueueType RetrieveRequest::getQueueType() {
       break;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure:
       return JobQueueType::JobsToReportToRepackForFailure;
-    case serializers::RetrieveJobStatus::RJS_ToTransferForRepack:
-      return JobQueueType::JobsToTransferForRepack;
     default: break;
     }
   }
@@ -665,12 +663,15 @@ JobQueueType RetrieveRequest::getQueueType() {
   return JobQueueType::FailedJobs;
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::getQueueType()
+//------------------------------------------------------------------------------
 JobQueueType RetrieveRequest::getQueueType(uint32_t copyNb){
   checkPayloadReadable();
   for(auto &j: m_payload.jobs()){
     if(j.copynb() == copyNb){
       switch(j.status()){
-        case serializers::RetrieveJobStatus::RJS_ToTransferForUser:
+        case serializers::RetrieveJobStatus::RJS_ToTransfer:
           return JobQueueType::JobsToTransferForUser;
         case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
           return JobQueueType::JobsToReportToRepackForSuccess;
@@ -680,8 +681,6 @@ JobQueueType RetrieveRequest::getQueueType(uint32_t copyNb){
           return JobQueueType::FailedJobs;
         case serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure:
           return JobQueueType::JobsToReportToRepackForFailure;
-        case serializers::RetrieveJobStatus::RJS_ToTransferForRepack:
-          return JobQueueType::JobsToTransferForRepack;
         default:
           return JobQueueType::FailedJobs;
       }
@@ -695,7 +694,7 @@ JobQueueType RetrieveRequest::getQueueType(uint32_t copyNb){
 //------------------------------------------------------------------------------
 std::string RetrieveRequest::statusToString(const serializers::RetrieveJobStatus& status) {
   switch(status) {
-  case serializers::RetrieveJobStatus::RJS_ToTransferForUser:
+  case serializers::RetrieveJobStatus::RJS_ToTransfer:
     return "ToTransfer";
   case serializers::RetrieveJobStatus::RJS_Failed:
     return "Failed";
@@ -743,7 +742,7 @@ auto RetrieveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent job
   switch (jobEvent)
   {
     case JobEvent::TransferFailed:
-      if (*currentStatus != RetrieveJobStatus::RJS_ToTransferForUser) {
+      if (*currentStatus != RetrieveJobStatus::RJS_ToTransfer) {
         // Wrong status, but the context leaves no ambiguity. Just warn.
         log::ScopedParamContainer params(lc);
         params.add("event", eventToString(jobEvent))
@@ -801,7 +800,7 @@ void RetrieveRequest::updateLifecycleTiming(serializers::RetrieveRequest& payloa
   LifecycleTimingsSerDeser lifeCycleSerDeser;
   lifeCycleSerDeser.deserialize(payload.lifecycle_timings());
   switch(retrieveJob.status()){
-    case RetrieveJobStatus::RJS_ToTransferForUser:
+    case RetrieveJobStatus::RJS_ToTransfer:
       if(retrieveJob.totalretries() == 0){
         //totalretries = 0 then this is the first selection of the request
         lifeCycleSerDeser.first_selected_time = time(nullptr);
