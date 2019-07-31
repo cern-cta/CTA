@@ -3502,7 +3502,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
               .add("freeSpace", diskSystemFreeSpace.at(ds).freeSpace)
               .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
               .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace);
-        logContext.log(log::WARNING, "In OStoreDB::RetrieveMount::getNextJobBatch(): could not allocated disk space for job batch.");
+        logContext.log(log::WARNING, "In OStoreDB::RetrieveMount::getNextJobBatch(): could not allocate disk space for job batch.");
       }  
     }
   }
@@ -3550,7 +3550,7 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<OStoreDB
     rrlist.push_back(rr);
     locks.emplace_back(*rr);
     rr->fetch();
-    sorter.insertRetrieveRequest(rr, *m_oStoreDB.m_agentReference, j->selectedCopyNb, logContext);
+    sorter.insertRetrieveRequest(rr, *m_oStoreDB.m_agentReference, nullopt, logContext);
   }
   locks.clear();
   rrlist.clear();

@@ -214,6 +214,23 @@ std::string RetrieveQueue::getVid() {
   return m_payload.vid();
 }
 
+optional<time_t> RetrieveQueue::getSleepForFreeSpaceStartTime() {
+  checkPayloadReadable();
+  optional<time_t> ret;
+  if (m_payload.has_sleep_for_free_space_since()) ret=(time_t)m_payload.sleep_for_free_space_since();
+  return ret;
+}
+
+void RetrieveQueue::resetSleepForFreeSpaceStartTime() {
+  checkPayloadWritable();
+  m_payload.clear_sleep_for_free_space_since();
+}
+
+void RetrieveQueue::setSleepForFreeSpaceStartTime(time_t time) {
+  checkPayloadWritable();
+  m_payload.set_sleep_for_free_space_since((uint64_t)time);
+}
+
 std::string RetrieveQueue::dump() {  
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;

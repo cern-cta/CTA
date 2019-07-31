@@ -65,7 +65,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
   // The real deal: go fetch the file system's free space.
   cta::utils::Regex eosDiskSystem("^eos://(.*)$");
   // For testing purposes
-  cta::utils::Regex constantFreeSpaceDiskSystem("^contantFreeSpace:(.*)");
+  cta::utils::Regex constantFreeSpaceDiskSystem("^constantFreeSpace:(.*)");
   for (auto const & ds: diskSystems) {
     uint64_t freeSpace;
     std::vector<std::string> regexResult;

@@ -125,6 +125,11 @@ public:
   // -- Generic parameters
   std::string getVid();
   
+  // Support for sleep waiting free space (back pressure).
+  void setSleepForFreeSpaceStartTime(time_t time);
+  optional<time_t> getSleepForFreeSpaceStartTime();
+  void resetSleepForFreeSpaceStartTime();
+  
 private:
   struct ShardForAddition {
     bool newShard=false;
