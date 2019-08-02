@@ -47,6 +47,18 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
   PoppedElementsBatch ret;
 
   auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elementsToSkip, unfulfilledCriteria.diskSystemsToSkip);
+  if (unfulfilledCriteria.diskSystemsToSkip.size() && candidateJobsFromQueue.candidates.empty() && cont.getJobsSummary().jobs && elementsToSkip.empty()) {
+    // We failed to find any candidates from a non empty queue, from which there are no individual elements to skip.
+    // this means the it is time to sleep this queue.
+    // As we have no mean to log at this point we will pass the necessary information to the caller in the form
+    // of an exception.
+    cont.setSleepForFreeSpaceStartTimeAndName(::time(nullptr), *unfulfilledCriteria.diskSystemsToSkip.begin());
+    cont.commit();
+    RetrieveQueue::QueueSleepingForDiskSystemSpace ex(
+      "In ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getPoppingElementsCandidates(): sleeping queue due to disk system full.");
+    ex.fullDiskSystem = *unfulfilledCriteria.diskSystemsToSkip.begin();
+    throw ex;
+  }
   for(auto &cjfq : candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement{
       cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),

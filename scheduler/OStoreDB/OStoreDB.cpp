@@ -314,12 +314,12 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           auto & m = tmdi.potentialMounts.back();
           m.vid = rqp.vid;
           m.type = cta::common::dataStructures::MountType::Retrieve;
-          m.bytesQueued = rqueue.getJobsSummary().bytes;
-          m.filesQueued = rqueue.getJobsSummary().jobs;
+          m.bytesQueued = rqSummary.bytes;
+          m.filesQueued = rqSummary.jobs;
           m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
-          m.priority = rqueue.getJobsSummary().priority;
-          m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
-          m.minRequestAge = rqueue.getJobsSummary().minRetrieveRequestAge;
+          m.priority = rqSummary.priority;
+          m.maxDrivesAllowed = rqSummary.maxDrivesAllowed;
+          m.minRequestAge = rqSummary.minRetrieveRequestAge;
           m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
           m.tapePool = "";       // The tape pool is not know and will be determined by the caller.
           m.vendor = "";         // The vendor is not known here, and will be determined by the caller.
@@ -331,6 +331,13 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.activityNameAndWeightedMountCount.value().weight = ac.weight;
           m.activityNameAndWeightedMountCount.value().weightedMountCount = 0.0; // This value will be computed later by the caller.
           m.activityNameAndWeightedMountCount.value().mountCount = 0; // This value will be computed later by the caller.
+          // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
+          // This allows having a single decision point instead of implementing is at the consumer levels.
+          if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime + 15*60)) ) {
+            m.sleepingMount = true;
+            m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
+            m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+          }
         }
       }
       if (jobsWithoutActivity) {
@@ -338,18 +345,25 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         auto & m = tmdi.potentialMounts.back();
         m.vid = rqp.vid;
         m.type = cta::common::dataStructures::MountType::Retrieve;
-        m.bytesQueued = rqueue.getJobsSummary().bytes;
-        m.filesQueued = rqueue.getJobsSummary().jobs;      
-        m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
-        m.priority = rqueue.getJobsSummary().priority;
-        m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
-        m.minRequestAge = rqueue.getJobsSummary().minRetrieveRequestAge;
+        m.bytesQueued = rqSummary.bytes;
+        m.filesQueued = rqSummary.jobs;      
+        m.oldestJobStartTime = rqSummary.oldestJobStartTime;
+        m.priority = rqSummary.priority;
+        m.maxDrivesAllowed = rqSummary.maxDrivesAllowed;
+        m.minRequestAge = rqSummary.minRetrieveRequestAge;
         m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
         m.tapePool = "";       // The tape pool is not know and will be determined by the caller.
         m.vendor = "";         // The vendor is not known here, and will be determined by the caller.
         m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
         m.vo = "";             // The vo is not known here, and will be determined by the caller.
         m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
+        // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
+        // This allows having a single decision point instead of implementing is at the consumer levels.
+        if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime + 15*60)) ) {
+          m.sleepingMount = true;
+          m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
+          m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+        }
       }
     } else {
       tmdi.queueTrimRequired = true;
@@ -3478,7 +3492,14 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
   {
     RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
     popCriteria.diskSystemsToSkip = m_diskSystemsToSkip;
-    jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
+    try {
+      jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
+    } catch (objectstore::RetrieveQueue::QueueSleepingForDiskSystemSpace &ex) {
+      log::ScopedParamContainer param(logContext);
+      param.add("fullDiskSystem", ex.fullDiskSystem);
+      logContext.log(log::WARNING, "In OStoreDB::RetrieveMount::getNextJobBatch(): retrieve queue out to sleep for lack of free disk space.");
+      return std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ();
+    }
     // Try and allocate data for the popped jobs.
     // Compute the necessary space in each targeted disk system.
     std::map<std::string, uint64_t> spaceMap;

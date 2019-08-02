@@ -110,6 +110,13 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     sq_item->set_empty_tapes(sq.emptyTapes);
     sq_item->set_disabled_tapes(sq.disabledTapes);
     sq_item->set_writable_tapes(sq.writableTapes);
+    if (sq.sleepForSpaceInfo) {
+      sq_item->set_sleeping_for_space(true);
+      sq_item->set_sleep_start_time(sq.sleepForSpaceInfo.value().startTime);
+      sq_item->set_disk_system_slept_for(sq.sleepForSpaceInfo.value().diskSystemName);
+    } else {
+      sq_item->set_sleeping_for_space(false);
+    }
 
     is_buffer_full = streambuf->Push(record);
   }

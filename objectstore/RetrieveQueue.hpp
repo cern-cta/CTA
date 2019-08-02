@@ -92,6 +92,11 @@ public:
       uint64_t count;
     };
     std::list<ActivityCount> activityCounts;
+    struct SleepInfo {
+      time_t sleepStartTime;
+      std::string diskSystemSleptFor;
+    };
+    optional<SleepInfo> sleepInfo;
   };
   JobsSummary getJobsSummary();
   struct JobDump {
@@ -117,6 +122,12 @@ public:
   // which still should be removed from the queue. They will be disregarded from  listing.
   CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> & retrieveRequestsToSkip,
     const std::set<std::string> & diskSystemsToSkip);
+  
+  class QueueSleepingForDiskSystemSpace: public cta::exception::Exception {
+  public:
+    using cta::exception::Exception::Exception;
+    std::string fullDiskSystem;
+  };
 
   //! Return a summary of the number of jobs and number of bytes in the queue
   CandidateJobList getCandidateSummary();
@@ -126,8 +137,8 @@ public:
   std::string getVid();
   
   // Support for sleep waiting free space (back pressure).
-  void setSleepForFreeSpaceStartTime(time_t time);
-  optional<time_t> getSleepForFreeSpaceStartTime();
+  // This data is queried through getJobsSummary().
+  void setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName);
   void resetSleepForFreeSpaceStartTime();
   
 private:

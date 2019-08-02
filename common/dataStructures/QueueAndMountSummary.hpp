@@ -51,6 +51,11 @@ struct QueueAndMountSummary {
   uint64_t emptyTapes=0;
   uint64_t disabledTapes=0;
   uint64_t writableTapes=0;
+  struct SleepForSpaceInfo {
+    time_t startTime;
+    std::string diskSystemName;
+  };
+  optional<SleepForSpaceInfo> sleepForSpaceInfo;
   
   static QueueAndMountSummary &getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
     MountType mountType, const std::string &tapePool, const std::string &vid,

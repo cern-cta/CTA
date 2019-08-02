@@ -555,6 +555,9 @@ public:
     std::string logicalLibrary;   /**< The logical library (for a retrieve) */
     double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 ] ratio of existing 
                                    * mounts/quota (for faire share of mounts)*/
+    bool sleepingMount = false;   /**< Is the mount being slept due to lack of disk space? */
+    time_t sleepStartTime = 0;    /**< Start time for the sleeping for lack of disk space. */
+    std::string diskSystemSleptFor;/**< Name of (one of) the disk system(s) that could was too full to start more retrieves. */
     uint32_t mountCount;          /**< The number of mounts for this tape pool (which is the current "chargeable" entity for quotas. */
     struct ActivityNameAndWeightedMountCount {
       std::string activity;

@@ -817,12 +817,13 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   
   // We can now filter out the potential mounts for which their mount criteria
   // is not yet met, filter out the potential mounts for which the maximum mount
-  // quota is already reached, and weight the remaining by how much of their quota 
-  // is reached
+  // quota is already reached, filter out the retrieve requests put to sleep for lack of disk space,
+  // and weight the remaining by how much of their quota is reached.
   for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
     // Get summary data
     uint32_t existingMounts = 0;
     uint32_t activityMounts = 0;
+    bool sleepingMount = false;
     try {
       existingMounts = existingMountsSummary
           .at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type)))
@@ -845,7 +846,10 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       mountPassesACriteria = true;
     if (!effectiveExistingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minRequestAge))
       mountPassesACriteria = true;
-    if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed) {
+    if (m->sleepingMount) {
+      sleepingMount = true;
+    }
+    if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed || sleepingMount) {
       log::ScopedParamContainer params(lc);
       params.add("tapePool", m->tapePool);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
@@ -861,6 +865,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("existingMounts", existingMounts)
             .add("maxDrivesAllowed", m->maxDrivesAllowed);
+      if (sleepingMount) params.add("fullDiskSystem", m->diskSystemSleptFor);
       lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): Removing potential mount not passing criteria");
       m = mountInfo->potentialMounts.erase(m);
     } else {
@@ -1292,6 +1297,12 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.bytesQueued = pm.bytesQueued;
       summary.filesQueued = pm.filesQueued;
       summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
+      if (pm.sleepingMount) {
+        common::dataStructures::QueueAndMountSummary::SleepForSpaceInfo sfsi;
+        sfsi.startTime = pm.sleepStartTime;
+        sfsi.diskSystemName = pm.diskSystemSleptFor;
+        summary.sleepForSpaceInfo = sfsi;
+      }
       break;
     default:
       break;

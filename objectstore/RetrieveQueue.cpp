@@ -214,21 +214,16 @@ std::string RetrieveQueue::getVid() {
   return m_payload.vid();
 }
 
-optional<time_t> RetrieveQueue::getSleepForFreeSpaceStartTime() {
-  checkPayloadReadable();
-  optional<time_t> ret;
-  if (m_payload.has_sleep_for_free_space_since()) ret=(time_t)m_payload.sleep_for_free_space_since();
-  return ret;
-}
-
 void RetrieveQueue::resetSleepForFreeSpaceStartTime() {
   checkPayloadWritable();
   m_payload.clear_sleep_for_free_space_since();
+  m_payload.clear_disk_system_slept_for();
 }
 
-void RetrieveQueue::setSleepForFreeSpaceStartTime(time_t time) {
+void RetrieveQueue::setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName) {
   checkPayloadWritable();
   m_payload.set_sleep_for_free_space_since((uint64_t)time);
+  m_payload.set_disk_system_slept_for(diskSystemName);
 }
 
 std::string RetrieveQueue::dump() {  
@@ -593,6 +588,12 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
     RetrieveActivityCountMap retrieveActivityCountMap(m_payload.mutable_activity_map());
     for (auto ra: retrieveActivityCountMap.getActivities(ret.priority)) {
       ret.activityCounts.push_back({ra.diskInstanceName, ra.activity, ra.weight, ra.count});
+    }
+    if (m_payload.has_sleep_for_free_space_since()) {
+      JobsSummary::SleepInfo si;
+      si.diskSystemSleptFor = m_payload.disk_system_slept_for();
+      si.sleepStartTime = m_payload.sleep_for_free_space_since();
+      ret.sleepInfo = si;
     }
   } else {
     ret.maxDrivesAllowed = 0;

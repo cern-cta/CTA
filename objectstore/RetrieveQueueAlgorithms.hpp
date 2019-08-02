@@ -31,7 +31,7 @@ struct ContainerTraits<RetrieveQueue,C>
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
     ContainerSummary(const RetrieveQueue::JobsSummary &c) : 
       RetrieveQueue::JobsSummary({c.jobs,c.bytes,c.oldestJobStartTime,c.priority,
-          c.minRetrieveRequestAge,c.maxDrivesAllowed,c.activityCounts}) {}
+          c.minRetrieveRequestAge,c.maxDrivesAllowed,c.activityCounts, nullopt}) {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
   
@@ -462,6 +462,8 @@ template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSummary {
   uint64_t files;
   uint64_t bytes;
+  bool diskSystemFull = false;
+  std::string fullDiskSystem;
   PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
   bool operator==(const PoppedElementsSummary &pes) const {
     return bytes == pes.bytes && files == pes.files;
@@ -495,7 +497,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
   auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files,
     elementsToSkip, 
     // This parameter is needed only in the specialized version: 
-    // auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::getPoppingElementsCandidates
+    // auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getPoppingElementsCandidates
     // We provide an empty set here.
     std::set<std::string>()
   );

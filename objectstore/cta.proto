@@ -519,6 +519,7 @@ message RetrieveQueue {
   required uint64 mapsrebuildcount = 10160;
   required uint64 maxshardsize = 10170;
   optional uint64 sleep_for_free_space_since = 10180;
+  optional string disk_system_slept_for = 10190;
 }
 
 // ------------- Repack data strcutures ----------------------------------------
