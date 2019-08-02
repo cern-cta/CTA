@@ -62,6 +62,10 @@ public:
   
   bool isBeingGarbageCollected();
   
+  void setNeedsGarbageCollection();
+  
+  bool needsGarbageCollection();
+  
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   
