@@ -92,6 +92,12 @@ public:
   bool next();
 
   /**
+   * Returns true if the result set does not contain any more rows.
+   * @return True if the result set does not contain any more rows.
+   */
+  bool isEmpty() const;
+
+  /**
    * Returns true if the specified column contains a null value.
    *
    * @param colName The name of the column.

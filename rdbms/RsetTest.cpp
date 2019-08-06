@@ -36,6 +36,14 @@ protected:
   }
 };
 
+TEST_F(cta_rdbms_RsetTest, constructor) {
+  using namespace cta::rdbms;
+
+  Rset rset;
+
+  ASSERT_TRUE(rset.isEmpty());
+}
+
 TEST_F(cta_rdbms_RsetTest, next) {
   using namespace cta::rdbms;
 
@@ -60,12 +68,15 @@ TEST_F(cta_rdbms_RsetTest, next) {
     Stmt stmt = pool.getStmt(*conn, sql);
     auto rset = stmt.executeQuery();
 
+    ASSERT_FALSE(rset.isEmpty());
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1, rset.columnUint64("ID"));
 
     ASSERT_FALSE(rset.next());
 
     ASSERT_THROW(rset.next(), InvalidResultSet);
+
+    ASSERT_TRUE(rset.isEmpty());
   }
 }
 
