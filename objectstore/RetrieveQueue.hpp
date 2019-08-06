@@ -122,12 +122,7 @@ public:
   // which still should be removed from the queue. They will be disregarded from  listing.
   CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> & retrieveRequestsToSkip,
     const std::set<std::string> & diskSystemsToSkip);
-  
-  class QueueSleepingForDiskSystemSpace: public cta::exception::Exception {
-  public:
-    using cta::exception::Exception::Exception;
-    std::string fullDiskSystem;
-  };
+ 
 
   //! Return a summary of the number of jobs and number of bytes in the queue
   CandidateJobList getCandidateSummary();

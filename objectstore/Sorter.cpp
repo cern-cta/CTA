@@ -214,6 +214,8 @@ Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> r
   jobToAdd.jobDump.status = retrieveRequest->getJobStatus(jobToAdd.jobDump.copyNb);
   jobToAdd.fileSize = archiveFile.fileSize;
   jobToAdd.jobQueueType = retrieveRequest->getQueueType(copyNb); //May throw an exception
+  jobToAdd.activityDescription = retrieveRequest->getActivity();
+  jobToAdd.diskSystemName = retrieveRequest->getDiskSystemName();
   return jobToAdd;
 }
 
@@ -399,6 +401,8 @@ Sorter::RetrieveJob OStoreRetrieveRequestAccessor::createRetrieveJob(const cta::
   ret.jobDump.status = m_retrieveRequest->getJobStatus(ret.jobDump.copyNb);
   ret.jobQueueType = m_retrieveRequest->getQueueType(copyNb);
   ret.fileSize = archiveFile.fileSize;
+  ret.activityDescription = m_retrieveRequest->getActivity();
+  ret.diskSystemName = m_retrieveRequest->getDiskSystemName();
   return ret;
 }
 

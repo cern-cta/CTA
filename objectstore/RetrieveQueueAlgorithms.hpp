@@ -416,7 +416,19 @@ bool ContainerTraits<RetrieveQueue,C>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc)
 {
-  if(!cont.isEmpty()) return false;
+  if(!cont.isEmpty()) {
+    auto si = cont.getJobsSummary().sleepInfo;
+    if (si) {
+      log::ScopedParamContainer params(lc);
+      params.add("tapeVid", cId)
+            .add("queueObject", cont.getAddressIfSet())
+            .add("diskSystemSleptFor", si.value().diskSystemSleptFor);
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): non-empty queue is sleeping");
+      // We fake the fact that we trimed the queue for compatibility with previous algorithms (a sleeping queue is like gone at this point).
+      return true;
+    }
+    return false;
+  }
   // The current implementation is done unlocked
   contLock.release();
   try {

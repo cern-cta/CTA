@@ -3492,14 +3492,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
   {
     RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
     popCriteria.diskSystemsToSkip = m_diskSystemsToSkip;
-    try {
-      jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
-    } catch (objectstore::RetrieveQueue::QueueSleepingForDiskSystemSpace &ex) {
-      log::ScopedParamContainer param(logContext);
-      param.add("fullDiskSystem", ex.fullDiskSystem);
-      logContext.log(log::WARNING, "In OStoreDB::RetrieveMount::getNextJobBatch(): retrieve queue out to sleep for lack of free disk space.");
-      return std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ();
-    }
+    jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
     // Try and allocate data for the popped jobs.
     // Compute the necessary space in each targeted disk system.
     std::map<std::string, uint64_t> spaceMap;
