@@ -39,7 +39,7 @@ const DiskSystem& DiskSystemList::at(const std::string& name) {
 //------------------------------------------------------------------------------
 // DiskSystemList::getFSNAme()
 //------------------------------------------------------------------------------
-std::string DiskSystemList::getFSNAme(const std::string& fileURL) {
+std::string DiskSystemList::getFSNAme(const std::string& fileURL) const {
   // First if the regexes have not been created yet, do so.
   if (m_pointersAndRegexes.empty() && size()) {
     for (const auto &ds: *this) {

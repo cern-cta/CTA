@@ -52,7 +52,7 @@ class DiskSystemList: public std::list<DiskSystem> {
   
 public:
   /** Get the filesystem for a given destination URL */
-  std::string getFSNAme(const std::string &fileURL);
+  std::string getFSNAme(const std::string &fileURL) const;
   
   /** Get the file system parameters from a file system name */
   const DiskSystem & at(const std::string &name);
@@ -63,7 +63,7 @@ private:
     utils::Regex regex;
   };
   
-  std::list<PointerAndRegex> m_pointersAndRegexes;
+  mutable std::list<PointerAndRegex> m_pointersAndRegexes;
   
 };
 
