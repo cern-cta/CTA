@@ -568,6 +568,7 @@ message RepackRequest {
   required uint64 archivedbytes = 11510;
   required uint64 failedtoretrievefiles = 11520;
   required uint64 failedtoretrievebytes = 11530;
+  required uint64 failedtocreatearchivereq = 11535;
   required uint64 failedtoarchivefiles = 11540;
   required uint64 failedtoarchivebytes = 11550;
   required uint64 lastexpandedfseq = 11560;

@@ -72,6 +72,7 @@ void RepackRequest::initialize() {
   m_payload.set_archivedbytes(0);
   m_payload.set_failedtoretrievefiles(0);
   m_payload.set_failedtoretrievebytes(0);
+  m_payload.set_failedtocreatearchivereq(0);
   m_payload.set_failedtoarchivefiles(0);
   m_payload.set_failedtoarchivebytes(0);
   m_payload.set_lastexpandedfseq(0);
@@ -196,9 +197,9 @@ void RepackRequest::setStatus(){
   checkPayloadReadable();
   
   if(m_payload.is_expand_started()){
-    //The expansion of the Repack Request have started
+    //The expansion of the Repack Request have started 
     if(m_payload.is_expand_finished()){
-      if( (m_payload.retrievedfiles() + m_payload.failedtoretrievefiles() >= m_payload.totalfilestoretrieve()) && (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() >= m_payload.totalfilestoarchive()) ){
+      if( (m_payload.retrievedfiles() + m_payload.failedtoretrievefiles() >= m_payload.totalfilestoretrieve()) && (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() + m_payload.failedtocreatearchivereq() >= m_payload.totalfilestoarchive()) ){
         //We reached the end
         if (m_payload.failedtoretrievefiles() || m_payload.failedtoarchivefiles()) {
           //At least one retrieve or archive has failed
@@ -520,11 +521,26 @@ auto RepackRequest::getStats() -> std::map<StatsType, StatsValues> {
 //------------------------------------------------------------------------------
 // RepackRequest::reportRetrieveCreationFailures()
 //------------------------------------------------------------------------------
-void RepackRequest::reportRetrieveCreationFailures(const StatsValues& failedRetrieveCreation){
+void RepackRequest::reportRetrieveCreationFailures(const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests){
   checkPayloadWritable();
-  m_payload.set_failedtoretrievebytes(m_payload.failedtoretrievebytes() + failedRetrieveCreation.bytes);
-  m_payload.set_failedtoretrievefiles(m_payload.failedtoretrievefiles() + failedRetrieveCreation.files);
+  uint64_t failedToRetrieveFiles, failedToRetrieveBytes, failedToCreateArchiveReq = 0;
+  for(auto & subreq: notCreatedSubrequests){
+    failedToRetrieveFiles++;
+    failedToRetrieveBytes+=subreq.archiveFile.fileSize;
+    for(auto & copyNb: subreq.copyNbsToRearchive){
+      (void) copyNb;
+      failedToCreateArchiveReq++;
+    }
+  }
+  m_payload.set_failedtoretrievebytes(m_payload.failedtoretrievebytes() + failedToRetrieveBytes);
+  m_payload.set_failedtoretrievefiles(m_payload.failedtoretrievefiles() + failedToRetrieveFiles);
+  reportArchiveCreationFailures(failedToCreateArchiveReq);
   setStatus();
+}
+
+void RepackRequest::reportArchiveCreationFailures(uint64_t nbFailedToCreateArchiveRequests){
+  checkPayloadWritable();
+  m_payload.set_failedtocreatearchivereq(m_payload.failedtocreatearchivereq() + nbFailedToCreateArchiveRequests);
 }
 
 //------------------------------------------------------------------------------

@@ -634,7 +634,7 @@ void TextFormatter::print(const RepackLsItem &rels_item) {
    rels_item.failed_to_retrieve_files(),
    dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
    rels_item.failed_to_archive_files(),
-   dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
+   dataSizeToStr(rels_item.failed_to_archive_bytes()),
    rels_item.last_expanded_fseq(),
    rels_item.status()
   );

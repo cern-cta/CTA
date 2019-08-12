@@ -126,7 +126,9 @@ public:
   };
   std::map<StatsType, StatsValues> getStats();
   
-  void reportRetrieveCreationFailures(const StatsValues &failedRetrieveCreated);
+  void reportRetrieveCreationFailures(const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests);
+  
+  void reportArchiveCreationFailures(uint64_t nbFailedToCreateArchiveRequests);
   
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
