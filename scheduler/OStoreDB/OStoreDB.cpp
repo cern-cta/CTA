@@ -2188,7 +2188,6 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
   auto subrequestsNames = m_repackRequest.getOrPrepareSubrequestInfo(fSeqs, *m_oStoreDB.m_agentReference);
   m_repackRequest.setTotalStats(totalStatsFiles);
   uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
-  m_repackRequest.setLastExpandedFSeq(fSeq);
   common::dataStructures::MountPolicy mountPolicy = m_repackRequest.getMountPolicy();
   // We make sure the references to subrequests exist persistently before creating them.
   m_repackRequest.commit();
@@ -2325,6 +2324,15 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
       try {
         std::shared_ptr<objectstore::RetrieveRequest::AsyncInserter> rrai(rr->asyncInsert());
         asyncInsertionInfoList.emplace_back(AsyncInsertionInfo{rsr, rr, rrai, bestVid, activeCopyNumber});
+      } catch (cta::objectstore::ObjectOpsBase::NotNewObject &objExists){
+        //The retrieve subrequest already exists in the objectstore and is not deleted, we log and don't do anything
+        log::ScopedParamContainer params(lc);
+        params.add("copyNb",activeCopyNumber)
+              .add("repackVid",repackInfo.vid)
+              .add("bestVid",bestVid)
+              .add("fileId",rsr.archiveFile.archiveFileID);
+        lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubrequests(): could not asyncInsert the subrequest because it already exists, continuing expansion");
+        continue;
       } catch (exception::Exception & ex) {
         // We can fail to serialize here...
         // Count the failure for this subrequest. 
@@ -2333,7 +2341,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         failedCreationStats.bytes += rsr.archiveFile.fileSize;
         failedFSeqs.emplace_back(rsr.fSeq);
         log::ScopedParamContainer params(lc);
-        params.add("fileId", rsr.archiveFile)
+        params.add("fileId", rsr.archiveFile.archiveFileID)
               .add("repackVid", repackInfo.vid)
               .add("bestVid", bestVid)
               .add("ExceptionMessage", ex.getMessageValue());
@@ -2400,6 +2408,8 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
     sorter.flushAll(lc);
   }
   
+  m_repackRequest.setLastExpandedFSeq(fSeq);
+  m_repackRequest.commit();
 }
 
 //------------------------------------------------------------------------------
