@@ -16,6 +16,11 @@ if [ ! -e /etc/buildtreeRunner ]; then
   # yum -y install eos-protobuf3
 fi
 
+# Check that the /usr/bin/cta-fst-gcd executable has been installed
+test -e /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd EXISTS" || exit 1
+test -f /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd IS A REGULAR FILE" || exit 1
+test -x /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd IS EXECUTABLE" || exit 1
+
 # create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure
 groupadd --gid 1100 eosusers
 groupadd --gid 1200 powerusers
