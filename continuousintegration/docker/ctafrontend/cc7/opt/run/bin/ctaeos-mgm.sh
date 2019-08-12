@@ -129,6 +129,11 @@ echo
 echo "Limits summary for user daemon:"
 sudo -u daemon bash -c 'ulimit -a'
 
+NB_STARTED_CTA_FST_GCD=0
+if test -f /var/log/eos/fst/cta-fst-gcd.log; then
+  NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
+fi
+
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # generate eos_env file for systemd
   cat /etc/sysconfig/eos | sed -e 's/^export\s*//' > /etc/sysconfig/eos_env
@@ -145,6 +150,8 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
 
   systemctl status eos@{mq,mgm,fst}
 
+  systemctl start cta-fst-gcd
+
 else
   # Using jemalloc as specified in
   # it-puppet-module-eos:
@@ -160,6 +167,17 @@ else
     /usr/bin/xrootd -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
     /usr/bin/xrootd -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
     /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
+
+
+  runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
+fi
+
+let EXPECTED_NB_STARTED_CTA_FST_GCD=NB_STARTED_CTA_FST_GCD+1
+ACTUAL_NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
+if test ${EXPECTED_NB_STARTED_CTA_FST_GCD} = ${ACTUAL_NB_STARTED_CTA_FST_GCD}; then
+  echo "/usr/bin/cta-fst-gcd RUNNING"
+else
+  exit 1
 fi
 
   eos vid enable krb5
