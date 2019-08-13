@@ -588,9 +588,10 @@ public:
         if (activityNameAndWeightedMountCount.value().weightedMountCount < other.activityNameAndWeightedMountCount.value().weightedMountCount)
           return false;
       }
-      if(minRequestAge < other.minRequestAge)
+      //The smaller the oldest job start time is, the bigger the age is, hence the inverted comparison
+      if(oldestJobStartTime > other.oldestJobStartTime)
 	return true;
-      if(minRequestAge > other.minRequestAge)
+      if(oldestJobStartTime < other.oldestJobStartTime)
 	return false;
       /**
        * For the tests, we try to have the priority by 
