@@ -172,11 +172,21 @@ else
   runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
 fi
 
+echo "Giving cta-fst-gcd 1 second to start logging"
+sleep 1
+
 let EXPECTED_NB_STARTED_CTA_FST_GCD=NB_STARTED_CTA_FST_GCD+1
-ACTUAL_NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
-if test ${EXPECTED_NB_STARTED_CTA_FST_GCD} = ${ACTUAL_NB_STARTED_CTA_FST_GCD}; then
-  echo "/usr/bin/cta-fst-gcd RUNNING"
+ACTUAL_NB_STARTED_CTA_FST_GCD=0
+if test -f /var/log/eos/fst/cta-fst-gcd.log; then
+  ACTUAL_NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
 else
+  echo "/usr/bin/cta-fst-gcd DOES NOT EXIST"
+  exit 1
+fi
+if test ${EXPECTED_NB_STARTED_CTA_FST_GCD} = ${ACTUAL_NB_STARTED_CTA_FST_GCD}; then
+  echo "/usr/bin/cta-fst-gcd LOGGED 'cta-fst-gcd started'"
+else
+  echo "/usr/bin/cta-fst-gcd DID NOT LOG 'cta-fst-gcd started'"
   exit 1
 fi
 
