@@ -23,7 +23,6 @@ TAPEAWAREGC=0
 
 NB_BATCH_PROCS=500  # number of parallel batch processes
 BATCH_SIZE=20    # number of files per batch process
-GC_MINFREEBYTES=2000000000000000000 # value for space.tapeawaregc.minfreebytes initially (for default space). Set if TAPEAWAREGC=1
 
 SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
@@ -126,13 +125,7 @@ fi
 
 if [[ $TAPEAWAREGC == 1 ]]; then
     echo "Enabling tape aware garbage collector"
-    ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.tapeawaregc.minfreebytes=${GC_MINFREEBYTES} || die "Could not set space.tapeawaregc.minfreebytes to ${GC_MINFREEBYTES}"
     ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=off || die "Could not disable filearchivedgc"
-else
-    echo "Enabling file archived garbage collector"
-    # no ssh for CI
-    #ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.tapeawaregc.minfreebytes=0 || die "Could not set space.tapeawaregc.minfreebytes to 0"
-    #ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=on || die "Could not enable filearchivedgc"
 fi
 
 EOS_DIR=''
@@ -255,14 +248,6 @@ echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
 sleep 10
 echo "###"
-
-
-if [[ $TAPEAWAREGC == 1 ]]; then
-    echo "Disabling file tape aware garbage collector"
-    ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.tapeawaregc.minfreebytes=0 || die "Could not set space.tapeawaregc.minfreebytes to 0"
-    # we do not need it for retrieves
-    # ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=on || die "Could not enable filearchivedgc"
-fi
 
 
 echo "$(date +%s): Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"

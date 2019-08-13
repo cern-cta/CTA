@@ -69,6 +69,3 @@ mgmofs.autosaveconfig true
 # Set the endpoint and resources for EOS/CTA Workflows
 mgmofs.protowfendpoint ctafrontend:10955
 mgmofs.protowfresource /ctafrontend
-
-# Turn on the MGM LRU tape aware garbage collector
-mgmofs.tapeawaregc.defaultspace.enable true
