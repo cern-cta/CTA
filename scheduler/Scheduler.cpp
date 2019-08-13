@@ -991,6 +991,23 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
 }
 
 //------------------------------------------------------------------------------
+// getLogicalLibrary
+//------------------------------------------------------------------------------
+cta::optional<common::dataStructures::LogicalLibrary> Scheduler::getLogicalLibrary(const std::string& libraryName, double& getLogicalLibraryTime){
+  utils::Timer timer;
+  auto logicalLibraries = m_catalogue.getLogicalLibraries();
+  cta::optional<common::dataStructures::LogicalLibrary> ret;
+  auto logicalLibraryItor = std::find_if(logicalLibraries.begin(),logicalLibraries.end(),[libraryName](const cta::common::dataStructures::LogicalLibrary& ll){
+    return (ll.name == libraryName); 
+  });
+  getLogicalLibraryTime += timer.secs(utils::Timer::resetCounter);
+  if(logicalLibraryItor != logicalLibraries.end()){
+    ret = *logicalLibraryItor;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // getNextMountDryRun
 //------------------------------------------------------------------------------
 bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const std::string& driveName, log::LogContext& lc) {
@@ -1004,6 +1021,25 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
   double decisionTime = 0;
   double schedulerDbTime = 0;
   double catalogueTime = 0;
+  double getLogicalLibrariesTime = 0;
+  
+  auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTime);
+  if(logicalLibrary){
+    if(logicalLibrary.value().isDisabled){
+      log::ScopedParamContainer params(lc);
+      params.add("logicalLibrary",logicalLibraryName)
+            .add("catalogueTime",getLogicalLibrariesTime);
+      lc.log(log::INFO,"In Scheduler::getNextMountDryRun(): logicalLibrary is disabled");
+      return false;
+    }
+  } else {
+    log::ScopedParamContainer params(lc);
+    params.add("logicalLibrary",logicalLibraryName)
+          .add("catalogueTime",getLogicalLibrariesTime);
+    lc.log(log::INFO,"In Scheduler::getNextMountDryRun(): logicalLibrary does not exist");
+    return false;
+  }
+  
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfoNoLock(lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
@@ -1096,7 +1132,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
     }
   }
   schedulerDbTime = getMountInfoTime;
-  catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+  catalogueTime = getTapeInfoTime + getTapeForWriteTime + getLogicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);
   log::ScopedParamContainer params(lc);
   params.add("getMountInfoTime", getMountInfoTime)
@@ -1138,7 +1174,26 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   double mountCreationTime = 0;
   double driveStatusSetTime = 0;
   double schedulerDbTime = 0;
+  double getLogicalLibrariesTime = 0;
   double catalogueTime = 0;
+  
+auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTime);
+  if(logicalLibrary){
+    if(logicalLibrary.value().isDisabled){
+      log::ScopedParamContainer params(lc);
+      params.add("logicalLibrary",logicalLibraryName)
+            .add("catalogueTime",getLogicalLibrariesTime);
+      lc.log(log::INFO,"In Scheduler::getNextMount(): logicalLibrary is disabled");
+      return std::unique_ptr<TapeMount>();
+    }
+  } else {
+    log::ScopedParamContainer params(lc);
+    params.add("logicalLibrary",logicalLibraryName)
+          .add("catalogueTime",getLogicalLibrariesTime);
+    lc.log(log::CRIT,"In Scheduler::getNextMount(): logicalLibrary does not exist");
+    return std::unique_ptr<TapeMount>();
+  }
+
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfo(lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
@@ -1306,7 +1361,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
     }
   }
   schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
-  catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+  catalogueTime = getTapeInfoTime + getTapeForWriteTime + getLogicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);
   log::ScopedParamContainer params(lc);
   params.add("getMountInfoTime", getMountInfoTime)

@@ -436,7 +436,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
 
   // Create the environment for the migration to happen (library + tape) 
   const std::string libraryComment = "Library comment";
-  const bool libraryIsDisabled = false;
+  const bool libraryIsDisabled = true;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
@@ -464,6 +464,11 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
+    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    //Test that no mount is available when a logical library is disabled
+    ASSERT_EQ(nullptr, mount.get());
+    catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
+    //continue our test
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());

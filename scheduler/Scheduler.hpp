@@ -299,6 +299,8 @@ private:
    */
   void checkTapeFullBeforeRepack(std::string vid);
   
+  cta::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
+  
 public:
   /**
    * Run the mount decision logic lock free, so we have no contention in the 
