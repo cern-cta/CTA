@@ -340,7 +340,19 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_LISTPENDINGRETRIEVES, { "listpendingretrieves", "lpr", { } }},
    { AdminCmd::CMD_LOGICALLIBRARY,       { "logicallibrary",       "ll",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_MOUNTPOLICY,          { "mountpolicy",          "mp",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_REPACK,               { "repack",               "re",  { "add", "rm", "ls", "err" } }},
+   { AdminCmd::CMD_REPACK,               { "repack",               "re",  { "add", "rm", "ls", "err" },
+			 "\n  This command allows to manage repack requests.\n\n"
+			   "  Submit a repack request by using the \"add\" subcommand :\n"
+			   "   * Specify the vid (--vid option) or all the vids to repack by giving a file path to the --vidfile option.\n"
+			   "   * If the --bufferURL option is set, it will overwrite the default one. It should respect the following format : root://eosinstance//path/to/repack/buffer.\n"
+			   "     The default bufferURL is set in the CTA frontend configuration file.\n"
+			   "   * If the --justmove option is set, the files located on the tape to repack will be migrated on one or multiple tapes.\n"
+			   "     If the --justaddcopies option is set, new (or missing) copies (as defined by the storage class) of the files located on the tape to repack will be created and migrated.\n"
+			   "     By default, CTA will migrate AND add new (or missing) copies (as defined by the storage class) of the files located on the tape to repack.\n"
+                           "   * The --mountpolicy option allows to give a specific mount policy that will be applied to the repack subrequests (retrieve and archive requests).\n"
+			   "     By default, a hardcoded mount policy is applied (every request priorities and minimum request ages = 1)."
+					"\n\n" 
+					 }},
    { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
