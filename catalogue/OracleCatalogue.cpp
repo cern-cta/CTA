@@ -721,48 +721,6 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
 }
 
 //------------------------------------------------------------------------------
-// insertArchiveFilesIntoTempTable
-//------------------------------------------------------------------------------
-void OracleCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn &conn, const std::set<TapeFileWritten> &events) {
-  try {
-    TempTapeFileBatch tempTapeFileBatch(events.size());
-
-    // Store the length of each field and implicitly calculate the maximum field
-    // length of each column 
-    uint32_t i = 0;
-    for (const auto &event: events) {
-      tempTapeFileBatch.archiveFileId.setFieldLenToValueLen(i, event.archiveFileId);
-      i++;
-    }
-
-    // Store the value of each field
-    i = 0;
-    for (const auto &event: events) {
-      tempTapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
-      i++;
-    }
-
-    const char *const sql =
-      "INSERT INTO TEMP_TAPE_FILE_BATCH("
-        "ARCHIVE_FILE_ID)"
-      "VALUES("
-        ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql);
-    rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
-    occiStmt->setBatchErrorMode(false);
-
-    occiStmt.setColumn(tempTapeFileBatch.archiveFileId);
-
-    occiStmt->executeArrayUpdate(tempTapeFileBatch.nbRows);
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
 // deleteArchiveFile
 //------------------------------------------------------------------------------
 void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
