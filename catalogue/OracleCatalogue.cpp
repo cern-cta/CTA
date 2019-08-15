@@ -371,6 +371,19 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       } catch (std::bad_cast&) {}
     }
 
+    // Store the value of each field
+    i = 0;
+    for (const auto &event: fileEvents) {
+      tapeFileBatch.vid.setFieldValue(i, event.vid);
+      tapeFileBatch.fSeq.setFieldValue(i, event.fSeq);
+      tapeFileBatch.blockId.setFieldValue(i, event.blockId);
+      tapeFileBatch.fileSize.setFieldValue(i, event.size);
+      tapeFileBatch.copyNb.setFieldValue(i, event.copyNb);
+      tapeFileBatch.creationTime.setFieldValue(i, now);
+      tapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
+      i++;
+    }
+
     // Update the tape because all the necessary information is now available
     auto lastEventItor = events.cend();
     lastEventItor--;
@@ -386,7 +399,62 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     // Create the archive file entries, skipping those that already exist
     idempotentBatchInsertArchiveFiles(conn, fileEvents);
 
-    insertTapeFileBatchIntoTempTable(conn, fileEvents);
+    {
+      const char *const sql =
+        "INSERT INTO TEMP_TAPE_FILE_INSERTION_BATCH(" "\n"
+          "VID,"                                      "\n"
+          "FSEQ,"                                     "\n"
+          "BLOCK_ID,"                                 "\n"
+          "LOGICAL_SIZE_IN_BYTES,"                    "\n"
+          "COPY_NB,"                                  "\n"
+          "CREATION_TIME,"                            "\n"
+          "ARCHIVE_FILE_ID)"                          "\n"
+        "VALUES("                                     "\n"
+          ":VID,"                                     "\n"
+          ":FSEQ,"                                    "\n"
+          ":BLOCK_ID,"                                "\n"
+          ":LOGICAL_SIZE_IN_BYTES,"                   "\n"
+          ":COPY_NB,"                                 "\n"
+          ":CREATION_TIME,"                           "\n"
+          ":ARCHIVE_FILE_ID)"                         "\n";
+      auto stmt = conn.createStmt(sql);
+      rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
+      occiStmt.setColumn(tapeFileBatch.vid);
+      occiStmt.setColumn(tapeFileBatch.fSeq);
+      occiStmt.setColumn(tapeFileBatch.blockId);
+      occiStmt.setColumn(tapeFileBatch.fileSize);
+      occiStmt.setColumn(tapeFileBatch.copyNb);
+      occiStmt.setColumn(tapeFileBatch.creationTime);
+      occiStmt.setColumn(tapeFileBatch.archiveFileId);
+      try {
+        occiStmt->executeArrayUpdate(tapeFileBatch.nbRows);
+      } catch(oracle::occi::SQLException &ex) {
+        std::ostringstream msg;
+        msg << std::string(__FUNCTION__) << " failed for SQL statement " << rdbms::getSqlForException(sql) << ": " <<
+          ex.what();
+
+        if(rdbms::wrapper::OcciStmt::connShouldBeClosed(ex)) {
+          // Close the statement first and then the connection
+          try {
+            occiStmt.close();
+          } catch(...) {
+          }
+
+          try {
+            conn.closeUnderlyingStmtsAndConn();
+          } catch(...) {
+          }
+          throw exception::LostDatabaseConnection(msg.str());
+        }
+        throw exception::Exception(msg.str());
+      } catch(std::exception &se) {
+        std::ostringstream msg;
+        msg << std::string(__FUNCTION__) << " failed for SQL statement " << rdbms::getSqlForException(sql) << ": " <<
+          se.what();
+
+        throw exception::Exception(msg.str());
+      }
+    }
 
     // Verify that the archive file entries in the catalogue database agree with
     // the tape file written events
@@ -417,37 +485,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       fileSizeAndChecksum.checksumBlob.validate(event.checksumBlob);
     }
 
-    // Store the value of each field
-    i = 0;
-    for (const auto &event: fileEvents) {
-      tapeFileBatch.vid.setFieldValue(i, event.vid);
-      tapeFileBatch.fSeq.setFieldValue(i, event.fSeq);
-      tapeFileBatch.blockId.setFieldValue(i, event.blockId);
-      tapeFileBatch.fileSize.setFieldValue(i, event.size);
-      tapeFileBatch.copyNb.setFieldValue(i, event.copyNb);
-      tapeFileBatch.creationTime.setFieldValue(i, now);
-      tapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
-      i++;
-    }
-
     const char *const sql =
     "BEGIN"                                                                             "\n"
-      "INSERT INTO TEMP_TAPE_FILE_INSERTION_BATCH("                                     "\n"
-        "VID,"                                                                          "\n"
-        "FSEQ,"                                                                         "\n"
-        "BLOCK_ID,"                                                                     "\n"
-        "LOGICAL_SIZE_IN_BYTES,"                                                        "\n"
-        "COPY_NB,"                                                                      "\n"
-        "CREATION_TIME,"                                                                "\n"
-        "ARCHIVE_FILE_ID)"                                                              "\n"
-      "VALUES("                                                                         "\n"
-        ":VID,"                                                                         "\n"
-        ":FSEQ,"                                                                        "\n"
-        ":BLOCK_ID,"                                                                    "\n"
-        ":LOGICAL_SIZE_IN_BYTES,"                                                       "\n"
-        ":COPY_NB,"                                                                     "\n"
-        ":CREATION_TIME,"                                                               "\n"
-        ":ARCHIVE_FILE_ID);"                                                            "\n"
       "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"              "\n"
          "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n"
       "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                              "\n"
@@ -465,42 +504,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       "COMMIT;"                                                                         "\n"
     "END;";
     auto stmt = conn.createStmt(sql);
-    rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
-    occiStmt.setColumn(tapeFileBatch.vid);
-    occiStmt.setColumn(tapeFileBatch.fSeq);
-    occiStmt.setColumn(tapeFileBatch.blockId);
-    occiStmt.setColumn(tapeFileBatch.fileSize);
-    occiStmt.setColumn(tapeFileBatch.copyNb);
-    occiStmt.setColumn(tapeFileBatch.creationTime);
-    occiStmt.setColumn(tapeFileBatch.archiveFileId);
-    try {
-      occiStmt->executeArrayUpdate(tapeFileBatch.nbRows);
-    } catch(oracle::occi::SQLException &ex) {
-      std::ostringstream msg;
-      msg << std::string(__FUNCTION__) << " failed for SQL statement " << rdbms::getSqlForException(sql) << ": " <<
-        ex.what();
-
-      if(rdbms::wrapper::OcciStmt::connShouldBeClosed(ex)) {
-        // Close the statement first and then the connection
-        try {
-          occiStmt.close();
-        } catch(...) {
-        }
-
-        try {
-          conn.closeUnderlyingStmtsAndConn();
-        } catch(...) {
-        }
-        throw exception::LostDatabaseConnection(msg.str());
-      }
-      throw exception::Exception(msg.str());
-    } catch(std::exception &se) {
-      std::ostringstream msg;
-      msg << std::string(__FUNCTION__) << " failed for SQL statement " << rdbms::getSqlForException(sql) << ": " <<
-        se.what();
-
-      throw exception::Exception(msg.str());
-    }
+    stmt.executeNonQuery();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -686,10 +690,9 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
         "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32 "
       "FROM "
         "ARCHIVE_FILE "
-      "INNER JOIN TEMP_TAPE_FILE_BATCH ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TEMP_TAPE_FILE_BATCH.ARCHIVE_FILE_ID";
+      "INNER JOIN TEMP_TAPE_FILE_INSERTION_BATCH ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID";
     auto stmt = conn.createStmt(sql);
-
     auto rset = stmt.executeQuery();
 
     std::map<uint64_t, FileSizeAndChecksum> fileSizesAndChecksums;
