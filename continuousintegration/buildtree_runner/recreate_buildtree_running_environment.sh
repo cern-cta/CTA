@@ -77,5 +77,5 @@ sudo kubectl get persistentvolumes -l type=stg
 echo Generating the share host path
 rm -rf /shared/cta
 mkdir -pv /shared/cta/catdb
-touch -v /shared/cta/catdb/catdb
+touch /shared/cta/catdb/catdb
 chmod 1777 /shared/cta
