@@ -20,6 +20,7 @@
 
 #include "common/utils/Regex.hpp"
 #include "common/dataStructures/EntryLog.hpp"
+#include "common/log/LogContext.hpp"
 #include <string>
 #include <list>
 #include <set>
@@ -42,6 +43,7 @@ struct DiskSystem {
   std::string freeSpaceQueryURL;
   uint64_t refreshInterval;
   uint64_t targetedFreeSpace;
+  uint64_t sleepTime;
   cta::common::dataStructures::EntryLog creationLog;
   cta::common::dataStructures::EntryLog lastModificationLog;
   std::string comment;
@@ -52,13 +54,14 @@ class DiskSystemList: public std::list<DiskSystem> {
   
 public:
   /** Get the filesystem for a given destination URL */
-  std::string getFSNAme(const std::string &fileURL) const;
+  std::string getDSNAme(const std::string &fileURL) const;
   
   /** Get the file system parameters from a file system name */
-  const DiskSystem & at(const std::string &name);
+  const DiskSystem & at(const std::string &name) const;
   
 private:
   struct PointerAndRegex {
+    PointerAndRegex(const DiskSystem & dsys, const std::string &re): ds(dsys), regex(re) {}
     const DiskSystem & ds;
     utils::Regex regex;
   };
@@ -76,11 +79,12 @@ struct DiskSystemFreeSpace {
 class DiskSystemFreeSpaceList: public std::map<std::string, DiskSystemFreeSpace> {
 public:
   DiskSystemFreeSpaceList(DiskSystemList &diskSystemList): m_systemList(diskSystemList) {}
-  void fetchDiskSystemFreeSpace(const std::set<std::string> &diskSystems);
+  void fetchDiskSystemFreeSpace(const std::set<std::string> &diskSystems, log::LogContext & lc);
+  const DiskSystemList &getDiskSystemList() { return m_systemList; }
 private:
   DiskSystemList &m_systemList;
-  uint64_t fetchEosFreeSpace(const std::string & instanceAddress);
-  uint64_t fetchConstantFreeSpace(const std::string & instanceAddress);
+  uint64_t fetchEosFreeSpace(const std::string & instanceAddress, log::LogContext & lc);
+  uint64_t fetchConstantFreeSpace(const std::string & instanceAddress, log::LogContext & lc);
 };
 
 }} // namespace cta::common

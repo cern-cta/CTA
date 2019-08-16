@@ -30,7 +30,7 @@ namespace disk {
 //------------------------------------------------------------------------------
 // DiskSystemList::at()
 //------------------------------------------------------------------------------
-const DiskSystem& DiskSystemList::at(const std::string& name) {
+const DiskSystem& DiskSystemList::at(const std::string& name) const {
   auto dsi = std::find_if(begin(), end(), [&](const DiskSystem& ds){ return ds.name == name;});
   if (dsi != end()) return *dsi;
   throw std::out_of_range("In DiskSystemList::at(): name not found.");
@@ -39,11 +39,11 @@ const DiskSystem& DiskSystemList::at(const std::string& name) {
 //------------------------------------------------------------------------------
 // DiskSystemList::getFSNAme()
 //------------------------------------------------------------------------------
-std::string DiskSystemList::getFSNAme(const std::string& fileURL) const {
+std::string DiskSystemList::getDSNAme(const std::string& fileURL) const {
   // First if the regexes have not been created yet, do so.
   if (m_pointersAndRegexes.empty() && size()) {
     for (const auto &ds: *this) {
-      m_pointersAndRegexes.emplace_back(PointerAndRegex({ds, utils::Regex(ds.fileRegexp.c_str())}));
+      m_pointersAndRegexes.emplace_back(ds, ds.fileRegexp);
     }
   }
   // Try and find the fileURL
@@ -55,13 +55,13 @@ std::string DiskSystemList::getFSNAme(const std::string& fileURL) const {
       m_pointersAndRegexes.splice(m_pointersAndRegexes.begin(), m_pointersAndRegexes, pri);
     return pri->ds.name;
   }
-  throw std::out_of_range("In DiskSystemList::getFSNAme(): not match for fileURL");  
+  throw std::out_of_range("In DiskSystemList::getFSNAme(): not match for fileURL");
 }
 
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems) {
+void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems, log::LogContext & lc) {
   // The real deal: go fetch the file system's free space.
   cta::utils::Regex eosDiskSystem("^eos://(.*)$");
   // For testing purposes
@@ -71,12 +71,12 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     std::vector<std::string> regexResult;
     regexResult = eosDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
     if (regexResult.size()) {
-      freeSpace = fetchEosFreeSpace(regexResult.at(1));
+      freeSpace = fetchEosFreeSpace(regexResult.at(1), lc);
       goto found;
     }
     regexResult = constantFreeSpaceDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
      if (regexResult.size()) {
-      freeSpace = fetchConstantFreeSpace(regexResult.at(1));
+      freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
       goto found;
     }
     throw exception::Exception("In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
@@ -91,13 +91,15 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceAddress) {
-  threading::SubProcess sp("/usr/bin/eos", {std::string("root://")+instanceAddress, "space", "ls", "-m"});
+uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceAddress, log::LogContext & lc) {
+  threading::SubProcess sp("/usr/bin/eos", {"/usr/bin/eos", std::string("root://")+instanceAddress, "space", "ls", "-m"});
   sp.wait();
   try {
-    exception::Errnum::throwOnNonZero(sp.exitValue(), "In DiskSystemFreeSpaceList::fetchEosFreeSpace(), failed to call eos space ls -m");
+    exception::Errnum::throwOnNonZero(sp.exitValue(),
+        std::string("In DiskSystemFreeSpaceList::fetchEosFreeSpace(), failed to call \"eos root://") + 
+        instanceAddress + " space ls -m\"");
   } catch (exception::Exception & ex) {
-    ex.getMessage() << "stderr: " << sp.stderr();
+    ex.getMessage() << "instanceAddress: " << instanceAddress << "stderr: " << sp.stderr();
     throw;
   }
   if (sp.wasKilled()) {
@@ -122,12 +124,12 @@ uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceA
   
 defaultFound:
   // Look for the parameters in the result line.
-  utils::Regex rwSpaceRegex("sum.stat.statfs.capacity\\?configstatus@rw=(\\d+) ");
+  utils::Regex rwSpaceRegex("sum.stat.statfs.capacity\\?configstatus@rw=([0-9]+) ");
   auto rwSpaceRes = rwSpaceRegex.exec(defaultSpaceLine);
   if (rwSpaceRes.empty())
     throw exception::Exception(
         "In DiskSystemFreeSpaceList::fetchEosFreeSpace(): failed to parse parameter sum.stat.statfs.capacity?configstatus@rw.");
-  utils::Regex usedSpaceRegex("sum.stat.statfs.usedbytes=(\\d+) ");
+  utils::Regex usedSpaceRegex("sum.stat.statfs.usedbytes=([0-9]+) ");
   auto usedSpaceRes = usedSpaceRegex.exec(sp.stdout());
   if (usedSpaceRes.empty())
     throw exception::Exception("In DiskSystemFreeSpaceList::fetchEosFreeSpace(): failed to parse parameter sum.stat.statfs.usedbytes.");
@@ -137,7 +139,7 @@ defaultFound:
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& instanceAddress) {
+uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& instanceAddress, log::LogContext & lc) {
   return utils::toUint64(instanceAddress);
 }
 
