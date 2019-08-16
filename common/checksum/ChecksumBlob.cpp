@@ -113,7 +113,9 @@ void ChecksumBlob::deserialize(const std::string &bytearray) {
 
 void ChecksumBlob::deserializeOrSetAdler32(const std::string &bytearray, uint32_t adler32) {
   common::ChecksumBlob p_csb;
-  if(p_csb.ParseFromString(bytearray)) {
+  // A NULL value in the CHECKSUM_BLOB column will return an empty bytearray. If the bytearray is empty
+  // or otherwise invalid, default to using the contents of the CHECKSUM_ADLER32 column.
+  if(!bytearray.empty() && p_csb.ParseFromString(bytearray)) {
     ProtobufToChecksumBlob(p_csb, *this);
   } else {
     insert(ADLER32, adler32);
