@@ -523,6 +523,7 @@ public:
     const std::string &freeSpaceQueryURL,
     const uint64_t refreshInterval,
     const uint64_t targetedFreeSpace,
+    const uint64_t sleepTime,
     const std::string &comment) = 0;
   
   /**
@@ -540,6 +541,8 @@ public:
     const std::string &name, const uint64_t refreshInterval) = 0;
   virtual void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const uint64_t targetedFreeSpace) = 0;
+  virtual void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t sleepTime) = 0;
   virtual void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &comment) = 0;
       
@@ -674,6 +677,7 @@ public:
 
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringActivity);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnOutOfRangeActivityWeight);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroSleepTime);
 
 } // namespace catalogue
 } // namespace cta

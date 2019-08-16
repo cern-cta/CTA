@@ -4257,6 +4257,7 @@ disk::DiskSystemList RdbmsCatalogue::getAllDiskSystems() const {
         "DISK_SYSTEM.FREE_SPACE_QUERY_URL AS FREE_SPACE_QUERY_URL,"
         "DISK_SYSTEM.REFRESH_INTERVAL AS REFRESH_INTERVAL,"
         "DISK_SYSTEM.TARGETED_FREE_SPACE AS TARGETED_FREE_SPACE,"
+        "DISK_SYSTEM.SLEEP_TIME AS SLEEP_TIME,"
         
         "DISK_SYSTEM.USER_COMMENT AS USER_COMMENT,"
 
@@ -4281,6 +4282,7 @@ disk::DiskSystemList RdbmsCatalogue::getAllDiskSystems() const {
       diskSystem.freeSpaceQueryURL = rset.columnString("FREE_SPACE_QUERY_URL");
       diskSystem.refreshInterval =  rset.columnUint64("REFRESH_INTERVAL");
       diskSystem.targetedFreeSpace =  rset.columnUint64("TARGETED_FREE_SPACE");
+      diskSystem.sleepTime =  rset.columnUint64("SLEEP_TIME");
       diskSystem.comment = rset.columnString("USER_COMMENT");
       diskSystem.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       diskSystem.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -4309,6 +4311,7 @@ void RdbmsCatalogue::createDiskSystem(
   const std::string &freeSpaceQueryURL,
   const uint64_t refreshInterval,
   const uint64_t targetedFreeSpace,
+  const uint64_t sleepTime,
   const std::string &comment) {
  try {
     if(name.empty()) {
@@ -4325,6 +4328,9 @@ void RdbmsCatalogue::createDiskSystem(
     }
     if(0 == targetedFreeSpace) {
       throw UserSpecifiedAZeroTargetedFreeSpace("Cannot create disk system because the targeted free space is zero");
+    }
+    if (0 == sleepTime) {
+      throw UserSpecifiedAZeroSleepTime("Cannot create disk system because the sleep time is zero");
     }
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create disk system because the comment is an empty string");
@@ -4344,6 +4350,7 @@ void RdbmsCatalogue::createDiskSystem(
         "FREE_SPACE_QUERY_URL,"
         "REFRESH_INTERVAL,"
         "TARGETED_FREE_SPACE,"
+        "SLEEP_TIME,"
 
         "USER_COMMENT,"
 
@@ -4360,6 +4367,7 @@ void RdbmsCatalogue::createDiskSystem(
         ":FREE_SPACE_QUERY_URL,"
         ":REFRESH_INTERVAL,"
         ":TARGETED_FREE_SPACE,"
+        ":SLEEP_TIME,"
   
         ":USER_COMMENT,"
 
@@ -4377,6 +4385,7 @@ void RdbmsCatalogue::createDiskSystem(
     stmt.bindString(":FREE_SPACE_QUERY_URL", freeSpaceQueryURL);
     stmt.bindUint64(":REFRESH_INTERVAL", refreshInterval);
     stmt.bindUint64(":TARGETED_FREE_SPACE", targetedFreeSpace);
+    stmt.bindUint64(":SLEEP_TIME", sleepTime);
 
     stmt.bindString(":USER_COMMENT", comment);
 
@@ -4618,6 +4627,50 @@ void RdbmsCatalogue::modifyDiskSystemComment(const common::dataStructures::Secur
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":DISK_SYSTEM_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }  
+}
+
+//------------------------------------------------------------------------------
+// modifyDiskSystemSleepTime
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin, const std::string& name, 
+    const uint64_t sleepTime) {
+  try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
+        " because the disk system name is an empty string");
+    }
+    if(sleepTime == 0) {
+      throw UserSpecifiedAZeroSleepTime("Cannot modify disk system "
+        "because the new sleep time is zero");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE DISK_SYSTEM SET "
+        "SLEEP_TIME = :SLEEP_TIME,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":SLEEP_TIME", sleepTime);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

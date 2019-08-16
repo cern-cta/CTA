@@ -54,6 +54,7 @@ struct QueueAndMountSummary {
   struct SleepForSpaceInfo {
     time_t startTime;
     std::string diskSystemName;
+    time_t sleepTime;
   };
   optional<SleepForSpaceInfo> sleepForSpaceInfo;
   

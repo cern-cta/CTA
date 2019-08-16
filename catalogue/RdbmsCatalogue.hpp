@@ -536,6 +536,7 @@ public:
     const std::string &freeSpaceQueryURL,
     const uint64_t refreshInterval,
     const uint64_t targetedFreeSpace,
+    const uint64_t sleepTime,
     const std::string &comment) override;
   
   /**
@@ -555,6 +556,9 @@ public:
     const std::string &name, const uint64_t targetedFreeSpace) override;
   void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &comment) override;
+  void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin,
+    const std::string& name, const uint64_t sleepTime) override;
+
   
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid
