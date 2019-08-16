@@ -333,10 +333,12 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.activityNameAndWeightedMountCount.value().mountCount = 0; // This value will be computed later by the caller.
           // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
           // This allows having a single decision point instead of implementing is at the consumer levels.
-          if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime + 15*60)) ) {
+          if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime 
+              + (int64_t) rqSummary.sleepInfo.value().sleepTime)) ) {
             m.sleepingMount = true;
             m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
             m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+            m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
           }
         }
       }
@@ -359,10 +361,12 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
         // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
         // This allows having a single decision point instead of implementing is at the consumer levels.
-        if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime + 15*60)) ) {
+        if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime
+            + (int64_t) rqSummary.sleepInfo.value().sleepTime)) ) {
           m.sleepingMount = true;
           m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
           m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+          rqSummary.sleepInfo.value().sleepTime;
         }
       }
     } else {
@@ -2180,7 +2184,10 @@ void OStoreDB::RepackRequest::setLastExpandedFSeq(uint64_t fseq){
 //------------------------------------------------------------------------------
 // OStoreDB::RepackRequest::addSubrequests()
 //------------------------------------------------------------------------------
-void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap, uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles &totalStatsFiles, log::LogContext& lc) {
+void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
+    cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap, uint64_t maxFSeqLowBound, 
+    const uint64_t maxAddedFSeq, const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles &totalStatsFiles, 
+    disk::DiskSystemList diskSystemList, log::LogContext& lc) {
   // We need to prepare retrieve requests names and reference them, create them, enqueue them.
   objectstore::ScopedExclusiveLock rrl (m_repackRequest);
   m_repackRequest.fetch();
@@ -2226,6 +2233,11 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
       // dsrr.errorReportURL:  We leave this bank as the reporting will be done to the repack request,
       // stored in the repack info.
       rr->setSchedulerRequest(schedReq);
+      // Add the disk system information if needed.
+      try { 
+        auto dsName = diskSystemList.getDSNAme(schedReq.dstURL);
+        rr->setDiskSystemName(dsName); 
+      } catch (std::out_of_range &) {}
       // Set the repack info.
       RetrieveRequest::RepackInfo rRRepackInfo;
       try {
@@ -3491,7 +3503,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
   retryPop:
   {
     RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
-    popCriteria.diskSystemsToSkip = m_diskSystemsToSkip;
+    for (auto &dsts: m_diskSystemsToSkip) popCriteria.diskSystemsToSkip.insert({dsts.name, dsts.sleepTime});
     jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
     // Try and allocate data for the popped jobs.
     // Compute the necessary space in each targeted disk system.
@@ -3500,20 +3512,34 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
         if (j.diskSystemName)
           diskSpaceReservationRequest.addRequest(j.diskSystemName.value(), j.archiveFile.fileSize);
     // Get the existing reservation map from drives (including this drive's previous pending reservations).
-    auto otherDrivesReservations = getExistingDrivesReservations();
+    auto previousDrivesReservations = getExistingDrivesReservations();
+    typedef std::pair<std::string, uint64_t> Res;
+    uint64_t previousDrivesReservationTotal = 0;
+    previousDrivesReservationTotal = std::accumulate(previousDrivesReservations.begin(), previousDrivesReservations.end(), 
+        previousDrivesReservationTotal, [](uint64_t t, Res a){ return t+a.second;});
     // Get the free space from disk systems involved.
     std::set<std::string> diskSystemNames;
     for (auto const & dsrr: diskSpaceReservationRequest) diskSystemNames.insert(dsrr.first);
-    diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames);
+    try {
+      diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, logContext);
+    } catch (std::exception &ex) {
+      // Leave a log message before letting the possible exception go up the stack.
+      log::ScopedParamContainer params(logContext);
+      params.add("exceptionWhat", ex.what());
+      logContext.log(log::ERR, "In OStoreDB::RetrieveMount::getNextJobBatch(): got an exception from diskSystemFreeSpace.fetchDiskSystemFreeSpace().");
+      throw;
+    }
     // If any file system does not have enough space, mark it as full for this mount, requeue all (slight but rare inefficiency) 
     // and retry the pop.
     for (auto const & ds: diskSystemNames) {
-      if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds) + diskSystemFreeSpace.at(ds).targetedFreeSpace) {
-        m_diskSystemsToSkip.insert(ds);
+      if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds) + diskSystemFreeSpace.at(ds).targetedFreeSpace + 
+          previousDrivesReservationTotal) {
+        m_diskSystemsToSkip.insert({ds, diskSystemFreeSpace.getDiskSystemList().at(ds).sleepTime});
         failedAllocation = true;
         log::ScopedParamContainer params(logContext);
         params.add("diskSystemName", ds)
               .add("freeSpace", diskSystemFreeSpace.at(ds).freeSpace)
+              .add("existingReservations", previousDrivesReservationTotal)
               .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
               .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace);
         logContext.log(log::WARNING, "In OStoreDB::RetrieveMount::getNextJobBatch(): could not allocate disk space for job batch.");

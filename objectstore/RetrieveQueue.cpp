@@ -220,10 +220,11 @@ void RetrieveQueue::resetSleepForFreeSpaceStartTime() {
   m_payload.clear_disk_system_slept_for();
 }
 
-void RetrieveQueue::setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName) {
+void RetrieveQueue::setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName, uint64_t sleepTime) {
   checkPayloadWritable();
   m_payload.set_sleep_for_free_space_since((uint64_t)time);
   m_payload.set_disk_system_slept_for(diskSystemName);
+  m_payload.set_sleep_time(sleepTime);
 }
 
 std::string RetrieveQueue::dump() {  
@@ -593,6 +594,7 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
       JobsSummary::SleepInfo si;
       si.diskSystemSleptFor = m_payload.disk_system_slept_for();
       si.sleepStartTime = m_payload.sleep_for_free_space_since();
+      si.sleepTime = m_payload.sleep_time();
       ret.sleepInfo = si;
     }
   } else {

@@ -316,9 +316,9 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   // Create the disk system list
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList.push_back(cta::disk::DiskSystem{"ds-A", "$root://a.disk.system/", "constantFreeSpace:999999999999", 60, 10UL*1000*1000*1000,
-      common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
+      15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
   diskSystemList.push_back(cta::disk::DiskSystem{"ds-B", "$root://b.disk.system/", "constantFreeSpace:999999999999", 60, 10UL*1000*1000*1000,
-      common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
+      15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList(diskSystemList);
   
   // Inject 10 retrieve jobs to the db.
@@ -402,9 +402,9 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   // Files are 5 * 1000 byte per disk system. Make sure only half fits, preventing the pop for one of them.
   // We should then be able to pop one bacth of for a single disk system, and get the queue slept.
   diskSystemList.push_back(cta::disk::DiskSystem{"ds-A", "$root://a.disk.system/", "constantFreeSpace:6000", 60, 0UL,
-      common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
+      15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
   diskSystemList.push_back(cta::disk::DiskSystem{"ds-B", "$root://b.disk.system/", "constantFreeSpace:7500", 60, 5000UL,
-      common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
+      15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList(diskSystemList);
 
   

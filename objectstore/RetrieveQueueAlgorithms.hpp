@@ -467,7 +467,12 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria {
     files -= pes.files;
     return *this;
   }
-  std::set<std::string> diskSystemsToSkip;
+  struct DiskSystemToSkip {
+    std::string name;
+    uint64_t sleepTime;
+    bool operator<(const DiskSystemToSkip o) const { return name < o.name; }
+  };
+  std::set<DiskSystemToSkip> diskSystemsToSkip;
 };
 
 template<>
@@ -560,5 +565,10 @@ template<>
 struct ContainerTraits<RetrieveQueue, RetrieveQueueToTransferForRepack>::QueueType{
   objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForRepack;
 };
+
+template<>
+auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elementsToSkip,
+  log::LogContext &lc) -> PoppedElementsBatch;
 
 }} // namespace cta::objectstore

@@ -217,7 +217,7 @@ void Scheduler::queueRetrieve(
   // Determine disk system for this request, if any.
   optional<std::string> diskSystemName;
   try {
-    diskSystemName = diskSystemList.getFSNAme(request.dstURL);
+    diskSystemName = diskSystemList.getDSNAme(request.dstURL);
   } catch (std::out_of_range&) {}
   std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, diskSystemName, lc);
   auto schedulerDbTime = t.secs();
@@ -568,7 +568,9 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted). 
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
-    repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq - 1, maxAddedFSeq, totalStatsFile, lc);
+    auto diskSystemList = m_catalogue.getAllDiskSystems();
+    timingList.insertAndReset("getDisksystemsListTime",t);
+    repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq - 1, maxAddedFSeq, totalStatsFile, diskSystemList, lc);
     timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
   }
   log::ScopedParamContainer params(lc);
@@ -1191,6 +1193,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             m->vendor,
             m->capacityInBytes,
             time(NULL), actvityAndWeight)));
+        internalRet->setCatalogue(&m_catalogue);
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;
@@ -1301,6 +1304,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         common::dataStructures::QueueAndMountSummary::SleepForSpaceInfo sfsi;
         sfsi.startTime = pm.sleepStartTime;
         sfsi.diskSystemName = pm.diskSystemSleptFor;
+        sfsi.sleepTime = pm.sleepTime;
         summary.sleepForSpaceInfo = sfsi;
       }
       break;

@@ -95,6 +95,7 @@ public:
     struct SleepInfo {
       time_t sleepStartTime;
       std::string diskSystemSleptFor;
+      uint64_t sleepTime;
     };
     optional<SleepInfo> sleepInfo;
   };
@@ -133,7 +134,7 @@ public:
   
   // Support for sleep waiting free space (back pressure).
   // This data is queried through getJobsSummary().
-  void setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName);
+  void setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName, uint64_t sleepTime);
   void resetSleepForFreeSpaceStartTime();
   
 private:

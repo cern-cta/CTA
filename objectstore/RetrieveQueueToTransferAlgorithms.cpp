@@ -46,17 +46,20 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 {
   PoppedElementsBatch ret;
 
-  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elementsToSkip, unfulfilledCriteria.diskSystemsToSkip);
+  std::set<std::string> diskSystemsToSkipNames;
+  for (auto &ds: unfulfilledCriteria.diskSystemsToSkip) diskSystemsToSkipNames.insert(ds.name);
+  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elementsToSkip, diskSystemsToSkipNames);
   if (unfulfilledCriteria.diskSystemsToSkip.size() && candidateJobsFromQueue.candidates.empty() && cont.getJobsSummary().jobs && elementsToSkip.empty()) {
     // We failed to find any candidates from a non empty queue, from which there are no individual elements to skip.
     // this means the it is time to sleep this queue.
     // We log and return empty. Caller will stop trying to pop after that.
-    cont.setSleepForFreeSpaceStartTimeAndName(::time(nullptr), *unfulfilledCriteria.diskSystemsToSkip.begin());
+    cont.setSleepForFreeSpaceStartTimeAndName(::time(nullptr), unfulfilledCriteria.diskSystemsToSkip.begin()->name, unfulfilledCriteria.diskSystemsToSkip.begin()->sleepTime);
     cont.commit();
     log::ScopedParamContainer params(lc);
     params.add("tapeVid", cont.getVid())
           .add("queueObject", cont.getAddressIfSet())
-          .add("diskSystemName", *unfulfilledCriteria.diskSystemsToSkip.begin());
+          .add("diskSystemName", unfulfilledCriteria.diskSystemsToSkip.begin()->name)
+          .add("sleepTime", unfulfilledCriteria.diskSystemsToSkip.begin()->sleepTime);
     lc.log(log::WARNING, "In ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getPoppingElementsCandidates(): sleeping queue due to disk system full.");
     return ret;
   }

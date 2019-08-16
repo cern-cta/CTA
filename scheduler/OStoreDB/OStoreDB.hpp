@@ -224,7 +224,12 @@ public:
       log::LogContext& logContext);
     std::map<std::string, uint64_t> getExistingDrivesReservations(); 
     void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
-    std::set<std::string> m_diskSystemsToSkip;
+    struct DiskSystemToSkip {
+      std::string name;
+      uint64_t sleepTime;
+      bool operator<(const DiskSystemToSkip & o) const { return name < o.name; }
+    };
+    std::set<DiskSystemToSkip> m_diskSystemsToSkip;
   public:
     /// Public but non overriding function used by retrieve jobs (on failure to transfer):
     void releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
@@ -357,7 +362,8 @@ public:
     RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB) :
     m_oStoreDB(oStoreDB), m_repackRequest(jobAddress, m_oStoreDB.m_objectStore){}
     void addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
-      uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles,  log::LogContext& lc) override;
+      uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, disk::DiskSystemList diskSystemList, 
+      log::LogContext& lc) override;
     void expandDone() override;
     void fail() override;
     void requeueInToExpandQueue(log::LogContext& lc) override;

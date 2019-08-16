@@ -90,6 +90,7 @@ int DiskSystemLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     ds_item->set_free_space_query_url(ds.freeSpaceQueryURL);
     ds_item->set_refresh_interval(ds.refreshInterval);
     ds_item->set_targeted_free_space(ds.targetedFreeSpace);
+    ds_item->set_sleep_time(ds.sleepTime);
     ds_item->mutable_creation_log()->set_username(ds.creationLog.username);
     ds_item->mutable_creation_log()->set_host(ds.creationLog.host);
     ds_item->mutable_creation_log()->set_time(ds.creationLog.time);

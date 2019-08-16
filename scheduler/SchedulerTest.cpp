@@ -1380,6 +1380,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   auto &schedulerDB = getSchedulerDB();
   
   setupDefaultCatalogue();
+  catalogue.createDiskSystem({"user", "host"}, "diskSystem", "/public_dir/public_file", "constantFreeSpace:10", 10, 10L*1000*1000*1000, 15*60, "no comment");
   
     
 #ifdef STDOUT_LOGGING

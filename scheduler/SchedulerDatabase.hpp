@@ -462,7 +462,9 @@ public:
     };
     
     virtual void addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
-      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, log::LogContext & lc) = 0;
+      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, 
+      const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, disk::DiskSystemList diskSystemList,
+      log::LogContext & lc) = 0;
     virtual void expandDone() = 0;
     virtual void fail() = 0;
     virtual void requeueInToExpandQueue(log::LogContext &lc) = 0;
@@ -557,6 +559,7 @@ public:
     bool sleepingMount = false;   /**< Is the mount being slept due to lack of disk space? */
     time_t sleepStartTime = 0;    /**< Start time for the sleeping for lack of disk space. */
     std::string diskSystemSleptFor;/**< Name of (one of) the disk system(s) that could was too full to start more retrieves. */
+    uint64_t sleepTime = 0;       /**< Length of time to be slept for for this disk system. */
     uint32_t mountCount;          /**< The number of mounts for this tape pool (which is the current "chargeable" entity for quotas. */
     struct ActivityNameAndWeightedMountCount {
       std::string activity;
