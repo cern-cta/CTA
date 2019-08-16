@@ -29,7 +29,8 @@ namespace cta { namespace utils {
 
 class Regex {
   public:
-    Regex(const char * re_str);
+    Regex(const std::string & re_str);
+    Regex(const Regex & o);
     virtual ~Regex();
 
     /*!
@@ -45,6 +46,8 @@ class Regex {
     }
 
   private:
+    // We keep around the string from which the RE was compiled to allow copying.
+    std::string m_reStr;
     regex_t m_re;
     bool m_set;
 };
