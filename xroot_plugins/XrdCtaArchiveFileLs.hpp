@@ -20,6 +20,7 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include <common/checksum/ChecksumBlobSerDeser.hpp>
 
 
 namespace cta { namespace xrd {
@@ -70,16 +71,16 @@ ArchiveFileLsStream::ArchiveFileLsStream(const RequestMessage &requestMsg,
 
     // Get the search criteria from the optional options
 
-    m_searchCriteria.archiveFileId  = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
-    m_searchCriteria.tapeFileCopyNb = requestMsg.getOptional(OptionUInt64::COPY_NUMBER,     &has_any);
-    m_searchCriteria.diskFileId     = requestMsg.getOptional(OptionString::DISKID,          &has_any);
-    m_searchCriteria.vid            = requestMsg.getOptional(OptionString::VID,             &has_any);
-    m_searchCriteria.tapePool       = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);
-    m_searchCriteria.diskFileUser   = requestMsg.getOptional(OptionString::OWNER,           &has_any);
-    m_searchCriteria.diskFileGroup  = requestMsg.getOptional(OptionString::GROUP,           &has_any);
-    m_searchCriteria.storageClass   = requestMsg.getOptional(OptionString::STORAGE_CLASS,   &has_any);
-    m_searchCriteria.diskFilePath   = requestMsg.getOptional(OptionString::PATH,            &has_any);
-    m_searchCriteria.diskInstance   = requestMsg.getOptional(OptionString::INSTANCE,        &has_any);
+    m_searchCriteria.archiveFileId    = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
+    m_searchCriteria.tapeFileCopyNb   = requestMsg.getOptional(OptionUInt64::COPY_NUMBER,     &has_any);
+    m_searchCriteria.diskFileId       = requestMsg.getOptional(OptionString::DISKID,          &has_any);
+    m_searchCriteria.vid              = requestMsg.getOptional(OptionString::VID,             &has_any);
+    m_searchCriteria.tapePool         = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);
+    m_searchCriteria.diskFileOwnerUid = requestMsg.getOptional(OptionUInt64::OWNER_UID,       &has_any);
+    m_searchCriteria.diskFileGid      = requestMsg.getOptional(OptionUInt64::GID,             &has_any);
+    m_searchCriteria.storageClass     = requestMsg.getOptional(OptionString::STORAGE_CLASS,   &has_any);
+    m_searchCriteria.diskFilePath     = requestMsg.getOptional(OptionString::PATH,            &has_any);
+    m_searchCriteria.diskInstance     = requestMsg.getOptional(OptionString::INSTANCE,        &has_any);
 
     if(!has_any) {
       throw cta::exception::UserError("Must specify at least one search option, or --all");
@@ -119,11 +120,10 @@ int ArchiveFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       af->set_disk_instance(archiveFile.diskInstance);
       af->set_disk_id(archiveFile.diskFileId);
       af->set_size(archiveFile.fileSize);
-      af->mutable_cs()->set_type(archiveFile.checksumType);
-      af->mutable_cs()->set_value(archiveFile.checksumValue);
+      checksum::ChecksumBlobToProtobuf(archiveFile.checksumBlob, *(af->mutable_csb()));
       af->set_storage_class(archiveFile.storageClass);
-      af->mutable_df()->set_owner(archiveFile.diskFileInfo.owner);
-      af->mutable_df()->set_group(archiveFile.diskFileInfo.group);
+      af->mutable_df()->mutable_owner_id()->set_uid(archiveFile.diskFileInfo.owner_uid);
+      af->mutable_df()->mutable_owner_id()->set_gid(archiveFile.diskFileInfo.gid);
       af->mutable_df()->set_path(archiveFile.diskFileInfo.path);
       af->set_creation_time(archiveFile.creationTime);
 

@@ -260,6 +260,14 @@ void MysqlStmt::bindOptionalDouble(const std::string &paramName, const optional<
   }
 }
 
+void MysqlStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
+  try {
+    bindOptionalString(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 //------------------------------------------------------------------------------
 // bindString
 //------------------------------------------------------------------------------
@@ -307,7 +315,8 @@ void MysqlStmt::bindOptionalString(const std::string &paramName, const optional<
 
       // reset memory
       holder->reset();
-      snprintf(holder->val, holder->get_buffer_length(), paramValue.value().c_str());
+      // need to use memcpy for VARBINARY strings, which are not null-terminated
+      memcpy(holder->val, paramValue.value().c_str(), holder->get_buffer_length());
     } else {
       holder->length = 0;
     }
@@ -317,7 +326,6 @@ void MysqlStmt::bindOptionalString(const std::string &paramName, const optional<
     // delete m_placeholder[idx]; // remove the previous placeholder
 
     m_placeholder[idx] = holder;
-
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
       getSqlForException() + ": " + ex.getMessage().str()); 

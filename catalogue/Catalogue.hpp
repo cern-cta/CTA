@@ -52,10 +52,12 @@
 #include "common/dataStructures/TapeCopyToPoolMap.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "disk/DiskSystem.hpp"
+#include "common/exception/FileSizeMismatch.hpp"
+#include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -115,7 +117,7 @@ public:
   virtual uint64_t checkAndGetNextArchiveFileId(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const common::dataStructures::UserIdentity &user) = 0;
+    const common::dataStructures::RequesterIdentity &user) = 0;
 
   /**
    * Returns the information required to queue an archive request.
@@ -134,12 +136,12 @@ public:
   virtual common::dataStructures::ArchiveFileQueueCriteria getArchiveFileQueueCriteria(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const common::dataStructures::UserIdentity &user) = 0;
+    const common::dataStructures::RequesterIdentity &user) = 0;
 
   /**
    * Returns the list of tapes that can be written to by a tape drive in the
    * specified logical library, in other words tapes that are labelled, not
-   * disabled, not full and are in the specified logical library.
+   * disabled, not full, not read-only and are in the specified logical library.
    *
    * @param logicalLibraryName The name of the logical library.
    * @return The list of tapes for writing.
@@ -150,6 +152,8 @@ public:
    * Notifies the catalogue that the specified files have been written to tape.
    *
    * @param events The tape file written events.
+   * @throw TapeFseqMismatch If an unexpected tape file sequence number is encountered.
+   * @throw FileSizeMismatch If an unexpected tape file size is encountered.
    */
   virtual void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) = 0;
 
@@ -185,7 +189,7 @@ public:
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const std::string &diskInstanceName,
     const uint64_t archiveFileId,
-    const common::dataStructures::UserIdentity &user,
+    const common::dataStructures::RequesterIdentity &user,
     const optional<std::string> & activity,
     log::LogContext &lc) = 0;
 
@@ -285,7 +289,7 @@ public:
 
   /**
    * Creates a tape which is assumed to have logical block protection (LBP)
-   * enabled.
+   * enabled and isFromCastor disabled.
    */
   virtual void createTape(
     const common::dataStructures::SecurityIdentity &admin,
@@ -297,6 +301,7 @@ public:
     const uint64_t capacityInBytes,
     const bool disabled,
     const bool full,
+    const bool readOnly,
     const std::string &comment) = 0;
 
   virtual void deleteTape(const std::string &vid) = 0;
@@ -342,6 +347,23 @@ public:
    * @param vid The volume identifier of the tape to be reclaimed.
    */
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) = 0;
+  
+  /**
+   * Checks the specified tape for the tape label command.
+   *
+   * This method checks if the tape is safe to be labeled and will throw an 
+   * exception if the specified tape does not ready to be labeled.
+   *
+   * @param vid The volume identifier of the tape to be checked.
+   */
+  virtual void checkTapeForLabel(const std::string &vid) = 0;
+  
+  /**
+   * Returns the number of any files contained in the tape identified by its vid
+   * @param vid the vid in which we will count non superseded files
+   * @return the number of files on the tape
+   */
+  virtual uint64_t getNbFilesOnTape(const std::string &vid) const = 0 ;
 
   virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) = 0;
   virtual void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) = 0;
@@ -361,6 +383,34 @@ public:
    * @param fullValue Set to true if the tape is full.
    */
   virtual void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) = 0;
+  
+  /**
+   * Sets the read-only status of the specified tape.
+   *
+   * Please note that this method is to be called by the CTA front-end in
+   * response to a command from the CTA command-line interface (CLI).
+   *
+   * @param admin The administrator.
+   * @param vid The volume identifier of the tape to be marked as read-only.
+   * @param readOnlyValue Set to true if the tape is read-only.
+   */
+  virtual void setTapeReadOnly(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool readOnlyValue) = 0;
+  
+  /**
+   * This method notifies the CTA catalogue to set the specified tape read-only
+   * in case of a problem.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  virtual void setTapeReadOnlyOnError(const std::string &vid) = 0;
+  
+  /**
+   * This method notifies the CTA catalogue to set the specified tape is from CASTOR.
+   * This method only for unitTests and MUST never be called in CTA!!! 
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  virtual void setTapeIsFromCastorInUnitTests(const std::string &vid) = 0;
 
   virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) = 0;
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) = 0;

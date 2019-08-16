@@ -35,7 +35,12 @@ using ::testing::Invoke;
 using namespace castor::tape;
 
 namespace unitTests {
-  
+
+const uint32_t TEST_USER_1  = 9751;
+const uint32_t TEST_GROUP_1 = 9752;
+const uint32_t TEST_USER_2  = 9753;
+const uint32_t TEST_GROUP_2 = 9754;
+
   class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing::Test {
   public:
     castor_tape_tapeserver_daemon_MigrationReportPackerTest():
@@ -64,26 +69,24 @@ namespace unitTests {
     std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
   }; // class castor_tape_tapeserver_daemon_MigrationReportPackerTest
-  
+
   class MockArchiveJobExternalStats: public cta::MockArchiveJob {
   public:
     MockArchiveJobExternalStats(cta::ArchiveMount & am, cta::catalogue::Catalogue & catalogue, 
        int & completes, int &failures):
     MockArchiveJob(&am, catalogue), completesRef(completes), failuresRef(failures) {}
-    
+
     virtual void validate() override {}
     virtual cta::catalogue::TapeItemWrittenPointer validateAndGetTapeFileWritten() override {
       auto fileReportUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileReport = *fileReportUP;
       fileReport.archiveFileId = archiveFile.archiveFileID;
       fileReport.blockId = tapeFile.blockId;
-      fileReport.checksumType = tapeFile.checksumType;
-      fileReport.checksumValue = tapeFile.checksumValue;
-      fileReport.compressedSize = tapeFile.compressedSize;
+      fileReport.checksumBlob = tapeFile.checksumBlob;
       fileReport.copyNb = tapeFile.copyNb;
       fileReport.diskFileId = archiveFile.diskFileId;
-      fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
-      fileReport.diskFileGroup = archiveFile.diskFileInfo.group;
+      fileReport.diskFileOwnerUid = archiveFile.diskFileInfo.owner_uid;
+      fileReport.diskFileGid = archiveFile.diskFileInfo.gid;
       fileReport.diskFilePath = archiveFile.diskFileInfo.path;
       fileReport.diskInstance = archiveFile.diskInstance;
       fileReport.fSeq = tapeFile.fSeq;
@@ -93,12 +96,12 @@ namespace unitTests {
       fileReport.vid = tapeFile.vid;
       return cta::catalogue::TapeItemWrittenPointer(fileReportUP.release());
     }
-   
+
 
     void transferFailed(const std::string& failureReason, cta::log::LogContext& lc) override {
       failuresRef++;
     }
-    
+
     void reportJobSucceeded() override {
       completesRef++;
     }
@@ -107,10 +110,10 @@ namespace unitTests {
     int & completesRef;
     int & failuresRef;
   };
-  
+
   TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerNominal) {
     cta::MockArchiveMount tam(*m_catalogue);
-    
+
     const std::string vid1 = "VTEST001";
     const std::string vid2 = "VTEST002";
     const std::string mediaType = "media_type";
@@ -123,13 +126,14 @@ namespace unitTests {
     const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
     const bool disabledValue = true;
     const bool fullValue = false;
+    const bool readOnlyValue = false;
     const std::string createTapeComment = "Create tape";
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
 
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo, 2, true, supply, "Create tape pool");
     m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-      disabledValue, fullValue, createTapeComment);
+      disabledValue, fullValue, readOnlyValue, createTapeComment);
 
     cta::common::dataStructures::StorageClass storageClass;
     storageClass.diskInstance = "disk_instance";
@@ -137,7 +141,7 @@ namespace unitTests {
     storageClass.nbCopies = 1;
     storageClass.comment = "Create storage class";
     m_catalogue->createStorageClass(admin, storageClass);
-    
+
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
     int job1completes(0), job1failures(0);
@@ -150,20 +154,18 @@ namespace unitTests {
     job1->archiveFile.diskInstance="disk_instance";
     job1->archiveFile.diskFileId="diskFileId1";
     job1->archiveFile.diskFileInfo.path="filePath1";
-    job1->archiveFile.diskFileInfo.owner="testUser1";
-    job1->archiveFile.diskFileInfo.group="testGroup1";
+    job1->archiveFile.diskFileInfo.owner_uid=TEST_USER_1;
+    job1->archiveFile.diskFileInfo.gid=TEST_GROUP_1;
     job1->archiveFile.fileSize=1024;        
-    job1->archiveFile.checksumType="md5";
-    job1->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
+    job1->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     job1->archiveFile.storageClass="storage_class";
     job1->tapeFile.vid="VTEST001";
     job1->tapeFile.fSeq=1;
     job1->tapeFile.blockId=256;
-    job1->tapeFile.compressedSize=768;
+    job1->tapeFile.fileSize=768;
     job1->tapeFile.copyNb=1;
-    job1->tapeFile.checksumType="md5";
-    job1->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
-    
+    job1->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
+
     std::unique_ptr<cta::ArchiveJob> job2;
     int job2completes(0), job2failures(0);
     {
@@ -175,20 +177,18 @@ namespace unitTests {
     job2->archiveFile.diskInstance="disk_instance";
     job2->archiveFile.diskFileId="diskFileId2";
     job2->archiveFile.diskFileInfo.path="filePath2";
-    job2->archiveFile.diskFileInfo.owner="testUser2";
-    job2->archiveFile.diskFileInfo.group="testGroup2";
+    job2->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
+    job2->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
     job2->archiveFile.fileSize=1024;        
-    job2->archiveFile.checksumType="md5";
-    job2->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
+    job2->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     job2->archiveFile.storageClass="storage_class";
     job2->tapeFile.vid="VTEST001";
     job2->tapeFile.fSeq=2;
     job2->tapeFile.blockId=512;
-    job2->tapeFile.compressedSize=768;
+    job2->tapeFile.fileSize=768;
     job2->tapeFile.copyNb=1;
-    job2->tapeFile.checksumType="md5";
-    job2->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
-    
+    job2->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
+
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerNominal",cta::log::DEBUG);
     cta::log::LogContext lc(log);
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
@@ -231,7 +231,7 @@ namespace unitTests {
         new MockArchiveJobExternalStats(tam, *m_catalogue, job3completes, job3failures));
       job3.reset(mockJob.release());
     }
-    
+
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerFailure",cta::log::DEBUG);
     cta::log::LogContext lc(log);  
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
@@ -258,7 +258,7 @@ namespace unitTests {
 
   TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerBadFile) {
     cta::MockArchiveMount tam(*m_catalogue);
-    
+
     const std::string vid1 = "VTEST001";
     const std::string vid2 = "VTEST002";
     const std::string mediaType = "media_type";
@@ -273,13 +273,14 @@ namespace unitTests {
     const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
     const bool disabledValue = true;
     const bool fullValue = false;
+    const bool readOnlyValue = false;
     const std::string createTapeComment = "Create tape";
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
 
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
     m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-      disabledValue, fullValue, createTapeComment);
+      disabledValue, fullValue, readOnlyValue, createTapeComment);
 
     cta::common::dataStructures::StorageClass storageClass;
     storageClass.diskInstance = "disk_instance";
@@ -287,7 +288,7 @@ namespace unitTests {
     storageClass.nbCopies = 1;
     storageClass.comment = "Create storage class";
     m_catalogue->createStorageClass(admin, storageClass);
-    
+
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> migratedBigFile;
     int migratedBigFileCompletes(0), migratedBigFileFailures(0);
@@ -315,56 +316,50 @@ namespace unitTests {
     migratedBigFile->archiveFile.diskInstance="disk_instance";
     migratedBigFile->archiveFile.diskFileId="diskFileId2";
     migratedBigFile->archiveFile.diskFileInfo.path="filePath2";
-    migratedBigFile->archiveFile.diskFileInfo.owner="testUser2";
-    migratedBigFile->archiveFile.diskFileInfo.group="testGroup2";
+    migratedBigFile->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
+    migratedBigFile->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
     migratedBigFile->archiveFile.fileSize=100000;        
-    migratedBigFile->archiveFile.checksumType="md5";
-    migratedBigFile->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
+    migratedBigFile->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     migratedBigFile->archiveFile.storageClass="storage_class";
     migratedBigFile->tapeFile.vid="VTEST001";
     migratedBigFile->tapeFile.fSeq=1;
     migratedBigFile->tapeFile.blockId=256;
-    migratedBigFile->tapeFile.compressedSize=768;
+    migratedBigFile->tapeFile.fileSize=768;
     migratedBigFile->tapeFile.copyNb=1;
-    migratedBigFile->tapeFile.checksumType="md5";
-    migratedBigFile->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
-    
+    migratedBigFile->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
+
     migratedFileSmall->archiveFile.archiveFileID=5;
     migratedFileSmall->archiveFile.diskInstance="disk_instance";
     migratedFileSmall->archiveFile.diskFileId="diskFileId3";
     migratedFileSmall->archiveFile.diskFileInfo.path="filePath3";
-    migratedFileSmall->archiveFile.diskFileInfo.owner="testUser2";
-    migratedFileSmall->archiveFile.diskFileInfo.group="testGroup2";
+    migratedFileSmall->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
+    migratedFileSmall->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
     migratedFileSmall->archiveFile.fileSize=1;        
-    migratedFileSmall->archiveFile.checksumType="md5";
-    migratedFileSmall->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
+    migratedFileSmall->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     migratedFileSmall->archiveFile.storageClass="storage_class";
     migratedFileSmall->tapeFile.vid="VTEST001";
     migratedFileSmall->tapeFile.fSeq=2;
     migratedFileSmall->tapeFile.blockId=512;
-    migratedFileSmall->tapeFile.compressedSize=1;
+    migratedFileSmall->tapeFile.fileSize=1;
     migratedFileSmall->tapeFile.copyNb=1;
-    migratedFileSmall->tapeFile.checksumType="md5";
-    migratedFileSmall->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
-    
+    migratedFileSmall->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
+
     migratedNullFile->archiveFile.archiveFileID=6;
     migratedNullFile->archiveFile.diskInstance="disk_instance";
     migratedNullFile->archiveFile.diskFileId="diskFileId4";
     migratedNullFile->archiveFile.diskFileInfo.path="filePath4";
-    migratedNullFile->archiveFile.diskFileInfo.owner="testUser2";
-    migratedNullFile->archiveFile.diskFileInfo.group="testGroup2";
+    migratedNullFile->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
+    migratedNullFile->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
     migratedNullFile->archiveFile.fileSize=0;        
-    migratedNullFile->archiveFile.checksumType="md5";
-    migratedNullFile->archiveFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
+    migratedNullFile->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     migratedNullFile->archiveFile.storageClass="storage_class";
     migratedNullFile->tapeFile.vid="VTEST001";
     migratedNullFile->tapeFile.fSeq=3;
     migratedNullFile->tapeFile.blockId=768;
-    migratedNullFile->tapeFile.compressedSize=0;
+    migratedNullFile->tapeFile.fileSize=0;
     migratedNullFile->tapeFile.copyNb=1;
-    migratedNullFile->tapeFile.checksumType="md5";
-    migratedFileSmall->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6"; 
-    
+    migratedNullFile->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
+
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile",cta::log::DEBUG);
     cta::log::LogContext lc(log);  
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);

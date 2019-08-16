@@ -20,6 +20,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cmdline/CtaAdminTextFormatter.hpp>
+#include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include <common/dataStructures/DriveStatusSerDeser.hpp>
 #include <common/dataStructures/MountTypeSerDeser.hpp>
 
@@ -162,6 +163,22 @@ void TextFormatter::printArchiveFileLsHeader() {
 }
 
 void TextFormatter::print(const ArchiveFileLsItem &afls_item) {
+  using namespace cta::checksum;
+
+  std::string checksumType("NONE");
+  std::string checksumValue;
+
+  ChecksumBlob csb;
+  ProtobufToChecksumBlob(afls_item.af().csb(), csb);
+
+  // Files can have multiple checksums of different types. Display only the first checksum here. All
+  // checksums will be listed in JSON.
+  if(!csb.empty()) {
+    auto cs_it = csb.getMap().begin();
+    checksumType = ChecksumTypeName.at(cs_it->first);
+    checksumValue = "0x" + ChecksumBlob::ByteArrayToHex(cs_it->second);
+  }
+
   push_back(
     afls_item.af().archive_id(),
     afls_item.copy_nb(),
@@ -171,11 +188,11 @@ void TextFormatter::print(const ArchiveFileLsItem &afls_item) {
     afls_item.af().disk_instance(),
     afls_item.af().disk_id(),
     dataSizeToStr(afls_item.af().size()),
-    afls_item.af().cs().type(),
-    afls_item.af().cs().value(),
+    checksumType,
+    checksumValue,
     afls_item.af().storage_class(),
-    afls_item.af().df().owner(),
-    afls_item.af().df().group(),
+    afls_item.af().df().owner_id().uid(),
+    afls_item.af().df().owner_id().gid(),
     timeToStr(afls_item.af().creation_time()),
     afls_item.tf().superseded_by_vid(),
     afls_item.tf().superseded_by_f_seq(),
@@ -421,6 +438,22 @@ void TextFormatter::printListPendingArchivesHeader() {
 }
 
 void TextFormatter::print(const ListPendingArchivesItem &lpa_item) {
+  using namespace cta::checksum;
+
+  std::string checksumType("NONE");
+  std::string checksumValue;
+
+  ChecksumBlob csb;
+  ProtobufToChecksumBlob(lpa_item.af().csb(), csb);
+
+  // Files can have multiple checksums of different types. Display only the first checksum here. All
+  // checksums will be listed in JSON.
+  if(!csb.empty()) {
+    auto cs_it = csb.getMap().begin();
+    checksumType = ChecksumTypeName.at(cs_it->first);
+    checksumValue = "0x" + ChecksumBlob::ByteArrayToHex(cs_it->second);
+  }
+
   push_back(
     lpa_item.tapepool(),
     lpa_item.af().archive_id(),
@@ -428,11 +461,11 @@ void TextFormatter::print(const ListPendingArchivesItem &lpa_item) {
     lpa_item.copy_nb(),
     lpa_item.af().disk_id(),
     lpa_item.af().disk_instance(),
-    lpa_item.af().cs().type(),
-    lpa_item.af().cs().value(),
+    checksumType,
+    checksumValue,
     dataSizeToStr(lpa_item.af().size()),
-    lpa_item.af().df().owner(),
-    lpa_item.af().df().group(),
+    lpa_item.af().df().owner_id().uid(),
+    lpa_item.af().df().owner_id().gid(),
     lpa_item.af().df().path()
   );
 }
@@ -477,8 +510,8 @@ void TextFormatter::print(const ListPendingRetrievesItem &lpr_item) {
     lpr_item.tf().f_seq(),
     lpr_item.tf().block_id(),
     dataSizeToStr(lpr_item.af().size()),
-    lpr_item.af().df().owner(),
-    lpr_item.af().df().group(),
+    lpr_item.af().df().owner_id().uid(),
+    lpr_item.af().df().owner_id().gid(),
     lpr_item.af().df().path()
   );
 }
@@ -601,7 +634,7 @@ void TextFormatter::print(const RepackLsItem &rels_item) {
    rels_item.failed_to_retrieve_files(),
    dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
    rels_item.failed_to_archive_files(),
-   dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
+   dataSizeToStr(rels_item.failed_to_archive_bytes()),
    rels_item.last_expanded_fseq(),
    rels_item.status()
   );
@@ -662,6 +695,7 @@ void TextFormatter::printShowQueuesHeader() {
     "full tapes",
     "empty tapes",
     "disabled tapes",
+    "rdonly tapes",
     "writable tapes"
   );
 }
@@ -671,7 +705,7 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
   std::string minAge;
   std::string maxDrivesAllowed;
 
-  if(sq_item.mount_type() == ARCHIVE_FOR_USER ||
+  if(sq_item.mount_type() == ARCHIVE_FOR_USER || sq_item.mount_type() == ARCHIVE_FOR_REPACK || 
      sq_item.mount_type() == RETRIEVE) {
     priority         = std::to_string(sq_item.priority());
     minAge           = std::to_string(sq_item.min_age());
@@ -700,6 +734,7 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
     sq_item.full_tapes(),
     sq_item.empty_tapes(),
     sq_item.disabled_tapes(),
+    sq_item.rdonly_tapes(),
     sq_item.writable_tapes()
   );
 }
@@ -750,18 +785,23 @@ void TextFormatter::printTapeLsHeader() {
     "last fseq",
     "full",
     "disabled",
+    "rdonly",
+    "from castor",
     "label drive",
     "label time",
     "last w drive",
     "last w time",
+    "w mounts",
     "last r drive",
     "last r time",
+    "r mounts",
     "c.user",
     "c.host",
     "c.time",
     "m.user",
     "m.host",
-    "m.time"
+    "m.time",
+    "comment"
   );
 }
 
@@ -779,18 +819,23 @@ void TextFormatter::print(const TapeLsItem &tals_item) {
     tals_item.last_fseq(),
     tals_item.full(),
     tals_item.disabled(),
+    tals_item.rdonly(),
+    tals_item.from_castor(),
     tals_item.has_label_log()        ? tals_item.label_log().drive()                  : "",
     tals_item.has_label_log()        ? timeToStr(tals_item.label_log().time())        : "",
     tals_item.has_last_written_log() ? tals_item.last_written_log().drive()           : "",
     tals_item.has_last_written_log() ? timeToStr(tals_item.last_written_log().time()) : "",
+    tals_item.write_mount_count(),
     tals_item.has_last_read_log()    ? tals_item.last_read_log().drive()              : "",
     tals_item.has_last_read_log()    ? timeToStr(tals_item.last_read_log().time())    : "",
+    tals_item.read_mount_count(),
     tals_item.creation_log().username(),
     tals_item.creation_log().host(),
     timeToStr(tals_item.creation_log().time()),
     tals_item.last_modification_log().username(),
     tals_item.last_modification_log().host(),
-    timeToStr(tals_item.last_modification_log().time())
+    timeToStr(tals_item.last_modification_log().time()),
+    tals_item.comment()
   );
 }
 

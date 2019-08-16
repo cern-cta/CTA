@@ -24,15 +24,16 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveMount::RetrieveMount():
-  m_sessionRunning(false) {}
+cta::RetrieveMount::RetrieveMount(cta::catalogue::Catalogue &catalogue): m_sessionRunning(false), m_catalogue(catalogue) {
+}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveMount::RetrieveMount(
+  cta::catalogue::Catalogue &catalogue,
   std::unique_ptr<SchedulerDatabase::RetrieveMount> dbMount): 
-  m_sessionRunning(false) {
+  m_sessionRunning(false), m_catalogue(catalogue) {
   m_dbMount.reset(dbMount.release());
 }
 
@@ -140,7 +141,7 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
     throw SessionNotRunning("In RetrieveMount::getNextJobBatch(): trying to get job from complete/not started session");
   // Get the current file systems list from the catalogue
   disk::DiskSystemList diskSystemList;
-  if (m_catalogue) diskSystemList = m_catalogue->getAllDiskSystems();
+  diskSystemList = m_catalogue.getAllDiskSystems();
   // TODO: the diskSystemFreeSpaceList could be made a member of the retrieve mount and cache the fetched values, limiting the re-querying
   // of the disk systems free space.
   disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList (diskSystemList);
@@ -238,17 +239,6 @@ cta::disk::DiskReporter* cta::RetrieveMount::createDiskReporter(std::string& URL
 }
 
 //------------------------------------------------------------------------------
-// setCatalogue()
-//------------------------------------------------------------------------------
-void cta::RetrieveMount::setCatalogue(catalogue::Catalogue* catalogue) {
-  if (m_catalogue)
-    throw exception::Exception("In RetrieveMount::setCatalogue(): catalogue already set.");
-  if (!catalogue)
-    throw exception::Exception("In RetrieveMount::setCatalogue(): trying to set a null catalogue.");
-  m_catalogue = catalogue;
-}
-
-//------------------------------------------------------------------------------
 // tapeComplete()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::tapeComplete() {
@@ -300,6 +290,25 @@ void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
   m_dbMount->setTapeSessionStats(stats);
+}
+
+//------------------------------------------------------------------------------
+// setTapeMounted()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::setTapeMounted(cta::log::LogContext& logContext) const {
+  utils::Timer t;    
+  log::ScopedParamContainer spc(logContext);
+  try {
+    m_catalogue.tapeMountedForRetrieve(m_dbMount->getMountInfo().vid, m_dbMount->getMountInfo().drive);
+    auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
+    spc.add("catalogueTime", catalogueTime);
+    logContext.log(log::INFO, "In RetrieveMount::setTapeMounted(): success.");
+  } catch (cta::exception::Exception &ex) {
+    auto catalogueTimeFailed = t.secs(cta::utils::Timer::resetCounter);
+    spc.add("catalogueTime", catalogueTimeFailed);
+    logContext.log(cta::log::WARNING,
+      "Failed to update catalogue for the tape mounted for retrieve.");
+  }    
 }
 
 //------------------------------------------------------------------------------

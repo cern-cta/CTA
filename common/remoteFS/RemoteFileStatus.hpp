@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/OwnerIdentity.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -44,14 +44,14 @@ struct RemoteFileStatus {
    * @param size The size of the file in bytes.
    */
   RemoteFileStatus(
-    const common::dataStructures::UserIdentity &owner,
+    const common::dataStructures::OwnerIdentity &owner,
     const mode_t mode,
     const uint64_t size);
 
   /**
    * The identity of the owner.
    */
-  common::dataStructures::UserIdentity owner;
+  common::dataStructures::OwnerIdentity owner;
 
   /**
    * The mode bits of the directory entry.

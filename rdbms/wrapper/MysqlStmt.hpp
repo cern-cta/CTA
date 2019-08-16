@@ -117,6 +117,14 @@ public:
   void bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) override;
 
   /** 
+   * Binds an SQL parameter of type binary string (byte array).
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */ 
+  void bindBlob(const std::string &paramName, const std::string &paramValue) override;
+
+  /** 
    * Binds an SQL parameter of type string.
    *
    * Please note that this method will throw an exception if the string

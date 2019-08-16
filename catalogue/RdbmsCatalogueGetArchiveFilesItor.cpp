@@ -44,11 +44,10 @@ namespace {
     archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
     archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
     archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-    archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-    archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+    archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+    archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
-    archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
+    archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
     archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
     archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
     archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -59,11 +58,10 @@ namespace {
       tapeFile.vid = rset.columnString("VID");
       tapeFile.fSeq = rset.columnUint64("FSEQ");
       tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-      tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+      tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
-      tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
+      tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
       if(!rset.columnIsNull("SUPERSEDED_BY_VID") && !rset.columnIsNull("SUPERSEDED_BY_FSEQ")){
         tapeFile.supersededByVid = rset.columnString("SUPERSEDED_BY_VID");
         tapeFile.supersededByFSeq = rset.columnUint64("SUPERSEDED_BY_FSEQ");
@@ -95,18 +93,18 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
         "TAPE_FILE.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID, "
@@ -126,8 +124,8 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       searchCriteria.diskInstance   ||
       searchCriteria.diskFileId     ||
       searchCriteria.diskFilePath   ||
-      searchCriteria.diskFileUser   ||
-      searchCriteria.diskFileGroup  ||
+      searchCriteria.diskFileOwnerUid   ||
+      searchCriteria.diskFileGid  ||
       searchCriteria.storageClass   ||
       searchCriteria.vid            ||
       searchCriteria.tapeFileCopyNb ||
@@ -158,14 +156,14 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       sql += "ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.diskFileUser) {
+    if(searchCriteria.diskFileOwnerUid) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_USER = :DISK_FILE_USER";
+      sql += "ARCHIVE_FILE.DISK_FILE_UID = :DISK_FILE_UID";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.diskFileGroup) {
+    if(searchCriteria.diskFileGid) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_GROUP = :DISK_FILE_GROUP";
+      sql += "ARCHIVE_FILE.DISK_FILE_GID = :DISK_FILE_GID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.storageClass) {
@@ -210,11 +208,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     if(searchCriteria.diskFilePath) {
       m_stmt.bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
     }
-    if(searchCriteria.diskFileUser) {
-      m_stmt.bindString(":DISK_FILE_USER", searchCriteria.diskFileUser.value());
+    if(searchCriteria.diskFileOwnerUid) {
+      m_stmt.bindUint64(":DISK_FILE_UID", searchCriteria.diskFileOwnerUid.value());
     }
-    if(searchCriteria.diskFileGroup) {
-      m_stmt.bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup.value());
+    if(searchCriteria.diskFileGid) {
+      m_stmt.bindUint64(":DISK_FILE_GID", searchCriteria.diskFileGid.value());
     }
     if(searchCriteria.storageClass) {
       m_stmt.bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());

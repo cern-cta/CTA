@@ -153,12 +153,13 @@ bool ListPendingQueueStream<OStoreDB::ArchiveQueueItor_t>::pushRecord(XrdSsiPb::
   af->set_disk_instance(job.instanceName);
   af->set_disk_id(job.request.diskFileID);
   af->set_size(job.request.fileSize);
-  af->mutable_cs()->set_type(job.request.checksumType);
-  af->mutable_cs()->set_value(job.request.checksumValue);         
   af->set_storage_class(job.request.storageClass);
-  af->mutable_df()->set_owner(job.request.requester.name);
-  af->mutable_df()->set_group(job.request.requester.group);
+  af->mutable_df()->mutable_owner_id()->set_uid(job.request.diskFileInfo.owner_uid);
+  af->mutable_df()->mutable_owner_id()->set_gid(job.request.diskFileInfo.gid);
   af->mutable_df()->set_path(job.request.diskFileInfo.path);
+
+  // Checksum array
+  checksum::ChecksumBlobToProtobuf(job.request.checksumBlob, *(af->mutable_csb()));
 
   return streambuf->Push(record);
 }
@@ -213,10 +214,9 @@ bool ListPendingQueueStream<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb:
     // Archive file
     auto af = record.mutable_lpr_item()->mutable_af();
     af->set_archive_id(job.request.archiveFileID);
-    //af->set_size(tape_it->second.second.compressedSize);
     af->set_size(job.fileSize);
-    af->mutable_df()->set_owner(job.request.requester.name);
-    af->mutable_df()->set_group(job.request.requester.group);
+    af->mutable_df()->mutable_owner_id()->set_uid(job.request.diskFileInfo.owner_uid);
+    af->mutable_df()->mutable_owner_id()->set_gid(job.request.diskFileInfo.gid);
     af->mutable_df()->set_path(job.request.diskFileInfo.path);
 
     // Tape file
@@ -224,6 +224,9 @@ bool ListPendingQueueStream<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb:
     tf->set_vid(tape_it->first);
     tf->set_f_seq(tape_it->second.second.fSeq);
     tf->set_block_id(tape_it->second.second.blockId);
+
+    // Checksum array
+    checksum::ChecksumBlobToProtobuf(tape_it->second.second.checksumBlob, *(af->mutable_csb()));
 
     is_buffer_full = streambuf->Push(record);
   }

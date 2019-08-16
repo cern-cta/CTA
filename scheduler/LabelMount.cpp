@@ -65,6 +65,11 @@ void LabelMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::Tap
   // TODO
 }
 
+void LabelMount::setTapeMounted(log::LogContext &logContext) const {
+  throw 0;
+  // TODO
+}
+
 LabelMount::LabelMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount): 
   m_catalogue(catalogue) {
   throw 0;

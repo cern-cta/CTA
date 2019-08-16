@@ -55,3 +55,6 @@ export EOS_TTY_BROACAST_EGREP="\"CRIT|ALERT|EMERG|PROGRESS\""
 
 # define the fst delete rate
 export EOS_FST_DELETE_QUERY_INTERVAL=5
+
+# Tell clients that there is a CTA backend by starting the sitename with "cern_tape_archive_"
+XRDSITE=cern_tape_archive_ci

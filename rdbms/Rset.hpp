@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/optional.hpp"
+#include "rdbms/InvalidResultSet.hpp"
 
 #include <memory>
 #include <stdint.h>
@@ -86,16 +87,36 @@ public:
    *
    * @return True if a row has been retrieved else false if there are no more
    * rows in the result set.
+   * @throw InvalidResultSet if the result is invalid.
    */
   bool next();
+
+  /**
+   * Returns true if the result set does not contain any more rows.
+   * @return True if the result set does not contain any more rows.
+   */
+  bool isEmpty() const;
 
   /**
    * Returns true if the specified column contains a null value.
    *
    * @param colName The name of the column.
    * @return True if the specified column contains a null value.
+   * @throw InvalidResultSet if the result is invalid.
    */
   bool columnIsNull(const std::string &colName) const;
+
+  /**
+   * Returns the value of the specified column as a binary string (byte array).
+   *
+   * This method will throw an exception if the value of the specified column
+   * is nullptr.
+   *
+   * @param colName The name of the column.
+   * @return The string value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
+   */
+  std::string columnBlob(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as a string.
@@ -105,6 +126,7 @@ public:
    *
    * @param colName The name of the column.
    * @return The string value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
    */
   std::string columnString(const std::string &colName) const;
 
@@ -115,6 +137,7 @@ public:
    *
    * @param colName The name of the column.
    * @return The string value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
    */
   optional<std::string> columnOptionalString(const std::string &colName) const;
 
@@ -126,6 +149,7 @@ public:
    *
    * @param colName The name of the column.
    * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
    */
   uint64_t columnUint64(const std::string &colName) const;
 
@@ -140,6 +164,7 @@ public:
    *
    * @param colName The name of the column.
    * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
    */
   bool columnBool(const std::string &colName) const;
 
@@ -150,6 +175,7 @@ public:
    *
    * @param colName The name of the column.
    * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
    */
   optional<uint64_t> columnOptionalUint64(const std::string &colName) const;
 
@@ -163,6 +189,7 @@ public:
    *
    * @param colName The name of the column.
    * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
    */
   optional<bool> columnOptionalBool(const std::string &colName) const;
 
@@ -174,6 +201,7 @@ public:
    *
    * @param colName The name of the column.
    * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
    */
   double columnDouble(const std::string &colName) const;
 
@@ -184,6 +212,7 @@ public:
    *
    * @param colName The name of the column.
    * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
    */
   optional<double> columnOptionalDouble(const std::string &colName) const;
 

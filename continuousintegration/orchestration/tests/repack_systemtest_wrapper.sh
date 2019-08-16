@@ -82,7 +82,7 @@ fi
 echo "Reclaiming tape ${VID_TO_REPACK}"
 kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
-NB_FILES=1152
+NB_FILES=1153
 kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -A || exit 1
 
 VID_TO_REPACK=$(getFirstVidContainingFiles)

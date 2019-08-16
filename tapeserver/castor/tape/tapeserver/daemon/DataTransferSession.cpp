@@ -544,7 +544,8 @@ const char *castor::tape::tapeserver::daemon::DataTransferSession::
   mountTypeToString(const cta::common::dataStructures::MountType mountType) const throw() {
   switch(mountType) {
   case cta::common::dataStructures::MountType::Retrieve: return "Retrieve";
-  case cta::common::dataStructures::MountType::ArchiveForUser : return "Archive";
+  case cta::common::dataStructures::MountType::ArchiveForUser : return "ArchiveForUser";
+  case cta::common::dataStructures::MountType::ArchiveForRepack : return "ArchiveForRepack";
   case cta::common::dataStructures::MountType::Label: return "Label";
   default                      : return "UNKNOWN";
   }

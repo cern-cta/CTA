@@ -1,6 +1,6 @@
-/*
+/*!
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,11 @@
 
 #include <list>
 #include <map>
-#include <stdint.h>
 #include <string>
 
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/TapeFile.hpp"
+#include "common/checksum/ChecksumBlob.hpp"
 
 namespace cta {
 namespace common {
@@ -53,14 +53,7 @@ struct ArchiveFile {
   std::string diskFileId;
   std::string diskInstance;
   uint64_t fileSize;
-  /**
-   * The human readable checksum type. Ex: ADLER32 
-   */
-  std::string checksumType;
-  /**
-   * The human readable checksum value. Ex: 0X1292AB12 
-   */
-  std::string checksumValue;
+  checksum::ChecksumBlob checksumBlob;
   std::string storageClass;
   DiskFileInfo diskFileInfo;
   /**

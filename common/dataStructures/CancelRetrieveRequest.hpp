@@ -24,7 +24,7 @@
 #include <string>
 
 #include "common/dataStructures/DiskFileInfo.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
 
 namespace cta {
 namespace common {
@@ -41,7 +41,7 @@ struct CancelRetrieveRequest {
 
   bool operator!=(const CancelRetrieveRequest &rhs) const;
 
-  UserIdentity requester;
+  RequesterIdentity requester;
   uint64_t archiveFileID;
   std::string dstURL;
   DiskFileInfo diskFileInfo;

@@ -58,13 +58,11 @@ cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWr
   auto & fileReport = *fileReportUP;
   fileReport.archiveFileId = archiveFile.archiveFileID;
   fileReport.blockId = tapeFile.blockId;
-  fileReport.checksumType = tapeFile.checksumType;
-  fileReport.checksumValue = tapeFile.checksumValue;
-  fileReport.compressedSize = tapeFile.compressedSize;
+  fileReport.checksumBlob = tapeFile.checksumBlob;
   fileReport.copyNb = tapeFile.copyNb;
   fileReport.diskFileId = archiveFile.diskFileId;
-  fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
-  fileReport.diskFileGroup = archiveFile.diskFileInfo.group;
+  fileReport.diskFileOwnerUid = archiveFile.diskFileInfo.owner_uid;
+  fileReport.diskFileGid = archiveFile.diskFileInfo.gid;
   fileReport.diskFilePath = archiveFile.diskFileInfo.path;
   fileReport.diskInstance = archiveFile.diskInstance;
   fileReport.fSeq = tapeFile.fSeq;
@@ -84,43 +82,50 @@ void cta::ArchiveJob::validate(){
       std::numeric_limits<decltype(tapeFile.blockId)>::max())
     throw BlockIdNotSet("In cta::ArchiveJob::validate(): Block ID not set");
   // Also check the checksum has been set
-  if (archiveFile.checksumType.empty() || archiveFile.checksumValue.empty() || 
-      tapeFile.checksumType.empty() || tapeFile.checksumValue.empty())
+  if (archiveFile.checksumBlob.empty() || tapeFile.checksumBlob.empty())
     throw ChecksumNotSet("In cta::ArchiveJob::validate(): checksums not set");
   // And matches
-  if (archiveFile.checksumType != tapeFile.checksumType || 
-      archiveFile.checksumValue != tapeFile.checksumValue)
-    throw ChecksumMismatch(std::string("In cta::ArchiveJob::validate(): checksum mismatch!")
-            +" Archive file checksum type: "+archiveFile.checksumType
-            +" Archive file checksum value: "+archiveFile.checksumValue
-            +" Tape file checksum type: "+tapeFile.checksumType
-            +" Tape file checksum value: "+tapeFile.checksumValue);
+  archiveFile.checksumBlob.validate(tapeFile.checksumBlob);
 }
 
 //------------------------------------------------------------------------------
 // ArchiveJob::reportURL
 //------------------------------------------------------------------------------
-std::string cta::ArchiveJob::reportURL() {
+std::string cta::ArchiveJob::exceptionThrowingReportURL() {
   switch (m_dbJob->reportType) {
   case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
     return m_dbJob->archiveReportURL;
-  case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
-    {
-      if (m_dbJob->latestError.empty()) {
-        throw exception::Exception("In ArchiveJob::reportURL(): empty failure reason.");
-      }
-      std::string base64ErrorReport;
-      // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
-      const bool noNewLineInBase64Output = false;
-      CryptoPP::StringSource ss1(m_dbJob->latestError, true, 
-        new CryptoPP::Base64Encoder(
-          new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
-      return m_dbJob->errorReportURL + base64ErrorReport;
+  case SchedulerDatabase::ArchiveJob::ReportType::FailureReport: {
+    if (m_dbJob->latestError.empty()) {
+      throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): empty failure reason.");
     }
-  default:
-    { 
-      throw exception::Exception("In ArchiveJob::reportURL(): job status does not require reporting.");
-    }
+    std::string base64ErrorReport;
+    // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
+    const bool noNewLineInBase64Output = false;
+    CryptoPP::StringSource ss1(m_dbJob->latestError, true, 
+      new CryptoPP::Base64Encoder(
+        new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
+    return m_dbJob->errorReportURL + base64ErrorReport;
+  }
+  case SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired:
+    throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): job status NoReportRequired does not require reporting.");
+  case SchedulerDatabase::ArchiveJob::ReportType::Report:
+    throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): job status Report does not require reporting.");
+  }
+  throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): invalid report type reportType=" +
+    std::to_string(static_cast<uint8_t>(m_dbJob->reportType)));
+}
+
+//------------------------------------------------------------------------------
+// ArchiveJob::reportURL
+//------------------------------------------------------------------------------
+std::string cta::ArchiveJob::reportURL() noexcept {
+  try {
+    return exceptionThrowingReportURL();
+  } catch(exception::Exception &ex) {
+    return ex.what();
+  } catch(...) {
+    return "In ArchiveJob::reportURL(): unknown exception";
   }
 }
 
@@ -142,6 +147,7 @@ std::string cta::ArchiveJob::reportType() {
       throw exception::Exception("In ArchiveJob::reportType(): job status does not require reporting.");
     }
   }
+  throw exception::Exception("In ArchiveJob::reportType(): invalid report type.");
 }
 
 //------------------------------------------------------------------------------

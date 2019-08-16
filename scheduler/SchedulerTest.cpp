@@ -57,6 +57,11 @@
 
 namespace unitTests {
 
+const uint32_t CMS_USER = 9751;
+const uint32_t GROUP_2  = 9752;
+const uint32_t PUBLIC_OWNER_UID = 9753;
+const uint32_t PUBLIC_GID = 9754;
+
 namespace {
 
 /**
@@ -189,7 +194,6 @@ public:
     ASSERT_EQ(mountPolicyComment, group.comment);
 
     const std::string ruleComment = "create requester mount-rule";
-    cta::common::dataStructures::UserIdentity userIdentity;
     catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_diskInstance, s_userName, ruleComment);
 
     const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.getRequesterMountRules();
@@ -264,17 +268,16 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   creationLog.time=0;
   creationLog.username="admin1";
   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.group="group2";
-  diskFileInfo.owner="cms_user";
+  diskFileInfo.gid=GROUP_2;
+  diskFileInfo.owner_uid=CMS_USER;
   diskFileInfo.path="path/to/file";
   cta::common::dataStructures::ArchiveRequest request;
-  request.checksumType="ADLER32";
-  request.checksumValue="1111";
+  request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
   request.creationLog=creationLog;
   request.diskFileInfo=diskFileInfo;
   request.diskFileID="diskFileID";
   request.fileSize=100*1000*1000;
-  cta::common::dataStructures::UserIdentity requester;
+  cta::common::dataStructures::RequesterIdentity requester;
   requester.name = s_userName;
   requester.group = "userGroup";
   request.requester = requester;
@@ -325,17 +328,16 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 //  creationLog.time=0;
 //  creationLog.username="admin1";
 //  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-//  diskFileInfo.group="group2";
-//  diskFileInfo.owner="cms_user";
+//  diskFileInfo.gid=GROUP_2;
+//  diskFileInfo.owner_uid=CMS_USER;
 //  diskFileInfo.path="path/to/file";
 //  cta::common::dataStructures::ArchiveRequest request;
-//  request.checksumType="ADLER32";
-//  request.checksumValue="1111";
+//  request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
 //  request.creationLog=creationLog;
 //  request.diskFileInfo=diskFileInfo;
 //  request.diskFileID="diskFileID";
 //  request.fileSize=100*1000*1000;
-//  cta::common::dataStructures::UserIdentity requester;
+//  cta::common::dataStructures::RequesterIdentity requester;
 //  requester.name = s_userName;
 //  requester.group = "userGroup";
 //  request.requester = requester;
@@ -399,17 +401,16 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="ADLER32";
-    request.checksumValue="1234abcd";
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -435,7 +436,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
 
   // Create the environment for the migration to happen (library + tape) 
   const std::string libraryComment = "Library comment";
-  const bool libraryIsDisabled = false;
+  const bool libraryIsDisabled = true;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
@@ -448,8 +449,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
 
   const std::string driveName = "tape_drive";
 
@@ -462,6 +464,11 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
+    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    //Test that no mount is available when a logical library is disabled
+    ASSERT_EQ(nullptr, mount.get());
+    catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
+    //continue our test
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
@@ -478,9 +485,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
-    archiveJob->tapeFile.checksumType = "ADLER32";
-    archiveJob->tapeFile.checksumValue = "1234abcd";
-    archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
@@ -509,8 +515,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
@@ -599,17 +605,16 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="ADLER32";
-    request.checksumValue="1234abcd";
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -648,8 +653,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
 
   const std::string driveName = "tape_drive";
 
@@ -678,9 +684,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
-    archiveJob->tapeFile.checksumType = "ADLER32";
-    archiveJob->tapeFile.checksumValue = "1234abcd";
-    archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
@@ -709,8 +714,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
@@ -850,17 +855,16 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="ADLER32";
-    request.checksumValue="1234abcd";
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -899,8 +903,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, "mediatype", "vendor", s_libraryName, s_tapePoolName,
-    capacityInBytes, notDisabled, notFull, tapeComment);
+    capacityInBytes, notDisabled, notFull, notReadOnly, tapeComment);
 
   const std::string driveName = "tape_drive";
 
@@ -929,9 +934,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
-    archiveJob->tapeFile.checksumType = "ADLER32";
-    archiveJob->tapeFile.checksumValue = "1234abcd";
-    archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
@@ -960,8 +964,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
@@ -1107,17 +1111,16 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="ADLER32";
-    request.checksumValue="1111";
+    request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -1144,8 +1147,9 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
 
   catalogue.tapeLabelled(s_vid, "tape_drive");
 
@@ -1190,8 +1194,8 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = 12345;
@@ -1222,17 +1226,16 @@ TEST_P(SchedulerTest, showqueues) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="ADLER32";
-    request.checksumValue="1111";
+    request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -1273,17 +1276,18 @@ TEST_P(SchedulerTest, repack) {
   cliId.username = s_userName;
   std::string tape1 = "Tape";
   
-  catalogue.createTape(cliId,tape1,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,false,"Comment");
+  const bool notReadOnly = false; 
+  catalogue.createTape(cliId,tape1,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,false, notReadOnly, "Comment");
   
   //The queueing of a repack request should fail if the tape to repack is not full
-  ASSERT_THROW(scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc),cta::exception::UserError);
+  ASSERT_THROW(scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,lc),cta::exception::UserError);
   //The queueing of a repack request in a vid that does not exist should throw an exception
-  ASSERT_THROW(scheduler.queueRepack(cliId, "NOT_EXIST", "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc),cta::exception::UserError);
+  ASSERT_THROW(scheduler.queueRepack(cliId, "NOT_EXIST", "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, lc),cta::exception::UserError);
   
   catalogue.setTapeFull(cliId,tape1,true);
   
   // Create and then cancel repack
-  scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
+  scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, lc);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, repacks.size());
@@ -1294,8 +1298,8 @@ TEST_P(SchedulerTest, repack) {
   ASSERT_EQ(0, scheduler.getRepacks().size());
   // Recreate a repack and get it moved to ToExpand
   std::string tape2 = "Tape2";
-  catalogue.createTape(cliId,tape2,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true,"Comment");
-  scheduler.queueRepack(cliId, tape2, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
+  catalogue.createTape(cliId,tape2,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
+  scheduler.queueRepack(cliId, tape2, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, lc);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, repacks.size());
@@ -1332,16 +1336,17 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   cliId.host = "host";
   cliId.username = s_userName;
   std::string tape1 = "Tape";
-  catalogue.createTape(cliId,tape1,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true,"Comment");
+  const bool notReadOnly = false;
+  catalogue.createTape(cliId,tape1,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
   
   //Queue the first repack request
-  scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, lc);
+  scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,  lc);
   
   std::string tape2 = "Tape2";
-  catalogue.createTape(cliId,tape2,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true,"Comment");
+  catalogue.createTape(cliId,tape2,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
   
   //Queue the second repack request
-  scheduler.queueRepack(cliId,tape2,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,lc);
+  scheduler.queueRepack(cliId,tape2,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, lc);
   
   //Test the repack request queued has status Pending
   ASSERT_EQ(scheduler.getRepack(tape1).status,common::dataStructures::RepackInfo::Status::Pending);
@@ -1398,12 +1403,11 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
+  const bool readOnlyValue = false;
   const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  const std::string diskFileUser = "public_disk_user";
-  const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
@@ -1421,7 +1425,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     std::string vid = ossVid.str();
     allVid.push_back(vid);
     catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-      disabledValue, fullValue, comment);
+      disabledValue, fullValue, readOnlyValue, comment);
   }
   
   //Create a storage class in the catalogue
@@ -1430,16 +1434,14 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
-
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  const uint64_t compressedFileSize = archiveFileSize;
 
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  checksum::ChecksumBlob checksumBlob;
+  checksumBlob.insert(cta::checksum::ADLER32, "1234");
   {
     uint64_t archiveFileId = 1;
     for(uint64_t i = 1; i<= nbTapesToRepack;++i){
@@ -1455,16 +1457,14 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         fileWritten.diskInstance = storageClass.diskInstance;
         fileWritten.diskFileId = diskFileId.str();
         fileWritten.diskFilePath = diskFilePath.str();
-        fileWritten.diskFileUser = diskFileUser;
-        fileWritten.diskFileGroup = diskFileGroup;
+        fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+        fileWritten.diskFileGid = PUBLIC_GID;
         fileWritten.size = archiveFileSize;
-        fileWritten.checksumType = checksumType;
-        fileWritten.checksumValue = checksumValue;
+        fileWritten.checksumBlob = checksumBlob;
         fileWritten.storageClassName = s_storageClassName;
         fileWritten.vid = currentVid;
         fileWritten.fSeq = j;
         fileWritten.blockId = j * 100;
-        fileWritten.compressedSize = compressedFileSize;
         fileWritten.copyNb = 1;
         fileWritten.tapeDrive = tapeDrive;
         tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
@@ -1478,7 +1478,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
     for(uint64_t i = 0; i < nbTapesToRepack ; ++i) {
-      scheduler.queueRepack(admin,allVid.at(i),"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+      scheduler.queueRepack(admin,allVid.at(i),"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, lc);
     }
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();
@@ -1513,15 +1513,14 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         //Test that the informations are correct for each file
         //ASSERT_EQ(retrieveJob.request.tapePool,s_tapePoolName);
         ASSERT_EQ(retrieveJob.request.archiveFileID,archiveFileId++);
-        ASSERT_EQ(retrieveJob.fileSize,compressedFileSize);
+        ASSERT_EQ(retrieveJob.fileSize,archiveFileSize);
         std::stringstream ss;
         ss<<"file://"<<tempDirectory.path()<<"/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
         ASSERT_EQ(retrieveJob.request.dstURL, ss.str());
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.copyNb,1);
-        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumType,checksumType);
-        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumValue,checksumValue);
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumBlob,checksumBlob);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.blockId,j*100);
-        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.compressedSize,compressedFileSize);
+        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.fileSize,archiveFileSize);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.fSeq,j);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.vid,vid);
         ++j;
@@ -1609,9 +1608,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           ASSERT_EQ(tapeFile.vid,allVid.at(i-1));
           ASSERT_EQ(tapeFile.blockId,j * 100);
           ASSERT_EQ(tapeFile.fSeq,j);
-          ASSERT_EQ(tapeFile.checksumType, checksumType);
-          ASSERT_EQ(tapeFile.checksumValue,checksumValue);
-          ASSERT_EQ(tapeFile.compressedSize, compressedFileSize);
+          ASSERT_EQ(tapeFile.checksumBlob, checksumBlob);
+          ASSERT_EQ(tapeFile.fileSize, archiveFileSize);
 
           //Testing scheduler retrieve request
           ASSERT_EQ(schedulerRetrieveRequest.archiveFileID,archiveFileId++);
@@ -1676,16 +1674,15 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ASSERT_LE(1, fileIndex);
         ASSERT_GE(nbArchiveFilesPerTape, fileIndex);
         //Test the ArchiveRequest
-        ASSERT_EQ(archiveFile.checksumType,checksumType);
-        ASSERT_EQ(archiveFile.checksumValue,checksumValue);
+        ASSERT_EQ(archiveFile.checksumBlob,checksumBlob);
         std::ostringstream diskFilePath;
         diskFilePath << "/public_dir/public_file_"<<tapeIndex<<"_"<<fileIndex;
         std::ostringstream diskFileId;
         diskFileId << (12345677 + archiveFile.archiveFileID);
         ASSERT_EQ(archiveFile.diskFileId,diskFileId.str());
         ASSERT_EQ(archiveFile.diskFileInfo.path,diskFilePath.str());
-        ASSERT_EQ(archiveFile.diskFileInfo.group,diskFileGroup);
-        ASSERT_EQ(archiveFile.diskFileInfo.owner,diskFileUser);
+        ASSERT_EQ(archiveFile.diskFileInfo.gid,PUBLIC_GID);
+        ASSERT_EQ(archiveFile.diskFileInfo.owner_uid,PUBLIC_OWNER_UID);
         ASSERT_EQ(archiveFile.fileSize,archiveFileSize);
         ASSERT_EQ(archiveFile.storageClass,s_storageClassName);
         std::stringstream ss;
@@ -1734,12 +1731,11 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
+  const bool readOnlyValue = false;
   const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  const std::string diskFileUser = "public_disk_user";
-  const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
@@ -1749,7 +1745,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
   catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -1758,12 +1754,9 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
 
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  const uint64_t compressedFileSize = archiveFileSize;
   
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
@@ -1781,16 +1774,15 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = diskFileUser;
-      fileWritten.diskFileGroup = diskFileGroup;
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
       fileWritten.storageClassName = s_storageClassName;
       fileWritten.vid = currentVid;
       fileWritten.fSeq = j;
       fileWritten.blockId = j * 100;
-      fileWritten.compressedSize = compressedFileSize;
+      fileWritten.size = archiveFileSize;
       fileWritten.copyNb = 1;
       fileWritten.tapeDrive = tapeDrive;
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
@@ -1803,7 +1795,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
  
     log::TimingList tl;
@@ -1974,12 +1966,11 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
+  const bool readOnlyValue = false;
   const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  const std::string diskFileUser = "public_disk_user";
-  const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
@@ -1989,11 +1980,11 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
   catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   //Create a repack destination tape
   std::string vidDestination = "vidDestination";
   catalogue.createTape(s_adminOnAdminHost,vidDestination, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, false, comment);
+    disabledValue, false, readOnlyValue, comment);
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -2002,12 +1993,9 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
 
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  const uint64_t compressedFileSize = archiveFileSize;
   
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
@@ -2025,16 +2013,15 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = diskFileUser;
-      fileWritten.diskFileGroup = diskFileGroup;
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
       fileWritten.storageClassName = s_storageClassName;
       fileWritten.vid = currentVid;
       fileWritten.fSeq = j;
       fileWritten.blockId = j * 100;
-      fileWritten.compressedSize = compressedFileSize;
+      fileWritten.size = archiveFileSize;
       fileWritten.copyNb = 1;
       fileWritten.tapeDrive = tapeDrive;
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
@@ -2047,7 +2034,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();
  
@@ -2119,7 +2106,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
     
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
@@ -2132,9 +2119,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       auto jobBatch = archiveMount->getNextJobBatch(1,archiveFileSize,lc);
       archiveJob.reset(jobBatch.front().release());
       archiveJob->tapeFile.blockId = j * 101;
-      archiveJob->tapeFile.checksumType = checksumType;
-      archiveJob->tapeFile.checksumValue = checksumValue;
-      archiveJob->tapeFile.compressedSize = compressedFileSize;
+      archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32,"1234");
+      archiveJob->tapeFile.fileSize = archiveFileSize;
       ASSERT_NE(nullptr,archiveJob.get());
       executedJobs.push_back(std::move(archiveJob));
     }
@@ -2225,12 +2211,11 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
+  const bool readOnlyValue = false;
   const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  const std::string diskFileUser = "public_disk_user";
-  const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
@@ -2240,12 +2225,12 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
   catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   //Create a repack destination tape
   std::string vidDestinationRepack = "vidDestinationRepack";
   catalogue.createTape(s_adminOnAdminHost,vidDestinationRepack, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-   disabledValue, false, comment);
+   disabledValue, false, readOnlyValue, comment);
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -2254,12 +2239,9 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
 
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  const uint64_t compressedFileSize = archiveFileSize;
   
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
@@ -2277,16 +2259,15 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = diskFileUser;
-      fileWritten.diskFileGroup = diskFileGroup;
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
       fileWritten.storageClassName = s_storageClassName;
       fileWritten.vid = currentVid;
       fileWritten.fSeq = j;
       fileWritten.blockId = j * 100;
-      fileWritten.compressedSize = compressedFileSize;
+      fileWritten.size = archiveFileSize;
       fileWritten.copyNb = 1;
       fileWritten.tapeDrive = tapeDrive;
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
@@ -2299,7 +2280,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     log::TimingList tl;
@@ -2367,7 +2348,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
     
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
@@ -2380,9 +2361,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       auto jobBatch = archiveMount->getNextJobBatch(1,archiveFileSize,lc);
       archiveJob.reset(jobBatch.front().release());
       archiveJob->tapeFile.blockId = j * 101;
-      archiveJob->tapeFile.checksumType = checksumType;
-      archiveJob->tapeFile.checksumValue = checksumValue;
-      archiveJob->tapeFile.compressedSize = compressedFileSize;
+      archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32,"1234");
+      archiveJob->tapeFile.fileSize = archiveFileSize;
       ASSERT_NE(nullptr,archiveJob.get());
       executedJobs.push_back(std::move(archiveJob));
     }
@@ -2440,7 +2420,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       std::unique_ptr<cta::TapeMount> mount;
       mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
       ASSERT_NE(nullptr, mount.get());
-      ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+      ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
       std::unique_ptr<cta::ArchiveMount> archiveMount;
       archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
       ASSERT_NE(nullptr, archiveMount.get());
@@ -2530,12 +2510,11 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
+  const bool readOnlyValue = false;
   const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  const std::string diskFileUser = "public_disk_user";
-  const std::string diskFileGroup = "public_disk_group";
   
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
@@ -2545,7 +2524,7 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
   catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -2554,12 +2533,9 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
 
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  const uint64_t compressedFileSize = archiveFileSize;
   
   //Simulate the writing of 10 files in 1 tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
@@ -2577,16 +2553,15 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = diskFileUser;
-      fileWritten.diskFileGroup = diskFileGroup;
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
       fileWritten.storageClassName = s_storageClassName;
       fileWritten.vid = currentVid;
       fileWritten.fSeq = j;
       fileWritten.blockId = j * 100;
-      fileWritten.compressedSize = compressedFileSize;
+      fileWritten.size = archiveFileSize;
       fileWritten.copyNb = 1;
       fileWritten.tapeDrive = tapeDrive;
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
@@ -2599,7 +2574,7 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   //one retrieve request
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,lc);
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     log::TimingList tl;
@@ -2650,19 +2625,18 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     diskFileInfo.path += std::to_string(i);
     cta::common::dataStructures::ArchiveRequest request;
-    request.checksumType="ADLER32";
-    request.checksumValue="1234abcd";
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
     request.creationLog=creationLog;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.diskFileID += std::to_string(i);
     request.fileSize=100*1000*1000;
-    cta::common::dataStructures::UserIdentity requester;
+    cta::common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
     request.requester = requester;
@@ -2705,10 +2679,11 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   const std::string driveName = "tape_drive";
   for (auto i:fileRange) {
     catalogue.createTape(s_adminOnAdminHost, s_vid + std::to_string(i), s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-      notDisabled, notFull, tapeComment);
+      notDisabled, notFull, notReadOnly, tapeComment);
     catalogue.tapeLabelled(s_vid + std::to_string(i), "tape_drive");    
   }
 
@@ -2738,9 +2713,8 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
       std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
       archiveJob->tapeFile.blockId = 1;
       archiveJob->tapeFile.fSeq = 1;
-      archiveJob->tapeFile.checksumType = "ADLER32";
-      archiveJob->tapeFile.checksumValue = "1234abcd";
-      archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
+      archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+      archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
       archiveJob->tapeFile.copyNb = 1;
       archiveJob->validate();
       std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
@@ -2789,8 +2763,8 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
     creationLog.time=0;
     creationLog.username="admin1";
     cta::common::dataStructures::DiskFileInfo diskFileInfo;
-    diskFileInfo.group="group2";
-    diskFileInfo.owner="cms_user";
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
     for (auto i:fileRange) {
       cta::common::dataStructures::RetrieveRequest request;

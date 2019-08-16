@@ -24,7 +24,9 @@
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/UserSpecifiedANonExistentDiskSystem.hpp"
 #include "catalogue/UserSpecifiedANonEmptyDiskSystemAfterDelete.hpp"
+#include "catalogue/UserSpecifiedANonEmptyLogicalLibrary.hpp"
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
+#include "catalogue/UserSpecifiedANonExistentLogicalLibrary.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringDiskSystemName.hpp"
@@ -781,20 +783,20 @@ bool RdbmsCatalogue::diskFilePathExists(rdbms::Conn &conn, const std::string &di
 // diskFileUserExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::diskFileUserExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  const std::string &diskFileUser) const {
+  uint32_t diskFileOwnerUid) const {
   try {
     const char *const sql =
       "SELECT "
         "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-        "DISK_FILE_USER AS DISK_FILE_USER "
+        "DISK_FILE_UID AS DISK_FILE_UID "
       "FROM "
         "ARCHIVE_FILE "
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "DISK_FILE_USER = :DISK_FILE_USER";
+        "DISK_FILE_UID = :DISK_FILE_UID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    stmt.bindString(":DISK_FILE_USER", diskFileUser);
+    stmt.bindUint64(":DISK_FILE_UID", diskFileOwnerUid);
     auto rset = stmt.executeQuery();
     return rset.next();
   } catch(exception::UserError &) {
@@ -809,20 +811,20 @@ bool RdbmsCatalogue::diskFileUserExists(rdbms::Conn &conn, const std::string &di
 // diskFileGroupExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  const std::string &diskFileGroup) const {
+  uint32_t diskFileGid) const {
   try {
     const char *const sql =
       "SELECT "
         "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-        "DISK_FILE_GROUP AS DISK_FILE_GROUP "
+        "DISK_FILE_GID AS DISK_FILE_GID "
       "FROM "
         "ARCHIVE_FILE "
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "DISK_FILE_GROUP = :DISK_FILE_GROUP";
+        "DISK_FILE_GID = :DISK_FILE_GID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    stmt.bindString(":DISK_FILE_GROUP", diskFileGroup);
+    stmt.bindUint64(":DISK_FILE_GID", diskFileGid);
     auto rset = stmt.executeQuery();
     return rset.next();
   } catch(exception::UserError &) {
@@ -1150,9 +1152,9 @@ void RdbmsCatalogue::modifyTapePoolSupply(const common::dataStructures::Security
         " string");
     }
 
-    if(supply.empty()) {
-      throw UserSpecifiedAnEmptyStringSupply("Cannot modify tape pool because the new supply value is an empty"
-        " string");
+    optional<std::string> optionalSupply;
+    if(!supply.empty()) {
+      optionalSupply = supply;
     }
 
     const time_t now = time(nullptr);
@@ -1166,7 +1168,7 @@ void RdbmsCatalogue::modifyTapePoolSupply(const common::dataStructures::Security
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":SUPPLY", supply);
+    stmt.bindOptionalString(":SUPPLY", optionalSupply);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -1587,14 +1589,28 @@ bool RdbmsCatalogue::logicalLibraryExists(rdbms::Conn &conn, const std::string &
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
   try {
-    const char *const sql = "DELETE FROM LOGICAL_LIBRARY WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+    const char *const sql =
+      "DELETE "
+      "FROM LOGICAL_LIBRARY "
+      "WHERE "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME_1 AND "
+        "NOT EXISTS (SELECT LOGICAL_LIBRARY_NAME FROM TAPE WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME_2)";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME_1", name);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME_2", name);
     stmt.executeNonQuery();
 
+    // The delete statement will effect no rows and will not raise an error if
+    // either the logical library does not exist or if it still contains tapes
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot delete logical-library ") + name + " because it does not exist");
+      if(logicalLibraryExists(conn, name)) {
+        throw UserSpecifiedANonEmptyLogicalLibrary(std::string("Cannot delete logical library ") + name +
+          " because it contains one or more tapes");
+      } else {
+        throw UserSpecifiedANonExistentLogicalLibrary(std::string("Cannot delete logical library ") + name +
+          " because it does not exist");
+      }
     }
   } catch(exception::UserError &) {
     throw;
@@ -1739,7 +1755,10 @@ void RdbmsCatalogue::createTape(
   const uint64_t capacityInBytes,
   const bool disabled,
   const bool full,
+  const bool readOnly,      
   const std::string &comment) {
+  // CTA hard code this field to FALSE
+  const bool isFromCastor = false;
   try {
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
@@ -1796,6 +1815,8 @@ void RdbmsCatalogue::createTape(
         "LAST_FSEQ,"
         "IS_DISABLED,"
         "IS_FULL,"
+        "IS_READ_ONLY,"
+        "IS_FROM_CASTOR,"
 
         "USER_COMMENT,"
 
@@ -1817,6 +1838,8 @@ void RdbmsCatalogue::createTape(
         ":LAST_FSEQ,"
         ":IS_DISABLED,"
         ":IS_FULL,"
+        ":IS_READ_ONLY,"
+        ":IS_FROM_CASTOR,"
 
         ":USER_COMMENT,"
 
@@ -1839,6 +1862,8 @@ void RdbmsCatalogue::createTape(
     stmt.bindUint64(":LAST_FSEQ", 0);
     stmt.bindBool(":IS_DISABLED", disabled);
     stmt.bindBool(":IS_FULL", full);
+    stmt.bindBool(":IS_READ_ONLY", readOnly);
+    stmt.bindBool(":IS_FROM_CASTOR", isFromCastor);
 
     stmt.bindString(":USER_COMMENT", comment);
 
@@ -2015,6 +2040,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
+        "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2024,6 +2051,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 
         "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
         "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+            
+        "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
+        "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
         "TAPE.USER_COMMENT AS USER_COMMENT,"
 
@@ -2047,7 +2077,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.vo ||
        searchCriteria.capacityInBytes ||
        searchCriteria.disabled ||
-       searchCriteria.full) {
+       searchCriteria.full ||
+       searchCriteria.readOnly) {
       sql += " WHERE ";
     }
 
@@ -2097,6 +2128,11 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " TAPE.IS_FULL = :IS_FULL";
       addedAWhereConstraint = true;
     }
+    if(searchCriteria.readOnly) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE.IS_READ_ONLY = :IS_READ_ONLY";
+      addedAWhereConstraint = true;
+    }
 
     sql += " ORDER BY TAPE.VID";
 
@@ -2111,6 +2147,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.disabled) stmt.bindBool(":IS_DISABLED", searchCriteria.disabled.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
+    if(searchCriteria.readOnly) stmt.bindBool(":IS_READ_ONLY", searchCriteria.readOnly.value());
 
     auto rset = stmt.executeQuery();
     while (rset.next()) {
@@ -2128,10 +2165,15 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.disabled = rset.columnBool("IS_DISABLED");
       tape.full = rset.columnBool("IS_FULL");
-
+      tape.readOnly = rset.columnBool("IS_READ_ONLY");
+      tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
+      
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
       tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+      
+      tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
+      tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
       tape.comment = rset.columnString("USER_COMMENT");
       tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -2173,6 +2215,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
+        "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"    
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2182,6 +2226,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
 
         "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
         "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+            
+        "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
+        "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
         "TAPE.USER_COMMENT AS USER_COMMENT,"
 
@@ -2240,10 +2287,15 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.disabled = rset.columnBool("IS_DISABLED");
       tape.full = rset.columnBool("IS_FULL");
+      tape.readOnly = rset.columnBool("IS_READ_ONLY");
+      tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
       tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+      
+      tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
+      tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
       tape.comment = rset.columnString("USER_COMMENT");
       tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -2289,6 +2341,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
+        "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"    
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2298,6 +2352,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
 
         "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
         "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+                            
+        "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
+        "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
         "TAPE.USER_COMMENT AS USER_COMMENT,"
 
@@ -2332,10 +2389,15 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.disabled = rset.columnBool("IS_DISABLED");
       tape.full = rset.columnBool("IS_FULL");
+      tape.readOnly = rset.columnBool("IS_READ_ONLY");
+      tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
       tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+      
+      tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
+      tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
       tape.comment = rset.columnString("USER_COMMENT");
       tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -2378,6 +2440,42 @@ uint64_t RdbmsCatalogue::getNbNonSupersededFilesOnTape(rdbms::Conn& conn, const 
   }
 }
 
+
+//------------------------------------------------------------------------------
+// getNbFilesOnTape
+//------------------------------------------------------------------------------
+uint64_t RdbmsCatalogue::getNbFilesOnTape(const std::string& vid) const {
+  try {
+    auto conn = m_connPool.getConn();
+    return getNbFilesOnTape(conn, vid);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+//getNbFilesOnTape
+//------------------------------------------------------------------------------
+uint64_t RdbmsCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::string& vid) const {
+  try {
+    const char *const sql = 
+    "SELECT COUNT(*) AS NB_FILES FROM TAPE_FILE "
+    "WHERE VID = :VID ";
+    
+    auto stmt = conn.createStmt(sql);
+    
+    stmt.bindString(":VID", vid);
+    auto rset = stmt.executeQuery();
+    rset.next();
+    return rset.columnUint64("NB_FILES");
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
 void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) const {
   try {
@@ -2446,6 +2544,38 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
       throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because there is at least one tape"
             " file in the catalogue that is on the tape");
     }
+  } catch (exception::UserError& ue) {
+    throw;
+  }
+  catch (exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkTapeForLabel
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::checkTapeForLabel(const std::string &vid) {
+   try{
+    auto conn = m_connPool.getConn();
+    
+    TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = vid;
+    const auto tapes = getTapes(conn, searchCriteria);
+
+    if(tapes.empty()) {
+      throw exception::UserError(std::string("Cannot label tape ") + vid + 
+                                             " because it does not exist");
+    } 
+    //The tape exists checks any files on it
+    const uint64_t nbFilesOnTape = getNbFilesOnTape(conn, vid);
+    if( 0 != nbFilesOnTape) {
+      throw exception::UserError(std::string("Cannot label tape ") + vid + 
+                                             " because it has " +
+                                             std::to_string(nbFilesOnTape) + 
+                                             " file(s)");  
+    } 
   } catch (exception::UserError& ue) {
     throw;
   }
@@ -2672,6 +2802,11 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
 void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &encryptionKey) {
   try {
+    optional<std::string> optionalEncryptionKey;
+    if(!encryptionKey.empty()) {
+      optionalEncryptionKey = encryptionKey;
+    }
+
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
@@ -2683,7 +2818,7 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":ENCRYPTION_KEY", encryptionKey);
+    stmt.bindOptionalString(":ENCRYPTION_KEY", optionalEncryptionKey);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -2705,12 +2840,13 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
 // tapeMountedForArchive
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
-  try {
+  try {  
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
         "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME = :LAST_WRITE_TIME "
+        "LAST_WRITE_TIME = :LAST_WRITE_TIME, "
+        "WRITE_MOUNT_COUNT = WRITE_MOUNT_COUNT + 1 "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
@@ -2740,7 +2876,8 @@ void RdbmsCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::s
     const char *const sql =
       "UPDATE TAPE SET "
         "LAST_READ_DRIVE = :LAST_READ_DRIVE,"
-        "LAST_READ_TIME = :LAST_READ_TIME "
+        "LAST_READ_TIME = :LAST_READ_TIME, "
+        "READ_MOUNT_COUNT = READ_MOUNT_COUNT + 1 "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
@@ -2804,6 +2941,93 @@ void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
     const char *const sql =
       "UPDATE TAPE SET "
         "IS_FULL = '1' "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if (0 == stmt.getNbAffectedRows()) {
+      throw exception::Exception(std::string("Tape ") + vid + " does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setTapeReadOnly
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setTapeReadOnly(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
+  const bool readOnlyValue) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "IS_READ_ONLY = :IS_READ_ONLY,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindBool(":IS_READ_ONLY", readOnlyValue);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setTapeReadOnlyOnError
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setTapeReadOnlyOnError(const std::string &vid) {
+  try {
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "IS_READ_ONLY = '1' "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if (0 == stmt.getNbAffectedRows()) {
+      throw exception::Exception(std::string("Tape ") + vid + " does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setTapeIsFromCastorInUnitTests
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) {
+  try {
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "IS_FROM_CASTOR = '1' "
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
@@ -4054,7 +4278,7 @@ void RdbmsCatalogue::createActivitiesFairShareWeight(const common::dataStructure
     
     const time_t now = time(nullptr);
     const char *const sql =
-      "INSERT INTO ACTIVITIES_WEIGHTS ("
+      "INSERT INTO ACTIVITIES_WEIGHTS("
         "DISK_INSTANCE_NAME,"
         "ACTIVITY,"
         "WEIGHT,"
@@ -4705,11 +4929,11 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
         "DISK_INSTANCE_NAME,"
         "DISK_FILE_ID,"
         "DISK_FILE_PATH,"
-        "DISK_FILE_USER,"
-        "DISK_FILE_GROUP,"
+        "DISK_FILE_UID,"
+        "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
-        "CHECKSUM_TYPE,"
-        "CHECKSUM_VALUE,"
+        "CHECKSUM_BLOB,"
+        "CHECKSUM_ADLER32,"
         "STORAGE_CLASS_ID,"
         "CREATION_TIME,"
         "RECONCILIATION_TIME)"
@@ -4718,11 +4942,11 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
         "DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
         ":DISK_FILE_PATH,"
-        ":DISK_FILE_USER,"
-        ":DISK_FILE_GROUP,"
+        ":DISK_FILE_UID,"
+        ":DISK_FILE_GID,"
         ":SIZE_IN_BYTES,"
-        ":CHECKSUM_TYPE,"
-        ":CHECKSUM_VALUE,"
+        ":CHECKSUM_BLOB,"
+        ":CHECKSUM_ADLER32,"
         "STORAGE_CLASS_ID,"
         ":CREATION_TIME,"
         ":RECONCILIATION_TIME "
@@ -4737,11 +4961,19 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
     stmt.bindString(":DISK_INSTANCE_NAME", row.diskInstance);
     stmt.bindString(":DISK_FILE_ID", row.diskFileId);
     stmt.bindString(":DISK_FILE_PATH", row.diskFilePath);
-    stmt.bindString(":DISK_FILE_USER", row.diskFileUser);
-    stmt.bindString(":DISK_FILE_GROUP", row.diskFileGroup);
+    stmt.bindUint64(":DISK_FILE_UID", row.diskFileOwnerUid);
+    stmt.bindUint64(":DISK_FILE_GID", row.diskFileGid);
     stmt.bindUint64(":SIZE_IN_BYTES", row.size);
-    stmt.bindString(":CHECKSUM_TYPE", row.checksumType);
-    stmt.bindString(":CHECKSUM_VALUE", row.checksumValue);
+    stmt.bindBlob  (":CHECKSUM_BLOB", row.checksumBlob.serialize());
+    // Keep transition ADLER32 checksum up-to-date if it exists
+    uint32_t adler32;
+    try {
+      std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(row.checksumBlob.at(checksum::ADLER32));
+      adler32 = strtoul(adler32hex.c_str(), 0, 16);
+    } catch(exception::ChecksumTypeMismatch &ex) {
+      adler32 = 0;
+    }
+    stmt.bindUint64(":CHECKSUM_ADLER32", adler32);
     stmt.bindString(":STORAGE_CLASS_NAME", row.storageClassName);
     stmt.bindUint64(":CREATION_TIME", now);
     stmt.bindUint64(":RECONCILIATION_TIME", now);
@@ -4769,15 +5001,15 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
     }
   }
 
-  if(searchCriteria.diskFileGroup && !searchCriteria.diskInstance) {
-    throw exception::UserError(std::string("Disk file group ") + searchCriteria.diskFileGroup.value() + " is ambiguous "
-      "without disk instance name");
+  if(searchCriteria.diskFileGid && !searchCriteria.diskInstance) {
+    throw exception::UserError(std::string("Disk file group ") + std::to_string(searchCriteria.diskFileGid.value()) +
+      " is ambiguous without disk instance name");
   }
 
-  if(searchCriteria.diskInstance && searchCriteria.diskFileGroup) {
-    if(!diskFileGroupExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileGroup.value())) {
+  if(searchCriteria.diskInstance && searchCriteria.diskFileGid) {
+    if(!diskFileGroupExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileGid.value())) {
       throw exception::UserError(std::string("Disk file group ") + searchCriteria.diskInstance.value() + "::" +
-        searchCriteria.diskFileGroup.value() + " does not exist");
+        std::to_string(searchCriteria.diskFileGid.value()) + " does not exist");
     }
   }
 
@@ -4805,15 +5037,15 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
     }
   }
 
-  if(searchCriteria.diskFileUser && !searchCriteria.diskInstance) {
-    throw exception::UserError(std::string("Disk file user ") + searchCriteria.diskFileUser.value() + " is ambiguous "
-      "without disk instance name");
+  if(searchCriteria.diskFileOwnerUid && !searchCriteria.diskInstance) {
+    throw exception::UserError(std::string("Disk file user ") + std::to_string(searchCriteria.diskFileOwnerUid.value()) +
+      " is ambiguous without disk instance name");
   }
 
-  if(searchCriteria.diskInstance && searchCriteria.diskFileUser) {
-    if(!diskFileUserExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileUser.value())) {
+  if(searchCriteria.diskInstance && searchCriteria.diskFileOwnerUid) {
+    if(!diskFileUserExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileOwnerUid.value())) {
       throw exception::UserError(std::string("Disk file user ") + searchCriteria.diskInstance.value() + "::" +
-        searchCriteria.diskFileUser.value() + " does not exist");
+        std::to_string(searchCriteria.diskFileOwnerUid.value()) + " does not exist");
     }
   }
 
@@ -4874,18 +5106,18 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -4919,11 +5151,10 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
       archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
       archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-      archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-      archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+      archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+      archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
       archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-      archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
-      archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
+      archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
       archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
       archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
       archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -4932,11 +5163,10 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       tapeFile.vid = rset.columnString("VID");
       tapeFile.fSeq = rset.columnUint64("FSEQ");
       tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-      tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+      tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
-      tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
+      tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
       if (!rset.columnIsNull("SSBY_VID")) {
         tapeFile.supersededByVid = rset.columnString("SSBY_VID");
         tapeFile.supersededByFSeq = rset.columnUint64("SSBY_VID");
@@ -4981,7 +5211,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     std::string sql =
       "SELECT "
         "COALESCE(SUM(ARCHIVE_FILE.SIZE_IN_BYTES), 0) AS TOTAL_BYTES,"
-        "COALESCE(SUM(TAPE_FILE.COMPRESSED_SIZE_IN_BYTES), 0) AS TOTAL_COMPRESSED_BYTES,"
         "COUNT(ARCHIVE_FILE.ARCHIVE_FILE_ID) AS TOTAL_FILES "
       "FROM "
         "ARCHIVE_FILE "
@@ -4997,8 +5226,8 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       searchCriteria.diskInstance   ||
       searchCriteria.diskFileId     ||
       searchCriteria.diskFilePath   ||
-      searchCriteria.diskFileUser   ||
-      searchCriteria.diskFileGroup  ||
+      searchCriteria.diskFileOwnerUid   ||
+      searchCriteria.diskFileGid  ||
       searchCriteria.storageClass   ||
       searchCriteria.vid            ||
       searchCriteria.tapeFileCopyNb ||
@@ -5027,14 +5256,14 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       sql += "ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.diskFileUser) {
+    if(searchCriteria.diskFileOwnerUid) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_USER = :DISK_FILE_USER";
+      sql += "ARCHIVE_FILE.DISK_FILE_UID = :DISK_FILE_UID";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.diskFileGroup) {
+    if(searchCriteria.diskFileGid) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_GROUP = :DISK_FILE_GROUP";
+      sql += "ARCHIVE_FILE.DISK_FILE_GID = :DISK_FILE_GID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.storageClass) {
@@ -5071,11 +5300,11 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     if(searchCriteria.diskFilePath) {
       stmt.bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
     }
-    if(searchCriteria.diskFileUser) {
-      stmt.bindString(":DISK_FILE_USER", searchCriteria.diskFileUser.value());
+    if(searchCriteria.diskFileOwnerUid) {
+      stmt.bindUint64(":DISK_FILE_UID", searchCriteria.diskFileOwnerUid.value());
     }
-    if(searchCriteria.diskFileGroup) {
-      stmt.bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup.value());
+    if(searchCriteria.diskFileGid) {
+      stmt.bindUint64(":DISK_FILE_GID", searchCriteria.diskFileGid.value());
     }
     if(searchCriteria.storageClass) {
       stmt.bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());
@@ -5096,7 +5325,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
 
     common::dataStructures::ArchiveFileSummary summary;
     summary.totalBytes = rset.columnUint64("TOTAL_BYTES");
-    summary.totalCompressedBytes = rset.columnUint64("TOTAL_COMPRESSED_BYTES");
     summary.totalFiles = rset.columnUint64("TOTAL_FILES");
     return summary;
   } catch(exception::UserError &) {
@@ -5165,7 +5393,7 @@ void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &dri
 // checkAndGetNextArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskInstanceName,
-  const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
+  const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user) {
   try {
     const auto storageClass = StorageClass(diskInstanceName, storageClassName);
     const auto copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass);
@@ -5218,7 +5446,7 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQueueCriteria(
   const std::string &diskInstanceName,
-  const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
+  const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user) {
   try {
     const StorageClass storageClass = StorageClass(diskInstanceName, storageClassName);
     const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass);
@@ -5407,7 +5635,7 @@ void RdbmsCatalogue::updateTape(
 common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(
   const std::string &diskInstanceName,
   const uint64_t archiveFileId,
-  const common::dataStructures::UserIdentity &user,
+  const common::dataStructures::RequesterIdentity &user,
   const optional<std::string>& activity,
   log::LogContext &lc) {
   try {
@@ -5658,6 +5886,8 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
 //      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
         "IS_DISABLED = '0' AND "
         "IS_FULL = '0' AND "
+        "IS_READ_ONLY = '0' AND "
+        "IS_FROM_CASTOR = '0' AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
 
     auto conn = m_connPool.getConn();
@@ -5702,7 +5932,7 @@ void RdbmsCatalogue::insertTapeFile(
           "VID,"
           "FSEQ,"
           "BLOCK_ID,"
-          "COMPRESSED_SIZE_IN_BYTES,"
+          "LOGICAL_SIZE_IN_BYTES,"
           "COPY_NB,"
           "CREATION_TIME,"
           "ARCHIVE_FILE_ID)"
@@ -5710,7 +5940,7 @@ void RdbmsCatalogue::insertTapeFile(
           ":VID,"
           ":FSEQ,"
           ":BLOCK_ID,"
-          ":COMPRESSED_SIZE_IN_BYTES,"
+          ":LOGICAL_SIZE_IN_BYTES,"
           ":COPY_NB,"
           ":CREATION_TIME,"
           ":ARCHIVE_FILE_ID)";
@@ -5719,7 +5949,7 @@ void RdbmsCatalogue::insertTapeFile(
       stmt.bindString(":VID", tapeFile.vid);
       stmt.bindUint64(":FSEQ", tapeFile.fSeq);
       stmt.bindUint64(":BLOCK_ID", tapeFile.blockId);
-      stmt.bindUint64(":COMPRESSED_SIZE_IN_BYTES", tapeFile.compressedSize);
+      stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES", tapeFile.fileSize);
       stmt.bindUint64(":COPY_NB", tapeFile.copyNb);
       stmt.bindUint64(":CREATION_TIME", now);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
@@ -5825,18 +6055,18 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -5863,11 +6093,10 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+        archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
+        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5880,11 +6109,10 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!rset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = rset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
@@ -5915,18 +6143,18 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -5956,11 +6184,10 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+        archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
+        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -5973,11 +6200,10 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!rset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = rset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
@@ -6062,18 +6288,18 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -6102,11 +6328,10 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+        archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
+        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -6119,11 +6344,10 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!rset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = rset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
@@ -6156,18 +6380,18 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -6199,11 +6423,10 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+        archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
+        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -6216,11 +6439,10 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.vid = rset.columnString("VID");
         tapeFile.fSeq = rset.columnUint64("FSEQ");
         tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!rset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = rset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
@@ -6305,16 +6527,15 @@ void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &calling
     if(event.diskInstance.empty()) throw exception::Exception("diskInstance is an empty string");
     if(event.diskFileId.empty()) throw exception::Exception("diskFileId is an empty string");
     if(event.diskFilePath.empty()) throw exception::Exception("diskFilePath is an empty string");
-    if(event.diskFileUser.empty()) throw exception::Exception("diskFileUser is an empty string");
-    if(event.diskFileGroup.empty()) throw exception::Exception("diskFileGroup is an empty string");
+    if(0 == event.diskFileOwnerUid) throw exception::Exception("diskFileOwnerUid is 0");
+    if(0 == event.diskFileGid) throw exception::Exception("diskFileGid is 0");
     if(0 == event.size) throw exception::Exception("size is 0");
-    if(event.checksumType.empty()) throw exception::Exception("checksumType is an empty string");
-    if(event.checksumValue.empty()) throw exception::Exception("checksumValue is an empty string");
+    if(event.checksumBlob.length() == 0) throw exception::Exception("checksumBlob is an empty string");
     if(event.storageClassName.empty()) throw exception::Exception("storageClassName is an empty string");
     if(event.vid.empty()) throw exception::Exception("vid is an empty string");
     if(0 == event.fSeq) throw exception::Exception("fSeq is 0");
     if(0 == event.blockId && event.fSeq != 1) throw exception::Exception("blockId is 0 and fSeq is not 1");
-    if(0 == event.compressedSize) throw exception::Exception("compressedSize is 0");
+    if(0 == event.size) throw exception::Exception("size is 0");
     if(0 == event.copyNb) throw exception::Exception("copyNb is 0");
     if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
   } catch (exception::Exception &ex) {

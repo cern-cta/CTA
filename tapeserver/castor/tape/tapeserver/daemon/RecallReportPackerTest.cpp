@@ -66,7 +66,8 @@ protected:
   };
 
 TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerNominal) {
-  cta::MockRetrieveMount retrieveMount;
+  auto catalogue = cta::catalogue::DummyCatalogue();
+  cta::MockRetrieveMount retrieveMount(catalogue);
 
 
   
@@ -111,7 +112,8 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
 }
 
 TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
-  cta::MockRetrieveMount retrieveMount;
+  auto catalogue = cta::catalogue::DummyCatalogue();
+  cta::MockRetrieveMount retrieveMount(catalogue);
 
   ::testing::InSequence dummy;
   std::unique_ptr<cta::RetrieveJob> job1;

@@ -96,6 +96,12 @@ namespace cta {
      * Report a tape session statistics
      */
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+    
+    /**
+     * Report a tape mounted event
+     * @param logContext
+     */ 
+    void setTapeMounted(log::LogContext &logContext) const override;
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     

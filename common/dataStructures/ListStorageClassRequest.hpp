@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
 
 namespace cta {
 namespace common {
@@ -40,7 +40,7 @@ struct ListStorageClassRequest {
 
   bool operator!=(const ListStorageClassRequest &rhs) const;
 
-  UserIdentity requester;
+  RequesterIdentity requester;
 
 }; // struct ListStorageClassRequest
 

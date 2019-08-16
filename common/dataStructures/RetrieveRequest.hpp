@@ -25,7 +25,7 @@
 
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "LifecycleTimings.hpp"
 #include "common/optional.hpp"
@@ -45,7 +45,7 @@ struct RetrieveRequest {
 
   bool operator!=(const RetrieveRequest &rhs) const;
 
-  UserIdentity requester;
+  RequesterIdentity requester;
   uint64_t archiveFileID;
   std::string dstURL;
   std::string errorReportURL;

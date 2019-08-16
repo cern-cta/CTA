@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/checksum/Checksum.hpp"
+#include "common/checksum/ChecksumBlob.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -69,14 +69,14 @@ struct ArchiveFileRow {
   std::string diskFilePath;
 
   /**
-   * The user name of the source disk file within its host disk system.
+   * The user ID of the owner of the source disk file within its host disk system.
    */
-  std::string diskFileUser;
+  uint32_t diskFileOwnerUid;
 
   /**
-   * The group name of the source disk file within its host disk system.
+   * The group ID of the source disk file within its host disk system.
    */
-  std::string diskFileGroup;
+  uint32_t diskFileGid;
 
   /**
    * The uncompressed size of the tape file in bytes.
@@ -84,15 +84,10 @@ struct ArchiveFileRow {
   uint64_t size;
   
   /**
-   * Checksum type of the tape file content
+   * Set of checksum types and values
    */
-  std::string checksumType;
+  checksum::ChecksumBlob checksumBlob;
   
-  /**
-   * Checksum value of the file type content
-   */
-  std::string checksumValue;
-
   /**
    * The name of the file's storage class.
    */

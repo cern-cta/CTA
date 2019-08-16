@@ -28,7 +28,7 @@
 
 /**
  * Plan => Garbage collector keeps track of the agents.
- * If an agent is declared dead => tape ownership of owned objects
+ * If an agent is declared dead => take ownership of owned objects
  * Using the backup owner, re-post the objet to the container.
  * All containers will have a "repost" method, which is more thorough 
  * (and expensive) than the usual one. It can for example prevent double posting.
@@ -56,8 +56,10 @@ public:
   /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
     * one batch per queue. */
   struct OwnedObjectSorter {
-    std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
-    std::map<std::tuple<std::string, JobQueueType>, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
+    //tuple[0] = containerIdentifier (tapepool or Repack Request's address), tuple[1]=jobQueueType, tuple[2]=tapepoolOfTheJob
+    std::map<std::tuple<std::string, JobQueueType ,std::string>, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
+    //tuple[0] = containerIdentifier (vid or Repack Request's address), tuple[1]=jobQueueType, tuple[2]=vidOfTheJob
+    std::map<std::tuple<std::string, JobQueueType,std::string>, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
     std::list<std::shared_ptr<GenericObject>> otherObjects;
     //Sorter m_sorter;
     /// Fill up the fetchedObjects with objects of interest.
@@ -74,6 +76,16 @@ public:
     void lockFetchAndUpdateOtherObjects(Agent & agent, AgentReference & agentReference, Backend & objectStore,
         cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
     //Sorter& getSorter();
+    
+  private:
+    std::string dispatchArchiveAlgorithms(std::list<std::shared_ptr<ArchiveRequest>> &jobs,const JobQueueType& jobQueueType, const std::string& containerIdentifier,
+        const std::string& tapepool,std::set<std::string> & jobsIndividuallyGCed, 
+        Agent& agent, AgentReference& agentReference, Backend & objectstore, log::LogContext &lc);
+    
+    template<typename ArchiveSpecificQueue>
+    void executeArchiveAlgorithm(std::list<std::shared_ptr<ArchiveRequest>> &jobs,std::string &queueAddress, const std::string& containerIdentifier, const std::string& tapepool, 
+        std::set<std::string> & jobsIndividuallyGCed, Agent& agent, AgentReference& agentReference, 
+        Backend &objectStore, log::LogContext& lc);
   };
   
 private:
@@ -82,7 +94,6 @@ private:
   AgentReference & m_ourAgentReference;
   AgentRegister m_agentRegister;
   std::map<std::string, AgentWatchdog * > m_watchedAgents;
-  //void garbageCollectArchiveRequests(Agent& agent, OwnedObjectSorter &ownedObjectSorter,log::LogContext & lc);
 };
   
 }}

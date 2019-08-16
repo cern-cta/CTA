@@ -23,7 +23,6 @@ TAPEAWAREGC=0
 
 NB_BATCH_PROCS=500  # number of parallel batch processes
 BATCH_SIZE=20    # number of files per batch process
-GC_MINFREEBYTES=2000000000000000000 # value for space.tapeawaregc.minfreebytes initially (for default space). Set if TAPEAWAREGC=1
 
 SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
@@ -126,13 +125,7 @@ fi
 
 if [[ $TAPEAWAREGC == 1 ]]; then
     echo "Enabling tape aware garbage collector"
-    ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.tapeawaregc.minfreebytes=${GC_MINFREEBYTES} || die "Could not set space.tapeawaregc.minfreebytes to ${GC_MINFREEBYTES}"
     ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=off || die "Could not disable filearchivedgc"
-else
-    echo "Enabling file archived garbage collector"
-    # no ssh for CI
-    #ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.tapeawaregc.minfreebytes=0 || die "Could not set space.tapeawaregc.minfreebytes to 0"
-    #ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=on || die "Could not enable filearchivedgc"
 fi
 
 EOS_DIR=''
@@ -257,14 +250,6 @@ sleep 10
 echo "###"
 
 
-if [[ $TAPEAWAREGC == 1 ]]; then
-    echo "Disabling file tape aware garbage collector"
-    ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.tapeawaregc.minfreebytes=0 || die "Could not set space.tapeawaregc.minfreebytes to 0"
-    # we do not need it for retrieves
-    # ssh ${SSH_OPTIONS} -l root ${EOSINSTANCE} eos space config default space.filearchivedgc=on || die "Could not enable filearchivedgc"
-fi
-
-
 echo "$(date +%s): Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 
 rm -f ${STATUS_FILE}
@@ -331,9 +316,9 @@ done
 
 TO_STAGERRM=$(cat ${STATUS_FILE} | wc -l)
 
-echo "$(date +%s): $TO_STAGERRM files to be stagerrm'ed from EOS"
+echo "$(date +%s): $TO_STAGERRM files to be stagerrm'ed from EOS using 'xrdfs prepare -e'"
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 eos root://${EOSINSTANCE} stagerrm   > /dev/null
+cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOSINSTANCE} prepare -e > /dev/null
 
 
 LEFTOVER=0
@@ -342,7 +327,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 
 STAGERRMED=$((${TO_STAGERRM}-${LEFTOVER}))
-echo "$(date +%s): $STAGERRMED files stagerrmed from EOS"
+echo "$(date +%s): $STAGERRMED files stagerrmed from EOS 'xrdfs prepare -e'"
 
 LASTCOUNT=${STAGERRMED}
 

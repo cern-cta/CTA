@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/checksum/Checksum.hpp"
+#include "common/checksum/ChecksumBlob.hpp"
 #include "TapeItemWritten.hpp"
 
 #include <string>
@@ -71,12 +71,12 @@ struct TapeFileWritten: public TapeItemWritten {
   /**
    * The user name of the source disk file within its host disk system.
    */
-  std::string diskFileUser;
+  uint32_t diskFileOwnerUid;
 
   /**
    * The group name of the source disk file within its host disk system.
    */
-  std::string diskFileGroup;
+  uint32_t diskFileGid;
 
   /**
    * The uncompressed size of the tape file in bytes.
@@ -84,15 +84,10 @@ struct TapeFileWritten: public TapeItemWritten {
   uint64_t size;
 
   /**
-   * Checksum type for the tape file contents.
+   * Set of checksum types and values
    */
-  std::string checksumType;
+  checksum::ChecksumBlob checksumBlob;
 
-  /**
-   * Checksum value for the tape file contents.
-   */
-  std::string checksumValue;
-  
   /**
    * The name of the file's storage class.
    */
@@ -103,12 +98,6 @@ struct TapeFileWritten: public TapeItemWritten {
    * identifier.
    */
   uint64_t blockId;
-
-  /**
-   * The compressed size of the tape file in bytes.  In other words the actual
-   * number of bytes it occupies on tape.
-   */
-  uint64_t compressedSize;
 
   /**
    * The copy number of the tape file.

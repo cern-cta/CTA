@@ -1,0 +1,47 @@
+.\" The CERN Tape Archive (CTA) project
+.\" Copyright (C) 2015  CERN
+.\"
+.\" This program is free software: you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation, either version 3 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.TH CTA-TAPE-LABEL 1CTA "July 2019" CTA CTA
+.SH NAME
+cta-tape-label \- Pre-label a CTA tape
+.SH SYNOPSIS
+.BI "cta-tape-label [options] --vid/-v VID"
+
+.SH DESCRIPTION
+\fBcta-tape-label\fP is a command-line tool for pre-labelling a CTA tape.
+
+\fBcta-tape-label\fP writes CTA label to the tape with specified \fBVID\fP. 
+.SH OPTIONS
+.TP
+\fB\-o, \-\-oldlabel
+Volume ID from the tape label if the tape non-blank. Needs to be set if the tape has any vid in the label differ from VID.
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
+.TP
+\fB\-d, \-\-debug
+Prints more logs for label operations.
+.TP
+\fB\-f, \-\-force
+Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually.
+.SH RETURN VALUE
+Zero on success and non-zero on failure.
+.SH EXAMPLES
+cta-tape-label --vid I54321 --oldvid T12345 --debug
+.br
+cta-tape-label --vid L54321 --force
+
+.SH AUTHOR
+\fBCTA\fP Team

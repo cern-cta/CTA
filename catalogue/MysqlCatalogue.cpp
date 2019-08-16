@@ -17,9 +17,6 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/ChecksumTypeMismatch.hpp"
-#include "catalogue/ChecksumValueMismatch.hpp"
-#include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/MysqlCatalogueSchema.hpp"
 #include "catalogue/MysqlCatalogue.hpp"
 #include "common/exception/DatabaseConstraintError.hpp"
@@ -156,6 +153,8 @@ common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &co
       "LAST_FSEQ AS LAST_FSEQ,"
       "IS_DISABLED AS IS_DISABLED,"
       "IS_FULL AS IS_FULL,"
+      "IS_READ_ONLY AS IS_READ_ONLY,"
+      "IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
       "LABEL_DRIVE AS LABEL_DRIVE,"
       "LABEL_TIME AS LABEL_TIME,"
@@ -198,6 +197,8 @@ common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &co
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
     tape.disabled = rset.columnBool("IS_DISABLED");
     tape.full = rset.columnBool("IS_FULL");
+    tape.readOnly = rset.columnBool("IS_READ_ONLY");
+    tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
     tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
     tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -205,8 +206,7 @@ common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &co
 
     tape.comment = rset.columnString("USER_COMMENT");
 
-    common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = rset.columnString("CREATION_LOG_USER_NAME");
+    // std::string creatorUIname = rset.columnString("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
     creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -215,8 +215,7 @@ common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &co
 
     tape.creationLog = creationLog;
 
-    common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = rset.columnString("LAST_UPDATE_USER_NAME");
+    // std::string updaterUIname = rset.columnString("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
     updateLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
@@ -254,7 +253,7 @@ void MysqlCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &
 
     const auto tape = selectTapeForUpdate(conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
-    uint64_t totalCompressedBytesWritten = 0;
+    uint64_t totalLogicalBytesWritten = 0;
 
     for(const auto &eventP: events) {
       const auto & event = *eventP;
@@ -265,7 +264,7 @@ void MysqlCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &
       }
 
       if(expectedFSeq != event.fSeq) {
-        exception::Exception ex;
+        exception::TapeFseqMismatch ex;
         ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
           firstEvent.fSeq;
         throw ex;
@@ -276,14 +275,14 @@ void MysqlCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event); 
-        totalCompressedBytesWritten += fileEvent.compressedSize;
+        totalLogicalBytesWritten += fileEvent.size;
       } catch (std::bad_cast&) {}
     }
 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten, lastEvent.tapeDrive);
+    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten, lastEvent.tapeDrive);
 
     for(const auto &event : events) {
       try {
@@ -316,17 +315,14 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
       row.diskFileId = event.diskFileId;
       row.diskInstance = event.diskInstance;
       row.size = event.size;
-      row.checksumType = event.checksumType;
-      row.checksumValue = event.checksumValue;
+      row.checksumBlob = event.checksumBlob;
       row.storageClassName = event.storageClassName;
       row.diskFilePath = event.diskFilePath;
-      row.diskFileUser = event.diskFileUser;
-      row.diskFileGroup = event.diskFileGroup;
+      row.diskFileOwnerUid = event.diskFileOwnerUid;
+      row.diskFileGid = event.diskFileGid;
       insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error
-    } catch(...) {
-      throw;
     }
 
     const time_t now = time(nullptr);
@@ -350,26 +346,14 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
       throw ex;
     }
 
-    if(archiveFile->checksumType != event.checksumType) {
-      catalogue::ChecksumTypeMismatch ex;
-      ex.getMessage() << "Checksum type mismatch: expected=" << archiveFile->checksumType << ", actual=" <<
-        event.checksumType << ": " << fileContext.str();
-      throw ex;
-    }
-
-    if(archiveFile->checksumValue != event.checksumValue) {
-      catalogue::ChecksumValueMismatch ex;
-      ex.getMessage() << "Checksum value mismatch: expected=" << archiveFile->checksumValue << ", actual=" <<
-        event.checksumValue << ": " << fileContext.str();
-      throw ex;
-    }
+    archiveFile->checksumBlob.validate(event.checksumBlob);
 
     // Insert the tape file
     common::dataStructures::TapeFile tapeFile;
     tapeFile.vid            = event.vid;
     tapeFile.fSeq           = event.fSeq;
     tapeFile.blockId        = event.blockId;
-    tapeFile.compressedSize = event.compressedSize;
+    tapeFile.fileSize       = event.size;
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
     insertTapeFile(conn, tapeFile, event.archiveFileId);
@@ -393,18 +377,18 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
@@ -437,11 +421,10 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
         archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = selectRset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = selectRset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
+        archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");
+        archiveFile->checksumBlob.deserializeOrSetAdler32(selectRset.columnBlob("CHECKSUM_BLOB"), selectRset.columnUint64("CHECKSUM_ADLER32"));
         archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
         archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
         archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");
@@ -454,15 +437,14 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         tapeFile.vid = selectRset.columnString("VID");
         tapeFile.fSeq = selectRset.columnUint64("FSEQ");
         tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.fileSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         if (!selectRset.columnIsNull("SSBY_VID")) {
           tapeFile.supersededByVid = selectRset.columnString("SSBY_VID");
           tapeFile.supersededByFSeq = selectRset.columnUint64("SSBY_FSEQ");
         }
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
 
         archiveFile->tapeFiles.push_back(tapeFile);
       }
@@ -482,11 +464,10 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
          .add("requestDiskInstance", diskInstanceName)
          .add("diskFileId", archiveFile->diskFileId)
          .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-         .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-         .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+         .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+         .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
-         .add("checksumType", archiveFile->checksumType)
-         .add("checksumValue", archiveFile->checksumValue)
+         .add("checksumBlob", archiveFile->checksumBlob)
          .add("creationTime", std::to_string(archiveFile->creationTime))
          .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
          .add("storageClass", archiveFile->storageClass)
@@ -500,9 +481,8 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
           << " fSeq: " << it->fSeq
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
-          << " compressedSize: " << it->compressedSize
-          << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-          << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+          << " fileSize: " << it->fileSize
+          << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
           << " supersededByVid: " << it->supersededByVid
           << " supersededByFSeq: " << it->supersededByFSeq;
@@ -547,11 +527,10 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
        .add("diskInstance", archiveFile->diskInstance)
        .add("diskFileId", archiveFile->diskFileId)
        .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+       .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+       .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumType", archiveFile->checksumType)
-       .add("checksumValue", archiveFile->checksumValue)
+       .add("checksumBlob", archiveFile->checksumBlob)
        .add("creationTime", std::to_string(archiveFile->creationTime))
        .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
        .add("storageClass", archiveFile->storageClass)
@@ -568,9 +547,8 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         << " fSeq: " << it->fSeq
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
-        << " compressedSize: " << it->compressedSize
-        << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+        << " fileSize: " << it->fileSize
+        << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
         << " supersededByVid: " << it->supersededByVid
         << " supersededByFSeq: " << it->supersededByFSeq;

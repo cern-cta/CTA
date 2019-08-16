@@ -73,6 +73,20 @@ bool PostgresRset::columnIsNull(const std::string &colName) const {
   return PQgetisnull(m_resItr->get(), 0, ifield);
 }
 
+std::string PostgresRset::columnBlob(const std::string &colName) const {
+  auto blob = columnOptionalString(colName);
+  if(blob) {
+    size_t blob_len;
+    unsigned char *blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
+    if(blob_ptr != nullptr) {
+      std::string blob_str(reinterpret_cast<const char*>(blob_ptr), blob_len);
+      PQfreemem(blob_ptr);
+      return blob_str;
+    }
+  }
+  return std::string();
+}
+
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------

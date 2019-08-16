@@ -108,8 +108,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
         job.tapePool                 = j.tapePool;
         job.copyNumber               = j.copyNb;
         job.archiveFileID            = osar.first.getArchiveFile().archiveFileID;
-        job.request.checksumType     = osar.first.getArchiveFile().checksumType;
-        job.request.checksumValue    = osar.first.getArchiveFile().checksumValue;
+        job.request.checksumBlob     = osar.first.getArchiveFile().checksumBlob;
         job.request.creationLog      = osar.first.getEntryLog();
         job.request.diskFileID       = osar.first.getArchiveFile().diskFileId;
         job.request.diskFileInfo     = osar.first.getArchiveFile().diskFileInfo;

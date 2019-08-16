@@ -65,8 +65,8 @@ message GenericObject {
 // ===========================  Root Entry =====================================
 // The objects making up the root entry.
 
-// A user information record
-message UserIdentity {
+// User information record for requesters
+message RequesterIdentity {
   required string name = 10;
   required string group = 11;
 }
@@ -178,17 +178,20 @@ message TapeFile {
   required string vid = 9120;
   required uint64 fseq = 9121;
   required uint64 blockid = 9122;
-  required uint64 compressedsize = 9123;
+  required uint64 filesize = 9123;
   required uint32 copynb = 9124;
   required uint64 creationtime = 9125;
-  required string checksumtype = 9126;
-  required string checksumvalue = 9127;
+  //required string checksumtype = 9126;     DEPRECATED
+  //required string checksumvalue = 9127;    DEPRECATED
+  required bytes checksumblob = 9128;
 }
 
 message DiskFileInfo {
-  required bytes recoveryblob = 8900;
-  required string group = 8910;
-  required string owner = 8930;
+  //required bytes recoveryblob = 8900;      DEPRECATED
+  //required string group = 8910;            DEPRECATED
+  //required string owner = 8930;            DEPRECATED
+  required uint32 owner_uid = 8920;
+  required uint32 gid = 8925;
   required string path = 8940;
 }
 
@@ -198,8 +201,9 @@ message ArchiveFile {
   required string diskfileid = 4353;
   required string diskinstance= 4354;
   required DiskFileInfo diskfileinfo= 4355;
-  required string checksumtype = 4356;
-  required string checksumvalue = 4357;
+  //required string checksumtype = 4356;     DEPRECATED
+  //required string checksumvalue = 4357;    DEPRECATED
+  required bytes checksumblob = 4362;
   required uint64 creationtime = 4358;
   repeated TapeFile tapefiles = 4359;
   required uint64 reconciliationtime = 4360;
@@ -330,8 +334,9 @@ message ArchiveRequestRepackInfo {
 message ArchiveRequest {
   required uint64 archivefileid = 8990;
   required MountPolicy mountpolicy = 8995;
-  required string checksumtype = 9000;
-  required string checksumvalue = 9010;
+  //required string checksumtype = 9000;     DEPRECATED
+  //required string checksumvalue = 9010;    DEPRECATED
+  required bytes checksumblob = 9011;
   required uint64 creationtime = 9015;
   required uint64 reconcilationtime = 9017;
   required DiskFileInfo diskfileinfo = 9040;
@@ -340,7 +345,7 @@ message ArchiveRequest {
   required string archivereporturl = 9057;
   required string archiveerrorreporturl = 9058;
   required uint64 filesize = 9060;
-  required UserIdentity requester = 9070;
+  required RequesterIdentity requester = 9070;
   required string srcurl = 9080;
   required string storageclass = 9090;
   required EntryLog creationlog = 9091;
@@ -368,7 +373,7 @@ enum RetrieveJobStatus {
 }
 
 message SchedulerRetrieveRequest {
-  required UserIdentity requester = 9100;
+  required RequesterIdentity requester = 9100;
   required uint64 ArchiveFileId = 9101;
   required string dstURL = 9102;
   required DiskFileInfo diskfileinfo = 9103;
@@ -576,6 +581,7 @@ message RepackRequest {
   required uint64 archivedbytes = 11510;
   required uint64 failedtoretrievefiles = 11520;
   required uint64 failedtoretrievebytes = 11530;
+  required uint64 failedtocreatearchivereq = 11535;
   required uint64 failedtoarchivefiles = 11540;
   required uint64 failedtoarchivebytes = 11550;
   required uint64 lastexpandedfseq = 11560;
@@ -584,6 +590,7 @@ message RepackRequest {
   //the expansion of the RepackRequest is done or not
   required bool is_expand_finished = 11561;
   required bool is_expand_started = 11562;
+  required MountPolicy mount_policy = 11563;
   repeated RepackSubRequestPointer subrequests = 11570;
 }
 

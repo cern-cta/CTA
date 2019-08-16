@@ -9,12 +9,17 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable eos-citrine
 
   # Install missing RPMs
-  yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate
+  yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
 
   ## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
   # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
   # yum -y install eos-protobuf3
 fi
+
+# Check that the /usr/bin/cta-fst-gcd executable has been installed
+test -e /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd EXISTS" || exit 1
+test -f /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd IS A REGULAR FILE" || exit 1
+test -x /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd IS EXECUTABLE" || exit 1
 
 # create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure
 groupadd --gid 1100 eosusers
@@ -124,6 +129,11 @@ echo
 echo "Limits summary for user daemon:"
 sudo -u daemon bash -c 'ulimit -a'
 
+NB_STARTED_CTA_FST_GCD=0
+if test -f /var/log/eos/fst/cta-fst-gcd.log; then
+  NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
+fi
+
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # generate eos_env file for systemd
   cat /etc/sysconfig/eos | sed -e 's/^export\s*//' > /etc/sysconfig/eos_env
@@ -140,6 +150,8 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
 
   systemctl status eos@{mq,mgm,fst}
 
+  systemctl start cta-fst-gcd
+
 else
   # Using jemalloc as specified in
   # it-puppet-module-eos:
@@ -155,6 +167,27 @@ else
     /usr/bin/xrootd -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
     /usr/bin/xrootd -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
     /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
+
+
+  runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
+fi
+
+echo "Giving cta-fst-gcd 1 second to start logging"
+sleep 1
+
+let EXPECTED_NB_STARTED_CTA_FST_GCD=NB_STARTED_CTA_FST_GCD+1
+ACTUAL_NB_STARTED_CTA_FST_GCD=0
+if test -f /var/log/eos/fst/cta-fst-gcd.log; then
+  ACTUAL_NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
+else
+  echo "/usr/bin/cta-fst-gcd DOES NOT EXIST"
+  exit 1
+fi
+if test ${EXPECTED_NB_STARTED_CTA_FST_GCD} = ${ACTUAL_NB_STARTED_CTA_FST_GCD}; then
+  echo "/usr/bin/cta-fst-gcd LOGGED 'cta-fst-gcd started'"
+else
+  echo "/usr/bin/cta-fst-gcd DID NOT LOG 'cta-fst-gcd started'"
+  exit 1
 fi
 
   eos vid enable krb5
@@ -174,8 +207,7 @@ fi
   eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
   eos mkdir ${CTA_PROC_DIR}
   eos mkdir ${CTA_WF_DIR}
-  eos attr set CTA_TapeFsId=${TAPE_FS_ID} ${CTA_WF_DIR}
-  
+
   # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
   # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
   # this is achieved through the ACLs.
@@ -186,10 +218,6 @@ fi
 
   eos attr set CTA_StorageClass=ctaStorageClass ${CTA_TEST_DIR}
     
-  # hack before it is fixed in EOS
-    TAPE_FS_ID_TOSET=`eos attr ls ${CTA_WF_DIR} | grep CTA_TapeFsId= | tr '"' ' ' | cut -d ' ' -f 2`
-    eos attr set CTA_TapeFsId=${TAPE_FS_ID_TOSET} ${CTA_TEST_DIR}
-
   # Link the attributes of CTA worklow directory to the test directory
   eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR}
 
@@ -237,8 +265,6 @@ fi
 # prepare EOS garbage collectors
   # enable the 'file archived' garbage collector
   eos space config default space.filearchivedgc=on
-  # set the number of free bytes at which the MGM LRU tape aware garabge collector will start deleting redundant disk files
-  eos space config default space.tapeawaregc.minfreebytes=0
 
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh

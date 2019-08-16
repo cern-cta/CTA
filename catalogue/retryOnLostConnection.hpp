@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include "catalogue/ChecksumTypeMismatch.hpp"
-#include "catalogue/ChecksumValueMismatch.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
+//#include "common/checksum/ChecksumTypeMismatch.hpp"
+//#include "common/checksum/ChecksumValueMismatch.hpp"
 #include "common/log/Logger.hpp"
 
 #include <list>

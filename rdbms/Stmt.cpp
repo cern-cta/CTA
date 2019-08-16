@@ -175,6 +175,17 @@ void Stmt::bindOptionalBool(const std::string &paramName, const optional<bool> &
 //-----------------------------------------------------------------------------
 // bindString
 //-----------------------------------------------------------------------------
+void Stmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
+  if(nullptr != m_stmt) {
+    return m_stmt->bindBlob(paramName, paramValue);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Stmt does not contain a cached statement");
+  }
+}
+
+//-----------------------------------------------------------------------------
+// bindString
+//-----------------------------------------------------------------------------
 void Stmt::bindString(const std::string &paramName, const std::string &paramValue) {
   if(nullptr != m_stmt) {
     return m_stmt->bindString(paramName, paramValue);

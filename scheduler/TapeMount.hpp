@@ -21,6 +21,7 @@
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/optional.hpp"
+#include "common/log/LogContext.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
 #include <string>
@@ -95,6 +96,12 @@ namespace cta {
      * Report a tape session statistics
      */
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
+    
+    /**
+     * Report a tape mounted event
+     * @param LogContext
+     */
+    virtual void setTapeMounted(cta::log::LogContext &logContext) const = 0;
     
     /**
      * Destructor.

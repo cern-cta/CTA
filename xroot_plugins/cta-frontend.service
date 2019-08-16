@@ -10,6 +10,7 @@ Restart=always
 RestartSec=10
 StartLimitInterval=0
 StartLimitBurst=0
+OOMScoreAdjust=-1000
 LimitCORE=infinity
 LimitNOFILE=65536
 

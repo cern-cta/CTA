@@ -44,11 +44,10 @@ namespace {
     archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
     archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
     archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-    archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-    archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+    archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+    archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
-    archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
+    archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
     archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
     archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
     archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -59,12 +58,18 @@ namespace {
       tapeFile.vid = rset.columnString("VID");
       tapeFile.fSeq = rset.columnUint64("FSEQ");
       tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-      tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+      tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
-      tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
-
+      tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
+      cta::optional<std::string> supersededByVid = rset.columnOptionalString("SUPERSEDED_BY_VID");
+      if(supersededByVid){
+        tapeFile.supersededByVid = supersededByVid.value();
+      }
+      cta::optional<uint64_t> supersededByFSeq = rset.columnOptionalUint64("SUPERSEDED_BY_FSEQ");
+      if(supersededByFSeq){
+        tapeFile.supersededByFSeq = supersededByFSeq.value();
+      }
       archiveFile.tapeFiles.push_back(tapeFile);
     }
 
@@ -92,20 +97,22 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
         "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_COPY.VID AS VID,"
         "TAPE_COPY.FSEQ AS FSEQ,"
         "TAPE_COPY.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_COPY.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_COPY.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_COPY.COPY_NB AS COPY_NB,"
         "TAPE_COPY.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
+        "TAPE_COPY.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID, "
+        "TAPE_COPY.SUPERSEDED_BY_FSEQ AS SUPERSEDED_BY_FSEQ, "
         "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "TAPE_FILE REPACK_TAPE "
@@ -121,6 +128,10 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
         "REPACK_TAPE.VID = :VID "
       "AND "
         "REPACK_TAPE.FSEQ >= :START_FSEQ "
+     "AND "
+        "REPACK_TAPE.SUPERSEDED_BY_VID IS NULL "
+      "AND "
+        "REPACK_TAPE.SUPERSEDED_BY_FSEQ IS NULL "
       "ORDER BY REPACK_TAPE.FSEQ";
 
     m_conn = connPool.getConn();

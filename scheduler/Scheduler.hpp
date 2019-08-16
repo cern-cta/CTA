@@ -119,7 +119,7 @@ public:
   uint64_t checkAndGetNextArchiveFileId(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
-    const common::dataStructures::UserIdentity &user,
+    const common::dataStructures::RequesterIdentity &user,
     log::LogContext &lc);
 
   /** 
@@ -200,7 +200,7 @@ public:
     const bool force);
 
   void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc);
+    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext & lc);
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc);
   std::list<cta::common::dataStructures::RepackInfo> getRepacks();
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
@@ -299,6 +299,8 @@ private:
    */
   void checkTapeFullBeforeRepack(std::string vid);
   
+  cta::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
+  
 public:
   /**
    * Run the mount decision logic lock free, so we have no contention in the 
@@ -357,6 +359,11 @@ public:
   };
   RepackReportBatch getNextRepackReportBatch(log::LogContext & lc);
   std::list<Scheduler::RepackReportBatch> getRepackReportBatches(log::LogContext &lc);
+  
+  RepackReportBatch getNextSuccessfulRetrieveRepackReportBatch(log::LogContext &lc);
+  RepackReportBatch getNextFailedRetrieveRepackReportBatch(log::LogContext &lc);
+  RepackReportBatch getNextSuccessfulArchiveRepackReportBatch(log::LogContext &lc);
+  RepackReportBatch getNextFailedArchiveRepackReportBatch(log::LogContext &lc);
   
   /*======================= Failed archive jobs support ======================*/
   SchedulerDatabase::JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &lc);

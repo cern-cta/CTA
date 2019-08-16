@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/UserIdentity.hpp"
 #include "objectstore/cta.pb.h"
 #include "common/dataStructures/TapeFile.hpp"
 #include "EntryLogSerDeser.hpp"
@@ -42,22 +41,20 @@ public:
     ostf.set_vid(vid);
     ostf.set_fseq(fSeq);
     ostf.set_blockid(blockId);
-    ostf.set_compressedsize(compressedSize);
+    ostf.set_filesize(fileSize);
     ostf.set_copynb(copyNb);
     ostf.set_creationtime(creationTime);
-    ostf.set_checksumtype(checksumType);
-    ostf.set_checksumvalue(checksumValue);
+    ostf.set_checksumblob(checksumBlob.serialize());
   }
   
   void deserialize (const cta::objectstore::serializers::TapeFile & ostf) {
     vid=ostf.vid();
     fSeq=ostf.fseq();
     blockId=ostf.blockid();
-    compressedSize=ostf.compressedsize();
+    fileSize=ostf.filesize();
     copyNb=ostf.copynb();
     creationTime=ostf.creationtime();
-    checksumType=ostf.checksumtype();
-    checksumValue=ostf.checksumvalue();
+    checksumBlob.deserialize(ostf.checksumblob());
   }
 };
   

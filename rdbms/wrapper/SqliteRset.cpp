@@ -215,6 +215,24 @@ bool SqliteRset::columnIsNull(const std::string &colName) const {
   }
 }
 
+std::string SqliteRset::columnBlob(const std::string &colName) const {
+  try {
+    const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
+    if(SQLITE_NULL == idxAndType.colType) {
+      return std::string();
+    } else {
+      const char *const colValue = reinterpret_cast<const char*>(sqlite3_column_blob(m_stmt.get(), idxAndType.colIdx));
+      if(NULL == colValue) {
+        return std::string();
+      }
+      int blobsize = sqlite3_column_bytes(m_stmt.get(), idxAndType.colIdx);
+      return std::string(colValue,blobsize);
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------

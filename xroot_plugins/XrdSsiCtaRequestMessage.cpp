@@ -327,9 +327,9 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    checkIsNotEmptyString(notification.cli().user().groupname(), "notification.cli.user.groupname");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name  = notification.cli().user().username();
-   originator.group = notification.cli().user().groupname();
+   cta::common::dataStructures::RequesterIdentity requester;
+   requester.name  = notification.cli().user().username();
+   requester.group = notification.cli().user().groupname();
 
    const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
    if(notification.file().xattr().end() == storageClassItor) {
@@ -342,7 +342,7 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
 
    cta::utils::Timer t;
 
-   const uint64_t archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, originator, m_lc);
+   const uint64_t archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, requester, m_lc);
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
@@ -369,47 +369,32 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    // Validate received protobuf
    checkIsNotEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
-   checkIsNotEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
-   checkIsNotEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
    checkIsNotEmptyString(notification.file().lpath(),             "notification.file.lpath");
    checkIsNotEmptyString(notification.wf().instance().url(),      "notification.wf.instance.url");
    checkIsNotEmptyString(notification.transport().report_url(),   "notification.transport.report_url");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name    = notification.cli().user().username();
-   originator.group   = notification.cli().user().groupname();
-
-   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-   diskFileInfo.owner = notification.file().owner().username();
-   diskFileInfo.group = notification.file().owner().groupname();
-   diskFileInfo.path  = notification.file().lpath();
-
-   std::string checksumtype(notification.file().cks().type());
-   if(checksumtype == "adler") checksumtype = "ADLER32";   // replace this with an enum!
-
-   std::string checksumvalue("0X" + notification.file().cks().value());
-   cta::utils::toUpper(checksumvalue);    // replace this with a number!
-
    const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
    if(notification.file().xattr().end() == storageClassItor) {
      throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_StorageClass");
    }
 
    cta::common::dataStructures::ArchiveRequest request;
-   request.checksumType         = checksumtype;
-   request.checksumValue        = checksumvalue;
-   request.diskFileInfo         = diskFileInfo;
-   request.diskFileID           = std::to_string(notification.file().fid());
-   request.fileSize             = notification.file().size();
-   request.requester            = originator;
-   request.srcURL               = notification.wf().instance().url();
-   request.storageClass         = storageClassItor->second;
-   request.archiveReportURL     = notification.transport().report_url();
-   request.archiveErrorReportURL = notification.transport().error_report_url();
-   request.creationLog.host     = m_cliIdentity.host;
-   request.creationLog.username = m_cliIdentity.username;
-   request.creationLog.time     = time(nullptr);
+   checksum::ProtobufToChecksumBlob(notification.file().csb(), request.checksumBlob);
+   request.diskFileInfo.owner_uid = notification.file().owner().uid();
+   request.diskFileInfo.gid       = notification.file().owner().gid();
+   request.diskFileInfo.path      = notification.file().lpath();
+   request.diskFileID             = std::to_string(notification.file().fid());
+   request.fileSize               = notification.file().size();
+   request.requester.name         = notification.cli().user().username();
+   request.requester.group        = notification.cli().user().groupname();
+   request.srcURL                 = notification.wf().instance().url();
+   request.storageClass           = storageClassItor->second;
+   request.archiveReportURL       = notification.transport().report_url();
+   request.archiveErrorReportURL  = notification.transport().error_report_url();
+   request.creationLog.host       = m_cliIdentity.host;
+   request.creationLog.username   = m_cliIdentity.username;
+   request.creationLog.time       = time(nullptr);
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
@@ -446,30 +431,21 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    // Validate received protobuf
    checkIsNotEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
-   checkIsNotEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
-   checkIsNotEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
    checkIsNotEmptyString(notification.file().lpath(),             "notification.file.lpath");
    checkIsNotEmptyString(notification.transport().dst_url(),      "notification.transport.dst_url");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name              = notification.cli().user().username();
-   originator.group             = notification.cli().user().groupname();
-
-   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-   diskFileInfo.owner           = notification.file().owner().username();
-   diskFileInfo.group           = notification.file().owner().groupname();
-   diskFileInfo.path            = notification.file().lpath();
-
    cta::common::dataStructures::RetrieveRequest request;
-   request.requester            = originator;
-   request.dstURL               = notification.transport().dst_url();
-   request.errorReportURL       = notification.transport().error_report_url();
-   request.diskFileInfo         = diskFileInfo;
-   request.creationLog.host     = m_cliIdentity.host;
-   request.creationLog.username = m_cliIdentity.username;
-   request.creationLog.time     = time(nullptr);
-
+   request.requester.name         = notification.cli().user().username();
+   request.requester.group        = notification.cli().user().groupname();
+   request.dstURL                 = notification.transport().dst_url();
+   request.errorReportURL         = notification.transport().error_report_url();
+   request.diskFileInfo.owner_uid = notification.file().owner().uid();
+   request.diskFileInfo.gid       = notification.file().owner().gid();
+   request.diskFileInfo.path      = notification.file().lpath();
+   request.creationLog.host       = m_cliIdentity.host;
+   request.creationLog.username   = m_cliIdentity.username;
+   request.creationLog.time       = time(nullptr);
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
@@ -515,13 +491,9 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name   = notification.cli().user().username();
-   originator.group  = notification.cli().user().groupname();
-
    cta::common::dataStructures::DeleteArchiveRequest request;
-   request.requester = originator;
-
+   request.requester.name   = notification.cli().user().username();
+   request.requester.group  = notification.cli().user().groupname();
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
@@ -560,12 +532,9 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
 
    // Unpack message
-   cta::common::dataStructures::UserIdentity originator;
-   originator.name          = notification.cli().user().username();
-   originator.group         = notification.cli().user().groupname();
-
    cta::common::dataStructures::DeleteArchiveRequest request;
-   request.requester        = originator;
+   request.requester.name    = notification.cli().user().username();
+   request.requester.group   = notification.cli().user().groupname();
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
@@ -1114,10 +1083,41 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
    }
    
    auto buff = getOptional(OptionString::BUFFERURL);
-   if (buff)
+   if (buff){
+     //The buffer is provided by the user
      bufferURL = buff.value();
-   else
-     throw cta::exception::UserError("Must specify the buffer URL using --bufferurl option.");
+   }
+   else {
+     //Buffer is not provided by the user, try to get the one from the configuration file
+     if(m_repackBufferURL){
+       bufferURL = m_repackBufferURL.value();
+     } else {
+       //Buffer is neither provided by the user, neither provided by the frontend configuration file, exception
+       throw cta::exception::UserError("Must specify the buffer URL using --bufferurl option or using the frontend configuration file.");
+     }
+   }
+   
+   typedef common::dataStructures::MountPolicy MountPolicy;
+   MountPolicy mountPolicy = MountPolicy::s_defaultMountPolicyForRepack;
+   
+   auto mountPolicyProvidedByUserOpt = getOptional(OptionString::MOUNT_POLICY);
+   if(mountPolicyProvidedByUserOpt){
+     //The user specified a mount policy name for this repack request
+     std::string mountPolicyProvidedByUser = mountPolicyProvidedByUserOpt.value();
+     //Get the mountpolicy from the catalogue
+     typedef std::list<common::dataStructures::MountPolicy> MountPolicyList;
+     MountPolicyList mountPolicies = m_catalogue.getMountPolicies();
+     MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(),[mountPolicyProvidedByUser](const common::dataStructures::MountPolicy & mp){
+       return mp.name == mountPolicyProvidedByUser;
+     });
+     if(repackMountPolicyItor != mountPolicies.end()){
+       //The mount policy exists
+       mountPolicy = *repackMountPolicyItor;
+     } else {
+       //The mount policy does not exist, throw a user error
+       throw cta::exception::UserError("The mount policy name provided does not match any existing mount policy.");
+     }
+   }
 
    // Expand, repack, or both ?
    cta::common::dataStructures::RepackInfo::Type type;
@@ -1134,7 +1134,7 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
 
    // Process each item in the list
    for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL,  type, m_lc);
+      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL,  type, mountPolicy , m_lc);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1334,9 +1334,10 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    auto &capacity       = getRequired(OptionUInt64::CAPACITY);
    auto &disabled       = getRequired(OptionBoolean::DISABLED);
    auto &full           = getRequired(OptionBoolean::FULL);
+   auto &readOnly       = getRequired(OptionBoolean::READ_ONLY);
    auto  comment        = getOptional(OptionString::COMMENT);
 
-   m_catalogue.createTape(m_cliIdentity, vid, mediaType, vendor, logicallibrary, tapepool, capacity, disabled, full, comment ? comment.value() : "-");
+   m_catalogue.createTape(m_cliIdentity, vid, mediaType, vendor, logicallibrary, tapepool, capacity, disabled, full, readOnly, comment ? comment.value() : "-");
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1357,6 +1358,7 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    auto  encryptionkey  = getOptional(OptionString::ENCRYPTION_KEY);
    auto  disabled       = getOptional(OptionBoolean::DISABLED);
    auto  full           = getOptional(OptionBoolean::FULL);
+   auto  readOnly       = getOptional(OptionBoolean::READ_ONLY);
 
    if(mediaType) {
       m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
@@ -1384,6 +1386,9 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    }
    if(full) {
       m_catalogue.setTapeFull(m_cliIdentity, vid, full.value());
+   }
+   if(readOnly) {
+      m_catalogue.setTapeReadOnly(m_cliIdentity, vid, readOnly.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

@@ -39,7 +39,7 @@ void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& qu
   std::map<uint64_t,std::shared_ptr<ArchiveJobQueueInfo>> succeededJobs;
   std::string previousOwner;
   for(auto& jobToAdd: jobs){
-    Sorter::ArchiveJob job = std::get<0>(jobToAdd->jobToQueue);
+    SorterArchiveJob job = std::get<0>(jobToAdd->jobToQueue);
     succeededJobs[job.jobDump.copyNb] = jobToAdd;
     previousOwner = job.previousOwner->getAgentAddress();
     jobsToAdd.push_back({ job.archiveRequest.get() ,job.jobDump.copyNb,job.archiveFile, job.mountPolicy,cta::nullopt });
@@ -89,7 +89,7 @@ void Sorter::dispatchArchiveAlgorithm(const std::string tapePool, const JobQueue
 
 void Sorter::insertArchiveRequest(std::shared_ptr<ArchiveRequest> archiveRequest, AgentReferenceInterface& previousOwner, log::LogContext& lc){
   for(auto& job: archiveRequest->dumpJobs()){
-    ArchiveJob jobToInsert;
+    SorterArchiveJob jobToInsert;
     jobToInsert.archiveRequest = archiveRequest;
     jobToInsert.archiveFile = archiveRequest->getArchiveFile();
     jobToInsert.jobDump = job;
@@ -109,13 +109,13 @@ void Sorter::insertArchiveRequest(std::shared_ptr<ArchiveRequest> archiveRequest
 
 void Sorter::insertArchiveRequest(const SorterArchiveRequest& archiveRequest, AgentReferenceInterface& previousOwner, log::LogContext& lc) {
   for(auto& archiveJob: archiveRequest.archiveJobs){
-    ArchiveJob jobToInsert = archiveJob;
+    SorterArchiveJob jobToInsert = archiveJob;
     jobToInsert.previousOwner = &previousOwner;
     insertArchiveJob(jobToInsert);
   }
 }
 
-void Sorter::insertArchiveJob(const ArchiveJob& job){
+void Sorter::insertArchiveJob(const SorterArchiveJob& job){
   auto ajqi = std::make_shared<ArchiveJobQueueInfo>();
   ajqi->jobToQueue = std::make_tuple(job,std::promise<void>());
   threading::MutexLocker mapLocker(m_mutex);

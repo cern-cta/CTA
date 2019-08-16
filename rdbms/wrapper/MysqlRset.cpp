@@ -79,7 +79,6 @@ bool MysqlRset::next() {
   }
 
   return true;
-  // throw exception::Exception(std::string(__FUNCTION__) + " not implemented.");
 }
 
 //------------------------------------------------------------------------------
@@ -94,6 +93,11 @@ bool MysqlRset::columnIsNull(const std::string &colName) const {
   Mysql::Placeholder* holder = m_stmt.columnHolder(colName);
 
   return *holder->get_is_null();
+}
+
+std::string MysqlRset::columnBlob(const std::string &colName) const {
+  auto blob = columnOptionalString(colName);
+  return blob ? *blob : std::string();
 }
 
 //------------------------------------------------------------------------------

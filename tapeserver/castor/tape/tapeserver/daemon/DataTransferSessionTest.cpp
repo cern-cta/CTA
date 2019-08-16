@@ -71,6 +71,11 @@ using namespace castor::tape::tapeserver::daemon;
 
 namespace unitTests {
 
+const uint32_t DISK_FILE_OWNER_UID = 9751;
+const uint32_t DISK_FILE_GID = 9752;
+const uint32_t DISK_FILE_SOME_USER = 9753;
+const uint32_t DISK_FILE_SOME_GROUP = 9754;
+
 namespace {
 
 /**
@@ -269,7 +274,6 @@ public:
     ASSERT_EQ(mountPolicyComment, group.comment);
 
     const std::string ruleComment = "create requester mount-rule";
-    cta::common::dataStructures::UserIdentity userIdentity;
     catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_diskInstance, s_userName, ruleComment);
 
     const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.getRequesterMountRules();
@@ -387,8 +391,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
   {
@@ -433,18 +438,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
       tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+      tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -568,8 +571,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
   {
@@ -597,7 +601,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       // Write the file to tape
       const uint64_t archiveFileSize = 1000;
       cta::MockArchiveMount mam(catalogue);
-      cta::MockRetrieveMount mrm;
+      cta::MockRetrieveMount mrm(catalogue);
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = 1000 + fseq;
@@ -614,19 +618,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
         tapeFileWritten.archiveFileId=666;
-        tapeFileWritten.checksumType="ADLER32";
-        tapeFileWritten.checksumValue="0xDEADBEEF";
+        tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::checksum::ChecksumBlob::HexToByteArray("0xDEADBEEF"));
         tapeFileWritten.vid=volInfo.vid;
         tapeFileWritten.size=archiveFileSize;
         tapeFileWritten.fSeq=fseq;
         tapeFileWritten.blockId=0;
         tapeFileWritten.copyNb=1;
-        tapeFileWritten.compressedSize=archiveFileSize; // No compression
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq);
         tapeFileWritten.diskFilePath = "/somefile";
-        tapeFileWritten.diskFileUser = s_userName;
-        tapeFileWritten.diskFileGroup = "someGroup";
+        tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+        tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
         tapeFileWritten.storageClassName = s_storageClassName;
         tapeFileWritten.tapeDrive = "drive0";
         catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -639,19 +641,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
         tapeFileWritten.archiveFileId=1000 + fseq;
-        tapeFileWritten.checksumType="ADLER32";
-        tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+        tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
         tapeFileWritten.vid=volInfo.vid;
         tapeFileWritten.size=archiveFileSize;
         tapeFileWritten.fSeq=fseq + 1;
         tapeFileWritten.blockId=wf.getBlockId() + 10000;
         tapeFileWritten.copyNb=1;
-        tapeFileWritten.compressedSize=archiveFileSize; // No compression
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq + 1);
         tapeFileWritten.diskFilePath = remoteFilePath.str();
-        tapeFileWritten.diskFileUser = s_userName;
-        tapeFileWritten.diskFileGroup = "someGroup";
+        tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+        tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
         tapeFileWritten.storageClassName = s_storageClassName;
         tapeFileWritten.tapeDrive = "drive0";
         catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -763,8 +763,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
 
   int MAX_RECALLS = 50;
   int MAX_BULK_RECALLS = 31;
@@ -816,18 +817,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
       tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+      tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -981,8 +980,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
   {
@@ -1027,18 +1027,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
       tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+      tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -1129,8 +1127,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
   {
@@ -1175,18 +1174,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+      tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
       tapeFileWritten.fSeq=fseq;
       tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
       tapeFileWritten.diskFilePath = remoteFilePath.str();
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
+      tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
+      tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
@@ -1287,8 +1284,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
   
   // Create the mount criteria
   catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
@@ -1317,8 +1315,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumType="ADLER32";
-      ar.checksumValue=sourceFiles.back()->adler32();
+      ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
@@ -1326,8 +1323,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       ar.fileSize = 1000;
       ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner = "z";
-      ar.diskFileInfo.group = "g";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1367,7 +1364,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
     auto afi = *(afiiter++);
     auto afs = catalogue.getArchiveFileById(afi);
     ASSERT_EQ(1, afs.tapeFiles.size());
-    ASSERT_EQ(sf->adler32(), afs.checksumValue);
+    cta::checksum::ChecksumBlob checksumBlob;
+    checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
+    ASSERT_EQ(afs.checksumBlob, checksumBlob);
     ASSERT_EQ(1000, afs.fileSize);
   }
 
@@ -1430,8 +1429,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
   
   // Create the mount criteria
   catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
@@ -1460,8 +1460,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumType="ADLER32";
-      ar.checksumValue=sourceFiles.back()->adler32();
+      ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
@@ -1470,8 +1469,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       ar.diskFileID = "x";
       ar.diskFileID += std::to_string(fseq);
       ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner = "z";
-      ar.diskFileInfo.group = "g";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1589,8 +1588,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
   
   // Create the mount criteria
   catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
@@ -1620,8 +1620,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumType="ADLER32";
-      ar.checksumValue=sourceFiles.back()->adler32();
+      ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
@@ -1629,8 +1628,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       ar.fileSize = 1000;
       ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner = "z";
-      ar.diskFileInfo.group = "g";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1674,7 +1673,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     if (archiveFileCount <= 3) {
       auto afs = catalogue.getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
-      ASSERT_EQ(sf->adler32(), afs.checksumValue);
+      cta::checksum::ChecksumBlob checksumBlob;
+      checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
+      ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
     } else {
       ASSERT_THROW(catalogue.getArchiveFileById(afi), cta::exception::Exception);
@@ -1746,8 +1747,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
+  bool notReadOnly = false;
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, tapeComment);
+    notDisabled, notFull, notReadOnly, tapeComment);
   
   // Create the mount criteria
   catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
@@ -1778,8 +1780,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumType="ADLER32";
-      ar.checksumValue=sourceFiles.back()->adler32();
+      ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
@@ -1787,8 +1788,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       ar.fileSize = 1000;
       ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner = "z";
-      ar.diskFileInfo.group = "g";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -1804,7 +1805,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
-
+  
   // Create the data transfer session
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024*1024; // 1 MB memory buffers
@@ -1832,7 +1833,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
     if (archiveFileCount <= 3) {
       auto afs = catalogue.getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
-      ASSERT_EQ(sf->adler32(), afs.checksumValue);
+      cta::checksum::ChecksumBlob checksumBlob;
+      checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
+      ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
     } else {
       ASSERT_THROW(catalogue.getArchiveFileById(afi), cta::exception::Exception);

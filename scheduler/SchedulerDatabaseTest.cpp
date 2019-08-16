@@ -18,7 +18,6 @@
 
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
-#include "common/UserIdentity.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -36,6 +35,9 @@
 #include <uuid/uuid.h>
 
 namespace unitTests {
+
+const uint32_t DISK_FILE_OWNER_UID = 9751;
+const uint32_t DISK_FILE_GID = 9752;
 
 /**
  * This structure is used to parameterize scheduler database tests.
@@ -165,7 +167,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       afqc.mountPolicy.comment = "comment";
       afqc.fileId = i;
       ar.archiveReportURL="";
-      ar.checksumType="";
+      ar.checksumBlob.insert(cta::checksum::NONE, "");
       ar.creationLog = { "user", "host", time(nullptr)};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
@@ -173,8 +175,8 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       uuid_unparse(fileUUID, fileUUIDStr);
       ar.diskFileID = fileUUIDStr;
       ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
-      ar.diskFileInfo.owner = "user";
-      ar.diskFileInfo.group = "group";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       ar.fileSize = 1000;
       ar.requester = { "user", "group" };
       ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
@@ -245,7 +247,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       afqc.mountPolicy.comment = "comment";
       afqc.fileId = i;
       ar.archiveReportURL="";
-      ar.checksumType="";
+      ar.checksumBlob.insert(cta::checksum::NONE, "");
       ar.creationLog = { "user", "host", time(nullptr)};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
@@ -253,8 +255,8 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       uuid_unparse(fileUUID, fileUUIDStr);
       ar.diskFileID = fileUUIDStr;
       ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
-      ar.diskFileInfo.owner = "user";
-      ar.diskFileInfo.group = "group";
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
       ar.fileSize = 1000;
       ar.requester = { "user", "group" };
       ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
@@ -350,8 +352,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
       rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
-      rr.diskFileInfo.owner = "user";
-      rr.diskFileInfo.group = "group";
       rr.requester = { "user", "group" };
       rr.dstURL = std::string ("root://") + (i%2?"b":"a") + ".disk.system/" + std::to_string(i);
       std::string dsName = (i%2?"ds-B":"ds-A");
@@ -438,9 +438,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
-      rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
-      rr.diskFileInfo.owner = "user";
-      rr.diskFileInfo.group = "group";
+      rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr; 
       rr.requester = { "user", "group" };
       std::string dsName;
       if (i%2) {

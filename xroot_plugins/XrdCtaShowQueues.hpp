@@ -77,6 +77,7 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto  sq_item = record.mutable_sq_item();
 
     switch(sq.mountType) {
+      case common::dataStructures::MountType::ArchiveForRepack:
       case common::dataStructures::MountType::ArchiveForUser:
         sq_item->set_priority(sq.mountPolicy.archivePriority);
         sq_item->set_min_age(sq.mountPolicy.archiveMinRequestAge);
@@ -109,6 +110,7 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     sq_item->set_full_tapes(sq.fullTapes);
     sq_item->set_empty_tapes(sq.emptyTapes);
     sq_item->set_disabled_tapes(sq.disabledTapes);
+    sq_item->set_rdonly_tapes(sq.readOnlyTapes);
     sq_item->set_writable_tapes(sq.writableTapes);
     if (sq.sleepForSpaceInfo) {
       sq_item->set_sleeping_for_space(true);

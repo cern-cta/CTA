@@ -21,6 +21,7 @@
 #include "AgentReference.hpp"
 #include "RepackQueueAlgorithms.hpp"
 #include "Algorithms.hpp"
+#include "MountPolicySerDeser.hpp"
 #include <google/protobuf/util/json_util.h>
 #include <iostream>
 
@@ -71,6 +72,7 @@ void RepackRequest::initialize() {
   m_payload.set_archivedbytes(0);
   m_payload.set_failedtoretrievefiles(0);
   m_payload.set_failedtoretrievebytes(0);
+  m_payload.set_failedtocreatearchivereq(0);
   m_payload.set_failedtoarchivefiles(0);
   m_payload.set_failedtoarchivebytes(0);
   m_payload.set_lastexpandedfseq(0);
@@ -177,14 +179,27 @@ void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::T
   setTotalBytesToRetrieve(totalStatsFiles.totalBytesToRetrieve);
 }
 
+void RepackRequest::setMountPolicy(const common::dataStructures::MountPolicy& mp){
+  checkPayloadWritable();
+  MountPolicySerDeser mpSerDeser(mp);
+  mpSerDeser.serialize(*m_payload.mutable_mount_policy());
+}
+
+common::dataStructures::MountPolicy RepackRequest::getMountPolicy(){
+  checkPayloadReadable();
+  MountPolicySerDeser mpSerDeser;
+  mpSerDeser.deserialize(m_payload.mount_policy());
+  return mpSerDeser;
+}
+
 void RepackRequest::setStatus(){
   checkPayloadWritable();
   checkPayloadReadable();
   
   if(m_payload.is_expand_started()){
-    //The expansion of the Repack Request have started
+    //The expansion of the Repack Request have started 
     if(m_payload.is_expand_finished()){
-      if( (m_payload.retrievedfiles() + m_payload.failedtoretrievefiles() >= m_payload.totalfilestoretrieve()) && (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() >= m_payload.totalfilestoarchive()) ){
+      if( (m_payload.retrievedfiles() + m_payload.failedtoretrievefiles() >= m_payload.totalfilestoretrieve()) && (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() + m_payload.failedtocreatearchivereq() >= m_payload.totalfilestoarchive()) ){
         //We reached the end
         if (m_payload.failedtoretrievefiles() || m_payload.failedtoarchivefiles()) {
           //At least one retrieve or archive has failed
@@ -518,6 +533,30 @@ auto RepackRequest::getStats() -> std::map<StatsType, StatsValues> {
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// RepackRequest::reportRetrieveCreationFailures()
+//------------------------------------------------------------------------------
+void RepackRequest::reportRetrieveCreationFailures(const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests){
+  checkPayloadWritable();
+  uint64_t failedToRetrieveFiles, failedToRetrieveBytes, failedToCreateArchiveReq = 0;
+  for(auto & subreq: notCreatedSubrequests){
+    failedToRetrieveFiles++;
+    failedToRetrieveBytes+=subreq.archiveFile.fileSize;
+    for(auto & copyNb: subreq.copyNbsToRearchive){
+      (void) copyNb;
+      failedToCreateArchiveReq++;
+    }
+  }
+  m_payload.set_failedtoretrievebytes(m_payload.failedtoretrievebytes() + failedToRetrieveBytes);
+  m_payload.set_failedtoretrievefiles(m_payload.failedtoretrievefiles() + failedToRetrieveFiles);
+  reportArchiveCreationFailures(failedToCreateArchiveReq);
+  setStatus();
+}
+
+void RepackRequest::reportArchiveCreationFailures(uint64_t nbFailedToCreateArchiveRequests){
+  checkPayloadWritable();
+  m_payload.set_failedtocreatearchivereq(m_payload.failedtocreatearchivereq() + nbFailedToCreateArchiveRequests);
+}
 
 //------------------------------------------------------------------------------
 // RepackRequest::garbageCollect()

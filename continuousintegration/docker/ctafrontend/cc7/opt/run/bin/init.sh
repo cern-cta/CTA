@@ -79,7 +79,7 @@ else
 fi
 
 
-
+: <<'COMMENT_LABEL_PART'
 if [ ! $LIBRARYTYPE == "mhvtl" ]; then
   echo "Real tapes, not labelling";
 else
@@ -108,5 +108,6 @@ else
     echo "OK"
   done
 fi
+COMMENT_LABEL_PART
 
 echo "### INIT COMPLETED ###"

@@ -17,9 +17,6 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/ChecksumTypeMismatch.hpp"
-#include "catalogue/ChecksumValueMismatch.hpp"
-#include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
 #include "common/exception/DatabaseConstraintError.hpp"
@@ -84,11 +81,10 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
          .add("requestDiskInstance", diskInstanceName)
          .add("diskFileId", archiveFile->diskFileId)
          .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-         .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-         .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+         .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+         .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
-         .add("checksumType", archiveFile->checksumType)
-         .add("checksumValue", archiveFile->checksumValue)
+         .add("checksumBlob", archiveFile->checksumBlob)
          .add("creationTime", std::to_string(archiveFile->creationTime))
          .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
          .add("storageClass", archiveFile->storageClass)
@@ -101,9 +97,8 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
           << " fSeq: " << it->fSeq
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
-          << " compressedSize: " << it->compressedSize
-          << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-          << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+          << " fileSize: " << it->fileSize
+          << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
           << " supersededByVid: " << it->supersededByVid
           << " supersededByFSeq: " << it->supersededByFSeq;
@@ -150,11 +145,10 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("diskInstance", archiveFile->diskInstance)
        .add("diskFileId", archiveFile->diskFileId)
        .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+       .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+       .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumType", archiveFile->checksumType)
-       .add("checksumValue", archiveFile->checksumValue)
+       .add("checksumBlob", archiveFile->checksumBlob)
        .add("creationTime", std::to_string(archiveFile->creationTime))
        .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
        .add("storageClass", archiveFile->storageClass)
@@ -170,9 +164,8 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         << " fSeq: " << it->fSeq
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
-        << " compressedSize: " << it->compressedSize
-        << " checksumType: " << it->checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->checksumValue //this shouldn't be here: repeated field
+        << " fileSize: " << it->fileSize
+        << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
         << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
         << " supersededByVid: " << it->supersededByVid
         << " supersededByFSeq: " << it->supersededByFSeq;
@@ -263,6 +256,8 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, cons
         "LAST_FSEQ AS LAST_FSEQ,"
         "IS_DISABLED AS IS_DISABLED,"
         "IS_FULL AS IS_FULL,"
+        "IS_READ_ONLY AS IS_READ_ONLY,"
+        "IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
         "LABEL_DRIVE AS LABEL_DRIVE,"
         "LABEL_TIME AS LABEL_TIME,"
@@ -305,6 +300,8 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, cons
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
     tape.disabled = rset.columnBool("IS_DISABLED");
     tape.full = rset.columnBool("IS_FULL");
+    tape.readOnly = rset.columnBool("IS_READ_ONLY");
+    tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
     tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
     tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -312,7 +309,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, cons
 
     tape.comment = rset.columnString("USER_COMMENT");
 
-    common::dataStructures::UserIdentity creatorUI;
+    common::dataStructures::RequesterIdentity creatorUI;
     creatorUI.name = rset.columnString("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
@@ -322,7 +319,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::Conn &conn, cons
 
     tape.creationLog = creationLog;
 
-    common::dataStructures::UserIdentity updaterUI;
+    common::dataStructures::RequesterIdentity updaterUI;
     updaterUI.name = rset.columnString("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
@@ -365,7 +362,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
 
     const auto tape = selectTape(conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
-    uint64_t totalCompressedBytesWritten = 0;
+    uint64_t totalLogicalBytesWritten = 0;
 
     for(const auto &eventP: events) {
       const auto & event = *eventP;
@@ -376,7 +373,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       }
 
       if(expectedFSeq != event.fSeq) {
-        exception::Exception ex;
+        exception::TapeFseqMismatch ex;
         ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
           firstEvent.fSeq;
         throw ex;
@@ -387,14 +384,14 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event); 
-        totalCompressedBytesWritten += fileEvent.compressedSize;
+        totalLogicalBytesWritten += fileEvent.size;
       } catch (std::bad_cast&) {}
     }
 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten, lastEvent.tapeDrive);
+    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten, lastEvent.tapeDrive);
 
     for(const auto &event : events) {
       try {
@@ -426,12 +423,11 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
       row.diskFileId = event.diskFileId;
       row.diskInstance = event.diskInstance;
       row.size = event.size;
-      row.checksumType = event.checksumType;
-      row.checksumValue = event.checksumValue;
+      row.checksumBlob = event.checksumBlob;
       row.storageClassName = event.storageClassName;
       row.diskFilePath = event.diskFilePath;
-      row.diskFileUser = event.diskFileUser;
-      row.diskFileGroup = event.diskFileGroup;
+      row.diskFileOwnerUid = event.diskFileOwnerUid;
+      row.diskFileGid = event.diskFileGid;
       insertArchiveFile(conn, row);
     } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error
@@ -460,26 +456,14 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
       throw ex;
     }
 
-    if(archiveFile->checksumType != event.checksumType) {
-      catalogue::ChecksumTypeMismatch ex;
-      ex.getMessage() << "Checksum type mismatch: expected=" << archiveFile->checksumType << ", actual=" <<
-        event.checksumType << ": " << fileContext.str();
-      throw ex;
-    }
-
-    if(archiveFile->checksumValue != event.checksumValue) {
-      catalogue::ChecksumValueMismatch ex;
-      ex.getMessage() << "Checksum value mismatch: expected=" << archiveFile->checksumValue << ", actual=" <<
-        event.checksumValue << ": " << fileContext.str();
-      throw ex;
-    }
+    archiveFile->checksumBlob.validate(event.checksumBlob);
 
     // Insert the tape file
     common::dataStructures::TapeFile tapeFile;
     tapeFile.vid            = event.vid;
     tapeFile.fSeq           = event.fSeq;
     tapeFile.blockId        = event.blockId;
-    tapeFile.compressedSize = event.compressedSize;
+    tapeFile.fileSize       = event.size;
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
     insertTapeFile(conn, tapeFile, event.archiveFileId);

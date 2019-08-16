@@ -303,14 +303,21 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         obj.reset();
         bool jobRequeued=false;
         for (auto &j: ar->dumpJobs()) {
-          if ((j.owner == agent.getAddressIfSet())) {
+          if ((j.owner == agent.getAddressIfSet() && ar->c_statusesImplyingQueueing.count(j.status))) {
+            std::string containerIdentifier;
             try {
-              archiveQueuesAndRequests[std::make_tuple(j.tapePool, ar->getJobQueueType(j.copyNb))].emplace_back(ar);
+              if(ar->c_statusesImplyingQueueingByRepackRequestAddress.count(j.status)){
+                containerIdentifier = ar->getRepackInfo().repackRequestAddress;
+              } else {
+                containerIdentifier = j.tapePool;
+              }
+              archiveQueuesAndRequests[std::make_tuple(containerIdentifier, ar->getJobQueueType(j.copyNb),j.tapePool)].emplace_back(ar);
               log::ScopedParamContainer params3(lc);
               params3.add("tapePool", j.tapePool)
+                     .add("containerIdentifier", containerIdentifier)
                      .add("copynb", j.copyNb)
                      .add("fileId", ar->getArchiveFile().archiveFileID);
-              lc.log(log::INFO, "Selected archive request for requeueing to tape pool");
+              lc.log(log::INFO, "Selected archive request for requeueing to the corresponding queue");
               jobRequeued=true;
             } catch (ArchiveRequest::JobNotQueueable &) {}
           }
@@ -339,9 +346,17 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         }
         // Small parenthesis for non transfer cases.
         if (candidateVids.empty()) {
-          // The request might need to be added to the failed to report of failed queue/container.
+          //If the queueType of the RetrieveRequest is FailedJobs or JobsToReportToUser, it needs to be requeued in a queue identified by the vid of the tape
+          //If queueType is JobsToReportToRepackForSuccess or JobsToReportToRepackForFailure, it needs to be requeued in a queue identified by the RepackRequest's address
           try {
-            retrieveQueuesAndRequests[std::make_tuple(rr->getArchiveFile().tapeFiles.begin()->vid, rr->getQueueType())].emplace_back(rr);
+            std::string vid = rr->getArchiveFile().tapeFiles.begin()->vid;
+            if(rr->getQueueType() != JobQueueType::FailedJobs && rr->getQueueType() != JobQueueType::JobsToReportToUser){
+              retrieveQueuesAndRequests[std::make_tuple(rr->getRepackInfo().repackRequestAddress, rr->getQueueType(),vid)].emplace_back(rr);
+            } else {
+              // The request has failed, might need to be added to the failed to report of failed queue/container.
+              retrieveQueuesAndRequests[std::make_tuple(vid, rr->getQueueType(),vid)].emplace_back(rr);
+            }
+            break;
           } catch (cta::exception::Exception & ex) {
             log::ScopedParamContainer params3(lc);
             params3.add("fileId", rr->getArchiveFile().archiveFileID)
@@ -362,7 +377,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
           otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
           break;
         }
-        retrieveQueuesAndRequests[std::make_tuple(vid, JobQueueType::JobsToTransferForUser)].emplace_back(rr);
+        retrieveQueuesAndRequests[std::make_tuple(vid, JobQueueType::JobsToTransferForUser,vid)].emplace_back(rr);
         log::ScopedParamContainer params3(lc);
         // Find copyNb for logging
         size_t copyNb = std::numeric_limits<size_t>::max();
@@ -373,8 +388,8 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
                .add("tapeVid", vid)
                .add("fSeq", fSeq);
         lc.log(log::INFO, "Selected vid to be requeued for retrieve request.");
-        break;
       }
+      break;
       default:
         // For other objects, we will not implement any optimization and simply call
         // their individual garbageCollect method.
@@ -389,6 +404,109 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
   fetchedObjects.clear();
 }
 
+template<typename ArchiveSpecificQueue>
+void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std::shared_ptr<ArchiveRequest>> &jobs,std::string &queueAddress, const std::string& containerIdentifier, const std::string& tapepool, 
+        std::set<std::string> & jobsIndividuallyGCed, Agent& agent, AgentReference& agentReference, 
+        Backend &objectStore, log::LogContext& lc)
+{
+  typedef ContainerAlgorithms<ArchiveQueue,ArchiveSpecificQueue> AqAlgos;
+  AqAlgos aqcl(objectStore, agentReference);
+  typename decltype(aqcl)::InsertedElement::list jobsToAdd;
+  for (auto & ar: jobs) {
+    // Determine the copy number and feed the queue with it.
+    for (auto &j: ar->dumpJobs()) {
+      if (j.tapePool == tapepool) {
+        jobsToAdd.push_back({ar.get(), j.copyNb, ar->getArchiveFile(), ar->getMountPolicy(), cta::nullopt});         
+      }
+    }
+  }
+  std::set<std::string> jobsNotRequeued;
+  try {
+    aqcl.referenceAndSwitchOwnershipIfNecessary(containerIdentifier, agent.getAddressIfSet(), queueAddress, jobsToAdd, lc);
+  } catch (typename AqAlgos::OwnershipSwitchFailure & failure) {
+    for (auto &failedAR: failure.failedElements) {
+      try {
+        std::rethrow_exception(failedAR.failure);
+      } catch (cta::exception::Exception & e) {
+        // Update did not go through. It could be benign
+        std::string debugType=typeid(e).name();
+        auto & arup=*failedAR.element;
+        jobsNotRequeued.insert(arup.archiveRequest->getAddressIfSet());
+        if (typeid(e) == typeid(Backend::NoSuchObject) || typeid(e) == typeid(Backend::WrongPreviousOwner)) {
+          // The object was not present or not owned during update, so we skip it.
+          // This is nevertheless unexpected (from previous fetch, so this is an error).
+          log::ScopedParamContainer params(lc);
+          params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
+                .add("copyNb", arup.copyNb)
+                .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
+                .add("exceptionType", debugType);
+          lc.log(log::ERR, 
+              "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): "
+              "failed to requeue gone/not owned archive job. Removed from queue.");
+        } else {
+          // We have an unexpected error. We will handle this with the request-by-request garbage collection.
+          log::ScopedParamContainer params(lc);
+          params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
+                .add("copyNb", arup.copyNb)
+                .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
+                .add("exceptionType", debugType)
+                .add("exceptionMessage", e.getMessageValue());
+          lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): "
+              "failed to requeue archive job with unexpected error. "
+              "Removing from queue and will re-run individual garbage collection.");
+          // We will re-run the individual GC for this one.
+          jobsIndividuallyGCed.insert(arup.archiveRequest->getAddressIfSet());
+          otherObjects.emplace_back(new GenericObject(arup.archiveRequest->getAddressIfSet(), objectStore));
+        }
+      }
+    }
+  }
+  // We can now log individually requeued jobs.
+  for (auto & arup: jobsToAdd) {
+    if (!jobsNotRequeued.count(arup.archiveRequest->getAddressIfSet())) {
+        // OK, the job made it to the queue
+        log::ScopedParamContainer params(lc);
+        params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
+              .add("copyNb", arup.copyNb)
+              .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
+              .add("tapePool", tapepool)
+              .add("archiveQueueObject", queueAddress)
+              .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
+        lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): requeued archive job.");
+    }
+  }
+  jobsToAdd.clear();
+}
+
+std::string GarbageCollector::OwnedObjectSorter::dispatchArchiveAlgorithms(std::list<std::shared_ptr<ArchiveRequest>> &jobs,const JobQueueType& jobQueueType, const std::string& containerIdentifier,
+        const std::string& tapepool,std::set<std::string> & jobsIndividuallyGCed, 
+        Agent& agent, AgentReference& agentReference, Backend & objectstore, log::LogContext &lc) {
+  std::string queueAddress;
+  switch(jobQueueType){
+    case JobQueueType::JobsToTransferForUser:
+      executeArchiveAlgorithm<ArchiveQueueToTransferForUser>(jobs,queueAddress,containerIdentifier,tapepool, jobsIndividuallyGCed, agent, agentReference, objectstore, lc);
+      break;
+    case JobQueueType::JobsToReportToUser:
+      executeArchiveAlgorithm<ArchiveQueueToReportForUser>(jobs,queueAddress,containerIdentifier,tapepool, jobsIndividuallyGCed, agent, agentReference, objectstore, lc);
+      break;
+    case JobQueueType::JobsToTransferForRepack:
+      executeArchiveAlgorithm<ArchiveQueueToTransferForRepack>(jobs,queueAddress,containerIdentifier,tapepool, jobsIndividuallyGCed, agent, agentReference, objectstore, lc);
+      break;
+    case JobQueueType::JobsToReportToRepackForSuccess:
+      executeArchiveAlgorithm<ArchiveQueueToReportToRepackForSuccess>(jobs,queueAddress,containerIdentifier,tapepool, jobsIndividuallyGCed, agent, agentReference, objectstore, lc);
+      break;
+    case JobQueueType::JobsToReportToRepackForFailure:
+      executeArchiveAlgorithm<ArchiveQueueToReportToRepackForFailure>(jobs,queueAddress,containerIdentifier,tapepool, jobsIndividuallyGCed, agent, agentReference, objectstore, lc);
+      break;
+    case JobQueueType::FailedJobs:
+      executeArchiveAlgorithm<ArchiveQueueFailed>(jobs,queueAddress,containerIdentifier,tapepool, jobsIndividuallyGCed, agent, agentReference, objectstore, lc);
+      break;
+    default:
+      break;
+  }
+  return queueAddress;
+}
+
 //TODO : We should record the VID in the ArchiveRequest object to allow the requeueing in the proper report queue (currently, the report queue is selected
 //by tapepool, which works but is not the most efficient way to report the request (contention problem)
 void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& agent, AgentReference& agentReference, Backend & objectStore,
@@ -401,9 +519,10 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
     // The number of objects to requeue could be very high. In order to limit the time taken by the
     // individual requeue operations, we limit the number of concurrently requeued objects to an 
     // arbitrary 500.
+    std::string containerIdentifier;
     std::string tapepool;
     JobQueueType queueType;
-    std::tie(tapepool, queueType) = archiveQueueIdAndReqs.first;
+    std::tie(containerIdentifier, queueType, tapepool) = archiveQueueIdAndReqs.first;
     auto & requestsList = archiveQueueIdAndReqs.second;
     while (requestsList.size()) {
       decltype (archiveQueueIdAndReqs.second) currentJobBatch;
@@ -411,76 +530,11 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
         currentJobBatch.emplace_back(std::move(requestsList.front()));
         requestsList.pop_front();
       }
-      utils::Timer t;
-      typedef ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> AqAlgos;
-      AqAlgos aqcl(objectStore, agentReference);
-      decltype(aqcl)::InsertedElement::list jobsToAdd;
-      for (auto & ar: currentJobBatch) {
-        // Determine the copy number and feed the queue with it.
-        for (auto &j: ar->dumpJobs()) {
-          if (j.tapePool == tapepool) {
-            jobsToAdd.push_back({ar.get(), j.copyNb, ar->getArchiveFile(), ar->getMountPolicy(), cta::nullopt});         
-          }
-        }
-      }
       std::set<std::string> jobsIndividuallyGCed;
-      std::set<std::string> jobsNotRequeued;
-      std::string queueAddress;
-      try {
-        aqcl.referenceAndSwitchOwnershipIfNecessary(tapepool, agent.getAddressIfSet(), queueAddress, jobsToAdd, lc);
-      } catch (AqAlgos::OwnershipSwitchFailure & failure) {
-        for (auto &failedAR: failure.failedElements) {
-          try {
-            std::rethrow_exception(failedAR.failure);
-          } catch (cta::exception::Exception & e) {
-            // Update did not go through. It could be benign
-            std::string debugType=typeid(e).name();
-            auto & arup=*failedAR.element;
-            jobsNotRequeued.insert(arup.archiveRequest->getAddressIfSet());
-            if (typeid(e) == typeid(Backend::NoSuchObject) || typeid(e) == typeid(Backend::WrongPreviousOwner)) {
-              // The object was not present or not owned during update, so we skip it.
-              // This is nevertheless unexpected (from previous fetch, so this is an error).
-              log::ScopedParamContainer params(lc);
-              params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
-                    .add("copyNb", arup.copyNb)
-                    .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-                    .add("exceptionType", debugType);
-              lc.log(log::ERR, 
-                  "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): "
-                  "failed to requeue gone/not owned archive job. Removed from queue.");
-            } else {
-              // We have an unexpected error. We will handle this with the request-by-request garbage collection.
-              log::ScopedParamContainer params(lc);
-              params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
-                    .add("copyNb", arup.copyNb)
-                    .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-                    .add("exceptionType", debugType)
-                    .add("exceptionMessage", e.getMessageValue());
-              lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): "
-                  "failed to requeue archive job with unexpected error. "
-                  "Removing from queue and will re-run individual garbage collection.");
-              // We will re-run the individual GC for this one.
-              jobsIndividuallyGCed.insert(arup.archiveRequest->getAddressIfSet());
-              otherObjects.emplace_back(new GenericObject(arup.archiveRequest->getAddressIfSet(), objectStore));
-            }
-          }
-        }
-      }
-      // We can now log individually requeued jobs.
-      for (auto & arup: jobsToAdd) {
-        if (!jobsNotRequeued.count(arup.archiveRequest->getAddressIfSet())) {
-            // OK, the job made it to the queue
-            log::ScopedParamContainer params(lc);
-            params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
-                  .add("copyNb", arup.copyNb)
-                  .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-                  .add("tapePool", tapepool)
-                  .add("archiveQueueObject", queueAddress)
-                  .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
-            lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): requeued archive job.");
-        }
-      }
-      jobsToAdd.clear();
+      utils::Timer t;
+      //Dispatch the archive algorithms
+      dispatchArchiveAlgorithms(currentJobBatch,queueType,containerIdentifier,tapepool,jobsIndividuallyGCed,agent,agentReference,objectStore,lc);
+      
       // We can now forget pool level list. But before that, we can remove the objects 
       // from agent ownership if this was the last reference to it.
       // The usage of use_count() is safe here because we are in a single threaded environment.
@@ -520,9 +574,10 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
   // 2) Get the retrieve requests done. They are simpler as retrieve requests are fully owned.
   // Then should hence not have changes since we pre-fetched them.
   for (auto & retriveQueueIdAndReqs: retrieveQueuesAndRequests) {
-    std::string vid;
+    std::string containerIdentifier;
     JobQueueType queueType;
-    std::tie(vid, queueType) = retriveQueueIdAndReqs.first;
+    std::string vid;
+    std::tie(containerIdentifier, queueType, vid) = retriveQueueIdAndReqs.first;
     auto & requestsList = retriveQueueIdAndReqs.second;
     while (requestsList.size()) {
       decltype (retriveQueueIdAndReqs.second) currentJobBatch;
@@ -545,7 +600,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       // Get the retrieve queue and add references to the jobs to it.
       RetrieveQueue rq(objectStore);
       ScopedExclusiveLock rql;
-      Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,rql, agentReference, vid, queueType, lc);
+      Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,rql, agentReference, containerIdentifier, queueType, lc);
       queueLockFetchTime = t.secs(utils::Timer::resetCounter);
       auto jobsSummary=rq.getJobsSummary();
       filesBefore=jobsSummary.jobs;
@@ -557,7 +612,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       for (auto & rr: currentJobBatch) {
         // Determine the copy number and feed the queue with it.
         for (auto &tf: rr->getArchiveFile().tapeFiles) {
-          if (tf.vid == vid) {
+            if (tf.vid == vid) {
             jta.push_back({tf.copyNb, tf.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize, 
                 rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity(), rr->getDiskSystemName()});
           }

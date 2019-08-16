@@ -32,6 +32,7 @@
 #include "RetrieveRequestDump.hpp"
 #include "disk/DiskFileImplementations.hpp"
 #include "disk/RadosStriperPool.hpp"
+#include "OStoreDB/OStoreDB.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -101,7 +102,7 @@ void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity &c
 // checkAndGetNextArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string &instanceName,
-  const std::string &storageClassName, const common::dataStructures::UserIdentity &user, log::LogContext &lc) {
+  const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user, log::LogContext &lc) {
   cta::utils::Timer t;
   const uint64_t archiveFileId = m_catalogue.checkAndGetNextArchiveFileId(instanceName, storageClassName, user);
   const auto catalogueTime = t.secs();
@@ -157,10 +158,9 @@ void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std:
      .add("policyArchivePriority", catalogueInfo.mountPolicy.archivePriority)
      .add("policyMaxDrives", catalogueInfo.mountPolicy.maxDrivesAllowed)
      .add("diskFilePath", request.diskFileInfo.path)
-     .add("diskFileOwner", request.diskFileInfo.owner)
-     .add("diskFileGroup", request.diskFileInfo.group)
-     .add("checksumValue", request.checksumValue)
-     .add("checksumType", request.checksumType)
+     .add("diskFileOwnerUid", request.diskFileInfo.owner_uid)
+     .add("diskFileGid", request.diskFileInfo.gid)
+     .add("checksumBlob", request.checksumBlob)
      .add("archiveReportURL", midEllipsis(request.archiveReportURL, 50, 15))
      .add("archiveErrorReportURL", midEllipsis(request.archiveErrorReportURL, 50, 15))
      .add("creationHost", request.creationLog.host)
@@ -225,8 +225,8 @@ void Scheduler::queueRetrieve(
   spc.add("fileId", request.archiveFileID)
      .add("instanceName", instanceName)
      .add("diskFilePath", request.diskFileInfo.path)
-     .add("diskFileOwner", request.diskFileInfo.owner)
-     .add("diskFileGroup", request.diskFileInfo.group)
+     .add("diskFileOwnerUid", request.diskFileInfo.owner_uid)
+     .add("diskFileGid", request.diskFileInfo.gid)
      .add("dstURL", request.dstURL)
      .add("errorReportURL", request.errorReportURL)
      .add("creationHost", request.creationLog.host)
@@ -235,12 +235,11 @@ void Scheduler::queueRetrieve(
      .add("requesterName", request.requester.name)
      .add("requesterGroup", request.requester.group)
      .add("criteriaArchiveFileId", queueCriteria.archiveFile.archiveFileID)
-     .add("criteriaChecksumType", queueCriteria.archiveFile.checksumType)
-     .add("criteriaChecksumValue", queueCriteria.archiveFile.checksumValue)
+     .add("criteriaChecksumBlob", queueCriteria.archiveFile.checksumBlob)
      .add("criteriaCreationTime", queueCriteria.archiveFile.creationTime)
      .add("criteriaDiskFileId", queueCriteria.archiveFile.diskFileId)
      .add("criteriaDiskFilePath", queueCriteria.archiveFile.diskFileInfo.path)
-     .add("criteriaDiskFileOwner", queueCriteria.archiveFile.diskFileInfo.owner)
+     .add("criteriaDiskFileOwnerUid", queueCriteria.archiveFile.diskFileInfo.owner_uid)
      .add("criteriaDiskInstance", queueCriteria.archiveFile.diskInstance)
      .add("criteriaFileSize", queueCriteria.archiveFile.fileSize)
      .add("reconciliationTime", queueCriteria.archiveFile.reconciliationTime)
@@ -345,13 +344,13 @@ void Scheduler::checkTapeFullBeforeRepack(std::string vid){
 // repack
 //------------------------------------------------------------------------------
 void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) {
+    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext & lc) {
   // Check request sanity
   if (vid.empty()) throw exception::UserError("Empty VID name.");
   if (bufferURL.empty()) throw exception::UserError("Empty buffer URL.");
   utils::Timer t;
   checkTapeFullBeforeRepack(vid);
-  m_db.queueRepack(vid, bufferURL, repackType, lc);
+  m_db.queueRepack(vid, bufferURL, repackType, mountPolicy, lc);
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);
   log::ScopedParamContainer params(lc);
@@ -482,24 +481,28 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   timingList.insertAndReset("fillTotalStatsFileBeforeExpandTime",t);
   cta::catalogue::ArchiveFileItor archiveFilesForCatalogue = m_catalogue.getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
   timingList.insertAndReset("catalogueGetArchiveFilesForRepackItorTime",t);
+  
   std::stringstream dirBufferURL;
   dirBufferURL << repackInfo.repackBufferBaseURL << "/" << repackInfo.vid << "/";
-  cta::disk::DirectoryFactory dirFactory;
-  std::unique_ptr<cta::disk::Directory> dir;
-  dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
   std::set<std::string> filesInDirectory;
-  if(dir->exist()){
-    filesInDirectory = dir->getFilesName();
-  } else {
-    dir->mkdir();
+  if(archiveFilesForCatalogue.hasMore()){
+    //We only create the folder if there are some files to Repack
+    cta::disk::DirectoryFactory dirFactory;
+    std::unique_ptr<cta::disk::Directory> dir;
+    dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
+    if(dir->exist()){
+      filesInDirectory = dir->getFilesName();
+    } else {
+      dir->mkdir();
+    }
   }
   double elapsedTime = 0;
   bool stopExpansion = false;
+  repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
   while(archiveFilesForCatalogue.hasMore() && !stopExpansion) {
     size_t filesCount = 0;
     uint64_t maxAddedFSeq = 0;
     std::list<SchedulerDatabase::RepackRequest::Subrequest> retrieveSubrequests;
-    repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
     while(filesCount < c_defaultMaxNbFilesForRepack && !stopExpansion && archiveFilesForCatalogue.hasMore())
     {
       filesCount++;
@@ -515,14 +518,19 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::MoveOnly) {
         // determine which fSeq(s) (normally only one) lives on this tape.
         for (auto & tc: archiveFile.tapeFiles) if (tc.vid == repackInfo.vid) {
-          retrieveSubRequest.copyNbsToRearchive.insert(tc.copyNb);
           // We make the (reasonable) assumption that the archive file only has one copy on this tape.
           // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
           // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
           // restart of expansion.
-          retrieveSubRequest.fSeq = std::min(tc.fSeq, retrieveSubRequest.fSeq);
-          totalStatsFile.totalFilesToArchive += 1;
-          totalStatsFile.totalBytesToArchive += retrieveSubRequest.archiveFile.fileSize;
+          if(tc.supersededByVid.empty()){
+            //We want to Archive the "active" copies on the tape, thus the copies that are not superseded by another
+            //we want to Retrieve the "active" fSeq
+            totalStatsFile.totalFilesToArchive += 1;
+            totalStatsFile.totalBytesToArchive += retrieveSubRequest.archiveFile.fileSize;
+            retrieveSubRequest.copyNbsToRearchive.insert(tc.copyNb);
+            retrieveSubRequest.fSeq = tc.fSeq;
+          }
+          //retrieveSubRequest.fSeq = (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) ? tc.fSeq : std::max(tc.fSeq, retrieveSubRequest.fSeq);
         }
       }
       std::stringstream fileName;
@@ -570,8 +578,16 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // value in case of crash.
     auto diskSystemList = m_catalogue.getAllDiskSystems();
     timingList.insertAndReset("getDisksystemsListTime",t);
-    repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq - 1, maxAddedFSeq, totalStatsFile, diskSystemList, lc);
+    repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq, maxAddedFSeq, totalStatsFile, diskSystemList, lc);
     timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
+    {
+      if(!stopExpansion && archiveFilesForCatalogue.hasMore()){
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid",repackInfo.vid);
+        timingList.addToLog(params);
+        lc.log(log::INFO,"Max number of files expanded reached ("+std::to_string(c_defaultMaxNbFilesForRepack)+"), doing some reporting before continuing expansion.");
+      }
+    }
   }
   log::ScopedParamContainer params(lc);
   params.add("tapeVid",repackInfo.vid);
@@ -596,12 +612,68 @@ Scheduler::RepackReportBatch Scheduler::getNextRepackReportBatch(log::LogContext
   return ret;
 }
 
+
+//------------------------------------------------------------------------------
+// Scheduler::getRepackReportBatches
+//------------------------------------------------------------------------------
 std::list<Scheduler::RepackReportBatch> Scheduler::getRepackReportBatches(log::LogContext &lc){
   std::list<Scheduler::RepackReportBatch> ret;
   for(auto& reportBatch: m_db.getRepackReportBatches(lc)){
     Scheduler::RepackReportBatch report;
     report.m_DbBatch.reset(reportBatch.release());
     ret.push_back(std::move(report));
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getNextSuccessfulRetrieveRepackReportBatch
+//------------------------------------------------------------------------------
+Scheduler::RepackReportBatch Scheduler::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext &lc){
+  Scheduler::RepackReportBatch ret;
+  try{
+    ret.m_DbBatch.reset(m_db.getNextSuccessfulRetrieveRepackReportBatch(lc).release());
+  } catch (OStoreDB::NoRepackReportBatchFound &){
+    ret.m_DbBatch = nullptr;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getNextFailedRetrieveRepackReportBatch
+//------------------------------------------------------------------------------
+Scheduler::RepackReportBatch Scheduler::getNextFailedRetrieveRepackReportBatch(log::LogContext &lc){
+  Scheduler::RepackReportBatch ret;
+  try{
+    ret.m_DbBatch.reset(m_db.getNextFailedRetrieveRepackReportBatch(lc).release());
+  } catch (OStoreDB::NoRepackReportBatchFound &){
+    ret.m_DbBatch = nullptr;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getNextSuccessfulArchiveRepackReportBatch
+//------------------------------------------------------------------------------
+Scheduler::RepackReportBatch Scheduler::getNextSuccessfulArchiveRepackReportBatch(log::LogContext &lc){
+  Scheduler::RepackReportBatch ret;
+  try{
+    ret.m_DbBatch.reset(m_db.getNextSuccessfulArchiveRepackReportBatch(lc).release());
+  } catch (OStoreDB::NoRepackReportBatchFound &){
+    ret.m_DbBatch = nullptr;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getNextFailedArchiveRepackReportBatch
+//------------------------------------------------------------------------------
+Scheduler::RepackReportBatch Scheduler::getNextFailedArchiveRepackReportBatch(log::LogContext &lc){
+  Scheduler::RepackReportBatch ret;
+  try{
+    ret.m_DbBatch.reset(m_db.getNextFailedArchiveRepackReportBatch(lc).release());
+  } catch (OStoreDB::NoRepackReportBatchFound &){
+    ret.m_DbBatch = nullptr;
   }
   return ret;
 }
@@ -933,6 +1005,23 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
 }
 
 //------------------------------------------------------------------------------
+// getLogicalLibrary
+//------------------------------------------------------------------------------
+cta::optional<common::dataStructures::LogicalLibrary> Scheduler::getLogicalLibrary(const std::string& libraryName, double& getLogicalLibraryTime){
+  utils::Timer timer;
+  auto logicalLibraries = m_catalogue.getLogicalLibraries();
+  cta::optional<common::dataStructures::LogicalLibrary> ret;
+  auto logicalLibraryItor = std::find_if(logicalLibraries.begin(),logicalLibraries.end(),[libraryName](const cta::common::dataStructures::LogicalLibrary& ll){
+    return (ll.name == libraryName); 
+  });
+  getLogicalLibraryTime += timer.secs(utils::Timer::resetCounter);
+  if(logicalLibraryItor != logicalLibraries.end()){
+    ret = *logicalLibraryItor;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // getNextMountDryRun
 //------------------------------------------------------------------------------
 bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const std::string& driveName, log::LogContext& lc) {
@@ -946,6 +1035,25 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
   double decisionTime = 0;
   double schedulerDbTime = 0;
   double catalogueTime = 0;
+  double getLogicalLibrariesTime = 0;
+  
+  auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTime);
+  if(logicalLibrary){
+    if(logicalLibrary.value().isDisabled){
+      log::ScopedParamContainer params(lc);
+      params.add("logicalLibrary",logicalLibraryName)
+            .add("catalogueTime",getLogicalLibrariesTime);
+      lc.log(log::INFO,"In Scheduler::getNextMountDryRun(): logicalLibrary is disabled");
+      return false;
+    }
+  } else {
+    log::ScopedParamContainer params(lc);
+    params.add("logicalLibrary",logicalLibraryName)
+          .add("catalogueTime",getLogicalLibrariesTime);
+    lc.log(log::INFO,"In Scheduler::getNextMountDryRun(): logicalLibrary does not exist");
+    return false;
+  }
+  
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfoNoLock(lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
@@ -1038,7 +1146,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
     }
   }
   schedulerDbTime = getMountInfoTime;
-  catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+  catalogueTime = getTapeInfoTime + getTapeForWriteTime + getLogicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);
   log::ScopedParamContainer params(lc);
   params.add("getMountInfoTime", getMountInfoTime)
@@ -1080,7 +1188,26 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   double mountCreationTime = 0;
   double driveStatusSetTime = 0;
   double schedulerDbTime = 0;
+  double getLogicalLibrariesTime = 0;
   double catalogueTime = 0;
+  
+auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTime);
+  if(logicalLibrary){
+    if(logicalLibrary.value().isDisabled){
+      log::ScopedParamContainer params(lc);
+      params.add("logicalLibrary",logicalLibraryName)
+            .add("catalogueTime",getLogicalLibrariesTime);
+      lc.log(log::INFO,"In Scheduler::getNextMount(): logicalLibrary is disabled");
+      return std::unique_ptr<TapeMount>();
+    }
+  } else {
+    log::ScopedParamContainer params(lc);
+    params.add("logicalLibrary",logicalLibraryName)
+          .add("catalogueTime",getLogicalLibrariesTime);
+    lc.log(log::CRIT,"In Scheduler::getNextMount(): logicalLibrary does not exist");
+    return std::unique_ptr<TapeMount>();
+  }
+
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfo(lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
@@ -1182,8 +1309,8 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             m->activityNameAndWeightedMountCount.value().activity,
             m->activityNameAndWeightedMountCount.value().weight };
         }
-        std::unique_ptr<RetrieveMount> internalRet (
-          new RetrieveMount(mountInfo->createRetrieveMount(m->vid, 
+        std::unique_ptr<RetrieveMount> internalRet(new RetrieveMount(m_catalogue));
+        internalRet->m_dbMount.reset(mountInfo->createRetrieveMount(m->vid, 
             m->tapePool,
             driveName,
             logicalLibraryName, 
@@ -1192,8 +1319,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             m->mediaType,
             m->vendor,
             m->capacityInBytes,
-            time(NULL), actvityAndWeight)));
-        internalRet->setCatalogue(&m_catalogue);
+            time(NULL), actvityAndWeight).release());
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;
@@ -1249,7 +1375,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
     }
   }
   schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
-  catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+  catalogueTime = getTapeInfoTime + getTapeForWriteTime + getLogicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);
   log::ScopedParamContainer params(lc);
   params.add("getMountInfoTime", getMountInfoTime)
@@ -1285,6 +1411,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid, vid_to_tapeinfo);
     switch (pm.type) {
     case common::dataStructures::MountType::ArchiveForUser:
+    case common::dataStructures::MountType::ArchiveForRepack:
       summary.mountPolicy.archivePriority = pm.priority;
       summary.mountPolicy.archiveMinRequestAge = pm.minRequestAge;
       summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
@@ -1316,6 +1443,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid, vid_to_tapeinfo);
     switch (em.type) {
     case common::dataStructures::MountType::ArchiveForUser:
+    case common::dataStructures::MountType::ArchiveForRepack:
     case common::dataStructures::MountType::Retrieve:
       if (em.currentMount) 
         summary.currentMounts++;
@@ -1332,7 +1460,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   mountDecisionInfo.reset();
   // Add the tape information where useful (archive queues).
   for (auto & mountOrQueue: ret) {
-    if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType) {
+    if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType || common::dataStructures::MountType::ArchiveForRepack==mountOrQueue.mountType) {
       // Get all the tape for this pool
       cta::catalogue::TapeSearchCriteria tsc;
       tsc.tapePool = mountOrQueue.tapePool;
@@ -1345,7 +1473,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
           mountOrQueue.emptyTapes++;
         if (t.disabled) mountOrQueue.disabledTapes++;
         if (t.full) mountOrQueue.fullTapes++;
-        if (!t.full && !t.disabled) mountOrQueue.writableTapes++;
+        if (t.readOnly) mountOrQueue.readOnlyTapes++;
+        if (!t.full && !t.disabled && !t.readOnly) mountOrQueue.writableTapes++;
       }
     } else if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
       // Get info for this tape.
@@ -1363,7 +1492,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         mountOrQueue.emptyTapes++;
       if (t.disabled) mountOrQueue.disabledTapes++;
       if (t.full) mountOrQueue.fullTapes++;
-      if (!t.full && !t.disabled) mountOrQueue.writableTapes++;
+      if (t.readOnly) mountOrQueue.readOnlyTapes++;
+      if (!t.full && !t.disabled && !t.readOnly) mountOrQueue.writableTapes++;
       mountOrQueue.tapePool = t.tapePoolName;
     }
   }
@@ -1459,7 +1589,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
     auto & current = pendingReports.back();
     // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
     try {
-      current.reporter.reset(reporterFactory.createDiskReporter(j->reportURL()));
+      current.reporter.reset(reporterFactory.createDiskReporter(j->exceptionThrowingReportURL()));
       current.reporter->asyncReport();
       current.archiveJob = j.get();
     } catch (cta::exception::Exception & ex) {

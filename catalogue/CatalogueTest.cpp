@@ -18,10 +18,9 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueTest.hpp"
-#include "catalogue/ChecksumTypeMismatch.hpp"
-#include "catalogue/ChecksumValueMismatch.hpp"
-#include "catalogue/FileSizeMismatch.hpp"
+#include "catalogue/UserSpecifiedANonEmptyLogicalLibrary.hpp"
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
+#include "catalogue/UserSpecifiedANonExistentLogicalLibrary.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentDiskSystem.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringDiskSystemName.hpp"
@@ -62,6 +61,13 @@
 #include <set>
 
 namespace unitTests {
+
+const uint32_t PUBLIC_DISK_USER = 9751;
+const uint32_t PUBLIC_DISK_GROUP = 9752;
+const uint32_t DISK_FILE_OWNER_UID = 9753;
+const uint32_t DISK_FILE_GID = 9754;
+const uint32_t NON_EXISTENT_DISK_FILE_OWNER_UID = 9755;
+const uint32_t NON_EXISTENT_DISK_FILE_GID = 9756;
 
 //------------------------------------------------------------------------------
 // constructor
@@ -956,6 +962,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape";
 
@@ -977,7 +984,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
   }
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   ASSERT_TRUE(m_catalogue->tapeExists(vid));
 
@@ -996,6 +1003,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -1597,9 +1606,30 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringSupply) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string modifiedSupply = "";
-  ASSERT_THROW(m_catalogue->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply),
-    catalogue::UserSpecifiedAnEmptyStringSupply);
+  const std::string modifiedSupply;
+  m_catalogue->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+      
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(isEncrypted, pool.encryption);
+    ASSERT_FALSE((bool)pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_nonExistentTapePool) {
@@ -2446,7 +2476,68 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_existant) {
   using namespace cta;
       
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-  ASSERT_THROW(m_catalogue->deleteLogicalLibrary("non_existant_logical_library"), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteLogicalLibrary("non_existant_logical_library"),
+    catalogue::UserSpecifiedANonExistentLogicalLibrary);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, 
+    comment);
+
+  const std::list<common::dataStructures::Tape> tapes =
+    m_catalogue->getTapes();
+
+  ASSERT_EQ(1, tapes.size());
+
+  const common::dataStructures::Tape tape = tapes.front();
+  ASSERT_EQ(vid, tape.vid);
+  ASSERT_EQ(mediaType, tape.mediaType);
+  ASSERT_EQ(vendor, tape.vendor);
+  ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+  ASSERT_EQ(tapePoolName, tape.tapePoolName);
+  ASSERT_EQ(vo, tape.vo);
+  ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+  ASSERT_TRUE(disabledValue == tape.disabled);
+  ASSERT_TRUE(fullValue == tape.full);
+  ASSERT_TRUE(readOnlyValue == tape.readOnly);
+  ASSERT_FALSE(tape.isFromCastor);
+  ASSERT_EQ(comment, tape.comment);
+  ASSERT_FALSE(tape.labelLog);
+  ASSERT_FALSE(tape.lastReadLog);
+  ASSERT_FALSE(tape.lastWriteLog);
+
+  const common::dataStructures::EntryLog creationLog = tape.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog =
+    tape.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  ASSERT_THROW(m_catalogue->deleteLogicalLibrary(logicalLibraryName), catalogue::UserSpecifiedANonEmptyLogicalLibrary);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
@@ -2537,6 +2628,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -2556,7 +2648,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   }
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   ASSERT_TRUE(m_catalogue->tapeExists(vid));
 
@@ -2575,6 +2667,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -2621,6 +2715,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -2640,7 +2735,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment), catalogue::UserSpecifiedAnEmptyStringVid);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringVid);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringMediaType) {
@@ -2663,6 +2758,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringMediaType) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -2680,7 +2776,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringMediaType) {
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment), catalogue::UserSpecifiedAnEmptyStringMediaType);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringMediaType);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVendor) {
@@ -2703,6 +2799,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVendor) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
+  
   const std::string comment = "Create tape";
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -2720,7 +2818,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVendor) {
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment), catalogue::UserSpecifiedAnEmptyStringVendor);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringVendor);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
@@ -2743,6 +2841,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -2760,7 +2859,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment), catalogue::UserSpecifiedAnEmptyStringLogicalLibraryName);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringLogicalLibraryName);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
@@ -2781,12 +2880,13 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_zeroCapacity) {
@@ -2810,6 +2910,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_zeroCapacity) {
   const uint64_t capacityInBytes = 0;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -2829,7 +2930,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_zeroCapacity) {
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment), catalogue::UserSpecifiedAZeroCapacity);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAZeroCapacity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringComment) {
@@ -2853,6 +2954,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringComment) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -2872,7 +2974,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringComment) {
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment), catalogue::UserSpecifiedAnEmptyStringComment);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
@@ -2892,11 +2994,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment), exception::UserError);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_tape_pool) {
@@ -2913,11 +3016,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_tape_pool) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment), exception::UserError);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
@@ -2939,6 +3043,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
   const uint64_t capacityInBytes = 9L * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -2958,7 +3063,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
   }
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   const auto tapes = m_catalogue->getTapes();
 
@@ -2975,6 +3080,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3018,6 +3125,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -3037,7 +3145,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   }
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, comment);
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -3053,7 +3161,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName,
-    tapePoolName, capacityInBytes, disabledValue, fullValue,
+    tapePoolName, capacityInBytes, disabledValue, fullValue, readOnlyValue,
     comment), exception::UserError);
 
   {
@@ -3085,6 +3193,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   const uint64_t capacityInBytes = (uint64_t) 10 * 1000 * 1000 * 1000 * 1000;
   const bool disabled = true;
   const bool full = false;
+  const bool readOnly = false;
   const std::string comment = "Create tape";
 
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
@@ -3113,7 +3222,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     vid << "vid" << i;
 
     m_catalogue->createTape(m_admin, vid.str(), mediaType, vendor, logicalLibrary, tapePoolName, capacityInBytes,
-      disabled, full, comment);
+      disabled, full, readOnly, comment);
 
     {
       const auto pools = m_catalogue->getTapePools();
@@ -3152,6 +3261,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabled == tape.disabled);
       ASSERT_TRUE(full == tape.full);
+      ASSERT_TRUE(readOnly == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -3348,6 +3459,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabled == tape.disabled);
       ASSERT_TRUE(full == tape.full);
+      ASSERT_TRUE(readOnly == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -3389,6 +3502,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -3409,7 +3523,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
 
   {
     m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName,
-      capacityInBytes, disabledValue, fullValue, comment);
+      capacityInBytes, disabledValue, fullValue, readOnlyValue, comment);
     const auto tapes = cta_catalogue_CatalogueTest::tapeListToMap(m_catalogue->getTapes());
     ASSERT_EQ(1, tapes.size());
 
@@ -3426,6 +3540,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3463,16 +3579,14 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.diskInstance         = storageClass.diskInstance;
     file1Written.diskFileId           = "5678";
     file1Written.diskFilePath         = "/public_dir/public_file";
-    file1Written.diskFileUser         = "public_disk_user";
-    file1Written.diskFileGroup        = "public_disk_group";
+    file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
-    file1Written.checksumType         = "checksum_type";
-    file1Written.checksumValue        = "checksum_value";
+    file1Written.checksumBlob.insert(checksum::ADLER32, 0x1000); // tests checksum with embedded zeros
     file1Written.storageClassName     = storageClass.name;
     file1Written.vid                  = vid1;
     file1Written.fSeq                 = 1;
     file1Written.blockId              = 4321;
-    file1Written.compressedSize       = fileSize;
     file1Written.copyNb               = 1;
     file1Written.tapeDrive            = "tape_drive";
     m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -3493,7 +3607,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
 
   {
     m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName,
-      capacityInBytes, disabledValue, fullValue, comment);
+      capacityInBytes, disabledValue, fullValue, readOnlyValue, comment);
     const auto tapes = cta_catalogue_CatalogueTest::tapeListToMap(m_catalogue->getTapes());
     ASSERT_EQ(2, tapes.size());
 
@@ -3510,6 +3624,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3556,12 +3672,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue,
+    capacityInBytes, disabledValue, fullValue, readOnlyValue, 
     comment);
 
   const std::list<common::dataStructures::Tape> tapes =
@@ -3579,6 +3696,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
   ASSERT_TRUE(disabledValue == tape.disabled);
   ASSERT_TRUE(fullValue == tape.full);
+  ASSERT_TRUE(readOnlyValue == tape.readOnly);
+  ASSERT_FALSE(tape.isFromCastor);
   ASSERT_EQ(comment, tape.comment);
   ASSERT_FALSE(tape.labelLog);
   ASSERT_FALSE(tape.lastReadLog);
@@ -3621,12 +3740,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
-    comment);
+    readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -3644,6 +3764,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3668,16 +3790,14 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     file1Written.diskInstance         = storageClass.diskInstance;
     file1Written.diskFileId           = "5678";
     file1Written.diskFilePath         = "/public_dir/public_file";
-    file1Written.diskFileUser         = "public_disk_user";
-    file1Written.diskFileGroup        = "public_disk_group";
+    file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
-    file1Written.checksumType         = "checksum_type";
-    file1Written.checksumValue        = "checksum_value";
+    file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
     file1Written.storageClassName     = storageClass.name;
     file1Written.vid                  = vid;
     file1Written.fSeq                 = 1;
     file1Written.blockId              = 4321;
-    file1Written.compressedSize       = fileSize;
     file1Written.copyNb               = 1;
     file1Written.tapeDrive            = "tape_drive";
     m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -3699,6 +3819,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(fileSize, tape.dataOnTapeInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3743,13 +3865,14 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -3766,6 +3889,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3795,6 +3920,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3825,13 +3952,14 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -3848,6 +3976,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3878,6 +4008,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3908,6 +4040,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -3916,7 +4049,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
 
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -3933,6 +4066,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -3963,6 +4098,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4007,6 +4144,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4015,7 +4153,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   m_catalogue->createTapePool(m_admin, anotherTapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create another tape pool");
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4032,6 +4170,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4062,6 +4202,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4111,6 +4253,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4118,7 +4261,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4135,6 +4278,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4166,6 +4311,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
     ASSERT_EQ(modifiedCapacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4206,6 +4353,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4213,7 +4361,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4230,6 +4378,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4262,6 +4412,98 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey_emptyStringEncryptionKey) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedEncryptionKey;
+  m_catalogue->modifyTapeEncryptionKey(m_admin, vid, modifiedEncryptionKey);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_FALSE((bool)tape.encryptionKey);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4302,6 +4544,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4309,7 +4552,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4326,6 +4569,8 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4357,6 +4602,8 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_TRUE((bool)tape.labelLog);
     ASSERT_EQ(labelDrive, tape.labelLog.value().drive);
@@ -4398,6 +4645,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4405,7 +4653,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4422,6 +4670,10 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(0, tape.readMountCount);
+    ASSERT_EQ(0, tape.writeMountCount);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4453,6 +4705,44 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(0, tape.readMountCount);
+    ASSERT_EQ(1, tape.writeMountCount);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_TRUE((bool)tape.lastWriteLog);
+    ASSERT_EQ(modifiedDrive, tape.lastWriteLog.value().drive);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+  
+  for(int i=1; i<1024; i++) {
+    m_catalogue->tapeMountedForArchive(vid, modifiedDrive);
+  }
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(0, tape.readMountCount);
+    ASSERT_EQ(1024, tape.writeMountCount);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4494,6 +4784,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4501,7 +4792,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4518,6 +4809,10 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(0, tape.readMountCount);
+    ASSERT_EQ(0, tape.writeMountCount);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4549,6 +4844,44 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(1, tape.readMountCount);
+    ASSERT_EQ(0, tape.writeMountCount);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_TRUE((bool)tape.lastReadLog);
+    ASSERT_EQ(modifiedDrive, tape.lastReadLog.value().drive);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+  
+  for(int i=1; i<1024; i++) {
+    m_catalogue->tapeMountedForRetrieve(vid, modifiedDrive);
+  }
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(1024, tape.readMountCount);
+    ASSERT_EQ(0, tape.writeMountCount);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_TRUE((bool)tape.lastReadLog);
@@ -4590,6 +4923,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4597,7 +4931,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4614,6 +4948,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4644,6 +4980,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4683,6 +5021,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4690,7 +5029,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4707,6 +5046,8 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4737,6 +5078,8 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4758,6 +5101,231 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape_nonExistentTape) {
   ASSERT_THROW(m_catalogue->noSpaceLeftOnTape(vid), exception::Exception);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->setTapeReadOnly(m_admin, vid, true);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+  
+   m_catalogue->setTapeReadOnly(m_admin, vid, false);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_FALSE(tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly_nonExistentTape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+
+  ASSERT_THROW(m_catalogue->setTapeReadOnly(m_admin, vid, true), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->setTapeReadOnlyOnError(vid);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError_nonExistentTape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+
+  ASSERT_THROW(m_catalogue->setTapeReadOnlyOnError(vid), exception::Exception);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
   using namespace cta;
 
@@ -4776,6 +5344,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4783,7 +5352,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4800,6 +5369,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4830,6 +5401,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(tape.disabled);
     ASSERT_FALSE(tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -4839,6 +5412,134 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->setTapeIsFromCastorInUnitTests(vid);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_TRUE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+  
+  // do it twice
+  m_catalogue->setTapeIsFromCastorInUnitTests(vid);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_TRUE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }  
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastor_nonExistentTape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+
+  ASSERT_THROW(m_catalogue->setTapeIsFromCastorInUnitTests(vid), exception::Exception);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled_nonExistentTape) {
@@ -4869,12 +5570,13 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = false;
+  const bool readOnlyValue = false;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-   disabledValue, fullValue, comment);
+   disabledValue, fullValue, readOnlyValue, comment);
   m_catalogue->tapeLabelled(vid, "tape_drive");
 
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
@@ -4890,6 +5592,139 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   ASSERT_EQ(0, tape.lastFSeq);
   ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_disabled_tape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+   disabledValue, fullValue, readOnlyValue, comment);
+  m_catalogue->tapeLabelled(vid, "tape_drive");
+
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+
+  ASSERT_EQ(0, tapes.size());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_full_tape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = true;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+   disabledValue, fullValue, readOnlyValue, comment);
+  m_catalogue->tapeLabelled(vid, "tape_drive");
+
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+
+  ASSERT_EQ(0, tapes.size());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_read_only_tape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+   disabledValue, fullValue, readOnlyValue, comment);
+  m_catalogue->tapeLabelled(vid, "tape_drive");
+
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+
+  ASSERT_EQ(0, tapes.size());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_is_from_castor_tape) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = false;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+   disabledValue, fullValue, readOnlyValue, comment);
+  m_catalogue->tapeLabelled(vid, "tape_drive");
+  {
+    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+    ASSERT_EQ(1, tapes.size());
+  }
+  {
+    m_catalogue->setTapeIsFromCastorInUnitTests(vid);
+    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+    ASSERT_EQ(0, tapes.size());
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tapes) {
@@ -4910,12 +5745,13 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-   disabledValue, fullValue, comment);
+   disabledValue, fullValue, readOnlyValue, comment);
 
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
 
@@ -6248,11 +7084,11 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_archive_rout
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity),
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity),
     exception::UserError);
 }
 
@@ -6264,7 +7100,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
   const std::string diskInstanceName = "disk_instance_name";
-  common::dataStructures::UserIdentity userIdentity;
 
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = diskInstanceName;
@@ -6303,10 +7138,11 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   ASSERT_EQ(creationLog, lastModificationLog);
 
   const std::string requesterName = "requester_name";
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity),
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity),
     exception::UserError);
 }
 
@@ -6388,14 +7224,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -6479,14 +7315,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = "username";
-  userIdentity.group = requesterGroupName;
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = "username";
+  requesterIdentity.group = requesterGroupName;
 
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -6589,14 +7425,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, userIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -6653,11 +7489,11 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_no_archive_route
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity),
+  ASSERT_THROW(m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity),
     exception::UserError);
 }
 
@@ -6739,10 +7575,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
-  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity);
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
+  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_mount_rule) {
@@ -6822,10 +7658,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = "username";
-  userIdentity.group = requesterGroupName;
-  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity);
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = "username";
+  requesterIdentity.group = requesterGroupName;
+  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_rule_overide) {
@@ -6924,10 +7760,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
-  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity);
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
+  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
@@ -6952,14 +7788,15 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string createTapeComment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
 
   const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
   const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
@@ -6975,6 +7812,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -7000,6 +7839,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -7029,8 +7870,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file1Written = *file1WrittenUP;
@@ -7039,16 +7878,14 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -7059,14 +7896,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -7075,9 +7911,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -7089,16 +7923,14 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumType         = checksumType;
-  file2Written.checksumValue        = checksumValue;
+  file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file2WrittenSet);
@@ -7109,14 +7941,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -7126,9 +7957,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
@@ -7136,9 +7965,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
   const std::string mountPolicyName = "mount_policy";
@@ -7177,11 +8004,11 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
   log::LogContext dummyLc(m_dummyLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc);
+    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
 
   ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
@@ -7189,7 +8016,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 
   // Check that the diskInstanceName mismatch detection works
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, userIdentity, cta::nullopt, dummyLc),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
     exception::UserError);
 }
 
@@ -7214,14 +8041,15 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string createTapeComment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
 
   const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
   const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
@@ -7237,6 +8065,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -7262,6 +8092,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -7290,26 +8122,23 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file1Written = *file1WrittenUP;
-    std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;    file1WrittenSet.insert(file1WrittenUP.release());
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -7320,14 +8149,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -7336,9 +8164,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -7350,16 +8176,14 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumType         = checksumType;
-  file2Written.checksumValue        = checksumValue;
+  file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file2WrittenSet);
@@ -7370,14 +8194,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -7387,9 +8210,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
 
     const auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
@@ -7397,9 +8218,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
   const std::string mountPolicyName = "mount_policy";
@@ -7438,13 +8257,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   log::LogContext dummyLc(m_dummyLog);
 
-  common::dataStructures::UserIdentity userIdentity;
-  userIdentity.name = requesterName;
-  userIdentity.group = "group";
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc);
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
@@ -7458,9 +8277,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     const auto copyNbToTapeFile2Itor = queueCriteria.archiveFile.tapeFiles.find(2);
@@ -7469,16 +8286,14 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
   m_catalogue->setTapeDisabled(m_admin, vid1, true);
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc);
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
@@ -7492,14 +8307,12 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
   m_catalogue->setTapeDisabled(m_admin, vid2, true);
 
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, cta::nullopt, dummyLc),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
     exception::UserError);
 }
 
@@ -7520,7 +8333,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_group_without_inst
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskFileGroup = "disk_file_group";
+  searchCriteria.diskFileGid = DISK_FILE_GID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -7531,7 +8344,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_disk_file_group
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
-  searchCriteria.diskFileGroup = "non_existant_disk_file_group";
+  searchCriteria.diskFileGid = NON_EXISTENT_DISK_FILE_GID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -7586,7 +8399,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_user_without_insta
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskFileUser = "disk_file_user";
+  searchCriteria.diskFileOwnerUid = DISK_FILE_OWNER_UID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -7597,7 +8410,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_disk_file_user)
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
-  searchCriteria.diskFileUser = "non_existant_disk_file_user";
+  searchCriteria.diskFileOwnerUid = NON_EXISTENT_DISK_FILE_OWNER_UID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -7694,6 +8507,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -7733,7 +8547,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   }
 
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName1, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -7751,7 +8565,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   }
 
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName2, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -7787,6 +8601,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -7813,6 +8631,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -7834,14 +8654,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 for this test
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  const uint64_t compressedFileSize = archiveFileSize;
 
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
@@ -7857,16 +8674,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskInstance = storageClass.diskInstance;
     fileWritten.diskFileId = diskFileId.str();
     fileWritten.diskFilePath = diskFilePath.str();
-    fileWritten.diskFileUser = "public_disk_user";
-    fileWritten.diskFileGroup = "public_disk_group";
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
-    fileWritten.checksumType = checksumType;
-    fileWritten.checksumValue = checksumValue;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
     fileWritten.vid = vid1;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
-    fileWritten.compressedSize = compressedFileSize;
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
@@ -7884,7 +8699,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
@@ -7920,16 +8735,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.diskInstance = storageClass.diskInstance;
     fileWritten.diskFileId = diskFileId.str();
     fileWritten.diskFilePath = diskFilePath.str();
-    fileWritten.diskFileUser = "public_disk_user";
-    fileWritten.diskFileGroup = "public_disk_group";
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
-    fileWritten.checksumType = checksumType;
-    fileWritten.checksumValue = checksumValue;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
     fileWritten.vid = vid2;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
-    fileWritten.compressedSize = compressedFileSize;
     fileWritten.copyNb = 2;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy2.emplace(fileWrittenUP.release());
@@ -7947,7 +8760,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
@@ -7975,8 +8788,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     searchCriteria.diskInstance = storageClass.diskInstance;
     searchCriteria.diskFileId = std::to_string(12345678);
     searchCriteria.diskFilePath = "/public_dir/public_file_1";
-    searchCriteria.diskFileUser = "public_disk_user";
-    searchCriteria.diskFileGroup = "public_disk_group";
+    searchCriteria.diskFileOwnerUid = PUBLIC_DISK_USER;
+    searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     searchCriteria.storageClass = storageClass.name;
     searchCriteria.vid = vid1;
     searchCriteria.tapeFileCopyNb = 1;
@@ -7993,8 +8806,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(searchCriteria.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(searchCriteria.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(searchCriteria.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(searchCriteria.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(searchCriteria.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(searchCriteria.diskFileOwnerUid, static_cast<uint64_t>(archiveFile.diskFileInfo.owner_uid));
+    ASSERT_EQ(searchCriteria.diskFileGid, static_cast<uint64_t>(archiveFile.diskFileInfo.gid));
     ASSERT_EQ(searchCriteria.storageClass, archiveFile.storageClass);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->vid);
@@ -8016,16 +8829,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileUser = "public_disk_user";
-      fileWritten1.diskFileGroup = "public_disk_group";
+      fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
-      fileWritten1.checksumType = checksumType;
-      fileWritten1.checksumValue = checksumValue;
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten1.storageClassName = storageClass.name;
       fileWritten1.vid = vid1;
       fileWritten1.fSeq = i;
       fileWritten1.blockId = i * 100;
-      fileWritten1.compressedSize = compressedFileSize;
       fileWritten1.copyNb = 1;
 
       catalogue::TapeFileWritten fileWritten2 = fileWritten1;
@@ -8039,11 +8850,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten1.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten1.storageClassName, archiveFile.storageClass);
       ASSERT_EQ(storageClass.nbCopies, archiveFile.tapeFiles.size());
 
@@ -8054,9 +8864,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
         ASSERT_EQ(fileWritten1.vid, it->vid);
         ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten1.blockId, it->blockId);
-        ASSERT_EQ(fileWritten1.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten1.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten1.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten1.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
       }
 
@@ -8067,9 +8875,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
         ASSERT_EQ(fileWritten2.vid, it->vid);
         ASSERT_EQ(fileWritten2.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten2.blockId, it->blockId);
-        ASSERT_EQ(fileWritten2.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten2.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten2.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten2.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten2.copyNb, it->copyNb);
       }
     }
@@ -8092,16 +8898,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileUser = "public_disk_user";
-      fileWritten1.diskFileGroup = "public_disk_group";
+      fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
-      fileWritten1.checksumType = checksumType;
-      fileWritten1.checksumValue = checksumValue;
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten1.storageClassName = storageClass.name;
       fileWritten1.vid = vid1;
       fileWritten1.fSeq = i;
       fileWritten1.blockId = i * 100;
-      fileWritten1.compressedSize = compressedFileSize;
       fileWritten1.copyNb = 1;
 
       catalogue::TapeFileWritten fileWritten2 = fileWritten1;
@@ -8115,11 +8919,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten1.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten1.storageClassName, archiveFile.storageClass);
       ASSERT_EQ(storageClass.nbCopies, archiveFile.tapeFiles.size());
 
@@ -8130,9 +8933,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
         ASSERT_EQ(fileWritten1.vid, it->vid);
         ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten1.blockId, it->blockId);
-        ASSERT_EQ(fileWritten1.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten1.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten1.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten1.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
       }
 
@@ -8143,9 +8944,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
         ASSERT_EQ(fileWritten2.vid, it->vid);
         ASSERT_EQ(fileWritten2.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten2.blockId, it->blockId);
-        ASSERT_EQ(fileWritten2.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten2.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten2.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten2.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten2.copyNb, it->copyNb);
       }
     }
@@ -8170,16 +8969,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = i;
       fileWritten.blockId = i * 100;
-      fileWritten.compressedSize = compressedFileSize;
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
@@ -8189,11 +8986,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten.storageClassName, archiveFile.storageClass);
 
       // There is only one tape copy because repack only want the tape file on a
@@ -8206,9 +9002,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
         ASSERT_EQ(fileWritten.vid, it->vid);
         ASSERT_EQ(fileWritten.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten.blockId, it->blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
@@ -8233,16 +9027,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = i;
       fileWritten.blockId = i * 100;
-      fileWritten.compressedSize = compressedFileSize;
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
@@ -8252,11 +9044,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten.storageClassName, archiveFile.storageClass);
 
       // There is only one tape copy because repack only want the tape file on a
@@ -8269,9 +9060,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
         ASSERT_EQ(fileWritten.vid, it->vid);
         ASSERT_EQ(fileWritten.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten.blockId, it->blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
@@ -8296,16 +9085,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = i;
       fileWritten.blockId = i * 100;
-      fileWritten.compressedSize = compressedFileSize;
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
@@ -8315,11 +9102,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten.storageClassName, archiveFile.storageClass);
 
       // There is only one tape copy because repack only want the tape file on a
@@ -8332,9 +9118,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
         ASSERT_EQ(fileWritten.vid, it->vid);
         ASSERT_EQ(fileWritten.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten.blockId, it->blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
@@ -8351,7 +9135,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8364,7 +9147,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8379,7 +9161,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8394,35 +9175,32 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileUser = "public_disk_user";
+    searchCriteria.diskFileOwnerUid     = PUBLIC_DISK_USER;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileGroup = "public_disk_group";
+    searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8436,7 +9214,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8448,7 +9225,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -8461,7 +9237,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -8474,7 +9249,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -8487,7 +9261,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -8500,7 +9273,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -8511,7 +9283,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(0, summary.totalBytes);
-    ASSERT_EQ(0, summary.totalCompressedBytes);
     ASSERT_EQ(0, summary.totalFiles);
   }
 }
@@ -8573,14 +9344,12 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         const uint64_t batchSize,
         const common::dataStructures::StorageClass &storageClass,
         const uint64_t &archiveFileSize,
-        const std::string &checksumType,
-        const std::string &checksumValue,
+        const checksum::ChecksumBlob &checksumBlob,
         const std::string &vid,
-        const uint64_t &compressedFileSize,
         const uint64_t &copyNb,
         const std::string &tapeDrive) :
           m_cat(cat), m_barrier(barrier), m_nbArchiveFiles(nbArchiveFiles), m_batchSize(batchSize), m_storageClass(storageClass), m_archiveFileSize(archiveFileSize),
-          m_checksumType(checksumType), m_checksumValue(checksumValue), m_vid(vid), m_compressedFileSize(compressedFileSize), m_copyNb(copyNb), m_tapeDrive(tapeDrive) { }
+          m_checksumBlob(checksumBlob), m_vid(vid), m_copyNb(copyNb), m_tapeDrive(tapeDrive) { }
 
     void run() override {
       for(uint64_t batch=0;batch< 1 + (m_nbArchiveFiles-1)/m_batchSize;++batch) {
@@ -8605,16 +9374,14 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
           fileWritten.diskInstance = m_storageClass.diskInstance;
           fileWritten.diskFileId = diskFileId.str();
           fileWritten.diskFilePath = diskFilePath.str();
-          fileWritten.diskFileUser = "public_disk_user";
-          fileWritten.diskFileGroup = "public_disk_group";
+          fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+          fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
           fileWritten.size = m_archiveFileSize;
-          fileWritten.checksumType = m_checksumType;
-          fileWritten.checksumValue = m_checksumValue;
+          fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
           fileWritten.storageClassName = m_storageClass.name;
           fileWritten.vid = m_vid;
           fileWritten.fSeq = fn_seq;
           fileWritten.blockId = fn_seq * 100;
-          fileWritten.compressedSize = m_compressedFileSize;
           fileWritten.copyNb = m_copyNb;
           fileWritten.tapeDrive = m_tapeDrive;
           tapeFilesWritten.emplace(fileWrittenUP.release());
@@ -8640,10 +9407,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     const uint64_t m_batchSize;
     const common::dataStructures::StorageClass m_storageClass;
     const uint64_t m_archiveFileSize;
-    const std::string m_checksumType;
-    const std::string m_checksumValue;
+    const checksum::ChecksumBlob m_checksumBlob;
     const std::string m_vid;
-    const uint64_t m_compressedFileSize;
     const uint64_t m_copyNb;
     const std::string m_tapeDrive;
   };
@@ -8683,6 +9448,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -8722,7 +9488,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   }
 
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName1, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -8740,7 +9506,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   }
 
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName2, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -8776,6 +9542,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -8802,6 +9570,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -8823,22 +9593,22 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive1 = "tape_drive1";
   const std::string tapeDrive2 = "tape_drive2";
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   const uint64_t nbArchiveFiles = 200; // Must be a multiple of batchsize for this test
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  const uint64_t compressedFileSize = archiveFileSize;
 
   const uint64_t batchsize = 20;
 
+  checksum::ChecksumBlob checksumBlob;
+  checksumBlob.insert(checksum::ADLER32, "9876");
+
   {
     Barrier barrier(2);
-    filesWrittenThread a(m_catalogue.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumType, checksumValue, vid1, compressedFileSize, 1, tapeDrive1);
-    filesWrittenThread b(catalogue2.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumType, checksumValue, vid2, compressedFileSize, 2, tapeDrive2);
+    filesWrittenThread a(m_catalogue.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumBlob, vid1, 1, tapeDrive1);
+    filesWrittenThread b(catalogue2.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumBlob, vid2, 2, tapeDrive2);
 
     filesWrittenRunner r1(a);
     filesWrittenRunner r2(b);
@@ -8858,7 +9628,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
@@ -8892,7 +9662,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
@@ -8920,8 +9690,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     searchCriteria.diskInstance = storageClass.diskInstance;
     searchCriteria.diskFileId = std::to_string(12345678);
     searchCriteria.diskFilePath = "/public_dir/public_file_1";
-    searchCriteria.diskFileUser = "public_disk_user";
-    searchCriteria.diskFileGroup = "public_disk_group";
+    searchCriteria.diskFileOwnerUid = PUBLIC_DISK_USER;
+    searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     searchCriteria.storageClass = storageClass.name;
     searchCriteria.vid = vid1;
     searchCriteria.tapeFileCopyNb = 1;
@@ -8938,8 +9708,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(searchCriteria.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(searchCriteria.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(searchCriteria.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(searchCriteria.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(searchCriteria.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(searchCriteria.diskFileOwnerUid, static_cast<uint64_t>(archiveFile.diskFileInfo.owner_uid));
+    ASSERT_EQ(searchCriteria.diskFileGid, static_cast<uint64_t>(archiveFile.diskFileInfo.gid));
     ASSERT_EQ(searchCriteria.storageClass, archiveFile.storageClass);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->vid);
@@ -8975,16 +9745,14 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileUser = "public_disk_user";
-      fileWritten1.diskFileGroup = "public_disk_group";
+      fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
-      fileWritten1.checksumType = checksumType;
-      fileWritten1.checksumValue = checksumValue;
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
       fileWritten1.vid = vid1;
       fileWritten1.fSeq = seq1;
       fileWritten1.blockId = seq1 * 100;
-      fileWritten1.compressedSize = compressedFileSize;
       fileWritten1.copyNb = 1;
 
       catalogue::TapeFileWritten fileWritten2 = fileWritten1;
@@ -9000,11 +9768,10 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten1.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten1.storageClassName, archiveFile.storageClass);
       ASSERT_EQ(storageClass.nbCopies, archiveFile.tapeFiles.size());
 
@@ -9015,9 +9782,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         ASSERT_EQ(fileWritten1.vid, it->vid);
         ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten1.blockId, it->blockId);
-        ASSERT_EQ(fileWritten1.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten1.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten1.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten1.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
       }
 
@@ -9028,9 +9793,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         ASSERT_EQ(fileWritten2.vid, it->vid);
         ASSERT_EQ(fileWritten2.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten2.blockId, it->blockId);
-        ASSERT_EQ(fileWritten2.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten2.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten2.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten2.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten2.copyNb, it->copyNb);
       }
     }
@@ -9055,16 +9818,14 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.diskInstance = storageClass.diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
-      fileWritten1.diskFileUser = "public_disk_user";
-      fileWritten1.diskFileGroup = "public_disk_group";
+      fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
-      fileWritten1.checksumType = checksumType;
-      fileWritten1.checksumValue = checksumValue;
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
       fileWritten1.vid = vid1;
       fileWritten1.fSeq = seq1;
       fileWritten1.blockId = seq1 * 100;
-      fileWritten1.compressedSize = compressedFileSize;
       fileWritten1.copyNb = 1;
 
       catalogue::TapeFileWritten fileWritten2 = fileWritten1;
@@ -9080,11 +9841,10 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten1.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten1.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten1.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten1.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten1.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten1.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten1.storageClassName, archiveFile.storageClass);
       ASSERT_EQ(storageClass.nbCopies, archiveFile.tapeFiles.size());
 
@@ -9095,9 +9855,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         ASSERT_EQ(fileWritten1.vid, it->vid);
         ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten1.blockId, it->blockId);
-        ASSERT_EQ(fileWritten1.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten1.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten1.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten1.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
       }
 
@@ -9108,9 +9866,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         ASSERT_EQ(fileWritten2.vid, it->vid);
         ASSERT_EQ(fileWritten2.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten2.blockId, it->blockId);
-        ASSERT_EQ(fileWritten2.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten2.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten2.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten2.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten2.copyNb, it->copyNb);
       }
     }
@@ -9138,16 +9894,14 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = seq;
       fileWritten.blockId = seq * 100;
-      fileWritten.compressedSize = compressedFileSize;
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
@@ -9157,11 +9911,10 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten.storageClassName, archiveFile.storageClass);
 
       // There is only one tape copy because repack only want the tape file on a
@@ -9174,9 +9927,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         ASSERT_EQ(fileWritten.vid, it->vid);
         ASSERT_EQ(fileWritten.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten.blockId, it->blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
@@ -9204,16 +9955,14 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = seq;
       fileWritten.blockId = seq * 100;
-      fileWritten.compressedSize = compressedFileSize;
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
@@ -9223,11 +9972,10 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten.storageClassName, archiveFile.storageClass);
 
       // There is only one tape copy because repack only want the tape file on a
@@ -9240,9 +9988,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         ASSERT_EQ(fileWritten.vid, it->vid);
         ASSERT_EQ(fileWritten.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten.blockId, it->blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
@@ -9270,16 +10016,14 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.diskInstance = storageClass.diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
-      fileWritten.diskFileUser = "public_disk_user";
-      fileWritten.diskFileGroup = "public_disk_group";
+      fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
-      fileWritten.checksumType = checksumType;
-      fileWritten.checksumValue = checksumValue;
+      fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten.storageClassName = storageClass.name;
       fileWritten.vid = vid;
       fileWritten.fSeq = seq;
       fileWritten.blockId = seq * 100;
-      fileWritten.compressedSize = compressedFileSize;
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
@@ -9289,11 +10033,10 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(fileWritten.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(fileWritten.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(fileWritten.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
-      ASSERT_EQ(fileWritten.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(fileWritten.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(fileWritten.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(fileWritten.storageClassName, archiveFile.storageClass);
 
       // There is only one tape copy because repack only want the tape file on a
@@ -9306,9 +10049,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         ASSERT_EQ(fileWritten.vid, it->vid);
         ASSERT_EQ(fileWritten.fSeq, it->fSeq);
         ASSERT_EQ(fileWritten.blockId, it->blockId);
-        ASSERT_EQ(fileWritten.compressedSize, it->compressedSize);
-        ASSERT_EQ(fileWritten.checksumType, it->checksumType);
-        ASSERT_EQ(fileWritten.checksumValue, it->checksumValue);
+        ASSERT_EQ(fileWritten.checksumBlob, it->checksumBlob);
         ASSERT_EQ(fileWritten.copyNb, it->copyNb);
       }
     }
@@ -9325,7 +10066,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9338,7 +10078,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9353,7 +10092,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9368,35 +10106,32 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileUser = "public_disk_user";
+    searchCriteria.diskFileOwnerUid     = PUBLIC_DISK_USER;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = storageClass.diskInstance;
-    searchCriteria.diskFileGroup = "public_disk_group";
+    searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9410,7 +10145,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9422,7 +10156,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
@@ -9435,7 +10168,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -9448,7 +10180,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -9461,7 +10192,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -9474,7 +10204,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
@@ -9485,7 +10214,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(0, summary.totalBytes);
-    ASSERT_EQ(0, summary.totalCompressedBytes);
     ASSERT_EQ(0, summary.totalFiles);
   }
 }
@@ -9507,14 +10235,15 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -9534,6 +10263,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -9559,6 +10292,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -9587,8 +10324,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
@@ -9599,16 +10334,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -9628,14 +10361,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -9644,9 +10376,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -9658,16 +10388,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumType         = checksumType;
-  file2Written.checksumValue        = checksumValue;
+  file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file2WrittenSet);
@@ -9688,14 +10416,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -9705,9 +10432,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
@@ -9716,9 +10441,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 }
@@ -9740,14 +10463,15 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -9767,6 +10491,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -9792,6 +10518,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -9820,8 +10548,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
@@ -9832,16 +10558,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -9861,14 +10585,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -9877,9 +10600,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -9891,16 +10612,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumType         = checksumType;
-  file2Written.checksumValue        = checksumValue;
+  file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 1;
   file2Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file2WrittenSet);
@@ -9921,14 +10640,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     // If there are two or more tape copies with the same copy number then
     // only one of them will be active (<=> supersededByVid.empty()).
@@ -9945,9 +10663,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(fileWritten.vid, tapeFile.vid);
       ASSERT_EQ(fileWritten.fSeq, tapeFile.fSeq);
       ASSERT_EQ(fileWritten.blockId, tapeFile.blockId);
-      ASSERT_EQ(fileWritten.compressedSize, tapeFile.compressedSize);
-      ASSERT_EQ(fileWritten.checksumType, tapeFile.checksumType);
-      ASSERT_EQ(fileWritten.checksumValue, tapeFile.checksumValue);
+      ASSERT_EQ(fileWritten.checksumBlob, tapeFile.checksumBlob);
       ASSERT_EQ(fileWritten.copyNb, tapeFile.copyNb);
     }
   }
@@ -9969,12 +10685,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -9994,6 +10711,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10022,8 +10743,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
@@ -10034,16 +10753,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -10063,14 +10780,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10079,9 +10795,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -10093,16 +10807,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumType         = checksumType;
-  file2Written.checksumValue        = checksumValue;
+  file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid1;
   file2Written.fSeq                 = 2;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 1;
   file2Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file2WrittenSet);
@@ -10123,14 +10835,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     // If there are two or more tape copies with the same copy number then
     // only one of them will be active (<=> supersededByVid.empty()).
@@ -10147,12 +10858,161 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(fileWritten.vid, tapeFile.vid);
       ASSERT_EQ(fileWritten.fSeq, tapeFile.fSeq);
       ASSERT_EQ(fileWritten.blockId, tapeFile.blockId);
-      ASSERT_EQ(fileWritten.compressedSize, tapeFile.compressedSize);
-      ASSERT_EQ(fileWritten.checksumType, tapeFile.checksumType);
-      ASSERT_EQ(fileWritten.checksumValue, tapeFile.checksumValue);
+      ASSERT_EQ(fileWritten.checksumBlob, tapeFile.checksumBlob);
       ASSERT_EQ(fileWritten.copyNb, tapeFile.copyNb);
     }
   }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies_same_fseq_same_tape) {
+  using namespace cta;
+
+  const std::string vid1 = "VID123";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    {
+      auto it = vidToTape.find(vid1);
+      const common::dataStructures::Tape &tape = it->second;
+      ASSERT_EQ(vid1, tape.vid);
+      ASSERT_EQ(mediaType, tape.mediaType);
+      ASSERT_EQ(vendor, tape.vendor);
+      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(vo, tape.vo);
+      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(disabledValue == tape.disabled);
+      ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);
+      ASSERT_EQ(comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
+
+      const common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_admin.username, creationLog.username);
+      ASSERT_EQ(m_admin.host, creationLog.host);
+
+      const common::dataStructures::EntryLog lastModificationLog =
+        tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
+  file1Written.size                 = archiveFileSize;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
+  file1Written.storageClassName     = storageClass.name;
+  file1Written.vid                  = vid1;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = file1Written.vid;
+    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(1, tapes.size());
+    const common::dataStructures::Tape &tape = tapes.front();
+    ASSERT_EQ(1, tape.lastFSeq);
+  }
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
+  file2Written.archiveFileId        = file1Written.archiveFileId;
+  file2Written.diskInstance         = file1Written.diskInstance;
+  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.diskFilePath         = file1Written.diskFilePath;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
+  file2Written.size                 = archiveFileSize;
+  file2Written.checksumBlob         = file1Written.checksumBlob;
+  file2Written.storageClassName     = storageClass.name;
+  file2Written.vid                  = vid1;
+  file2Written.fSeq                 = file1Written.fSeq;
+  file2Written.blockId              = 4331;
+  file2Written.copyNb               = 2;
+  file2Written.tapeDrive            = tapeDrive;
+  ASSERT_THROW(m_catalogue->filesWrittenToTape(file2WrittenSet), exception::TapeFseqMismatch);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies_different_sizes) {
@@ -10172,14 +11032,15 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -10199,6 +11060,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10224,6 +11089,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10252,8 +11119,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize1 = 1;
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
@@ -10264,16 +11129,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize1;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -10293,14 +11156,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10309,9 +11171,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -10325,16 +11185,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize2;
-  file2Written.checksumType         = checksumType;
-  file2Written.checksumValue        = checksumValue;
+  file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
   ASSERT_THROW(m_catalogue->filesWrittenToTape(file2WrittenSet),
@@ -10358,14 +11216,15 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -10385,6 +11244,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10410,6 +11273,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);      
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10438,8 +11305,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
-  const std::string checksumType1 = "checksum_type_1";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
@@ -10450,16 +11315,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType1;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -10479,14 +11342,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10495,13 +11357,9 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
-
-  const std::string checksumType2 = "checksum_type_2";
 
   auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file2Written = *file2WrittenUP;
@@ -10511,20 +11369,17 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumType         = checksumType2;
-  file2Written.checksumValue        = checksumValue;
+  file2Written.checksumBlob.insert(checksum::CRC32, "1234");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  ASSERT_THROW(m_catalogue->filesWrittenToTape(file2WrittenSet),
-    catalogue::ChecksumTypeMismatch);
+  ASSERT_THROW(m_catalogue->filesWrittenToTape(file2WrittenSet), exception::ChecksumTypeMismatch);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies_different_checksum_values) {
@@ -10544,14 +11399,15 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -10571,6 +11427,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10596,6 +11454,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10624,8 +11484,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue1 = "checksum_value_1";
   const std::string tapeDrive = "tape_drive";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
@@ -10636,16 +11494,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue1;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -10665,14 +11521,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10681,13 +11536,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  const std::string checksumValue2 = "checksum_value_2";
 
   auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file2Written = *file2WrittenUP;
@@ -10697,20 +11549,17 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumType         = checksumType;
-  file2Written.checksumValue        = checksumValue2;
+  file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  ASSERT_THROW(m_catalogue->filesWrittenToTape(file2WrittenSet),
-    catalogue::ChecksumValueMismatch);
+  ASSERT_THROW(m_catalogue->filesWrittenToTape(file2WrittenSet), exception::ChecksumValueMismatch);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
@@ -10730,14 +11579,15 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -10757,6 +11607,10 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10782,6 +11636,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -10810,8 +11666,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
@@ -10822,16 +11676,14 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -10857,14 +11709,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10873,9 +11724,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -10885,14 +11734,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -10901,9 +11749,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -10915,16 +11761,14 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumType         = checksumType;
-  file2Written.checksumValue        = checksumValue;
+  file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file2WrittenSet);
@@ -10953,14 +11797,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-      ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
       ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
       ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -10970,9 +11813,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file1Written.vid, tapeFile1.vid);
       ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
       ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-      ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-      ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-      ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+      ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
       ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
       auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
@@ -10981,9 +11822,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file2Written.vid, tapeFile2.vid);
       ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
       ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-      ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-      ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-      ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
+      ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
       ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
     }
   }
@@ -10994,14 +11833,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -11011,9 +11849,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
@@ -11022,9 +11858,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
@@ -11051,14 +11885,15 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -11078,6 +11913,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -11103,6 +11940,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
+      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -11131,8 +11970,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
@@ -11143,16 +11980,14 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -11178,14 +12013,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -11194,9 +12028,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -11206,14 +12038,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -11222,9 +12053,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -11236,16 +12065,14 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
   file2Written.diskFilePath         = file1Written.diskFilePath;
-  file2Written.diskFileUser         = file1Written.diskFileUser;
-  file2Written.diskFileGroup        = file1Written.diskFileGroup;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
-  file2Written.checksumType         = checksumType;
-  file2Written.checksumValue        = checksumValue;
+  file2Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file2Written.storageClassName     = storageClass.name;
   file2Written.vid                  = vid2;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
-  file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file2WrittenSet);
@@ -11274,14 +12101,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
       ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-      ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-      ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
+      ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
       ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
       ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-      ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-      ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+      ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
       ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -11291,9 +12117,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(file1Written.vid, tapeFile1.vid);
       ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
       ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-      ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-      ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-      ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+      ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
       ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
       auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
@@ -11302,9 +12126,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(file2Written.vid, tapeFile2.vid);
       ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
       ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-      ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-      ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-      ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
+      ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
       ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
     }
   }
@@ -11315,14 +12137,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
@@ -11332,9 +12153,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
@@ -11343,9 +12162,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
+    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
@@ -11400,6 +12217,7 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -11411,7 +12229,7 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
     vid << "V" << std::setfill('0') << std::setw(5) << i;
     const std::string tapeComment = "Create tape " + vid.str();
     m_catalogue->createTape(m_admin, vid.str(), mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-      disabledValue, fullValue, tapeComment);
+      disabledValue, fullValue, readOnlyValue, tapeComment);
   }
 
   const auto vidToTapeMap = m_catalogue->getAllTapes();
@@ -11434,6 +12252,10 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
     ASSERT_EQ(capacityInBytes, tapeItor->second.capacityInBytes);
     ASSERT_EQ(disabledValue, tapeItor->second.disabled);
     ASSERT_EQ(fullValue, tapeItor->second.full);
+    ASSERT_EQ(readOnlyValue, tapeItor->second.readOnly);
+    ASSERT_FALSE(tapeItor->second.isFromCastor);
+    ASSERT_EQ(0, tapeItor->second.readMountCount);
+    ASSERT_EQ(0, tapeItor->second.writeMountCount);
     ASSERT_EQ(tapeComment, tapeItor->second.comment);
   }
 }
@@ -12357,6 +13179,722 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemCommentL_emptyStringComment)
     catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+ 
+  ASSERT_EQ(0, m_catalogue->getNbFilesOnTape(vid));
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
+  using namespace cta;
+
+  const std::string diskInstanceName1 = "disk_instance_1";
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid1 = "VID123";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string createTapeComment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName1;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 1;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
+  file1Written.size                 = archiveFileSize;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
+  file1Written.storageClassName     = storageClass.name;
+  file1Written.vid                  = vid1;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  ASSERT_EQ(1, m_catalogue->getNbFilesOnTape(vid1));
+}
+
+TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string vid = "vid";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+ 
+  ASSERT_NO_THROW(m_catalogue->checkTapeForLabel(vid));
+}
+
+TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
+  using namespace cta;
+
+  const std::string diskInstanceName1 = "disk_instance_1";
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid1 = "VID123";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string createTapeComment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName1;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 1;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
+  file1Written.size                 = archiveFileSize;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
+  file1Written.storageClassName     = storageClass.name;
+  file1Written.vid                  = vid1;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  ASSERT_THROW(m_catalogue->checkTapeForLabel(vid1), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_tape) {
+  using namespace cta;
+
+  const std::string diskInstanceName1 = "disk_instance_1";
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid1 = "VID123";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string createTapeComment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName1;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 1;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
+  file1Written.size                 = archiveFileSize;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
+  file1Written.storageClassName     = storageClass.name;
+  file1Written.vid                  = vid1;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  ASSERT_THROW(m_catalogue->checkTapeForLabel(vid1), exception::UserError);
+  
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->deleteArchiveFile(diskInstanceName1, archiveFileId, dummyLc);
+  
+  m_catalogue->setTapeFull(m_admin, vid1, true);
+  m_catalogue->reclaimTape(m_admin, vid1);
+  
+  ASSERT_NO_THROW(m_catalogue->checkTapeForLabel(vid1));
+}
+
+TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) {
+  using namespace cta;
+
+  const std::string diskInstanceName1 = "disk_instance_1";
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid1 = "VID123";
+  const std::string vid2 = "VID234";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string createTapeComment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
+  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(2, vidToTape.size());
+
+    auto it = vidToTape.find(vid1);
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(0, tape.dataOnTapeInBytes);
+    ASSERT_EQ(0, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  // Record initial tape file
+    
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName1;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 1;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFilePath         = "/public_dir/public_file";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
+  file1Written.size                 = archiveFileSize;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
+  file1Written.storageClassName     = storageClass.name;
+  file1Written.vid                  = vid1;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.size                 = 1;
+  file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.size, tapeFile1.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(2, vidToTape.size());
+
+    auto it = vidToTape.find(vid1);
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(file1Written.size, tape.dataOnTapeInBytes);
+    ASSERT_EQ(1, tape.lastFSeq);
+    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(vo, tape.vo);
+    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_TRUE((bool)tape.lastWriteLog);
+    ASSERT_EQ(tapeDrive, tape.lastWriteLog.value().drive);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  m_catalogue->setTapeFull(m_admin, vid1, true);
+  
+  // Record superseding tape file
+
+  file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1WrittenAgain = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenAgainSet;
+  file1WrittenAgainSet.insert(file1WrittenUP.release());
+  file1WrittenAgain.archiveFileId        = archiveFileId;
+  file1WrittenAgain.diskInstance         = storageClass.diskInstance;
+  file1WrittenAgain.diskFileId           = "5678";
+  file1WrittenAgain.diskFilePath         = "/public_dir/public_file";
+  file1WrittenAgain.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1WrittenAgain.diskFileGid          = PUBLIC_DISK_GROUP;
+  file1WrittenAgain.size                 = archiveFileSize;
+  file1WrittenAgain.checksumBlob.insert(checksum::ADLER32, "1234");
+  file1WrittenAgain.storageClassName     = storageClass.name;
+  file1WrittenAgain.vid                  = vid2;
+  file1WrittenAgain.fSeq                 = 1;
+  file1WrittenAgain.blockId              = 4321;
+  file1WrittenAgain.size                 = 1;
+  file1WrittenAgain.copyNb               = 1;
+  file1WrittenAgain.tapeDrive            = tapeDrive;
+  m_catalogue->filesWrittenToTape(file1WrittenAgainSet);
+  
+  common::dataStructures::ArchiveFile repackedFile = m_catalogue->getArchiveFileById(archiveFileId);
+  ASSERT_EQ(2, repackedFile.tapeFiles.size());
+  for (auto &tf: repackedFile.tapeFiles) {
+    if (tf.vid == vid1)
+      ASSERT_EQ(vid2, tf.supersededByVid);
+    else
+      ASSERT_EQ("", tf.supersededByVid);
+  }
+  
+  ASSERT_THROW(m_catalogue->checkTapeForLabel(vid1), exception::UserError);
+ 
+}
+
+TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_not_in_the_catalogue) {
+    using namespace cta;
+    
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+  
+  const std::string vid = "vid";
+  
+  ASSERT_THROW(m_catalogue->checkTapeForLabel(vid), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_empty_vid) {
+    using namespace cta;
+    
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+  
+  const std::string vid = "";
+  
+  ASSERT_THROW(m_catalogue->checkTapeForLabel(vid), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   using namespace cta;
 
@@ -12375,12 +13913,13 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12398,6 +13937,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12431,6 +13972,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_FALSE(tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12460,12 +14003,13 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
+    disabledValue, fullValue, readOnlyValue, comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12484,6 +14028,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12520,12 +14066,13 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string createTapeComment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12545,6 +14092,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12573,8 +14122,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file1Written = *file1WrittenUP;
@@ -12584,16 +14131,14 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -12604,14 +14149,13 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -12620,9 +14164,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -12643,6 +14185,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12680,6 +14224,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12715,6 +14261,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12747,12 +14295,13 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string createTapeComment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12772,6 +14321,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12800,8 +14351,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file1Written = *file1WrittenUP;
@@ -12811,16 +14360,14 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -12831,14 +14378,13 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -12847,9 +14393,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -12871,6 +14415,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12911,14 +14457,15 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
+  const bool readOnlyValue = true;
   const std::string createTapeComment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
   m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+    disabledValue, fullValue, readOnlyValue, createTapeComment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12938,6 +14485,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -12968,8 +14517,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
-  const std::string checksumType = "checksum_type";
-  const std::string checksumValue = "checksum_value";
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file1Written = *file1WrittenUP;
@@ -12979,16 +14526,15 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
-  file1Written.diskFileUser         = "public_disk_user";
-  file1Written.diskFileGroup        = "public_disk_group";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
-  file1Written.checksumType         = checksumType;
-  file1Written.checksumValue        = checksumValue;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
   file1Written.vid                  = vid1;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
-  file1Written.compressedSize       = 1;
+  file1Written.size                 = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
@@ -12999,14 +14545,13 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, archiveFile.checksumValue);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
     ASSERT_EQ(file1Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file1Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file1Written.diskFileGroup, archiveFile.diskFileInfo.group);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
@@ -13015,9 +14560,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
+    ASSERT_EQ(file1Written.size, tapeFile1.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -13039,6 +14583,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
@@ -13066,16 +14612,15 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   file1WrittenAgain.diskInstance         = storageClass.diskInstance;
   file1WrittenAgain.diskFileId           = "5678";
   file1WrittenAgain.diskFilePath         = "/public_dir/public_file";
-  file1WrittenAgain.diskFileUser         = "public_disk_user";
-  file1WrittenAgain.diskFileGroup        = "public_disk_group";
+  file1WrittenAgain.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1WrittenAgain.diskFileGid          = PUBLIC_DISK_GROUP;
   file1WrittenAgain.size                 = archiveFileSize;
-  file1WrittenAgain.checksumType         = checksumType;
-  file1WrittenAgain.checksumValue        = checksumValue;
+  file1WrittenAgain.checksumBlob.insert(checksum::ADLER32, "1234");
   file1WrittenAgain.storageClassName     = storageClass.name;
   file1WrittenAgain.vid                  = vid2;
   file1WrittenAgain.fSeq                 = 1;
   file1WrittenAgain.blockId              = 4321;
-  file1WrittenAgain.compressedSize       = 1;
+  file1WrittenAgain.size                 = 1;
   file1WrittenAgain.copyNb               = 1;
   file1WrittenAgain.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenAgainSet);
@@ -13105,6 +14650,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(tape.disabled);
     ASSERT_FALSE(tape.full);
+    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(createTapeComment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);

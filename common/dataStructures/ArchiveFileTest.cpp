@@ -23,6 +23,9 @@
 
 namespace unitTests {
 
+const uint32_t RECOVERY_OWNER_UID = 9751;
+const uint32_t RECOVERY_GID       = 9752;
+
 class cta_common_dataStructures_ArchiveFileTest : public ::testing::Test {
 protected:
 
@@ -41,20 +44,19 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   archiveFile1.archiveFileID = 1234;
   archiveFile1.diskFileId = "EOS_file_ID";
   archiveFile1.fileSize = 1;
-  archiveFile1.checksumType = "checksum_type";
-  archiveFile1.checksumValue = "cheskum_value";
+  archiveFile1.checksumBlob.insert(cta::checksum::ADLER32, "1234");
   archiveFile1.storageClass = "storage_class";
 
   archiveFile1.diskInstance = "recovery_instance";
   archiveFile1.diskFileInfo.path = "recovery_path";
-  archiveFile1.diskFileInfo.owner = "recovery_owner";
-  archiveFile1.diskFileInfo.group = "recovery_group";
+  archiveFile1.diskFileInfo.owner_uid = RECOVERY_OWNER_UID;
+  archiveFile1.diskFileInfo.gid = RECOVERY_GID;
 
   TapeFile tapeFile1;
   tapeFile1.vid = "VID1";
   tapeFile1.fSeq = 5678;
   tapeFile1.blockId = 9012;
-  tapeFile1.compressedSize = 5;
+  tapeFile1.fileSize = 5;
   tapeFile1.copyNb = 1;
 
   archiveFile1.tapeFiles.push_back(tapeFile1);
@@ -64,7 +66,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   tapeFile2.vid = "VID2";
   tapeFile2.fSeq = 3456;
   tapeFile2.blockId = 7890;
-  tapeFile2.compressedSize = 6;
+  tapeFile2.fileSize = 6;
   tapeFile2.copyNb = 2;
 
   archiveFile1.tapeFiles.push_back(tapeFile2);
@@ -77,14 +79,13 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   ASSERT_EQ(archiveFile1.archiveFileID, archiveFile2.archiveFileID);
   ASSERT_EQ(archiveFile1.diskFileId, archiveFile2.diskFileId);
   ASSERT_EQ(archiveFile1.fileSize, archiveFile2.fileSize);
-  ASSERT_EQ(archiveFile1.checksumType, archiveFile2.checksumType);
-  ASSERT_EQ(archiveFile1.checksumValue, archiveFile2.checksumValue);
+  ASSERT_EQ(archiveFile1.checksumBlob, archiveFile2.checksumBlob);
   ASSERT_EQ(archiveFile1.storageClass, archiveFile2.storageClass);
 
   ASSERT_EQ(archiveFile1.diskInstance, archiveFile2.diskInstance);
   ASSERT_EQ(archiveFile1.diskFileInfo.path, archiveFile2.diskFileInfo.path);
-  ASSERT_EQ(archiveFile1.diskFileInfo.owner, archiveFile2.diskFileInfo.owner);
-  ASSERT_EQ(archiveFile1.diskFileInfo.group, archiveFile2.diskFileInfo.group);
+  ASSERT_EQ(archiveFile1.diskFileInfo.owner_uid, archiveFile2.diskFileInfo.owner_uid);
+  ASSERT_EQ(archiveFile1.diskFileInfo.gid, archiveFile2.diskFileInfo.gid);
 
   ASSERT_EQ(2, archiveFile2.tapeFiles.size());
 
@@ -95,7 +96,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
     ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->vid);
     ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->fSeq);
     ASSERT_EQ(tapeFile1.blockId, copyNbToTapeFileItor->blockId);
-    ASSERT_EQ(tapeFile1.compressedSize, copyNbToTapeFileItor->compressedSize);
+    ASSERT_EQ(tapeFile1.fileSize, copyNbToTapeFileItor->fileSize);
     ASSERT_EQ(tapeFile1.copyNb, copyNbToTapeFileItor->copyNb);
   }
 
@@ -106,7 +107,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
     ASSERT_EQ(tapeFile2.vid, copyNbToTapeFileItor->vid);
     ASSERT_EQ(tapeFile2.fSeq, copyNbToTapeFileItor->fSeq);
     ASSERT_EQ(tapeFile2.blockId, copyNbToTapeFileItor->blockId);
-    ASSERT_EQ(tapeFile2.compressedSize, copyNbToTapeFileItor->compressedSize);
+    ASSERT_EQ(tapeFile2.fileSize, copyNbToTapeFileItor->fileSize);
     ASSERT_EQ(tapeFile2.copyNb, copyNbToTapeFileItor->copyNb);
   }
 }

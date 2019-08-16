@@ -212,14 +212,12 @@ void ArchiveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFi
   checkPayloadWritable();
   // TODO: factor out the archivefile structure from the flat ArchiveRequest.
   m_payload.set_archivefileid(archiveFile.archiveFileID);
-  m_payload.set_checksumtype(archiveFile.checksumType);
-  m_payload.set_checksumvalue(archiveFile.checksumValue);
+  m_payload.set_checksumblob(archiveFile.checksumBlob.serialize());
   m_payload.set_creationtime(archiveFile.creationTime);
   m_payload.set_diskfileid(archiveFile.diskFileId);
-  m_payload.mutable_diskfileinfo()->set_group(archiveFile.diskFileInfo.group);
-  m_payload.mutable_diskfileinfo()->set_owner(archiveFile.diskFileInfo.owner);
+  m_payload.mutable_diskfileinfo()->set_gid(archiveFile.diskFileInfo.gid);
+  m_payload.mutable_diskfileinfo()->set_owner_uid(archiveFile.diskFileInfo.owner_uid);
   m_payload.mutable_diskfileinfo()->set_path(archiveFile.diskFileInfo.path);
-  m_payload.mutable_diskfileinfo()->set_recoveryblob("");
   m_payload.set_diskinstance(archiveFile.diskInstance);
   m_payload.set_filesize(archiveFile.fileSize);
   m_payload.set_reconcilationtime(archiveFile.reconciliationTime);
@@ -233,12 +231,11 @@ cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
   checkPayloadReadable();
   cta::common::dataStructures::ArchiveFile ret;
   ret.archiveFileID = m_payload.archivefileid();
-  ret.checksumType = m_payload.checksumtype();
-  ret.checksumValue = m_payload.checksumvalue();
+  ret.checksumBlob.deserialize(m_payload.checksumblob());
   ret.creationTime = m_payload.creationtime();
   ret.diskFileId = m_payload.diskfileid();
-  ret.diskFileInfo.group = m_payload.diskfileinfo().group();
-  ret.diskFileInfo.owner = m_payload.diskfileinfo().owner();
+  ret.diskFileInfo.gid = m_payload.diskfileinfo().gid();
+  ret.diskFileInfo.owner_uid = m_payload.diskfileinfo().owner_uid();
   ret.diskFileInfo.path = m_payload.diskfileinfo().path();
   ret.diskInstance = m_payload.diskinstance();
   ret.fileSize = m_payload.filesize();
@@ -300,7 +297,7 @@ cta::common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::setRequester()
 //------------------------------------------------------------------------------
-void ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentity &requester) {
+void ArchiveRequest::setRequester(const cta::common::dataStructures::RequesterIdentity &requester) {
   checkPayloadWritable();
   auto payloadRequester = m_payload.mutable_requester();
   payloadRequester->set_name(requester.name);
@@ -310,9 +307,9 @@ void ArchiveRequest::setRequester(const cta::common::dataStructures::UserIdentit
 //------------------------------------------------------------------------------
 // ArchiveRequest::getRequester()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::UserIdentity ArchiveRequest::getRequester() {
+cta::common::dataStructures::RequesterIdentity ArchiveRequest::getRequester() {
   checkPayloadReadable();
-  cta::common::dataStructures::UserIdentity requester;
+  cta::common::dataStructures::RequesterIdentity requester;
   auto payloadRequester = m_payload.requester();
   requester.name=payloadRequester.name();
   requester.group=payloadRequester.group();
@@ -384,12 +381,10 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
   auto * jl = m_payload.mutable_jobs();
   bool anythingGarbageCollected=false;
   using serializers::ArchiveJobStatus;
-  std::set<ArchiveJobStatus> statusesImplyingQueueing ({ArchiveJobStatus::AJS_ToTransferForUser, ArchiveJobStatus::AJS_ToReportToUserForTransfer,
-      ArchiveJobStatus::AJS_ToReportToUserForFailure, ArchiveJobStatus::AJS_Failed});
   for (auto j=jl->begin(); j!=jl->end(); j++) {
     auto owner=j->owner();
     auto status=j->status();
-    if ( statusesImplyingQueueing.count(status) && owner==presumedOwner) {
+    if ( c_statusesImplyingQueueing.count(status) && owner==presumedOwner) {
       // The job is in a state which implies queuing.
       std::string queueObject="Not defined yet";
       anythingGarbageCollected=true;
@@ -399,7 +394,13 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
         ScopedExclusiveLock aql;
-        Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), getQueueType(status), lc);
+        std::string containerId;
+        if(!c_statusesImplyingQueueingByRepackRequestAddress.count(status)){
+          containerId = j->tapepool();
+        } else {
+          containerId = m_payload.repack_info().repack_request_address();
+        }
+        Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(aq, aql, agentReference, containerId, getQueueType(status), lc);
         queueObject=aq.getAddressIfSet();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
@@ -545,12 +546,11 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
             // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequesgetLockedAndFetchedJobQueuet.
             // We could try and refactor this.
             retRef.m_archiveFile.archiveFileID = payload.archivefileid();
-            retRef.m_archiveFile.checksumType = payload.checksumtype();
-            retRef.m_archiveFile.checksumValue = payload.checksumvalue();
+            retRef.m_archiveFile.checksumBlob.deserialize(payload.checksumblob());
             retRef.m_archiveFile.creationTime = payload.creationtime();
             retRef.m_archiveFile.diskFileId = payload.diskfileid();
-            retRef.m_archiveFile.diskFileInfo.group = payload.diskfileinfo().group();
-            retRef.m_archiveFile.diskFileInfo.owner = payload.diskfileinfo().owner();
+            retRef.m_archiveFile.diskFileInfo.gid = payload.diskfileinfo().gid();
+            retRef.m_archiveFile.diskFileInfo.owner_uid = payload.diskfileinfo().owner_uid();
             retRef.m_archiveFile.diskFileInfo.path = payload.diskfileinfo().path();
             retRef.m_archiveFile.diskInstance = payload.diskinstance();
             retRef.m_archiveFile.fileSize = payload.filesize();
@@ -689,7 +689,7 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
             return oh.SerializeAsString();
           }
         }
-      } else { // Repack case, the report policy is different (report all jobs). So we just the job's status.
+      } else { // Repack case, the report policy is different (report all jobs). So we just change the job's status.
         for (auto j: *payload.mutable_jobs()) {
           if (j.copynb() == copyNumber) {
             j.set_status(serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess);
@@ -752,6 +752,10 @@ JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& s
   case ArchiveJobStatus::AJS_ToReportToUserForTransfer:
   case ArchiveJobStatus::AJS_ToReportToUserForFailure:
     return JobQueueType::JobsToReportToUser;
+  case ArchiveJobStatus::AJS_ToReportToRepackForSuccess:
+    return JobQueueType::JobsToReportToRepackForSuccess;
+  case ArchiveJobStatus::AJS_ToReportToRepackForFailure:
+    return JobQueueType::JobsToReportToRepackForFailure; 
   case ArchiveJobStatus::AJS_Failed:
     return JobQueueType::FailedJobs;
   default:
@@ -819,7 +823,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   if (!currentStatus) {
     std::stringstream err;
     err << "In ArchiveRequest::updateJobStatus(): copynb not found : " << copyNumberUpdated
-        << "exiing ones: ";
+        << "existing ones: ";
     for (auto &j: jl) err << j.copynb() << "  ";
     throw cta::exception::Exception(err.str());
   }

@@ -22,7 +22,7 @@
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "JobQueueType.hpp"
 #include "common/Timer.hpp"
@@ -83,6 +83,13 @@ public:
      * success/failure scenario. */
     serializers::ArchiveJobStatus nextStatus;
   };
+  const std::set<serializers::ArchiveJobStatus> c_statusesImplyingQueueing = {serializers::ArchiveJobStatus::AJS_ToTransferForUser, serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer,
+      serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure, serializers::ArchiveJobStatus::AJS_Failed,
+      serializers::ArchiveJobStatus::AJS_ToTransferForRepack, serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure,
+      serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess
+  };
+  const std::set<serializers::ArchiveJobStatus> c_statusesImplyingQueueingByRepackRequestAddress {serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure,
+      serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess};
 private:
   /**
    * Determine and set the new status of the job and determine whether and where the request should be queued 
@@ -206,8 +213,8 @@ public:
   void setArchiveErrorReportURL(const std::string &URL);
   std::string getArchiveErrorReportURL();
 
-  void setRequester(const cta::common::dataStructures::UserIdentity &requester);
-  cta::common::dataStructures::UserIdentity getRequester();
+  void setRequester(const cta::common::dataStructures::RequesterIdentity &requester);
+  cta::common::dataStructures::RequesterIdentity getRequester();
 
   void setSrcURL(const std::string &srcURL);
   std::string getSrcURL();

@@ -27,6 +27,8 @@
 #include "Helpers.hpp"
 #include "common/utils/utils.hpp"
 #include "LifecycleTimingsSerDeser.hpp"
+#include "Sorter.hpp"
+#include "AgentWrapper.hpp"
 #include <google/protobuf/util/json_util.h>
 #include <cmath>
 
@@ -84,21 +86,65 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   using serializers::RetrieveJobStatus;
   std::set<std::string> candidateVids;
   for (auto &j: m_payload.jobs()) {
-    if (j.status() == RetrieveJobStatus::RJS_ToTransfer) {
-      // Find the job details in tape file
-      for (auto &tf: m_payload.archivefile().tapefiles()) {
-        if (tf.copynb() == j.copynb()) {
-          candidateVids.insert(tf.vid());
-          goto found;
+    switch(j.status()){
+      case RetrieveJobStatus::RJS_ToTransfer:
+        // Find the job details in tape file
+        for (auto &tf: m_payload.archivefile().tapefiles()) {
+          if (tf.copynb() == j.copynb()) {
+            candidateVids.insert(tf.vid());
+            goto found;
+          }
         }
-      }
-      {
-        std::stringstream err;
-        err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << j.copynb();
-        throw exception::Exception(err.str());
-      }
-    found:;
+        {
+          std::stringstream err;
+          err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << j.copynb();
+          throw exception::Exception(err.str());
+        }
+        break;
+      case RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
+      case RetrieveJobStatus::RJS_ToReportToRepackForFailure:
+        //We don't have any vid to find, we just need to
+        //Requeue it into RetrieveQueueToReportToRepackForSuccess or into the RetrieveQueueToReportToRepackForFailure (managed by the sorter)
+        for (auto &tf: m_payload.archivefile().tapefiles()) {
+          if (tf.copynb() == j.copynb()) {
+            Sorter sorter(agentReference,m_objectStore,catalogue);
+            std::shared_ptr<RetrieveRequest> rr = std::make_shared<RetrieveRequest>(*this);
+            cta::objectstore::Agent agentRR(getOwner(),m_objectStore);
+            cta::objectstore::AgentWrapper agentRRWrapper(agentRR);
+            sorter.insertRetrieveRequest(rr,agentRRWrapper,cta::optional<uint32_t>(tf.copynb()),lc);
+            std::string retrieveQueueAddress = rr->getRepackInfo().repackRequestAddress;
+            this->m_exclusiveLock->release();
+            cta::objectstore::Sorter::MapRetrieve allRetrieveJobs = sorter.getAllRetrieve();
+            std::list<std::tuple<cta::objectstore::Sorter::RetrieveJob,std::future<void>>> allFutures;
+            cta::utils::Timer t;
+            cta::log::TimingList tl;
+            for(auto& kv: allRetrieveJobs){
+              for(auto& job: kv.second){
+                allFutures.emplace_back(std::make_tuple(std::get<0>(job->jobToQueue),std::get<1>(job->jobToQueue).get_future()));
+              }
+            }
+            sorter.flushAll(lc);
+            tl.insertAndReset("sorterFlushingTime",t);
+            for(auto& future: allFutures){
+              //Throw an exception in case of failure
+              std::get<1>(future).get();
+            }
+            log::ScopedParamContainer params(lc);
+            params.add("jobObject", getAddressIfSet())
+                  .add("fileId", m_payload.archivefile().archivefileid())
+                  .add("queueObject", retrieveQueueAddress)
+                  .add("copynb", tf.copynb())
+                  .add("tapeVid", tf.vid());
+            tl.addToLog(params);
+            lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the repack retrieve request.");
+            return;
+          }
+        }
+        break;
+      default:
+        break;
     }
+    found:;
   }
   std::string bestVid;
   // If no tape file is a candidate, we just need to skip to queueing to the failed queue
@@ -107,7 +153,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   // filter on tape availability.
   try {
     // If we have to fetch the status of the tapes and queued for the non-disabled vids.
-    auto bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore);
+    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore);
     goto queueForTransfer;
   } catch (Helpers::NoTapeAvailableForRetrieve &) {}
 queueForFailure:;
@@ -153,7 +199,7 @@ queueForFailure:;
     // We now need to grab the failed queue and queue the request.
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
-    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, JobQueueType::JobsToReportToUser, lc);
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, getQueueType(), lc);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
@@ -1047,7 +1093,7 @@ void RetrieveRequest::AsyncJobDeleter::wait() {
 RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReportSucceedForRepack(uint32_t copyNb)
 {
   std::unique_ptr<AsyncJobSucceedForRepackReporter> ret(new AsyncJobSucceedForRepackReporter);
-  ret->m_updaterCallback = [copyNb](const std::string &in)->std::string{ 
+  ret->m_updaterCallback = [&ret,copyNb](const std::string &in)->std::string{ 
         // We have a locked and fetched object, so we just need to work on its representation.
         cta::objectstore::serializers::ObjectHeader oh;
         if (!oh.ParseFromString(in)) {
@@ -1080,6 +1126,7 @@ RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReport
             return oh.SerializeAsString();
           }
         }
+        ret->m_MountPolicy.deserialize(payload.mountpolicy());
         throw cta::exception::Exception("In RetrieveRequest::asyncReportSucceedForRepack::lambda(): copyNb not found");
     };
     ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(),ret->m_updaterCallback));
@@ -1126,8 +1173,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     serializers::ArchiveRequest archiveRequestPayload;
     const cta::objectstore::serializers::ArchiveFile& archiveFile = retrieveRequestPayload.archivefile();
     archiveRequestPayload.set_archivefileid(archiveFile.archivefileid());
-    archiveRequestPayload.set_checksumtype(archiveFile.checksumtype());
-    archiveRequestPayload.set_checksumvalue(archiveFile.checksumvalue());
+    archiveRequestPayload.set_checksumblob(archiveFile.checksumblob());
     archiveRequestPayload.set_creationtime(archiveFile.creationtime()); //TODO : should the creation time be the same as the archiveFile creation time ?
     archiveRequestPayload.set_diskfileid(archiveFile.diskfileid());
     archiveRequestPayload.set_diskinstance(archiveFile.diskinstance());
@@ -1157,7 +1203,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     //ArchiveRequest source url is the same as the retrieveRequest destination URL
     const cta::objectstore::serializers::SchedulerRetrieveRequest schedulerRetrieveRequest = retrieveRequestPayload.schedulerrequest();
     archiveRequestPayload.set_srcurl(schedulerRetrieveRequest.dsturl());
-    cta::objectstore::serializers::UserIdentity *archiveRequestUser = archiveRequestPayload.mutable_requester();
+    cta::objectstore::serializers::RequesterIdentity *archiveRequestUser = archiveRequestPayload.mutable_requester();
     archiveRequestUser->CopyFrom(schedulerRetrieveRequest.requester());
     
     //Copy the RetrieveRequest MountPolicy into the new ArchiveRequest

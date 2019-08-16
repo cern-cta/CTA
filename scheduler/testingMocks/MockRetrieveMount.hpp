@@ -21,6 +21,7 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/testingMocks/MockRetrieveJob.hpp"
+#include "catalogue/DummyCatalogue.hpp"
 #include <memory>
 
 namespace cta {
@@ -28,7 +29,7 @@ namespace cta {
   public:
     int getJobs;
     int completes;
-    MockRetrieveMount(): getJobs(0), completes(0) {}
+    MockRetrieveMount(cta::catalogue::Catalogue &catalogue): RetrieveMount(catalogue), getJobs(0), completes(0) {}
 
     ~MockRetrieveMount() throw() {
     }
@@ -67,6 +68,8 @@ namespace cta {
     void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {};
     
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
+    
+    void setTapeMounted(log::LogContext &logContext) const override {};
     
     void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) override {};
 

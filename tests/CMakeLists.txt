@@ -35,6 +35,7 @@ target_link_libraries(cta-unitTests
   ctainmemorystmtunittests
   ctaobjectstore
   ctaobjectstoreunittests
+  ctardbmsunittests
   ctardbmswrapperunittests
   ctaschedulerunittests
   ctatapeserverdaemonunittests
@@ -42,6 +43,7 @@ target_link_libraries(cta-unitTests
   ctatapeserverfileunittests
   ctatapeserverscsiunittests
   ctadiskunittests
+  ctatapelabelunittests
   gtest
   pthread)
 
@@ -63,7 +65,8 @@ target_link_libraries(cta-rdbmsUnitTests
   ctardbmsunittests
   ctadisk
   gtest
-  pthread)
+  pthread
+  ${PROTOBUF3_LIBRARIES})
 
 if (OCCI_SUPPORT)
   set_property (TARGET cta-rdbmsUnitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
@@ -101,11 +104,14 @@ add_executable(cta-systemTests
   system_tests.cpp
   ${GMOCK_SRC})
 
+set_property (TARGET cta-systemTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+
 target_link_libraries(cta-systemTests
   systemTestHelperTests
   cta-tapedSystemTests
   gtest
-  pthread)
+  pthread
+  ${PROTOBUF3_LIBRARIES})
 
 install(TARGETS cta-rdbmsUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
 

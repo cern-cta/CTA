@@ -134,6 +134,10 @@ ELSE(DEFINED PackageOnly)
   set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/xrootd-ssi-protobuf-interface)
 
   add_subdirectory(eos_cta)
+
+  add_subdirectory(upgrade_db)
+  add_subdirectory(migration)
+
   add_subdirectory(cmdline)
   add_subdirectory(xroot_plugins)
 
@@ -147,7 +151,7 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(scheduler)
   add_subdirectory(tapeserver)
   add_subdirectory(XRootdSSiRmcd)
-  
+
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in
     ${CMAKE_BINARY_DIR}/version.h)
@@ -178,7 +182,7 @@ endif (${COMPILE_PACKAGING} STREQUAL "1")
 configure_file(tests/valgrind.suppr tests/valgrind.suppr COPYONLY)
 configure_file(tests/helgrind.suppr tests/helgrind.suppr COPYONLY)
 set(VALGRIND valgrind)
-set(VALGRIND_OPTS --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --max-threads=1000)
+set(VALGRIND_OPTS --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --max-threads=1000)
 set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=tests/valgrind.suppr)
 string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
 

@@ -336,6 +336,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         scoped.add("mountTime", m_stats.mountTime);
         m_logContext.log(cta::log::INFO, "Tape mounted and drive ready");
       }
+      m_archiveMount.setTapeMounted(m_logContext);
       try {
         currentErrorToCount = "Error_tapeEncryptionEnable";
         // We want those scoped params to last for the whole mount.

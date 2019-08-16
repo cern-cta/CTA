@@ -58,6 +58,7 @@ BuildRequires: mariadb-devel
 BuildRequires: postgresql-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
+BuildRequires: grpc, grpc-devel, grpc-static, grpc-plugins
 %{?systemd_requires}
 BuildRequires: systemd
 # only build debug info if you're building the whole code
@@ -250,6 +251,7 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libctadaemonunittests.so*
 %{_libdir}/libctamediachangerunittests.so*
 %{_libdir}/libctadiskunittests.so*
+%{_libdir}/libctatapelabelunittests.so*
 %{_bindir}/cta-systemTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
@@ -287,11 +289,36 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-drop
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-verify
 %attr(0755,root,root) %{_bindir}/cta-database-poll
+%attr(0755,root,root) %{_bindir}/cta-upgrade-db
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-admin-user-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-drop.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-verify.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-database-poll.1cta.gz
+
+%package -n cta-migration-tools
+Summary: Tools for migrating CASTOR to CTA
+Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
+Requires: castor-dbtools >= 2.1.18
+%description -n cta-migration-tools
+CERN Tape Archive:
+Tools for migrating the CASTOR catalogue to CTA and injecting CASTOR file and
+directory metadata into the EOS namespace.
+%files -n cta-migration-tools
+%attr(0755,root,root) %{_bindir}/eos-import-dirs
+%attr(0755,root,root) %{_bindir}/eos-import-files
+%attr(0755,root,root) %{_bindir}/eos-test-dir-inject
+%attr(0755,root,root) %{_bindir}/eos-test-file-inject
+%attr(0755,root,root) %{_bindir}/eos-test-inject.sh
+%attr(0755,root,root) %{_bindir}/eos-insert-missing-dirs
+%attr(0755,root,root) %{_bindir}/json-pretty-print.sh
+%attr(0755,root,root) %{_bindir}/startvoexport.sh
+%attr(0755,root,root) %{_bindir}/exporttapepool.sh
+%attr(0755,root,root) %{_bindir}/undoexporttapepool.sh
+%attr(0755,root,root) %{_bindir}/tapepool_castor_to_cta.py
+%attr(0755,root,root) %{_bindir}/complete_tapepool_export.py
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/castor-migration.conf.example
 
 %package -n cta-rmcd
 Summary: The Remote Media Changer daemon (rmcd)
@@ -332,6 +359,21 @@ The client of the Remote Media Changer Daemon (rmcd)
 %attr(0755,root,root) %{_bindir}/cta-smc
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-smc.conf
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-smc.1cta.gz
+
+%package -n cta-tape-label
+Summary: The command-line tool for pre-labelling a CTA tape.
+Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
+Requires(post): /usr/sbin/setcap
+%description -n cta-tape-label
+CERN Tape Archive:
+The command-line tool for pre-labelling a CTA tape.
+%files -n cta-tape-label
+%defattr(-,root,root)
+%attr(0750,cta,tape) %{_bindir}/cta-tape-label
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-label.1cta.gz
+%post -n cta-tape-label
+/usr/sbin/setcap cap_sys_rawio+ep  %{_bindir}/cta-tape-label
 
 %package -n cta-common
 Summary: CERN Tape Archive common items

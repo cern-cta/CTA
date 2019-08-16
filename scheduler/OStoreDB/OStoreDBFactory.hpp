@@ -158,6 +158,22 @@ public:
     return m_OStoreDB.getNextRepackReportBatch(lc);
   }
   
+  std::unique_ptr<RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) override {
+    return m_OStoreDB.getNextSuccessfulRetrieveRepackReportBatch(lc);
+  }
+  
+  std::unique_ptr<RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) override {
+    return m_OStoreDB.getNextSuccessfulArchiveRepackReportBatch(lc);
+  }
+  
+  std::unique_ptr<RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) override {
+    return m_OStoreDB.getNextFailedRetrieveRepackReportBatch(lc);
+  }
+  
+  std::unique_ptr<RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext& lc) override {
+    return m_OStoreDB.getNextFailedArchiveRepackReportBatch(lc);
+  }
+  
   std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) override {
     return m_OStoreDB.getRepackReportBatches(lc);
   }
@@ -210,8 +226,8 @@ public:
   }
   
 
-  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, log::LogContext& lc) override {
-    m_OStoreDB.queueRepack(vid, bufferURL, repackType, lc);
+  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext& lc) override {
+    m_OStoreDB.queueRepack(vid, bufferURL, repackType, mountPolicy, lc);
   }
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override {

@@ -25,7 +25,6 @@
 #include "Backend.hpp"
 #include "ObjectOps.hpp"
 #include "EntryLogSerDeser.hpp"
-#include "UserIdentity.hpp"
 #include "common/MountControl.hpp"
 #include <list>
 

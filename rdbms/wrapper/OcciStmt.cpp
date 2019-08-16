@@ -115,6 +115,10 @@ void OcciStmt::bindOptionalUint64(const std::string &paramName, const optional<u
   }
 }
 
+void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
+  throw exception::Exception("OcciStmt::bindBlob not implemented.");
+}
+
 //------------------------------------------------------------------------------
 // bindDouble
 //------------------------------------------------------------------------------
@@ -291,11 +295,11 @@ oracle::occi::Statement *OcciStmt::operator->() const {
 //------------------------------------------------------------------------------
 // setColumn
 //------------------------------------------------------------------------------
-void OcciStmt::setColumn(OcciColumn &col) {
+void OcciStmt::setColumn(OcciColumn &col, oracle::occi::Type type) {
   const std::string paramName = std::string(":") + col.getColName();
   const auto paramIdx = getParamIdx(paramName);
-  m_stmt->setDataBuffer(paramIdx, col.getBuffer(), oracle::occi::OCCI_SQLT_STR,
-    col.getMaxFieldLength(), col.getFieldLengths());
+  m_stmt->setDataBuffer(paramIdx, col.getBuffer(), type, col.getMaxFieldLength(),
+    col.getFieldLengths());
 }
 
 //------------------------------------------------------------------------------

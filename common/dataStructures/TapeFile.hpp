@@ -20,9 +20,9 @@
 
 #include <list>
 #include <map>
-#include <stdint.h>
 #include <string>
 
+#include <common/checksum/ChecksumBlob.hpp>
 
 namespace cta {
 namespace common {
@@ -56,10 +56,10 @@ struct TapeFile {
   // TODO: change denomination to match SCSI nomenclature (logical object identifier).
   uint64_t blockId;
   /**
-   * The compressed size of the tape file in bytes. In other words the 
-   * actual number of bytes it occupies on tape. 
+   * The uncompressed (logical) size of the tape file in bytes. This field is redundant as it already exists in the
+   * ArchiveFile class, so it may be removed in future.
    */
-  uint64_t compressedSize;
+  uint64_t fileSize;
   /**
    * The copy number of the file. Copy numbers start from 1. Copy number 0 
    * is an invalid copy number. 
@@ -71,14 +71,9 @@ struct TapeFile {
   time_t creationTime;
   
   /**
-   * The checksum type
+   * Set of checksum (type, value) pairs
    */
-  std::string checksumType;
-  
-  /**
-   * The checksum value 
-   */
-  std::string checksumValue;
+  checksum::ChecksumBlob checksumBlob;
   
   /**
    * The vid of the tape file superseding this one (or empty string if not)

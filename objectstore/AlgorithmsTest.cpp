@@ -50,8 +50,7 @@ void fillRetrieveRequests(
     cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
     rqc.archiveFile.archiveFileID = 123456789L;
     rqc.archiveFile.diskFileId = "eos://diskFile";
-    rqc.archiveFile.checksumType = "";
-    rqc.archiveFile.checksumValue = "";
+    rqc.archiveFile.checksumBlob.insert(cta::checksum::NONE, "");
     rqc.archiveFile.creationTime = 0;
     rqc.archiveFile.reconciliationTime = 0;
     rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -61,8 +60,7 @@ void fillRetrieveRequests(
     {
       cta::common::dataStructures::TapeFile tf;
       tf.blockId = 0;
-      tf.compressedSize = 1;
-      tf.compressedSize = 1;
+      tf.fileSize = 1;
       tf.copyNb = 1;
       tf.creationTime = time(nullptr);
       tf.fSeq = i;
@@ -131,8 +129,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     cta::common::dataStructures::ArchiveFile aFile;
     aFile.archiveFileID = 123456789L;
     aFile.diskFileId = "eos://diskFile";
-    aFile.checksumType = "";
-    aFile.checksumValue = "";
+    aFile.checksumBlob.insert(cta::checksum::NONE, "");
     aFile.creationTime = 0;
     aFile.reconciliationTime = 0;
     aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
@@ -150,7 +147,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
     ar.setArchiveErrorReportURL("");
-    ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
+    ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
     ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();

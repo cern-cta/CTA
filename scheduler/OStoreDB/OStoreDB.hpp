@@ -348,7 +348,7 @@ public:
   
   /* === Repack requests handling =========================================== */
   void queueRepack(const std::string& vid, const std::string& bufferURL, 
-    common::dataStructures::RepackInfo::Type repackType, log::LogContext &logContext) override;
+    common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext &logContext) override;
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRepackRequest);
@@ -450,6 +450,7 @@ public:
        * in order to save a read in the most common case (only one job), and trigger immediate deletion of
        * the request after succeeding/failing. */
       std::map<uint32_t, objectstore::serializers::ArchiveJobStatus> archiveJobsStatusMap;
+      cta::objectstore::AgentReference * owner;
       std::shared_ptr<SR> subrequest;
       common::dataStructures::ArchiveFile archiveFile;
       typename SR::RepackInfo repackInfo;
@@ -523,13 +524,14 @@ public:
   
   std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) override;
   
-private:
-  CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
-  const size_t c_repackReportBatchSize = 500;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc);
+  CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
+private:
+  const size_t c_repackArchiveReportBatchSize = 10000;
+  const size_t c_repackRetrieveReportBatchSize = 10000;
 public:
 
   /* === Drive state handling  ============================================== */

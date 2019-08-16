@@ -45,6 +45,7 @@ set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
   ConnPoolTest.cpp
   LoginTest.cpp
   RdbmsTest.cpp
+  RsetTest.cpp
   StmtPoolTest.cpp)
 
 add_library (ctardbmsunittests SHARED

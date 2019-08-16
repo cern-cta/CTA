@@ -198,7 +198,7 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
       aReq.initialize();
       cta::common::dataStructures::ArchiveFile aFile;
       cta::common::dataStructures::MountPolicy mountPolicy;
-      cta::common::dataStructures::UserIdentity requester;
+      cta::common::dataStructures::RequesterIdentity requester;
       cta::common::dataStructures::EntryLog entryLog;
       aFile.archiveFileID = i;
       aReq.setArchiveFile(aFile);

@@ -23,8 +23,6 @@
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/UserIdentity.hpp"
-
 namespace cta {
 namespace common {
 namespace dataStructures {

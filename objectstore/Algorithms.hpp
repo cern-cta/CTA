@@ -55,15 +55,28 @@ public:
     log::TimingList timingList;
     utils::Timer t;
     ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
+    timingList.insertAndReset("queueLockFetchTime", t);
+    auto contSummaryBefore = ContainerTraits<Q,C>::getContainerSummary(cont);
     ContainerTraits<Q,C>::addReferencesAndCommit(cont, elements, m_agentReference, lc);
+    timingList.insertAndReset("queueProcessAndCommitTime", t);
     auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
         prevContAddress, timingList, t, lc);
+    timingList.insertAndReset("requestsUpdatingTime", t);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
       ContainerTraits<Q,C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);
+      timingList.insertAndReset("queueRecommitTime", t);
     }
+    auto contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
     // We are now done with the container.
     contLock.release();
+    timingList.insertAndReset("queueUnlockTime", t);
+    log::ScopedParamContainer params(lc);
+    params.add("C", ContainerTraits<Q,C>::c_containerTypeName)
+          .add(ContainerTraits<Q,C>::c_identifierType, contId)
+          .add("containerAddress", cont.getAddressIfSet());
+    contSummaryAfter.addDeltaToLog(contSummaryBefore, params);
+    timingList.addToLog(params);
     if (failedOwnershipSwitchElements.empty()) {
       // The good case: all elements went through.
       std::list<std::string> transferedElements;
@@ -72,6 +85,7 @@ public:
       }
       m_agentReference.removeBatchFromOwnership(transferedElements, m_backend);
       // That's it, we're done.
+      lc.log(log::INFO, "In ContainerAlgorithms::referenceAndSwitchOwnership(): Requeued a batch of elements.");
       return;
     } else {
       // Bad case: we have to filter the elements and remove ownership only for the successful ones.
@@ -87,6 +101,9 @@ public:
       }
       if (transferedElements.size()) m_agentReference.removeBatchFromOwnership(transferedElements, m_backend);
       failureEx.failedElements = failedOwnershipSwitchElements;
+      params.add("errorCount", failedOwnershipSwitchElements.size());
+      lc.log(log::WARNING, "In ContainerAlgorithms::referenceAndSwitchOwnership(): "
+          "Encountered problems while requeuing a batch of elements");
       throw failureEx;
     }
   }

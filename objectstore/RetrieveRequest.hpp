@@ -26,13 +26,14 @@
 #include <list>
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/LifecycleTimings.hpp"
 #include "AgentReference.hpp"
+#include "SorterArchiveJob.hpp"
+#include "MountPolicySerDeser.hpp"
 
 namespace cta { 
   namespace objectstore {
@@ -77,6 +78,7 @@ public:
      * Wait for the end of the execution of the updater callback
      */
     void wait();
+    MountPolicySerDeser m_MountPolicy;
   private:
     //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;

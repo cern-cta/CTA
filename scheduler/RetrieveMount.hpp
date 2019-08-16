@@ -38,18 +38,19 @@ namespace cta {
    */
   class RetrieveMount: public TapeMount {
     friend class Scheduler;
-  protected:
+  protected:    
     /**
-     * Trivial constructor
+     * Constructor.
+     * @param catalogue The file catalogue interface.
      */
-    RetrieveMount();
+    RetrieveMount(cta::catalogue::Catalogue &catalogue);
     
     /**
      * Constructor.
-     *
+     * @param catalogue The file catalogue interface.
      * @param dbMount The database representation of this mount.
      */
-    RetrieveMount(std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount);
+    RetrieveMount(cta::catalogue::Catalogue &catalogue, std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount);
 
   public:
 
@@ -132,7 +133,13 @@ namespace cta {
      * Report a tape session statistics
      */
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats);
-
+    
+    /**
+     * Report a tape mounted event
+     * @param logContext
+     */
+    virtual void setTapeMounted(log::LogContext &logContext) const;
+    
     /**
      * Indicates that the disk thread of the mount was completed. This
      * will implicitly trigger the transition from DrainingToDisk to Up if necessary.
@@ -193,12 +200,6 @@ namespace cta {
     disk::DiskReporter * createDiskReporter(std::string & URL);
     
     /**
-     * Passes a reference to the catalogue, used for disk space back pressure 
-     * @param catalogue
-     */
-    void setCatalogue(catalogue::Catalogue *catalogue);
-    
-    /**
      * Destructor.
      */
     virtual ~RetrieveMount() throw();
@@ -209,11 +210,6 @@ namespace cta {
      * The database representation of this mount.
      */
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> m_dbMount;
-    
-    /**
-     * A reference to the catalogue
-     */
-    catalogue::Catalogue * m_catalogue = nullptr;
     
     /**
      * Internal tracking of the session completion
@@ -237,6 +233,11 @@ namespace cta {
      * Internal tracking of the full disk systems. It is one strike out (for the mount duration).
      */
     std::set<std::string> m_fullDiskSystems;
+    
+    /**
+     * A pointer to the file catalogue.
+     */
+    cta::catalogue::Catalogue &m_catalogue; 
 
   }; // class RetrieveMount
 

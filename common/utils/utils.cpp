@@ -36,7 +36,7 @@
 #include <sys/utsname.h>
 #include <sys/prctl.h>
 #include <iomanip>
-#include <xrootd/XrdClient/XrdClientUrlInfo.hh>
+#include <xrootd/XrdCl/XrdClURL.hh>
 
 using cta::exception::Exception;
 
@@ -721,18 +721,6 @@ uint32_t getAdler32(const uint8_t *buf, const uint32_t len)
 }
 
 //------------------------------------------------------------------------------
-// getAdler32String
-//------------------------------------------------------------------------------
-std::string getAdler32String(const uint8_t *buf, const uint32_t len)
-{
-  const uint32_t checksum = adler32(0L, Z_NULL, 0);
-  std::stringstream ret;
-  ret << "0X" << std::noshowbase << std::hex << std::setw(8) << std::setfill('0') << std::uppercase
-      << adler32(checksum, (const Bytef*)buf, len);
-  return ret.str();
-}
-
-//------------------------------------------------------------------------------
 // getShortHostname
 //------------------------------------------------------------------------------
 std::string getShortHostname() {
@@ -859,8 +847,8 @@ std::string getCurrentLocalTime() {
 }
 
 std::string extractPathFromXrootdPath(const std::string& path){
-  XrdClientUrlInfo urlInfo(path.c_str());
-  return std::string(urlInfo.File.c_str());
+  XrdCl::URL urlInfo(path.c_str());
+  return urlInfo.GetPath();
 }
 
 //------------------------------------------------------------------------------

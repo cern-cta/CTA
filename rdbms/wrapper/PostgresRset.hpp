@@ -61,6 +61,14 @@ public:
   bool columnIsNull(const std::string &colName) const override;
 
   /**
+   * Returns the value of the specified column as a binary string (byte array).
+   *
+   * @param colName The name of the column.
+   * @return The string value of the specified column.
+   */
+  std::string columnBlob(const std::string &colName) const override;
+
+  /**
    * Returns the value of the specified column as a string.
    *
    * This method will return a null column value as an optional with no value.

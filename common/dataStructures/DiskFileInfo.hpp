@@ -36,13 +36,15 @@ struct DiskFileInfo {
 
   DiskFileInfo();
 
+  DiskFileInfo(const std::string &path, uint32_t owner_uid, uint32_t gid);
+
   bool operator==(const DiskFileInfo &rhs) const;
 
   bool operator!=(const DiskFileInfo &rhs) const;
 
   std::string path;
-  std::string owner;
-  std::string group;
+  uint32_t    owner_uid;
+  uint32_t    gid;
 
 }; // struct DiskFileInfo
 

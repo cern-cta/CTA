@@ -29,8 +29,11 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 Tape::Tape():
   lastFSeq(0),
-  capacityInBytes(0),
-  dataOnTapeInBytes(0) {}
+  capacityInBytes(0), 
+  dataOnTapeInBytes(0),
+  full(false),
+  disabled(false),
+  readOnly(false) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -45,6 +48,7 @@ bool Tape::operator==(const Tape &rhs) const {
       && encryptionKey==rhs.encryptionKey
       && full==rhs.full
       && disabled==rhs.disabled
+      && readOnly==rhs.readOnly
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
       && comment==rhs.comment
@@ -73,6 +77,7 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
      << " encryptionKey=" << (obj.encryptionKey ? obj.encryptionKey.value() : "null")
      << " full=" << obj.full
      << " disabled=" << obj.disabled
+     << " readOnly=" << obj.readOnly    
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment

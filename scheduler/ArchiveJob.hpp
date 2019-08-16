@@ -74,7 +74,6 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(BlockIdNotSet);
   CTA_GENERATE_EXCEPTION_CLASS(ChecksumNotSet);
-  CTA_GENERATE_EXCEPTION_CLASS(ChecksumMismatch);
   
   /**
    * Start an asynchronous update for a batch of jobs and then make sure they complete.
@@ -110,7 +109,14 @@ public:
    * Get the URL used for reporting
    * @return The URL used to report to the disk system.
    */
-  virtual std::string reportURL();
+  virtual std::string exceptionThrowingReportURL();
+
+  /**
+   * Same as exceptionThrowingReportURL() except it doesn't throw exceptions.
+   * Errors are returned in the output string.
+   * @return The URL used to report to the disk system.
+   */
+  virtual std::string reportURL() noexcept;
 
   /**
    * Get the report type.

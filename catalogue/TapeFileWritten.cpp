@@ -26,9 +26,10 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 TapeFileWritten::TapeFileWritten() :
   archiveFileId(0),
+  diskFileOwnerUid(0),
+  diskFileGid(0),
   size(0),
   blockId(0),
-  compressedSize(0),
   copyNb(0) {
 }
 
@@ -42,14 +43,12 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
     diskInstance == rhs.diskInstance &&
     diskFileId == rhs.diskFileId &&
     diskFilePath == rhs.diskFilePath &&
-    diskFileUser == rhs.diskFileUser &&
-    diskFileGroup == rhs.diskFileGroup &&
+    diskFileOwnerUid == rhs.diskFileOwnerUid &&
+    diskFileGid == rhs.diskFileGid &&
     size == rhs.size &&
-    checksumType == rhs.checksumType &&
-    checksumValue == rhs.checksumValue &&
+    checksumBlob == rhs.checksumBlob &&
     storageClassName == rhs.storageClassName &&
     blockId == rhs.blockId &&
-    compressedSize == rhs.compressedSize &&
     copyNb == rhs.copyNb &&
     tapeDrive == rhs.tapeDrive;
 }
@@ -64,15 +63,14 @@ std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj) {
   "diskInstance=" << obj.diskInstance << ","
   "diskFileId=" << obj.diskFileId << ","
   "diskFilePath=" << obj.diskFilePath << ","
-  "diskFileUser=" << obj.diskFileUser << ","
-  "diskFileGroup=" << obj.diskFileGroup << ","
+  "diskFileOwnerUid=" << obj.diskFileOwnerUid << ","
+  "diskFileGid=" << obj.diskFileGid << ","
   "size=" << obj.size << ","
-  "checksumType=" << obj.checksumType << "checksumValue=" << obj.checksumValue << ","
+  "checksumBlob=" << obj.checksumBlob << ","
   "storageClassName=" << obj.storageClassName << ","
   "vid=" << obj.vid << ","
   "fSeq=" << obj.fSeq << ","
   "blockId=" << obj.blockId << ","
-  "compressedSize=" << obj.compressedSize << ","
   "copyNb=" << obj.copyNb << ","
   "tapeDrive=" << obj.tapeDrive <<
   "}";

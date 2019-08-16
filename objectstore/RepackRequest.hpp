@@ -48,6 +48,9 @@ public:
   void setExpandStarted(const bool expandStarted);
   void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles getTotalStatsFile();
+  void setMountPolicy(const common::dataStructures::MountPolicy &mp);
+  common::dataStructures::MountPolicy getMountPolicy();
+  
   /**
    * Automatically set the new status of the Repack Request
    * regarding multiple parameters
@@ -122,6 +125,10 @@ public:
     uint64_t bytes = 0;
   };
   std::map<StatsType, StatsValues> getStats();
+  
+  void reportRetrieveCreationFailures(const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests);
+  
+  void reportArchiveCreationFailures(uint64_t nbFailedToCreateArchiveRequests);
   
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;

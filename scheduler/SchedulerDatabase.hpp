@@ -74,7 +74,6 @@ class StorageClass;
 class Tape;
 class TapeMount;
 class TapeSession;
-class UserIdentity;
 class RepackRequest;
 namespace objectstore{
   class RetrieveRequest;
@@ -159,6 +158,7 @@ public:
       std::string host;
       uint64_t mountId;
       uint64_t capacityInBytes;
+      cta::common::dataStructures::MountType mountType;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
@@ -398,7 +398,7 @@ public:
 
   /*============ Repack management: user side ================================*/
   virtual void queueRepack(const std::string & vid, const std::string & bufferURL,
-      common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) = 0;
+      common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext & lc) = 0;
   virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
   virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
   virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;
@@ -504,6 +504,14 @@ public:
    * @return Next batch to report.
    */
   virtual std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext & lc) = 0;
+  
+  virtual std::unique_ptr<RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext &lc) = 0;
+  
+  virtual std::unique_ptr<RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext &lc) = 0;
+  
+  virtual std::unique_ptr<RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext &lc) = 0;
+  
+  virtual std::unique_ptr<RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc) = 0;
   
   /**
    * Return all batches of subrequests from the database to be reported to repack.
