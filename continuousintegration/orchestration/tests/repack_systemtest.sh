@@ -88,7 +88,7 @@ admin_cta tape ch --vid ${VID_TO_REPACK} --full true
 echo "Backpressure test: setting too high free space requirements"
 # This should be idempotent as we will be called several times
 if [[ $( admin_cta --json ds ls | jq '.[] | select(.name=="repackBuffer") | .name') != '"repackBuffer"' ]]; then
-  admin_cta ds add -n repackBuffer -r "root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}" -u "eos://${EOSINSTANCE}" -i 60 -f 111222333444555 -s 60 -m toto
+  admin_cta ds add -n repackBuffer -r "root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}" -u "eos://${EOSINSTANCE}" -i 5 -f 111222333444555 -s 60 -m toto
 else
   echo "Disk system repackBuffer alread defined. Ensuring too high free space requirements."
   admin_cta ds ch -n repackBuffer -f 111222333444555
