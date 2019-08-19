@@ -99,7 +99,7 @@ uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceA
         std::string("In DiskSystemFreeSpaceList::fetchEosFreeSpace(), failed to call \"eos root://") + 
         instanceAddress + " space ls -m\"");
   } catch (exception::Exception & ex) {
-    ex.getMessage() << "instanceAddress: " << instanceAddress << "stderr: " << sp.stderr();
+    ex.getMessage() << " instanceAddress: " << instanceAddress << " stderr: " << sp.stderr();
     throw;
   }
   if (sp.wasKilled()) {
