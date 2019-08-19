@@ -110,6 +110,7 @@ Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
+Requires: eos-client
 %description -n cta-taped
 CERN Tape Archive:
 The tape server daemon
