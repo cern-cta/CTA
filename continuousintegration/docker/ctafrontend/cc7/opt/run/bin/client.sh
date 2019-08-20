@@ -21,6 +21,7 @@ cat <<EOF > /etc/cta/cta-cli.conf
 cta.endpoint ctafrontend:10955
 EOF
 
+EOS_HOSTNAME=$(awk '/mgmofs.instance/ { print $2 }' /etc/xrd.cf.mgm)
 cat <<EOF >/etc/cta/castor-migration.conf
 castor.db_login               oracle:castor/<password>@castor
 castor.json                   true
@@ -29,9 +30,11 @@ castor.batch_size             100
 castor.prefix                 /castor/cern.ch
 eos.dry_run                   false
 eos.prefix                    /eos/grpc
-eos.endpoint                  eoscta:50051
+eos.endpoint                  ${EOS_HOSTNAME}:50051
 eos.token                     migrationtesttoken
 EOF
+echo $EOS_HOSTNAME
+cat /etc/cta/castor-migration.conf
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # sleep forever but exit immediately when pod is deleted
