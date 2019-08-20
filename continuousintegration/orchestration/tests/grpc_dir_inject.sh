@@ -24,8 +24,8 @@ echoc()
   echo -e "${COLOUR}$*${NC}"
 }
 
-TEST_PATH=$(which eos-test-dir-inject)
-[ -x ${TEST_PATH} ] || error "Can't find executable eos-test-dir-inject"
+EOS_TEST_DIR_INJECT=/usr/bin/eos-test-dir-inject
+[ -x ${EOS_TEST_DIR_INJECT} ] || error "Can't find executable ${EOS_TEST_DIR_INJECT}"
 
 CONFIG_FILE=/etc/cta/castor-migration.conf
 [ -r ${CONFIG_FILE} ] || error "Can't find configuration file ${CONFIG_FILE}"
@@ -41,7 +41,7 @@ eos mkdir -p ${EOS_PREFIX} 2>/dev/null
 
 # Create directory with system-assigned file id -- should succeed
 echoc $LT_BLUE "Creating directory with auto-assigned file id"
-eos-test-dir-inject --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with auto-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
@@ -51,7 +51,7 @@ eos rmdir ${EOS_PREFIX}/my_test_dir
 
 # Create directory with self-assigned file id -- should succeed
 echoc $LT_BLUE "Creating directory with self-assigned file id"
-eos-test-dir-inject --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
@@ -59,18 +59,17 @@ eos fileinfo ${EOS_PREFIX}/my_test_dir
 
 # Try again -- should fail
 echoc $LT_GREEN "Creating directory with the same file id (should fail)"
-eos-test-dir-inject --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir2 >/dev/null
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir2 >/dev/null
 [ $? -ne 0 ] || error "Creating directory with self-assigned file id succeeded when it should have failed"
 
 # Remove and try again -- should succeed after restarting EOS
 echoc $LT_GREEN "Remove the directory and restart EOS to remove the tombstone"
 eos rmdir ${EOS_PREFIX}/my_test_dir
 echoc $LT_BLUE "Recreate the directory with self-assigned file id (should succeed this time)"
-eos-test-dir-inject --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >/dev/null
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >/dev/null
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed with error $?"
 eos fileinfo ${EOS_PREFIX}/my_test_dir
 
 echoc $LT_GREEN "Cleaning up: removing tombstones and removing injected directories"
 eos rmdir ${EOS_PREFIX}/my_test_dir  2>/dev/null
 eos rmdir ${EOS_PREFIX}/my_test_dir2 2>/dev/null
-
