@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 #include "DriveStatus.hpp"
 #include "MountType.hpp"
@@ -39,10 +40,18 @@ struct DriveState {
   bool operator==(const DriveState &rhs) const;
 
   bool operator!=(const DriveState &rhs) const;
+  
+  struct DriveConfigItem{
+    std::string category;
+    std::string key;
+    std::string value;
+    std::string source;
+  };
 
   std::string driveName;
   std::string host;
   std::string logicalLibrary;
+  std::string ctaVersion;
   uint64_t sessionId = 0;
   uint64_t bytesTransferredInSession = 0;
   uint64_t filesTransferredInSession = 0;
@@ -75,6 +84,7 @@ struct DriveState {
   std::string nextTapepool;
   uint64_t nextPriority = 0;
   optional<ActivityAndWeight> nextActivityAndWeight;
+  std::vector<DriveConfigItem> driveConfigItems;
 }; // struct DriveState
 
 std::ostream &operator<<(std::ostream &os, const DriveState &obj);

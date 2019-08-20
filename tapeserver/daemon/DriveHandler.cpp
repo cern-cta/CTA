@@ -939,7 +939,7 @@ int DriveHandler::runChild() {
   // The object store is accessible, let's turn the agent heartbeat on.
   objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend, lc.logger());
   agentHeartbeat.startThread();
-
+  
   // 1) Special case first, if we crashed in a cleaner session, we put the drive down
   if (m_previousSession == PreviousSession::Crashed && m_previousType == SessionType::Cleanup) {
     log::ScopedParamContainer params(lc);
@@ -1074,14 +1074,17 @@ int DriveHandler::runChild() {
         scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/, lc);
+        scheduler.reportDriveConfig(m_configLine.unitName,m_tapedConfig,lc);
       } catch (cta::exception::Exception & ex) {
-        params.add("Message", ex.getMessageValue());
+        params.add("Message", ex.getMessageValue())
+              .add("Backtrace",ex.backtrace());
         lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
         // This is a fatal error (failure to access the scheduler). Shut daemon down.
         driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       }
     }
+    
     castor::tape::tapeserver::daemon::DataTransferSession dataTransferSession(
       cta::utils::getShortHostname(),
       lc.logger(),
@@ -1092,7 +1095,7 @@ int DriveHandler::runChild() {
       capUtils,
       dataTransferConfig,
       scheduler);
-
+    
     auto ret = dataTransferSession.execute();
     agentHeartbeat.stopAndWaitThread();
     return ret;

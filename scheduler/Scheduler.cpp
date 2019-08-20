@@ -734,6 +734,19 @@ void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity &cliI
 }
 
 //------------------------------------------------------------------------------
+// reportDriveConfig
+//------------------------------------------------------------------------------
+void Scheduler::reportDriveConfig(const std::string &driveName,const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) {
+  utils::Timer t;
+  m_db.reportDriveConfig(driveName,tapedConfig,lc);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+   spc.add("drive", driveName)
+      .add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO,"In Scheduler::reportDriveConfig(): success.");
+}
+
+//------------------------------------------------------------------------------
 // setDesiredDriveState
 //------------------------------------------------------------------------------
 void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, common::dataStructures::MountType type, common::dataStructures::DriveStatus status, log::LogContext & lc) {
