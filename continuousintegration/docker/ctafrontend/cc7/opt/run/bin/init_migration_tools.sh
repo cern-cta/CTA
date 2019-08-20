@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat <<EOF
+cat <<EOF >/etc/cta/castor-migration.conf
 castor.db_login               oracle:castor/<password>@castor
 castor.json                   true
 castor.max_num_connections    1
