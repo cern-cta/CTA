@@ -491,7 +491,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
          "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n"
       "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                              "\n"
          "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;" "\n"
-      "FOR TF IN (SELECT * FROM TEMP_TAPE_FILE_INSERTION_BATCH)"                        "\n"
+      "FOR TF IN (SELECT * FROM TEMP_TAPE_FILE_INSERTION_BATCH ORDER BY FSEQ ASC)"      "\n"
       "LOOP"                                                                            "\n"
         "UPDATE TAPE_FILE SET"                                                          "\n"
           "SUPERSEDED_BY_VID=TF.VID,"  /*VID of the new file*/                          "\n"
