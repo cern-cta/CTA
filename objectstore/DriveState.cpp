@@ -112,6 +112,8 @@ cta::common::dataStructures::DriveState DriveState::getState() {
   for(auto & driveConfigItem: m_payload.drive_config()){
     ret.driveConfigItems.push_back({driveConfigItem.category(),driveConfigItem.key(),driveConfigItem.value(),driveConfigItem.source()});
   }
+  ret.devFileName = m_payload.dev_file_name();
+  ret.rawLibrarySlot = m_payload.raw_library_slot();
   if (m_payload.has_current_activity())
     ret.currentActivityAndWeight = 
       cta::common::dataStructures::DriveState::ActivityAndWeight{
@@ -264,6 +266,11 @@ void DriveState::setConfig(const cta::tape::daemon::TapedConfiguration& tapedCon
   fillConfig(config->wdIdleSessionTimer);
   fillConfig(config->backendPath);
   fillConfig(config->fileCatalogConfigFile);
+}
+
+void DriveState::setTpConfig(const cta::tape::daemon::TpconfigLine& configLine){
+  m_payload.set_dev_file_name(configLine.devFilename);
+  m_payload.set_raw_library_slot(configLine.rawLibrarySlot);
 }
 
 //------------------------------------------------------------------------------

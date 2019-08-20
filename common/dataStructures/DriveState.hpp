@@ -85,6 +85,8 @@ struct DriveState {
   uint64_t nextPriority = 0;
   optional<ActivityAndWeight> nextActivityAndWeight;
   std::vector<DriveConfigItem> driveConfigItems;
+  std::string devFileName;
+  std::string rawLibrarySlot;
 }; // struct DriveState
 
 std::ostream &operator<<(std::ostream &os, const DriveState &obj);

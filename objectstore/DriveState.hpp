@@ -47,6 +47,7 @@ public:
   cta::common::dataStructures::DriveState getState();
   void setState(cta::common::dataStructures::DriveState & state);
   void setConfig(const cta::tape::daemon::TapedConfiguration &tapedConfiguration);
+  void setTpConfig(const cta::tape::daemon::TpconfigLine &tpConfigLine);
   /**
    * JSON dump of the drive state
    * @return 

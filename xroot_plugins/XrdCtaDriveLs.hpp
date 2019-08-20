@@ -122,7 +122,9 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_time_since_last_update(time(nullptr)-dr.lastUpdateTime);
     dr_item->set_current_priority(dr.currentPriority);
     dr_item->set_current_activity(dr.currentActivityAndWeight ? dr.currentActivityAndWeight.value().activity : "");
-
+    dr_item->set_dev_file_name(dr.devFileName);
+    dr_item->set_raw_library_slot(dr.rawLibrarySlot);
+    
     auto driveConfig = dr_item->mutable_drive_config();
     for(auto & driveConfigItem: dr.driveConfigItems){
       auto driveConfigItemProto = driveConfig->Add();

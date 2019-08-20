@@ -253,7 +253,9 @@ message DriveState {
   optional uint64 next_priority = 5031;
   optional string next_activity = 5032;
   optional double next_activity_weight = 5033;
-  repeated DriveConfig drive_config = 5035;
+  optional string dev_file_name = 5035;
+  optional string raw_library_slot = 5036;
+  repeated DriveConfig drive_config = 5037;
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 

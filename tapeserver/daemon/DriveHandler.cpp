@@ -1074,7 +1074,7 @@ int DriveHandler::runChild() {
         scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/, lc);
-        scheduler.reportDriveConfig(m_configLine.unitName,m_tapedConfig,lc);
+        scheduler.reportDriveConfig(m_configLine,m_tapedConfig,lc);
       } catch (cta::exception::Exception & ex) {
         params.add("Message", ex.getMessageValue())
               .add("Backtrace",ex.backtrace());

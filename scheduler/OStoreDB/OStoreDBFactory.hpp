@@ -271,8 +271,8 @@ public:
        latestBandwidth, vid, tapepool);
   }
   
-  void reportDriveConfig(const std::string& driveName, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override {
-    m_OStoreDB.reportDriveConfig(driveName, tapedConfig,lc);
+  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override {
+    m_OStoreDB.reportDriveConfig(tpConfigLine, tapedConfig,lc);
   }
 
 private:

@@ -261,7 +261,7 @@ public:
    * @param driveName the name of the drive to report the config to the objectstore
    * @param tapedConfig the config of the drive to report to the objectstore.
    */
-  void reportDriveConfig(const std::string& driveName, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc);
+  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc);
 
   /**
    * Dumps the states of all drives for display

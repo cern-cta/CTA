@@ -742,7 +742,7 @@ public:
     const std::string & vid = "",
     const std::string & tapepool = "") = 0;
   
-  virtual void reportDriveConfig(const std::string& driveName, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) = 0;
+  virtual void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) = 0;
 }; // class SchedulerDatabase
 
 } // namespace cta
