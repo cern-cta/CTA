@@ -501,8 +501,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
           "TAPE_FILE.COPY_NB= TF.COPY_NB AND"                                           "\n"
           "(TAPE_FILE.VID <> TF.VID OR TAPE_FILE.FSEQ <> TF.FSEQ);"                     "\n"
       "END LOOP;"                                                                       "\n"
-      "COMMIT;"                                                                         "\n"
     "END;";
+    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
     auto stmt = conn.createStmt(sql);
     stmt.executeNonQuery();
   } catch(exception::UserError &) {
