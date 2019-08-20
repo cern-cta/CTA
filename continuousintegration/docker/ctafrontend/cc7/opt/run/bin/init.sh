@@ -17,7 +17,7 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable ceph
 
   # install needed packages
-  yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient-sqlplus
+  yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient-sqlplus cta-migration-tools
   yum clean packages
 fi
 
@@ -25,6 +25,9 @@ echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh
 cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
+
+echo "Configuring migration tools:"
+/opt/run/bin/init_migration_tools.sh
 
 echo "Configuring objectstore:"
 /opt/run/bin/init_objectstore.sh
@@ -49,7 +52,6 @@ if [ "$KEEP_OBJECTSTORE" == "0" ]; then
 else
   echo "Reusing objectstore (no check)"
 fi
-
 
 echo "Configuring database:"
 /opt/run/bin/init_database.sh
