@@ -33,7 +33,7 @@ eos.prefix                    /eos/grpc
 eos.endpoint                  ${EOS_HOSTNAME}:50051
 eos.token                     migrationtesttoken
 EOF
-echo $EOS_HOSTNAME
+echo Migration tools configuration:
 cat /etc/cta/castor-migration.conf
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then

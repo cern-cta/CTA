@@ -9,7 +9,6 @@ export KRB5RCACHETYPE=none
 # e.g. /etc/sysconfig/xrd.<role>. The role based mechanism allows for
 # multiple xrd's running with different options to be controlled via
 # the same initd script
-
 XRD_ROLES="mq mgm fst"
 
 # ------------------------------------------------------------------
@@ -58,3 +57,6 @@ export EOS_FST_DELETE_QUERY_INTERVAL=5
 
 # Tell clients that there is a CTA backend by starting the sitename with "cern_tape_archive_"
 XRDSITE=cern_tape_archive_ci
+
+# Port to use for injecting into namespace using gRPC API
+EOS_MGM_GRPC_PORT=50051
