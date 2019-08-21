@@ -215,7 +215,7 @@ fi
 
   # 2. Add authorisation key (must be the same as the one specified in client.sh)
   EOS_AUTH_KEY=migration-test-token
-  eos -r 0 0 set map -grpc key:${EOS_AUTH_KEY} vuid:2 vid:2
+  eos -r 0 0 vid set map -grpc key:${EOS_AUTH_KEY} vuid:2 vgid:2
   echo "gRPC authorized uid and gid:"
   eos -r 0 0 vid ls | grep grpc:
 
