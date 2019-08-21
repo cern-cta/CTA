@@ -209,6 +209,17 @@ fi
   eos mkdir ${CTA_PROC_DIR}
   eos mkdir ${CTA_WF_DIR}
 
+  # Configure gRPC interface:
+  #
+  # 1. Map requests to EOS virtual identities
+  eos -r 0 0 vid add gateway eoscta grpc
+
+  # 2. Add authorisation key (must be the same as the one specified in client.sh)
+  EOS_AUTH_KEY=migration-test-token
+  vid -r 0 0 set map -grpc key:${EOS_AUTH_KEY} vuid:2 vid:2
+  echo "gRPC authorized uid and gid:"
+  eos -r 0 0 vid ls | grep grpc:
+
   # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
   # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
   # this is achieved through the ACLs.
