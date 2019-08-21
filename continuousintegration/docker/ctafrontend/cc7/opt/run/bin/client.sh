@@ -22,6 +22,7 @@ cta.endpoint ctafrontend:10955
 EOF
 
 EOS_HOSTNAME=ctaeos
+EOS_AUTH_KEY=migration-test-token
 cat <<EOF >/etc/cta/castor-migration.conf
 castor.db_login               oracle:castor/<password>@castor
 castor.json                   true
@@ -31,7 +32,7 @@ castor.prefix                 /castor/cern.ch
 eos.dry_run                   false
 eos.prefix                    /eos/grpc
 eos.endpoint                  ${EOS_HOSTNAME}:50051
-eos.token                     migrationtesttoken
+eos.token                     ${EOS_AUTH_KEY}
 EOF
 echo Migration tools configuration:
 cat /etc/cta/castor-migration.conf

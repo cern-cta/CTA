@@ -35,6 +35,8 @@ TMPFILE=/tmp/eos-test-inject-sh.$$
 CASTOR_PREFIX=$(awk '/^castor.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 EOS_PREFIX=$(awk '/^eos.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 
+echo "Running as user ${UID}:${USER}"
+
 # Ping the gRPC interface
 ${EOS_TEST_DIR_INJECT} ping || error "gRPC ping failed"
 
