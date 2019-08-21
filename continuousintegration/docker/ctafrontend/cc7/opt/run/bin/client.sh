@@ -21,7 +21,7 @@ cat <<EOF > /etc/cta/cta-cli.conf
 cta.endpoint ctafrontend:10955
 EOF
 
-EOS_HOSTNAME=$(awk '/mgmofs.instance/ { print $2 }' /etc/xrd.cf.mgm)
+EOS_HOSTNAME=ctaeos
 cat <<EOF >/etc/cta/castor-migration.conf
 castor.db_login               oracle:castor/<password>@castor
 castor.json                   true
