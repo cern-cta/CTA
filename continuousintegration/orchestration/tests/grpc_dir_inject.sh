@@ -35,6 +35,9 @@ TMPFILE=/tmp/eos-test-inject-sh.$$
 CASTOR_PREFIX=$(awk '/^castor.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 EOS_PREFIX=$(awk '/^eos.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 
+# Ping the gRPC interface
+${EOS_TEST_DIR_INJECT} ping || error "gRPC ping failed"
+
 # Create the top-level directory. GNU coreutils "mkdir -p" does not return an error if the directory
 # already exists; "eos mkdir -p" does return an error, which we explicitly ignore.
 eos mkdir -p ${EOS_PREFIX} 2>/dev/null
