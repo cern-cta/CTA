@@ -78,7 +78,7 @@ public:
    * to the algorithm, but will help performance drastically for a very similar result
    */
   static std::string selectBestRetrieveQueue (const std::set<std::string> & candidateVids, cta::catalogue::Catalogue & catalogue, 
-  objectstore::Backend & objectstore);
+  objectstore::Backend & objectstore, bool isRepack = false);
   
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB

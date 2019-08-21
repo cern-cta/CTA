@@ -2276,7 +2276,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         if (tc.vid == repackInfo.vid) {
           try {
             // Try to select the repack VID from a one-vid list.
-            Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+            Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,true);
             bestVid = repackInfo.vid;
             activeCopyNumber = tc.copyNb;
           } catch (Helpers::NoTapeAvailableForRetrieve &) {}
@@ -2288,7 +2288,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         std::set<std::string> candidateVids;
         for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
         try {
-          bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+          bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,true);
         } catch (Helpers::NoTapeAvailableForRetrieve &) {
           // Count the failure for this subrequest. 
           notCreatedSubrequests.emplace_back(rsr);

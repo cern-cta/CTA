@@ -523,7 +523,8 @@ auto RepackRequest::getStats() -> std::map<StatsType, StatsValues> {
 //------------------------------------------------------------------------------
 void RepackRequest::reportRetrieveCreationFailures(const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests){
   checkPayloadWritable();
-  uint64_t failedToRetrieveFiles, failedToRetrieveBytes, failedToCreateArchiveReq = 0;
+  checkPayloadReadable();
+  uint64_t failedToRetrieveFiles = 0, failedToRetrieveBytes = 0, failedToCreateArchiveReq = 0;
   for(auto & subreq: notCreatedSubrequests){
     failedToRetrieveFiles++;
     failedToRetrieveBytes+=subreq.archiveFile.fileSize;

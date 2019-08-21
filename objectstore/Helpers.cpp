@@ -364,7 +364,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 // Helpers::selectBestRetrieveQueue()
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candidateVids, cta::catalogue::Catalogue & catalogue,
-    objectstore::Backend & objectstore) {
+    objectstore::Backend & objectstore, bool isRepack) {
   // We will build the retrieve stats of the non-disable candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
   // A promise we create so we can make users wait on it.
@@ -383,7 +383,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         grqsmLock.unlock();
         updateFuture.wait();
         grqsmLock.lock();
-        if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled) {
+        if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && isRepack)) {
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         }
       } else {
@@ -430,8 +430,9 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       // Signal to potential waiters
       updatePromise.set_value();
       // Update our own candidate list if needed.
-      if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled)
+      if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && isRepack)) {
         candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
+      }
     }
   }
   // We now have all the candidates listed (if any).
