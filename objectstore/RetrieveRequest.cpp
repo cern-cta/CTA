@@ -153,7 +153,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   // filter on tape availability.
   try {
     // If we have to fetch the status of the tapes and queued for the non-disabled vids.
-    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore);
+    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore,m_payload.isrepack());
     goto queueForTransfer;
   } catch (Helpers::NoTapeAvailableForRetrieve &) {}
 queueForFailure:;

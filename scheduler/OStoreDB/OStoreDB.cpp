@@ -4591,12 +4591,13 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
           "In OStoreDB::RetrieveJob::failTransfer(): no active job after addJobFailure() returned false."
         );
       }
+      bool isRepack = m_retrieveRequest.getRepackInfo().isRepack;
       m_retrieveRequest.commit();
       rel.release();
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
-        m_oStoreDB.m_objectStore);
+        m_oStoreDB.m_objectStore,isRepack);
 
       auto tf_it = af.tapeFiles.begin();
       for( ; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it) ;

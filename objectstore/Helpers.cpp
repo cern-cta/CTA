@@ -391,7 +391,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         if (g_retrieveQueueStatistics.at(v).updateTime + c_retrieveQueueCacheMaxAge > time(nullptr))
           throw std::out_of_range("");
         // We're lucky: cache hit (and not stale)
-        if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled)
+        if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && isRepack))
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
       }
     } catch (std::out_of_range &) {
