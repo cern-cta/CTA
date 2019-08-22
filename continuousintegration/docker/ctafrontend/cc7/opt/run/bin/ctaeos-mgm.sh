@@ -213,9 +213,15 @@ fi
   # 1. Map requests to EOS virtual identities
   eos -r 0 0 vid add gateway eoscta grpc
 
-  # 2. Add authorisation key (must be the same as the one specified in client.sh)
+  # 2. Add authorisation key
+  #
+  # Note: EOS_GRPC_USER and EOS_AUTH_KEY must be the same as those specified in client.sh
+  EOS_GRPC_USER=daemon
+  EOS_GRPC_GROUP=${EOS_GRPC_USER}
   EOS_AUTH_KEY=migration-test-token
-  eos -r 0 0 vid set map -grpc key:${EOS_AUTH_KEY} vuid:2 vgid:2
+  # daemon is already in EOS sudo group (see above)
+  #eos vid set membership ${EOS_GRPC_USER} +sudo
+  eos -r 0 0 vid set map -grpc key:${EOS_AUTH_KEY} vuid:${EOS_GRPC_USER} vgid:${EOS_GRPC_GROUP}
   echo "gRPC authorized uid and gid:"
   eos -r 0 0 vid ls | grep grpc:
 
