@@ -220,8 +220,8 @@ fi
   # Note: EOS_AUTH_KEY must be the same as the one specified in client.sh
   EOS_AUTH_KEY=migration-test-token
   eos -r 0 0 vid set map -grpc key:${EOS_AUTH_KEY} vuid:2 vgid:2
-  echo "gRPC authorized uid and gid:"
-  eos -r 0 0 vid ls | grep grpc:
+  echo "eos vid ls:"
+  eos -r 0 0 vid ls
   # 3. Create top-level directory and set permissions to writeable by all
   eos mkdir ${GRPC_TEST_DIR}
   eos chmod 777 ${GRPC_TEST_DIR}
