@@ -30,7 +30,7 @@ castor.max_num_connections    1
 castor.batch_size             100
 castor.prefix                 /castor/cern.ch
 eos.dry_run                   false
-eos.prefix                    /eos/grpc
+eos.prefix                    /eos/grpctest
 eos.endpoint                  ${EOS_HOSTNAME}:50051
 eos.token                     ${EOS_AUTH_KEY}
 EOF
