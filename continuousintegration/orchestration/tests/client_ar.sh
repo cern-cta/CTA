@@ -450,9 +450,23 @@ test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES:
 # stop tail
 test -z $TAILPID || kill ${TAILPID} &> /dev/null
 
-test ${LASTCOUNT} -eq $((${NB_FILES} * ${NB_DIRS})) && exit 0
+RC=0
+if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
+  ((RC++))
+  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
+  grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
+fi
 
-echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
-grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
+if [ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) -ne 0 ]; then
+  # THIS IS NOT YET AN ERROR: UNCOMMENT THE FOLLOWING LINE WHEN https://gitlab.cern.ch/cta/CTA/issues/606 is fixed
+  # ((RC++))
+  echo "ERROR $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) files out of $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | wc -l) prepared files have no sys.retrieve.req_id extended attribute set"
+fi
 
-exit 1
+if [ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]; then
+  ((RC++))
+  echo "ERROR several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
+fi
+
+
+exit ${RC}
