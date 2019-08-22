@@ -1,7 +1,6 @@
 #!/bin/sh
 
 # Migration tools parameters
-EOS_GRPC_USER=daemon
 EOS_TEST_DIR_INJECT=/usr/bin/eos-test-dir-inject
 CONFIG_FILE=/etc/cta/castor-migration.conf
 TMPFILE=/tmp/eos-test-inject-sh.$$
@@ -30,19 +29,13 @@ echoc()
   echo -e "${COLOUR}$*${NC}"
 }
 
-test_dir_inject()
-{
-  COMMAND="${EOS_TEST_DIR_INJECT} $*"
-  sudo -u ${EOS_GRPC_USER} bash -c "${COMMAND}"
-}
-
 [ -x ${EOS_TEST_DIR_INJECT} ] || error "Can't find executable ${EOS_TEST_DIR_INJECT}"
 [ -r ${CONFIG_FILE} ] || error "Can't find configuration file ${CONFIG_FILE}"
 CASTOR_PREFIX=$(awk '/^castor.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 EOS_PREFIX=$(awk '/^eos.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 
 # Ping the gRPC interface
-test_dir_inject ping || error "gRPC ping failed"
+${EOS_TEST_DIR_INJECT} ping || error "gRPC ping failed"
 
 # Create the top-level directory. GNU coreutils "mkdir -p" does not return an error if the directory
 # already exists; "eos mkdir -p" does return an error, which we explicitly ignore.
@@ -50,7 +43,7 @@ eos mkdir -p ${EOS_PREFIX} 2>/dev/null
 
 # Create directory with system-assigned file id -- should succeed
 echoc $LT_BLUE "Creating directory with auto-assigned file id"
-test_dir_inject --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with auto-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
@@ -60,7 +53,7 @@ eos rmdir ${EOS_PREFIX}/my_test_dir
 
 # Create directory with self-assigned file id -- should succeed
 echoc $LT_BLUE "Creating directory with self-assigned file id"
-test_dir_inject --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
@@ -68,14 +61,14 @@ eos fileinfo ${EOS_PREFIX}/my_test_dir
 
 # Try again -- should fail
 echoc $LT_GREEN "Creating directory with the same file id (should fail)"
-test_dir_inject --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir2 >/dev/null
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir2 >/dev/null
 [ $? -ne 0 ] || error "Creating directory with self-assigned file id succeeded when it should have failed"
 
 # Remove and try again -- should succeed after restarting EOS
 echoc $LT_GREEN "Remove the directory and restart EOS to remove the tombstone"
 eos rmdir ${EOS_PREFIX}/my_test_dir
 echoc $LT_BLUE "Recreate the directory with self-assigned file id (should succeed this time)"
-test_dir_inject --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >/dev/null
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >/dev/null
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed with error $?"
 eos fileinfo ${EOS_PREFIX}/my_test_dir
 

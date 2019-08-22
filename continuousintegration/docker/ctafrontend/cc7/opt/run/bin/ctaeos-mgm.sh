@@ -48,6 +48,8 @@ CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
 # dir for cta tests only for eosusers and powerusers
 CTA_TEST_DIR=/eos/${EOS_INSTANCE}/cta
+# dir for gRPC tests, should be the same as eos.prefix in client.sh
+GRPC_TEST_DIR=/eos/grpctest
 # dir for eos instance basic tests writable and readable by anyone
 EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 
@@ -213,18 +215,16 @@ fi
   #
   # 1. Map requests to EOS virtual identities
   eos -r 0 0 vid add gateway eoscta grpc
-
   # 2. Add authorisation key
   #
-  # Note: EOS_GRPC_USER and EOS_AUTH_KEY must be the same as those specified in client.sh
-  EOS_GRPC_USER=daemon
-  EOS_GRPC_GROUP=${EOS_GRPC_USER}
+  # Note: EOS_AUTH_KEY must be the same as the one specified in client.sh
   EOS_AUTH_KEY=migration-test-token
-  # daemon is already in EOS sudo group (see above)
-  #eos vid set membership ${EOS_GRPC_USER} +sudo
-  eos -r 0 0 vid set map -grpc key:${EOS_AUTH_KEY} vuid:${EOS_GRPC_USER} vgid:${EOS_GRPC_GROUP}
+  eos -r 0 0 vid set map -grpc key:${EOS_AUTH_KEY} vuid:2 vgid:2
   echo "gRPC authorized uid and gid:"
   eos -r 0 0 vid ls | grep grpc:
+  # 3. Create top-level directory and set permissions to writeable by all
+  eos mkdir ${GRPC_TEST_DIR}
+  eos chmod 777 ${GRPC_TEST_DIR}
 
   # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
   # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
@@ -233,7 +233,6 @@ fi
   eos mkdir ${CTA_TEST_DIR}
   eos chmod 555 ${CTA_TEST_DIR}
   eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp /eos/ctaeos/cta
-
   eos attr set CTA_StorageClass=ctaStorageClass ${CTA_TEST_DIR}
     
   # Link the attributes of CTA worklow directory to the test directory
