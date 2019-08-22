@@ -135,7 +135,7 @@ if [[ "x${TARGETDIR}" = "x" ]]; then
 else
     EOS_DIR="${EOS_BASEDIR}/${TARGETDIR}"
 fi
-LOGDIR="${LOGDIR}/$(basebane ${EOS_DIR})"
+LOGDIR="${LOGDIR}/$(basename ${EOS_DIR})"
 mkdir -p ${LOGDIR} || die "Cannot create directory LOGDIR: ${LOGDIR}"
 mkdir -p ${LOGDIR}/xrd_errors || die "Cannot create directory LOGDIR/xrd_errors: ${LOGDIR}/xrd_errors"
 
