@@ -201,7 +201,7 @@ void Scheduler::queueArchiveRequestForRepackBatch(std::list<cta::objectstore::Ar
 //------------------------------------------------------------------------------
 // queueRetrieve
 //------------------------------------------------------------------------------
-void Scheduler::queueRetrieve(
+std::string Scheduler::queueRetrieve(
   const std::string &instanceName,
   common::dataStructures::RetrieveRequest &request,
   log::LogContext & lc) {
@@ -212,7 +212,7 @@ void Scheduler::queueRetrieve(
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
   queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, request.activity, lc);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
-  std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
+  auto requestInfo = m_db.queueRetrieve(request, queueCriteria, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)
@@ -242,16 +242,18 @@ void Scheduler::queueRetrieve(
     tc << "tapeCopy" << tf.copyNb;
     spc.add(tc.str(), tf);
   }
-  spc.add("selectedVid", selectedVid)
+  spc.add("selectedVid", requestInfo.selectedVid)
      .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime)
      .add("policyName", queueCriteria.mountPolicy.name)
      .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
      .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
-     .add("policyPriority", queueCriteria.mountPolicy.retrievePriority);
+     .add("policyPriority", queueCriteria.mountPolicy.retrievePriority)
+     .add("retrieveRequestId", requestInfo.requestId);
   if (request.activity)
     spc.add("activity", request.activity.value());
   lc.log(log::INFO, "Queued retrieve request");
+  return requestInfo.requestId;
 }
 
 //------------------------------------------------------------------------------
@@ -285,8 +287,8 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
 //------------------------------------------------------------------------------
 // cancelRetrieve
 //------------------------------------------------------------------------------
-void Scheduler::cancelRetrieve(const std::string &instanceName, const common::dataStructures::CancelRetrieveRequest &request) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::cancelRetrieve(const std::string &instanceName, const common::dataStructures::CancelRetrieveRequest &request, log::LogContext & lc) {
+  m_db.cancelRetrieve(instanceName, request, lc);
 }
 
 //------------------------------------------------------------------------------

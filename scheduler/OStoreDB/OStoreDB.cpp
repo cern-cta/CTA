@@ -1128,7 +1128,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 //------------------------------------------------------------------------------
 // OStoreDB::queueRetrieve()
 //------------------------------------------------------------------------------
-std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
+SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
   auto mutexForHelgrind = cta::make_unique<cta::threading::Mutex>();
@@ -1137,7 +1137,8 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
   // Get the best vid from the cache
   std::set<std::string> candidateVids;
   for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.vid);
-  std::string bestVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
+  SchedulerDatabase::RetrieveRequestInfo ret;
+  ret.selectedVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
   // Check that the activity is fine (if applying: disk instance uses them or it is sent).
   if (rqst.activity || criteria.activitiesFairShareWeight.activitiesWeights.size()) {
     // Activity is set. It should exist in the catlogue
@@ -1162,7 +1163,7 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
   // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
   uint64_t bestCopyNb;
   for (auto & tf: criteria.archiveFile.tapeFiles) {
-    if (tf.vid == bestVid) {
+    if (tf.vid == ret.selectedVid) {
       bestCopyNb = tf.copyNb;
       goto vidFound;
     }
@@ -1170,12 +1171,13 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
   {
     std::stringstream err;
     err << "In OStoreDB::queueRetrieve(): no tape file for requested vid. archiveId=" << criteria.archiveFile.archiveFileID
-        << " vid=" << bestVid;
+        << " vid=" << ret.selectedVid;
     throw RetrieveRequestHasNoCopies(err.str());
   }
   vidFound:
   // In order to post the job, construct it first in memory.
   auto rReq = cta::make_unique<objectstore::RetrieveRequest> (m_agentReference->nextId("RetrieveRequest"), m_objectStore);
+  ret.requestId = rReq->getAddressIfSet();
   rReq->initialize();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
@@ -1193,7 +1195,7 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
   {
     std::stringstream err;
     err << "In OStoreDB::queueRetrieve(): no job for requested copyNb. archiveId=" << criteria.archiveFile.archiveFileID
-        << " vid=" << bestVid << " copyNb=" << bestCopyNb;
+        << " vid=" << ret.selectedVid << " copyNb=" << bestCopyNb;
     throw RetrieveRequestHasNoCopies(err.str());
   }
   jobFound:
@@ -1212,7 +1214,7 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
     uint64_t taskQueueSize = m_taskQueueSize;
     // Prepare the logs to avoid multithread access on the object.
     log::ScopedParamContainer params(logContext);
-    params.add("tapeVid", bestVid)
+    params.add("tapeVid", ret.selectedVid)
           .add("jobObject", rReq->getAddressIfSet())
           .add("fileId", rReq->getArchiveFile().archiveFileID)
           .add("diskInstance", rReq->getArchiveFile().diskInstance)
@@ -1224,7 +1226,7 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
     delayIfNecessary(logContext);
     auto rReqPtr = rReq.release();
     auto *mutexForHelgrindAddr = mutexForHelgrind.release();
-    auto * et = new EnqueueingTask([rReqPtr, job, bestVid, mutexForHelgrindAddr, this]{
+    auto * et = new EnqueueingTask([rReqPtr, job, ret, mutexForHelgrindAddr, this]{
       std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
       std::unique_ptr<objectstore::RetrieveRequest> rReq(rReqPtr);
       cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
@@ -1242,7 +1244,7 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
       objectstore::ScopedExclusiveLock rReqL(*rReq);
       double rLockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       rReq->fetch();
-      auto sharedLock = ostoredb::MemRetrieveQueue::sharedAddToQueue(nonConstJob, bestVid, *rReq, *this, logContext);
+      auto sharedLock = ostoredb::MemRetrieveQueue::sharedAddToQueue(nonConstJob, ret.selectedVid, *rReq, *this, logContext);
       double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       // The object ownership was set in SharedAdd.
       // We need to extract the owner before inserting. After, we would need to hold a lock.
@@ -1258,7 +1260,7 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
       m_agentReference->removeFromOwnership(rReq->getAddressIfSet(), m_objectStore);
       double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       log::ScopedParamContainer params(logContext);
-      params.add("tapeVid", bestVid)
+      params.add("tapeVid", ret.selectedVid)
             .add("queueObject", owner)
             .add("jobObject", rReq->getAddressIfSet())
             .add("fileId", rReq->getArchiveFile().archiveFileID)
@@ -1284,7 +1286,46 @@ std::string OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest
           .add("totalTime", vidSelectionTime + agentReferencingTime + insertionTime + taskPostingTime);
     logContext.log(log::INFO, "In OStoreDB::queueRetrieve(): recorded request for queueing (enqueueing posted to thread pool).");  
   }
-  return bestVid;
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::cancelRetrieve()
+//------------------------------------------------------------------------------
+void OStoreDB::cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,
+  log::LogContext& lc) {
+  // We should have the retrieve request's address in the request. Let's check it is the right one
+  objectstore::RetrieveRequest rr(rqst.retrieveRequestId, m_objectStore);
+  // We try to lock the request. It might not be present (in which case we have nothing to do.
+  objectstore::ScopedExclusiveLock rrl;
+  try{
+    rrl.lock(rr);
+    rr.fetch();
+  } catch (objectstore::Backend::NoSuchObject &) {
+    return;
+  } catch (exception::Exception & ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("archiveFileId", rqst.archiveFileID)
+          .add("retrieveRequestId", rqst.retrieveRequestId)
+          .add("exceptionMessage", ex.getMessageValue());
+    lc.log(log::ERR, "In OStoreDB::cancelRetrieve(): failed to lock of fetch the retreive request.");
+    throw;
+  }
+  // We have the objectstore request. Let's validate it is matching the cancellation request's.
+  if (rqst.archiveFileID != rr.getArchiveFile().archiveFileID) {
+    log::ScopedParamContainer params(lc);
+    params.add("ArchiveFileID", rqst.archiveFileID)
+          .add("RetrieveRequest", rqst.retrieveRequestId)
+          .add("ArchiveFileIdFromRequest", rr.getArchiveFile().archiveFileID);
+    lc.log(log::ERR, "In OStoreDB::cancelRetrieve(): archive file Id mismatch.");
+    throw exception::Exception("In OStoreDB::cancelRetrieve(): archiveFileID mismatch.");
+  }
+  // Looks fine, we delete the request
+  log::ScopedParamContainer params(lc);
+  params.add("ArchiveFileID", rqst.archiveFileID)
+        .add("RetrieveRequest", rqst.retrieveRequestId);
+  lc.log(log::INFO, "OStoreDB::cancelRetrieve(): will delete the retrieve request");
+  rr.remove();
 }
 
 //------------------------------------------------------------------------------

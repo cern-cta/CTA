@@ -31,6 +31,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/CancelRetrieveRequest.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
@@ -271,8 +272,15 @@ public:
    * @param logContext context allowing logging db operation
    * @return the selected vid (mostly for logging)
    */
-  virtual std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest &rqst,
+  struct RetrieveRequestInfo {
+    std::string selectedVid;
+    std::string requestId;
+  };
+  virtual RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest &rqst,
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) = 0;
+  
+  virtual void cancelRetrieve(const std::string & instanceName, const cta::common::dataStructures::CancelRetrieveRequest &rqst,
+    log::LogContext & lc) = 0;
 
   /**
    * Returns all of the existing retrieve jobs grouped by tape and then

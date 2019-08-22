@@ -454,17 +454,19 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    cta::utils::Timer t;
 
    // Queue the request
-   m_scheduler.queueRetrieve(m_cliIdentity.username, request, m_lc);
+   std::string retrieveReqId = m_scheduler.queueRetrieve(m_cliIdentity.username, request, m_lc);
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
+   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs())
+         .add("retrieveReqId", retrieveReqId);
    if(static_cast<bool>(request.activity)) {
      params.add("activity", request.activity.value());
    }
    m_lc.log(cta::log::INFO, "In RequestMessage::processPREPARE(): queued file for retrieve.");
 
    // Set response type
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_RetrieveRequestId", retrieveReqId));
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -477,7 +479,7 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
 
    // Unpack message
-   cta::common::dataStructures::DeleteArchiveRequest request;
+   cta::common::dataStructures::CancelRetrieveRequest request;
    request.requester.name   = notification.cli().user().username();
    request.requester.group  = notification.cli().user().groupname();
 
@@ -492,11 +494,17 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
+   
+   // The request Id should be stored as an extended attribute
+   const auto retrieveRequestIdItor = notification.file().xattr().find("CTA_RetrieveRequestId");
+   if(notification.file().xattr().end() == retrieveRequestIdItor) {
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_RetrieveRequestId");
+   }
+   const std::string retrieveRequestId = archiveFileIdItor->second;
+   request.retrieveRequestId = archiveFileIdStr;
 
-#if 0
    // Queue the request
-   m_scheduler.queueAbortRetrieve(m_cliIdentity.username, request, m_lc);
-#endif
+   m_scheduler.cancelRetrieve(m_cliIdentity.username, request, m_lc);
 
    cta::utils::Timer t;
 

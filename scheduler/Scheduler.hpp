@@ -148,8 +148,9 @@ public:
    * Queue a retrieve request. 
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
+   * return an opaque id (string) that can be used to cancel the retrieve request.
    */
-  void queueRetrieve(const std::string &instanceName, cta::common::dataStructures::RetrieveRequest &request,
+  std::string queueRetrieve(const std::string &instanceName, cta::common::dataStructures::RetrieveRequest &request,
     log::LogContext &lc);
   
   /** 
@@ -167,7 +168,7 @@ public:
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
   void cancelRetrieve(const std::string &instanceName, 
-    const cta::common::dataStructures::CancelRetrieveRequest &request);
+    const cta::common::dataStructures::CancelRetrieveRequest &request, log::LogContext & lc);
   
   /** 
    * Update the file information of an archived file.
