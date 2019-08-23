@@ -216,8 +216,9 @@ fi
   # 1. Map requests to EOS virtual identities
   #eos -r 0 0 vid add gateway eoscta grpc
   #eos -r 0 0 vid add gateway [:1] grpc
-  for ip_addr in $(ip addr|awk '/inet / { sub("/.*$",""); print $2 }')
+  for i in {1..10}
   do
+    ip_addr=10.254.75.$i
     eos -r 0 0 vid add gateway $ip_addr grpc
   done
   # 2. Add authorisation key
