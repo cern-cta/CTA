@@ -47,36 +47,40 @@ ${EOS_CMD} mkdir -p ${EOS_PREFIX}
 
 # Create directory with system-assigned file id -- should succeed
 echoc $LT_BLUE "Creating directory with auto-assigned file id"
-${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/test_dir1 >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with auto-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
 ${EOS_CMD} ls -l ${EOS_PREFIX}
-${EOS_CMD} fileinfo ${EOS_PREFIX}/my_test_dir
-XrdSecPROTOCOL=sss ${EOS_CMD} fileinfo ${EOS_PREFIX}/my_test_dir
-${EOS_CMD} rmdir ${EOS_PREFIX}/my_test_dir
+${EOS_CMD} fileinfo ${EOS_PREFIX}/test_dir1
+${EOS_CMD} -r 2 2 rmdir ${EOS_PREFIX}/test_dir1
 
 # Create directory with self-assigned file id -- should succeed
 echoc $LT_BLUE "Creating directory with self-assigned file id"
-${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/test_dir2 >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
-${EOS_CMD} fileinfo ${EOS_PREFIX}/my_test_dir
+${EOS_CMD} fileinfo ${EOS_PREFIX}/test_dir2
+
+# Try again -- should fail
+echoc $LT_GREEN "Creating directory with the same path (should fail)"
+${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/test_dir2 >/dev/null
+[ $? -ne 0 ] || error "Creating directory with self-assigned file id succeeded when it should have failed"
 
 # Try again -- should fail
 echoc $LT_GREEN "Creating directory with the same file id (should fail)"
-${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir2 >/dev/null
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/test_dir3 >/dev/null
 [ $? -ne 0 ] || error "Creating directory with self-assigned file id succeeded when it should have failed"
 
-# Remove and try again -- should succeed after restarting EOS
-echoc $LT_GREEN "Remove the directory and restart EOS to remove the tombstone"
-${EOS_CMD} rmdir ${EOS_PREFIX}/my_test_dir
-echoc $LT_BLUE "Recreate the directory with self-assigned file id (should succeed this time)"
-${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/my_test_dir >/dev/null
-[ $? -eq 0 ] || error "Creating directory with self-assigned file id failed with error $?"
-${EOS_CMD} fileinfo ${EOS_PREFIX}/my_test_dir
+# Remove and try again -- should succeed
+echoc $LT_GREEN "Remove the directory and tombstone"
+${EOS_CMD} rmdir ${EOS_PREFIX}/test_dir2
+${EOS_CMD} ns cache drop-single-container 9876543210
 
-echoc $LT_GREEN "Cleaning up: removing tombstones and removing injected directories"
-${EOS_CMD} rmdir ${EOS_PREFIX}/my_test_dir  2>/dev/null
-${EOS_CMD} rmdir ${EOS_PREFIX}/my_test_dir2 2>/dev/null
+echoc $LT_BLUE "Recreate the directory with self-assigned file id (should succeed this time)"
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/test_dir2 >/dev/null
+[ $? -eq 0 ] || error "Creating directory with self-assigned file id failed with error $?"
+${EOS_CMD} fileinfo ${EOS_PREFIX}/test_dir2
+${EOS_CMD} -r 2 2 rmdir ${EOS_PREFIX}/test_dir2
+
