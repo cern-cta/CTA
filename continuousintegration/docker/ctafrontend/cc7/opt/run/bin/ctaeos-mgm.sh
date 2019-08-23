@@ -212,15 +212,10 @@ fi
 
   # Configure gRPC interface:
   #
-  # 1. Map requests to EOS virtual identities
-  CLIENT_IP=$(host client|sed 's/^.* //')
+  # 1. Map requests from the client to EOS virtual identities
+  CLIENT_IP=$(cat /etc/grpc_client_ip)
   echo CLIENT_IP is $CLIENT_IP
-  eos -r 0 0 vid add gateway client grpc
-  #for i in {1..10}
-  #do
-    #ip_addr=10.254.75.$i
-    #eos -r 0 0 vid add gateway $ip_addr grpc
-  #done
+  eos -r 0 0 vid add gateway ${CLIENT_IP} grpc
   # 2. Add authorisation key
   #
   # Note: EOS_AUTH_KEY must be the same as the one specified in client.sh
