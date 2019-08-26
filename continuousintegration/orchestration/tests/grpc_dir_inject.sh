@@ -58,13 +58,13 @@ rm ${TMPFILE}
 ${EOS_CMD} ls -l ${EOS_PREFIX}
 ${EOS_CMD} fileinfo ${EOS_PREFIX}/test_dir1
 ${EOS_CMD} attr ls ${EOS_PREFIX}/test_dir1
-/usr/bin/eos -r 0 0 quota ls ${EOS_PREFIX}/test_dir1
+/usr/bin/eos -r 0 0 root://${EOSINSTANCE} quota ls ${EOS_PREFIX}/test_dir1
 /usr/bin/eos -r 1000 1000 root://${EOSINSTANCE} rmdir ${EOS_PREFIX}/test_dir1
 
 # Create directory with self-assigned file id -- should succeed
+TEST_FILE_ID=123456789
 echoc $LT_BLUE "Creating directory with self-assigned file id"
-#${EOS_TEST_DIR_INJECT} --fileid 12345 --path ${CASTOR_PREFIX}/test_dir2 >${TMPFILE}
-${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/test_dir2 >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --fileid ${TEST_FILE_ID} --path ${CASTOR_PREFIX}/test_dir2 >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
@@ -77,16 +77,16 @@ ${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/test_dir2 >/dev/null
 
 # Try again -- should fail
 echoc $LT_GREEN "Creating directory with the same file id (should fail)"
-${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/test_dir3 >/dev/null
+${EOS_TEST_DIR_INJECT} --fileid ${TEST_FILE_ID} --path ${CASTOR_PREFIX}/test_dir3 >/dev/null
 [ $? -ne 0 ] || error "Creating directory with self-assigned file id succeeded when it should have failed"
 
 # Remove and try again -- should succeed
 echoc $LT_GREEN "Remove the directory and tombstone"
 ${EOS_CMD} rmdir ${EOS_PREFIX}/test_dir2
-${EOS_CMD} ns cache drop-single-container 9876543210
+${EOS_CMD} ns cache drop-single-container ${TEST_FILE_ID}
 
 echoc $LT_BLUE "Recreate the directory with self-assigned file id (should succeed this time)"
-${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/test_dir2 >/dev/null
+${EOS_TEST_DIR_INJECT} --fileid ${TEST_FILE_ID} --path ${CASTOR_PREFIX}/test_dir2 >/dev/null
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed with error $?"
 ${EOS_CMD} fileinfo ${EOS_PREFIX}/test_dir2
 ${EOS_CMD} rmdir ${EOS_PREFIX}/test_dir2
