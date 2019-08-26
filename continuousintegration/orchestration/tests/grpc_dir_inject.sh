@@ -21,6 +21,10 @@ LT_BLUE='\033[1;34m'
 error()
 {
   echo -e "${RED}$*${NC}" >&2
+  if [ -r ${TMPFILE} ]
+  then
+    json-pretty-print.sh ${TMPFILE}
+  fi
   exit 1
 }
 
@@ -54,11 +58,11 @@ rm ${TMPFILE}
 ${EOS_CMD} ls -l ${EOS_PREFIX}
 ${EOS_CMD} fileinfo ${EOS_PREFIX}/test_dir1
 #${EOS_CMD} rmdir ${EOS_PREFIX}/test_dir1
-/usr/bin/eos -r 2 2 root://${EOSINSTANCE} rmdir ${EOS_PREFIX}/test_dir1
+/usr/bin/eos -r 1000 1000 root://${EOSINSTANCE} rmdir ${EOS_PREFIX}/test_dir1
 
 # Create directory with self-assigned file id -- should succeed
 echoc $LT_BLUE "Creating directory with self-assigned file id"
-${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/test_dir2 | json-pretty-print.sh #>${TMPFILE}
+${EOS_TEST_DIR_INJECT} --fileid 9876543210 --path ${CASTOR_PREFIX}/test_dir2 >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
