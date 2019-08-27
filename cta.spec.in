@@ -310,7 +310,6 @@ directory metadata into the EOS namespace.
 %attr(0755,root,root) %{_bindir}/eos-import-files
 %attr(0755,root,root) %{_bindir}/eos-test-dir-inject
 %attr(0755,root,root) %{_bindir}/eos-test-file-inject
-%attr(0755,root,root) %{_bindir}/eos-insert-missing-dirs
 %attr(0755,root,root) %{_bindir}/json-pretty-print.sh
 %attr(0755,root,root) %{_bindir}/startvoexport.sh
 %attr(0755,root,root) %{_bindir}/exporttapepool.sh
