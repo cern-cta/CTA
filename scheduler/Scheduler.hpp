@@ -74,6 +74,9 @@ class RetrieveJob;
  * The scheduler is the unique entry point to the central storage for taped. It is 
  * 
  */
+CTA_GENERATE_EXCEPTION_CLASS(NoArchiveRoute);
+CTA_GENERATE_EXCEPTION_CLASS(NoStorageClass);
+
 class Scheduler {
   
 public:

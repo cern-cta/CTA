@@ -41,7 +41,13 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
       //We have a RepackRequest that has the status ToExpand, expand it
       try{
         m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
-      } catch(const cta::exception::Exception &e){
+      } catch (const NoArchiveRoute& ex){
+        lc.log(log::ERR,ex.what());
+        repackRequest->fail();
+      } catch (const NoStorageClass &ex){
+        lc.log(log::ERR,ex.what());
+        repackRequest->fail();
+      } catch (const cta::exception::Exception &e){
         lc.log(log::ERR,e.what());
         repackRequest->fail();
         throw(e);

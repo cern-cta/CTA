@@ -1802,7 +1802,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
     // As we are popping from a single report queue, all requests should concern only one repack request.
     if (repackRequestAddresses.size() != 1) {
       std::stringstream err;
-      err << "In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): reports for several repack requests in the same queue. ";
+      err << "In OStoreDB::getNextSuccessfulArchiveRepackReportBatch(): reports for several repack requests in the same queue. ";
       for (auto & rr: repackRequestAddresses) { err << rr << " "; }
       throw exception::Exception(err.str());
     }
@@ -4008,7 +4008,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
             .add("totalRetries", retryStatus.totalRetries)
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
       lc.log(log::INFO,
-          "In ArchiveJob::failTransfer(): requeued job for (potentially in-mount) retry.");
+          "In ArchiveJob::failTransfer(): requeued job for (potentially in-mount) retry (repack).");
       return;
   }
   case NextStep::StoreInFailedJobsContainer: {
@@ -4229,12 +4229,13 @@ objectstore::RepackRequest::SubrequestStatistics::List OStoreDB::RepackArchiveRe
     ssl.back().fSeq = sri.repackInfo.fSeq;
     ssl.back().copyNb = sri.archivedCopyNb;
     for(auto &j: sri.archiveJobsStatusMap){
-      if(j.first != sri.archivedCopyNb && 
-        (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && 
-        (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){
-        break;
-      } else {
-        ssl.back().subrequestDeleted = true;
+      if(j.first != sri.archivedCopyNb){
+        if((j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){
+          break;
+        } else {
+          ssl.back().subrequestDeleted = true;
+          break;
+        }
       }
     }
   }
@@ -4275,12 +4276,24 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   for (auto &sri: m_subrequestList) {
     bufferURL = sri.repackInfo.fileBufferURL;
     bool moreJobsToDo = false;
+    //Check if the ArchiveRequest contains other jobs that are not finished
     for (auto &j: sri.archiveJobsStatusMap) {
-      if ((j.first != sri.archivedCopyNb) && 
-          (j.second != serializers::ArchiveJobStatus::AJS_Complete) && 
-          (j.second != serializers::ArchiveJobStatus::AJS_Failed)) {
-        moreJobsToDo = true;
-        break;
+      //Getting the siblings jobs (ie copy nb != current one)
+      if (j.first != sri.archivedCopyNb) {
+        //Sibling job not finished mean its status is nor AJS_Complete nor AJS_Failed 
+        if ((j.second != serializers::ArchiveJobStatus::AJS_Complete) && 
+        (j.second != serializers::ArchiveJobStatus::AJS_Failed)) {
+          //The sibling job is not finished, but maybe it is planned to change its status, checking the jobOwnerUpdaterList that is the list containing the jobs
+          //we want to change its status to AJS_Complete
+          bool copyNbStatusUpdating = (std::find_if(jobOwnerUpdatersList.begin(), jobOwnerUpdatersList.end(), [&j,&sri](JobOwnerUpdaters &jou){
+            return ((jou.subrequestInfo.archiveFile.archiveFileID == sri.archiveFile.archiveFileID) && (jou.subrequestInfo.archivedCopyNb == j.first));
+          }) != jobOwnerUpdatersList.end());
+          if(!copyNbStatusUpdating){
+            //The sibling job is not in the jobOwnerUpdaterList, it means that it is not finished yet, there is more jobs to do
+            moreJobsToDo = true;
+            break;
+          }
+        }
       }
     }
     objectstore::ArchiveRequest & ar = *sri.subrequest;
@@ -4396,7 +4409,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
             .add("exceptionMsg", ex.getMessageValue());
-      lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async job update.");
+      lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.");
     }    
   }
   timingList.insertAndReset("asyncUpdateOrDeleteCompletionTime", t);

@@ -450,13 +450,14 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   auto repackInfo = repackRequest->getRepackInfo();
   
   typedef cta::common::dataStructures::RepackInfo::Type RepackType;
-  if (repackInfo.type != RepackType::MoveOnly) {
+  /*if (repackInfo.type != RepackType::MoveOnly && repackInfo.type != RepackType::AddCopiesOnly) {
     log::ScopedParamContainer params(lc);
     params.add("tapeVid", repackInfo.vid);
     lc.log(log::ERR, "In Scheduler::expandRepackRequest(): failing repack request with unsupported (yet) type.");
     repackRequest->fail();
     return;
-  }
+  }*/
+  
   //We need to get the ArchiveRoutes to allow the retrieval of the tapePool in which the
   //tape where the file is is located
   std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue.getArchiveRoutes();
@@ -491,6 +492,11 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   }
   double elapsedTime = 0;
   bool stopExpansion = false;
+  
+  std::list<common::dataStructures::StorageClass> storageClasses;
+  if(repackInfo.type == RepackType::AddCopiesOnly)
+    storageClasses = m_catalogue.getStorageClasses();
+  
   repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
   while(archiveFilesForCatalogue.hasMore() && !stopExpansion) {
     size_t filesCount = 0;
@@ -526,6 +532,58 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
           //retrieveSubRequest.fSeq = (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) ? tc.fSeq : std::max(tc.fSeq, retrieveSubRequest.fSeq);
         }
       }
+      
+      if(repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies){
+        //We are in the case where we possibly need to create new copies (if the number of copies the storage class of the current ArchiveFile 
+        //is greater than the number of tape files we have in the current ArchiveFile)
+        auto archiveFileRoutes = archiveRoutesMap[std::make_pair(archiveFile.diskInstance,archiveFile.storageClass)];
+        auto storageClassItor = std::find_if(storageClasses.begin(),storageClasses.end(),[archiveFile](common::dataStructures::StorageClass& sc){
+          return sc.name == archiveFile.storageClass;
+        });
+        if(storageClassItor != storageClasses.end()){
+          common::dataStructures::StorageClass sc = *storageClassItor;
+          uint64_t nbFilesAlreadyArchived = archiveFile.tapeFiles.size();
+          uint64_t nbCopiesInStorageClass = sc.nbCopies;
+          if(nbFilesAlreadyArchived < nbCopiesInStorageClass){
+            uint64_t filesToArchive = nbCopiesInStorageClass - nbFilesAlreadyArchived;
+            totalStatsFile.totalFilesToArchive += filesToArchive;
+            totalStatsFile.totalBytesToArchive += (filesToArchive * archiveFile.fileSize);
+            if(filesToArchive != 0){
+              std::set<uint64_t> copyNbsAlreadyInCTA;
+              for (auto & tc: archiveFile.tapeFiles) {
+                copyNbsAlreadyInCTA.insert(tc.copyNb);
+                if (tc.vid == repackInfo.vid) {
+                  // We make the (reasonable) assumption that the archive file only has one copy on this tape.
+                  // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
+                  // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
+                  // restart of expansion.
+                  //We found the copy of the file we want to retrieve and archive
+                  //retrieveSubRequest.fSeq = tc.fSeq;
+                  retrieveSubRequest.fSeq = (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) ? tc.fSeq : std::max(tc.fSeq, retrieveSubRequest.fSeq);
+                }
+              }
+              for(auto archiveFileRoutesItor = archiveFileRoutes.begin(); archiveFileRoutesItor != archiveFileRoutes.end(); ++archiveFileRoutesItor){
+                if(copyNbsAlreadyInCTA.find(archiveFileRoutesItor->first) == copyNbsAlreadyInCTA.end()){
+                  //We need to archive the missing copy
+                  retrieveSubRequest.copyNbsToRearchive.insert(archiveFileRoutesItor->first);
+                }
+              }
+              if(retrieveSubRequest.copyNbsToRearchive.size() != filesToArchive){
+                throw NoArchiveRoute("In Scheduler::expandRepackRequest(): Missing archive routes for the creation of the new copies of the files");
+              }
+            } else {
+              //Nothing to Archive so nothing to Retrieve as well
+              retrieveSubrequests.pop_back();
+              continue;
+            }
+          }
+        } else {
+          //No storage class have been found for the current tapefile throw an exception
+          throw NoStorageClass("In Scheduler::expandRepackRequest(): No storage class have been found for the file to add copies");
+        }
+      }
+      
+      
       std::stringstream fileName;
       fileName << std::setw(9) << std::setfill('0') << retrieveSubRequest.fSeq;
       bool createArchiveSubrequest = false;
@@ -542,16 +600,18 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       if(!createArchiveSubrequest){
         totalStatsFile.totalBytesToRetrieve += retrieveSubRequest.archiveFile.fileSize;
         totalStatsFile.totalFilesToRetrieve += 1;
-        if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::AddCopiesOnly) {
+        /*if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::AddCopiesOnly) {
           // We should not get here are the type is filtered at the beginning of the function.
           // TODO: add support for expand.
           throw cta::exception::Exception("In Scheduler::expandRepackRequest(): expand not yet supported.");
-        }
-        if ((retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) || retrieveSubRequest.copyNbsToRearchive.empty()) {
+        }*/
+        if (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) {
           log::ScopedParamContainer params(lc);
           params.add("fileId", retrieveSubRequest.archiveFile.archiveFileID)
                 .add("repackVid", repackInfo.vid);
           lc.log(log::ERR, "In Scheduler::expandRepackRequest(): no fSeq found for this file on this tape.");
+          totalStatsFile.totalBytesToRetrieve -= retrieveSubRequest.archiveFile.fileSize;
+          totalStatsFile.totalFilesToRetrieve -= 1;
           retrieveSubrequests.pop_back();
         } else {
           // We found some copies to rearchive. We still have to decide which file path we are going to use.
@@ -564,7 +624,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         }
       }
       stopExpansion = (elapsedTime >= m_repackRequestExpansionTimeLimit);
-    }
+    }   
     // Note: the highest fSeq will be recorded internally in the following call.
     // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted). 
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
