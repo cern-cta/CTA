@@ -65,6 +65,20 @@ void ArchiveRequest::initialize() {
   m_payloadInterpreted = true;
 }
 
+void ArchiveRequest::commit(){
+  checkPayloadWritable();
+  checkPayloadReadable();
+  for(auto & job: m_payload.jobs()){
+    int nbTapepool = std::count_if(m_payload.jobs().begin(),m_payload.jobs().end(),[&job](const cta::objectstore::serializers::ArchiveJob & archiveJob){
+      return archiveJob.tapepool() == job.tapepool();
+    });
+    if(nbTapepool != 1){
+      throw cta::exception::Exception("In ArchiveRequest::commit(), cannot insert an ArchiveRequest containing archive jobs with the same destination tapepool");
+    }
+  }
+  ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>::commit();
+}
+
 //------------------------------------------------------------------------------
 // ArchiveRequest::addJob()
 //------------------------------------------------------------------------------

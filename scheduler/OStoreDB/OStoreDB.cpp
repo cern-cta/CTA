@@ -2237,6 +2237,15 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         for (auto & ar: archiveRoutesMap.at(std::make_tuple(rsr.archiveFile.diskInstance, rsr.archiveFile.storageClass))) {
           rRRepackInfo.archiveRouteMap[ar.second.copyNb] = ar.second.tapePoolName;
         }
+        //Check that we do not have the same destination tapepool for two different copyNb
+        for(auto & currentCopyNbTapePool: rRRepackInfo.archiveRouteMap){
+          int nbTapepool = std::count_if(rRRepackInfo.archiveRouteMap.begin(),rRRepackInfo.archiveRouteMap.end(),[&currentCopyNbTapePool](const std::pair<uint64_t,std::string> & copyNbTapepool){
+            return copyNbTapepool.second == currentCopyNbTapePool.second;
+          });
+          if(nbTapepool != 1){
+            throw cta::ExpandRepackRequestException("In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(), found the same destination tapepool for multiple copyNb.");
+          }
+        }
       } catch (std::out_of_range &) {
         notCreatedSubrequests.emplace_back(rsr);
         failedCreationStats.files++;
@@ -4299,10 +4308,12 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
     objectstore::ArchiveRequest & ar = *sri.subrequest;
     if (moreJobsToDo) {
       try {
-        jobOwnerUpdatersList.push_back(JobOwnerUpdaters{std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> (
-              ar.asyncUpdateJobOwner(sri.archivedCopyNb, "", m_oStoreDb.m_agentReference->getAgentAddress(),
-              newStatus)), 
-            sri});
+        if(ar.exists()){
+          jobOwnerUpdatersList.push_back(JobOwnerUpdaters{std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> (
+                ar.asyncUpdateJobOwner(sri.archivedCopyNb, "", m_oStoreDb.m_agentReference->getAgentAddress(),
+                newStatus)), 
+              sri});
+        }
       } catch (cta::exception::Exception & ex) {
         // Log the error
         log::ScopedParamContainer params(lc);

@@ -596,13 +596,19 @@ public:
 	return false;
       /**
        * For the tests, we try to have the priority by 
-       * alphabetical order : vid1 should be treated before vid2,
+       * alphabetical order : vid1 / tapepool1 should be treated before vid2/tapepool2,
        * so if this->vid < other.vid : then this > other.vid, so return false
        */
       if(vid < other.vid)
 	return false;
       if(vid > other.vid)
 	return true;
+      
+      if(tapePool < other.tapePool)
+	return false;
+      if(tapePool > other.tapePool)
+	return true;
+      
       return false;
     }
   };
