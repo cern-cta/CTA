@@ -270,6 +270,10 @@ public:
     m_OStoreDB.reportDriveStatus(driveInfo, mountType, status, reportTime, lc, mountSessionId, byteTransfered, filesTransfered,
        latestBandwidth, vid, tapepool);
   }
+  
+  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override {
+    m_OStoreDB.reportDriveConfig(tpConfigLine, tapedConfig,lc);
+  }
 
 private:
   std::unique_ptr <cta::log::Logger> m_logger;

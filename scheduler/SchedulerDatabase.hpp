@@ -38,6 +38,7 @@
 #include "common/log/LogContext.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 
 #include <list>
 #include <limits>
@@ -588,9 +589,10 @@ public:
         if (activityNameAndWeightedMountCount.value().weightedMountCount < other.activityNameAndWeightedMountCount.value().weightedMountCount)
           return false;
       }
-      if(minRequestAge < other.minRequestAge)
+      //The smaller the oldest job start time is, the bigger the age is, hence the inverted comparison
+      if(oldestJobStartTime > other.oldestJobStartTime)
 	return true;
-      if(minRequestAge > other.minRequestAge)
+      if(oldestJobStartTime < other.oldestJobStartTime)
 	return false;
       /**
        * For the tests, we try to have the priority by 
@@ -740,6 +742,8 @@ public:
     double latestBandwidth = std::numeric_limits<double>::max(),
     const std::string & vid = "",
     const std::string & tapepool = "") = 0;
+  
+  virtual void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) = 0;
 }; // class SchedulerDatabase
 
 } // namespace cta

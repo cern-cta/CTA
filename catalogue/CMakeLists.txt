@@ -159,7 +159,8 @@ add_custom_command(OUTPUT PostgresCatalogueSchema.cpp
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
   InMemoryCatalogueTest.cpp
-  InMemoryVersionOfCatalogueTest.cpp)
+  InMemoryVersionOfCatalogueTest.cpp
+  TapeItemWrittenPointerTest.cpp)
 
 add_library (ctainmemorycatalogueunittests SHARED
   ${IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})

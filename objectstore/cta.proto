@@ -210,6 +210,13 @@ message ArchiveFile {
 
 // ------------- Drives handling  ----------------------------------------------
 
+message DriveConfig {
+  required string category = 13000;
+  required string key = 13001;
+  required string value = 13002;
+  required string source = 13003;
+}
+
 message DriveState {
   required string drivename = 5000;
   required string host = 5001;
@@ -235,6 +242,7 @@ message DriveState {
   required bool desiredUp = 5019;
   required bool desiredForceDown = 5020;
   optional string currentvid = 5021;
+  optional string cta_version = 5034;
   optional uint64 current_priority = 5028;
   optional string current_activity = 5029;
   optional double current_activity_weight = 5030;
@@ -245,6 +253,9 @@ message DriveState {
   optional uint64 next_priority = 5031;
   optional string next_activity = 5032;
   optional double next_activity_weight = 5033;
+  optional string dev_file_name = 5035;
+  optional string raw_library_slot = 5036;
+  repeated DriveConfig drive_config = 5037;
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 

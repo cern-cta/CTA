@@ -532,6 +532,8 @@ public:
     common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext & lc, uint64_t mountSessionId, uint64_t byteTransfered, 
     uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool) override;
   
+  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override;
+  
   /* --- Private helper part implementing state transition logic -------------*/
   /*
    * The drive register should gracefully handle reports of status from the drive

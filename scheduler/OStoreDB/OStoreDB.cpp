@@ -2725,6 +2725,18 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::reportDriveConfig()
+//------------------------------------------------------------------------------
+void OStoreDB::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc){
+  objectstore::DriveState ds(m_objectStore);
+  ScopedExclusiveLock dsl;
+  Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_agentReference, tpConfigLine.unitName, lc, Helpers::CreateIfNeeded::doNotCreate);
+  ds.setConfig(tapedConfig);
+  ds.setTpConfig(tpConfigLine);
+  ds.commit();
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::updateDriveStatus()
 //------------------------------------------------------------------------------
 void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatusInputs& inputs,

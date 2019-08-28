@@ -50,6 +50,8 @@
 #include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 
+#include "tapeserver/daemon/TapedConfiguration.hpp"
+
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
 
@@ -253,6 +255,13 @@ public:
    */
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type, 
     cta::common::dataStructures::DriveStatus status, log::LogContext & lc);
+  
+  /**
+   * Reports the configuration of the drive to the objectstore.
+   * @param driveName the name of the drive to report the config to the objectstore
+   * @param tapedConfig the config of the drive to report to the objectstore.
+   */
+  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc);
 
   /**
    * Dumps the states of all drives for display
