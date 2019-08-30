@@ -40,6 +40,8 @@ echoc()
 CASTOR_PREFIX=$(awk '/^castor.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 EOS_PREFIX=$(awk '/^eos.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 
+ldd ${EOS_TEST_DIR_INJECT}
+
 # Ping the gRPC interface
 ${EOS_TEST_DIR_INJECT} ping || error "gRPC ping failed"
 
@@ -47,6 +49,7 @@ ${EOS_TEST_DIR_INJECT} ping || error "gRPC ping failed"
 #
 # Note: GNU coreutils "mkdir -p" does not return an error if the directory already exists;
 #       but "eos mkdir -p" does return an error.
+echo Creating ${EOS_PREFIX}...
 ${EOS_CMD} mkdir -p ${EOS_PREFIX}
 
 # Create directory with system-assigned file id -- should succeed
