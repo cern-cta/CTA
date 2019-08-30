@@ -58,15 +58,7 @@ rm ${TMPFILE}
 ${EOS_CMD} ls -l ${EOS_PREFIX}
 ${EOS_CMD} fileinfo ${EOS_PREFIX}/test_dir1
 ${EOS_CMD} attr ls ${EOS_PREFIX}/test_dir1
-/usr/bin/eos -r 0 0 root://${EOSINSTANCE} quota ls ${EOS_PREFIX}/test_dir1
-/usr/bin/eos -r 0 0 root://${EOSINSTANCE} acl --list ${EOS_PREFIX}/test_dir1
-
-echo "rmdir:"
-/usr/bin/eos -r 0 0 root://${EOSINSTANCE} rmdir ${EOS_PREFIX}/test_dir1
-echo "rm -r:"
-/usr/bin/eos -r 0 0 root://${EOSINSTANCE} rm -r ${EOS_PREFIX}/test_dir1
-
-exit 0
+/usr/bin/eos root://${EOSINSTANCE} rmdir ${EOS_PREFIX}/test_dir1
 
 # Create directory with self-assigned file id -- should succeed
 TEST_FILE_ID=123456789
