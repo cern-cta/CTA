@@ -17,9 +17,9 @@ if [ ! -e /etc/buildtreeRunner ]; then
 fi
 
 # Check that the /usr/bin/cta-fst-gcd executable has been installed
-test -e /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd EXISTS" || exit 1
-test -f /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd IS A REGULAR FILE" || exit 1
-test -x /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd IS EXECUTABLE" || exit 1
+test -e /usr/bin/cta-fst-gcd || { echo "/usr/bin/cta-fst-gcd MISSING" ; exit 1; }
+test -f /usr/bin/cta-fst-gcd || { echo "/usr/bin/cta-fst-gcd NO A REGULAR FILE"; exit 1; }
+test -x /usr/bin/cta-fst-gcd && echo "/usr/bin/cta-fst-gcd exists as a regular, executable file: OK" || { echo "/usr/bin/cta-fst-gcd NOT EXECUTABLE"; exit 1; }
 
 # create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure
 groupadd --gid 1100 eosusers
@@ -169,11 +169,11 @@ else
     /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
 
 
-  runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
+  runuser -u daemon setsid /usr/bin/cta-fst-gcd < /dev/null &
 fi
 
-echo "Giving cta-fst-gcd 1 second to start logging"
-sleep 1
+echo "Giving cta-fst-gcd 3 second to start logging"
+sleep 3
 
 let EXPECTED_NB_STARTED_CTA_FST_GCD=NB_STARTED_CTA_FST_GCD+1
 ACTUAL_NB_STARTED_CTA_FST_GCD=0
@@ -181,6 +181,7 @@ if test -f /var/log/eos/fst/cta-fst-gcd.log; then
   ACTUAL_NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
 else
   echo "/var/log/eos/fst/cta-fst-gcd.log DOES NOT EXIST"
+  ps auxf | grep gcd
   exit 1
 fi
 if test ${EXPECTED_NB_STARTED_CTA_FST_GCD} = ${ACTUAL_NB_STARTED_CTA_FST_GCD}; then
