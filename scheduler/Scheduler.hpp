@@ -167,7 +167,7 @@ public:
    * Throws a UserError exception in case of wrong request parameters (ex. file not being retrieved)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  void cancelRetrieve(const std::string &instanceName, 
+  void abortRetrieve(const std::string &instanceName, 
     const cta::common::dataStructures::CancelRetrieveRequest &request, log::LogContext & lc);
   
   /** 

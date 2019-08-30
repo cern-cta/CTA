@@ -287,7 +287,7 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
 //------------------------------------------------------------------------------
 // cancelRetrieve
 //------------------------------------------------------------------------------
-void Scheduler::cancelRetrieve(const std::string &instanceName, const common::dataStructures::CancelRetrieveRequest &request, log::LogContext & lc) {
+void Scheduler::abortRetrieve(const std::string &instanceName, const common::dataStructures::CancelRetrieveRequest &request, log::LogContext & lc) {
   m_db.cancelRetrieve(instanceName, request, lc);
 }
 

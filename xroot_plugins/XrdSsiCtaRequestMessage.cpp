@@ -465,7 +465,7 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    }
    m_lc.log(cta::log::INFO, "In RequestMessage::processPREPARE(): queued file for retrieve.");
 
-   // Set response type
+   // Set response type and add retrieve request reference as an extended attribute.
    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_RetrieveRequestId", retrieveReqId));
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -504,7 +504,7 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    request.retrieveRequestId = archiveFileIdStr;
 
    // Queue the request
-   m_scheduler.cancelRetrieve(m_cliIdentity.username, request, m_lc);
+   m_scheduler.abortRetrieve(m_cliIdentity.username, request, m_lc);
 
    cta::utils::Timer t;
 
@@ -513,7 +513,8 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processABORT_PREPARE(): not implemented, no action taken.");
 
-   // Set response type
+   // Set response type and remove reference to retrieve request in EOS extended attributes.
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_RetrieveRequestId", ""));
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
