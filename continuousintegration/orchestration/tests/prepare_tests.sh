@@ -72,6 +72,28 @@ echo "Preparing CTA configuration for tests"
       exit 1
     fi
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
+
+  echo "Cleaning up leftovers from potential previous runs."
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm /eos/ctaeos/cta/*
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all  |             \
+    jq -r '.[] | .vid ' | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli --            \
+    cta-admin tape rm -v {}
+
+  kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json archiveroute ls |           \
+    jq '.[] |  "-i "  + .instance + " -s " + .storageClass + " -c " + (.copyNumber|tostring)' | \
+    xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute rm {}"
+
+  kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json tapepool ls  |              \
+    jq -r '.[] | .name' |                                                                       \
+    xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool rm -n {} 
+
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json storageclass ls  |           \
+    jq -r '.[] | "-i " + .diskInstance + " -n  " + .name'  |                                    \
+    xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass rm {}"
+
+
+
+
   for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
     kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
       --name ${TAPEDRIVES_IN_USE[${i}]}                                            \
