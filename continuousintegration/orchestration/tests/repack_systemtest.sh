@@ -4,8 +4,6 @@
 EOSINSTANCE=ctaeos
 #default Repack timeout
 WAIT_FOR_REPACK_TIMEOUT=300
-# default generate report = true
-GENERATE_REPORT=1
 
 die() {
   echo "$@" 1>&2
@@ -20,7 +18,6 @@ eosinstance : the name of the ctaeos instance to be used (default ctaeos)
 timeout : the timeout in seconds to wait for the repack to be done
 -a : Launch a repack just add copies workflow
 -m : Launch a repack just move workflow
--g : Avoid generating repack report at the end of repack
 EOF
 exit 1
 }
@@ -128,4 +125,4 @@ fi
 
 echo "Repack request on VID ${VID_TO_REPACK} succeeded."
 
-[[ $GENERATE_REPORT == 1 ]] && exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} || exit 0
+exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} ${ADD_COPIES_ONLY} || exit 0

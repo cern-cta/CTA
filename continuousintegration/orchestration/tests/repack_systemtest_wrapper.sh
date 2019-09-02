@@ -181,5 +181,5 @@ echo "Putting all drives up"
 kubectl -n ${NAMESPACE} exec ctacli -- cta-admin dr up VD.*
 echo "OK"
 
-echo "Launching the repack \"just add copies\" test on VID ${VID_TO_REPACK}"
-kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -a -g || exit 1
+echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
+kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} || exit 1
