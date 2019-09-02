@@ -33,6 +33,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringVendor.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
+#include "catalogue/UserSpecifiedAnEmptyTapePool.hpp"
 #include "catalogue/UserSpecifiedAZeroCapacity.hpp"
 #include "catalogue/UserSpecifiedAZeroCopyNb.hpp"
 #include "common/exception/Exception.hpp"
@@ -1025,7 +1026,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  ASSERT_THROW(m_catalogue->deleteTapePool(tapePoolName), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteTapePool(tapePoolName), catalogue::UserSpecifiedAnEmptyTapePool);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringTapePoolName) {
@@ -2044,7 +2045,11 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
     route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name), exception::Exception);
+  ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name),
+    catalogue::UserSpecifiedAnInUseStorageClass);
+
+  ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.diskInstance, storageClass.name),
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {

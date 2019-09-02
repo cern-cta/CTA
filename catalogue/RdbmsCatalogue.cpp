@@ -37,6 +37,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringVendor.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
+#include "catalogue/UserSpecifiedAnEmptyTapePool.hpp"
 #include "catalogue/UserSpecifiedAZeroCapacity.hpp"
 #include "catalogue/UserSpecifiedAZeroCopyNb.hpp"
 #include "common/dataStructures/TapeFile.hpp"
@@ -878,7 +879,7 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
         throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
       }
     } else {
-      throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it is not empty");
+      throw UserSpecifiedAnEmptyTapePool(std::string("Cannot delete tape-pool ") + name + " because it is not empty");
     }
   } catch(exception::UserError &) {
     throw;
