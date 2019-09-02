@@ -1341,6 +1341,24 @@ protected:
   bool isSetAndEmpty(const optional<std::string> &optionalStr) const;
 
   /**
+   * Returns true if the specified storage class is currently being used by one
+   * or more archive routes.
+   *
+   * @param conn The database connection.
+   * @param storageClassName The name of the storage class.
+   */
+  bool storageClassIsUsedByArchiveRoutes(rdbms::Conn &conn, const std::string &storageClassName) const;
+
+  /**
+   * Returns true if the specified storage class is currently being used by one
+   * or more archive files.
+   *
+   * @param conn The database connection.
+   * @param storageClassName The name of the storage class.
+   */
+  bool storageClassIsUsedByArchiveFiles(rdbms::Conn &conn, const std::string &storageClassName) const;
+
+  /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
    */

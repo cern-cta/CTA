@@ -40,6 +40,8 @@
 #include "catalogue/UserSpecifiedAnEmptyTapePool.hpp"
 #include "catalogue/UserSpecifiedAZeroCapacity.hpp"
 #include "catalogue/UserSpecifiedAZeroCopyNb.hpp"
+#include "catalogue/UserSpecifiedStorageClassUsedByArchiveFiles.hpp"
+#include "catalogue/UserSpecifiedStorageClassUsedByArchiveRoutes.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -408,13 +410,24 @@ bool RdbmsCatalogue::storageClassExists(rdbms::Conn &conn, const std::string &di
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) {
   try {
+    auto conn = m_connPool.getConn();
+
+    if(storageClassIsUsedByArchiveRoutes(conn, storageClassName)) {
+      throw UserSpecifiedStorageClassUsedByArchiveRoutes(std::string("The ") + storageClassName +
+        " storage class is being used by one or more archive routes");
+    }
+
+    if(storageClassIsUsedByArchiveFiles(conn, storageClassName)) {
+      throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The ") + storageClassName +
+        " storage class is being used by one or more archive files");
+    }
+
     const char *const sql =
       "DELETE FROM "
         "STORAGE_CLASS "
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-    auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
@@ -425,6 +438,62 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &diskInstanceName, con
       throw exception::UserError(std::string("Cannot delete storage-class ") + diskInstanceName + ":" +
         storageClassName + " because it does not exist");
     }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// storageClassIsUsedByArchiveRoutes
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::storageClassIsUsedByArchiveRoutes(rdbms::Conn &conn, const std::string &storageClassName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
+      "FROM "
+        "ARCHIVE_ROUTE "
+      "INNER JOIN "
+        "STORAGE_CLASS "
+      "ON "
+        "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
+      "WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// storageClassIsUsedByARchiveFiles
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::storageClassIsUsedByArchiveFiles(rdbms::Conn &conn, const std::string &storageClassName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
+      "FROM "
+        "ARCHIVE_FILE "
+      "INNER JOIN "
+        "STORAGE_CLASS "
+      "ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
+      "WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
+    auto rset = stmt.executeQuery();
+    return rset.next();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
