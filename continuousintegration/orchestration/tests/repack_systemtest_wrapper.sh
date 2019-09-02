@@ -126,18 +126,18 @@ tapepoolDestination1="ctasystest2"
 tapepoolDestination2="ctasystest3"
 
 echo "Creating two destination tapepool : $tapepoolDestination1 and $tapepoolDestination2"
-kubectl -n cta exec ctacli -- cta-admin tapepool add --name $tapepoolDestination1 --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination1 tapepool"
-kubectl -n cta exec ctacli -- cta-admin tapepool add --name $tapepoolDestination2 --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination2 tapepool"
+kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination1 --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination1 tapepool"
+kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tapepool add --name $tapepoolDestination2 --vo vo --partialtapesnumber 2 --encrypted false --comment "$tapepoolDestination2 tapepool"
 echo "OK"
 
 echo "Creating archive routes for adding two copies of the file"
-kubectl -n cta exec ctacli -- cta-admin archiveroute add --instance ctaeos --storageclass ctaStorageClass --copynb 2 --tapepool $tapepoolDestination1 --comment "ArchiveRoute2"
-kubectl -n cta exec ctacli -- cta-admin archiveroute add --instance ctaeos --storageclass ctaStorageClass --copynb 3 --tapepool $tapepoolDestination2 --comment "ArchiveRoute3"
+kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --instance ctaeos --storageclass ctaStorageClass --copynb 2 --tapepool $tapepoolDestination1 --comment "ArchiveRoute2"
+kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --instance ctaeos --storageclass ctaStorageClass --copynb 3 --tapepool $tapepoolDestination2 --comment "ArchiveRoute3"
 echo "OK"
 
 echo "Will change the tapepool of the tapes"
 
-allVID=`kubectl -n cta  exec ctacli -- cta-admin --json tape ls --all | jq -r ". [] | .vid"`
+allVID=`kubectl -n ${NAMESPACE}  exec ctacli -- cta-admin --json tape ls --all | jq -r ". [] | .vid"`
 read -a allVIDTable <<< $allVID
 
 nbVid=${#allVIDTable[@]}
@@ -159,7 +159,7 @@ tapepoolIndice=1 #We only change the vid of the remaining other tapes
 
 for ((i=$(($nbTapePerTapepool+$(($nbVid%$nbTapepool)))); i<$nbVid; i++));
 do
-  echo "kubectl -n cta exec ctacli -- cta-admin tape ch --vid ${allVIDTable[$i]} --tapepool ${allTapepoolTable[$tapepoolIndice]}"
+  echo "kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${allVIDTable[$i]} --tapepool ${allTapepoolTable[$tapepoolIndice]}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${allVIDTable[$i]} --tapepool ${allTapepoolTable[$tapepoolIndice]}
   countChanging=$((countChanging + 1))
   if [ $countChanging != 0 ] && [ $((countChanging % nbTapePerTapepool)) == 0 ]

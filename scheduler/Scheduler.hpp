@@ -52,6 +52,7 @@
 
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 
+#include "disk/DiskFile.hpp"
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
 
@@ -311,6 +312,10 @@ private:
   void checkTapeFullBeforeRepack(std::string vid);
   
   cta::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
+  
+  void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer);
+  
+  uint64_t getNbFilesAlreadyArchived(const common::dataStructures::ArchiveFile& archiveFile);
   
 public:
   /**

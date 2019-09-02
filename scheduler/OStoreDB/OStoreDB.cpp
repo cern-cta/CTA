@@ -2243,7 +2243,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
             return copyNbTapepool.second == currentCopyNbTapePool.second;
           });
           if(nbTapepool != 1){
-            throw cta::ExpandRepackRequestException("In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(), found the same destination tapepool for multiple copyNb.");
+            throw cta::ExpandRepackRequestException("In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(), found the same destination tapepool for different copyNb.");
           }
         }
       } catch (std::out_of_range &) {

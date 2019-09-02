@@ -487,7 +487,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   bool stopExpansion = false;
   
   std::list<common::dataStructures::StorageClass> storageClasses;
-  if(repackInfo.type == RepackType::AddCopiesOnly)
+  if(repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies)
     storageClasses = m_catalogue.getStorageClasses();
   
   repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
@@ -530,12 +530,12 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         //We are in the case where we possibly need to create new copies (if the number of copies the storage class of the current ArchiveFile 
         //is greater than the number of tape files we have in the current ArchiveFile)
         auto archiveFileRoutes = archiveRoutesMap[std::make_pair(archiveFile.diskInstance,archiveFile.storageClass)];
-        auto storageClassItor = std::find_if(storageClasses.begin(),storageClasses.end(),[archiveFile](common::dataStructures::StorageClass& sc){
+        auto storageClassItor = std::find_if(storageClasses.begin(),storageClasses.end(),[&archiveFile](const common::dataStructures::StorageClass& sc){
           return sc.name == archiveFile.storageClass;
         });
         if(storageClassItor != storageClasses.end()){
           common::dataStructures::StorageClass sc = *storageClassItor;
-          uint64_t nbFilesAlreadyArchived = archiveFile.tapeFiles.size();
+          uint64_t nbFilesAlreadyArchived = getNbFilesAlreadyArchived(archiveFile);
           uint64_t nbCopiesInStorageClass = sc.nbCopies;
           uint64_t filesToArchive = nbCopiesInStorageClass - nbFilesAlreadyArchived;
           if(filesToArchive > 0){
@@ -561,7 +561,8 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
                 retrieveSubRequest.copyNbsToRearchive.insert(archiveFileRoutesItor->first);
               }
             }
-            if(retrieveSubRequest.copyNbsToRearchive.size() != filesToArchive){
+            if(retrieveSubRequest.copyNbsToRearchive.size() < filesToArchive){
+              deleteRepackBuffer(std::move(dir));
               throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): Missing archive routes for the creation of the new copies of the files");
             }
           } else {
@@ -573,6 +574,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
           }
         } else {
           //No storage class have been found for the current tapefile throw an exception
+          deleteRepackBuffer(std::move(dir));
           throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): No storage class have been found for the file to add copies");
         }
       }
@@ -594,11 +596,6 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       if(!createArchiveSubrequest){
         totalStatsFile.totalBytesToRetrieve += retrieveSubRequest.archiveFile.fileSize;
         totalStatsFile.totalFilesToRetrieve += 1;
-        /*if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::AddCopiesOnly) {
-          // We should not get here are the type is filtered at the beginning of the function.
-          // TODO: add support for expand.
-          throw cta::exception::Exception("In Scheduler::expandRepackRequest(): expand not yet supported.");
-        }*/
         if (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) {
           log::ScopedParamContainer params(lc);
           params.add("fileId", retrieveSubRequest.archiveFile.archiveFileID)
@@ -623,7 +620,12 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted). 
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
-    repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq, maxAddedFSeq, totalStatsFile, lc);
+    try{
+      repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq, maxAddedFSeq, totalStatsFile, lc);
+    } catch(const cta::ExpandRepackRequestException& e){
+      deleteRepackBuffer(std::move(dir));
+      throw e;
+    }
     timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
     {
       if(!stopExpansion && archiveFilesForCatalogue.hasMore()){
@@ -645,9 +647,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   } else {
     if(totalStatsFile.totalFilesToRetrieve == 0){
       //If no files have been retrieve, the repack buffer will have to be deleted
-      if(dir != nullptr && dir->exist()){
-        dir->rmdir();
-      }
+      deleteRepackBuffer(std::move(dir));      
     }
     repackRequest->m_dbReq->expandDone();
     lc.log(log::INFO,"In Scheduler::expandRepackRequest(), repack request expanded");
@@ -1079,6 +1079,25 @@ cta::optional<common::dataStructures::LogicalLibrary> Scheduler::getLogicalLibra
   }
   return ret;
 }
+
+void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer) {
+  if(repackBuffer != nullptr && repackBuffer->exist()){
+    repackBuffer->rmdir();
+  }
+}
+
+uint64_t Scheduler::getNbFilesAlreadyArchived(const common::dataStructures::ArchiveFile& archiveFile) {
+  uint64_t nbFilesAlreadyArchived = 0;
+  for(auto &tf: archiveFile.tapeFiles){
+    if(tf.supersededByVid == ""){
+      //We only want the "active" copies of the archive file
+      nbFilesAlreadyArchived++;
+    }
+  }
+  return nbFilesAlreadyArchived;
+}
+
+
 
 //------------------------------------------------------------------------------
 // getNextMountDryRun
