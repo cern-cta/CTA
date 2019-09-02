@@ -54,7 +54,7 @@ ${EOS_CMD} mkdir -p ${EOS_PREFIX}
 
 # Create directory with system-assigned file id -- should succeed
 echoc $LT_BLUE "Creating directory with auto-assigned file id"
-${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/test_dir1 >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --fileid 192837 --path ${CASTOR_PREFIX}/test_dir1 >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with auto-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
