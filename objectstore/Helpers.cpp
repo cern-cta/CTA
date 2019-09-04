@@ -364,7 +364,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 // Helpers::selectBestRetrieveQueue()
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candidateVids, cta::catalogue::Catalogue & catalogue,
-    objectstore::Backend & objectstore, bool isRepack) {
+    objectstore::Backend & objectstore, bool forceDisabledTape) {
   // We will build the retrieve stats of the non-disable candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
   // A promise we create so we can make users wait on it.
@@ -383,7 +383,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         grqsmLock.unlock();
         updateFuture.wait();
         grqsmLock.lock();
-        if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && isRepack)) {
+        if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape)) {
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         }
       } else {
@@ -391,7 +391,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         if (g_retrieveQueueStatistics.at(v).updateTime + c_retrieveQueueCacheMaxAge > time(nullptr))
           throw std::out_of_range("");
         // We're lucky: cache hit (and not stale)
-        if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && isRepack))
+        if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape))
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
       }
     } catch (std::out_of_range &) {
@@ -430,7 +430,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       // Signal to potential waiters
       updatePromise.set_value();
       // Update our own candidate list if needed.
-      if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && isRepack)) {
+      if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape)) {
         candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
       }
     }
@@ -483,6 +483,11 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
     g_retrieveQueueStatistics[vid].updating = false;
     g_retrieveQueueStatistics[vid].updateTime = time(nullptr);
   }
+}
+
+void Helpers::flushRetrieveQueueStatisticsCache(){
+  threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
+  g_retrieveQueueStatistics.clear();
 }
 
 //------------------------------------------------------------------------------

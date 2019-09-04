@@ -1638,6 +1638,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape){
   
   cta::objectstore::RetrieveRequest::RepackInfo ri;
   ri.isRepack = true;
+  ri.forceDisabledTape = true;
   ri.fSeq = 1;
   ri.fileBufferURL = "testFileBufferURL";
   ri.repackRequestAddress = "repackRequestAddress";

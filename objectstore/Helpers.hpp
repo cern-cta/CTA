@@ -78,7 +78,7 @@ public:
    * to the algorithm, but will help performance drastically for a very similar result
    */
   static std::string selectBestRetrieveQueue (const std::set<std::string> & candidateVids, cta::catalogue::Catalogue & catalogue, 
-  objectstore::Backend & objectstore, bool isRepack = false);
+  objectstore::Backend & objectstore, bool forceDisabledTape = false);
   
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB
@@ -94,6 +94,12 @@ public:
    * tape is not disabled (full status not fetched).
    */
   static void updateRetrieveQueueStatisticsCache(const std::string & vid, uint64_t files, uint64_t bytes, uint64_t priority);
+  
+  /**
+   * Allows to flush the RetrieveQueueStatisticsCache
+   * TO BE USED BY UNIT TESTS !
+   */
+  static void flushRetrieveQueueStatisticsCache();
   
 private:
   /** Lock for the retrieve queues stats */

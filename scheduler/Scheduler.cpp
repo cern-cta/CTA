@@ -337,18 +337,19 @@ void Scheduler::checkTapeFullBeforeRepack(std::string vid){
 // repack
 //------------------------------------------------------------------------------
 void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext & lc) {
+    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, const bool forceDisabledTape, log::LogContext & lc) {
   // Check request sanity
   if (vid.empty()) throw exception::UserError("Empty VID name.");
   if (bufferURL.empty()) throw exception::UserError("Empty buffer URL.");
   utils::Timer t;
   checkTapeFullBeforeRepack(vid);
-  m_db.queueRepack(vid, bufferURL, repackType, mountPolicy, lc);
+  m_db.queueRepack(vid, bufferURL, repackType, mountPolicy, forceDisabledTape, lc);
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);
   log::ScopedParamContainer params(lc);
   params.add("tapeVid", vid)
         .add("repackType", toString(repackType))
+        .add("disabledTape", forceDisabledTape)
         .add("bufferURL", bufferURL);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
@@ -446,7 +447,6 @@ double Scheduler::getRepackRequestExpansionTimeLimit() const {
 // expandRepackRequest
 //------------------------------------------------------------------------------
 void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList& timingList, utils::Timer& t, log::LogContext& lc) {
-  std::list<common::dataStructures::ArchiveFile> files;
   auto repackInfo = repackRequest->getRepackInfo();
   
   typedef cta::common::dataStructures::RepackInfo::Type RepackType;

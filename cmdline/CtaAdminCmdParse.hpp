@@ -254,7 +254,8 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--justaddcopies",         OptionBoolean::JUSTADDCOPIES },
    { "--justretrieve",          OptionBoolean::JUSTRETRIEVE },
    { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
-   { "--summary",               OptionBoolean::SUMMARY }
+   { "--summary",               OptionBoolean::SUMMARY },
+   { "--disabledtape",		OptionBoolean::DISABLED } 
 };
 
 
@@ -350,7 +351,8 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 			   "     If the --justaddcopies option is set, new (or missing) copies (as defined by the storage class) of the files located on the tape to repack will be created and migrated.\n"
 			   "     By default, CTA will migrate AND add new (or missing) copies (as defined by the storage class) of the files located on the tape to repack.\n"
                            "   * The --mountpolicy option allows to give a specific mount policy that will be applied to the repack subrequests (retrieve and archive requests).\n"
-			   "     By default, a hardcoded mount policy is applied (every request priorities and minimum request ages = 1)."
+			   "     By default, a hardcoded mount policy is applied (every request priorities and minimum request ages = 1).\n"
+			   "   * If the --disabledtape flag is set, the tape to repack will be mounted for retrieval even if it is disabled."
 					"\n\n" 
 					 }},
    { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "ch", "rm", "ls" } }},
@@ -432,6 +434,7 @@ const Option opt_vo                   { Option::OPT_STR,  "--vo",               
 const Option opt_vidfile              { Option::OPT_STR_LIST, "--vidfile",           "-f",   " <filename>" };
 const Option opt_full                 { Option::OPT_BOOL, "--full",                  "-f",   " <\"true\" or \"false\">" };
 const Option opt_readonly             { Option::OPT_BOOL, "--readonly",              "-r",   " <\"true\" or \"false\">" };
+const Option opt_disabled_tape        { Option::OPT_FLAG, "--disabledtape",          "-d",   ""};
 
 
 
@@ -500,7 +503,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ADD   },
-      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_mountpolicy.optional() }},
+      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_mountpolicy.optional(), opt_disabled_tape.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_vid.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},

@@ -27,6 +27,7 @@
 #include "OStoreDB.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "MemQueues.hpp"
+#include "catalogue/InMemoryCatalogue.hpp"
 
 namespace unitTests {
 
@@ -63,8 +64,9 @@ public:
     // We do a deep reference to the member as the C++ compiler requires the function to be 
     // already defined if called implicitly.
     const auto &factory = GetParam().dbFactory;
+    m_catalogue = cta::make_unique<cta::catalogue::DummyCatalogue>(new cta::catalogue::DummyCatalogue);
     // Get the OStore DB from the factory.
-    auto osdb = std::move(factory.create());
+    auto osdb = std::move(factory.create(m_catalogue));
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface).
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).
@@ -108,7 +110,8 @@ private:
   OStoreDBTest & operator= (const OStoreDBTest &) = delete;
 
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
-
+  
+  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 }; // class SchedulerDatabaseTest
 
 TEST_P(OStoreDBTest, getBatchArchiveJob) {
