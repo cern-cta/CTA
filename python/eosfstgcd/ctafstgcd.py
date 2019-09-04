@@ -37,6 +37,9 @@ class UserError(Exception):
 class StagerrmError(Exception):
   pass
 
+class AttrsetError(Exception):
+  pass
+
 class NoMgmHost(UserError):
   pass
 
@@ -141,6 +144,22 @@ class RealEos:
 
     if 0 != process.returncode:
       raise StagerrmError("'{}' returned non zero: returncode={}".format(cmd, process.returncode))
+
+  def attrset(self, name, value, fxid):
+    mgmurl = "root://{}".format(self.mgmhost)
+    args = ["eos", "-r", "0", "0", mgmurl, "attr", "set", '{}={}'.format(name, value), "fxid:{}".format(fxid)]
+    env = os.environ.copy()
+    env["XrdSecPROTOCOL"] = "sss"
+    env["XrdSecSSSKT"] = self.xrdsecssskt
+    process = None
+    try:
+      process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    except Exception as err:
+      raise Exception("Failed to execute '{}': {}".format(" ".join(args), err))
+    stdout,stderr = process.communicate()
+
+    if 0 != process.returncode:
+      raise AttrsetError("'{}' returned non zero: returncode={}".format(" ".join(args), process.returncode))
 
 class SpaceTracker:
   '''Calculates the amount of effective free space in the file system of a given
@@ -280,6 +299,10 @@ class Gc:
             spacetracker.stagerrmqueued(filesizeandctime.sizebytes)
             self.log.info("stagerrm: subdir={}, fxid={}, bytesrequiredbefore={}, filesizebytes={}"
               .format(subdir, fstfile, bytesrequiredbefore, filesizeandctime.sizebytes))
+            nowstr = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
+            attrname = "sys.retrieve.error"
+            attrvalue = "Garbage collected at {}".format(nowstr)
+            self.eos.attrset(attrname, attrvalue, fstfile)
           except StagerrmError as err:
             pass
           except Exception as err:
