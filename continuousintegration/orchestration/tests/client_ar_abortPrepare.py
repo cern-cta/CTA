@@ -4,6 +4,8 @@ import argparse
 import subprocess
 import os
 import copy
+import traceback
+import re
 
 # Instantiate the parser and parse command line
 parser = argparse.ArgumentParser(
@@ -39,6 +41,7 @@ try:
 except subprocess.CalledProcessError as cpe:
   print('ERROR with xrdfs query for file ' + options.file + ': '+str(cpe.stderr)+' full logs in ' +
       xattrgeterrorfilepath)
+  traceback.print_exc()
   print(cpe.stdout)
   errFile = open(xattrgeterrorfilepath, 'w')
   errFile.write(str(xattrRes.stderr))
@@ -46,41 +49,47 @@ except subprocess.CalledProcessError as cpe:
 except Exception as e:
   print('ERROR with xrdfs query for file ' + options.file + ': got exception of type: ' +
       str(type(e)) + '['.join(arg + ', ' for arg in e.args) +'] full logs in ' +  xattrgeterrorfilepath)
+  traceback.print_exc()
   errFile = open(xattrgeterrorfilepath, 'w')
   errFile.write(str(xattrRes.stderr))
   errFile.close()
 # OK, worked...
-requestId=xattrRes.stdout.rstrip()
-print('requestId=' + requestId)
+requestId=xattrRes.stdout.decode('utf8')
+#print('requestId(pre-match)=' + requestId)
+reComp=re.compile(r'.*value=(.*)')
+reExec=reComp.match(requestId)
+requestId = re.compile(r'.*value=(.*)').match(requestId).group(1)
+#print('requestId(post-match)=' + requestId)
 
 # We can now abort the prepare
 try:
-  print('Will xrdfs ' + str(options.eos_instance).rstrip() + 'prepare -a ' + requestId + ' ' + filepath)
+  # print('Will xrdfs ' + str(options.eos_instance).rstrip() + 'prepare -a ' + requestId + ' ' + filepath)
   abortRes = subprocess.run(
       ['xrdfs', str(options.eos_instance).rstrip(), 'prepare', '-a', requestId, filepath],
       env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   abortRes.check_returncode()
+  # print('abortRes.stdout')
+  # print(abortRes.stdout.decode('utf8'))
+  # print('abortRes.stderr')
+  # print(abortRes.stderr.decode('utf8'))
 except subprocess.CalledProcessError as cpe:
   print('ERROR with xrdfs prepare -a ' + options.file + '(' + str(cpe.returncode) + ') full logs in ' +
       aborterrorfilepath)
+  traceback.print_exc()
   print('cpe.stderr:')
-  print(cpe.stderr)
+  print(cpe.stderr.decode('utf8'))
   print('cpe.stdout')
-  print(cpe.stdout)
-  print('abortRes.stdout')
-  print(abortRes.stdout)
-  print('abortRes.stderr')
-  print(abortRes.stderr)
+  print(cpe.stdout.decode('utf8'))
   errFile = open(aborterrorfilepath, 'w')
   errFile.write(str(abortRes.stderr))
   errFile.close() 
 except Exception as e:
   print('ERROR with xrdfs prepare -a for file ' + options.file + ': got exception of type: ' +
         str(type(e)) + '['.join(arg + ', ' for arg in e.args) +'] full logs in '+ aborterrorfilepath)
+  traceback.print_exc()
   errFile = open(aborterrorfilepath, 'w')
-  errFile.write(str(abortRes.stderr))
+  errFile.write(str(e))
   errFile.close()
-print(abortRes.stdout)
 
 
   

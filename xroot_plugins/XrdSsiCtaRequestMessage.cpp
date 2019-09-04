@@ -500,8 +500,8 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    if(notification.file().xattr().end() == retrieveRequestIdItor) {
      throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_RetrieveRequestId");
    }
-   const std::string retrieveRequestId = archiveFileIdItor->second;
-   request.retrieveRequestId = archiveFileIdStr;
+   const std::string retrieveRequestId = retrieveRequestIdItor->second;
+   request.retrieveRequestId = retrieveRequestId;
 
    // Queue the request
    m_scheduler.abortRetrieve(m_cliIdentity.username, request, m_lc);
@@ -510,8 +510,11 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
-   m_lc.log(cta::log::INFO, "In RequestMessage::processABORT_PREPARE(): not implemented, no action taken.");
+   params.add("fileId", request.archiveFileID)
+         .add("schedulerTime", t.secs())
+         .add("retrieveRequestId", request.retrieveRequestId)
+         .add("diskFilePath", cta::utils::midEllipsis(request.diskFileInfo.path, 100));
+   m_lc.log(cta::log::INFO, "In RequestMessage::processABORT_PREPARE(): canceled retrieve request.");
 
    // Set response type and remove reference to retrieve request in EOS extended attributes.
    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_RetrieveRequestId", ""));

@@ -1302,6 +1302,10 @@ void OStoreDB::cancelRetrieve(const std::string& instanceName, const cta::common
     rrl.lock(rr);
     rr.fetch();
   } catch (objectstore::Backend::NoSuchObject &) {
+    log::ScopedParamContainer params(lc);
+    params.add("archiveFileId", rqst.archiveFileID)
+          .add("retrieveRequestId", rqst.retrieveRequestId);
+    lc.log(log::ERR, "In OStoreDB::cancelRetrieve(): no such retrieve request.");
     return;
   } catch (exception::Exception & ex) {
     log::ScopedParamContainer params(lc);

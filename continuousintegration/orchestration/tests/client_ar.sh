@@ -440,7 +440,11 @@ while test ${REMAINING_REQUESTS} -gt 0; do
 done
 
 # Check that the files were not retrieved
-# TODO
+echo "Checking restaged files."
+RESTAGEDFILES=0
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  RESTAGEDFILES=$(( ${RESTAGEDFILES} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+done
 
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   # there were some prepare errors
@@ -522,8 +526,8 @@ fi
 
 echo "###"
 echo "$(date +%s): Results:"
-echo "REMOVED/STAGERRMED/RETRIEVED/ARCHIVED/NB_FILES"
-echo "${DELETED}/${STAGERRMED}/${RETRIEVED}/${ARCHIVED}/$((${NB_FILES} * ${NB_DIRS}))"
+echo "REMOVED/EVICTED/RETRIEVED/ARCHIVED/RESTAGEDFILES/NB_FILES"
+echo "${DELETED}/${EVICTED}/${RETRIEVED}/${ARCHIVED}/${RESTAGEDFILES}/$((${NB_FILES} * ${NB_DIRS}))"
 echo "###"
 
 test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES: $((${NB_FILES} * ${NB_DIRS}))</br>ARCHIVED: ${ARCHIVED}<br/>RETRIEVED: ${RETRIEVED}<br/>STAGERRMED: ${STAGERRMED}</br>DELETED: ${DELETED}" 'test,end'
@@ -552,6 +556,11 @@ fi
 if [ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]; then
   ((RC++))
   echo "ERROR several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
+fi
+
+if [ ${RESTAGEDFILES} -ne "0" ]; then
+  ((RC++))
+  echo "ERROR some files were retrieved in spite of retrieve cancellation."
 fi
 
 
