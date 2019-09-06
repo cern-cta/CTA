@@ -489,6 +489,14 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
   ArchiveFileSerDeser(criteria.archiveFile).serialize(*m_payload.mutable_archivefile());
   for (auto &tf: criteria.archiveFile.tapeFiles) {
     MountPolicySerDeser(criteria.mountPolicy).serialize(*m_payload.mutable_mountpolicy());
+    /*
+     * Explaination about these hardcoded retries :
+     * The hardcoded RetriesWithinMount will ensure that we will try to retrieve the file 3 times
+     * in the same mount.
+     * The hardcoded TotalRetries ensure that we will never try more than 6 times to retrieve a file.
+     * As totalretries = 6 and retrieswithinmount = 3, this will ensure that the file will be retried by maximum 2 mounts.
+     * (2 mounts * 3 retrieswithinmount = 6 totalretries)
+     */
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
     const uint32_t hardcodedReportRetries = 2;

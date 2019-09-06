@@ -12,10 +12,12 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>]
+Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>] [-a] [m]
 (bufferURL example : /eos/ctaeos/repack)
 eosinstance : the name of the ctaeos instance to be used (default ctaeos)
 timeout : the timeout in seconds to wait for the repack to be done
+-a : Launch a repack just add copies workflow
+-m : Launch a repack just move workflow
 EOF
 exit 1
 }
@@ -38,7 +40,7 @@ then
   usage
 fi;
 
-while getopts "v:e:b:t:" o; do
+while getopts "v:e:b:t:amg" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -51,6 +53,15 @@ while getopts "v:e:b:t:" o; do
       ;;
     t)
       WAIT_FOR_REPACK_TIMEOUT=${OPTARG}
+      ;;
+    a)
+      ADD_COPIES_ONLY="-a"
+      ;;
+    m)
+      MOVE_ONLY="-m"
+      ;;
+    g)
+      GENERATE_REPORT=0
       ;;
     *)
       usage
@@ -69,6 +80,14 @@ if [ "x${VID_TO_REPACK}" = "x" ]; then
   die "No vid to repack provided."
 fi
 
+REPACK_OPTION=""
+
+if [ "x${ADD_COPIES_ONLY}" != "x" ] && [ "x${MOVE_ONLY}" != "x" ]; then
+  die "-a and -m options are mutually exclusive"
+fi
+
+[[ "x${ADD_COPIES_ONLY}" == "x" ]] && REPACK_OPTION=${MOVE_ONLY} || REPACK_OPTION=${ADD_COPIES_ONLY}
+
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
@@ -86,7 +105,7 @@ echo "Marking the tape ${VID_TO_REPACK} as full before Repacking it"
 admin_cta tape ch --vid ${VID_TO_REPACK} --full true
 
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
-admin_cta re add --vid ${VID_TO_REPACK} --justmove --bufferurl ${FULL_REPACK_BUFFER_URL}
+admin_cta re add --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL}
 
 SECONDS_PASSED=0
 while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Complete" or .status == "Failed")' | wc -l`; do
@@ -104,4 +123,6 @@ if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | s
     exit 1
 fi
 
-exec /root/repack_generate_report.sh -v ${VID_TO_REPACK}
+echo "Repack request on VID ${VID_TO_REPACK} succeeded."
+
+exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} ${ADD_COPIES_ONLY} || exit 0

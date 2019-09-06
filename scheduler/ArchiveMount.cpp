@@ -154,7 +154,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
 // reportJobsBatchWritten
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
-    std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext& logContext) {
+    std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, std::queue<std::unique_ptr<cta::ArchiveJob>>& failedToReportArchiveJobs,cta::log::LogContext& logContext) {
   std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
   std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
   std::unique_ptr<cta::ArchiveJob> job;
@@ -224,6 +224,9 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
     }
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
+    for(auto &aj: validatedSuccessfulArchiveJobs){
+      failedToReportArchiveJobs.push(std::move(aj));
+    }
     throw cta::ArchiveMount::FailedMigrationRecallResult(msg_error);
   } catch(const std::exception& e){
     cta::log::ScopedParamContainer params(logContext);
@@ -236,6 +239,9 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
     }
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an standard exception";
     logContext.log(cta::log::ERR, msg_error);
+    for(auto &aj: validatedSuccessfulArchiveJobs){
+      failedToReportArchiveJobs.push(std::move(aj));
+    }
     throw cta::ArchiveMount::FailedMigrationRecallResult(msg_error);
   }
 }

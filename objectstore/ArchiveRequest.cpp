@@ -65,6 +65,20 @@ void ArchiveRequest::initialize() {
   m_payloadInterpreted = true;
 }
 
+void ArchiveRequest::commit(){
+  checkPayloadWritable();
+  checkPayloadReadable();
+  for(auto & job: m_payload.jobs()){
+    int nbTapepool = std::count_if(m_payload.jobs().begin(),m_payload.jobs().end(),[&job](const cta::objectstore::serializers::ArchiveJob & archiveJob){
+      return archiveJob.tapepool() == job.tapepool();
+    });
+    if(nbTapepool != 1){
+      throw cta::exception::Exception("In ArchiveRequest::commit(), cannot insert an ArchiveRequest containing archive jobs with the same destination tapepool");
+    }
+  }
+  ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>::commit();
+}
+
 //------------------------------------------------------------------------------
 // ArchiveRequest::addJob()
 //------------------------------------------------------------------------------
@@ -139,24 +153,24 @@ auto ArchiveRequest::addTransferFailure(uint32_t copyNumber,
       }
       j.set_totalretries(j.totalretries() + 1);
       * j.mutable_failurelogs()->Add() = failureReason;
-    }
-    if (j.totalretries() >= j.maxtotalretries()) {
-      // We have to determine if this was the last copy to fail/succeed.
-      return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
-    } else {
-      EnqueueingNextStep ret;
-      bool isRepack =  m_payload.isrepack();
-      ret.nextStatus = isRepack ? serializers::ArchiveJobStatus::AJS_ToTransferForRepack : serializers::ArchiveJobStatus::AJS_ToTransferForUser;
-      // Decide if we want the job to have a chance to come back to this mount (requeue) or not. In the latter
-      // case, the job will remain owned by this session and get garbage collected.
-      if (j.retrieswithinmount() >= j.maxretrieswithinmount())
-        ret.nextStep = EnqueueingNextStep::NextStep::Nothing;
-      else
-        ret.nextStep = isRepack ? EnqueueingNextStep::NextStep::EnqueueForTransferForRepack : EnqueueingNextStep::NextStep::EnqueueForTransferForUser;
-      return ret;
+      if (j.totalretries() >= j.maxtotalretries()) {
+        // We have to determine if this was the last copy to fail/succeed.
+        return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
+      } else {
+        EnqueueingNextStep ret;
+        bool isRepack =  m_payload.isrepack();
+        ret.nextStatus = isRepack ? serializers::ArchiveJobStatus::AJS_ToTransferForRepack : serializers::ArchiveJobStatus::AJS_ToTransferForUser;
+        // Decide if we want the job to have a chance to come back to this mount (requeue) or not. In the latter
+        // case, the job will remain owned by this session and get garbage collected.
+        if (j.retrieswithinmount() >= j.maxretrieswithinmount())
+          ret.nextStep = EnqueueingNextStep::NextStep::Nothing;
+        else
+          ret.nextStep = isRepack ? EnqueueingNextStep::NextStep::EnqueueForTransferForRepack : EnqueueingNextStep::NextStep::EnqueueForTransferForUser;
+        return ret;
+      }
     }
   }
-  throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
+  throw NoSuchJob ("In ArchiveRequest::addTransferFailure(): could not find job");
 }
 
 //------------------------------------------------------------------------------
@@ -822,7 +836,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   for (auto &j:jl) { if (j.copynb() == copyNumberUpdated) currentStatus = j.status(); }
   if (!currentStatus) {
     std::stringstream err;
-    err << "In ArchiveRequest::updateJobStatus(): copynb not found : " << copyNumberUpdated
+    err << "In ArchiveRequest::determineNextStep(): copynb not found : " << copyNumberUpdated
         << "existing ones: ";
     for (auto &j: jl) err << j.copynb() << "  ";
     throw cta::exception::Exception(err.str());
@@ -830,13 +844,13 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   // Check status compatibility with event.
   switch (jobEvent) {
   case JobEvent::TransferFailed:
-    if (*currentStatus != ArchiveJobStatus::AJS_ToTransferForUser) {
+    if (*currentStatus != ArchiveJobStatus::AJS_ToTransferForUser && *currentStatus != ArchiveJobStatus::AJS_ToTransferForRepack) {
       // Wrong status, but the context leaves no ambiguity. Just warn.
       log::ScopedParamContainer params(lc);
       params.add("event", eventToString(jobEvent))
             .add("status", statusToString(*currentStatus))
             .add("fileId", m_payload.archivefileid());
-      lc.log(log::WARNING, "In ArchiveRequest::updateJobStatus(): unexpected status. Assuming ToTransfer.");
+      lc.log(log::WARNING, "In ArchiveRequest::determineNextStep(): unexpected status. Assuming ToTransfer.");
     }
     break;
   case JobEvent::ReportFailed:
@@ -846,7 +860,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
       params.add("event", eventToString(jobEvent))
               .add("status", statusToString(*currentStatus))
             .add("fileId", m_payload.archivefileid());
-      lc.log(log::WARNING, "In ArchiveRequest::updateJobStatus(): unexpected status. Failing the job.");
+      lc.log(log::WARNING, "In ArchiveRequest::determineNextStep(): unexpected status. Failing the job.");
     }
   }
   // We are in the normal cases now.
@@ -854,18 +868,14 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   switch (jobEvent) {  
   case JobEvent::TransferFailed:
   {
+    bool isRepack = m_payload.isrepack();
     if (!m_payload.reportdecided()) {
       m_payload.set_reportdecided(true);
-      if(!m_payload.isrepack()){
-        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReportForUser;
-        ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure;
-      } else {
-        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReportForRepack;
-        ret.nextStatus = serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure;
-      }
+      ret.nextStep = isRepack ? EnqueueingNextStep::NextStep::EnqueueForReportForRepack : EnqueueingNextStep::NextStep::EnqueueForReportForUser;
+      ret.nextStatus = isRepack ? serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure : serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure;
     } else {
-      ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
-      ret.nextStatus = serializers::ArchiveJobStatus::AJS_Failed;
+      ret.nextStep = isRepack ? EnqueueingNextStep::NextStep::EnqueueForReportForRepack : EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
+      ret.nextStatus = isRepack ? serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure : serializers::ArchiveJobStatus::AJS_Failed;
     }
   }
   break;

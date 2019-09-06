@@ -180,7 +180,7 @@ ACTUAL_NB_STARTED_CTA_FST_GCD=0
 if test -f /var/log/eos/fst/cta-fst-gcd.log; then
   ACTUAL_NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
 else
-  echo "/usr/bin/cta-fst-gcd DOES NOT EXIST"
+  echo "/var/log/eos/fst/cta-fst-gcd.log DOES NOT EXIST"
   exit 1
 fi
 if test ${EXPECTED_NB_STARTED_CTA_FST_GCD} = ${ACTUAL_NB_STARTED_CTA_FST_GCD}; then

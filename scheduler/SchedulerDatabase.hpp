@@ -589,19 +589,26 @@ public:
         if (activityNameAndWeightedMountCount.value().weightedMountCount < other.activityNameAndWeightedMountCount.value().weightedMountCount)
           return false;
       }
-      if(minRequestAge < other.minRequestAge)
+      //The smaller the oldest job start time is, the bigger the age is, hence the inverted comparison
+      if(oldestJobStartTime > other.oldestJobStartTime)
 	return true;
-      if(minRequestAge > other.minRequestAge)
+      if(oldestJobStartTime < other.oldestJobStartTime)
 	return false;
       /**
        * For the tests, we try to have the priority by 
-       * alphabetical order : vid1 should be treated before vid2,
+       * alphabetical order : vid1 / tapepool1 should be treated before vid2/tapepool2,
        * so if this->vid < other.vid : then this > other.vid, so return false
        */
       if(vid < other.vid)
 	return false;
       if(vid > other.vid)
 	return true;
+      
+      if(tapePool < other.tapePool)
+	return false;
+      if(tapePool > other.tapePool)
+	return true;
+      
       return false;
     }
   };
