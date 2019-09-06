@@ -72,12 +72,13 @@ public:
     using namespace cta;
 
     const SchedulerDatabaseFactory &factory = GetParam().dbFactory;
-    m_catalogue = cta::make_unique<cta::catalogue::DummyCatalogue>(new cta::catalogue::DummyCatalogue);
+    m_catalogue = cta::make_unique<cta::catalogue::DummyCatalogue>();
     m_db.reset(factory.create(m_catalogue).release());
   }
 
   virtual void TearDown() {
     m_db.reset();
+    m_catalogue.reset();
   }
 
   cta::SchedulerDatabase &getDb() {

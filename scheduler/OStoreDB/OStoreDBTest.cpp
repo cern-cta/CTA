@@ -64,7 +64,7 @@ public:
     // We do a deep reference to the member as the C++ compiler requires the function to be 
     // already defined if called implicitly.
     const auto &factory = GetParam().dbFactory;
-    m_catalogue = cta::make_unique<cta::catalogue::DummyCatalogue>(new cta::catalogue::DummyCatalogue);
+    m_catalogue = cta::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the OStore DB from the factory.
     auto osdb = std::move(factory.create(m_catalogue));
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface).
@@ -75,6 +75,7 @@ public:
 
   virtual void TearDown() {
     m_db.reset();
+    m_catalogue.reset();
   }
 
   cta::objectstore::OStoreDBWrapperInterface &getDb() {

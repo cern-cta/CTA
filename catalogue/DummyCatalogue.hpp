@@ -32,7 +32,6 @@ namespace catalogue {
 class DummyCatalogue: public Catalogue {
 public:
   DummyCatalogue() {}
-  DummyCatalogue(const cta::catalogue::DummyCatalogue*) {}
   virtual ~DummyCatalogue() { }
 
   void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
