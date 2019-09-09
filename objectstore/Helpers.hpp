@@ -28,6 +28,12 @@
 #include <string>
 #include <set>
 #include <future>
+#include <fstream>
+#include <syscall.h>
+
+//Activate or not helper cache update for debugging
+//#define HELPERS_CACHE_UPDATE_LOGGING
+#define HELPERS_CACHE_UPDATE_LOGGING_FILE "/var/tmp/cta-helpers-update-cache.log"
 
 /**
  * A collection of helper functions for commonly used multi-object operations
@@ -118,6 +124,7 @@ private:
   static std::map<std::string, RetrieveQueueStatisticsWithTime> g_retrieveQueueStatistics;
   /** Time between cache updates */
   static const time_t c_retrieveQueueCacheMaxAge = 10;
+  static void logUpdateCacheIfNeeded(const bool entryCreation,const RetrieveQueueStatisticsWithTime& tapeStatistic, std::string message="");
   
 public:
   

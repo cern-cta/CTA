@@ -478,7 +478,8 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     cta::disk::DirectoryFactory dirFactory;
     dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
     if(dir->exist()){
-      filesInDirectory = dir->getFilesName();
+      //TODO : Repack tape repair workflow
+      //filesInDirectory = dir->getFilesName();
     } else {
       dir->mkdir();
     }
@@ -491,6 +492,8 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     storageClasses = m_catalogue.getStorageClasses();
   
   repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
+  uint64_t nbRetrieveSubrequestsQueued = 0;
+  
   while(archiveFilesForCatalogue.hasMore() && !stopExpansion) {
     size_t filesCount = 0;
     uint64_t maxAddedFSeq = 0;
@@ -621,7 +624,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
     try{
-      repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq, maxAddedFSeq, totalStatsFile, lc);
+      nbRetrieveSubrequestsQueued = repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq, maxAddedFSeq, totalStatsFile, lc);
     } catch(const cta::ExpandRepackRequestException& e){
       deleteRepackBuffer(std::move(dir));
       throw e;
@@ -645,7 +648,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       lc.log(log::INFO,"Expansion time reached, Repack Request requeued in ToExpand queue.");
     }
   } else {
-    if(totalStatsFile.totalFilesToRetrieve == 0){
+    if(totalStatsFile.totalFilesToRetrieve == 0 || nbRetrieveSubrequestsQueued == 0){
       //If no files have been retrieve, the repack buffer will have to be deleted
       deleteRepackBuffer(std::move(dir));      
     }

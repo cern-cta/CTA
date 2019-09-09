@@ -452,7 +452,11 @@ public:
       //TODO : userprovidedfiles and userprovidedbytes
     };
     
-    virtual void addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
+    /**
+     * Add Retrieve subrequests to the repack request and update its statistics
+     * @return the number of retrieve subrequests queued
+     */
+    virtual uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
       cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, log::LogContext & lc) = 0;
     virtual void expandDone() = 0;
     virtual void fail() = 0;
