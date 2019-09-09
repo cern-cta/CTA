@@ -71,6 +71,9 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringVendor.cpp
   UserSpecifiedAnEmptyStringVid.cpp
   UserSpecifiedAnEmptyStringVo.cpp
+  UserSpecifiedAnEmptyTapePool.cpp
+  UserSpecifiedStorageClassUsedByArchiveFiles.cpp
+  UserSpecifiedStorageClassUsedByArchiveRoutes.cpp
   UserSpecifiedAZeroCapacity.cpp
   UserSpecifiedAZeroCopyNb.cpp)
 

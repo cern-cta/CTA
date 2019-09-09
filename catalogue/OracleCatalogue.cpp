@@ -485,40 +485,46 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       fileSizeAndChecksum.checksumBlob.validate(event.checksumBlob);
     }
 
-    const char *const sql =
-    "BEGIN"                                                                             "\n"
-      "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"              "\n"
-         "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n"
-      "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                              "\n"
-         "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;" "\n"
-      "MERGE INTO"                                                                      "\n"
-        "TAPE_FILE"                                                                     "\n"
-      "USING("                                                                          "\n"
-        "SELECT"                                                                        "\n"
-          "ARCHIVE_FILE_ID,"                                                            "\n"
-          "COPY_NB,"                                                                    "\n"
-          "VID,"                                                                        "\n"
-          // Using MAX(FSEQ) to cover the same tape copy being written more than
-          // once.  The last one written supersedes the previous ones.
-          "MAX(FSEQ) AS MAX_FSEQ"                                                       "\n"
-        "FROM"                                                                          "\n"
-          "TEMP_TAPE_FILE_INSERTION_BATCH"                                              "\n"
-        "GROUP BY"                                                                      "\n"
-          "ARCHIVE_FILE_ID, COPY_NB, VID"                                               "\n"
-        ") TEMP"                                                                        "\n"
-      "ON("                                                                             "\n"
-        "TAPE_FILE.ARCHIVE_FILE_ID = TEMP.ARCHIVE_FILE_ID AND"                          "\n"
-        "TAPE_FILE.COPY_NB = TEMP.COPY_NB)"                                             "\n"
-      "WHEN MATCHED THEN"                                                               "\n"
-        "UPDATE SET"                                                                    "\n"
-          "TAPE_FILE.SUPERSEDED_BY_VID = TEMP.VID,"                                     "\n"
-          "TAPE_FILE.SUPERSEDED_BY_FSEQ = TEMP.MAX_FSEQ"                                "\n"
-        "WHERE"                                                                         "\n"
-          "NOT(TAPE_FILE.VID = TEMP.VID AND TAPE_FILE.FSEQ = TEMP.MAX_FSEQ);"           "\n"
-    "END;";
-    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
-    auto stmt = conn.createStmt(sql);
-    stmt.executeNonQuery();
+    {
+      const char *const sql =
+        "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"              "\n"
+           "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n"
+        "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                              "\n"
+           "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH";
+      auto stmt = conn.createStmt(sql);
+      stmt.executeNonQuery();
+    }
+
+    {
+      const char *const sql =
+        "MERGE INTO"                                                                      "\n"
+          "TAPE_FILE"                                                                     "\n"
+        "USING("                                                                          "\n"
+          "SELECT"                                                                        "\n"
+            "ARCHIVE_FILE_ID,"                                                            "\n"
+            "COPY_NB,"                                                                    "\n"
+            "VID,"                                                                        "\n"
+            // Using MAX(FSEQ) to cover the same tape copy being written more than
+            // once.  The last one written supersedes the previous ones.
+            "MAX(FSEQ) AS MAX_FSEQ"                                                       "\n"
+          "FROM"                                                                          "\n"
+            "TEMP_TAPE_FILE_INSERTION_BATCH"                                              "\n"
+          "GROUP BY"                                                                      "\n"
+            "ARCHIVE_FILE_ID, COPY_NB, VID"                                               "\n"
+          ") TEMP"                                                                        "\n"
+        "ON("                                                                             "\n"
+          "TAPE_FILE.ARCHIVE_FILE_ID = TEMP.ARCHIVE_FILE_ID AND"                          "\n"
+          "TAPE_FILE.COPY_NB = TEMP.COPY_NB)"                                             "\n"
+        "WHEN MATCHED THEN"                                                               "\n"
+          "UPDATE SET"                                                                    "\n"
+            "TAPE_FILE.SUPERSEDED_BY_VID = TEMP.VID,"                                     "\n"
+            "TAPE_FILE.SUPERSEDED_BY_FSEQ = TEMP.MAX_FSEQ"                                "\n"
+          "WHERE"                                                                         "\n"
+            "NOT(TAPE_FILE.VID = TEMP.VID AND TAPE_FILE.FSEQ = TEMP.MAX_FSEQ)";
+      conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+      auto stmt = conn.createStmt(sql);
+      stmt.executeNonQuery();
+    }
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

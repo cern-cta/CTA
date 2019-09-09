@@ -44,6 +44,7 @@ public:
   ArchiveRequest(Backend & os);
   ArchiveRequest(GenericObject & go);
   void initialize();
+  void commit();
   // Ownership of archive requests is managed per job. Object level owner has no meaning.
   std::string getOwner() = delete;
   void setOwner(const std::string &) = delete;

@@ -50,7 +50,7 @@ namespace cta {
       }
       
       void reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs, 
-          std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext& logContext) override {
+          std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, std::queue<std::unique_ptr<cta::ArchiveJob>>& failedToReportArchiveJobs, cta::log::LogContext& logContext) override {
         try {
           std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
           std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
