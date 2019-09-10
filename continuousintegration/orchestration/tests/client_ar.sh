@@ -359,6 +359,8 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 
 # Put all tape drives down
+echo "Sleeping 3 seconds to let previous sessions finish."
+sleep 3
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
 INITIAL_DRIVES_STATE=`admin_cta --json dr ls`
@@ -403,7 +405,7 @@ fi
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare_abort)..."
   cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2                                                                         \
-  | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME /root/client_ar_abortPrepare.py --eos-instance ${EOSINSTANCE}              \
+  | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME cta-client-ar-abortPrepare --eos-instance ${EOSINSTANCE}              \
       --eos-poweruser ${EOSPOWER_USER} --eos-dir ${EOS_DIR} --subdir ${subdir} --file TEST_FILE_NAME --error-dir ${ERROR_DIR} \
   | tee ${LOGDIR}/prepare_abort_sys.retrieve.req_id_${subdir}.log # | grep ^ERROR
   echo Done.
@@ -440,11 +442,12 @@ while test ${REMAINING_REQUESTS} -gt 0; do
 done
 
 # Check that the files were not retrieved
-echo "Checking restaged files."
+echo -n "Checking restaged files. Found: "
 RESTAGEDFILES=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  RESTAGEDFILES=$(( ${RESTAGEDFILES} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+  (( RESTAGEDFILES += $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
 done
+echo ${RESTAGEDFILES}
 
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   # there were some prepare errors
@@ -452,7 +455,6 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   echo "Please check client pod logs in artifacts"
   mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
 fi
-
 
 # We can now delete the files
 DELETED=0

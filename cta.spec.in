@@ -410,3 +410,13 @@ collects EOS disk copies that have been safely stored to tape.
 %postun -n cta-fst-gcd
 %systemd_postun cta-fst-gcd.service
 %systemdDaemonReload
+
+%package -n cta-systemtest-helpers
+Summary: Collection of utilities deployed in system test client containers.
+Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
+%description -n cta-systemtest-helpers
+Collection of utilities deployed in system test client containers.
+Currently contains a helper for the client-ar script, which should be installed alongside it.
+%files -n cta-systemtest-helpers
+%attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
