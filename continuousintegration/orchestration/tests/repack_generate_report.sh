@@ -49,8 +49,6 @@ admin_klist > /dev/null 2>&1 || die "Cannot get kerberos credentials for user ${
 
 repackRequest=`admin_cta --json repack ls --vid ${VID}`
 
-echo $repackRequest
-
 if [ "$repackRequest" == "" ];
 then
   die "No repack request for this VID."

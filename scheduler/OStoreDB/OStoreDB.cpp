@@ -1401,7 +1401,7 @@ OStoreDB::RetrieveQueueItor_t* OStoreDB::getRetrieveJobItorPtr(const std::string
 // OStoreDB::queueRepack()
 //------------------------------------------------------------------------------
 void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
-    common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy& mountPolicy, log::LogContext & lc) {
+    common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy& mountPolicy, const bool forceDisabledTape,log::LogContext & lc) {
   // Prepare the repack request object in memory.
   assertAgentAddressSet();
   cta::utils::Timer t;
@@ -1413,6 +1413,7 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   rr->setType(repackType);
   rr->setBufferURL(bufferURL);
   rr->setMountPolicy(mountPolicy);
+  rr->setForceDisabledTape(forceDisabledTape);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
   try {
     Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
@@ -1635,6 +1636,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
     ret->repackInfo.type = repackInfo.type;
     ret->repackInfo.status = repackInfo.status;
     ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
+    ret->repackInfo.forceDisabledTape = repackInfo.forceDisabledTape;
     return std::move(ret);
   }
 }
@@ -2186,8 +2188,9 @@ void OStoreDB::RepackRequest::setLastExpandedFSeq(uint64_t fseq){
 //------------------------------------------------------------------------------
 // OStoreDB::RepackRequest::addSubrequests()
 //------------------------------------------------------------------------------
-void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap, uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles &totalStatsFiles, log::LogContext& lc) {
+uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap, uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles &totalStatsFiles, log::LogContext& lc) {
   // We need to prepare retrieve requests names and reference them, create them, enqueue them.
+  uint64_t nbRetrieveSubrequestsCreated = 0;
   objectstore::ScopedExclusiveLock rrl (m_repackRequest);
   m_repackRequest.fetch();
   std::set<uint64_t> fSeqs;
@@ -2196,6 +2199,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
   m_repackRequest.setTotalStats(totalStatsFiles);
   uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
   common::dataStructures::MountPolicy mountPolicy = m_repackRequest.getMountPolicy();
+  bool forceDisabledTape = m_repackRequest.getInfo().forceDisabledTape;
   // We make sure the references to subrequests exist persistently before creating them.
   m_repackRequest.commit();
   // We keep holding the repack request lock: we need to ensure de deleted boolean of each subrequest does
@@ -2269,6 +2273,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
       rRRepackInfo.fileBufferURL = rsr.fileBufferURL;
       rRRepackInfo.fSeq = rsr.fSeq;
       rRRepackInfo.isRepack = true;
+      rRRepackInfo.forceDisabledTape = forceDisabledTape;
       rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
       rr->setRepackInfo(rRRepackInfo);
       // Set the queueing parameters
@@ -2285,7 +2290,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         if (tc.vid == repackInfo.vid) {
           try {
             // Try to select the repack VID from a one-vid list.
-            Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+            Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,repackInfo.forceDisabledTape);
             bestVid = repackInfo.vid;
             activeCopyNumber = tc.copyNb;
           } catch (Helpers::NoTapeAvailableForRetrieve &) {}
@@ -2297,7 +2302,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         std::set<std::string> candidateVids;
         for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
         try {
-          bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+          bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,forceDisabledTape);
         } catch (Helpers::NoTapeAvailableForRetrieve &) {
           // Count the failure for this subrequest. 
           notCreatedSubrequests.emplace_back(rsr);
@@ -2417,12 +2422,14 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
       is.request->fetch();
       sorter.insertRetrieveRequest(is.request, *m_oStoreDB.m_agentReference, is.activeCopyNb, lc);
     }
+    nbRetrieveSubrequestsCreated = sorter.getAllRetrieve().size();
     locks.clear();
     sorter.flushAll(lc);
   }
   
   m_repackRequest.setLastExpandedFSeq(fSeq);
   m_repackRequest.commit();
+  return nbRetrieveSubrequestsCreated;
 }
 
 //------------------------------------------------------------------------------
@@ -4615,12 +4622,13 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
           "In OStoreDB::RetrieveJob::failTransfer(): no active job after addJobFailure() returned false."
         );
       }
+      bool disabledTape = m_retrieveRequest.getRepackInfo().forceDisabledTape;
       m_retrieveRequest.commit();
       rel.release();
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
-        m_oStoreDB.m_objectStore);
+        m_oStoreDB.m_objectStore,disabledTape);
 
       auto tf_it = af.tapeFiles.begin();
       for( ; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it) ;

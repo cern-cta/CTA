@@ -318,7 +318,7 @@ std::set<std::string> Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAcc
 std::string Sorter::getBestVidForQueueingRetrieveRequest(RetrieveRequestInfosAccessorInterface &requestAccessor, std::set<std::string>& candidateVids, log::LogContext &lc){
   std::string vid;
   try{
-    vid = Helpers::selectBestRetrieveQueue(candidateVids,m_catalogue,m_objectstore);
+    vid = Helpers::selectBestRetrieveQueue(candidateVids,m_catalogue,m_objectstore,requestAccessor.getForceDisabledTape());
   } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
     log::ScopedParamContainer params(lc);
     params.add("fileId", requestAccessor.getArchiveFile().archiveFileID);
@@ -412,6 +412,10 @@ std::string OStoreRetrieveRequestAccessor::getRepackAddress(){
   return m_retrieveRequest->getRepackInfo().repackRequestAddress;
 }
 
+bool OStoreRetrieveRequestAccessor::getForceDisabledTape(){
+  return m_retrieveRequest->getRepackInfo().forceDisabledTape;
+}
+
 /* END OF RetrieveRequestAccessor CLASS */
 
 
@@ -444,6 +448,10 @@ serializers::RetrieveJobStatus SorterRetrieveRequestAccessor::getJobStatus(const
 
 std::string SorterRetrieveRequestAccessor::getRepackAddress(){
   return m_retrieveRequest.repackRequestAddress;
+}
+
+bool SorterRetrieveRequestAccessor::getForceDisabledTape(){
+  return m_retrieveRequest.forceDisabledTape;
 }
 
 /* END OF SorterRetrieveRequestAccessor CLASS*/

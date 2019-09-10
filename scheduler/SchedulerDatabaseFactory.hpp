@@ -19,6 +19,7 @@
 #pragma once
 
 #include <memory>
+#include "catalogue/Catalogue.hpp"
 
 namespace cta {
 
@@ -42,7 +43,7 @@ public:
    *
    * @return A newly created scheduler database object.
    */
-  virtual std::unique_ptr<SchedulerDatabase> create() const = 0;
+  virtual std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const = 0;
 
 }; // class SchedulerDatabaseFactory
 

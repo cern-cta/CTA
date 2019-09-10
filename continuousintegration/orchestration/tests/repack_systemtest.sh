@@ -18,6 +18,7 @@ eosinstance : the name of the ctaeos instance to be used (default ctaeos)
 timeout : the timeout in seconds to wait for the repack to be done
 -a : Launch a repack just add copies workflow
 -m : Launch a repack just move workflow
+-d : Force a repack on a disabled tape (adds --disabled to the repack add command)
 EOF
 exit 1
 }
@@ -40,7 +41,8 @@ then
   usage
 fi;
 
-while getopts "v:e:b:t:amg" o; do
+DISABLED_TAPE_FLAG=""
+while getopts "v:e:b:t:amgd" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -62,6 +64,9 @@ while getopts "v:e:b:t:amg" o; do
       ;;
     g)
       GENERATE_REPORT=0
+      ;;
+    d)
+      DISABLED_TAPE_FLAG="--disabledtape"
       ;;
     *)
       usage
@@ -105,7 +110,8 @@ echo "Marking the tape ${VID_TO_REPACK} as full before Repacking it"
 admin_cta tape ch --vid ${VID_TO_REPACK} --full true
 
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
-admin_cta re add --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL}
+
+admin_cta repack add --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG}
 
 SECONDS_PASSED=0
 while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Complete" or .status == "Failed")' | wc -l`; do
@@ -118,7 +124,7 @@ while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] 
     exit 1
   fi
 done
-if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Failed")' | wc -l`; then
+if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.status == "Failed")] | length'`; then
     echo "Repack failed for tape ${VID_TO_REPACK}."
     exit 1
 fi

@@ -331,7 +331,7 @@ public:
   
   /* === Repack requests handling =========================================== */
   void queueRepack(const std::string& vid, const std::string& bufferURL, 
-    common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext &logContext) override;
+    common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, const bool forceDisabledTape, log::LogContext &logContext) override;
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRepackRequest);
@@ -344,7 +344,7 @@ public:
   public:
     RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB) :
     m_oStoreDB(oStoreDB), m_repackRequest(jobAddress, m_oStoreDB.m_objectStore){}
-    void addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+    uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
       uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles,  log::LogContext& lc) override;
     void expandDone() override;
     void fail() override;

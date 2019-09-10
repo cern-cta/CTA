@@ -389,7 +389,7 @@ public:
 
   /*============ Repack management: user side ================================*/
   virtual void queueRepack(const std::string & vid, const std::string & bufferURL,
-      common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext & lc) = 0;
+      common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, const bool forceDisabledTape, log::LogContext & lc) = 0;
   virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
   virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
   virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;
@@ -452,7 +452,11 @@ public:
       //TODO : userprovidedfiles and userprovidedbytes
     };
     
-    virtual void addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
+    /**
+     * Add Retrieve subrequests to the repack request and update its statistics
+     * @return the number of retrieve subrequests queued
+     */
+    virtual uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
       cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, log::LogContext & lc) = 0;
     virtual void expandDone() = 0;
     virtual void fail() = 0;
