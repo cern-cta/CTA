@@ -271,58 +271,73 @@ class Gc:
     self.log.info("Config: mgmhost={}".format(self.config.mgmhost))
     self.log.info("Config: minfreebytes={}".format(self.config.minfreebytes))
     self.log.info("Config: gcagesecs={}".format(self.config.gcagesecs))
+    self.log.info("Config: absolutemaxagesecs={}".format(self.config.absolutemaxagesecs))
     self.log.info("Config: queryperiodsecs={}". format(self.config.queryperiodsecs))
     self.log.info("Config: mainloopperiodsecs={}". format(self.config.mainloopperiodsecs))
     self.log.info("Config: xrdsecssskt={}".format(self.config.xrdsecssskt))
 
   def processfile(self, subdir, fstfile):
+    fullpath = os.path.join(subdir,fstfile)
+    filesizeandctime = None
+    try:
+      filesizeandctime = self.disk.getfilesizeandctime(fullpath)
+    except Exception as err:
+      self.log.error(err)
+
+    if not filesizeandctime:
+      return
+
+    now = time.time()
+    agesecs = now - filesizeandctime.ctime
+    absolutemaxagereached = agesecs > self.config.absolutemaxagesecs
+    gcagereached = agesecs > self.config.gcagesecs
     spacetracker = self.spacetrackers.gettracker(subdir)
     totalfreebytes = spacetracker.getfreebytes()
     shouldfreespace = totalfreebytes < self.config.minfreebytes
 
-    if shouldfreespace:
-      fullpath = os.path.join(subdir,fstfile)
-
-      filesizeandctime = None
+    if absolutemaxagereached or (shouldfreespace and gcagereached):
       try:
-        filesizeandctime = self.disk.getfilesizeandctime(fullpath)
+        bytesrequiredbefore = 0
+        if self.config.minfreebytes > totalfreebytes:
+          bytesrequiredbefore = self.config.minfreebytes - totalfreebytes
+        self.eos.stagerrm(fstfile)
+        spacetracker.stagerrmqueued(filesizeandctime.sizebytes)
+        self.log.info("stagerrm: subdir={}, fxid={}, bytesrequiredbefore={}, filesizebytes={}, absolutemaxagereached={}, shouldfreespace={}, gcagereached={}"
+          .format(subdir, fstfile, bytesrequiredbefore, filesizeandctime.sizebytes, absolutemaxagereached, shouldfreespace, gcagereached))
+        nowstr = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
+        attrname = "sys.retrieve.error"
+        attrvalue = "Garbage collected at {}".format(nowstr)
+        self.eos.attrset(attrname, attrvalue, fstfile)
+      except StagerrmError as err:
+        pass
       except Exception as err:
         self.log.error(err)
 
-      if filesizeandctime:
-        now = time.time()
-        agesecs = now - filesizeandctime.ctime
-        if agesecs > self.config.gcagesecs:
-          try:
-            bytesrequiredbefore = self.config.minfreebytes - totalfreebytes
-            self.eos.stagerrm(fstfile)
-            spacetracker.stagerrmqueued(filesizeandctime.sizebytes)
-            self.log.info("stagerrm: subdir={}, fxid={}, bytesrequiredbefore={}, filesizebytes={}"
-              .format(subdir, fstfile, bytesrequiredbefore, filesizeandctime.sizebytes))
-            nowstr = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
-            attrname = "sys.retrieve.error"
-            attrvalue = "Garbage collected at {}".format(nowstr)
-            self.eos.attrset(attrname, attrvalue, fstfile)
-          except StagerrmError as err:
-            pass
-          except Exception as err:
-            self.log.error(err)
-
   def processfssubdir(self, subdir):
-    spacetracker = self.spacetrackers.gettracker(subdir)
-    totalfreebytes = spacetracker.getfreebytes()
-    shouldfreespace = totalfreebytes < self.config.minfreebytes
+    #spacetracker = self.spacetrackers.gettracker(subdir)
+    #totalfreebytes = spacetracker.getfreebytes()
+    #shouldfreespace = totalfreebytes < self.config.minfreebytes
 
-    if shouldfreespace:
-      subdirfiles = []
-      try:
-        subdirfiles = self.disk.listdir(subdir)
-      except Exception as err:
-        self.log.error("Failed to list contents of sub directory: subdir={}: {}".format(subdir, err))
+    #if shouldfreespace:
+    #  subdirfiles = []
+    #  try:
+    #    subdirfiles = self.disk.listdir(subdir)
+    #  except Exception as err:
+    #    self.log.error("Failed to list contents of sub directory: subdir={}: {}".format(subdir, err))
 
-      fstfiles = [f for f in subdirfiles if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isfile(os.path.join(subdir, f))]
-      for fstfile in fstfiles:
-        self.processfile(subdir, fstfile)
+    #  fstfiles = [f for f in subdirfiles if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isfile(os.path.join(subdir, f))]
+    #  for fstfile in fstfiles:
+    #    self.processfile(subdir, fstfile)
+
+    subdirfiles = []
+    try:
+      subdirfiles = self.disk.listdir(subdir)
+    except Exception as err:
+      self.log.error("Failed to list contents of sub directory: subdir={}: {}".format(subdir, err))
+
+    fstfiles = [f for f in subdirfiles if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isfile(os.path.join(subdir, f))]
+    for fstfile in fstfiles:
+      self.processfile(subdir, fstfile)
 
   def processfs(self, path):
     fsfiles = []
@@ -424,6 +439,7 @@ def parseconf(conffile):
     config.mgmhost = parser.get('main', 'mgmhost')
     config.minfreebytes = parser.getint('main', 'minfreebytes')
     config.gcagesecs = parser.getint('main', 'gcagesecs')
+    config.absolutemaxagesecs = parser.getint('main', 'absolutemaxagesecs')
     config.queryperiodsecs = parser.getint('main', 'queryperiodsecs')
     config.mainloopperiodsecs = parser.getint('main', 'mainloopperiodsecs')
     config.xrdsecssskt = parser.get('main', 'xrdsecssskt')
