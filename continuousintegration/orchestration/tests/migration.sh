@@ -36,7 +36,7 @@ fi
 
 echo
 echo "Launching grpc_dir_inject.sh on client pod"
-kubectl -n ${NAMESPACE} cp grpc_dir_inject.sh client:/root/grpc_dir_inject.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/grpc_dir_inject.sh || exit 1
+kubectl -n ${NAMESPACE} cp grpc_dir_inject.sh eoscta:/root/grpc_dir_inject.sh
+kubectl -n ${NAMESPACE} exec eoscta -- bash /root/grpc_dir_inject.sh || exit 1
 
 exit 0

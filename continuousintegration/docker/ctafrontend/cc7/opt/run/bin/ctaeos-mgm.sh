@@ -214,7 +214,7 @@ fi
   # Configure gRPC interface:
   #
   # 1. Map requests from the client to EOS virtual identities
-  CLIENT_IP=$(cat /etc/grpc_client_ip)
+  CLIENT_IP=127.0.0.1
   echo CLIENT_IP is $CLIENT_IP
   eos -r 0 0 vid add gateway ${CLIENT_IP} grpc
   # 2. Add authorisation key
@@ -287,6 +287,22 @@ fi
 
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
+
+# configuration for migration tools
+cat <<EOF >/etc/cta/castor-migration.conf
+castor.db_login               oracle:castor/<password>@castor
+castor.json                   true
+castor.max_num_connections    1
+castor.batch_size             100
+castor.prefix                 /castor/cern.ch
+eos.dry_run                   false
+eos.prefix                    /eos/grpctest
+eos.endpoint                  localhost:50051
+eos.token                     ${EOS_AUTH_KEY}
+EOF
+echo Migration tools configuration:
+cat /etc/cta/castor-migration.conf
+
 
 touch /EOSOK
 
