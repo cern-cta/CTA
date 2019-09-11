@@ -1,5 +1,9 @@
 #!/bin/sh
 
+echo "whoami:"
+whoami
+echo "USER=${USER}"
+
 # Migration tools parameters
 #EOSINSTANCE=ctaeos
 #EOS_CMD="/usr/bin/eos root://${EOSINSTANCE}"
