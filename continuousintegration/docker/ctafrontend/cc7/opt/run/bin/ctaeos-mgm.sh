@@ -149,9 +149,6 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   systemctl status eos@{mq,mgm,fst} &>/dev/null && echo OK || echo FAILED
 
   systemctl status eos@{mq,mgm,fst}
-
-  systemctl start cta-fst-gcd
-
 else
   # Using jemalloc as specified in
   # it-puppet-module-eos:
@@ -167,28 +164,6 @@ else
     /usr/bin/xrootd -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
     /usr/bin/xrootd -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
     /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
-
-
-  runuser -u daemon setsid /usr/bin/cta-fst-gcd < /dev/null &
-fi
-
-echo "Giving cta-fst-gcd 3 second to start logging"
-sleep 3
-
-let EXPECTED_NB_STARTED_CTA_FST_GCD=NB_STARTED_CTA_FST_GCD+1
-ACTUAL_NB_STARTED_CTA_FST_GCD=0
-if test -f /var/log/eos/fst/cta-fst-gcd.log; then
-  ACTUAL_NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
-else
-  echo "/var/log/eos/fst/cta-fst-gcd.log DOES NOT EXIST"
-  ps auxf | grep gcd
-  exit 1
-fi
-if test ${EXPECTED_NB_STARTED_CTA_FST_GCD} = ${ACTUAL_NB_STARTED_CTA_FST_GCD}; then
-  echo "/usr/bin/cta-fst-gcd LOGGED 'cta-fst-gcd started'"
-else
-  echo "/usr/bin/cta-fst-gcd DID NOT LOG 'cta-fst-gcd started'"
-  exit 1
 fi
 
   eos vid enable krb5
@@ -231,6 +206,22 @@ fi
     echo "Sleeping 1 second"
     sleep 1
   done
+
+  # Start the FST garbage collector (the daemon user must be an EOS sudoer by now)
+  if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+    systemctl start cta-fst-gcd
+  else
+    runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
+  fi
+  echo "Giving cta-fst-gcd 1 second to start"
+  sleep 1
+  FST_GCD_PID=`ps -ef | egrep '^daemon .* /bin/python /usr/bin/cta-fst-gcd$' | grep -v grep | awk '{print $2;}'`
+  if test "x${FST_GCD_PID}" = x; then
+    echo "cta-fst-gcd is not running"
+    exit 1
+  else
+    echo "cta-fst-gcd is running FST_GCD_PID=${FST_GCD_PID}"
+  fi
 
 # test EOS
   eos -b node ls
