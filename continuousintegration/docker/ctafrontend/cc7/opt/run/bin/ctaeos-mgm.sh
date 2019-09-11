@@ -168,6 +168,48 @@ else
     /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
 fi
 
+if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+  if eos ns | grep 'In-flight FileMD' && eos ns | grep 'In-flight ContainerMD'; then
+    echo 'The EOS namespace backend is QuarkDB'
+  else
+    echo 'The EOS namespace backend is not QuarkDB'
+    exit 1
+  fi
+
+  if eos ns reserve-ids 4294967296 4294967296; then
+    echo "Reserved EOS file and container IDs up to and including 4294967296"
+  else
+    echo "Failed to reserve EOS file and container IDs"
+    exit 1
+  fi
+  CID_TEST_DIR=/cid_test_dir
+  if eos mkdir ${CID_TEST_DIR}; then
+    echo "Created ${CID_TEST_DIR}"
+  else
+    echo "Failed to create ${CID_TEST_DIR}"
+    exit 1
+  fi
+  echo eos fileinfo ${CID_TEST_DIR}
+  eos fileinfo ${CID_TEST_DIR}
+  CID_TEST_DIR_CID=`eos fileinfo ${CID_TEST_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://'`
+  if test x = "x${CID_TEST_DIR_CID}"; then
+    echo "Failed to determine the EOS container ID of ${CID_TEST_DIR}"
+    exit 1
+  else
+    echo "The EOS container ID of ${CID_TEST_DIR} is ${CID_TEST_DIR_CID}"
+  fi
+  if test 4294967296 -ge ${CID_TEST_DIR_CID}; then
+    echo "Container ID ${CID_TEST_DIR_CID} is illegal because it is within the reserverd set"
+    exit 1
+  fi
+  if eos rmdir ${CID_TEST_DIR}; then
+    echo "Deleted ${CID_TEST_DIR}"
+  else
+    echo "Failed to delete ${CID_TEST_DIR}"
+    exit 1
+  fi
+fi
+
   eos vid enable krb5
   eos vid enable sss
   eos vid enable unix
@@ -200,6 +242,20 @@ fi
   # 3. Create top-level directory and set permissions to writeable by all
   eos mkdir ${GRPC_TEST_DIR}
   eos chmod 777 ${GRPC_TEST_DIR}
+
+if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+  CTA_PROC_DIR_CID=`eos fileinfo ${CTA_PROC_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://'`
+  if test x = "x${CTA_PROC_DIR_CID}"; then
+    echo "Failed to determine the EOS container ID of ${CTA_PROC_DIR}"
+    exit 1
+  else
+    echo "The EOS container ID of ${CTA_PROC_DIR} is ${CTA_PROC_DIR_CID}"
+  fi
+  if test 4294967296 -ge ${CTA_PROC_DIR_CID}; then
+    echo "Container ID ${CTA_PROC_DIR_CID} is illegal because it is within the reserverd set"
+    exit 1
+  fi
+fi
 
   # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
   # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
