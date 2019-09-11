@@ -16,11 +16,13 @@
 
 cmake_minimum_required (VERSION 2.6)
 
-find_package (xrootd REQUIRED)
-find_package (xrootdclient REQUIRED)
+find_package(xrootd REQUIRED)
+find_package(xrootdclient REQUIRED)
+find_package(Protobuf3 REQUIRED)
 
-include_directories (${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
+include_directories(${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
 add_executable(cta-client-ar-abortPrepare client-ar-abortPrepare.cpp)
 target_link_libraries(cta-client-ar-abortPrepare XrdCl ctacommon)
 install(TARGETS cta-client-ar-abortPrepare DESTINATION usr/bin)
+set_property(TARGET cta-client-ar-abortPrepare APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
