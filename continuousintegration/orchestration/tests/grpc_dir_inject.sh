@@ -41,6 +41,9 @@ echoc()
 CASTOR_PREFIX=$(awk '/^castor.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 EOS_PREFIX=$(awk '/^eos.prefix[ 	]/ { print $2 }' ${CONFIG_FILE})
 
+echoc $LT_BLUE "gRPC configuration:"
+cat ${CONFIG_FILE}
+
 # Ping the gRPC interface
 ${EOS_TEST_DIR_INJECT} ping || error "gRPC ping failed"
 
@@ -53,7 +56,7 @@ ${EOS_CMD} mkdir -p ${EOS_PREFIX}
 
 # Create directory with system-assigned file id -- should succeed
 echoc $LT_BLUE "Creating directory with auto-assigned file id"
-sudo --user=daemon ${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/test_dir1 >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/test_dir1 >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with auto-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
@@ -65,7 +68,7 @@ ${EOS_CMD} attr ls ${EOS_PREFIX}/test_dir1
 # Create directory with self-assigned file id -- should succeed
 TEST_FILE_ID=123456789
 echoc $LT_BLUE "Creating directory with self-assigned file id"
-sudo --user=daemon ${EOS_TEST_DIR_INJECT} --fileid ${TEST_FILE_ID} --path ${CASTOR_PREFIX}/test_dir2 >${TMPFILE}
+${EOS_TEST_DIR_INJECT} --fileid ${TEST_FILE_ID} --path ${CASTOR_PREFIX}/test_dir2 >${TMPFILE}
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed"
 json-pretty-print.sh ${TMPFILE}
 rm ${TMPFILE}
@@ -73,12 +76,12 @@ ${EOS_CMD} fileinfo ${EOS_PREFIX}/test_dir2
 
 # Try again -- should fail
 echoc $LT_GREEN "Creating directory with the same path (should fail)"
-sudo --user=daemon ${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/test_dir2 >/dev/null
+${EOS_TEST_DIR_INJECT} --path ${CASTOR_PREFIX}/test_dir2 >/dev/null
 [ $? -ne 0 ] || error "Creating directory with self-assigned file id succeeded when it should have failed"
 
 # Try again -- should fail
 echoc $LT_GREEN "Creating directory with the same file id (should fail)"
-sudo --user=daemon ${EOS_TEST_DIR_INJECT} --fileid ${TEST_FILE_ID} --path ${CASTOR_PREFIX}/test_dir3 >/dev/null
+${EOS_TEST_DIR_INJECT} --fileid ${TEST_FILE_ID} --path ${CASTOR_PREFIX}/test_dir3 >/dev/null
 [ $? -ne 0 ] || error "Creating directory with self-assigned file id succeeded when it should have failed"
 
 # Remove and try again -- should succeed
@@ -87,7 +90,7 @@ ${EOS_CMD} rmdir ${EOS_PREFIX}/test_dir2
 ${EOS_CMD} ns cache drop-single-container ${TEST_FILE_ID}
 
 echoc $LT_BLUE "Recreate the directory with self-assigned file id (should succeed this time)"
-sudo --user=daemon ${EOS_TEST_DIR_INJECT} --fileid ${TEST_FILE_ID} --path ${CASTOR_PREFIX}/test_dir2 >/dev/null
+${EOS_TEST_DIR_INJECT} --fileid ${TEST_FILE_ID} --path ${CASTOR_PREFIX}/test_dir2 >/dev/null
 [ $? -eq 0 ] || error "Creating directory with self-assigned file id failed with error $?"
 ${EOS_CMD} fileinfo ${EOS_PREFIX}/test_dir2
 ${EOS_CMD} rmdir ${EOS_PREFIX}/test_dir2
