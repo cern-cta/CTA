@@ -20,6 +20,7 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <fstream>
 #include <XrdCl/XrdClFileSystem.hh>
 #include "common/utils/Regex.hpp"
 #include "common/exception/XrootCl.hpp"
@@ -111,15 +112,17 @@ int main(int argc, char **argv) {
     exit (EXIT_FAILURE);
   }
   
-  std::cout << "To run again: "    << argv[0] 
-            << " --eos-instance="  << options.eos_instance
-            << " --eos-poweruser=" << options.eos_poweruser
-            << " --eos-dir="        << options.eos_dir
-            << " --subdir="         << options.subdir
-            << " --file="           << options.file
-            << " --error_dir="      << options.error_dir << std::endl;
+//  std::cout << "To run again: "    << argv[0] 
+//            << " --eos-instance="  << options.eos_instance
+//            << " --eos-poweruser=" << options.eos_poweruser
+//            << " --eos-dir="        << options.eos_dir
+//            << " --subdir="         << options.subdir
+//            << " --file="           << options.file
+//            << " --error_dir="      << options.error_dir << std::endl;
   
   // Get the extended attribute for the retrieve request id
+  std::string retrieveRequestId, fileName(options.eos_dir + "/" + options.subdir + "/" + options.file);
+  XrdCl::FileSystem xrdfs(options.eos_instance);
   try {
     // Prepare environment.
     putenv(envXRD_LOGLEVEL);
@@ -130,8 +133,6 @@ int main(int argc, char **argv) {
     putenv(envKRB5CCNAME.get());
     putenv(envXrdSecPROTOCOL);
     
-    XrdCl::FileSystem xrdfs(options.eos_instance);
-    std::string fileName = options.eos_dir + "/" + options.subdir + "/" + options.file;
     std::string query = fileName + "?mgm.pcmd=xattr&mgm.subcmd=get&mgm.xattrname=sys.retrieve.req_id";
     auto qcOpaque = XrdCl::QueryCode::OpaqueFile;
     XrdCl::Buffer xrdArg;
@@ -149,13 +150,27 @@ int main(int argc, char **argv) {
       // We did not receive the expected structure
       throw cta::exception::Exception(std::string("Unexpected result from xattr query: ") + respStr);
     }
-    std::string retrieveRequestId = reResult[1];
+    retrieveRequestId = reResult[1];
+  } catch (cta::exception::Exception & ex) {
+    std::string errFileName = options.error_dir + '/' + "XATTRGET2_" + options.subdir + '_' + options.file;
+    std::cerr << "ERROR: failed to get request Id for file " << fileName << " full logs in " << errFileName << std::endl;
+    std::ofstream errFile(errFileName, std::ios::out | std::ios::app);
+    errFile << ex.what();
+  }
+  try {
     std::vector<std::string> files = { retrieveRequestId, fileName };
     XrdCl::PrepareFlags::Flags flags = XrdCl::PrepareFlags::Cancel;
+    XrdCl::Buffer *respPtr = nullptr;
     auto abortStatus = xrdfs.Prepare(files, flags, 0, respPtr, 0 /* timeout */);
+    // Ensure proper memory management for the response buffer (it is our responsilibity to free it, we delegate to the unique_ptr).
+    std::unique_ptr<XrdCl::Buffer> respUP(respPtr);
+    respPtr = nullptr;
     cta::exception::XrootCl::throwOnError(abortStatus, "Error during XrdCl::Prepare");
   } catch (cta::exception::Exception & ex) {
-    std::cerr << "Received exception: " << ex.what() << std::endl;
+    std::string errFileName = options.error_dir + '/' + "PREPAREABORT_" + options.subdir + '_' + options.file;
+    std::cerr << "ERROR: failed to get request Id for file " << fileName << " full logs in " << errFileName << std::endl;
+    std::ofstream errFile(errFileName, std::ios::out | std::ios::app);
+    errFile << ex.what();
   }
   return 0;
 }

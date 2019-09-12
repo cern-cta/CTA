@@ -423,6 +423,7 @@ echo "$(date +%s): Waiting for retrieve queues to be cleared:"
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
 REMAINING_REQUESTS=`admin_cta --json sq | jq -r '.[] | select (.mountType == "RETRIEVE") | [ .queuedFiles | tonumber ] | reduce .[] as $n (0;.+$n)'`
+echo "Remaining requests: ${REMAINING_REQUESTS}"
 # Prevent the result from being empty
 if [ -z $REMAINING_REQUESTS ]; then REMAINING_REQUESTS='0'; fi 
 while test ${REMAINING_REQUESTS} -gt 0; do
@@ -442,12 +443,14 @@ while test ${REMAINING_REQUESTS} -gt 0; do
 done
 
 # Check that the files were not retrieved
-echo -n "Checking restaged files. Found: "
+echo "Checking restaged files..."
 RESTAGEDFILES=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  (( RESTAGEDFILES += $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+  RF=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l)
+  echo "Restaged files in directory ${subdir}: ${RF}"
+  (( RESTAGEDFILES += ${RF} ))
 done
-echo ${RESTAGEDFILES}
+echo "Total restaged files found: ${RESTAGEDFILES}"
 
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   # there were some prepare errors
