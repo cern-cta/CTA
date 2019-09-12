@@ -3,8 +3,8 @@
 # Migration tools parameters
 #EOSINSTANCE=ctaeos
 #EOS_CMD="/usr/bin/eos root://${EOSINSTANCE}"
-EOS_CMD="/usr/bin/eos -r 2 2"
-EOS_TEST_DIR_INJECT=/usr/bin/eos-test-dir-inject
+EOS_CMD="/usr/bin/eos"
+EOS_TEST_DIR_INJECT="sudo --user=daemon /usr/bin/eos-test-dir-inject"
 CONFIG_FILE=/etc/cta/castor-migration.conf
 TMPFILE=/tmp/eos-test-inject-sh.$$
 
