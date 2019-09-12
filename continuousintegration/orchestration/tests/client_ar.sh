@@ -425,8 +425,8 @@ WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
 REMAINING_REQUESTS=`admin_cta --json sq | jq -r '.[] | select (.mountType == "RETRIEVE") | [ .queuedFiles | tonumber ] | reduce .[] as $n (0;.+$n)'`
 echo "Remaining requests: ${REMAINING_REQUESTS}"
 # Prevent the result from being empty
-if [ -z $REMAINING_REQUESTS ]; then REMAINING_REQUESTS='0'; fi 
-while test ${REMAINING_REQUESTS} -gt 0; do
+if [ -z "$REMAINING_REQUESTS" ]; then REMAINING_REQUESTS='0'; fi 
+while test "${REMAINING_REQUESTS}" -gt 0; do
   echo "$(date +%s): Waiting for retrieve queues to be cleared: Seconds passed = ${SECONDS_PASSED}"
   echo "${REMAINING_REQUESTS} requests remaining."
   sleep 1
