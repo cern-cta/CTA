@@ -37,6 +37,7 @@ fi
 echo
 echo "Launching grpc_dir_inject.sh on ctaeos pod"
 kubectl -n ${NAMESPACE} cp grpc_dir_inject.sh ctaeos:/root/grpc_dir_inject.sh
+kubectl -n ${NAMESPACE} exec ctaeos -- chmod 755 /root/grpc_dir_inject.sh
 kubectl -n ${NAMESPACE} exec ctaeos -- sudo -u daemon bash /root/grpc_dir_inject.sh || exit 1
 
 exit 0
