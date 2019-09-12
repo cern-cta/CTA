@@ -108,7 +108,7 @@ done
 nbDestinationTape=${#destinationTapes[@]}
 
 # Compute the number of files to copy and the size of each file
-fileSizeToCopy=`perl -e "print int((${SIZE_OF_TAPES} / ${NB_FILES_PER_TAPE}) * 1000)"` 
+fileSizeToCopy=`perl -e "use POSIX; print int( ceil((( (${SIZE_OF_TAPES} * 1000) - ((6 * 80) / 1000)) / ${NB_FILES_PER_TAPE})) )"` 
 nbFilesToCopy=$(($NB_FILES_PER_TAPE * $nbTapesToRepack))
 
 echo 
@@ -127,9 +127,8 @@ allPid=()
 for vid in ${tapesToRepack[@]}
 do
   echo "Launching repack requests on vid $vid"
-  bash /root/repack_systemtest.sh -v $vid -b ${REPACK_BUFFER_URL} &
+  bash /root/repack_systemtest.sh -v $vid -b ${REPACK_BUFFER_URL} -t 500 &
   allPid+=($!)
-  #admin_cta repack add --vid $vid -m -b root://ctaeos//eos/ctaeos/repack
 done
 
 oneRepackFailed=0

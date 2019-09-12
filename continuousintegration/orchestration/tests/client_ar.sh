@@ -234,7 +234,8 @@ while test 0 != ${ARCHIVING}; do
 
   ARCHIVING=$((${TO_BE_ARCHIVED} - ${ARCHIVED}))
   NB_TAPE_NOT_FULL=`admin_cta --json ta ls --all | jq "[.[] | select(.full == false)] | length"`
-  if test ${NB_TAPE_NOT_FULL} == 0; then
+  if [[ ${NB_TAPE_NOT_FULL} == 0 ]]
+  then
     echo "$(date +%s): All tapes are full, exiting archiving loop"
     break
   fi

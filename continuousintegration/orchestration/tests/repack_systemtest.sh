@@ -12,7 +12,7 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>] [-a] [m]
+Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>] [-a] [-m] [-d]
 (bufferURL example : /eos/ctaeos/repack)
 eosinstance : the name of the ctaeos instance to be used (default ctaeos)
 timeout : the timeout in seconds to wait for the repack to be done

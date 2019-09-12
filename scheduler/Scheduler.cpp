@@ -485,7 +485,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     }
   }
   double elapsedTime = 0;
-  bool stopExpansion = false;
+  bool expansionTimeReached = false;
   
   std::list<common::dataStructures::StorageClass> storageClasses;
   if(repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies)
@@ -494,12 +494,11 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
   uint64_t nbRetrieveSubrequestsQueued = 0;
   
-  while(archiveFilesForCatalogue.hasMore() && !stopExpansion) {
+  while(archiveFilesForCatalogue.hasMore() && !expansionTimeReached) {
     size_t filesCount = 0;
     uint64_t maxAddedFSeq = 0;
     std::list<SchedulerDatabase::RepackRequest::Subrequest> retrieveSubrequests;
-    while(filesCount < c_defaultMaxNbFilesForRepack && !stopExpansion && archiveFilesForCatalogue.hasMore())
-    {
+    while(filesCount < c_defaultMaxNbFilesForRepack && !expansionTimeReached && archiveFilesForCatalogue.hasMore()){
       filesCount++;
       fSeq++;
       retrieveSubrequests.push_back(cta::SchedulerDatabase::RepackRequest::Subrequest());
@@ -617,7 +616,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
           retrieveSubRequest.fileBufferURL = dirBufferURL.str() + fileName.str();
         }
       }
-      stopExpansion = (elapsedTime >= m_repackRequestExpansionTimeLimit);
+      expansionTimeReached = (elapsedTime >= m_repackRequestExpansionTimeLimit);
     }   
     // Note: the highest fSeq will be recorded internally in the following call.
     // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted). 
@@ -631,7 +630,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     }
     timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
     {
-      if(!stopExpansion && archiveFilesForCatalogue.hasMore()){
+      if(!expansionTimeReached && archiveFilesForCatalogue.hasMore()){
         log::ScopedParamContainer params(lc);
         params.add("tapeVid",repackInfo.vid);
         timingList.addToLog(params);
@@ -643,13 +642,12 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   params.add("tapeVid",repackInfo.vid);
   timingList.addToLog(params);
   if(archiveFilesForCatalogue.hasMore()){
-    if(stopExpansion){
-      repackRequest->m_dbReq->requeueInToExpandQueue(lc);
-      lc.log(log::INFO,"Expansion time reached, Repack Request requeued in ToExpand queue.");
-    }
+    repackRequest->m_dbReq->requeueInToExpandQueue(lc);
+    lc.log(log::INFO,"Repack Request requeued in ToExpand queue.");
   } else {
     if(totalStatsFile.totalFilesToRetrieve == 0 || nbRetrieveSubrequestsQueued == 0){
       //If no files have been retrieve, the repack buffer will have to be deleted
+      //TODO : in case of Repack tape repair, we should not try to delete the buffer
       deleteRepackBuffer(std::move(dir));      
     }
     repackRequest->m_dbReq->expandDone();

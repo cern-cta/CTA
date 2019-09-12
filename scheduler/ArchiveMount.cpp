@@ -169,6 +169,12 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       job = std::move(successfulArchiveJobs.front());
       successfulArchiveJobs.pop();
       if (!job.get()) continue;
+      cta::log::ScopedParamContainer params(logContext);
+      params.add("tapeVid",job->tapeFile.vid)
+            .add("mountType",cta::common::dataStructures::toString(job->m_mount->getMountType()))
+            .add("fileId",job->archiveFile.archiveFileID)
+            .add("type", "ReportSuccessful");
+      logContext.log(cta::log::INFO, "In cta::ArchiveMount::reportJobsBatchTransferred(), archive job succesful.");
       tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
       files++;
       bytes+=job->archiveFile.fileSize;

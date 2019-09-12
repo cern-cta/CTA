@@ -3630,6 +3630,14 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     if (osdbJob->isRepack) {
       try {
         osdbJob->m_jobSucceedForRepackReporter->wait();
+        {
+          cta::log::ScopedParamContainer spc(lc);
+          std::string vid = osdbJob->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid;
+          spc.add("tapeVid",vid)
+             .add("mountType","RetrieveForRepack")
+             .add("fileId",osdbJob->archiveFile.archiveFileID);
+          lc.log(cta::log::INFO,"In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
+        }
         mountPolicy = osdbJob->m_jobSucceedForRepackReporter->m_MountPolicy;
         jobsToRequeueForRepackMap[osdbJob->m_repackInfo.repackRequestAddress].emplace_back(osdbJob);
       } catch (cta::exception::Exception & ex) {
@@ -3644,6 +3652,15 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     } else {
       try {
         osdbJob->m_jobDelete->wait();
+        {
+          //Log for monitoring
+          cta::log::ScopedParamContainer spc(lc);
+          std::string vid = osdbJob->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid;
+          spc.add("tapeVid",vid)
+             .add("mountType","RetrieveForUser")
+             .add("fileId",osdbJob->archiveFile.archiveFileID);
+          lc.log(cta::log::INFO,"In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
+        }
         osdbJob->retrieveRequest.lifecycleTimings.completed_time = time(nullptr);
         std::string requestAddress = osdbJob->m_retrieveRequest.getAddressIfSet();
         
@@ -3652,7 +3669,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
         cta::common::dataStructures::LifecycleTimings requestTimings = osdbJob->retrieveRequest.lifecycleTimings;
         log::ScopedParamContainer params(lc);
         params.add("requestAddress",requestAddress)
-              .add("archiveFileID",osdbJob->archiveFile.archiveFileID)
+              .add("fileId",osdbJob->archiveFile.archiveFileID)
               .add("vid",osdbJob->m_retrieveMount->mountInfo.vid)
               .add("timeForSelection",requestTimings.getTimeForSelection())
               .add("timeForCompletion", requestTimings.getTimeForCompletion());

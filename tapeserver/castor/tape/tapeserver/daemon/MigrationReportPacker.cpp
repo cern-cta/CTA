@@ -56,7 +56,7 @@ MigrationReportPacker::~MigrationReportPacker(){
 //reportCompletedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportCompletedJob(
-std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) {
+  std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) {
   std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportSuccessful");

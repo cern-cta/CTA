@@ -47,7 +47,7 @@ kubectl -n ${NAMESPACE} cp repack_generate_report.sh client:/root/repack_generat
 
 NB_FILES_PER_TAPE=1000
 
-SIZE_OF_TAPES=2
+SIZE_OF_TAPES=10
 
 REPACK_BUFFER_URL=/eos/ctaeos/repack
 echo "Creating the repack buffer URL directory (${REPACK_BUFFER_URL})"
