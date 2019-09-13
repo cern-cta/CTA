@@ -227,9 +227,7 @@ add_custom_target(helgrind
 add_custom_target(shortunittests
   tests/cta-unitTests
   COMMAND tests/cta-unitTests-multiProcess
-  COMMAND echo ${PROJECT_SOURCE_DIR}/python/eosfstgcd/test_ctafstgcd.py
-  COMMAND ${PROJECT_SOURCE_DIR}/python/eosfstgcd/test_ctafstgcd.py
-  
+
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess
   COMMENT "Running unit tests" VERBATIM)
 
