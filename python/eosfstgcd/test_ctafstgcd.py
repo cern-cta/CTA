@@ -570,6 +570,57 @@ class GcTestCase(unittest.TestCase):
     self.assertEqual(1, eos.nbstagerrm)
     self.assertEqual(1, eos.nbattrset)
 
+  def test_run_only_once_one_fs_one_subdir_one_file_free_space_absolutely_old_file(self):
+    mockfile = MockTreeNode("90abcdef")
+    mocksubdir = MockTreeNode("12345678", [mockfile])
+    mockfs = MockTreeNode("filesystem1", [mocksubdir])
+    mocktree = MockTreeNode("/", [mockfs])
+    filesizeandctime = ctafstgcd.FileSizeAndCtime()
+    filesizeandctime.sizebytes = 1000
+    filesizeandctime.ctime = time.time() - self.config.absolutemaxagesecs - 1
+    disk = MockDisk(mocktree, self.freebytes, filesizeandctime)
+
+    filesystem1 = {
+      "path" : "/filesystem1",
+      "host" : self.fqdn
+    }
+    filesystems = [filesystem1]
+    eos = MockEos(filesystems)
+
+    self.assertEqual(0, disk.nblistdir)
+    self.assertEqual(0, disk.nbisdir)
+    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(0, disk.nbgetfreebytes)
+    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(0, eos.nbfsls)
+    self.assertEqual(0, eos.nbstagerrm)
+    self.assertEqual(0, eos.nbattrset)
+
+    self.config.minfreebytes = self.freebytes + 1
+
+    gc = ctafstgcd.Gc(self.log, self.fqdn, disk, eos, self.config)
+
+    self.assertEqual(0, disk.nblistdir)
+    self.assertEqual(0, disk.nbisdir)
+    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(0, disk.nbgetfreebytes)
+    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(0, eos.nbfsls)
+    self.assertEqual(0, eos.nbstagerrm)
+    self.assertEqual(0, eos.nbattrset)
+
+    runonlyonce = True
+    gc.run(runonlyonce)
+
+    self.assertEqual(2, disk.nblistdir)
+    self.assertEqual(1, disk.nbisdir)
+    self.assertEqual(1, disk.nbisfile)
+    self.assertEqual(1, disk.nbgetfreebytes) # file
+    self.assertEqual(1, disk.nbgetfilesizeandctime)
+    self.assertEqual(1, eos.nbfsls)
+    self.assertEqual(1, eos.nbstagerrm)
+    self.assertEqual(1, eos.nbattrset)
+
   def test_run_only_once_one_fs_one_subdir_one_file_free_space_old_file(self):
     mockfile = MockTreeNode("90abcdef")
     mocksubdir = MockTreeNode("12345678", [mockfile])
