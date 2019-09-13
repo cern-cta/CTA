@@ -3,7 +3,6 @@ stages:
   - build:rpm
   - build:dockerimage
   - rename:dockerimage
-  - migrationtest
   - test
   - regressions
   - shouldfail
