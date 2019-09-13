@@ -57,6 +57,7 @@ class MockDisk:
     self.nbgetfreebytes = 0
 
   def listdir(self, path):
+    print "listdir path={}".format(path)
     self.nblistdir = self.nblistdir + 1
 
     pathlist = self.pathtolist(path)
@@ -373,7 +374,7 @@ class GcTestCase(unittest.TestCase):
     self.assertEqual(2, disk.nblistdir) # ls of fs and subdir
     self.assertEqual(1, disk.nbisdir)
     self.assertEqual(0, disk.nbisfile)
-    self.assertEqual(1, disk.nbgetfreebytes) # subdir
+    self.assertEqual(0, disk.nbgetfreebytes)
     self.assertEqual(0, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(0, eos.nbstagerrm)
@@ -415,10 +416,10 @@ class GcTestCase(unittest.TestCase):
     runonlyonce = True
     gc.run(runonlyonce)
 
-    self.assertEqual(1, disk.nblistdir)
+    self.assertEqual(2, disk.nblistdir)
     self.assertEqual(1, disk.nbisdir)
     self.assertEqual(0, disk.nbisfile)
-    self.assertEqual(1, disk.nbgetfreebytes) # subdir
+    self.assertEqual(0, disk.nbgetfreebytes) # subdir
     self.assertEqual(0, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(0, eos.nbstagerrm)
@@ -461,11 +462,11 @@ class GcTestCase(unittest.TestCase):
     runonlyonce = True
     gc.run(runonlyonce)
 
-    self.assertEqual(1, disk.nblistdir)
+    self.assertEqual(2, disk.nblistdir)
     self.assertEqual(1, disk.nbisdir)
-    self.assertEqual(0, disk.nbisfile)
-    self.assertEqual(1, disk.nbgetfreebytes) # subdir
-    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(1, disk.nbisfile)
+    self.assertEqual(1, disk.nbgetfreebytes)
+    self.assertEqual(1, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(0, eos.nbstagerrm)
     self.assertEqual(0, eos.nbattrset)
@@ -512,7 +513,7 @@ class GcTestCase(unittest.TestCase):
     self.assertEqual(2, disk.nblistdir)
     self.assertEqual(1, disk.nbisdir)
     self.assertEqual(1, disk.nbisfile)
-    self.assertEqual(2, disk.nbgetfreebytes) # subdir and file
+    self.assertEqual(1, disk.nbgetfreebytes) # file
     self.assertEqual(1, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(0, eos.nbstagerrm)
@@ -563,7 +564,7 @@ class GcTestCase(unittest.TestCase):
     self.assertEqual(2, disk.nblistdir)
     self.assertEqual(1, disk.nbisdir)
     self.assertEqual(1, disk.nbisfile)
-    self.assertEqual(2, disk.nbgetfreebytes) # subdir and file
+    self.assertEqual(1, disk.nbgetfreebytes) # file
     self.assertEqual(1, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(1, eos.nbstagerrm)
@@ -611,11 +612,11 @@ class GcTestCase(unittest.TestCase):
     runonlyonce = True
     gc.run(runonlyonce)
 
-    self.assertEqual(1, disk.nblistdir)
+    self.assertEqual(2, disk.nblistdir)
     self.assertEqual(1, disk.nbisdir)
-    self.assertEqual(0, disk.nbisfile)
+    self.assertEqual(1, disk.nbisfile)
     self.assertEqual(1, disk.nbgetfreebytes)
-    self.assertEqual(0, disk.nbgetfilesizeandctime)
+    self.assertEqual(1, disk.nbgetfilesizeandctime)
     self.assertEqual(1, eos.nbfsls)
     self.assertEqual(0, eos.nbstagerrm)
     self.assertEqual(0, eos.nbattrset)
