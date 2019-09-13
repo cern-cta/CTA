@@ -914,7 +914,7 @@ void PostgresCatalogue::beginCreateTemporarySetDeferred(rdbms::Conn &conn) const
       "TEMP_TAPE_FILE_BATCH(ARCHIVE_FILE_ID);"
     "SET CONSTRAINTS ARCHIVE_FILE_DIN_DFI_UN DEFERRED";
 
-  conn.executeNonQuery(sql_temptables);
+  conn.executeNonQueries(sql_temptables);
 }
 
 
