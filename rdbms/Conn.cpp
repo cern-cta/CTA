@@ -18,8 +18,10 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
-#include "rdbms/ConnPool.hpp"
 #include "rdbms/Conn.hpp"
+#include "rdbms/ConnPool.hpp"
+#include "rdbms/rdbms.hpp"
+#include "rdbms/UnexpectedSemicolon.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -142,6 +144,11 @@ void Conn::executeNonQueries(const std::string &sqlStmts) {
 //------------------------------------------------------------------------------
 void Conn::executeNonQuery(const std::string &sql) {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    if(std::string::npos != sql.find(";")) {
+      UnexpectedSemicolon ex;
+      ex.getMessage() << "Encountered unexpected semicolon in " << getSqlForException(sql);
+      throw ex;
+    }
     m_connAndStmts->conn->executeNonQuery(sql);
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
