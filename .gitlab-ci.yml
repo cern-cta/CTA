@@ -149,23 +149,6 @@ ctageneric_docker_rename:
     - cd continuousintegration/ci_helpers/
     - ./rename_tag.sh
 
-migration:
-  except:
-    - tags
-  stage: migrationtest
-  retry: 1
-  script:
-    - export NAMESPACE="migration-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
-    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/migration.sh -O -D -t 2400
-  artifacts:
-    when: always
-    expire_in: 30 days
-    paths:
-    - pod_logs
-  tags:
-    - kubernetes
-    - mhvtl
-    
 archiveretrieve:
   except:
     - tags
