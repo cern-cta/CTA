@@ -220,6 +220,7 @@ class GcTestCase(unittest.TestCase):
     self.config.mgmhost = 'mgmhost'
     self.config.minfreebytes = 0
     self.config.gcagesecs = 1000
+    self.config.absolutemaxagesecs = 604800
     self.config.queryperiodsecs = 0
     self.config.mainloopperiodsecs = 0
     self.config.xrdsecssskt = ''
