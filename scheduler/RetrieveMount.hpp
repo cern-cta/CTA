@@ -233,7 +233,7 @@ namespace cta {
      * A pointer to the file catalogue.
      */
     cta::catalogue::Catalogue &m_catalogue; 
-
+    
   }; // class RetrieveMount
 
 } // namespace cta

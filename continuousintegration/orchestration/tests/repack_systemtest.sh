@@ -5,6 +5,8 @@ EOSINSTANCE=ctaeos
 #default Repack timeout
 WAIT_FOR_REPACK_TIMEOUT=300
 
+REPORT_DIRECTORY=/var/log
+
 die() {
   echo "$@" 1>&2
   test -z $TAILPID || kill ${TAILPID} &> /dev/null
@@ -12,10 +14,11 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>] [-a] [-m] [-d]
+Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m] [-d]
 (bufferURL example : /eos/ctaeos/repack)
-eosinstance : the name of the ctaeos instance to be used (default ctaeos)
+eosinstance : the name of the ctaeos instance to be used (default : $EOSINSTANCE)
 timeout : the timeout in seconds to wait for the repack to be done
+reportDirectory : the directory to generate the report of the repack test (default : $REPORT_DIRECTORY)
 -a : Launch a repack just add copies workflow
 -m : Launch a repack just move workflow
 -d : Force a repack on a disabled tape (adds --disabled to the repack add command)
@@ -42,7 +45,7 @@ then
 fi;
 
 DISABLED_TAPE_FLAG=""
-while getopts "v:e:b:t:amgd" o; do
+while getopts "v:e:b:t:r:amd" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -62,8 +65,8 @@ while getopts "v:e:b:t:amgd" o; do
     m)
       MOVE_ONLY="-m"
       ;;
-    g)
-      GENERATE_REPORT=0
+    r)
+      REPORT_DIRECTORY=${OPTARG}
       ;;
     d)
       DISABLED_TAPE_FLAG="--disabledtape"
@@ -121,14 +124,20 @@ while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] 
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_REPACK_TIMEOUT}; then
     echo "Timed out after ${WAIT_FOR_REPACK_TIMEOUT} seconds waiting for tape ${VID_TO_REPACK} to be repacked"
+    exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} -r ${REPORT_DIRECTORY} ${ADD_COPIES_ONLY} &
+    wait $!
     exit 1
   fi
 done
 if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.status == "Failed")] | length'`; then
     echo "Repack failed for tape ${VID_TO_REPACK}."
+    exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} -r ${REPORT_DIRECTORY} ${ADD_COPIES_ONLY} &
+    wait $!
     exit 1
 fi
 
 echo "Repack request on VID ${VID_TO_REPACK} succeeded."
 
-exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} ${ADD_COPIES_ONLY} || exit 0
+exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} -r ${REPORT_DIRECTORY} ${ADD_COPIES_ONLY} &
+wait $!
+exit 0

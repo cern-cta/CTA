@@ -54,6 +54,9 @@ then
   die "No repack request for this VID."
 fi;
 
+echo "Creating the report directory ${REPORT_DIRECTORY}"
+mkdir -p ${REPORT_DIRECTORY} || die "Unable to create the directory for report generation"
+
 echo "Generation of a repack report of the vid ${VID}"
 
 DATE=`date +%d-%m-%y-%H:%M:%S`
@@ -64,6 +67,7 @@ NOT_REPACKED_JSON_PATH=${REPORT_DIRECTORY}/${VID}_report_not_repacked_${DATE}.js
 SELF_REPACKED_JSON_PATH=${REPORT_DIRECTORY}/${VID}_report_self_repacked_${DATE}.json
 REPACKED_MOVE_JSON_PATH=${REPORT_DIRECTORY}/${VID}_report_repacked_move_${DATE}.json
 REPACK_ADD_COPIES_JSON_PATH=${REPORT_DIRECTORY}/${VID}_report_repack_add_copies_${DATE}.json
+STDOUT_REPORT_PATH=${REPORT_DIRECTORY}/${VID}_stdout_report.txt
 
 
 echo "1. Generate archive file ls result into ${ARCHIVE_FILE_LS_RESULT_PATH} file..."
@@ -104,7 +108,7 @@ then
   if [ ${NB_NON_REPACKED_FILES} -ne 0 ]
   then
     header="ArchiveID\tFSeq\tSize"
-    { echo -e $header; jq -r '.[] | [.af.archiveId,.tf.fSeq, .af.size] | @tsv' ${NOT_REPACKED_JSON_PATH}; } | column -t
+    { echo -e $header; jq -r '.[] | [.af.archiveId,.tf.fSeq, .af.size] | @tsv' ${NOT_REPACKED_JSON_PATH}; } | column -t | tee --append ${STDOUT_REPORT_PATH}
   fi;
 fi;
  
@@ -114,7 +118,7 @@ echo "Number of self-repacked files : ${NB_SELF_REPACKED_FILES}"
 if [ ${NB_SELF_REPACKED_FILES} -ne 0 ]
 then
   header="ArchiveID\tFSeq\tSize"
-  { echo -e $header; jq -r '.[] | [.af.archiveId, .tf.fSeq, .af.size] | @tsv' ${SELF_REPACKED_JSON_PATH}; } | column -t
+  { echo -e $header; jq -r '.[] | [.af.archiveId, .tf.fSeq, .af.size] | @tsv' ${SELF_REPACKED_JSON_PATH}; } | column -t | tee --append ${STDOUT_REPORT_PATH}
 fi; 
 echo
 
@@ -123,7 +127,7 @@ echo "Number of repacked (moved) files : ${NB_REPACKED_MOVE_FILES}"
 if [ ${NB_REPACKED_MOVE_FILES} -ne 0 ]
 then
   header="DestinationVID\tNbFiles\ttotalSize\n"
-  { echo -e $header; jq -r 'group_by(.tf.supersededByVid)[] | [(.[0].tf.supersededByVid),([.[] | .tf.supersededByFSeq] | length),(reduce [.[] | .af.size | tonumber][] as $currentSize (0; . + $currentSize))] | @tsv' ${REPACKED_MOVE_JSON_PATH}; } | column -t
+  { echo -e $header; jq -r 'group_by(.tf.supersededByVid)[] | [(.[0].tf.supersededByVid),([.[] | .tf.supersededByFSeq] | length),(reduce [.[] | .af.size | tonumber][] as $currentSize (0; . + $currentSize))] | @tsv' ${REPACKED_MOVE_JSON_PATH}; } | column -t | tee --append ${STDOUT_REPORT_PATH}
 fi;
 echo
 
@@ -132,7 +136,8 @@ echo "Number of copied files : $NB_COPIED_FILES"
 if [ ${NB_COPIED_FILES} -ne 0 ]
 then
   header="DestinationVID\tNbFiles\ttotalSize\n"
-  { echo -e $header; jq -r 'group_by(.tf.vid)[] | [(.[0].tf.vid),([.[] | .tf.fSeq] | length),(reduce [.[] | .af.size | tonumber][] as $currentSize (0; . + $currentSize))] | @tsv' ${REPACK_ADD_COPIES_JSON_PATH}; } | column -t
+  { echo -e $header; jq -r 'group_by(.tf.vid)[] | [(.[0].tf.vid),([.[] | .tf.fSeq] | length),(reduce [.[] | .af.size | tonumber][] as $currentSize (0; . + $currentSize))] | @tsv' ${REPACK_ADD_COPIES_JSON_PATH}; } | column -t | tee --append ${STDOUT_REPORT_PATH}
 fi;
 
 echo "End of the repack report"
+exit 0
