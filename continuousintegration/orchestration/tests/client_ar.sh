@@ -398,6 +398,8 @@ fi
 requestsTotal=`admin_cta --json sq | jq -r '.[] | select (.mountType == "RETRIEVE") | [ .queuedFiles | tonumber ] | reduce .[] as $n (0;.+$n)'`
 echo "Retrieve requests count: ${requestsTotal}"
 filesCount=`wc -l ${STATUS_FILE} | cut -d " " -f 1`
+echo -n "Status file wc: "
+wc -l ${STATUS_FILE}
 echo "Files count: ${filesCount}"
 if [ ${requestsTotal} -ne ${filesCount} ]; then
   echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
