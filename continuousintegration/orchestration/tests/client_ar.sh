@@ -439,7 +439,7 @@ while [[ ${REMAINING_REQUESTS} > 0 ]]; do
 
   REMAINING_REQUESTS=`admin_cta --json sq | jq -r '.[] | select (.mountType == "RETRIEVE") | [ .queuedFiles | tonumber ] | reduce .[] as $n (0;.+$n)'`;
   # Prevent the result from being empty
-  if [ -z $REMAINING_REQUESTS ]; then REMAINING_REQUESTS='0'; fi
+  if [ -z "$REMAINING_REQUEST" ]; then REMAINING_REQUESTS='0'; fi
 done
 
 # Check that the files were not retrieved
