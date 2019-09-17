@@ -34,7 +34,6 @@ enum ObjectType {
   RepackRequest_t = 11;
   RepackIndex_t = 12;
   RepackQueue_t = 13;
-  DiskSystemSpaceRegister_t = 14;
   GenericObject_t = 1000;
 }
 

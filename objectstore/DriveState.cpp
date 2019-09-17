@@ -268,6 +268,9 @@ void DriveState::setConfig(const cta::tape::daemon::TapedConfiguration& tapedCon
   fillConfig(config->fileCatalogConfigFile);
 }
 
+//------------------------------------------------------------------------------
+// DriveState::setTpConfig())
+//------------------------------------------------------------------------------
 void DriveState::setTpConfig(const cta::tape::daemon::TpconfigLine& configLine){
   m_payload.set_dev_file_name(configLine.devFilename);
   m_payload.set_raw_library_slot(configLine.rawLibrarySlot);
@@ -350,6 +353,9 @@ std::string DriveState::dump() {
   return headerDump;
 }
 
+//------------------------------------------------------------------------------
+// DriveState::commit()
+//------------------------------------------------------------------------------
 void DriveState::commit(){
   checkPayloadWritable();
   m_payload.set_cta_version(CTA_VERSION);
