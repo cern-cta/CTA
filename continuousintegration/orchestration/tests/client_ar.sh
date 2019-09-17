@@ -395,7 +395,7 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
 fi
 
 # Ensure all requests files are queued
-requestsTotal=`admin_cta --json sq | jq -r '.[] | select (.mountType == "RETRIEVE") | [ .queuedFiles | tonumber ] | reduce .[] as $n (0;.+$n)'`
+requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber ) | reduce .[] as $n (0;.+$n)'`
 echo "Retrieve requests count: ${requestsTotal}"
 filesCount=`cat ${STATUS_FILE} | wc -l`
 echo -n "Status file wc: "
