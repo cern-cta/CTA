@@ -396,7 +396,7 @@ cta-fst-gcd is a daemon that runs on an EOS FST and garbage
 collects EOS disk copies that have been safely stored to tape.
 %files -n cta-fst-gcd
 %defattr(-,root,root)
-%attr(0755,root,root) /usr/bin/cta-fst-gcd
+%attr(0755,root,root) %{_bindir}/cta-fst-gcd
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-fst-gcd.1cta.gz
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-fst-gcd.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-fst-gcd.conf.example
