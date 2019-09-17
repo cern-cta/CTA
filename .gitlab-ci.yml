@@ -122,7 +122,7 @@ cta_valgrind:
   tags:
     - docker
 
-cta_rdbms_unit_tests_postgresql:
+dbunittests_postgresql:
   except:
     - tags
   stage: test
