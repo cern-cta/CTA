@@ -105,7 +105,8 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
 
     auto &dr      = m_driveList.front();
     auto  dr_item = record.mutable_drls_item();
-
+    
+    dr_item->set_cta_version(dr.ctaVersion);
     dr_item->set_logical_library(dr.logicalLibrary);
     dr_item->set_drive_name(dr.driveName);
     dr_item->set_host(dr.host);
@@ -121,7 +122,17 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_time_since_last_update(time(nullptr)-dr.lastUpdateTime);
     dr_item->set_current_priority(dr.currentPriority);
     dr_item->set_current_activity(dr.currentActivityAndWeight ? dr.currentActivityAndWeight.value().activity : "");
-
+    dr_item->set_dev_file_name(dr.devFileName);
+    dr_item->set_raw_library_slot(dr.rawLibrarySlot);
+    
+    auto driveConfig = dr_item->mutable_drive_config();
+    for(auto & driveConfigItem: dr.driveConfigItems){
+      auto driveConfigItemProto = driveConfig->Add();
+      driveConfigItemProto->set_category(driveConfigItem.category);
+      driveConfigItemProto->set_key(driveConfigItem.key);
+      driveConfigItemProto->set_value(driveConfigItem.value);
+      driveConfigItemProto->set_source(driveConfigItem.source);
+    }
     // set the time spent in the current state
     uint64_t drive_time = time(nullptr);
 

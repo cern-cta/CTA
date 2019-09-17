@@ -336,6 +336,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         obj.reset();
         // Get the list of vids for non failed tape files.
         std::set<std::string> candidateVids;
+        bool disabledTape = rr->getRepackInfo().forceDisabledTape;
         for (auto & j: rr->dumpJobs()) {
           if(j.status==RetrieveJobStatus::RJS_ToTransfer) {
             for (auto &tf: rr->getArchiveFile().tapeFiles) {
@@ -369,7 +370,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         // Back to the transfer case.
         std::string vid;
         try {
-          vid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore);
+          vid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, disabledTape);
         } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", rr->getArchiveFile().archiveFileID);

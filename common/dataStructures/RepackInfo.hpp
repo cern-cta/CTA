@@ -61,6 +61,7 @@ struct RepackInfo {
   uint64_t retrievedFiles;
   uint64_t archivedFiles;
   bool isExpandFinished;
+  bool forceDisabledTape;
 //  std::string tag;
 //  uint64_t totalFiles;
 //  uint64_t totalSize;

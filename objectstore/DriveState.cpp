@@ -19,6 +19,9 @@
 #include "DriveState.hpp"
 #include "GenericObject.hpp"
 #include <google/protobuf/util/json_util.h>
+#include <version.h>
+#include "common/SourcedParameter.hpp"
+#include "tapeserver/daemon/FetchReportOrFlushLimits.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -105,6 +108,12 @@ cta::common::dataStructures::DriveState DriveState::getState() {
   ret.currentVid                  = m_payload.currentvid();
   ret.currentTapePool             = m_payload.currenttapepool();
   ret.currentPriority             = m_payload.current_priority();
+  ret.ctaVersion                  = m_payload.cta_version();
+  for(auto & driveConfigItem: m_payload.drive_config()){
+    ret.driveConfigItems.push_back({driveConfigItem.category(),driveConfigItem.key(),driveConfigItem.value(),driveConfigItem.source()});
+  }
+  ret.devFileName = m_payload.dev_file_name();
+  ret.rawLibrarySlot = m_payload.raw_library_slot();
   if (m_payload.has_current_activity())
     ret.currentActivityAndWeight = 
       cta::common::dataStructures::DriveState::ActivityAndWeight{
@@ -172,6 +181,96 @@ void DriveState::setState(cta::common::dataStructures::DriveState& state) {
     m_payload.clear_next_activity();
     m_payload.clear_next_activity_weight();
   }
+}
+
+template <>
+void DriveState::setConfigValue<std::string>(cta::objectstore::serializers::DriveConfig * item, const std::string& value){
+  item->set_value(value);
+}
+
+template<>
+void DriveState::setConfigValue<uint64_t>(cta::objectstore::serializers::DriveConfig * item,const uint64_t & value){
+  item->set_value(std::to_string(value));
+}
+
+template<>
+void DriveState::setConfigValue<time_t>(cta::objectstore::serializers::DriveConfig * item,const time_t & value){
+  item->set_value(std::to_string(value));
+}
+
+template <typename T>
+cta::objectstore::serializers::DriveConfig * DriveState::createAndInitDriveConfig(cta::SourcedParameter<T>& sourcedParameter) {
+  auto item = m_payload.mutable_drive_config()->Add();
+  item->set_source(sourcedParameter.source());
+  item->set_category(sourcedParameter.category());
+  item->set_key(sourcedParameter.key());
+  return item;
+}
+
+template<>
+void DriveState::fillConfig<std::string>(cta::SourcedParameter<std::string> & sourcedParameter){
+  auto item = createAndInitDriveConfig(sourcedParameter);
+  setConfigValue(item,sourcedParameter.value());
+}
+
+template <>
+void DriveState::fillConfig<cta::tape::daemon::FetchReportOrFlushLimits>(cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits>& sourcedParameter){
+  auto itemFiles = createAndInitDriveConfig(sourcedParameter);
+  std::string key = sourcedParameter.key();
+  cta::utils::searchAndReplace(key,"Bytes","");
+  cta::utils::searchAndReplace(key,"Files","");
+  itemFiles->set_key(key.append("Files"));
+  setConfigValue(itemFiles, sourcedParameter.value().maxFiles);
+  
+  cta::utils::searchAndReplace(key,"Files","");
+  auto itemBytes = createAndInitDriveConfig(sourcedParameter);
+  itemBytes->set_key(key.append("Bytes"));
+  setConfigValue(itemBytes,sourcedParameter.value().maxBytes);
+}
+
+template<>
+void DriveState::fillConfig<uint64_t>(cta::SourcedParameter<uint64_t>& sourcedParameter){
+  auto item = createAndInitDriveConfig(sourcedParameter);
+  setConfigValue(item,sourcedParameter.value());
+}
+
+template<>
+void DriveState::fillConfig<time_t>(cta::SourcedParameter<time_t>& sourcedParameter){
+  auto item = createAndInitDriveConfig(sourcedParameter);
+  setConfigValue(item,sourcedParameter.value());
+}
+
+//------------------------------------------------------------------------------
+// DriveState::setConfig())
+//------------------------------------------------------------------------------
+void DriveState::setConfig(const cta::tape::daemon::TapedConfiguration& tapedConfiguration) {
+  cta::tape::daemon::TapedConfiguration * config = const_cast<cta::tape::daemon::TapedConfiguration*>(&tapedConfiguration);
+  
+  m_payload.mutable_drive_config()->Clear();
+  
+  fillConfig(config->daemonUserName);
+  fillConfig(config->daemonGroupName);
+  fillConfig(config->logMask);
+  fillConfig(config->tpConfigPath);
+  fillConfig(config->bufferSizeBytes);
+  fillConfig(config->bufferCount);
+  fillConfig(config->archiveFetchBytesFiles);
+  fillConfig(config->archiveFlushBytesFiles);
+  fillConfig(config->retrieveFetchBytesFiles);
+  fillConfig(config->mountCriteria);
+  fillConfig(config->nbDiskThreads);
+  fillConfig(config->useRAO);
+  fillConfig(config->wdScheduleMaxSecs);
+  fillConfig(config->wdMountMaxSecs);
+  fillConfig(config->wdNoBlockMoveMaxSecs);
+  fillConfig(config->wdIdleSessionTimer);
+  fillConfig(config->backendPath);
+  fillConfig(config->fileCatalogConfigFile);
+}
+
+void DriveState::setTpConfig(const cta::tape::daemon::TpconfigLine& configLine){
+  m_payload.set_dev_file_name(configLine.devFilename);
+  m_payload.set_raw_library_slot(configLine.rawLibrarySlot);
 }
 
 //------------------------------------------------------------------------------
@@ -251,8 +350,10 @@ std::string DriveState::dump() {
   return headerDump;
 }
 
+void DriveState::commit(){
+  checkPayloadWritable();
+  m_payload.set_cta_version(CTA_VERSION);
+  ObjectOps<serializers::DriveState, serializers::DriveState_t>::commit();
+}
+
 }} // namespace cta::objectstore
-
-
-
-

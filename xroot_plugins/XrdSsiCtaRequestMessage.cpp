@@ -460,9 +460,9 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    }
    
    // Activity value is a string. The parameter might be present or not.
-   try {
+   if(notification.file().xattr().find("activity") != notification.file().xattr().end()) {
      request.activity = notification.file().xattr().at("activity");
-   } catch (...) {}
+   }
 
    cta::utils::Timer t;
 
@@ -472,10 +472,9 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
-   try {
-     // Print out the received activity in the logs for the moment.
-     params.add("activity", notification.file().xattr().at("activity"));
-   } catch (...) {}
+   if(static_cast<bool>(request.activity)) {
+     params.add("activity", request.activity.value());
+   }
    m_lc.log(cta::log::INFO, "In RequestMessage::processPREPARE(): queued file for retrieve.");
 
    // Set response type
@@ -1131,10 +1130,12 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
    } else {
       type = cta::common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
    }
+   
+   bool forceDisabledTape = has_flag(OptionBoolean::DISABLED);
 
    // Process each item in the list
    for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL,  type, mountPolicy , m_lc);
+      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL, type, mountPolicy, forceDisabledTape, m_lc);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

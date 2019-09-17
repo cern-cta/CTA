@@ -218,6 +218,13 @@ message DiskSpaceReservation {
   required uint64 reserved_bytes = 5110;
 }
 
+message DriveConfig {
+  required string category = 13000;
+  required string key = 13001;
+  required string value = 13002;
+  required string source = 13003;
+}
+
 message DriveState {
   required string drivename = 5000;
   required string host = 5001;
@@ -243,6 +250,7 @@ message DriveState {
   required bool desiredUp = 5019;
   required bool desiredForceDown = 5020;
   optional string currentvid = 5021;
+  optional string cta_version = 5035;
   optional uint64 current_priority = 5028;
   optional string current_activity = 5029;
   optional double current_activity_weight = 5030;
@@ -254,6 +262,9 @@ message DriveState {
   optional string next_activity = 5032;
   optional double next_activity_weight = 5033;
   repeated DiskSpaceReservation disk_space_reservations = 5034;
+  optional string dev_file_name = 5036;
+  optional string raw_library_slot = 5037;
+  repeated DriveConfig drive_config = 5038;
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 
@@ -406,6 +417,7 @@ message RetrieveRequestRepackInfo {
   required string repack_request_address = 9520;
   required string file_buffer_url = 9530;
   required uint64 fseq = 9540;
+  required bool force_disabled_tape = 9560;
 }
 
 // The different timings of the lifecycle of a RetrieveRequest (creation time, first select time, request complete)
@@ -591,6 +603,7 @@ message RepackRequest {
   required bool is_expand_finished = 11561;
   required bool is_expand_started = 11562;
   required MountPolicy mount_policy = 11563;
+  required bool force_disabled_tape = 11564;
   repeated RepackSubRequestPointer subrequests = 11570;
 }
 

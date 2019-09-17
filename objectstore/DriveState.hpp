@@ -21,6 +21,7 @@
 #include "ObjectOps.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/DriveNextState.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -52,11 +53,41 @@ public:
   void substractDiskSpaceReservation(const std::string & diskSystemName, uint64_t bytes);
   void resetDiskSpaceReservation();
   
+  void setConfig(const cta::tape::daemon::TapedConfiguration &tapedConfiguration);
+  void setTpConfig(const cta::tape::daemon::TpconfigLine &tpConfigLine);
   /**
    * JSON dump of the drive state
    * @return 
    */
   std::string dump();
+  
+  void commit();
+  
+private:
+  /**
+   * Allows to set a configuration value to the DriveConfig item passed in parameter
+   * @param item the objectstore DriveConfig item
+   * @param value the value to set to the item
+   */
+  template <typename T>
+  void setConfigValue(cta::objectstore::serializers::DriveConfig * item,const T& value);
+  
+  /**
+   * Add a DriveConfig to the DriveState DriveConfig list and return its pointer
+   * so the pointed DriveConfig can be modified afterwards
+   * @param sourcedParameter the configuration that will be used for initialize the DriveConfig item
+   * @return 
+   */
+  template <typename T>
+  cta::objectstore::serializers::DriveConfig * createAndInitDriveConfig(cta::SourcedParameter<T>& sourcedParameter);
+  
+  /**
+   * Allows to put the content of the sourcedParameter passed in parameter
+   * into the DriveState's protobuf list of DriveConfig items (used for the cta-admin --json dr ls) command
+   * @param sourcedParameter the SourcedParameter to save into the protobuf list of DriveConfig items
+   */
+  template <typename T>
+  void fillConfig(cta::SourcedParameter<T>& sourceParameter);
 };
 
 }} // namespace cta::objectstore

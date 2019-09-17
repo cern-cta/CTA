@@ -301,7 +301,6 @@ kubectl --namespace=${instance} exec kdc cat /root/eos-server.keytab | kubectl -
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
 
-
 ## THE FILE IS MOVED THERE MUCH LATER AND OVERWRITES THIS
 # THIS HAS TO BE IMPROVED (DEFINITELY) SO THAT WE CAN ASYNCHRONOUSLY UPDATE THE CONFIGURATION FILES...
 # SYSTEMD IS THE WAY TO GO

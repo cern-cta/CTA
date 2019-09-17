@@ -56,7 +56,7 @@ MigrationReportPacker::~MigrationReportPacker(){
 //reportCompletedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportCompletedJob(
-std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) {
+  std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) {
   std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportSuccessful");
@@ -245,8 +245,18 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       reportPacker.m_lc.log(cta::log::INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
-    reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, 
+    std::queue<std::unique_ptr<cta::ArchiveJob>> failedToReportArchiveJobs;
+    try{
+      reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, failedToReportArchiveJobs, 
         reportPacker.m_lc);
+    } catch(const cta::ArchiveMount::FailedMigrationRecallResult &ex){
+      while(!failedToReportArchiveJobs.empty()){
+        auto archiveJob = std::move(failedToReportArchiveJobs.front());
+        archiveJob->transferFailed(ex.getMessageValue(),reportPacker.m_lc);
+        failedToReportArchiveJobs.pop();
+      }
+      throw ex;
+    }
   } else {
     // This is an abnormal situation: we should never flush after an error!
     reportPacker.m_lc.log(cta::log::ALERT,"Received a flush after an error: sending file errors to client");

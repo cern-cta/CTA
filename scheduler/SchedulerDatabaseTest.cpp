@@ -25,6 +25,7 @@
 #include "objectstore/BackendRados.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/range.hpp"
+#include "common/make_unique.hpp"
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
@@ -72,11 +73,13 @@ public:
     using namespace cta;
 
     const SchedulerDatabaseFactory &factory = GetParam().dbFactory;
-    m_db.reset(factory.create().release());
+    m_catalogue = cta::make_unique<cta::catalogue::DummyCatalogue>();
+    m_db.reset(factory.create(m_catalogue).release());
   }
 
   virtual void TearDown() {
     m_db.reset();
+    m_catalogue.reset();
   }
 
   cta::SchedulerDatabase &getDb() {
@@ -112,6 +115,8 @@ private:
   SchedulerDatabaseTest & operator= (const SchedulerDatabaseTest &);
 
   std::unique_ptr<cta::SchedulerDatabase> m_db;
+  
+  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
 }; // class SchedulerDatabaseTest
 

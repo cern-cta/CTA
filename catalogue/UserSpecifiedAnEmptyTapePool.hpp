@@ -18,33 +18,29 @@
 
 #pragma once
 
-#include <memory>
-#include "catalogue/Catalogue.hpp"
+#include "common/exception/UserError.hpp"
 
 namespace cta {
-
-// Forward declarations
-class SchedulerDatabase;
+namespace catalogue {
 
 /**
- * Asbtract class specifying the interface to a factory of scheduler database
- * objects.
+ * User error thrown when a tape pool they specified is not empty when it should
+ * be.
  */
-class SchedulerDatabaseFactory {
+class UserSpecifiedAnEmptyTapePool: public exception::UserError {
 public:
 
   /**
-   * Destructor.
-   */
-  virtual ~SchedulerDatabaseFactory() throw() = 0;
-
-  /**
-   * Returns a newly created scheduler database object.
+   * Constructor.
    *
-   * @return A newly created scheduler database object.
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
    */
-  virtual std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const = 0;
+  UserSpecifiedAnEmptyTapePool(const std::string &context = "", const bool embedBacktrace = true);
 
-}; // class SchedulerDatabaseFactory
+}; // class UserSpecifiedAnEmptyTapePool
 
+} // namespace catalogue
 } // namespace cta

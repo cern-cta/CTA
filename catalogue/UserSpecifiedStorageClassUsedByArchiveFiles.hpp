@@ -18,33 +18,32 @@
 
 #pragma once
 
-#include <memory>
-#include "catalogue/Catalogue.hpp"
+#include "common/exception/UserError.hpp"
 
 namespace cta {
-
-// Forward declarations
-class SchedulerDatabase;
+namespace catalogue {
 
 /**
- * Asbtract class specifying the interface to a factory of scheduler database
- * objects.
+ * User specified a storage class which is currently being used by one or more
+ * archive files.
  */
-class SchedulerDatabaseFactory {
+class UserSpecifiedStorageClassUsedByArchiveFiles: public exception::UserError {
 public:
+  /**
+   * Constructor.
+   *
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
+   */
+  UserSpecifiedStorageClassUsedByArchiveFiles(const std::string &context = "", const bool embedBacktrace = true);
 
   /**
    * Destructor.
    */
-  virtual ~SchedulerDatabaseFactory() throw() = 0;
+  ~UserSpecifiedStorageClassUsedByArchiveFiles() override;
+}; // class UserSpecifiedStorageClassUsedByArchiveFiles
 
-  /**
-   * Returns a newly created scheduler database object.
-   *
-   * @return A newly created scheduler database object.
-   */
-  virtual std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const = 0;
-
-}; // class SchedulerDatabaseFactory
-
+} // namespace catalogue
 } // namespace cta

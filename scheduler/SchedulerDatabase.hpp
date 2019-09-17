@@ -39,6 +39,7 @@
 #include "common/log/LogContext.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 
 #include <list>
 #include <limits>
@@ -398,7 +399,7 @@ public:
 
   /*============ Repack management: user side ================================*/
   virtual void queueRepack(const std::string & vid, const std::string & bufferURL,
-      common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext & lc) = 0;
+      common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, const bool forceDisabledTape, log::LogContext & lc) = 0;
   virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
   virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
   virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;
@@ -461,7 +462,11 @@ public:
       //TODO : userprovidedfiles and userprovidedbytes
     };
     
-    virtual void addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
+    /**
+     * Add Retrieve subrequests to the repack request and update its statistics
+     * @return the number of retrieve subrequests queued
+     */    
+    virtual uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
       cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, 
       const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, disk::DiskSystemList diskSystemList,
       log::LogContext & lc) = 0;
@@ -604,19 +609,26 @@ public:
         if (activityNameAndWeightedMountCount.value().weightedMountCount < other.activityNameAndWeightedMountCount.value().weightedMountCount)
           return false;
       }
-      if(minRequestAge < other.minRequestAge)
+      //The smaller the oldest job start time is, the bigger the age is, hence the inverted comparison
+      if(oldestJobStartTime > other.oldestJobStartTime)
 	return true;
-      if(minRequestAge > other.minRequestAge)
+      if(oldestJobStartTime < other.oldestJobStartTime)
 	return false;
       /**
        * For the tests, we try to have the priority by 
-       * alphabetical order : vid1 should be treated before vid2,
+       * alphabetical order : vid1 / tapepool1 should be treated before vid2/tapepool2,
        * so if this->vid < other.vid : then this > other.vid, so return false
        */
       if(vid < other.vid)
 	return false;
       if(vid > other.vid)
 	return true;
+      
+      if(tapePool < other.tapePool)
+	return false;
+      if(tapePool > other.tapePool)
+	return true;
+      
       return false;
     }
   };
@@ -756,6 +768,8 @@ public:
     double latestBandwidth = std::numeric_limits<double>::max(),
     const std::string & vid = "",
     const std::string & tapepool = "") = 0;
+  
+  virtual void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) = 0;
 }; // class SchedulerDatabase
 
 } // namespace cta

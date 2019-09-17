@@ -48,7 +48,7 @@ class ArchiveJob {
    */
   friend class ArchiveMount;
   friend class Scheduler;
-
+  
 protected:
   /**
    * Constructor.

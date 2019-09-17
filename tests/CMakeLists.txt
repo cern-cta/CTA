@@ -68,6 +68,7 @@ target_link_libraries(cta-rdbmsUnitTests
   pthread
   ${PROTOBUF3_LIBRARIES})
 
+set_property (TARGET cta-rdbmsUnitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
   set_property (TARGET cta-rdbmsUnitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OCCI_SUPPORT)

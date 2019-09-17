@@ -1558,6 +1558,167 @@ TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   }
 }
 
+TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape){
+// We will need a log object
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("dummy", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "unitTest");
+#endif
+  cta::log::LogContext lc(dl);
+  // We need a dummy catalogue
+  cta::catalogue::DummyCatalogue catalogue;
+  // Here we check that can successfully call RetrieveRequests's garbage collector
+  cta::objectstore::BackendVFS be;
+  // Create the root entry
+  cta::objectstore::RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  cta::objectstore::EntryLogSerDeser el("user0",
+      "unittesthost", time(NULL));
+  cta::objectstore::ScopedExclusiveLock rel(re);
+  // Create the agent for objects creation
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
+  // Finish root creation.
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
+  rel.release();
+  // continue agent creation.
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  agent.initialize();
+  agent.setTimeout_us(10000);
+  agent.insertAndRegisterSelf(lc);
+  // Create all agents to be garbage collected
+  cta::objectstore::AgentReference agentRefToTransferForUser("ToTransferForUser", dl);
+  cta::objectstore::Agent agentToTransferForUser(agentRefToTransferForUser.getAgentAddress(), be);
+  agentToTransferForUser.initialize();
+  agentToTransferForUser.setTimeout_us(0);
+  agentToTransferForUser.insertAndRegisterSelf(lc);
+  
+  std::string retrieveRequestAddress = agentRefToTransferForUser.nextId("RetrieveRequest");
+  agentRefToTransferForUser.addToOwnership(retrieveRequestAddress, be);
+  
+  cta::objectstore::RetrieveRequest rr(retrieveRequestAddress, be);
+  
+  rr.initialize();
+  cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
+  rqc.archiveFile.archiveFileID = 123456789L;
+  rqc.archiveFile.diskFileId = "eos://diskFile";
+  rqc.archiveFile.checksumBlob.insert(cta::checksum::NONE, "");
+  rqc.archiveFile.creationTime = 0;
+  rqc.archiveFile.reconciliationTime = 0;
+  rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
+  rqc.archiveFile.diskInstance = "eoseos";
+  rqc.archiveFile.fileSize = 1000;
+  rqc.archiveFile.storageClass = "sc";
+  {
+    cta::common::dataStructures::TapeFile tf;
+    tf.blockId=0;
+    tf.fileSize=1;
+    tf.copyNb=2;
+    tf.creationTime=time(nullptr);
+    tf.fSeq=1;
+    tf.vid="Tape0";
+    rqc.archiveFile.tapeFiles.push_back(tf);
+  }
+  rqc.mountPolicy.archiveMinRequestAge = 1;
+  rqc.mountPolicy.archivePriority = 1;
+  rqc.mountPolicy.creationLog.time = time(nullptr);
+  rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+  rqc.mountPolicy.maxDrivesAllowed = 1;
+  rqc.mountPolicy.retrieveMinRequestAge = 1;
+  rqc.mountPolicy.retrievePriority = 1;
+  rr.setRetrieveFileQueueCriteria(rqc);
+  cta::common::dataStructures::RetrieveRequest sReq;
+  sReq.archiveFileID = rqc.archiveFile.archiveFileID;
+  sReq.creationLog.time=time(nullptr);
+  rr.setSchedulerRequest(sReq);
+  rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
+  rr.setOwner(agentToTransferForUser.getAddressIfSet());
+  rr.setActiveCopyNumber(0);
+  
+  cta::objectstore::RetrieveRequest::RepackInfo ri;
+  ri.isRepack = true;
+  ri.forceDisabledTape = true;
+  ri.fSeq = 1;
+  ri.fileBufferURL = "testFileBufferURL";
+  ri.repackRequestAddress = "repackRequestAddress";
+  rr.setRepackInfo(ri);
+  
+  rr.insert();
+  
+  // Create the garbage collector and run it once.
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+  gcAgent.initialize();
+  gcAgent.setTimeout_us(0);
+  gcAgent.insertAndRegisterSelf(lc);
+  
+  catalogue.addDisabledTape("Tape0");
+
+  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+  gc.runOnePass(lc);
+  
+  {
+    //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
+    re.fetchNoLock();
+    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", cta::objectstore::JobQueueType::JobsToTransferForUser), be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    auto jobs = rq.dumpJobs();
+    ASSERT_EQ(1,jobs.size());
+
+    auto& job = jobs.front();
+    ASSERT_EQ(2,job.copyNb);
+    
+    rr.fetchNoLock();
+    ASSERT_EQ(rr.getOwner(),rq.getAddressIfSet());
+  }
+  
+  {
+    //Test the RetrieveRequest::garbageCollect method for RJS_ToTransferForUser job and a disabled tape
+    cta::objectstore::AgentReference agentRefToTransferDisabledTapeAutoGc("ToReportToRepackForFailureAutoGC", dl);
+    cta::objectstore::Agent agentToReportToRepackForFailureJobAutoGc(agentRefToTransferDisabledTapeAutoGc.getAgentAddress(), be);
+    agentToReportToRepackForFailureJobAutoGc.initialize();
+    agentToReportToRepackForFailureJobAutoGc.setTimeout_us(0);
+    agentToReportToRepackForFailureJobAutoGc.insertAndRegisterSelf(lc);
+    
+    
+    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", cta::objectstore::JobQueueType::JobsToTransferForUser), be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    rq.removeJobsAndCommit({rr.getAddressIfSet()});
+    rql.release();
+    
+    {
+      cta::objectstore::ScopedExclusiveLock sel(rr);
+      rr.fetch();
+      rr.setOwner(agentRefToTransferDisabledTapeAutoGc.getAgentAddress());
+      rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
+      rr.commit();
+
+      agentRefToTransferDisabledTapeAutoGc.addToOwnership(rr.getAddressIfSet(),be);
+
+      ASSERT_NO_THROW(rr.garbageCollect(agentRefToTransferDisabledTapeAutoGc.getAgentAddress(),agentRef,lc,catalogue));
+    }
+    
+    //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
+    
+    re.fetchNoLock();
+    cta::objectstore::RetrieveQueue rqToTransferForUser(re.getRetrieveQueueAddress("Tape0", cta::objectstore::JobQueueType::JobsToTransferForUser), be);
+    rqToTransferForUser.fetchNoLock();
+    
+    auto jobs = rqToTransferForUser.dumpJobs();
+    ASSERT_EQ(1,jobs.size());
+
+    auto& job = jobs.front();
+    ASSERT_EQ(2,job.copyNb);
+
+    rr.fetchNoLock();
+    ASSERT_EQ(rqToTransferForUser.getAddressIfSet(),rr.getOwner());
+  }
+}
+
 TEST(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   // We will need a log object
 #ifdef STDOUT_LOGGING

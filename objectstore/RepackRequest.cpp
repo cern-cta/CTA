@@ -78,6 +78,7 @@ void RepackRequest::initialize() {
   m_payload.set_lastexpandedfseq(0);
   m_payload.set_is_expand_finished(false);
   m_payload.set_is_expand_started(false);
+  m_payload.set_force_disabled_tape(false);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -145,6 +146,7 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.lastExpandedFseq = m_payload.lastexpandedfseq();
   ret.userProvidedFiles = m_payload.userprovidedfiles();
   ret.isExpandFinished = m_payload.is_expand_finished();
+  ret.forceDisabledTape = m_payload.force_disabled_tape();
   if (m_payload.move_mode()) {
     if (m_payload.add_copies_mode()) {
       ret.type = RepackInfo::Type::MoveAndAddCopies;
@@ -192,6 +194,15 @@ common::dataStructures::MountPolicy RepackRequest::getMountPolicy(){
   return mpSerDeser;
 }
 
+void RepackRequest::setForceDisabledTape(const bool disabledTape){
+  checkPayloadWritable();
+  m_payload.set_force_disabled_tape(disabledTape);
+}
+
+bool RepackRequest::getForceDisabledTape() {
+  checkPayloadReadable();
+  return m_payload.force_disabled_tape();
+}
 void RepackRequest::setStatus(){
   checkPayloadWritable();
   checkPayloadReadable();
@@ -538,7 +549,8 @@ auto RepackRequest::getStats() -> std::map<StatsType, StatsValues> {
 //------------------------------------------------------------------------------
 void RepackRequest::reportRetrieveCreationFailures(const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests){
   checkPayloadWritable();
-  uint64_t failedToRetrieveFiles, failedToRetrieveBytes, failedToCreateArchiveReq = 0;
+  checkPayloadReadable();
+  uint64_t failedToRetrieveFiles = 0, failedToRetrieveBytes = 0, failedToCreateArchiveReq = 0;
   for(auto & subreq: notCreatedSubrequests){
     failedToRetrieveFiles++;
     failedToRetrieveBytes+=subreq.archiveFile.fileSize;
@@ -636,6 +648,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       retRef.m_repackInfo.status = (RepackInfo::Status) payload.status();
       retRef.m_repackInfo.vid = payload.vid();
       retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
+      retRef.m_repackInfo.forceDisabledTape = payload.force_disabled_tape();
       if (payload.move_mode()) {
         if (payload.add_copies_mode()) {
           retRef.m_repackInfo.type = RepackInfo::Type::MoveAndAddCopies;

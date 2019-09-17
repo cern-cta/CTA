@@ -68,7 +68,7 @@ namespace {
 template <class BackendType>
 class OStoreDBWrapper: public cta::objectstore::OStoreDBWrapperInterface {
 public:
-  OStoreDBWrapper(const std::string &context, const std::string &URL = "");
+  OStoreDBWrapper(const std::string &context, std::unique_ptr<cta::catalogue::Catalogue>& catalogue, const std::string &URL = "");
   
   ~OStoreDBWrapper() throw () {}
   
@@ -226,8 +226,8 @@ public:
   }
   
 
-  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext& lc) override {
-    m_OStoreDB.queueRepack(vid, bufferURL, repackType, mountPolicy, lc);
+  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, const bool forceDisabledTape, log::LogContext& lc) override {
+    m_OStoreDB.queueRepack(vid, bufferURL, repackType, mountPolicy, forceDisabledTape, lc);
   }
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
@@ -272,20 +272,24 @@ public:
     m_OStoreDB.reportDriveStatus(driveInfo, mountType, status, reportTime, lc, mountSessionId, byteTransfered, filesTransfered,
        latestBandwidth, vid, tapepool);
   }
+  
+  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override {
+    m_OStoreDB.reportDriveConfig(tpConfigLine, tapedConfig,lc);
+  }
 
 private:
   std::unique_ptr <cta::log::Logger> m_logger;
   std::unique_ptr <cta::objectstore::Backend> m_backend;
-  std::unique_ptr <cta::catalogue::Catalogue> m_catalogue;
+  std::unique_ptr <cta::catalogue::Catalogue> & m_catalogue;
   cta::OStoreDB m_OStoreDB;
   std::unique_ptr<objectstore::AgentReference> m_agentReferencePtr;
 };
 
 template <>
 OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
-        const std::string &context, const std::string &URL) :
+        const std::string &context, std::unique_ptr<cta::catalogue::Catalogue> & catalogue, const std::string &URL) :
 m_logger(new cta::log::DummyLogger("", "")), m_backend(new cta::objectstore::BackendVFS()), 
-m_catalogue(new cta::catalogue::DummyCatalogue),
+m_catalogue(catalogue),
 m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
   m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
 {
@@ -312,9 +316,9 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
 
 template <>
 OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
-        const std::string &context, const std::string &URL) :
+        const std::string &context,std::unique_ptr<cta::catalogue::Catalogue> & catalogue, const std::string &URL) :
 m_logger(new cta::log::DummyLogger("", "")), m_backend(cta::objectstore::BackendFactory::createBackend(URL, *m_logger).release()), 
-m_catalogue(new cta::catalogue::DummyCatalogue),
+m_catalogue(catalogue),
 m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
   m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
 {
@@ -370,8 +374,8 @@ public:
    *
    * @return A newly created scheduler database object.
    */
-  std::unique_ptr<SchedulerDatabase> create() const {
-    return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>("UnitTest", m_URL));
+  std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const {
+    return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>("UnitTest", catalogue, m_URL));
   }
   
   private:

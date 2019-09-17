@@ -1422,7 +1422,7 @@ OStoreDB::RetrieveQueueItor_t* OStoreDB::getRetrieveJobItorPtr(const std::string
 // OStoreDB::queueRepack()
 //------------------------------------------------------------------------------
 void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
-    common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy& mountPolicy, log::LogContext & lc) {
+    common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy& mountPolicy, const bool forceDisabledTape,log::LogContext & lc) {
   // Prepare the repack request object in memory.
   assertAgentAddressSet();
   cta::utils::Timer t;
@@ -1434,6 +1434,7 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   rr->setType(repackType);
   rr->setBufferURL(bufferURL);
   rr->setMountPolicy(mountPolicy);
+  rr->setForceDisabledTape(forceDisabledTape);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
   try {
     Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
@@ -1656,6 +1657,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
     ret->repackInfo.type = repackInfo.type;
     ret->repackInfo.status = repackInfo.status;
     ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
+    ret->repackInfo.forceDisabledTape = repackInfo.forceDisabledTape;
     return std::move(ret);
   }
 }
@@ -1823,7 +1825,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
     // As we are popping from a single report queue, all requests should concern only one repack request.
     if (repackRequestAddresses.size() != 1) {
       std::stringstream err;
-      err << "In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): reports for several repack requests in the same queue. ";
+      err << "In OStoreDB::getNextSuccessfulArchiveRepackReportBatch(): reports for several repack requests in the same queue. ";
       for (auto & rr: repackRequestAddresses) { err << rr << " "; }
       throw exception::Exception(err.str());
     }
@@ -2207,11 +2209,12 @@ void OStoreDB::RepackRequest::setLastExpandedFSeq(uint64_t fseq){
 //------------------------------------------------------------------------------
 // OStoreDB::RepackRequest::addSubrequests()
 //------------------------------------------------------------------------------
-void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
+uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
     cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap, uint64_t maxFSeqLowBound, 
     const uint64_t maxAddedFSeq, const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles &totalStatsFiles, 
     disk::DiskSystemList diskSystemList, log::LogContext& lc) {
   // We need to prepare retrieve requests names and reference them, create them, enqueue them.
+  uint64_t nbRetrieveSubrequestsCreated = 0;
   objectstore::ScopedExclusiveLock rrl (m_repackRequest);
   m_repackRequest.fetch();
   std::set<uint64_t> fSeqs;
@@ -2220,6 +2223,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
   m_repackRequest.setTotalStats(totalStatsFiles);
   uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
   common::dataStructures::MountPolicy mountPolicy = m_repackRequest.getMountPolicy();
+  bool forceDisabledTape = m_repackRequest.getInfo().forceDisabledTape;
   // We make sure the references to subrequests exist persistently before creating them.
   m_repackRequest.commit();
   // We keep holding the repack request lock: we need to ensure de deleted boolean of each subrequest does
@@ -2266,6 +2270,15 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         for (auto & ar: archiveRoutesMap.at(std::make_tuple(rsr.archiveFile.diskInstance, rsr.archiveFile.storageClass))) {
           rRRepackInfo.archiveRouteMap[ar.second.copyNb] = ar.second.tapePoolName;
         }
+        //Check that we do not have the same destination tapepool for two different copyNb
+        for(auto & currentCopyNbTapePool: rRRepackInfo.archiveRouteMap){
+          int nbTapepool = std::count_if(rRRepackInfo.archiveRouteMap.begin(),rRRepackInfo.archiveRouteMap.end(),[&currentCopyNbTapePool](const std::pair<uint64_t,std::string> & copyNbTapepool){
+            return copyNbTapepool.second == currentCopyNbTapePool.second;
+          });
+          if(nbTapepool != 1){
+            throw cta::ExpandRepackRequestException("In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(), found the same destination tapepool for different copyNb.");
+          }
+        }
       } catch (std::out_of_range &) {
         notCreatedSubrequests.emplace_back(rsr);
         failedCreationStats.files++;
@@ -2289,6 +2302,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
       rRRepackInfo.fileBufferURL = rsr.fileBufferURL;
       rRRepackInfo.fSeq = rsr.fSeq;
       rRRepackInfo.isRepack = true;
+      rRRepackInfo.forceDisabledTape = forceDisabledTape;
       rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
       rr->setRepackInfo(rRRepackInfo);
       // Set the queueing parameters
@@ -2305,7 +2319,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         if (tc.vid == repackInfo.vid) {
           try {
             // Try to select the repack VID from a one-vid list.
-            Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+            Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,repackInfo.forceDisabledTape);
             bestVid = repackInfo.vid;
             activeCopyNumber = tc.copyNb;
           } catch (Helpers::NoTapeAvailableForRetrieve &) {}
@@ -2317,7 +2331,7 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
         std::set<std::string> candidateVids;
         for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
         try {
-          bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+          bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,forceDisabledTape);
         } catch (Helpers::NoTapeAvailableForRetrieve &) {
           // Count the failure for this subrequest. 
           notCreatedSubrequests.emplace_back(rsr);
@@ -2438,11 +2452,13 @@ void OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>
       is.request->fetch();
       sorter.insertRetrieveRequest(is.request, *m_oStoreDB.m_agentReference, is.activeCopyNb, lc);
     }
+    nbRetrieveSubrequestsCreated = sorter.getAllRetrieve().size();
     locks.clear();
     sorter.flushAll(lc);
   }
   m_repackRequest.setLastExpandedFSeq(fSeq);
   m_repackRequest.commit();
+  return nbRetrieveSubrequestsCreated;
 }
 
 //------------------------------------------------------------------------------
@@ -2760,6 +2776,18 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
   inputs.vid = vid;
   inputs.tapepool = tapepool;
   updateDriveStatus(driveInfo, inputs, lc);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::reportDriveConfig()
+//------------------------------------------------------------------------------
+void OStoreDB::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc){
+  objectstore::DriveState ds(m_objectStore);
+  ScopedExclusiveLock dsl;
+  Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_agentReference, tpConfigLine.unitName, lc, Helpers::CreateIfNeeded::doNotCreate);
+  ds.setConfig(tapedConfig);
+  ds.setTpConfig(tpConfigLine);
+  ds.commit();
 }
 
 //------------------------------------------------------------------------------
@@ -3797,6 +3825,14 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     if (osdbJob->isRepack) {
       try {
         osdbJob->m_jobSucceedForRepackReporter->wait();
+        {
+          cta::log::ScopedParamContainer spc(lc);
+          std::string vid = osdbJob->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid;
+          spc.add("tapeVid",vid)
+             .add("mountType","RetrieveForRepack")
+             .add("fileId",osdbJob->archiveFile.archiveFileID);
+          lc.log(cta::log::INFO,"In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
+        }
         mountPolicy = osdbJob->m_jobSucceedForRepackReporter->m_MountPolicy;
         jobsToRequeueForRepackMap[osdbJob->m_repackInfo.repackRequestAddress].emplace_back(osdbJob);
       } catch (cta::exception::Exception & ex) {
@@ -3811,6 +3847,15 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     } else {
       try {
         osdbJob->m_jobDelete->wait();
+        {
+          //Log for monitoring
+          cta::log::ScopedParamContainer spc(lc);
+          std::string vid = osdbJob->archiveFile.tapeFiles.at(osdbJob->selectedCopyNb).vid;
+          spc.add("tapeVid",vid)
+             .add("mountType","RetrieveForUser")
+             .add("fileId",osdbJob->archiveFile.archiveFileID);
+          lc.log(cta::log::INFO,"In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
+        }
         osdbJob->retrieveRequest.lifecycleTimings.completed_time = time(nullptr);
         std::string requestAddress = osdbJob->m_retrieveRequest.getAddressIfSet();
         
@@ -3819,7 +3864,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
         cta::common::dataStructures::LifecycleTimings requestTimings = osdbJob->retrieveRequest.lifecycleTimings;
         log::ScopedParamContainer params(lc);
         params.add("requestAddress",requestAddress)
-              .add("archiveFileID",osdbJob->archiveFile.archiveFileID)
+              .add("fileId",osdbJob->archiveFile.archiveFileID)
               .add("vid",osdbJob->m_retrieveMount->mountInfo.vid)
               .add("timeForSelection",requestTimings.getTimeForSelection())
               .add("timeForCompletion", requestTimings.getTimeForCompletion());
@@ -4192,7 +4237,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
             .add("totalRetries", retryStatus.totalRetries)
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
       lc.log(log::INFO,
-          "In ArchiveJob::failTransfer(): requeued job for (potentially in-mount) retry.");
+          "In ArchiveJob::failTransfer(): requeued job for (potentially in-mount) retry (repack).");
       return;
   }
   case NextStep::StoreInFailedJobsContainer: {
@@ -4413,12 +4458,13 @@ objectstore::RepackRequest::SubrequestStatistics::List OStoreDB::RepackArchiveRe
     ssl.back().fSeq = sri.repackInfo.fSeq;
     ssl.back().copyNb = sri.archivedCopyNb;
     for(auto &j: sri.archiveJobsStatusMap){
-      if(j.first != sri.archivedCopyNb && 
-        (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && 
-        (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){
-        break;
-      } else {
-        ssl.back().subrequestDeleted = true;
+      if(j.first != sri.archivedCopyNb){
+        if((j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){
+          break;
+        } else {
+          ssl.back().subrequestDeleted = true;
+          break;
+        }
       }
     }
   }
@@ -4459,21 +4505,35 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   for (auto &sri: m_subrequestList) {
     bufferURL = sri.repackInfo.fileBufferURL;
     bool moreJobsToDo = false;
+    //Check if the ArchiveRequest contains other jobs that are not finished
     for (auto &j: sri.archiveJobsStatusMap) {
-      if ((j.first != sri.archivedCopyNb) && 
-          (j.second != serializers::ArchiveJobStatus::AJS_Complete) && 
-          (j.second != serializers::ArchiveJobStatus::AJS_Failed)) {
-        moreJobsToDo = true;
-        break;
+      //Getting the siblings jobs (ie copy nb != current one)
+      if (j.first != sri.archivedCopyNb) {
+        //Sibling job not finished mean its status is nor AJS_Complete nor AJS_Failed 
+        if ((j.second != serializers::ArchiveJobStatus::AJS_Complete) && 
+        (j.second != serializers::ArchiveJobStatus::AJS_Failed)) {
+          //The sibling job is not finished, but maybe it is planned to change its status, checking the jobOwnerUpdaterList that is the list containing the jobs
+          //we want to change its status to AJS_Complete
+          bool copyNbStatusUpdating = (std::find_if(jobOwnerUpdatersList.begin(), jobOwnerUpdatersList.end(), [&j,&sri](JobOwnerUpdaters &jou){
+            return ((jou.subrequestInfo.archiveFile.archiveFileID == sri.archiveFile.archiveFileID) && (jou.subrequestInfo.archivedCopyNb == j.first));
+          }) != jobOwnerUpdatersList.end());
+          if(!copyNbStatusUpdating){
+            //The sibling job is not in the jobOwnerUpdaterList, it means that it is not finished yet, there is more jobs to do
+            moreJobsToDo = true;
+            break;
+          }
+        }
       }
     }
     objectstore::ArchiveRequest & ar = *sri.subrequest;
     if (moreJobsToDo) {
       try {
-        jobOwnerUpdatersList.push_back(JobOwnerUpdaters{std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> (
-              ar.asyncUpdateJobOwner(sri.archivedCopyNb, "", m_oStoreDb.m_agentReference->getAgentAddress(),
-              newStatus)), 
-            sri});
+        if(ar.exists()){
+          jobOwnerUpdatersList.push_back(JobOwnerUpdaters{std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> (
+                ar.asyncUpdateJobOwner(sri.archivedCopyNb, "", m_oStoreDb.m_agentReference->getAgentAddress(),
+                newStatus)), 
+              sri});
+        }
       } catch (cta::exception::Exception & ex) {
         // Log the error
         log::ScopedParamContainer params(lc);
@@ -4580,7 +4640,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
             .add("exceptionMsg", ex.getMessageValue());
-      lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async job update.");
+      lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.");
     }    
   }
   timingList.insertAndReset("asyncUpdateOrDeleteCompletionTime", t);
@@ -4782,12 +4842,13 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
           "In OStoreDB::RetrieveJob::failTransfer(): no active job after addJobFailure() returned false."
         );
       }
+      bool disabledTape = m_retrieveRequest.getRepackInfo().forceDisabledTape;
       m_retrieveRequest.commit();
       rel.release();
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
-        m_oStoreDB.m_objectStore);
+        m_oStoreDB.m_objectStore,disabledTape);
 
       auto tf_it = af.tapeFiles.begin();
       for( ; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it) ;

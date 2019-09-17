@@ -7,6 +7,7 @@ DATA_SOURCE=/dev/urandom
 ARCHIVEONLY=0 # Only archive files or do the full test?
 DONOTARCHIVE=0 # files were already archived in a previous run NEED TARGETDIR
 TARGETDIR=''
+LOGDIR='/var/log'
 
 COMMENT=''
 # id of the test so that we can track it
@@ -134,6 +135,9 @@ if [[ "x${TARGETDIR}" = "x" ]]; then
 else
     EOS_DIR="${EOS_BASEDIR}/${TARGETDIR}"
 fi
+LOGDIR="${LOGDIR}/$(basename ${EOS_DIR})"
+mkdir -p ${LOGDIR} || die "Cannot create directory LOGDIR: ${LOGDIR}"
+mkdir -p ${LOGDIR}/xrd_errors || die "Cannot create directory LOGDIR/xrd_errors: ${LOGDIR}/xrd_errors"
 
 STATUS_FILE=$(mktemp)
 ERROR_FILE=$(mktemp)
@@ -188,6 +192,12 @@ done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump
 #  done | xargs -n ${BATCH_SIZE} --max-procs=${NB_BATCH_PROCS} ./batch_xrdcp /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${subdir}
   echo Done.
 done
+if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+  # there were some xrdcp errors
+  echo "Several xrdcp errors occured during archival!"
+  echo "Please check client pod logs in artifacts"
+  mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
+fi
 
 COPIED=0
 COPIED_EMPTY=0
@@ -223,6 +233,12 @@ while test 0 != ${ARCHIVING}; do
   echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
 
   ARCHIVING=$((${TO_BE_ARCHIVED} - ${ARCHIVED}))
+  NB_TAPE_NOT_FULL=`admin_cta --json ta ls --all | jq "[.[] | select(.full == false)] | length"`
+  if [[ ${NB_TAPE_NOT_FULL} == 0 ]]
+  then
+    echo "$(date +%s): All tapes are full, exiting archiving loop"
+    break
+  fi
 done
 
 
@@ -264,10 +280,16 @@ done
 # CAREFULL HERE: ${STATUS_FILE} contains lines like: 99/test9900001
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Recalling files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
-  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd transfer for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" > /dev/null
+  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd transfer for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
   echo Done.
+  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} query opaquefile ${EOS_DIR}/${subdir}/TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
 done
-
+if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+  # there were some prepare errors
+  echo "Several prepare errors occured during retrieval!"
+  echo "Please check client pod logs in artifacts"
+  mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
+fi
 
 ARCHIVED=$(cat ${STATUS_FILE} | wc -l)
 TO_BE_RETRIEVED=$(( ${ARCHIVED} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
@@ -434,9 +456,23 @@ test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES:
 # stop tail
 test -z $TAILPID || kill ${TAILPID} &> /dev/null
 
-test ${LASTCOUNT} -eq $((${NB_FILES} * ${NB_DIRS})) && exit 0
+RC=0
+if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
+  ((RC++))
+  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
+  grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
+fi
 
-echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
-grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
+if [ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) -ne 0 ]; then
+  # THIS IS NOT YET AN ERROR: UNCOMMENT THE FOLLOWING LINE WHEN https://gitlab.cern.ch/cta/CTA/issues/606 is fixed
+  # ((RC++))
+  echo "ERROR $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) files out of $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | wc -l) prepared files have no sys.retrieve.req_id extended attribute set"
+fi
 
-exit 1
+if [ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]; then
+  ((RC++))
+  echo "ERROR several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
+fi
+
+
+exit ${RC}

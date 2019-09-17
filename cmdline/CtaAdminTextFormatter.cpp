@@ -293,7 +293,8 @@ void TextFormatter::print(const DriveLsItem &drls_item)
   if(drls_item.drive_status() == DriveLsItem::TRANSFERRING) {
     filesTransferredInSession = std::to_string(drls_item.files_transferred_in_session());
     bytesTransferredInSession = dataSizeToStr(drls_item.bytes_transferred_in_session());
-    latestBandwidth = std::to_string(drls_item.latest_bandwidth());
+    double bandwidth = static_cast<double>(drls_item.latest_bandwidth())/static_cast<double>(1000000);
+    latestBandwidth = doubleToStr(bandwidth,'\0');
   }
 
   if(drls_item.drive_status() != DriveLsItem::UP &&
