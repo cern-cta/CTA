@@ -175,6 +175,12 @@ void cta_catalogue_CatalogueTest::SetUp() {
         m_catalogue->deleteMountPolicy(mountPolicy.name);
       }
     }
+    {
+      const auto diskSystems = m_catalogue->getAllDiskSystems();
+      for(auto &ds: diskSystems) {
+        m_catalogue->deleteDiskSystem(ds.name);
+      }
+    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
