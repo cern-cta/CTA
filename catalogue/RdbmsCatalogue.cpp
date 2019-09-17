@@ -1939,6 +1939,24 @@ void RdbmsCatalogue::createTape(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("mediaType", mediaType)
+       .add("vendor", vendor)
+       .add("logicalLibraryName", logicalLibraryName)
+       .add("tapePoolName", tapePoolName)
+       .add("capacityInBytes", capacityInBytes)
+       .add("isDisabled", disabled ? 1 : 0)
+       .add("isFull", full ? 1 : 0)
+       .add("isReadOnly", readOnly ? 1 : 0)
+       .add("isFromCastor", isFromCastor ? 1 : 0)
+       .add("userComment", comment)
+       .add("creationLogUserName", admin.username)
+       .add("creationLogHostName", admin.host)
+       .add("creationLogTime", now);
+    lc.log(log::INFO, "Catalogue - user created tape");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2672,6 +2690,15 @@ void RdbmsCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityI
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("mediaType", mediaType)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - mediaType");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2707,6 +2734,15 @@ void RdbmsCatalogue::modifyTapeVendor(const common::dataStructures::SecurityIden
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("vendor", vendor)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - vendor");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2742,6 +2778,15 @@ void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("logicalLibraryName", logicalLibraryName)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - logicalLibraryName");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2777,6 +2822,15 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("tapePoolName", tapePoolName)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - tapePoolName");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2812,6 +2866,15 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("capacityInBytes", capacityInBytes)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - capacityInBytes");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2852,6 +2915,15 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("encryptionKey", optionalEncryptionKey ? optionalEncryptionKey.value() : "NULL")
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - encryptionKey");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2883,6 +2955,13 @@ void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::st
     if (0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("lastWriteDrive", drive)
+       .add("lastWriteTime", now);
+    lc.log(log::INFO, "Catalogue - system modified tape - mountedForArchive");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2914,6 +2993,13 @@ void RdbmsCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::s
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("lastReadDrive", drive)
+       .add("lastReadTime", now);
+    lc.log(log::INFO, "Catalogue - system modified tape - mountedForRetrieve");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2949,6 +3035,15 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("isFull", fullValue ? 1 : 0)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - isFull");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2975,6 +3070,13 @@ void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
     if (0 == stmt.getNbAffectedRows()) {
       throw exception::Exception(std::string("Tape ") + vid + " does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("isFull", 1)
+       .add("method", "noSpaceLeftOnTape");
+    lc.log(log::INFO, "Catalogue - system modified tape - isFull");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3010,6 +3112,15 @@ void RdbmsCatalogue::setTapeReadOnly(const common::dataStructures::SecurityIdent
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("isReadOnly", readOnlyValue ? 1 : 0)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - isReadOnly");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3036,6 +3147,13 @@ void RdbmsCatalogue::setTapeReadOnlyOnError(const std::string &vid) {
     if (0 == stmt.getNbAffectedRows()) {
       throw exception::Exception(std::string("Tape ") + vid + " does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("isReadOnly", 1)
+       .add("method", "setTapeReadOnlyOnError");
+    lc.log(log::INFO, "Catalogue - system modified tape - isReadOnly");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3062,6 +3180,14 @@ void RdbmsCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) {
     if (0 == stmt.getNbAffectedRows()) {
       throw exception::Exception(std::string("Tape ") + vid + " does not exist");
     }
+
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("isFromCastor", 1)
+       .add("method", "setTapeIsFromCastorInUnitTests");
+    lc.log(log::INFO, "Catalogue - system modified tape - isFromCastor");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3097,6 +3223,15 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("isDisabled", disabledValue ? 1 : 0)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - isDisabled");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3132,6 +3267,16 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("userComment", comment)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - userComment");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
