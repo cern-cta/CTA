@@ -54,31 +54,42 @@ static RdbmsUnitTestsCmdLineArgs parseCmdLine(const int argc, char ** argv) {
 }
 
 int main(int argc, char** argv) {
-  // The following line must be executed to initialize Google Mock
-  // (and Google Test) before running the tests.
-  ::testing::InitGoogleMock(&argc, argv);
+  try {
+    // The following line must be executed to initialize Google Mock
+    // (and Google Test) before running the tests.
+    ::testing::InitGoogleMock(&argc, argv);
 
-  // Google test will consume its options from the command-line and leave everything else
-  g_cmdLineArgs = parseCmdLine(argc, argv);
+    // Google test will consume its options from the command-line and leave everything else
+    g_cmdLineArgs = parseCmdLine(argc, argv);
 
-  cta::log::DummyLogger dummyLogger("dummy", "dummy");
-  const auto login = cta::rdbms::Login::parseFile(g_cmdLineArgs.dbConfigPath);
-  const uint64_t nbConns = 1;
-  const uint64_t nbArchiveFileListingConns = 1;
-  const uint64_t maxTriesToConnect = 1;
-  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(dummyLogger, login, nbConns,
-    nbArchiveFileListingConns, maxTriesToConnect);
-  g_catalogueFactoryForUnitTests = catalogueFactory.get();
+    cta::log::DummyLogger dummyLogger("dummy", "dummy");
+    const auto login = cta::rdbms::Login::parseFile(g_cmdLineArgs.dbConfigPath);
+    const uint64_t nbConns = 1;
+    const uint64_t nbArchiveFileListingConns = 1;
+    const uint64_t maxTriesToConnect = 1;
+    auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(dummyLogger, login, nbConns,
+      nbArchiveFileListingConns, maxTriesToConnect);
+    g_catalogueFactoryForUnitTests = catalogueFactory.get();
 
-  const int ret = RUN_ALL_TESTS();
+    const int ret = RUN_ALL_TESTS();
 
-  // Close standard in, out and error so that valgrind can be used with the
-  // following command-line to track open file-descriptors:
-  //
-  //     valgrind --track-fds=yes
-  close(0);
-  close(1);
-  close(2);
+    // Close standard in, out and error so that valgrind can be used with the
+    // following command-line to track open file-descriptors:
+    //
+    //     valgrind --track-fds=yes
+    close(0);
+    close(1);
+    close(2);
 
-  return ret;
+    return ret;
+  } catch(cta::exception::Exception &ex) {
+    std::cerr << "Aborting: Caught a cta::exception::Exception: " << ex.getMessage().str() << std::endl;
+    return 1;
+  } catch(std::exception &se) {
+    std::cerr << "Aborting: Caught an std::exception: " << se.what() << std::endl;
+    return 1;
+  } catch(...) {
+    std::cerr << "Aborting: Caught an unknown exception " << std::endl;
+    return 1;
+  }
 }
