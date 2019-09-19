@@ -66,7 +66,8 @@ public:
     uint64_t fileSize;
     cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
-    optional<RetrieveActivityDescription> activityDescription; 
+    optional<RetrieveActivityDescription> activityDescription;
+    optional<std::string> diskSystemName;
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   // This version will check for existence of the job in the queue before
@@ -91,12 +92,24 @@ public:
       uint64_t count;
     };
     std::list<ActivityCount> activityCounts;
+    struct SleepInfo {
+      time_t sleepStartTime;
+      std::string diskSystemSleptFor;
+      uint64_t sleepTime;
+    };
+    optional<SleepInfo> sleepInfo;
   };
   JobsSummary getJobsSummary();
   struct JobDump {
     std::string address;
     uint32_t copyNb;
     uint64_t size;
+    struct ActivityDescription {
+      std::string diskInstanceName;
+      std::string activity;
+    };
+    optional<ActivityDescription> activity;
+    optional<std::string> diskSystemName;
   };
   std::list<JobDump> dumpJobs();
   struct CandidateJobList {
@@ -108,7 +121,9 @@ public:
   };
   // The set of retrieve requests to skip are requests previously identified by the caller as bad,
   // which still should be removed from the queue. They will be disregarded from  listing.
-  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip);
+  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> & retrieveRequestsToSkip,
+    const std::set<std::string> & diskSystemsToSkip);
+ 
 
   //! Return a summary of the number of jobs and number of bytes in the queue
   CandidateJobList getCandidateSummary();
@@ -116,6 +131,11 @@ public:
   void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
   // -- Generic parameters
   std::string getVid();
+  
+  // Support for sleep waiting free space (back pressure).
+  // This data is queried through getJobsSummary().
+  void setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName, uint64_t sleepTime);
+  void resetSleepForFreeSpaceStartTime();
   
 private:
   struct ShardForAddition {
@@ -157,12 +177,11 @@ private:
   uint64_t m_maxShardSize = c_defaultMaxShardSize;
 };
 
-class RetrieveQueueToTransferForUser : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
+class RetrieveQueueToTransfer : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 class RetrieveQueueToReportForUser : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 class RetrieveQueueFailed : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 class RetrieveQueueToReportToRepackForSuccess : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 class RetrieveQueueToReportToRepackForFailure: public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
-class RetrieveQueueToTransferForRepack : public RetrieveQueue { using RetrieveQueue::RetrieveQueue; };
 
 }}
 

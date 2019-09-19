@@ -328,26 +328,41 @@ uint64_t RepackRequest::getLastExpandedFSeq() {
   return m_payload.lastexpandedfseq();
 }
 
+//------------------------------------------------------------------------------
+// RepackRequest::setTotalFileToRetrieve()
+//------------------------------------------------------------------------------
 void RepackRequest::setTotalFileToRetrieve(const uint64_t nbFilesToRetrieve){
   checkPayloadWritable();
   m_payload.set_totalfilestoretrieve(nbFilesToRetrieve);
 }
 
+//------------------------------------------------------------------------------
+// RepackRequest::setTotalBytesToRetrieve()
+//------------------------------------------------------------------------------
 void RepackRequest::setTotalBytesToRetrieve(const uint64_t nbBytesToRetrieve){
   checkPayloadWritable();
   m_payload.set_totalbytestoretrieve(nbBytesToRetrieve);
 }
 
+//------------------------------------------------------------------------------
+// RepackRequest::setTotalFileToArchive()
+//------------------------------------------------------------------------------
 void RepackRequest::setTotalFileToArchive(const uint64_t nbFilesToArchive){
   checkPayloadWritable();
   m_payload.set_totalfilestoarchive(nbFilesToArchive);
 }
 
+//------------------------------------------------------------------------------
+// RepackRequest::setTotalBytesToArchive()
+//------------------------------------------------------------------------------
 void RepackRequest::setTotalBytesToArchive(const uint64_t nbBytesToArchive) {
   checkPayloadWritable();
   m_payload.set_totalbytestoarchive(nbBytesToArchive);
-    }
+}
 
+//------------------------------------------------------------------------------
+// RepackRequest::getTotalStatsFile()
+//------------------------------------------------------------------------------
 cta::SchedulerDatabase::RepackRequest::TotalStatsFiles RepackRequest::getTotalStatsFile() {
   checkPayloadReadable();
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles ret;

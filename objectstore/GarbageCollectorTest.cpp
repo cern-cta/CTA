@@ -603,7 +603,8 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       cta::objectstore::ScopedExclusiveLock rql(rq);
       rq.fetch();
       std::list <cta::objectstore::RetrieveQueue::JobToAdd> jta;
-      jta.push_back({1,rqc.archiveFile.tapeFiles.front().fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time, cta::nullopt});
+      jta.push_back({1,rqc.archiveFile.tapeFiles.front().fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, 
+          sReq.creationLog.time, cta::nullopt, cta::nullopt});
       rq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 5) { pass++; continue; }
@@ -1163,7 +1164,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   sReq.archiveFileID = rqc.archiveFile.archiveFileID;
   sReq.creationLog.time=time(nullptr);
   rr.setSchedulerRequest(sReq);
-  rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransferForUser);
+  rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
   rr.setOwner(agentToTransferForUser.getAddressIfSet());
   rr.setActiveCopyNumber(0);
   rr.insert();
@@ -1632,7 +1633,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape){
   sReq.archiveFileID = rqc.archiveFile.archiveFileID;
   sReq.creationLog.time=time(nullptr);
   rr.setSchedulerRequest(sReq);
-  rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransferForUser);
+  rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
   rr.setOwner(agentToTransferForUser.getAddressIfSet());
   rr.setActiveCopyNumber(0);
   
@@ -1693,7 +1694,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape){
       cta::objectstore::ScopedExclusiveLock sel(rr);
       rr.fetch();
       rr.setOwner(agentRefToTransferDisabledTapeAutoGc.getAgentAddress());
-      rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransferForUser);
+      rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
       rr.commit();
 
       agentRefToTransferDisabledTapeAutoGc.addToOwnership(rr.getAddressIfSet(),be);

@@ -62,14 +62,23 @@ void RetrieveQueueShard::garbageCollect(const std::string& presumedOwner, AgentR
   throw exception::Exception("In RetrieveQueueShard::garbageCollect(): garbage collection should not be necessary for this type of object.");
 }
 
-RetrieveQueue::CandidateJobList RetrieveQueueShard::getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip) {
+RetrieveQueue::CandidateJobList RetrieveQueueShard::getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> & retrieveRequestsToSkip, const std::set<std::string> & diskSystemsToSkip) {
   checkPayloadReadable();
   RetrieveQueue::CandidateJobList ret;
   ret.remainingBytesAfterCandidates = m_payload.retrievejobstotalsize();
   ret.remainingFilesAfterCandidates = m_payload.retrievejobs_size();
   for (auto & j: m_payload.retrievejobs()) {
-    if (!retrieveRequestsToSkip.count(j.address())) {
-      ret.candidates.push_back({j.address(), (uint16_t)j.copynb(), j.size()});
+    if (!retrieveRequestsToSkip.count(j.address()) && !diskSystemsToSkip.count(j.destination_disk_system_name())) {
+      ret.candidates.push_back({j.address(), (uint16_t)j.copynb(), j.size(), nullopt, nullopt});
+      if (j.has_activity()) {
+        RetrieveQueue::JobDump::ActivityDescription ad;
+        ad.activity = j.activity();
+        ad.diskInstanceName = j.disk_instance_name();
+        ret.candidates.back().activity = ad;
+      }
+      if (j.has_destination_disk_system_name()) {
+        ret.candidates.back().diskSystemName = j.destination_disk_system_name();
+      }
       ret.candidateBytes += j.size();
       ret.candidateFiles ++;
     }
@@ -104,7 +113,9 @@ auto RetrieveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) 
           ret.removedJobs.back().size = j.size();
           ret.removedJobs.back().startTime = j.starttime();
           if (j.has_activity())
-            ret.removedJobs.back().activityDescription = JobInfo::ActivityDescription{ j.disk_instance_name(), j.activity() };
+            ret.removedJobs.back().activityDescription = RetrieveQueue::JobDump::ActivityDescription{ j.disk_instance_name(), j.activity() };
+          if (j.has_destination_disk_system_name())
+            ret.removedJobs.back().diskSystemName = j.destination_disk_system_name();
           ret.bytesRemoved += j.size();
           totalSize -= j.size();
           ret.jobsRemoved++;
@@ -139,9 +150,12 @@ auto RetrieveQueueShard::dumpJobs() -> std::list<JobInfo> {
   std::list<JobInfo> ret;
   for (auto &j: m_payload.retrievejobs()) {
     ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
-        j.minretrieverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(), j.fseq(), nullopt});
+        j.minretrieverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(), j.fseq(), nullopt, nullopt});
     if (j.has_activity()) {
-      ret.back().activityDescription = JobInfo::ActivityDescription{ j.disk_instance_name(), j.activity() };
+      ret.back().activityDescription = RetrieveQueue::JobDump::ActivityDescription{ j.disk_instance_name(), j.activity() };
+    }
+    if (j.has_destination_disk_system_name()) {
+      ret.back().diskSystemName = j.destination_disk_system_name();
     }
   }
   return ret;
@@ -166,6 +180,8 @@ std::list<RetrieveQueue::JobToAdd> RetrieveQueueShard::dumpJobsToAdd() {
       rad.activity = j.activity();
       ret.back().activityDescription = rad;
     }
+    if (j.has_destination_disk_system_name())
+      ret.back().diskSystemName = j.destination_disk_system_name();
   }
   return ret;
 }
@@ -268,6 +284,7 @@ void RetrieveQueueShard::addJob(const RetrieveQueue::JobToAdd& jobToAdd) {
     j->set_disk_instance_name(jobToAdd.activityDescription.value().diskInstanceName);
     j->set_activity(jobToAdd.activityDescription.value().activity);
   }
+  if (jobToAdd.diskSystemName) j->set_destination_disk_system_name(jobToAdd.diskSystemName.value());
   m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize()+jobToAdd.fileSize);
   // Sort the shard
   size_t jobIndex = m_payload.retrievejobs_size() - 1;
@@ -304,6 +321,7 @@ void RetrieveQueueShard::addJobsThroughCopy(JobsToAddSet& jobsToAdd) {
       rjp.set_disk_instance_name(jobToAdd.activityDescription.value().diskInstanceName);
       rjp.set_activity(jobToAdd.activityDescription.value().activity);
     }
+    if (jobToAdd.diskSystemName) rjp.set_destination_disk_system_name(jobToAdd.diskSystemName.value());
     i = serializedJobsToAdd.insert(i, rjp);
     totalSize+=jobToAdd.fileSize;
   }

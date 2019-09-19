@@ -264,7 +264,8 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
   
-  rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransferForRepack);
+  // Make sure job 1 will get queued by failing the other one.
+  rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_Failed);
   
   cta::common::dataStructures::RetrieveRequest sReq;
   sReq.archiveFileID = rqc.archiveFile.archiveFileID;
@@ -298,7 +299,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
 
     allFutures.clear();
 
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> Algo;
+    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
     Algo algo(be,agentRef);
 
     typename Algo::PopCriteria criteria;
@@ -326,6 +327,10 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   {
     ScopedExclusiveLock sel(*retrieveRequest);
     retrieveRequest->fetch();
+    // Make sure now copy 2 will get queued.
+    retrieveRequest->setJobStatus(1,cta::objectstore::serializers::RetrieveJobStatus::RJS_Failed);
+    retrieveRequest->setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
+    retrieveRequest->commit();
 
     ASSERT_NO_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,cta::optional<uint32_t>(2),lc));
 
@@ -345,11 +350,12 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     }
     
     ASSERT_EQ(sorter.getAllRetrieve().size(),0);
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForRepack> Algo;
+    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
     Algo algo(be,agentRef);
     
     typename Algo::PopCriteria criteria;
     criteria.files = 1;
+    criteria.bytes = 1000;
     typename Algo::PoppedElementsBatch elements = algo.popNextBatch("Tape1",criteria,lc);
     ASSERT_EQ(elements.elements.size(),1);
     auto& elt = elements.elements.front();
@@ -371,10 +377,14 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   {
     ScopedExclusiveLock sel(*retrieveRequest);
     retrieveRequest->fetch();
+    // We should be forbidden to force queueing a non-exsiting copy number.
     ASSERT_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,cta::optional<uint32_t>(4),lc),cta::exception::Exception);
 
     retrieveRequest->setJobStatus(1,serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
+    retrieveRequest->setJobStatus(2,serializers::RetrieveJobStatus::RJS_Failed);
+    retrieveRequest->commit();
     
+    // We should be forbidden to requeue a request if no copy is in status ToTranfer.
     ASSERT_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,cta::nullopt,lc),cta::exception::Exception);
     
     sel.release();
@@ -630,7 +640,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   
   {
     //Test the Retrieve Jobs
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> Algo;
+    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
@@ -919,7 +929,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
     job.fSeq = tf.fSeq;
     job.fileSize = rqc.archiveFile.fileSize;
     job.jobDump.copyNb = tf.copyNb;
-    job.jobDump.status = serializers::RetrieveJobStatus::RJS_ToTransferForUser;
+    job.jobDump.status = serializers::RetrieveJobStatus::RJS_ToTransfer;
     job.jobQueueType = JobQueueType::JobsToTransferForUser;
     job.mountPolicy = rqc.mountPolicy;
     job.previousOwner = &agentRef;
@@ -946,7 +956,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   
   {
     //Test the Retrieve Jobs
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransferForUser> Algo;
+    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 2;

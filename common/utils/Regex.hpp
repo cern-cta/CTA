@@ -29,13 +29,14 @@ namespace cta { namespace utils {
 
 class Regex {
   public:
-    Regex(const char * re_str);
+    Regex(const std::string & re_str);
+    Regex(const Regex & o);
     virtual ~Regex();
 
     /*!
      * Return a list of matching substrings
      */
-    std::vector<std::string> exec(const std::string &s);
+    std::vector<std::string> exec(const std::string &s) const;
 
     /*!
      * Return true if there is at least one matching substring
@@ -45,6 +46,8 @@ class Regex {
     }
 
   private:
+    // We keep around the string from which the RE was compiled to allow copying.
+    std::string m_reStr;
     regex_t m_re;
     bool m_set;
 };

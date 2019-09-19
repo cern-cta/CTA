@@ -60,8 +60,15 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedANonEmptyTape.cpp
   UserSpecifiedANonExistentLogicalLibrary.cpp
   UserSpecifiedANonExistentTape.cpp
+  UserSpecifiedANonExistentDiskSystem.cpp
+  UserSpecifiedANonEmptyDiskSystemAfterDelete.cpp
   UserSpecifiedAnEmptyStringComment.cpp
   UserSpecifiedAnEmptyStringDiskInstanceName.cpp
+  UserSpecifiedAnEmptyStringDiskSystemName.cpp
+  UserSpecifiedAnEmptyStringFileRegexp.cpp
+  UserSpecifiedAnEmptyStringFreeSpaceQueryURL.cpp
+  UserSpecifiedAZeroRefreshInterval.cpp
+  UserSpecifiedAZeroTargetedFreeSpace.cpp
   UserSpecifiedAnEmptyStringLogicalLibraryName.cpp
   UserSpecifiedAnEmptyStringMediaType.cpp
   UserSpecifiedAnEmptyStringStorageClassName.cpp
@@ -171,7 +178,7 @@ set_property(TARGET ctainmemorycatalogueunittests PROPERTY SOVERSION "${CTA_SOVE
 set_property(TARGET ctainmemorycatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctainmemorycatalogueunittests
-  ctacatalogue)
+  ctacatalogue ctadisk)
 
 install (TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

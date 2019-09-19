@@ -55,6 +55,7 @@
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
+#include "disk/DiskSystem.hpp"
 #include "common/exception/FileSizeMismatch.hpp"
 #include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
@@ -542,6 +543,60 @@ public:
   virtual std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const = 0;
   
   /**
+   * Returns all the disk systems within the CTA catalogue.
+   *
+   * @return The disk systems.
+   * requester group.
+   */
+  virtual disk::DiskSystemList getAllDiskSystems() const = 0;
+  
+  /**
+   * Creates a disk system.
+   * 
+   * @param admin The administrator.
+   * @param name The name of the disk system.
+   * @param fileRegexp The regular expression allowing matching destination URLs
+   * for this disk system.
+   * @param freeSpaceQueryURL The query URL that describes a method to query the
+   * free space from the disk system.
+   * @param refreshInterval The refresh interval (seconds) defining how long do 
+   * we use a free space value.
+   * @param targetedFreeSpace The targeted free space (margin) based on the free
+   * space update latency (inherent to the file system and induced by the refresh 
+   * interval), and the expected external bandwidth from sources external to CTA.
+   * @param comment Comment.
+   */
+  virtual void createDiskSystem(
+    const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name,
+    const std::string &fileRegexp,
+    const std::string &freeSpaceQueryURL,
+    const uint64_t refreshInterval,
+    const uint64_t targetedFreeSpace,
+    const uint64_t sleepTime,
+    const std::string &comment) = 0;
+  
+  /**
+   * Deletes a disk system.
+   * 
+   * @param name The name of the disk system.
+   */
+  virtual void deleteDiskSystem(const std::string &name) = 0;
+  
+  virtual void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &fileRegexp) = 0;
+  virtual void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &freeSpaceQueryURL) = 0;
+  virtual void modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t refreshInterval) = 0;
+  virtual void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t targetedFreeSpace) = 0;
+  virtual void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t sleepTime) = 0;
+  virtual void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &comment) = 0;
+      
+  /**
    * Returns the specified archive files.  Please note that the list of files
    * is ordered by archive file ID.
    *
@@ -659,11 +714,20 @@ public:
    * @return True if the tape exists.
    */
   virtual bool tapeExists(const std::string &vid) const = 0;
+  
+  /**
+   * Returns true if the specified disk system exists.
+   *
+   * @param name The name identifier of the disk system.
+   * @return True if the tape exists.
+   */
+  virtual bool diskSystemExists(const std::string &name) const = 0;  
 
 }; // class Catalogue
 
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringActivity);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnOutOfRangeActivityWeight);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroSleepTime);
 
 } // namespace catalogue
 } // namespace cta

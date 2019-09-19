@@ -211,6 +211,8 @@ const cmdLookup_t cmdLookup = {
    { "ta",                      AdminCmd::CMD_TAPE },
    { "tapepool",                AdminCmd::CMD_TAPEPOOL },
    { "tp",                      AdminCmd::CMD_TAPEPOOL },
+   { "disksystem",              AdminCmd::CMD_DISKSYSTEM },
+   { "ds",                      AdminCmd::CMD_DISKSYSTEM }
 };
 
 
@@ -279,6 +281,9 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--partialtapesnumber",    OptionUInt64::PARTIAL_TAPES_NUMBER },
    { "--retrievepriority",      OptionUInt64::RETRIEVE_PRIORITY },
    { "--size",                  OptionUInt64::FILE_SIZE },
+   { "--refreshinterval",       OptionUInt64::REFRESH_INTERVAL },
+   { "--targetedfreespace",     OptionUInt64::TARGETED_FREE_SPACE },
+   { "--sleeptime",             OptionUInt64::SLEEP_TIME },
    { "--uid",                   OptionUInt64::OWNER_UID }
 };
 
@@ -308,7 +313,10 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--username",              OptionString::USERNAME },
    { "--vendor",                OptionString::VENDOR },
    { "--vid",                   OptionString::VID },
-   { "--vo",                    OptionString::VO }
+   { "--vo",                    OptionString::VO },
+   { "--disksystem",            OptionString::DISK_SYSTEM },
+   { "--fileregexp",            OptionString::FILE_REGEXP },
+   { "--freespacequeryurl",     OptionString::FREE_SPACE_QUERY_URL }
 };
 
 
@@ -360,6 +368,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" } }},
 };
 
 
@@ -436,7 +445,12 @@ const Option opt_full                 { Option::OPT_BOOL, "--full",             
 const Option opt_readonly             { Option::OPT_BOOL, "--readonly",              "-r",   " <\"true\" or \"false\">" };
 const Option opt_disabled_tape        { Option::OPT_FLAG, "--disabledtape",          "-d",   ""};
 
-
+const Option opt_disksystem           { Option::OPT_STR,  "--disksystem",            "-n", " <disk_system_name>" };
+const Option opt_file_regexp          { Option::OPT_STR,  "--fileregexp",            "-r", " <file_regexp>" };
+const Option opt_free_space_query_url { Option::OPT_STR,  "--freespacequeryurl",     "-u", " <free_space_query_url>" };
+const Option opt_refresh_interval     { Option::OPT_UINT,  "--refreshinterval",      "-i", " <refresh_intreval>" };
+const Option opt_targeted_free_space  { Option::OPT_UINT,  "--targetedfreespace",    "-f", " <targeted_free_space>" };
+const Option opt_sleep_time           { Option::OPT_UINT,  "--sleeptime",            "-s", " <sleep time in s>" };
 
 /*!
  * Map valid options to commands
@@ -547,6 +561,15 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_supply.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM    }, { opt_tapepool_alias }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { }},
+   /*----------------------------------------------------------------------------------------------------*/
+   {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_ADD   },
+      { opt_disksystem, opt_file_regexp, opt_free_space_query_url, opt_refresh_interval, opt_targeted_free_space, opt_sleep_time,
+        opt_comment }},
+   {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_CH    },
+      { opt_disksystem, opt_file_regexp.optional(), opt_free_space_query_url.optional(), opt_refresh_interval.optional(),
+        opt_targeted_free_space.optional(), opt_sleep_time.optional(), opt_comment.optional() }},
+   {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_RM    }, { opt_disksystem }},
+   {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_LS    }, { }},
 };
 
 

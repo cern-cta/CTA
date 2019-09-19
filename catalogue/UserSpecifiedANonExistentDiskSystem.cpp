@@ -1,6 +1,6 @@
-/**
+/*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2019 CERN
+ * Copyright (C) 2015  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,24 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "UserSpecifiedANonExistentDiskSystem.hpp"
 
-#include <string>
+namespace cta {
+namespace catalogue {
 
-#include "common/dataStructures/OwnerIdentity.hpp"
-#include "objectstore/cta.pb.h"
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+UserSpecifiedANonExistentDiskSystem::UserSpecifiedANonExistentDiskSystem(const std::string &context, const bool embedBacktrace):
+  UserError(context, embedBacktrace) {
+}
 
-namespace cta { namespace objectstore {
-
-struct OwnerIdentitySerDeser: public cta::common::dataStructures::OwnerIdentity {
-
-  void serialize(cta::objectstore::serializers::OwnerIdentity &user) const {
-    user.set_uid(uid);
-    user.set_gid(gid);
-  }
-
-  void deserialize(const cta::objectstore::serializers::OwnerIdentity &user) :
-    uid(user.uid()), gid(user.gid()) {}
-};
-
-}}
+} // namespace catalogue
+} // namespace cta

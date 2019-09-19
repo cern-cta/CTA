@@ -219,8 +219,9 @@ public:
   }
 
   SchedulerDatabase::RetrieveRequestInfo queueRetrieve(common::dataStructures::RetrieveRequest& rqst,
-    const common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override {
-    return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
+    const common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName,
+    log::LogContext &logContext) override {
+    return m_OStoreDB.queueRetrieve(rqst, criteria, diskSystemName, logContext);
   }
   
   void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,

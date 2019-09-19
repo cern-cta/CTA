@@ -159,7 +159,7 @@ void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueA
     Sorter::RetrieveJob job = std::get<0>(jobToAdd->jobToQueue);
     succeededJobs[job.jobDump.copyNb] = jobToAdd;
     previousOwner = job.previousOwner->getAgentAddress();
-    jobsToAdd.push_back({job.retrieveRequest.get(),job.jobDump.copyNb,job.fSeq,job.fileSize,job.mountPolicy,job.jobDump.status,job.activityDescription});
+    jobsToAdd.push_back({job.retrieveRequest.get(),job.jobDump.copyNb,job.fSeq,job.fileSize,job.mountPolicy,job.jobDump.status,job.activityDescription,job.diskSystemName});
   }
   try{
     algo.referenceAndSwitchOwnershipIfNecessary(vid,previousOwner,queueAddress,jobsToAdd,lc);
@@ -185,7 +185,7 @@ void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const JobQueueType
       this->executeRetrieveAlgorithm<RetrieveQueueToReportForUser>(vid,queueAddress,jobs,lc);
     break;
     case JobQueueType::JobsToTransferForUser:
-      this->executeRetrieveAlgorithm<RetrieveQueueToTransferForUser>(vid,queueAddress,jobs,lc);
+      this->executeRetrieveAlgorithm<RetrieveQueueToTransfer>(vid,queueAddress,jobs,lc);
       break;
     case JobQueueType::JobsToReportToRepackForSuccess:
       this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForSuccess>(vid,queueAddress,jobs,lc);
@@ -193,8 +193,6 @@ void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const JobQueueType
     case JobQueueType::JobsToReportToRepackForFailure:
       this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForFailure>(vid,queueAddress,jobs,lc);
       break;
-    case JobQueueType::JobsToTransferForRepack:
-      this->executeRetrieveAlgorithm<RetrieveQueueToTransferForRepack>(vid, queueAddress,jobs,lc);
       break;
     case JobQueueType::FailedJobs:
       break;
@@ -216,6 +214,8 @@ Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> r
   jobToAdd.jobDump.status = retrieveRequest->getJobStatus(jobToAdd.jobDump.copyNb);
   jobToAdd.fileSize = archiveFile.fileSize;
   jobToAdd.jobQueueType = retrieveRequest->getQueueType(copyNb); //May throw an exception
+  jobToAdd.activityDescription = retrieveRequest->getActivity();
+  jobToAdd.diskSystemName = retrieveRequest->getDiskSystemName();
   return jobToAdd;
 }
 
@@ -308,7 +308,7 @@ std::set<std::string> Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAcc
   using serializers::RetrieveJobStatus;
   std::set<std::string> candidateVids;
   for(auto& j: requestAccessor.getJobs()){
-    if(j.status == RetrieveJobStatus::RJS_ToTransferForUser){
+    if(j.status == RetrieveJobStatus::RJS_ToTransfer){
       candidateVids.insert(requestAccessor.getArchiveFile().tapeFiles.at(j.copyNb).vid);
     }
   }
@@ -401,6 +401,8 @@ Sorter::RetrieveJob OStoreRetrieveRequestAccessor::createRetrieveJob(const cta::
   ret.jobDump.status = m_retrieveRequest->getJobStatus(ret.jobDump.copyNb);
   ret.jobQueueType = m_retrieveRequest->getQueueType(copyNb);
   ret.fileSize = archiveFile.fileSize;
+  ret.activityDescription = m_retrieveRequest->getActivity();
+  ret.diskSystemName = m_retrieveRequest->getDiskSystemName();
   return ret;
 }
 

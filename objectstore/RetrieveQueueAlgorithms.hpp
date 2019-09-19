@@ -31,7 +31,7 @@ struct ContainerTraits<RetrieveQueue,C>
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
     ContainerSummary(const RetrieveQueue::JobsSummary &c) : 
       RetrieveQueue::JobsSummary({c.jobs,c.bytes,c.oldestJobStartTime,c.priority,
-          c.minRetrieveRequestAge,c.maxDrivesAllowed,c.activityCounts}) {}
+          c.minRetrieveRequestAge,c.maxDrivesAllowed,c.activityCounts, nullopt}) {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
   
@@ -45,6 +45,7 @@ struct ContainerTraits<RetrieveQueue,C>
     cta::common::dataStructures::MountPolicy policy;
     serializers::RetrieveJobStatus status;
     optional<RetrieveActivityDescription> activityDescription;
+    optional<std::string> diskSystemName;
     typedef std::list<InsertedElement> list;
   };
 
@@ -59,6 +60,8 @@ struct ContainerTraits<RetrieveQueue,C>
     std::string errorReportURL;
     SchedulerDatabase::RetrieveJob::ReportType reportType;
     RetrieveRequest::RepackInfo repackInfo;
+    optional<RetrieveQueue::JobDump::ActivityDescription> activity;
+    optional<std::string> diskSystemName;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
@@ -279,7 +282,7 @@ addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemC
   std::list<RetrieveQueue::JobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription});
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription, e.diskSystemName});
   }
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -292,7 +295,7 @@ addReferencesIfNecessaryAndCommit(Container& cont, typename InsertedElement::lis
   std::list<RetrieveQueue::JobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription});
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription, e.diskSystemName});
   }
   cont.addJobsIfNecessaryAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -387,6 +390,11 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       e.archiveFile = u.get()->getArchiveFile();
       e.rr = u.get()->getRetrieveRequest();
       e.repackInfo = u.get()->getRepackInfo();
+      auto & rad = u.get()->getRetrieveActivityDescription();
+      if (rad) {
+        e.activity = RetrieveQueue::JobDump::ActivityDescription{ rad.value().diskInstanceName, rad.value().activity };
+      }
+      e.diskSystemName = u.get()->getDiskSystemName();
       switch(u.get()->getJobStatus()) {
         case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:
           e.reportType = SchedulerDatabase::RetrieveJob::ReportType::FailureReport;
@@ -408,7 +416,19 @@ bool ContainerTraits<RetrieveQueue,C>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc)
 {
-  if(!cont.isEmpty()) return false;
+  if(!cont.isEmpty()) {
+    auto si = cont.getJobsSummary().sleepInfo;
+    if (si) {
+      log::ScopedParamContainer params(lc);
+      params.add("tapeVid", cId)
+            .add("queueObject", cont.getAddressIfSet())
+            .add("diskSystemSleptFor", si.value().diskSystemSleptFor);
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): non-empty queue is sleeping");
+      // We fake the fact that we trimed the queue for compatibility with previous algorithms (a sleeping queue is like gone at this point).
+      return true;
+    }
+    return false;
+  }
   // The current implementation is done unlocked
   contLock.release();
   try {
@@ -437,7 +457,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
 // RetrieveQueue full specialisations for ContainerTraits.
 
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PopCriteria {
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria {
   uint64_t files;
   uint64_t bytes;
   PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
@@ -447,12 +467,20 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PopCriteri
     files -= pes.files;
     return *this;
   }
+  struct DiskSystemToSkip {
+    std::string name;
+    uint64_t sleepTime;
+    bool operator<(const DiskSystemToSkip o) const { return name < o.name; }
+  };
+  std::set<DiskSystemToSkip> diskSystemsToSkip;
 };
 
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PoppedElementsSummary {
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSummary {
   uint64_t files;
   uint64_t bytes;
+  bool diskSystemFull = false;
+  std::string fullDiskSystem;
   PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
   bool operator==(const PoppedElementsSummary &pes) const {
     return bytes == pes.bytes && files == pes.files;
@@ -478,12 +506,18 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::PoppedElem
 
 template<typename C>
 auto ContainerTraits<RetrieveQueue,C>::
-getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elementsToSkip,
   log::LogContext &lc) -> PoppedElementsBatch
 {
   PoppedElementsBatch ret;
 
-  auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
+  auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files,
+    elementsToSkip, 
+    // This parameter is needed only in the specialized version: 
+    // auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getPoppingElementsCandidates
+    // We provide an empty set here.
+    std::set<std::string>()
+  );
   for(auto &cjfq : candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement{
       cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
@@ -492,7 +526,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
       common::dataStructures::ArchiveFile(),
       common::dataStructures::RetrieveRequest(),
       "", SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired,
-      RetrieveRequest::RepackInfo()
+      RetrieveRequest::RepackInfo(), cjfq.activity, cjfq.diskSystemName
     });
     ret.summary.files++;
   }
@@ -503,7 +537,7 @@ template<typename C>
 const std::string ContainerTraits<RetrieveQueue,C>::c_identifierType = "tapeVid";
   
 template<>
-struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForUser>::QueueType{
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::QueueType{
     objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForUser;
 };
 
@@ -531,5 +565,10 @@ template<>
 struct ContainerTraits<RetrieveQueue, RetrieveQueueToTransferForRepack>::QueueType{
   objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForRepack;
 };
+
+template<>
+auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elementsToSkip,
+  log::LogContext &lc) -> PoppedElementsBatch;
 
 }} // namespace cta::objectstore

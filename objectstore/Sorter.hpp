@@ -107,6 +107,7 @@ public:
     common::dataStructures::MountPolicy mountPolicy;
     cta::objectstore::JobQueueType jobQueueType;
     optional<RetrieveActivityDescription> activityDescription;
+    optional<std::string> diskSystemName;
   };
   
   /**

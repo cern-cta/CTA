@@ -91,6 +91,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kSclsItem:      std::cout << Log::DumpProtobuf(&record.scls_item());    break;
          case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
          case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
+         case Data::kDslsItem:      std::cout << Log::DumpProtobuf(&record.dsls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -117,6 +118,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kSclsItem:      formattedText.print(record.scls_item());    break;
          case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
          case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
+         case Data::kDslsItem:      formattedText.print(record.dsls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -270,6 +272,7 @@ void CtaAdminCmd::send() const
             case HeaderType::STORAGECLASS_LS:              formattedText.printStorageClassLsHeader(); break;
             case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;
             case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
+            case HeaderType::DISKSYSTEM_LS:                formattedText.printDiskSystemLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }

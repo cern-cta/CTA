@@ -223,7 +223,7 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
     });
     jobInsertions.emplace_back(std::async(std::launch::async ,lambdas.back()));
   }
-  for (auto &j: jobInsertions) { j.wait(); }
+  for (auto &j: jobInsertions) { j.get(); }
   jobInsertions.clear();
   lambdas.clear();
   

@@ -185,7 +185,10 @@ private:
   void processTapePool_Add          (cta::xrd::Response &response);
   void processTapePool_Ch           (cta::xrd::Response &response);
   void processTapePool_Rm           (cta::xrd::Response &response);
-
+  void processDiskSystem_Add        (cta::xrd::Response &response);
+  void processDiskSystem_Ch         (cta::xrd::Response &response);
+  void processDiskSystem_Rm         (cta::xrd::Response &response);
+  
   /*!
    * Process AdminCmd events which can return a stream response
    *
@@ -211,6 +214,7 @@ private:
   admincmdstream_t processTapePool_Ls;
   admincmdstream_t processTape_Ls;
   admincmdstream_t processRepack_Ls;
+  admincmdstream_t processDiskSystem_Ls;
 
   /*!
    * Log an admin command
