@@ -891,7 +891,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
 }
 
 //------------------------------------------------------------------------------
-// createTemporaryTables
+// beginCreateTemporarySetDeferred
 //------------------------------------------------------------------------------
 void PostgresCatalogue::beginCreateTemporarySetDeferred(rdbms::Conn &conn) const {
   const char *const sql_temptables =
