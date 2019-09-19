@@ -144,11 +144,11 @@ void Conn::executeNonQueries(const std::string &sqlStmts) {
 //------------------------------------------------------------------------------
 void Conn::executeNonQuery(const std::string &sql) {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
-    if(std::string::npos != sql.find(";")) {
-      UnexpectedSemicolon ex;
-      ex.getMessage() << "Encountered unexpected semicolon in " << getSqlForException(sql);
-      throw ex;
-    }
+//  if(std::string::npos != sql.find(";")) {
+//    UnexpectedSemicolon ex;
+//    ex.getMessage() << "Encountered unexpected semicolon in " << getSqlForException(sql);
+//    throw ex;
+//  }
     m_connAndStmts->conn->executeNonQuery(sql);
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");

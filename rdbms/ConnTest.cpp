@@ -149,7 +149,7 @@ TEST_P(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQuery) {
   }
 }
 
-TEST_P(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQuery_semicolon) {
+TEST_P(cta_rdbms_ConnTest, DISABLED_createTableInMemoryDatabase_executeNonQuery_semicolon) {
   using namespace cta::rdbms;
 
   const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER);";
