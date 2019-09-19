@@ -66,12 +66,14 @@ public:
 
     using cta::log::Param;
     
+    bool isRepack = m_retrieveJob->m_dbJob->isRepack;
     // Set the common context for all the coming logs (file info)
     cta::log::ScopedParamContainer params(lc);
     params.add("fileId", m_retrieveJob->archiveFile.archiveFileID)
           .add("BlockId", m_retrieveJob->selectedTapeFile().blockId)
           .add("fSeq", m_retrieveJob->selectedTapeFile().fSeq)
-          .add("dstURL", m_retrieveJob->retrieveRequest.dstURL);
+          .add("dstURL", m_retrieveJob->retrieveRequest.dstURL)
+          .add("isRepack",isRepack);
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
@@ -129,6 +131,11 @@ public:
         localStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
         auto blockSize = mb->m_payload.size();
         localStats.dataVolume += blockSize;
+	if(isRepack){
+	  localStats.repackBytesCount += blockSize;
+	} else {
+	  localStats.userBytesCount += blockSize;
+	}
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
         mb=NULL;
@@ -143,6 +150,11 @@ public:
       localStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       // We now transmitted one file:
       localStats.filesCount++;
+      if(isRepack){
+	localStats.repackFilesCount++;
+      } else {
+	localStats.userFilesCount++;
+      }
       params.add("positionTime", localStats.positionTime)
             .add("readWriteTime", localStats.readWriteTime)
             .add("waitFreeMemoryTime",localStats.waitFreeMemoryTime)
@@ -156,7 +168,11 @@ public:
                      /1000/1000/localStats.totalTime:0)
             .add("payloadTransferSpeedMBps",
                      localStats.totalTime?1.0*localStats.dataVolume/1000/1000/localStats.totalTime:0)
-            .add("LBPMode", LBPMode);
+            .add("LBPMode", LBPMode)
+	    .add("repackFilesCount",localStats.repackFilesCount)
+	    .add("repackBytesCount",localStats.repackBytesCount)
+	    .add("userFilesCount",localStats.userFilesCount)
+	    .add("userBytesCount",localStats.userBytesCount);
       lc.log(cta::log::INFO, "File successfully read from tape");
       // Add the local counts to the session's
       stats.add(localStats);

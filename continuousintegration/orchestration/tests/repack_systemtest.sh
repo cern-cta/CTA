@@ -5,6 +5,8 @@ EOSINSTANCE=ctaeos
 #default Repack timeout
 WAIT_FOR_REPACK_TIMEOUT=300
 
+REPORT_DIRECTORY=/var/log
+
 die() {
   echo "$@" 1>&2
   test -z $TAILPID || kill ${TAILPID} &> /dev/null
@@ -12,10 +14,14 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>]
+Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m] [-d]
 (bufferURL example : /eos/ctaeos/repack)
-eosinstance : the name of the ctaeos instance to be used (default ctaeos)
+eosinstance : the name of the ctaeos instance to be used (default : $EOSINSTANCE)
 timeout : the timeout in seconds to wait for the repack to be done
+reportDirectory : the directory to generate the report of the repack test (default : $REPORT_DIRECTORY)
+-a : Launch a repack just add copies workflow
+-m : Launch a repack just move workflow
+-d : Force a repack on a disabled tape (adds --disabled to the repack add command)
 EOF
 exit 1
 }
@@ -38,7 +44,8 @@ then
   usage
 fi;
 
-while getopts "v:e:b:t:" o; do
+DISABLED_TAPE_FLAG=""
+while getopts "v:e:b:t:r:amd" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -51,6 +58,18 @@ while getopts "v:e:b:t:" o; do
       ;;
     t)
       WAIT_FOR_REPACK_TIMEOUT=${OPTARG}
+      ;;
+    a)
+      ADD_COPIES_ONLY="-a"
+      ;;
+    m)
+      MOVE_ONLY="-m"
+      ;;
+    r)
+      REPORT_DIRECTORY=${OPTARG}
+      ;;
+    d)
+      DISABLED_TAPE_FLAG="--disabledtape"
       ;;
     *)
       usage
@@ -69,6 +88,14 @@ if [ "x${VID_TO_REPACK}" = "x" ]; then
   die "No vid to repack provided."
 fi
 
+REPACK_OPTION=""
+
+if [ "x${ADD_COPIES_ONLY}" != "x" ] && [ "x${MOVE_ONLY}" != "x" ]; then
+  die "-a and -m options are mutually exclusive"
+fi
+
+[[ "x${ADD_COPIES_ONLY}" == "x" ]] && REPACK_OPTION=${MOVE_ONLY} || REPACK_OPTION=${ADD_COPIES_ONLY}
+
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
@@ -86,7 +113,8 @@ echo "Marking the tape ${VID_TO_REPACK} as full before Repacking it"
 admin_cta tape ch --vid ${VID_TO_REPACK} --full true
 
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
-admin_cta re add --vid ${VID_TO_REPACK} --justmove --bufferurl ${FULL_REPACK_BUFFER_URL}
+
+admin_cta repack add --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG}
 
 SECONDS_PASSED=0
 while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Complete" or .status == "Failed")' | wc -l`; do
@@ -96,12 +124,20 @@ while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] 
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_REPACK_TIMEOUT}; then
     echo "Timed out after ${WAIT_FOR_REPACK_TIMEOUT} seconds waiting for tape ${VID_TO_REPACK} to be repacked"
+    exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} -r ${REPORT_DIRECTORY} ${ADD_COPIES_ONLY} &
+    wait $!
     exit 1
   fi
 done
-if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Failed")' | wc -l`; then
+if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.status == "Failed")] | length'`; then
     echo "Repack failed for tape ${VID_TO_REPACK}."
+    exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} -r ${REPORT_DIRECTORY} ${ADD_COPIES_ONLY} &
+    wait $!
     exit 1
 fi
 
-exec /root/repack_generate_report.sh -v ${VID_TO_REPACK}
+echo "Repack request on VID ${VID_TO_REPACK} succeeded."
+
+exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} -r ${REPORT_DIRECTORY} ${ADD_COPIES_ONLY} &
+wait $!
+exit 0

@@ -50,7 +50,6 @@ else
   echo "Reusing objectstore (no check)"
 fi
 
-
 echo "Configuring database:"
 /opt/run/bin/init_database.sh
 . /tmp/database-rc.sh

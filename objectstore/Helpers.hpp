@@ -28,6 +28,12 @@
 #include <string>
 #include <set>
 #include <future>
+#include <fstream>
+#include <syscall.h>
+
+//Activate or not helper cache update for debugging
+//#define HELPERS_CACHE_UPDATE_LOGGING
+#define HELPERS_CACHE_UPDATE_LOGGING_FILE "/var/tmp/cta-helpers-update-cache.log"
 
 /**
  * A collection of helper functions for commonly used multi-object operations
@@ -78,7 +84,7 @@ public:
    * to the algorithm, but will help performance drastically for a very similar result
    */
   static std::string selectBestRetrieveQueue (const std::set<std::string> & candidateVids, cta::catalogue::Catalogue & catalogue, 
-  objectstore::Backend & objectstore);
+  objectstore::Backend & objectstore, bool forceDisabledTape = false);
   
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB
@@ -94,6 +100,12 @@ public:
    * tape is not disabled (full status not fetched).
    */
   static void updateRetrieveQueueStatisticsCache(const std::string & vid, uint64_t files, uint64_t bytes, uint64_t priority);
+  
+  /**
+   * Allows to flush the RetrieveQueueStatisticsCache
+   * TO BE USED BY UNIT TESTS !
+   */
+  static void flushRetrieveQueueStatisticsCache();
   
 private:
   /** Lock for the retrieve queues stats */
@@ -112,6 +124,7 @@ private:
   static std::map<std::string, RetrieveQueueStatisticsWithTime> g_retrieveQueueStatistics;
   /** Time between cache updates */
   static const time_t c_retrieveQueueCacheMaxAge = 10;
+  static void logUpdateCacheIfNeeded(const bool entryCreation,const RetrieveQueueStatisticsWithTime& tapeStatistic, std::string message="");
   
 public:
   

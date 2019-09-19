@@ -9,7 +9,7 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable eos-citrine
 
   # Install missing RPMs
-  yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
+  yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-migration-tools cta-debuginfo sudo logrotate cta-fst-gcd
 
   ## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
   # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
@@ -48,6 +48,8 @@ CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
 # dir for cta tests only for eosusers and powerusers
 CTA_TEST_DIR=/eos/${EOS_INSTANCE}/cta
+# dir for gRPC tests, should be the same as eos.prefix in client.sh
+GRPC_TEST_DIR=/eos/grpctest
 # dir for eos instance basic tests writable and readable by anyone
 EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 
@@ -149,9 +151,6 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   systemctl status eos@{mq,mgm,fst} &>/dev/null && echo OK || echo FAILED
 
   systemctl status eos@{mq,mgm,fst}
-
-  systemctl start cta-fst-gcd
-
 else
   # Using jemalloc as specified in
   # it-puppet-module-eos:
@@ -167,28 +166,48 @@ else
     /usr/bin/xrootd -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
     /usr/bin/xrootd -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
     /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
-
-
-  runuser -u daemon setsid /usr/bin/cta-fst-gcd < /dev/null &
 fi
 
-echo "Giving cta-fst-gcd 3 second to start logging"
-sleep 3
+if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+  if eos ns | grep 'In-flight FileMD' && eos ns | grep 'In-flight ContainerMD'; then
+    echo 'The EOS namespace backend is QuarkDB'
+  else
+    echo 'The EOS namespace backend is not QuarkDB'
+    exit 1
+  fi
 
-let EXPECTED_NB_STARTED_CTA_FST_GCD=NB_STARTED_CTA_FST_GCD+1
-ACTUAL_NB_STARTED_CTA_FST_GCD=0
-if test -f /var/log/eos/fst/cta-fst-gcd.log; then
-  ACTUAL_NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
-else
-  echo "/var/log/eos/fst/cta-fst-gcd.log DOES NOT EXIST"
-  ps auxf | grep gcd
-  exit 1
-fi
-if test ${EXPECTED_NB_STARTED_CTA_FST_GCD} = ${ACTUAL_NB_STARTED_CTA_FST_GCD}; then
-  echo "/usr/bin/cta-fst-gcd LOGGED 'cta-fst-gcd started'"
-else
-  echo "/usr/bin/cta-fst-gcd DID NOT LOG 'cta-fst-gcd started'"
-  exit 1
+  if eos ns reserve-ids 4294967296 4294967296; then
+    echo "Reserved EOS file and container IDs up to and including 4294967296"
+  else
+    echo "Failed to reserve EOS file and container IDs"
+    exit 1
+  fi
+  CID_TEST_DIR=/cid_test_dir
+  if eos mkdir ${CID_TEST_DIR}; then
+    echo "Created ${CID_TEST_DIR}"
+  else
+    echo "Failed to create ${CID_TEST_DIR}"
+    exit 1
+  fi
+  echo eos fileinfo ${CID_TEST_DIR}
+  eos fileinfo ${CID_TEST_DIR}
+  CID_TEST_DIR_CID=`eos fileinfo ${CID_TEST_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://'`
+  if test x = "x${CID_TEST_DIR_CID}"; then
+    echo "Failed to determine the EOS container ID of ${CID_TEST_DIR}"
+    exit 1
+  else
+    echo "The EOS container ID of ${CID_TEST_DIR} is ${CID_TEST_DIR_CID}"
+  fi
+  if test 4294967296 -ge ${CID_TEST_DIR_CID}; then
+    echo "Container ID ${CID_TEST_DIR_CID} is illegal because it is within the reserverd set"
+    exit 1
+  fi
+  if eos rmdir ${CID_TEST_DIR}; then
+    echo "Deleted ${CID_TEST_DIR}"
+  else
+    echo "Failed to delete ${CID_TEST_DIR}"
+    exit 1
+  fi
 fi
 
   eos vid enable krb5
@@ -209,6 +228,35 @@ fi
   eos mkdir ${CTA_PROC_DIR}
   eos mkdir ${CTA_WF_DIR}
 
+  # Configure gRPC interface:
+  #
+  # 1. Map requests from the client to EOS virtual identities
+  eos -r 0 0 vid add gateway [:1] grpc
+  # 2. Add authorisation key
+  #
+  # Note: EOS_AUTH_KEY must be the same as the one specified in client.sh
+  EOS_AUTH_KEY=migration-test-token
+  eos -r 0 0 vid set map -grpc key:${EOS_AUTH_KEY} vuid:2 vgid:2
+  echo "eos vid ls:"
+  eos -r 0 0 vid ls
+  # 3. Create top-level directory and set permissions to writeable by all
+  eos mkdir ${GRPC_TEST_DIR}
+  eos chmod 777 ${GRPC_TEST_DIR}
+
+if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+  CTA_PROC_DIR_CID=`eos fileinfo ${CTA_PROC_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://'`
+  if test x = "x${CTA_PROC_DIR_CID}"; then
+    echo "Failed to determine the EOS container ID of ${CTA_PROC_DIR}"
+    exit 1
+  else
+    echo "The EOS container ID of ${CTA_PROC_DIR} is ${CTA_PROC_DIR_CID}"
+  fi
+  if test 4294967296 -ge ${CTA_PROC_DIR_CID}; then
+    echo "Container ID ${CTA_PROC_DIR_CID} is illegal because it is within the reserverd set"
+    exit 1
+  fi
+fi
+
   # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
   # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
   # this is achieved through the ACLs.
@@ -216,7 +264,6 @@ fi
   eos mkdir ${CTA_TEST_DIR}
   eos chmod 555 ${CTA_TEST_DIR}
   eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp /eos/ctaeos/cta
-
   eos attr set CTA_StorageClass=ctaStorageClass ${CTA_TEST_DIR}
     
   # Link the attributes of CTA worklow directory to the test directory
@@ -231,6 +278,22 @@ fi
     echo "Sleeping 1 second"
     sleep 1
   done
+
+  # Start the FST garbage collector (the daemon user must be an EOS sudoer by now)
+  if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+    systemctl start cta-fst-gcd
+  else
+    runuser -u daemon setsid /usr/bin/cta-fst-gcd > /dev/null 2>&1 < /dev/null &
+  fi
+  echo "Giving cta-fst-gcd 1 second to start"
+  sleep 1
+  FST_GCD_PID=`ps -ef | egrep '^daemon .* /bin/python /usr/bin/cta-fst-gcd$' | grep -v grep | awk '{print $2;}'`
+  if test "x${FST_GCD_PID}" = x; then
+    echo "cta-fst-gcd is not running"
+    exit 1
+  else
+    echo "cta-fst-gcd is running FST_GCD_PID=${FST_GCD_PID}"
+  fi
 
 # test EOS
   eos -b node ls
@@ -269,6 +332,22 @@ fi
 
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
+
+# configuration for migration tools
+cat <<EOF >/etc/cta/castor-migration.conf
+castor.db_login               oracle:castor/<password>@castor
+castor.json                   true
+castor.max_num_connections    1
+castor.batch_size             100
+castor.prefix                 /castor/cern.ch
+eos.dry_run                   false
+eos.prefix                    /eos/grpctest
+eos.endpoint                  localhost:50051
+eos.token                     ${EOS_AUTH_KEY}
+EOF
+echo Migration tools configuration:
+cat /etc/cta/castor-migration.conf
+
 
 touch /EOSOK
 

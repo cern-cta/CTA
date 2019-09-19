@@ -409,6 +409,7 @@ message RetrieveRequestRepackInfo {
   required string repack_request_address = 9520;
   required string file_buffer_url = 9530;
   required uint64 fseq = 9540;
+  required bool force_disabled_tape = 9560;
 }
 
 // The different timings of the lifecycle of a RetrieveRequest (creation time, first select time, request complete)
@@ -589,6 +590,7 @@ message RepackRequest {
   required bool is_expand_finished = 11561;
   required bool is_expand_started = 11562;
   required MountPolicy mount_policy = 11563;
+  required bool force_disabled_tape = 11564;
   repeated RepackSubRequestPointer subrequests = 11570;
 }
 

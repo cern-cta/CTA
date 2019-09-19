@@ -16,35 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include <memory>
-#include "catalogue/Catalogue.hpp"
+#include "UnexpectedSemicolon.hpp"
 
 namespace cta {
+namespace rdbms {
 
-// Forward declarations
-class SchedulerDatabase;
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+UnexpectedSemicolon::UnexpectedSemicolon(const std::string &context, const bool embedBacktrace):
+  Exception(context, embedBacktrace) {
+}
 
-/**
- * Asbtract class specifying the interface to a factory of scheduler database
- * objects.
- */
-class SchedulerDatabaseFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  virtual ~SchedulerDatabaseFactory() throw() = 0;
-
-  /**
-   * Returns a newly created scheduler database object.
-   *
-   * @return A newly created scheduler database object.
-   */
-  virtual std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const = 0;
-
-}; // class SchedulerDatabaseFactory
-
+} // namespace rdbms
 } // namespace cta

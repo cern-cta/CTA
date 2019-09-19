@@ -364,7 +364,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 // Helpers::selectBestRetrieveQueue()
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candidateVids, cta::catalogue::Catalogue & catalogue,
-    objectstore::Backend & objectstore) {
+    objectstore::Backend & objectstore, bool forceDisabledTape) {
   // We will build the retrieve stats of the non-disable candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
   // A promise we create so we can make users wait on it.
@@ -378,20 +378,29 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       // If an update is in progress, we wait on it, and get the result after.
       // We have to release the global lock while doing so.
       if (g_retrieveQueueStatistics.at(v).updating) {
+        logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"g_retrieveQueueStatistics.at(v).updating");
         // Cache is updating, we wait on update.
         auto updateFuture = g_retrieveQueueStatistics.at(v).updateFuture;
         grqsmLock.unlock();
         updateFuture.wait();
         grqsmLock.lock();
-        if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled) {
+        if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape)) {
+          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape)");
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         }
       } else {
         // We have a cache hit, check it's not stale.
-        if (g_retrieveQueueStatistics.at(v).updateTime + c_retrieveQueueCacheMaxAge > time(nullptr))
+        time_t timeSinceLastUpdate = time(nullptr) - g_retrieveQueueStatistics.at(v).updateTime;
+        if (timeSinceLastUpdate > c_retrieveQueueCacheMaxAge){
+          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"timeSinceLastUpdate ("+std::to_string(timeSinceLastUpdate)+")> c_retrieveQueueCacheMaxAge ("
+                  +std::to_string(c_retrieveQueueCacheMaxAge)+"), cache needs to be updated");
           throw std::out_of_range("");
+        }
+        
+        logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"Cache is not updated, timeSinceLastUpdate ("+std::to_string(timeSinceLastUpdate)+
+        ") <= c_retrieveQueueCacheMaxAge ("+std::to_string(c_retrieveQueueCacheMaxAge)+")");
         // We're lucky: cache hit (and not stale)
-        if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled)
+        if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape))
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
       }
     } catch (std::out_of_range &) {
@@ -427,11 +436,14 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         throw cta::exception::Exception("In Helpers::selectBestRetrieveQueue(): unexpected vid in tapeStatus.");
       g_retrieveQueueStatistics[v].stats = queuesStats.front();
       g_retrieveQueueStatistics[v].tapeStatus = tapeStatus.at(v);
+      g_retrieveQueueStatistics[v].updateTime = time(nullptr);
+      logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[v]);
       // Signal to potential waiters
       updatePromise.set_value();
       // Update our own candidate list if needed.
-      if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled)
+      if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape)) {
         candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
+      }
     }
   }
   // We now have all the candidates listed (if any).
@@ -471,6 +483,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
     g_retrieveQueueStatistics.at(vid).stats.filesQueued=files;
     g_retrieveQueueStatistics.at(vid).stats.bytesQueued=bytes;
     g_retrieveQueueStatistics.at(vid).stats.currentPriority = priority;
+    logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(vid));
   } catch (std::out_of_range &) {
     // The entry is missing. We just create it.
     g_retrieveQueueStatistics[vid].stats.bytesQueued=bytes;
@@ -481,7 +494,13 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
     g_retrieveQueueStatistics[vid].tapeStatus.full=false;
     g_retrieveQueueStatistics[vid].updating = false;
     g_retrieveQueueStatistics[vid].updateTime = time(nullptr);
+    logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[vid]);
   }
+}
+
+void Helpers::flushRetrieveQueueStatisticsCache(){
+  threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
+  g_retrieveQueueStatistics.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -701,6 +720,18 @@ void Helpers::removeRepackRequestToIndex(const std::string& vid, Backend& backen
   ri.fetch();
   ri.removeRepackRequest(vid);
   ri.commit();
+}
+
+void Helpers::logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQueueStatisticsWithTime& tapeStatistic, std::string message){
+  #ifdef HELPERS_CACHE_UPDATE_LOGGING
+    std::ofstream logFile(HELPERS_CACHE_UPDATE_LOGGING_FILE, std::ofstream::app);
+    std::time_t end_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    // Chomp newline in the end
+    std::string date=std::ctime(&end_time);
+    date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
+    logFile << date << " pid=" << ::getpid() << " tid=" << syscall(SYS_gettid) << " message=" << message << " entryCreation="<< entryCreation <<" vid=" 
+            << tapeStatistic.tapeStatus.vid << " disabled=" << tapeStatistic.tapeStatus.disabled << " filesQueued=" << tapeStatistic.stats.filesQueued <<  std::endl;
+  #endif //HELPERS_CACHE_UPDATE_LOGGING
 }
 
 }} // namespace cta::objectstore.

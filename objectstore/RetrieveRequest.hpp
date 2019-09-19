@@ -151,6 +151,7 @@ public:
   };
   struct RepackInfo {
     bool isRepack = false;
+    bool forceDisabledTape = false;
     std::map<uint32_t, std::string> archiveRouteMap;
     std::set<uint32_t> copyNbsToRearchive;
     std::string repackRequestAddress;
@@ -173,6 +174,7 @@ public:
       rrri.set_file_buffer_url(fileBufferURL);
       rrri.set_repack_request_address(repackRequestAddress);
       rrri.set_fseq(fSeq);
+      rrri.set_force_disabled_tape(forceDisabledTape);
     }
     
     void deserialize(const cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
@@ -182,6 +184,7 @@ public:
       fileBufferURL = rrri.file_buffer_url();
       repackRequestAddress = rrri.repack_request_address();
       fSeq = rrri.fseq();
+      forceDisabledTape = rrri.force_disabled_tape();
     }
   };
 private:

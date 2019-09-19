@@ -27,6 +27,7 @@ logfile = /var/log/eos/fst/cta-fst-gcd.log ; Path of garbage collector log file
 mgmhost = HOSTNAME.2NDLEVEL.TOPLEVEL ; Fully qualified host name of EOS MGM
 minfreebytes = 10000000000 ; Minimum number of free bytes a filesystem should have
 gcagesecs = 7200 ; Age at which a file can be considered for garbage collection
+absolutemaxagesecs = 604800 ; Age at which a file will be considered for garbage collection no matter the amount of free space
 queryperiodsecs = 310 ; Delay in seconds between free space queries to the local file systems
 mainloopperiodsecs = 300 ; Period in seconds of the main loop of the cta-fst-gcd daemon
 xrdsecssskt = /etc/eos.keytab ; Path to simple shared secret to authenticate with EOS MGM

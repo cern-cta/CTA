@@ -774,11 +774,7 @@ bool XRootdDirectory::exist() {
   if(statStatus.errNo == XErrorCode::kXR_NotFound){
     return false;
   }
-  cta::exception::XrootCl::throwOnError(statStatus,"In XrootdDirectory::exist(): fail to determine if directory exists.");
-  if(statInfo->GetSize() !=  0){
-    return true;
-  }
-  return false;
+  return true;
 }
 
 std::set<std::string> XRootdDirectory::getFilesName(){

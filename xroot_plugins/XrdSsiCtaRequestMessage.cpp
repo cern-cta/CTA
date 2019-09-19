@@ -1129,10 +1129,12 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
    } else {
       type = cta::common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
    }
+   
+   bool forceDisabledTape = has_flag(OptionBoolean::DISABLED);
 
    // Process each item in the list
    for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL,  type, mountPolicy , m_lc);
+      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL, type, mountPolicy, forceDisabledTape, m_lc);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

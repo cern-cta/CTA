@@ -52,6 +52,7 @@
 
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 
+#include "disk/DiskFile.hpp"
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
 
@@ -74,6 +75,8 @@ class RetrieveJob;
  * The scheduler is the unique entry point to the central storage for taped. It is 
  * 
  */
+CTA_GENERATE_EXCEPTION_CLASS(ExpandRepackRequestException);
+
 class Scheduler {
   
 public:
@@ -203,7 +206,7 @@ public:
     const bool force);
 
   void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, log::LogContext & lc);
+    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy,const bool disabledTape, log::LogContext & lc);
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc);
   std::list<cta::common::dataStructures::RepackInfo> getRepacks();
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
@@ -310,6 +313,10 @@ private:
   void checkTapeFullBeforeRepack(std::string vid);
   
   cta::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
+  
+  void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer);
+  
+  uint64_t getNbFilesAlreadyArchived(const common::dataStructures::ArchiveFile& archiveFile);
   
 public:
   /**

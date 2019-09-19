@@ -18,33 +18,28 @@
 
 #pragma once
 
-#include <memory>
-#include "catalogue/Catalogue.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace cta {
-
-// Forward declarations
-class SchedulerDatabase;
+namespace rdbms {
 
 /**
- * Asbtract class specifying the interface to a factory of scheduler database
- * objects.
+ * Encountered an unexpected semicolon.
  */
-class SchedulerDatabaseFactory {
+class UnexpectedSemicolon: public exception::Exception {
 public:
 
   /**
-   * Destructor.
-   */
-  virtual ~SchedulerDatabaseFactory() throw() = 0;
-
-  /**
-   * Returns a newly created scheduler database object.
+   * Constructor.
    *
-   * @return A newly created scheduler database object.
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
    */
-  virtual std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const = 0;
+  UnexpectedSemicolon(const std::string &context = "", const bool embedBacktrace = true);
 
-}; // class SchedulerDatabaseFactory
+}; // class UnexpectedSemicolon
 
+} // namespace rdbms
 } // namespace cta

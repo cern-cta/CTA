@@ -13,7 +13,6 @@ if [ ! -e /etc/buildtreeRunner ]; then
   # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
   # Andreas is fixing eos-(client|server) rpms to depend on eos-protobuf3 instead
   # yum -y install eos-protobuf3
-
 fi
 
 cat <<EOF > /etc/cta/cta-cli.conf

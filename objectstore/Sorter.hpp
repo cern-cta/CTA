@@ -117,7 +117,7 @@ public:
     common::dataStructures::ArchiveFile archiveFile;
     std::map<uint32_t, RetrieveJob> retrieveJobs;
     std::string repackRequestAddress;
-    bool isRepack;
+    bool forceDisabledTape = false;
   };
   
   /* Retrieve-related methods */
@@ -230,6 +230,7 @@ class RetrieveRequestInfosAccessorInterface{
     virtual ~RetrieveRequestInfosAccessorInterface();
     virtual serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb) = 0;
     virtual std::string getRepackAddress() = 0;
+    virtual bool getForceDisabledTape() = 0;
 };
 
 class OStoreRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterface{
@@ -242,6 +243,7 @@ class OStoreRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterfac
         const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
     serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
     std::string getRepackAddress();
+    bool getForceDisabledTape();
   private:
     std::shared_ptr<RetrieveRequest> m_retrieveRequest;
 };
@@ -256,6 +258,7 @@ class SorterRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterfac
         const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
     serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
     std::string getRepackAddress();
+    bool getForceDisabledTape();
   private:
     Sorter::SorterRetrieveRequest& m_retrieveRequest;
 };
