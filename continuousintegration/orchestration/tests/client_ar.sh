@@ -395,12 +395,9 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
 fi
 
 # Ensure all requests files are queued
-requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber ) | reduce .[] as $n (0;.+$n)'`
+requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
 echo "Retrieve requests count: ${requestsTotal}"
 filesCount=`cat ${STATUS_FILE} | wc -l`
-echo -n "Status file wc: "
-wc -l ${STATUS_FILE}
-echo "Files count: ${filesCount}"
 if [ ${requestsTotal} -ne ${filesCount} ]; then
   echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
 fi
@@ -409,7 +406,7 @@ fi
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare_abort)..."
   cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2                                                                         \
-  | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME cta-client-ar-abortPrepare --eos-instance ${EOSINSTANCE}              \
+  | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME cta-client-ar-abortPrepare --eos-instance ${EOSINSTANCE}                   \
       --eos-poweruser ${EOSPOWER_USER} --eos-dir ${EOS_DIR} --subdir ${subdir} --file TEST_FILE_NAME --error-dir ${ERROR_DIR} \
   | tee ${LOGDIR}/prepare_abort_sys.retrieve.req_id_${subdir}.log # | grep ^ERROR
   echo Done.
@@ -426,8 +423,7 @@ done
 echo "$(date +%s): Waiting for retrieve queues to be cleared:"
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
-REMAINING_REQUESTS=`admin_cta --json sq | jq -r '.[] | select (.mountType == "RETRIEVE") | [ .queuedFiles | tonumber ] | reduce .[] as $n (0;.+$n)'`
-echo "Remaining requests: ${REMAINING_REQUESTS}"
+REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
 # Prevent the result from being empty
 if [ -z "$REMAINING_REQUESTS" ]; then REMAINING_REQUESTS='0'; fi 
 while [[ ${REMAINING_REQUESTS} > 0 ]]; do
@@ -441,7 +437,7 @@ while [[ ${REMAINING_REQUESTS} > 0 ]]; do
     break
   fi
 
-  REMAINING_REQUESTS=`admin_cta --json sq | jq -r '.[] | select (.mountType == "RETRIEVE") | [ .queuedFiles | tonumber ] | reduce .[] as $n (0;.+$n)'`;
+  REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`;
   # Prevent the result from being empty
   if [ -z "$REMAINING_REQUEST" ]; then REMAINING_REQUESTS='0'; fi
 done
