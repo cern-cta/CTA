@@ -21,7 +21,6 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/rdbms.hpp"
-#include "rdbms/UnexpectedSemicolon.hpp"
 
 namespace cta {
 namespace rdbms {
