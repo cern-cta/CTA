@@ -546,6 +546,7 @@ bool MysqlStmt::do_bind_results() {
     bind[i].buffer = holder->get_buffer();
     bind[i].buffer_length = holder->get_buffer_length();
     bind[i].is_null = holder->get_is_null();
+    bind[i].is_unsigned = holder->get_is_unsigned();
     bind[i].length = holder->get_length();
     bind[i].error = holder->get_error();
 
