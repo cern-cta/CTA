@@ -3,6 +3,7 @@ stages:
   - build:rpm
   - build:dockerimage
   - rename:dockerimage
+  - dbunittests
   - test
   - regressions
   - shouldfail
@@ -125,7 +126,7 @@ cta_valgrind:
 dbunittests_postgresql:
   except:
     - tags
-  stage: test
+  stage: dbunittests
   variables:
     CTAREPODIR: /tmp/repo
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
@@ -166,7 +167,7 @@ dbunittests_postgresql:
 dbunittests_mysql:
   except:
     - tags
-  stage: test
+  stage: dbunittests
   variables:
     CTAREPODIR: /tmp/repo
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
