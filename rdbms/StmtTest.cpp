@@ -62,7 +62,7 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
     std::string sql =
       "CREATE TABLE STMT_TEST("
         "DOUBLE_COL FLOAT,"
-        "UINT64_COL NUMERIC(20, 0),"
+        "UINT64_COL UINT64TYPE,"
         "STRING_COL VARCHAR(100),"
         "BOOL_COL CHAR(1)"
       ")";
@@ -71,14 +71,17 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
     case Login::DBTYPE_IN_MEMORY:
       break;
     case Login::DBTYPE_ORACLE:
+      utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
       utils::searchAndReplace(sql, "VARCHAR", "VARCHAR2");
       break;
     case Login::DBTYPE_SQLITE:
+      utils::searchAndReplace(sql, "UINT64TYPE", "INTEGER");
       break;
     case Login::DBTYPE_MYSQL:
-      utils::searchAndReplace(sql, "NUMERIC(20, 0)", "BIGINT UNSIGNED");
+      utils::searchAndReplace(sql, "UINT64TYPE", "BIGINT UNSIGNED");
       break;
     case Login::DBTYPE_POSTGRESQL:
+      utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
       break;
     case Login::DBTYPE_NONE:
       {
