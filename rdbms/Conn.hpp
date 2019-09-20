@@ -118,17 +118,6 @@ public:
   Stmt createStmt(const std::string &sql);
 
   /**
-   * Convenience method that parses the specified string of multiple SQL
-   * statements and calls executeNonQuery() for each individual statement found.
-   *
-   * Please note that each statement should be a non-query terminated by a
-   * semicolon.
-   *
-   * @param sqlStmts The SQL statements to be executed.
-   */
-  void executeNonQueries(const std::string &sqlStmts);
-
-  /**
    * Executes the statement.
    *
    * @param sql The SQL statement.

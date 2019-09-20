@@ -3,6 +3,7 @@ stages:
   - build:rpm
   - build:dockerimage
   - rename:dockerimage
+  - dbunittests
   - test
   - regressions
   - shouldfail
@@ -125,7 +126,7 @@ cta_valgrind:
 dbunittests_postgresql:
   except:
     - tags
-  stage: test
+  stage: dbunittests
   variables:
     CTAREPODIR: /tmp/repo
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
@@ -159,6 +160,40 @@ dbunittests_postgresql:
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - runuser -u postgres -- ${POSTGRES_BIN}/pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
+
+  tags:
+    - docker
+
+dbunittests_mysql:
+  except:
+    - tags
+  stage: dbunittests
+  variables:
+    CTAREPODIR: /tmp/repo
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  script:
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
+    - yum -y install yum-plugin-priorities createrepo
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
+    - yum -y install cta-catalogueutils
+    - yum -y install lsof mariadb-server
+    - echo '[mariadb]' > /etc/my.cnf.d/cta_server_listen.cnf
+    - echo 'bind-address=localhost' >> /etc/my.cnf.d/cta_server_listen.cnf
+    - mysql_install_db --user=mysql
+    - /usr/bin/mysqld_safe > /dev/null 2>&1 < /dev/null &
+    - sleep 5
+    - echo 'create database cta;' | mysql
+    - echo 'create user cta;' | mysql
+    - echo 'grant all privileges on *.* to cta@localhost' | mysql
+    - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
+    - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
+    - echo 'mysql://cta@localhost:3306/cta' > ${CTA_CATALOGUE_CONF}
+    - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
+    - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+    - kill `ps -ef | egrep '^mysql.*/usr/libexec/mysqld' | awk '{print $2;}'`
 
   tags:
     - docker

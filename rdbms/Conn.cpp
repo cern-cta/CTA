@@ -21,7 +21,6 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/rdbms.hpp"
-#include "rdbms/UnexpectedSemicolon.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -116,39 +115,15 @@ Stmt Conn::createStmt(const std::string &sql) {
 }
 
 //------------------------------------------------------------------------------
-// executeNonQueries
-//------------------------------------------------------------------------------
-void Conn::executeNonQueries(const std::string &sqlStmts) {
-  try {
-    std::string::size_type searchPos = 0;
-    std::string::size_type findResult = std::string::npos;
-
-    while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
-      // Calculate the length of the current statement without the trailing ';'
-      const std::string::size_type stmtLen = findResult - searchPos;
-      const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
-      searchPos = findResult + 1;
-
-      if(0 < sqlStmt.size()) { // Ignore empty statements
-        executeNonQuery(sqlStmt);
-      }
-    }
-
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
 void Conn::executeNonQuery(const std::string &sql) {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
-    if(std::string::npos != sql.find(";")) {
-      UnexpectedSemicolon ex;
-      ex.getMessage() << "Encountered unexpected semicolon in " << getSqlForException(sql);
-      throw ex;
-    }
+//  if(std::string::npos != sql.find(";")) {
+//    UnexpectedSemicolon ex;
+//    ex.getMessage() << "Encountered unexpected semicolon in " << getSqlForException(sql);
+//    throw ex;
+//  }
     m_connAndStmts->conn->executeNonQuery(sql);
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");

@@ -72,6 +72,19 @@ private:
    */
   bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
 
+  /**
+   * Parses the specified string of multiple SQL statements separated by
+   * semicolons and calls executeNonQuery() for each statement found.
+   *
+   * Please note that this method does not support statements that themselves
+   * contain one more semicolons.
+   *
+   * @param conn The database connection.
+   * @param sqlStmts Multiple SQL statements separated by semicolons.
+   * Statements that themselves contain one more semicolons are not supported.
+   */
+  void executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts);
+
 }; // class CreateSchemaCmd
 
 } // namespace catalogue

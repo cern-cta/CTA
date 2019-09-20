@@ -78,9 +78,8 @@ else
 fi
 
 
-: <<'COMMENT_LABEL_PART'
 if [ ! $LIBRARYTYPE == "mhvtl" ]; then
-  echo "Real tapes, not labelling";
+  echo "Real tapes - do nothing";
 else
   # library management
   # BEWARE STORAGE SLOTS START @1 and DRIVE SLOTS START @0!!
@@ -91,22 +90,21 @@ else
     # normally, there is no need to rewind with virtual tapes...
     mtx -f /dev/${LIBRARYDEVICE} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
   done
-  echo "Labelling tapes using the first drive in ${LIBRARYNAME}: ${DRIVENAMES[${driveslot}]} on /dev/${DRIVEDEVICES[${driveslot}]}:"
-  for ((i=0; i<${#TAPES[@]}; i++)); do
-    vid=${TAPES[${i}]}
-    tapeslot=$((${i}+1)) # tape slot is 1 for tape[0] and so on...
-
-    echo -n "${vid} in slot ${tapeslot} "
-    mtx -f /dev/${LIBRARYDEVICE} load ${tapeslot} ${driveslot}
-    cd /tmp
-      echo "VOL1${vid}                           CASTOR                                    3">label.file
-      mt -f /dev/${DRIVEDEVICES[${driveslot}]} rewind
-      dd if=label.file of=/dev/${DRIVEDEVICES[${driveslot}]} bs=80 count=1
-      mt -f /dev/${DRIVEDEVICES[${driveslot}]} rewind
-    mtx -f /dev/${LIBRARYDEVICE} unload ${tapeslot} ${driveslot}
-    echo "OK"
-  done
+#  echo "Labelling tapes using the first drive in ${LIBRARYNAME}: ${DRIVENAMES[${driveslot}]} on /dev/${DRIVEDEVICES[${driveslot}]}:"
+#  for ((i=0; i<${#TAPES[@]}; i++)); do
+#    vid=${TAPES[${i}]}
+#    tapeslot=$((${i}+1)) # tape slot is 1 for tape[0] and so on...
+#
+#    echo -n "${vid} in slot ${tapeslot} "
+#    mtx -f /dev/${LIBRARYDEVICE} load ${tapeslot} ${driveslot}
+#    cd /tmp
+#      echo "VOL1${vid}                           CASTOR                                    3">label.file
+#      mt -f /dev/${DRIVEDEVICES[${driveslot}]} rewind
+#      dd if=label.file of=/dev/${DRIVEDEVICES[${driveslot}]} bs=80 count=1
+#      mt -f /dev/${DRIVEDEVICES[${driveslot}]} rewind
+#    mtx -f /dev/${LIBRARYDEVICE} unload ${tapeslot} ${driveslot}
+#    echo "OK"
+#  done
 fi
-COMMENT_LABEL_PART
 
 echo "### INIT COMPLETED ###"

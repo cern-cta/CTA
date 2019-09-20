@@ -29,8 +29,7 @@ set (RDBMS_LIB_SRC_FILES
   rdbms.cpp
   Rset.cpp
   Stmt.cpp
-  StmtPool.cpp
-  UnexpectedSemicolon.cpp)
+  StmtPool.cpp)
 
 add_library (ctardbms SHARED
   ${RDBMS_LIB_SRC_FILES})

@@ -23,6 +23,7 @@
 #include "catalogue/PostgresCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 #include "rdbms/AutocommitMode.hpp"
@@ -71,19 +72,19 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   case rdbms::Login::DBTYPE_SQLITE:
     {
        SqliteCatalogueSchema schema;
-       conn.executeNonQueries(schema.sql);
+       executeNonQueries(conn, schema.sql);
     }
     break;
   case rdbms::Login::DBTYPE_POSTGRESQL:
     {
        PostgresCatalogueSchema schema;
-       conn.executeNonQueries(schema.sql);
+       executeNonQueries(conn, schema.sql);
     }
     break;
   case rdbms::Login::DBTYPE_MYSQL:
     {
        MysqlCatalogueSchema schema;
-       conn.executeNonQueries(schema.sql);
+       executeNonQueries(conn, schema.sql);
 
        // execute triggers
        auto triggers = schema.triggers();
@@ -95,7 +96,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   case rdbms::Login::DBTYPE_ORACLE:
     {
       OracleCatalogueSchema schema;
-      conn.executeNonQueries(schema.sql);
+      executeNonQueries(conn, schema.sql);
     }
     break;
   case rdbms::Login::DBTYPE_NONE:
@@ -129,6 +130,30 @@ bool CreateSchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn
 //------------------------------------------------------------------------------
 void CreateSchemaCmd::printUsage(std::ostream &os) {
   CreateSchemaCmdLineArgs::printUsage(os);
+}
+
+//------------------------------------------------------------------------------
+// executeNonQueries
+//------------------------------------------------------------------------------
+void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) {
+  try {
+    std::string::size_type searchPos = 0;
+    std::string::size_type findResult = std::string::npos;
+
+    while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
+      // Calculate the length of the current statement without the trailing ';'
+      const std::string::size_type stmtLen = findResult - searchPos;
+      const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
+      searchPos = findResult + 1;
+
+      if(0 < sqlStmt.size()) { // Ignore empty statements
+        conn.executeNonQuery(sqlStmt);
+      }
+    }
+
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 } // namespace catalogue
