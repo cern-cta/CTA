@@ -430,11 +430,11 @@ echo "$(date +%s): Waiting for retrieve queues to be cleared:"
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
 REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
+echo "${REMAINING_REQUESTS} requests remaining."
 # Prevent the result from being empty
 if [ -z "$REMAINING_REQUESTS" ]; then REMAINING_REQUESTS='0'; fi 
 while [[ ${REMAINING_REQUESTS} > 0 ]]; do
   echo "$(date +%s): Waiting for retrieve queues to be cleared: Seconds passed = ${SECONDS_PASSED}"
-  echo "${REMAINING_REQUESTS} requests remaining."
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
@@ -446,6 +446,7 @@ while [[ ${REMAINING_REQUESTS} > 0 ]]; do
   REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`;
   # Prevent the result from being empty
   if [ -z "$REMAINING_REQUEST" ]; then REMAINING_REQUESTS='0'; fi
+  echo "${REMAINING_REQUESTS} requests remaining."
 done
 
 # Check that the files were not retrieved

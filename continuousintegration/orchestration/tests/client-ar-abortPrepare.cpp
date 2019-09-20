@@ -22,6 +22,7 @@
 #include <memory>
 #include <fstream>
 #include <XrdCl/XrdClFileSystem.hh>
+#include <XrdCl/XrdClDefaultEnv.hh>
 #include "common/utils/Regex.hpp"
 #include "common/exception/XrootCl.hpp"
 
@@ -60,7 +61,6 @@ void help() {
 }
 
 // We make these variables global as they will be part of the process's environment.
-char envXRD_LOGLEVEL[] = "XRD_LOGLEVEL=Dump";
 std::unique_ptr<char[]> envKRB5CCNAME;
 char envXrdSecPROTOCOL[] = "XrdSecPROTOCOL=krb5";
 
@@ -123,9 +123,12 @@ int main(int argc, char **argv) {
   // Get the extended attribute for the retrieve request id
   std::string retrieveRequestId, fileName(options.eos_dir + "/" + options.subdir + "/" + options.file);
   XrdCl::FileSystem xrdfs(options.eos_instance);
+  std::string errFileName;
   try {
-    // Prepare environment.
-    putenv(envXRD_LOGLEVEL);
+    // Prepare Xrootd environment.
+    errFileName = options.error_dir + '/' + "XATTRGET2_" + options.subdir + '_' + options.file;
+    XrdCl::DefaultEnv::SetLogLevel("Dump");
+    XrdCl::DefaultEnv::SetLogFile(errFileName);
     std::string envKRB5CCNAMEvalue = std::string("KRB5CCNAME=/tmp/") + options.eos_poweruser + "/krb5cc_0";
     // We need to copy to an array because of putenv's lack of const correctness.
     envKRB5CCNAME.reset(new char[envKRB5CCNAMEvalue.size() + 1]);
@@ -151,13 +154,18 @@ int main(int argc, char **argv) {
       throw cta::exception::Exception(std::string("Unexpected result from xattr query: ") + respStr);
     }
     retrieveRequestId = reResult[1];
+    unlink(errFileName.c_str());
   } catch (cta::exception::Exception & ex) {
-    std::string errFileName = options.error_dir + '/' + "XATTRGET2_" + options.subdir + '_' + options.file;
     std::cerr << "ERROR: failed to get request Id for file " << fileName << " full logs in " << errFileName << std::endl;
     std::ofstream errFile(errFileName, std::ios::out | std::ios::app);
     errFile << ex.what();
+    return 1;
   }
   try {
+    // Prepare Xrootd environment.
+    errFileName = options.error_dir + '/' + "PREPAREABORT_" + options.subdir + '_' + options.file;
+    XrdCl::DefaultEnv::SetLogLevel("Dump");
+    XrdCl::DefaultEnv::SetLogFile(errFileName);
     std::vector<std::string> files = { retrieveRequestId, fileName };
     XrdCl::PrepareFlags::Flags flags = XrdCl::PrepareFlags::Cancel;
     XrdCl::Buffer *respPtr = nullptr;
@@ -166,11 +174,12 @@ int main(int argc, char **argv) {
     std::unique_ptr<XrdCl::Buffer> respUP(respPtr);
     respPtr = nullptr;
     cta::exception::XrootCl::throwOnError(abortStatus, "Error during XrdCl::Prepare");
+    unlink(errFileName.c_str());
   } catch (cta::exception::Exception & ex) {
-    std::string errFileName = options.error_dir + '/' + "PREPAREABORT_" + options.subdir + '_' + options.file;
     std::cerr << "ERROR: failed to get request Id for file " << fileName << " full logs in " << errFileName << std::endl;
     std::ofstream errFile(errFileName, std::ios::out | std::ios::app);
     errFile << ex.what();
+    return 1;
   }
   return 0;
 }
