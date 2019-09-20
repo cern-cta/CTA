@@ -166,26 +166,6 @@ TEST_P(cta_rdbms_ConnTest, DISABLED_createTableInMemoryDatabase_executeNonQuery_
   }
 }
 
-TEST_P(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQueries) {
-  using namespace cta::rdbms;
-
-  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER);";
-
-  // First in-memory database
-  {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
-    const uint64_t maxNbConns = 1;
-    ConnPool connPool(login, maxNbConns);
-    auto conn = connPool.getConn();
-
-    ASSERT_TRUE(conn.getTableNames().empty());
-
-    conn.executeNonQueries(sql);
-
-    ASSERT_EQ(1, conn.getTableNames().size());
-  }
-}
-
 TEST_P(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_executeNonQuery) {
   using namespace cta::rdbms;
 
@@ -215,40 +195,6 @@ TEST_P(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
     ASSERT_TRUE(conn.getTableNames().empty());
 
     conn.executeNonQuery(sql);
-
-    ASSERT_EQ(1, conn.getTableNames().size());
-  }
-}
-
-TEST_P(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_executeNonQueries) {
-  using namespace cta::rdbms;
-
-  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER);";
-
-  // First in-memory database
-  {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
-    const uint64_t maxNbConns = 1;
-    ConnPool connPool(login, maxNbConns);
-    auto conn = connPool.getConn();
-
-    ASSERT_TRUE(conn.getTableNames().empty());
-
-    conn.executeNonQueries(sql);
-
-    ASSERT_EQ(1, conn.getTableNames().size());
-  }
-
-  // Second in-memory database
-  {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
-    const uint64_t maxNbConns = 1;
-    ConnPool connPool(login, maxNbConns);
-    auto conn = connPool.getConn();
-
-    ASSERT_TRUE(conn.getTableNames().empty());
-
-    conn.executeNonQueries(sql);
 
     ASSERT_EQ(1, conn.getTableNames().size());
   }

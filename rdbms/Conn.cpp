@@ -116,30 +116,6 @@ Stmt Conn::createStmt(const std::string &sql) {
 }
 
 //------------------------------------------------------------------------------
-// executeNonQueries
-//------------------------------------------------------------------------------
-void Conn::executeNonQueries(const std::string &sqlStmts) {
-  try {
-    std::string::size_type searchPos = 0;
-    std::string::size_type findResult = std::string::npos;
-
-    while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
-      // Calculate the length of the current statement without the trailing ';'
-      const std::string::size_type stmtLen = findResult - searchPos;
-      const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
-      searchPos = findResult + 1;
-
-      if(0 < sqlStmt.size()) { // Ignore empty statements
-        executeNonQuery(sqlStmt);
-      }
-    }
-
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
 void Conn::executeNonQuery(const std::string &sql) {
