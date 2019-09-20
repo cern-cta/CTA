@@ -19,6 +19,7 @@
 # Utility for reloading systemctl when needed
 #--------------------------------------------
 %define systemdDaemonReload() if [ -e /usr/bin/systemctl ] ; then /usr/bin/systemctl daemon-reload; fi
+%define systemdTryRestart() if [ -e /usr/bin/systemctl ] ; then /usr/bin/systemctl try-restart %1; fi
 
 # General settings
 #-----------------
@@ -127,6 +128,7 @@ The tape server daemon
 %post -n cta-taped
 %systemd_post cta-taped.service
 %systemdDaemonReload
+%systemdTryRestart cta-taped.service
 
 %preun -n cta-taped
 %systemd_preun cta-taped.service
@@ -157,6 +159,7 @@ The xroot plugin
 /sbin/ldconfig
 %systemd_post cta-frontend.service
 %systemdDaemonReload
+%systemdTryRestart cta-frontend.service
 
 %preun -n cta-frontend
 %systemd_preun cta-frontend.service
@@ -339,6 +342,7 @@ The Remote Media Changer daemon (rmcd)
 %post -n cta-rmcd
 %systemd_post cta-rmcd.service
 %systemdDaemonReload
+%systemdTryRestart cta-rmcd.service
 
 %preun -n cta-rmcd
 %systemd_preun cta-rmcd.service
@@ -404,8 +408,11 @@ collects EOS disk copies that have been safely stored to tape.
 %post -n cta-fst-gcd
 %systemd_post cta-fst-gcd.service
 %systemdDaemonReload
+%systemdTryRestart cta-fst-gcd.service
+
 %preun -n cta-fst-gcd
 %systemd_preun cta-fst-gcd.service
+
 %postun -n cta-fst-gcd
 %systemd_postun cta-fst-gcd.service
 %systemdDaemonReload
