@@ -62,7 +62,7 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
     std::string sql =
       "CREATE TABLE STMT_TEST("
         "DOUBLE_COL FLOAT,"
-        "UINT64_COL NUMERIC(20, 0),"
+        "UINT64_COL UINT64TYPE,"
         "STRING_COL VARCHAR(100),"
         "BOOL_COL CHAR(1)"
       ")";
@@ -71,13 +71,17 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
     case Login::DBTYPE_IN_MEMORY:
       break;
     case Login::DBTYPE_ORACLE:
+      utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
       utils::searchAndReplace(sql, "VARCHAR", "VARCHAR2");
       break;
     case Login::DBTYPE_SQLITE:
+      utils::searchAndReplace(sql, "UINT64TYPE", "INTEGER");
       break;
     case Login::DBTYPE_MYSQL:
+      utils::searchAndReplace(sql, "UINT64TYPE", "BIGINT UNSIGNED");
       break;
     case Login::DBTYPE_POSTGRESQL:
+      utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
       break;
     case Login::DBTYPE_NONE:
       {
@@ -189,55 +193,9 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64) {
   }
 }
 
-TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_54_minus_2) {
+TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_1) {
   using namespace cta::rdbms;
 
-  // The MySql support in CTA cannot store an unsigned integer greater than
-  // 2^54-2
-  const uint64_t insertValue = 18014398509481982;
-
-  // Insert a row into the test table
-  {
-    const char *const sql =
-      "INSERT INTO STMT_TEST("
-        "UINT64_COL) "
-      "VALUES("
-        ":UINT64_COL)";
-    auto stmt = m_conn.createStmt(sql);
-    stmt.bindUint64(":UINT64_COL", insertValue);
-    stmt.executeNonQuery();
-  }
-
-  // Select the row back from the table
-  {
-    const char *const sql =
-      "SELECT "
-        "UINT64_COL AS UINT64_COL "
-      "FROM "
-        "STMT_TEST";
-    auto stmt = m_conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    ASSERT_TRUE(rset.next());
-
-    const auto selectValue = rset.columnOptionalUint64("UINT64_COL");
-
-    ASSERT_TRUE((bool)selectValue);
-
-    ASSERT_EQ(insertValue,selectValue.value());
-
-    ASSERT_FALSE(rset.next());
-  }
-}
-
-TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_1_not_mysql) {
-  using namespace cta::rdbms;
-
-  if(m_login.dbType == Login::DBTYPE_MYSQL) {
-    return;
-  }
-
-  // The MySql support in CTA cannot store an unsigned integer greater than
-  // 2^54-2
   const uint64_t insertValue = 18446744073709551615U;
 
   // Insert a row into the test table
