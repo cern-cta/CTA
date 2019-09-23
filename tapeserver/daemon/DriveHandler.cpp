@@ -872,8 +872,17 @@ int DriveHandler::runChild() {
     lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to object store backend.");
   }
   // Before anything, we need to check we have access to the scheduler's central storages.
-  std::unique_ptr<cta::objectstore::Backend> backend(
-    cta::objectstore::BackendFactory::createBackend(m_tapedConfig.backendPath.value(), lc.logger()).release());
+  std::unique_ptr<cta::objectstore::Backend> backend;
+  try {
+    backend.reset(cta::objectstore::BackendFactory::createBackend(m_tapedConfig.backendPath.value(), lc.logger()).release());
+  } catch (cta::exception::Exception &ex) {
+    log::ScopedParamContainer param (lc);
+    param.add("errorMessage", ex.getMessageValue());
+    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to connect to objectstore. Reporting fatal error.");
+    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    sleep(1);
+    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+  }
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.
   try {
