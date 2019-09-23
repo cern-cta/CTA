@@ -236,6 +236,16 @@ public:
   void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) override;
   void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const std::string &comment) override;
 
+  /**
+   * Modifies the name of the specified storage class.
+   *
+   * @param diskInstanceName The name of the disk instance to which the
+   * storage class belongs.
+   * @param currentName The current name of the storage class.
+   * @param newName The new name of the storage class.
+   */
+  void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &currentName, const std::string &newName) override;
+
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override;
   void deleteTapePool(const std::string &name) override;
   std::list<TapePool> getTapePools() const override;

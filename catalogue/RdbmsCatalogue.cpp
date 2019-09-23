@@ -633,6 +633,44 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
 }
 
 //------------------------------------------------------------------------------
+// modifyStorageClassName
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &instanceName, const std::string &currentName, const std::string &newName) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE STORAGE_CLASS SET "
+        "STORAGE_CLASS_NAME = :NEW_STORAGE_CLASS_NAME,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS_NAME = :CURRENT_STORAGE_CLASS_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":NEW_STORAGE_CLASS_NAME", newName);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":DISK_INSTANCE_NAME", instanceName);
+    stmt.bindString(":CURRENT_STORAGE_CLASS_NAME", currentName);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify storage class ") + instanceName + ":" + currentName +
+        " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // createTapePool
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createTapePool(
