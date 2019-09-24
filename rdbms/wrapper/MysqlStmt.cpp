@@ -316,7 +316,7 @@ void MysqlStmt::bindOptionalString(const std::string &paramName, const optional<
       // reset memory
       holder->reset();
       // need to use memcpy for VARBINARY strings, which are not null-terminated
-      memcpy(holder->val, paramValue.value().c_str(), holder->get_buffer_length());
+      memcpy(holder->val, paramValue.value().c_str(), paramValue.value().size());
     } else {
       holder->length = 0;
     }
