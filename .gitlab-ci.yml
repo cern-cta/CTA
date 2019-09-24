@@ -192,6 +192,7 @@ dbunittests_mysql:
     - echo 'mysql://cta@localhost:3306/cta' > ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+    - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
     - kill `ps -ef | egrep '^mysql.*/usr/libexec/mysqld' | awk '{print $2;}'`
 
   tags:
