@@ -22,6 +22,7 @@ reportDirectory : the directory to generate the report of the repack test (defau
 -a : Launch a repack just add copies workflow
 -m : Launch a repack just move workflow
 -d : Force a repack on a disabled tape (adds --disabled to the repack add command)
+-p : enable backpressure test
 EOF
 exit 1
 }
@@ -45,7 +46,7 @@ then
 fi;
 
 DISABLED_TAPE_FLAG=""
-while getopts "v:e:b:t:r:amd" o; do
+while getopts "v:e:b:t:r:amdp" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -70,6 +71,9 @@ while getopts "v:e:b:t:r:amd" o; do
       ;;
     d)
       DISABLED_TAPE_FLAG="--disabledtape"
+      ;;
+    p)
+      BACKPRESSURE_TEST=1
       ;;
     *)
       usage
@@ -112,36 +116,40 @@ admin_cta repack rm --vid ${VID_TO_REPACK}
 echo "Marking the tape ${VID_TO_REPACK} as full before Repacking it"
 admin_cta tape ch --vid ${VID_TO_REPACK} --full true
 
-echo "Backpressure test: setting too high free space requirements"
-# This should be idempotent as we will be called several times
-if [[ $( admin_cta --json ds ls | jq '.[] | select(.name=="repackBuffer") | .name') != '"repackBuffer"' ]]; then
-  admin_cta ds add -n repackBuffer -r "root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}" -u "eos://${EOSINSTANCE}" -i 5 -f 111222333444555 -s 60 -m toto
-else
-  echo "Disk system repackBuffer alread defined. Ensuring too high free space requirements."
-  admin_cta ds ch -n repackBuffer -f 111222333444555
+if [ ! -z $BACKPRESSURE_TEST ]; then
+  echo "Backpressure test: setting too high free space requirements"
+  # This should be idempotent as we will be called several times
+  if [[ $( admin_cta --json ds ls | jq '.[] | select(.name=="repackBuffer") | .name') != '"repackBuffer"' ]]; then
+    admin_cta ds add -n repackBuffer -r "root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}" -u "eos://${EOSINSTANCE}" -i 5 -f 111222333444555 -s 60 -m toto
+  else
+    echo "Disk system repackBuffer alread defined. Ensuring too high free space requirements."
+    admin_cta ds ch -n repackBuffer -f 111222333444555
+  fi
+  admin_cta ds ls
 fi
-admin_cta ds ls
 
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
 
 admin_cta repack add --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG}
 
-echo "Backpressure test: waiting to see a report of sleeping retrieve queue."
-SECONDS_PASSED=0
-while test 0 = `admin_cta --json sq | jq -r ".[] | select(.vid == \"${VID_TO_REPACK}\" and .sleepingForSpace == true) | .vid" | wc -l`; do
-  echo "Waiting for retrieve queue for tape ${VID_TO_REPACK} to be sleepting: Seconds passed = $SECONDS_PASSED"
-  sleep 1
-  let SECONDS_PASSED=SECONDS_PASSED+1
+if [ ! -z $BACKPRESSURE_TEST ]; then
+  echo "Backpressure test: waiting to see a report of sleeping retrieve queue."
+  SECONDS_PASSED=0
+  while test 0 = `admin_cta --json sq | jq -r ".[] | select(.vid == \"${VID_TO_REPACK}\" and .sleepingForSpace == true) | .vid" | wc -l`; do
+    echo "Waiting for retrieve queue for tape ${VID_TO_REPACK} to be sleeping: Seconds passed = $SECONDS_PASSED"
+    sleep 1
+    let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_REPACK_TIMEOUT}; then
-    echo "Timed out after ${WAIT_FOR_REPACK_TIMEOUT} seconds waiting for tape ${VID_TO_REPACK} to be repacked"
-    exit 1
-  fi
-done
+    if test ${SECONDS_PASSED} == ${WAIT_FOR_REPACK_TIMEOUT}; then
+      echo "Timed out after ${WAIT_FOR_REPACK_TIMEOUT} seconds waiting retrieve queue for tape ${VID_TO_REPACK} to be sleeping."
+      exit 1
+    fi
+  done
 
-echo "Turning free space requirement to one byte (zero is not allowed)."
-admin_cta ds ch -n repackBuffer -f 1
-admin_cta ds ls
+  echo "Turning free space requirement to one byte (zero is not allowed)."
+  admin_cta ds ch -n repackBuffer -f 1
+  admin_cta ds ls
+fi
 
 echo "Now waiting for repack to proceed."
 SECONDS_PASSED=0
