@@ -2114,7 +2114,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "TAPE_POOL.VO AS VO,"
-        "TAPE.ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
         "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
@@ -2239,7 +2239,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
       tape.vo = rset.columnString("VO");
-      tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+      tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
@@ -2289,7 +2289,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "TAPE_POOL.VO AS VO,"
-        "TAPE.ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
         "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
@@ -2361,7 +2361,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
       tape.vo = rset.columnString("VO");
-      tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+      tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
@@ -2415,7 +2415,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
         "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "TAPE_POOL.VO AS VO,"
-        "TAPE.ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
         "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
@@ -2463,7 +2463,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
       tape.vo = rset.columnString("VO");
-      tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+      tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
@@ -2935,7 +2935,7 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
-        "ENCRYPTION_KEY = :ENCRYPTION_KEY,"
+        "ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME,"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
@@ -2943,7 +2943,7 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindOptionalString(":ENCRYPTION_KEY", optionalEncryptionKey);
+    stmt.bindOptionalString(":ENCRYPTION_KEY_NAME", optionalEncryptionKey);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
