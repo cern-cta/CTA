@@ -809,6 +809,67 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment_nonExistentStorage
     exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  {
+    const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
+
+    ASSERT_EQ(1, storageClasses.size());
+
+    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    ASSERT_EQ(storageClass.name, storageClasses.front().name);
+    ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
+    ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = storageClasses.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string newStorageClassName = "new_storage_class_name";
+  m_catalogue->modifyStorageClassName(m_admin, storageClass.diskInstance, storageClass.name, newStorageClassName);
+
+  {
+    const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
+
+    ASSERT_EQ(1, storageClasses.size());
+
+    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    ASSERT_EQ(newStorageClassName, storageClasses.front().name);
+    ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
+    ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_nonExistentStorageClass) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  const std::string diskInstance = "disk_instance";
+  const std::string currentStorageClassName = "storage_class";
+  const std::string newStorageClassName = "new_storage_class";
+  ASSERT_THROW(m_catalogue->modifyStorageClassName(m_admin, diskInstance, currentStorageClassName, newStorageClassName),
+    exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   using namespace cta;
       

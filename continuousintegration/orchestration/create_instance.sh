@@ -255,6 +255,28 @@ fi
 kubectl get pod init -a --namespace=${instance} | grep -q Completed || die "TIMED OUT"
 echo OK
 
+echo "Running database unit-tests"
+kubectl create -f ${poddir}/pod-oracleunittests.yaml --namespace=${instance}
+
+echo -n "Waiting for oracleunittests"
+for ((i=0; i<400; i++)); do
+  echo -n "."
+  kubectl get pod oracleunittests -a --namespace=${instance} | egrep -q 'Completed|Error' && break
+  sleep 1
+done
+
+kubectl --namespace=${instance} logs oracleunittests
+
+# database unit-tests went wrong => exit now with error
+if $(kubectl get pod oracleunittests -a --namespace=${instance} | grep -q Error); then
+	echo "init pod in Error status here are its last log lines:"
+	kubectl --namespace=${instance} logs oracleunittests --tail 10
+	die "ERROR: init pod in ErERROR: oracleunittests pod in Error state. Initialization failed."
+fi
+
+kubectl get pod init -a --namespace=${instance} | grep -q Completed || die "TIMED OUT"
+echo OK
+
 echo "Launching pods"
 
 for podname in client ctacli tpsrv01 tpsrv02 ctaeos ctafrontend kdc; do
