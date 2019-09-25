@@ -41,8 +41,13 @@ static void printUsage(std::ostream &os) {
  * command-line.
  */
 static RdbmsUnitTestsCmdLineArgs parseCmdLine(const int argc, char ** argv) {
-  if(argc != 2) {
-    std::cerr << "Invalid number of command-line arguments";
+  const int expectedNbArgs = 1;
+  const int actualNbArgs = argc - 1;
+
+  if(expectedNbArgs != actualNbArgs) {
+    std::cerr << "Invalid number of command-line arguments: expected=" << expectedNbArgs << " actual=" << actualNbArgs
+      << std::endl;
+    std::cerr << std::endl;
     printUsage(std::cerr);
     exit(1);
   }
