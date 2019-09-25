@@ -2849,6 +2849,8 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
   // Set the parameters that we always set
   driveState.host = driveInfo.host;
   driveState.logicalLibrary = driveInfo.logicalLibrary;
+  // Keep track of previous status to log changes
+  auto previousStatus = driveState.driveStatus;
   // Set the status
   switch (inputs.status) {
     case DriveStatus::Down:
@@ -2889,17 +2891,27 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
   }
   ds.setState(driveState);
   // If the drive is a state incompatible with space reservation, make sure there is none:
-  switch (inputs.status) {
-  case DriveStatus::CleaningUp:
+  switch (driveState.driveStatus) {
   case DriveStatus::Down:
   case DriveStatus::Shutdown:
   case DriveStatus::Unknown:
-  case DriveStatus::Unloading:
-  case DriveStatus::Unmounting:
   case DriveStatus::Up:
+    for (auto dr: ds.getDiskSpaceReservations()) {
+      log::ScopedParamContainer params(lc);
+      params.add("diskSystem", dr.first)
+            .add("bytes", dr.second)
+            .add("newStatus", toString(driveState.driveStatus));
+      lc.log(log::WARNING, "In OStoreDB::updateDriveStatus(): will clear non-empty disk space reservation on status change.");
+    }
     ds.resetDiskSpaceReservation();
   default:
     break;
+  }
+  if (previousStatus != driveState.driveStatus) {
+    log::ScopedParamContainer params(lc);
+    params.add("oldStatus", toString(previousStatus))
+          .add("newStatus", toString(driveState.driveStatus));
+    lc.log(log::INFO, "In OStoreDB::updateDriveStatus(): changing drive status.");
   }
   ds.commit();
 }
@@ -3750,11 +3762,32 @@ std::map<std::string, uint64_t> OStoreDB::RetrieveMount::getExistingDrivesReserv
 // OStoreDB::RetrieveMount::reserveDiskSpace()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+  if (diskSpaceReservation.empty()) return;
   // Try add our reservation to the drive status.
   objectstore::DriveState ds(m_oStoreDB.m_objectStore);
   objectstore::ScopedExclusiveLock dsl;
+  for (auto & rr: diskSpaceReservation) {
+    log::ScopedParamContainer params(lc);
+    params.add("diskSystem", rr.first)
+          .add("reservation", rr.second);
+    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request content.");
+  }
   Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_oStoreDB.m_agentReference, mountInfo.drive, lc, Helpers::CreateIfNeeded::doNotCreate);
+  for (auto & r: ds.getDiskSpaceReservations()) {
+    log::ScopedParamContainer params(lc);
+    params.add("diskSystem", r.first)
+          .add("reservation", r.second)
+          .add("objectName", ds.getAddressIfSet());
+    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state before reservation.");
+  }  
   for (auto const & dsr: diskSpaceReservation) ds.addDiskSpaceReservation(dsr.first, dsr.second);
+  for (auto & r: ds.getDiskSpaceReservations()) {
+    log::ScopedParamContainer params(lc);
+    params.add("diskSystem", r.first)
+          .add("reservation", r.second)
+          .add("objectName", ds.getAddressIfSet());
+    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
+  }
   ds.commit();
 }
 
@@ -3762,11 +3795,32 @@ void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest
 // OStoreDB::RetrieveMount::releaseDiskSpace()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveMount::releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+  if (diskSpaceReservation.empty()) return;
   // Try add our reservation to the drive status.
   objectstore::DriveState ds(m_oStoreDB.m_objectStore);
   objectstore::ScopedExclusiveLock dsl;
+  for (auto & rr: diskSpaceReservation) {
+    log::ScopedParamContainer params(lc);
+    params.add("diskSystem", rr.first)
+          .add("reservation", rr.second);
+    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): release request content.");
+  }
   Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_oStoreDB.m_agentReference, mountInfo.drive, lc, Helpers::CreateIfNeeded::doNotCreate);
+  for (auto & r: ds.getDiskSpaceReservations()) {
+    log::ScopedParamContainer params(lc);
+    params.add("diskSystem", r.first)
+          .add("reservation", r.second)
+          .add("objectName", ds.getAddressIfSet());
+    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state before release.");
+  }
   for (auto const & dsr: diskSpaceReservation) ds.substractDiskSpaceReservation(dsr.first, dsr.second);
+  for (auto & r: ds.getDiskSpaceReservations()) {
+    log::ScopedParamContainer params(lc);
+    params.add("diskSystem", r.first)
+          .add("reservation", r.second)
+          .add("objectName", ds.getAddressIfSet());
+    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state after release.");
+  }  
   ds.commit();
 }
 //------------------------------------------------------------------------------

@@ -327,9 +327,18 @@ void DriveState::substractDiskSpaceReservation(const std::string& diskSystemName
       ++index;
     }
   }
-  if (bytes)
+  if (bytes) {
+    std::stringstream err;
+    err << "In DriveState::substractDiskSpaceReservation(): Trying to substract bytes without previous reservation. ";
+    err << "dsr (";
+    for (auto dsr: *m_payload.mutable_disk_space_reservations()) {
+      err << "n:" << dsr.disk_system_name() << " rb:" << dsr.reserved_bytes();
+    }
+    err << ") b:" << bytes;
     throw NegativeDiskSpaceReservationReached(
-      "In DriveState::substractDiskSpaceReservation(): Trying to substract bytes without previous reservation.");
+        err.str()
+      );
+  }
 }
 
 //------------------------------------------------------------------------------
