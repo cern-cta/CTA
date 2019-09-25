@@ -189,14 +189,14 @@ void MysqlStmt::bindOptionalUint64(const std::string &paramName, const optional<
     const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
     const unsigned int idx = paramIdx - 1;
 
-    Mysql::Placeholder_Double* holder = dynamic_cast<Mysql::Placeholder_Double*>(m_placeholder[idx]);
+    Mysql::Placeholder_Uint64* holder = dynamic_cast<Mysql::Placeholder_Uint64*>(m_placeholder[idx]);
     // if already exists, try to reuse
     if (!holder and m_placeholder[idx]) {
       throw exception::Exception(std::string(__FUNCTION__) + " can't cast from Placeholder to Placeholder_Uint64. " );
     }
 
     if (!holder) {
-      holder = new Mysql::Placeholder_Double();
+      holder = new Mysql::Placeholder_Uint64();
       holder->idx = idx;
       holder->length = sizeof(uint64_t);
     }
