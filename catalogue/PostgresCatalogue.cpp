@@ -202,7 +202,7 @@ common::dataStructures::Tape PostgresCatalogue::selectTapeForUpdate(rdbms::Conn 
         "VID AS VID,"
         "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
         "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "DATA_IN_BYTES AS DATA_IN_BYTES,"
         "LAST_FSEQ AS LAST_FSEQ,"
@@ -246,7 +246,7 @@ common::dataStructures::Tape PostgresCatalogue::selectTapeForUpdate(rdbms::Conn 
     tape.vid = rset.columnString("VID");
     tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
     tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
-    tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+    tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
     tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
     tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
