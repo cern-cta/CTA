@@ -292,7 +292,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--comment",               OptionString::COMMENT },
    { "--diskid",                OptionString::DISKID },
    { "--drive",                 OptionString::DRIVE },
-   { "--encryptionkeyname",     OptionString::ENCRYPTION_KEY },
+   { "--encryptionkeyname",     OptionString::ENCRYPTION_KEY_NAME },
    { "--file",                  OptionString::FILENAME },
    { "--hostname",              OptionString::HOSTNAME },
    { "--input",                 OptionString::INPUT },

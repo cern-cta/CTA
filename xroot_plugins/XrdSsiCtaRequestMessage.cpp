@@ -1343,7 +1343,7 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    auto  tapepool          = getOptional(OptionString::TAPE_POOL);
    auto  capacity          = getOptional(OptionUInt64::CAPACITY);
    auto  comment           = getOptional(OptionString::COMMENT);
-   auto  encryptionkeyName = getOptional(OptionString::ENCRYPTION_KEY);
+   auto  encryptionkeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
    auto  disabled          = getOptional(OptionBoolean::DISABLED);
    auto  full              = getOptional(OptionBoolean::FULL);
    auto  readOnly          = getOptional(OptionBoolean::READ_ONLY);
