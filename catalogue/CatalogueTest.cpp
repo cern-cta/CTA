@@ -4471,7 +4471,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(modifiedEncryptionKeyName, tape.encryptionKey);
+    ASSERT_EQ(modifiedEncryptionKeyName, tape.encryptionKeyName);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -4561,7 +4561,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_FALSE((bool)tape.encryptionKey);
+    ASSERT_FALSE((bool)tape.encryptionKeyName);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
