@@ -1336,17 +1336,17 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   auto &vid            = getRequired(OptionString::VID);
-   auto  mediaType      = getOptional(OptionString::MEDIA_TYPE);
-   auto  vendor         = getOptional(OptionString::VENDOR);
-   auto  logicallibrary = getOptional(OptionString::LOGICAL_LIBRARY);
-   auto  tapepool       = getOptional(OptionString::TAPE_POOL);
-   auto  capacity       = getOptional(OptionUInt64::CAPACITY);
-   auto  comment        = getOptional(OptionString::COMMENT);
-   auto  encryptionkey  = getOptional(OptionString::ENCRYPTION_KEY);
-   auto  disabled       = getOptional(OptionBoolean::DISABLED);
-   auto  full           = getOptional(OptionBoolean::FULL);
-   auto  readOnly       = getOptional(OptionBoolean::READ_ONLY);
+   auto &vid               = getRequired(OptionString::VID);
+   auto  mediaType         = getOptional(OptionString::MEDIA_TYPE);
+   auto  vendor            = getOptional(OptionString::VENDOR);
+   auto  logicallibrary    = getOptional(OptionString::LOGICAL_LIBRARY);
+   auto  tapepool          = getOptional(OptionString::TAPE_POOL);
+   auto  capacity          = getOptional(OptionUInt64::CAPACITY);
+   auto  comment           = getOptional(OptionString::COMMENT);
+   auto  encryptionkeyName = getOptional(OptionString::ENCRYPTION_KEY);
+   auto  disabled          = getOptional(OptionBoolean::DISABLED);
+   auto  full              = getOptional(OptionBoolean::FULL);
+   auto  readOnly          = getOptional(OptionBoolean::READ_ONLY);
 
    if(mediaType) {
       m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
@@ -1366,8 +1366,8 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    if(comment) {
       m_catalogue.modifyTapeComment(m_cliIdentity, vid, comment.value());
    }
-   if(encryptionkey) {
-      m_catalogue.modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkey.value());
+   if(encryptionkeyName) {
+      m_catalogue.modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
    }
    if(disabled) {
       m_catalogue.setTapeDisabled(m_cliIdentity, vid, disabled.value());
