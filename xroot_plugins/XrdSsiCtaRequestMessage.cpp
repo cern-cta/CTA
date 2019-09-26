@@ -1367,7 +1367,7 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
       m_catalogue.modifyTapeComment(m_cliIdentity, vid, comment.value());
    }
    if(encryptionkey) {
-      m_catalogue.modifyTapeEncryptionKey(m_cliIdentity, vid, encryptionkey.value());
+      m_catalogue.modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkey.value());
    }
    if(disabled) {
       m_catalogue.setTapeDisabled(m_cliIdentity, vid, disabled.value());

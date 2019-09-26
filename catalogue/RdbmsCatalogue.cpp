@@ -2922,14 +2922,14 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
 }
 
 //------------------------------------------------------------------------------
-// modifyTapeEncryptionKey
+// modifyTapeEncryptionKeyName
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string &encryptionKey) {
+void RdbmsCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &encryptionKeyName) {
   try {
-    optional<std::string> optionalEncryptionKey;
-    if(!encryptionKey.empty()) {
-      optionalEncryptionKey = encryptionKey;
+    optional<std::string> optionalEncryptionKeyName;
+    if(!encryptionKeyName.empty()) {
+      optionalEncryptionKeyName = encryptionKeyName;
     }
 
     const time_t now = time(nullptr);
@@ -2943,7 +2943,7 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindOptionalString(":ENCRYPTION_KEY_NAME", optionalEncryptionKey);
+    stmt.bindOptionalString(":ENCRYPTION_KEY_NAME", optionalEncryptionKeyName);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -2957,11 +2957,11 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
     spc.add("vid", vid)
-       .add("encryptionKey", optionalEncryptionKey ? optionalEncryptionKey.value() : "NULL")
+       .add("encryptionKeyName", optionalEncryptionKeyName ? optionalEncryptionKeyName.value() : "NULL")
        .add("lastUpdateUserName", admin.username)
        .add("lastUpdateHostName", admin.host)
        .add("lastUpdateTime", now);
-    lc.log(log::INFO, "Catalogue - user modified tape - encryptionKey");
+    lc.log(log::INFO, "Catalogue - user modified tape - encryptionKeyName");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

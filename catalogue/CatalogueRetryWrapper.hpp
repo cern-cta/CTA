@@ -265,8 +265,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeCapacityInBytes(admin, vid, capacityInBytes);}, m_maxTriesToConnect);
   }
 
-  void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKey) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeEncryptionKey(admin, vid, encryptionKey);}, m_maxTriesToConnect);
+  void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeEncryptionKeyName(admin, vid, encryptionKeyName);}, m_maxTriesToConnect);
   }
 
   void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) override {
