@@ -255,6 +255,15 @@ public:
   void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool encryptionValue) override;
   void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &supply) override;
 
+  /**
+   * Modifies the name of the specified tape pool.
+   *
+   * @param admin The administrator.
+   * @param currentName The current name of the tape pool.
+   * @param newName The new name of the tape pool.
+   */
+  void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override;
+
   void createArchiveRoute(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &diskInstanceName,
@@ -1268,6 +1277,20 @@ protected:
    * within the catalogue.
    */
   virtual uint64_t getNextStorageClassId(rdbms::Conn &conn) = 0;
+
+  /**
+   * Returns a unique tape pool ID that can be used by a new tape pool within
+   * the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique tape pool ID that can be used by a new tape pool within
+   * the catalogue.
+   */
+  virtual uint64_t getNextTapePoolId(rdbms::Conn &conn) = 0;
 
   /**
    * Returns a cached version of the mapping from tape copy to tape pool for the

@@ -111,6 +111,19 @@ public:
    */
   uint64_t getNextStorageClassId(rdbms::Conn &conn) override;
 
+  /**
+   * Returns a unique tape pool ID that can be used by a new tape pool within
+   * the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique tape pool ID that can be used by a new tape pool within
+   * the catalogue.
+   */
+  uint64_t getNextTapePoolId(rdbms::Conn &conn) override;
 
 private:
 
@@ -125,12 +138,13 @@ private:
   void beginCreateTemporarySetDeferred(rdbms::Conn &conn) const;
 
   /**
-   * Selects the specified tape within the Tape table for update.
+   * Selects the specified tape for update and returns its last FSeq.
    *
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
+   * @param The last FSeq of the tape.
    */
-  common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) const;
+  uint64_t selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn, const std::string &vid) const;
 
   /**
    * Batch inserts rows into the ARCHIVE_FILE table that correspond to the

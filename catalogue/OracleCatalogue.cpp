@@ -203,42 +203,39 @@ uint64_t OracleCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
 }
 
 //------------------------------------------------------------------------------
-// selectTapeForUpdate
+// getNextTapePoolId
 //------------------------------------------------------------------------------
-common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) {
+uint64_t OracleCatalogue::getNextTapePoolId(rdbms::Conn &conn) {
   try {
     const char *const sql =
       "SELECT "
-        "VID AS VID,"
-        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ,"
-        "IS_DISABLED AS IS_DISABLED,"
-        "IS_FULL AS IS_FULL,"
-        "IS_READ_ONLY AS IS_READ_ONLY,"
-        "IS_FROM_CASTOR AS IS_FROM_CASTOR,"
+        "TAPE_POOL_ID_SEQ.NEXTVAL AS TAPE_POOL_ID "
+      "FROM "
+        "DUAL";
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    if (!rset.next()) {
+      throw exception::Exception(std::string("Result set is unexpectedly empty"));
+    }
 
-        "LABEL_DRIVE AS LABEL_DRIVE,"
-        "LABEL_TIME AS LABEL_TIME,"
+    return rset.columnUint64("TAPE_POOL_ID");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
-        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "LAST_READ_TIME AS LAST_READ_TIME,"
-
-        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
-
-        "USER_COMMENT AS USER_COMMENT,"
-
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+//------------------------------------------------------------------------------
+// selectTapeForUpdateAndGetLastFSeq
+//------------------------------------------------------------------------------
+uint64_t OracleCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn,
+  const std::string &vid) {
+  try {
+    const char *const sql =
+      "SELECT "
+        "LAST_FSEQ AS LAST_FSEQ "
       "FROM "
         "TAPE "
       "WHERE "
@@ -251,45 +248,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
 
-    common::dataStructures::Tape tape;
-
-    tape.vid = rset.columnString("VID");
-    tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
-    tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
-    tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
-    tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
-    tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
-    tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
-    tape.disabled = rset.columnBool("IS_DISABLED");
-    tape.full = rset.columnBool("IS_FULL");
-    tape.readOnly = rset.columnBool("IS_READ_ONLY");
-    tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
-
-    tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
-    tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-    tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
-
-    tape.comment = rset.columnString("USER_COMMENT");
-
-    //std::string creatorUIname = rset.columnString("CREATION_LOG_USER_NAME");
-
-    common::dataStructures::EntryLog creationLog;
-    creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
-    creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
-    creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
-
-    tape.creationLog = creationLog;
-
-    //std::string updaterUIname = rset.columnString("LAST_UPDATE_USER_NAME");
-
-    common::dataStructures::EntryLog updateLog;
-    updateLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
-    updateLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
-    updateLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-
-    tape.lastModificationLog = updateLog;
-
-    return tape;
+    return rset.columnUint64("LAST_FSEQ");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -317,8 +276,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
 
     conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
 
-    const auto tape = selectTapeForUpdate(conn, firstEvent.vid);
-    uint64_t expectedFSeq = tape.lastFSeq + 1;
+    const uint64_t lastFSeq = selectTapeForUpdateAndGetLastFSeq(conn, firstEvent.vid);
+    uint64_t expectedFSeq = lastFSeq + 1;
     uint64_t totalLogicalBytesWritten = 0;
 
     uint32_t i = 0;

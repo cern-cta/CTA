@@ -145,6 +145,7 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "STORAGE_CLASS",
       "STORAGE_CLASS_ID",
       "TAPE_POOL",
+      "TAPE_POOL_ID",
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
@@ -176,6 +177,7 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "STORAGE_CLASS",
       "STORAGE_CLASS_ID",
       "TAPE_POOL",
+      "TAPE_POOL_ID",
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
@@ -253,7 +255,7 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
 
     dropDatabaseTables(conn, tablesToDrop);
 
-    std::list<std::string> sequencesToDrop = {"ARCHIVE_FILE_ID_SEQ", "STORAGE_CLASS_ID_SEQ"};
+    std::list<std::string> sequencesToDrop = {"ARCHIVE_FILE_ID_SEQ", "STORAGE_CLASS_ID_SEQ", "TAPE_POOL_ID_SEQ"};
     dropDatabaseSequences(conn, sequencesToDrop);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -287,7 +289,7 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
 
     dropDatabaseTables(conn, tablesToDrop);
 
-    std::list<std::string> sequencesToDrop = {"ARCHIVE_FILE_ID_SEQ", "STORAGE_CLASS_ID_SEQ"};
+    std::list<std::string> sequencesToDrop = {"ARCHIVE_FILE_ID_SEQ", "STORAGE_CLASS_ID_SEQ", "TAPE_POOL_ID_SEQ"};
     dropDatabaseSequences(conn, sequencesToDrop);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
