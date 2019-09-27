@@ -2960,7 +2960,8 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because either it or tape pool " +
+        tapePoolName + " does not exist");
     }
 
     log::LogContext lc(m_log);
