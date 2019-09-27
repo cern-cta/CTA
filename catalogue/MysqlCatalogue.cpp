@@ -138,46 +138,58 @@ uint64_t MysqlCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
 }
 
 //------------------------------------------------------------------------------
-// selectTapeForUpdate
+// getNextTapePoolId
 //------------------------------------------------------------------------------
-common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) {
+uint64_t MysqlCatalogue::getNextTapePoolId(rdbms::Conn &conn) {
+  try {
+    rdbms::AutoRollback autoRollback(conn);
+
+    conn.executeNonQuery("START TRANSACTION");
+
+    {
+      const char *const sql =
+        "UPDATE TAPE_POOL_ID SET ID = LAST_INSERT_ID(ID + 1)";
+      auto stmt = conn.createStmt(sql);
+      stmt.executeNonQuery();
+    }
+
+    uint64_t tapePoolId = 0;
+    {
+      const char *const sql =
+        "SELECT LAST_INSERT_ID() AS ID ";
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery();
+      if(!rset.next()) {
+        throw exception::Exception("TAPE_POOL_ID table is empty");
+      }
+      tapePoolId = rset.columnUint64("ID");
+      if(rset.next()) {
+        throw exception::Exception("Found more than one ID counter in the TAPE_POOL_ID table");
+      }
+    }
+    conn.commit();
+
+    return tapePoolId;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// selectTapeForUpdateAndGetLastFSeq
+//------------------------------------------------------------------------------
+uint64_t MysqlCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn, const std::string &vid) {
   try {
     const char *const sql =
       "SELECT "
-      "VID AS VID,"
-      "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-      "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-      "ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
-      "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-      "DATA_IN_BYTES AS DATA_IN_BYTES,"
-      "LAST_FSEQ AS LAST_FSEQ,"
-      "IS_DISABLED AS IS_DISABLED,"
-      "IS_FULL AS IS_FULL,"
-      "IS_READ_ONLY AS IS_READ_ONLY,"
-      "IS_FROM_CASTOR AS IS_FROM_CASTOR,"
-
-      "LABEL_DRIVE AS LABEL_DRIVE,"
-      "LABEL_TIME AS LABEL_TIME,"
-
-      "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-      "LAST_READ_TIME AS LAST_READ_TIME,"
-
-      "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-      "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
-
-      "USER_COMMENT AS USER_COMMENT,"
-
-      "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-      "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-      "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-
-      "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "LAST_FSEQ AS LAST_FSEQ "
       "FROM "
-      "TAPE "
+        "TAPE "
       "WHERE "
-      "VID = :VID "
+        "VID = :VID "
       "FOR UPDATE";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
@@ -186,45 +198,7 @@ common::dataStructures::Tape MysqlCatalogue::selectTapeForUpdate(rdbms::Conn &co
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
 
-    common::dataStructures::Tape tape;
-
-    tape.vid = rset.columnString("VID");
-    tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
-    tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
-    tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
-    tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
-    tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
-    tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
-    tape.disabled = rset.columnBool("IS_DISABLED");
-    tape.full = rset.columnBool("IS_FULL");
-    tape.readOnly = rset.columnBool("IS_READ_ONLY");
-    tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
-
-    tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
-    tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-    tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
-
-    tape.comment = rset.columnString("USER_COMMENT");
-
-    // std::string creatorUIname = rset.columnString("CREATION_LOG_USER_NAME");
-
-    common::dataStructures::EntryLog creationLog;
-    creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
-    creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
-    creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
-
-    tape.creationLog = creationLog;
-
-    // std::string updaterUIname = rset.columnString("LAST_UPDATE_USER_NAME");
-
-    common::dataStructures::EntryLog updateLog;
-    updateLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
-    updateLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
-    updateLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-
-    tape.lastModificationLog = updateLog;
-
-    return tape;
+    return rset.columnUint64("LAST_FSEQ");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -251,8 +225,8 @@ void MysqlCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &
 
     conn.executeNonQuery("START TRANSACTION");
 
-    const auto tape = selectTapeForUpdate(conn, firstEvent.vid);
-    uint64_t expectedFSeq = tape.lastFSeq + 1;
+    const uint64_t lastFSeq = selectTapeForUpdateAndGetLastFSeq(conn, firstEvent.vid);
+    uint64_t expectedFSeq = lastFSeq + 1;
     uint64_t totalLogicalBytesWritten = 0;
 
     for(const auto &eventP: events) {

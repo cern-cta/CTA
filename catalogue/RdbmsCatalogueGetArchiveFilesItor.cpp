@@ -109,7 +109,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
         "TAPE_FILE.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID, "
         "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SUPERSEDED_BY_FSEQ, "
-        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
+        "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -117,7 +117,9 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       "LEFT OUTER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "LEFT OUTER JOIN TAPE ON "
-        "TAPE_FILE.VID = TAPE.VID";
+        "TAPE_FILE.VID = TAPE.VID "
+      "INNER JOIN TAPE_POOL ON "
+        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
 
     const bool thereIsAtLeastOneSearchCriteria =
       searchCriteria.archiveFileId  ||
@@ -183,7 +185,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     }
     if(searchCriteria.tapePool) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+      sql += "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
     }
 
     // Order by FSEQ if we are listing the contents of a tape, else order by

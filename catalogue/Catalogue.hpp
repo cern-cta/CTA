@@ -265,6 +265,15 @@ public:
   virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool encryptionValue) = 0;
   virtual void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &supply) = 0;
 
+  /**
+   * Modifies the name of the specified tape pool.
+   *
+   * @param admin The administrator.
+   * @param currentName The current name of the tape pool.
+   * @param newName The new name of the tape pool.
+   */
+  virtual void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) = 0;
+
   virtual void createArchiveRoute(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &diskInstanceName,
