@@ -780,7 +780,7 @@ void TextFormatter::printTapeLsHeader() {
     "library",
     "tapepool",
     "vo",
-    "encryption key",
+    "encryption key name",
     "capacity",
     "occupancy",
     "last fseq",
