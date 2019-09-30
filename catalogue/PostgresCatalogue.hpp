@@ -106,7 +106,7 @@ public:
    * problem of generating ever increasing numeric identifiers.
    *
    * @param conn The database connection.
-   * @return a unique archive ID that can be used by a new archive file within
+   * @return a unique storage class ID that can be used by a new storage class
    * within the catalogue.
    */
   uint64_t getNextStorageClassId(rdbms::Conn &conn) override;
