@@ -2594,7 +2594,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
           throw  exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
         // We now have a hold of the repack request.
         // We should delete all the file level subrequests.
-        // TODO
+        rr.deleteAllSubrequests();
         // And then delete the request
         std::string repackRequestOwner = rr.getOwner();
         rr.remove();
@@ -4712,6 +4712,12 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
     cta::disk::DirectoryFactory directoryFactory;
     std::string directoryPath = cta::utils::getEnclosingPath(bufferURL);
     std::unique_ptr<cta::disk::Directory> directory;
+    {
+      cta::ScopedExclusiveLock sel(m_repackRequest);
+      m_repackRequest.fetch();
+      m_repackRequest.setIsComplete(true);
+      m_repackRequest.commit();
+    }
     try{
       directory.reset(directoryFactory.createDirectory(directoryPath));
       directory->rmdir();

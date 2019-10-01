@@ -287,11 +287,11 @@ echo -n "Waiting for other pods"
 for ((i=0; i<240; i++)); do
   echo -n "."
   # exit loop when all pods are in Running state
-  kubectl get pods -a --namespace=${instance} | grep -v init | tail -n+2 | grep -q -v Running || break
+  kubectl get pods -a --namespace=${instance} | grep -v init | grep -v oracleunittests | tail -n+2 | grep -q -v Running || break
   sleep 1
 done
 
-if [[ $(kubectl get pods -a --namespace=${instance} | grep -v init | tail -n+2 | grep -q -v Running) ]]; then
+if [[ $(kubectl get pods -a --namespace=${instance} | grep -v init | grep -v oracleunittests | tail -n+2 | grep -q -v Running) ]]; then
   echo "TIMED OUT"
   echo "Some pods have not been initialized properly:"
   kubectl get pods -a --namespace=${instance}

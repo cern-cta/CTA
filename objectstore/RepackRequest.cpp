@@ -79,6 +79,7 @@ void RepackRequest::initialize() {
   m_payload.set_is_expand_finished(false);
   m_payload.set_is_expand_started(false);
   m_payload.set_force_disabled_tape(false);
+  m_payload.set_is_complete(false);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -192,6 +193,29 @@ common::dataStructures::MountPolicy RepackRequest::getMountPolicy(){
   MountPolicySerDeser mpSerDeser;
   mpSerDeser.deserialize(m_payload.mount_policy());
   return mpSerDeser;
+}
+
+void RepackRequest::deleteAllSubrequests() {
+  checkPayloadWritable();
+  std::list<std::unique_ptr<Backend::AsyncDeleter>> deleters;
+  if(!m_payload.is_complete()){
+    try{
+      for(auto itor = m_payload.mutable_subrequests()->begin(); itor != m_payload.mutable_subrequests()->end(); ++itor){
+        //Avoid the race condition that can happen during expansion of the RepackRequest
+        auto & subrequest = *itor;
+        subrequest.set_subrequest_deleted(true);
+        deleters.emplace_back(m_objectStore.asyncDelete(subrequest.address()));
+      }
+      for(auto & deleter: deleters){
+        deleter->wait();
+      }
+    } catch(objectstore::Backend::NoSuchObject & ){ /* If object already deleted, do nothing */ }
+  }
+}
+
+void RepackRequest::setIsComplete(const bool isComplete){
+  checkPayloadWritable();
+  m_payload.set_is_complete(isComplete);
 }
 
 void RepackRequest::setForceDisabledTape(const bool disabledTape){
