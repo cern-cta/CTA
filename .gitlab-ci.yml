@@ -182,7 +182,7 @@ dbunittests_mysql:
     - yum -y install lsof mariadb-server
     - echo '[mariadb]' > /etc/my.cnf.d/cta_server_listen.cnf
     - echo 'bind-address=localhost' >> /etc/my.cnf.d/cta_server_listen.cnf
-    - mysql_install_db --user=mysql
+    - mysql_install_db --basedir=/usr --user=mysql
     - /usr/bin/mysqld_safe > /dev/null 2>&1 < /dev/null &
     - sleep 5
     - echo 'create database cta;' | mysql
