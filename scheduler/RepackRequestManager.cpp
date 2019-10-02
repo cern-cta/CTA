@@ -40,14 +40,19 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
     if(repackRequest != nullptr){
       //We have a RepackRequest that has the status ToExpand, expand it
       try{
-        m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
-      } catch (const ExpandRepackRequestException& ex){
-        lc.log(log::ERR,ex.what());
-        repackRequest->fail();
-      } catch (const cta::exception::Exception &e){
-        lc.log(log::ERR,e.what());
-        repackRequest->fail();
-        throw(e);
+        try{
+          m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
+        } catch (const ExpandRepackRequestException& ex){
+          lc.log(log::ERR,ex.what());
+          repackRequest->fail();
+        } catch (const cta::exception::Exception &e){
+          lc.log(log::ERR,e.what());
+          repackRequest->fail();
+          throw(e);
+        }
+      } catch (const cta::objectstore::Backend::NoSuchObject &ex){
+        //In case the repack request is deleted during expansion, avoid a segmentation fault of the tapeserver
+        lc.log(log::WARNING,"In RepackRequestManager::runOnePass(), RepackRequest object does not exist in the objectstore");
       }
     }
   }
