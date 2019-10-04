@@ -1,0 +1,1258 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strcpy
+   fun:lfvLoadPkg
+   fun:lfvSetShlMode
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+   fun:_ZN6oracle4occi11Environment17createEnvironmentENS1_4ModeEPvPFS3_S3_mEPFS3_S3_S3_mEPFvS3_S3_E
+   fun:_ZN3cta5rdbms7wrapper7OcciEnvC1Ev
+   fun:_ZN3cta5rdbms7wrapper16OcciEnvSingletonC1Ev
+   fun:_ZN3cta5rdbms7wrapper16OcciEnvSingleton8instanceEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:lmmmalloc
+   fun:lmmcis
+   fun:lpmpali
+   fun:lpminitm
+   fun:lfvLoadPkg
+   fun:lfvSetShlMode
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+   fun:_ZN6oracle4occi11Environment17createEnvironmentENS1_4ModeEPvPFS3_S3_mEPFS3_S3_S3_mEPFvS3_S3_E
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:lmmmalloc
+   fun:lmmhpinit
+   fun:lmmcis
+   fun:lpmpali
+   fun:lpminitm
+   fun:lfvLoadPkg
+   fun:lfvSetShlMode
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:lmmmalloc
+   fun:lmmsthinit
+   fun:lmmhpinit
+   fun:lmmcis
+   fun:lpmpali
+   fun:lpminitm
+   fun:lfvLoadPkg
+   fun:lfvSetShlMode
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strcpy
+   fun:slpmadp
+   fun:lpmapd
+   fun:lfvLoadPkg
+   fun:lfvSetShlMode
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+   fun:_ZN6oracle4occi11Environment17createEnvironmentENS1_4ModeEPvPFS3_S3_mEPFS3_S3_S3_mEPFvS3_S3_E
+   fun:_ZN3cta5rdbms7wrapper7OcciEnvC1Ev
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:lmmmalloc
+   fun:lmmcis
+   fun:lpmpali
+   fun:lpmloadpkg
+   fun:lfvLoadPkg
+   fun:lfvSetShlMode
+   fun:lfvini1
+   fun:lfvinit
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+   fun:_ZN6oracle4occi11Environment17createEnvironmentENS1_4ModeEPvPFS3_S3_mEPFS3_S3_S3_mEPFvS3_S3_E
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strncpy
+   fun:lfvpkgname
+   fun:kpummpin
+   fun:kpuenvcr
+   fun:OCIEnvCreate
+   fun:_ZN6oracle4occi11Environment17createEnvironmentENS1_4ModeEPvPFS3_S3_mEPFS3_S3_S3_mEPFvS3_S3_E
+   fun:_ZN3cta5rdbms7wrapper7OcciEnvC1Ev
+   fun:_ZN3cta5rdbms7wrapper16OcciEnvSingletonC1Ev
+   fun:_ZN3cta5rdbms7wrapper16OcciEnvSingleton8instanceEv
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+   fun:_ZN9unitTests18cta_rdbms_StmtTest5SetUpEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strncpy
+   fun:lfvpkgname
+   fun:slxcfot
+   fun:lxldLoadBoot
+   fun:lxlinit
+   fun:nleminz
+   fun:nlstdggo
+   fun:nlstdgg
+   fun:nigini2
+   fun:kpeDbgTLSInit
+   fun:kpummTLSGET1
+   fun:kpeDbgProcessInit
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strncpy
+   fun:lfvpkgname
+   fun:slxcfot
+   fun:lxlfOpen
+   fun:lxldlod
+   fun:lxdlobj
+   fun:lxdgetobj
+   fun:lxplset
+   fun:lxhLaToId
+   fun:lxhenvquery
+   fun:lxhLangEnv
+   fun:nleminz
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strncmp
+   fun:lxlchkobj
+   fun:lxlfrd
+   fun:lxldlod
+   fun:lxdlobj
+   fun:lxdgetobj
+   fun:lxhLaToId
+   fun:lxhenvquery
+   fun:lxhLangEnv
+   fun:nleminz
+   fun:nlstdggo
+   fun:nlstdgg
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strcat
+   fun:slgfn
+   fun:dbgrgad_get_adrbase_directory
+   fun:kpeDbgGetInitFileParms
+   fun:kpeDbgGetInitFileParmsAndInitDBGC
+   fun:nlstddd_do_alter_diag
+   fun:nlstddt_do_alter_trace
+   fun:nlstdggo
+   fun:nlstdgg
+   fun:nigini2
+   fun:kpeDbgTLSInit
+   fun:kpummTLSGET1
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strcat
+   fun:slgfn
+   fun:dbgrgad_get_adrbase_directory
+   fun:nlddinit
+   fun:nlstddd_do_alter_diag
+   fun:nlstddt_do_alter_trace
+   fun:nlstdggo
+   fun:nlstdgg
+   fun:nigini2
+   fun:kpeDbgTLSInit
+   fun:kpummTLSGET1
+   fun:kpeDbgProcessInit
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:r0_des_set_key
+   fun:r0_cipher_des_set_key
+   fun:R1_CIPH_CTX_set_key_bytes_state
+   fun:r_ck_cipher_init_base
+   fun:r_ck_cipher_init_des
+   fun:ri_cr_ciph_init
+   fun:R_CR_encrypt_init
+   fun:ztca_RSAAdpSecKeyOpInit_2
+   fun:ztca_SecKeyEncryptCtxInitMC_2
+   fun:ztca_SecKeyEncryptCtxInit_2
+   fun:ztcebi_2
+   fun:ztcei2
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:r0_des_encp_k8_64
+   fun:r0_cipher_cbc8lup_enc
+   fun:r0_cipher_cbc8lup
+   fun:R1_CIPH_CTX_cipher
+   fun:r_ck_cipher_update
+   fun:ztca_RSAAdpEncrypt
+   fun:ztcebn
+   fun:ztcecrypto_2
+   fun:ztceenc
+   fun:ztcrbm
+   fun:ztcrbh
+   fun:ztcrbp
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_intel_fast_memcmp
+   fun:ztcrbh
+   fun:ztcrbp
+   fun:ztcrseed3
+   fun:ztcsh
+   fun:kpusattr
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztcrbh
+   fun:ztcrbp
+   fun:ztcrseed3
+   fun:ztcsh
+   fun:kpusattr
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+   fun:_ZN9unitTests18cta_rdbms_StmtTest5SetUpEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strncpy
+   fun:nttbnd2addr
+   fun:ntacbbnd2addr
+   fun:ntacbnd2addr
+   fun:nsgettrans_bystring
+   fun:niotns
+   fun:osncon
+   fun:kpuadef
+   fun:upiini
+   fun:kpuatch
+   fun:kpuspsessionget
+   fun:OCISessionGet
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_ssse3_rep_memcpy
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_ssse3_rep_memcpy
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_ssse3_rep_memcpy
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpugskey
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpugskey
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:kzsr5gvfr
+   fun:kpugskey
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:lxgcnvb
+   fun:lxgConvertToAL32UTF8
+   fun:kzsr5gvfr
+   fun:kpugskey
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_ssse3_rep_memcpy
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:ztcsc
+   fun:ztcsr
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:lxgcnvb
+   fun:lxgConvertToAL32UTF8
+   fun:kzsr5gvfr
+   fun:kpugskey
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_memset
+   fun:kpugskey
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_memset
+   fun:kpugskey
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_intel_fast_memcmp
+   fun:kztvo5weak
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:kztvo5weak
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_intel_fast_memcmp
+   fun:kztvo5weak
+   fun:kztvo5csk
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:kztvo5weak
+   fun:kztvo5csk
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:ztucbtx
+   fun:kztvo5csk
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:ztucbtx
+   fun:kztvo5ke
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:ztucbtx
+   fun:kztvo5_pbkdf2_skey_enc
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:lxgcnvb
+   fun:lxgcnv
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:lxgcnvb
+   fun:lxgcnv
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:ztucbtx
+   fun:kztvo5pe
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_memset
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_memset
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strncpy
+   fun:lfvpkgname
+   fun:kpusclt
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:lmmfree
+   fun:lmmsthfree
+   fun:lmmhpfree
+   fun:lmmcit
+   fun:lpmpfin
+   fun:lpmdelete
+   fun:kpubalts
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:lmmfree
+   fun:lmmhpfree
+   fun:lmmcit
+   fun:lpmpfin
+   fun:lpmdelete
+   fun:kpubalts
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:lmmfree
+   fun:lmmcit
+   fun:lpmpfin
+   fun:lpmdelete
+   fun:kpubalts
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_memset
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+   fun:_ZN9unitTests18cta_rdbms_StmtTest5SetUpEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_memset
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+   fun:_ZN9unitTests18cta_rdbms_StmtTest5SetUpEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strcpy
+   fun:nlolgobj
+   fun:nnfun2a
+   fun:niqname
+   fun:kpuctcmn
+   fun:kpuatch
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_sse2_strcpy
+   fun:nlolgserv
+   fun:nlolgobj
+   fun:nnfun2a
+   fun:niqname
+   fun:kpuctcmn
+   fun:kpuatch
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:kztvo5ed
+   fun:kztvo5ver
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:kztvo5ed
+   fun:kztvo5ver
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:kztvo5ed
+   fun:kztvo5ver
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:kztvo5ed
+   fun:kztvo5ver
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:kztvo5ed
+   fun:kztvo5ver
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztceb_unpadding
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:kztvo5ed
+   fun:kztvo5ver
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztcecrypto_2
+   fun:ztcedec
+   fun:kztvo5ed
+   fun:kztvo5ver
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:kztvo5ver
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_intel_fast_memcmp
+   fun:kztvo5ver
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+   fun:_ZN3cta5rdbms8ConnPool7getConnEv
+   fun:_ZN9unitTests18cta_rdbms_StmtTest5SetUpEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:nassky
+   fun:nszssk
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+   fun:_ZN3cta5rdbms7wrapper7OcciEnv10createConnERKSsS4_S4_
+   fun:_ZN3cta5rdbms7wrapper15OcciConnFactory6createEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_memset
+   fun:ztceb_padding
+   fun:kztvo5pe
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_memset
+   fun:ztceb_padding
+   fun:kztvo5pe
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_memset
+   fun:ztceb_padding
+   fun:kztvo5pe
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:ztcebn
+   fun:ztceb_padding
+   fun:kztvo5pe
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+   fun:_ZN6oracle4occi15EnvironmentImpl16createConnectionERKSsS3_S3_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_ssse3_rep_memcpy
+   fun:ztcebn
+   fun:ztceb_padding
+   fun:kztvo5pe
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_ssse3_rep_memcpy
+   fun:ztcebn
+   fun:ztceb_padding
+   fun:kztvo5pe
+   fun:kzsrepw
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+   fun:_ZN6oracle4occi14ConnectionImplC1EPNS0_15EnvironmentImplERKSsS5_S5_
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:nsbasic_bsd
+   fun:nioqrc
+   fun:ttcdrv
+   fun:nioqwa
+   fun:upirtrc
+   fun:upirtr
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+   fun:OCISessionGet
+   fun:_ZN6oracle4occi14ConnectionImpl14openConnectionEP6OCIEnvP8OCIErrorPvjS6_jS6_jS6_jjS6_jNS0_10Connection6PurityENS0_23StatelessConnectionPool8PoolTypeE
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   fun:__intel_ssse3_rep_memcpy
+   fun:ttcc2u
+   fun:ttcrbur
+   fun:ttcpip
+   fun:ttcdrv
+   fun:nioqwa
+   fun:upirtrc
+   fun:upirtr
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__intel_ssse3_rep_memcpy
+   fun:ttcc2u
+   fun:ttcrbur
+   fun:ttcpip
+   fun:ttcdrv
+   fun:nioqwa
+   fun:upirtrc
+   fun:upirtr
+   fun:kpu8lgn
+   fun:kpuauthxa
+   fun:kpuauth
+   fun:kpuspsessionget
+}
+

@@ -297,7 +297,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--comment",               OptionString::COMMENT },
    { "--diskid",                OptionString::DISKID },
    { "--drive",                 OptionString::DRIVE },
-   { "--encryptionkey",         OptionString::ENCRYPTION_KEY },
+   { "--encryptionkeyname",     OptionString::ENCRYPTION_KEY_NAME },
    { "--file",                  OptionString::FILENAME },
    { "--hostname",              OptionString::HOSTNAME },
    { "--input",                 OptionString::INPUT },
@@ -389,7 +389,7 @@ const Option opt_diskid               { Option::OPT_STR,  "--diskid",           
 const Option opt_drivename            { Option::OPT_STR,  "--drive",                 "-d",   " <drive_name>" };
 const Option opt_drivename_cmd        { Option::OPT_CMD,  "--drive",                 "",     "<drive_name>" };
 const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",             "-e",   " <\"true\" or \"false\">" };
-const Option opt_encryptionkey        { Option::OPT_STR,  "--encryptionkey",         "-k",   " <encryption_key>" };
+const Option opt_encryptionkeyname    { Option::OPT_STR,  "--encryptionkeyname",     "-k",   " <encryption_key_name>" };
 const Option opt_extended             { Option::OPT_FLAG, "--extended",              "-x",   "" };
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
 const Option opt_firstfseq            { Option::OPT_UINT, "--firstfseq",             "-f",   " <first_fseq>" };
@@ -543,7 +543,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_CH    },
       { opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
-        opt_tapepool.optional(), opt_capacity.optional(), opt_encryptionkey.optional(), opt_disabled.optional(),
+        opt_tapepool.optional(), opt_capacity.optional(), opt_encryptionkeyname.optional(), opt_disabled.optional(),
         opt_full.optional(), opt_readonly.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RECLAIM }, { opt_vid }},

@@ -399,7 +399,7 @@ public:
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override;
   void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) override;
   void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const uint64_t capacityInBytes) override;
-  void modifyTapeEncryptionKey(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKey) override;
+  void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) override;
 
   /**
    * Sets the full status of the specified tape.
@@ -1335,7 +1335,7 @@ protected:
    * problem of generating ever increasing numeric identifiers.
    *
    * @param conn The database connection.
-   * @return a unique archive ID that can be used by a new archive file within
+   * @return a unique storage class ID that can be used by a new storage class
    * within the catalogue.
    */
   virtual uint64_t getNextStorageClassId(rdbms::Conn &conn) = 0;

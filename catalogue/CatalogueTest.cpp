@@ -4410,7 +4410,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes_nonExistentTape) {
   ASSERT_THROW(m_catalogue->modifyTapeCapacityInBytes(m_admin, vid, capacityInBytes), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
@@ -4468,8 +4468,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string modifiedEncryptionKey = "modified_encryption_key";
-  m_catalogue->modifyTapeEncryptionKey(m_admin, vid, modifiedEncryptionKey);
+  const std::string modifiedEncryptionKeyName = "modified_encryption_key_name";
+  m_catalogue->modifyTapeEncryptionKeyName(m_admin, vid, modifiedEncryptionKeyName);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4483,7 +4483,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(modifiedEncryptionKey, tape.encryptionKey);
+    ASSERT_EQ(modifiedEncryptionKeyName, tape.encryptionKeyName);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -4500,7 +4500,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey_emptyStringEncryptionKey) {
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncryptionKey) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
@@ -4558,8 +4558,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey_emptyStringEncryptio
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::string modifiedEncryptionKey;
-  m_catalogue->modifyTapeEncryptionKey(m_admin, vid, modifiedEncryptionKey);
+  const std::string modifiedEncryptionKeyName;
+  m_catalogue->modifyTapeEncryptionKeyName(m_admin, vid, modifiedEncryptionKeyName);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4573,7 +4573,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey_emptyStringEncryptio
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_FALSE((bool)tape.encryptionKey);
+    ASSERT_FALSE((bool)tape.encryptionKeyName);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -4590,15 +4590,15 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey_emptyStringEncryptio
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey_nonExistentTape) {
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_nonExistentTape) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string vid = "vid";
-  const std::string encryptionKey = "encryption_key";
+  const std::string encryptionKeyName = "encryption_key_name";
 
-  ASSERT_THROW(m_catalogue->modifyTapeEncryptionKey(m_admin, vid, encryptionKey), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyTapeEncryptionKeyName(m_admin, vid, encryptionKeyName), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {

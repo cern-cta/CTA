@@ -231,6 +231,7 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libsystemTestHelperTests.so*
 %{_libdir}/libcta-tapedSystemTests.so*
 %{_bindir}/cta-rdbmsUnitTests
+%{_bindir}/cta-rdbmsUnitTests-oracle.sh
 %{_bindir}/cta-unitTests
 %{_bindir}/cta-unitTests-multiProcess
 %{_bindir}/cta-valgrindUnitTests.sh

@@ -53,12 +53,12 @@ struct Tape {
   uint64_t dataOnTapeInBytes;
 
   /**
-   * The optional identifier of the encrption key.
+   * The optional name of the encryption key.
    *
    * This optional should either have a non-empty string value or no value at
    * all.  Empty strings are prohibited.
    */
-  optional<std::string> encryptionKey;
+  optional<std::string> encryptionKeyName;
 
   bool full;
   bool disabled;
