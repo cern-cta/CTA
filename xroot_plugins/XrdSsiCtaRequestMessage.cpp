@@ -36,6 +36,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaTapeLs.hpp"
 #include "XrdCtaStorageClassLs.hpp"
 #include "XrdCtaTapePoolLs.hpp"
+#include "XrdCtaDiskSystemLs.hpp"
 
 namespace cta {
 namespace xrd {
@@ -230,7 +231,19 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS):
                processTapePool_Ls(response, stream);
                break;
-
+            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS):
+               processDiskSystem_Ls(response, stream);
+               break;   
+            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_ADD):
+               processDiskSystem_Add(response);
+               break;
+            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM):
+               processDiskSystem_Rm(response);
+               break;  
+            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH):
+               processDiskSystem_Ch(response);
+               break;  
+               
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -454,17 +467,19 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    cta::utils::Timer t;
 
    // Queue the request
-   m_scheduler.queueRetrieve(m_cliIdentity.username, request, m_lc);
+   std::string retrieveReqId = m_scheduler.queueRetrieve(m_cliIdentity.username, request, m_lc);
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
+   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs())
+         .add("retrieveReqId", retrieveReqId);
    if(static_cast<bool>(request.activity)) {
      params.add("activity", request.activity.value());
    }
    m_lc.log(cta::log::INFO, "In RequestMessage::processPREPARE(): queued file for retrieve.");
 
-   // Set response type
+   // Set response type and add retrieve request reference as an extended attribute.
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_RetrieveRequestId", retrieveReqId));
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -477,7 +492,7 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
 
    // Unpack message
-   cta::common::dataStructures::DeleteArchiveRequest request;
+   cta::common::dataStructures::CancelRetrieveRequest request;
    request.requester.name   = notification.cli().user().username();
    request.requester.group  = notification.cli().user().groupname();
 
@@ -492,20 +507,30 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
+   
+   // The request Id should be stored as an extended attribute
+   const auto retrieveRequestIdItor = notification.file().xattr().find("CTA_RetrieveRequestId");
+   if(notification.file().xattr().end() == retrieveRequestIdItor) {
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_RetrieveRequestId");
+   }
+   const std::string retrieveRequestId = retrieveRequestIdItor->second;
+   request.retrieveRequestId = retrieveRequestId;
 
-#if 0
    // Queue the request
-   m_scheduler.queueAbortRetrieve(m_cliIdentity.username, request, m_lc);
-#endif
+   m_scheduler.abortRetrieve(m_cliIdentity.username, request, m_lc);
 
    cta::utils::Timer t;
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
-   m_lc.log(cta::log::INFO, "In RequestMessage::processABORT_PREPARE(): not implemented, no action taken.");
+   params.add("fileId", request.archiveFileID)
+         .add("schedulerTime", t.secs())
+         .add("retrieveRequestId", request.retrieveRequestId)
+         .add("diskFilePath", cta::utils::midEllipsis(request.diskFileInfo.path, 100));
+   m_lc.log(cta::log::INFO, "In RequestMessage::processABORT_PREPARE(): canceled retrieve request.");
 
-   // Set response type
+   // Set response type and remove reference to retrieve request in EOS extended attributes.
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_RetrieveRequestId", ""));
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1510,6 +1535,80 @@ void RequestMessage::processTapePool_Ls(cta::xrd::Response &response, XrdSsiStre
 }
 
 
+
+void RequestMessage::processDiskSystem_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
+{
+  using namespace cta::admin;
+
+  // Create a XrdSsi stream object to return the results
+  stream = new DiskSystemLsStream(*this, m_catalogue, m_scheduler);
+
+  response.set_show_header(HeaderType::DISKSYSTEM_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskSystem_Add(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+
+  const auto &name              = getRequired(OptionString::DISK_SYSTEM);
+  const auto &fileRegexp        = getRequired(OptionString::FILE_REGEXP);
+  const auto &freeSpaceQueryURL = getRequired(OptionString::FREE_SPACE_QUERY_URL);
+  const auto &refreshInterval   = getRequired(OptionUInt64::REFRESH_INTERVAL);
+  const auto &targetedFreeSpace = getRequired(OptionUInt64::TARGETED_FREE_SPACE);
+  const auto &sleepTime         = getRequired(OptionUInt64::SLEEP_TIME);
+  const auto &comment           = getRequired(OptionString::COMMENT);
+   
+  m_catalogue.createDiskSystem(m_cliIdentity, name, fileRegexp, freeSpaceQueryURL,
+    refreshInterval, targetedFreeSpace, sleepTime, comment);
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskSystem_Ch(cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   const auto &name              = getRequired(OptionString::DISK_SYSTEM);
+   const auto &fileRegexp        = getOptional(OptionString::FILE_REGEXP);
+   const auto &freeSpaceQueryURL = getOptional(OptionString::FREE_SPACE_QUERY_URL);
+   const auto  refreshInterval   = getOptional(OptionUInt64::REFRESH_INTERVAL);
+   const auto  targetedFreeSpace = getOptional(OptionUInt64::TARGETED_FREE_SPACE);
+   const auto  sleepTime         = getOptional(OptionUInt64::SLEEP_TIME);
+   const auto  comment           = getOptional(OptionString::COMMENT);
+   
+   if(comment) {
+      m_catalogue.modifyDiskSystemComment(m_cliIdentity, name, comment.value());
+   }
+   if(fileRegexp) {
+      m_catalogue.modifyDiskSystemFileRegexp(m_cliIdentity, name, fileRegexp.value());
+   }
+   if(freeSpaceQueryURL) {
+      m_catalogue.modifyDiskSystemFreeSpaceQueryURL(m_cliIdentity, name, freeSpaceQueryURL.value());
+   }
+   if (sleepTime) {
+     m_catalogue.modifyDiskSystemSleepTime(m_cliIdentity, name, sleepTime.value());
+   }
+   if(refreshInterval) {
+      m_catalogue.modifyDiskSystemRefreshInterval(m_cliIdentity, name, refreshInterval.value());
+   }
+   if(targetedFreeSpace) {
+      m_catalogue.modifyDiskSystemTargetedFreeSpace(m_cliIdentity, name, targetedFreeSpace.value());
+   }
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskSystem_Rm(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+
+  const auto &name = getRequired(OptionString::DISK_SYSTEM);
+
+  m_catalogue.deleteDiskSystem(name);
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
 
 std::string RequestMessage::setDriveState(const std::string &regex, DriveState drive_state)
 {

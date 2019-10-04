@@ -385,7 +385,42 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getActivitiesFairShareWeights();}, m_maxTriesToConnect);
   }
 
+  disk::DiskSystemList getAllDiskSystems() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getAllDiskSystems();}, m_maxTriesToConnect);
+  }
+  
+  void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp, const std::string &freeSpaceQueryURL, const uint64_t refreshInterval, const uint64_t targetedFreeSpace, const uint64_t sleepTime, const std::string &comment)  override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createDiskSystem(admin, name, fileRegexp, freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);}, m_maxTriesToConnect);
+  }
+  
+  void deleteDiskSystem(const std::string &name) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteDiskSystem(name);}, m_maxTriesToConnect);
+  }
+  
+  void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemFileRegexp(admin, name, fileRegexp);}, m_maxTriesToConnect);
+  }
 
+  void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &freeSpaceQueryURL) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemFreeSpaceQueryURL(admin, name, freeSpaceQueryURL);}, m_maxTriesToConnect);  
+  }
+  
+  void modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t refreshInterval) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemRefreshInterval(admin, name, refreshInterval);}, m_maxTriesToConnect);      
+  }
+ 
+  void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t targetedFreeSpace) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemTargetedFreeSpace(admin, name, targetedFreeSpace);}, m_maxTriesToConnect);      
+  }
+  
+  void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemComment(admin, name, comment);}, m_maxTriesToConnect);
+  }
+  
+  void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin, const std::string& name, const uint64_t sleepTime) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemSleepTime(admin, name, sleepTime);}, m_maxTriesToConnect);
+  }
+  
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
   }
@@ -429,6 +464,10 @@ public:
   bool tapeExists(const std::string &vid) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeExists(vid);}, m_maxTriesToConnect);
   }
+
+  bool diskSystemExists(const std::string &name) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->diskSystemExists(name);}, m_maxTriesToConnect);
+  }; 
 
 protected:
 

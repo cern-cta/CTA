@@ -236,19 +236,21 @@ namespace daemon {
       // We also change the log level to INFO for the case of end of tape.
       int errorCode = 666; // TODO - Remove error code
       int errorLevel = cta::log::ERR;
+      bool doReportJobError = true;
       try {
         const cta::exception::Errnum & errnum = 
             dynamic_cast<const cta::exception::Errnum &> (e);
         if (ENOSPC == errnum.errorNumber()) {
           errorCode = ENOSPC;
           errorLevel = cta::log::INFO;
+          doReportJobError = false;
         }
       } catch (...) {}
       LogContext::ScopedParam sp(lc, Param("exceptionCode",errorCode));
       LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
       lc.log(errorLevel,"An error occurred for this file. End of migrations.");
       circulateMemBlocks();
-      reportPacker.reportFailedJob(std::move(m_archiveJob),e, lc);
+      if (doReportJobError) reportPacker.reportFailedJob(std::move(m_archiveJob),e, lc);
   
       //we throw again because we want TWST to stop all tasks from execution 
       //and go into a degraded mode operation.

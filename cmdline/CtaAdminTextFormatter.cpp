@@ -894,4 +894,42 @@ void TextFormatter::print(const TapePoolLsItem &tpls_item)
   );
 }
 
+void TextFormatter::printDiskSystemLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "name",
+    "regexp",
+    "url",
+    "refresh",
+    "space",
+    "sleep",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const DiskSystemLsItem &dsls_item)
+{  
+  push_back(
+    dsls_item.name(),
+    dsls_item.file_regexp(),
+    dsls_item.free_space_query_url(),
+    dsls_item.refresh_interval(),
+    dsls_item.targeted_free_space(),
+    dsls_item.sleep_time(),
+    dsls_item.creation_log().username(),
+    dsls_item.creation_log().host(),
+    timeToStr(dsls_item.creation_log().time()),
+    dsls_item.last_modification_log().username(),
+    dsls_item.last_modification_log().host(),
+    timeToStr(dsls_item.last_modification_log().time()),
+    dsls_item.comment()
+  );
+}
+
 }}

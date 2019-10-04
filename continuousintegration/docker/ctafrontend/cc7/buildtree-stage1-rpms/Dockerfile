@@ -96,6 +96,7 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       jsoncpp \
       libmicrohttpd \
       jq \
+      python36 \
   && \
     yum clean all \
   && \

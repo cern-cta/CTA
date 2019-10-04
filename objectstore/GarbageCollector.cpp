@@ -338,7 +338,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         std::set<std::string> candidateVids;
         bool disabledTape = rr->getRepackInfo().forceDisabledTape;
         for (auto & j: rr->dumpJobs()) {
-          if(j.status==RetrieveJobStatus::RJS_ToTransferForUser) {
+          if(j.status==RetrieveJobStatus::RJS_ToTransfer) {
             for (auto &tf: rr->getArchiveFile().tapeFiles) {
               if ((tf.copyNb == j.copyNb) && (tf.supersededByVid.empty()))
                 candidateVids.insert(tf.vid);
@@ -615,7 +615,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
         for (auto &tf: rr->getArchiveFile().tapeFiles) {
             if (tf.vid == vid) {
             jta.push_back({tf.copyNb, tf.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize, 
-                 rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity()});
+                rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity(), rr->getDiskSystemName()});
           }
         }
       }

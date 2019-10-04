@@ -73,3 +73,9 @@ mkdir -pv /shared/stg
 sudo kubectl delete pv stg || true
 sudo kubectl create -f ./stg_PV.yaml
 sudo kubectl get persistentvolumes -l type=stg
+
+echo Generating the share host path
+rm -rf /shared/cta
+mkdir -pv /shared/cta/catdb
+touch /shared/cta/catdb/catdb
+chmod 1777 /shared/cta

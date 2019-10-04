@@ -63,6 +63,7 @@ target_link_libraries(cta-rdbmsUnitTests
   ctadbconfigconnunittests
   ctadbconfigstmtunittests
   ctardbmsunittests
+  ctadisk
   gtest
   pthread
   ${PROTOBUF3_LIBRARIES})

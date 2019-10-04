@@ -230,6 +230,11 @@ namespace cta {
     disk::DiskReporterFactory m_reporterFactory;
     
     /**
+     * Internal tracking of the full disk systems. It is one strike out (for the mount duration).
+     */
+    std::set<std::string> m_fullDiskSystems;
+    
+    /**
      * A pointer to the file catalogue.
      */
     cta::catalogue::Catalogue &m_catalogue; 

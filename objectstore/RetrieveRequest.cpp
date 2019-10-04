@@ -87,7 +87,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   std::set<std::string> candidateVids;
   for (auto &j: m_payload.jobs()) {
     switch(j.status()){
-      case RetrieveJobStatus::RJS_ToTransferForUser:
+      case RetrieveJobStatus::RJS_ToTransfer:
         // Find the job details in tape file
         for (auto &tf: m_payload.archivefile().tapefiles()) {
           if (tf.copynb() == j.copynb()) {
@@ -160,7 +160,7 @@ queueForFailure:;
   {
     // If there is no candidate, we fail the jobs that are not yet, and queue the request as failed (on any VID).
     for (auto & j: *m_payload.mutable_jobs()) {
-      if (j.status() == RetrieveJobStatus::RJS_ToTransferForUser) {
+      if (j.status() == RetrieveJobStatus::RJS_ToTransfer) {
         j.set_status(RetrieveJobStatus::RJS_Failed);
     log::ScopedParamContainer params(lc);
         params.add("fileId", m_payload.archivefile().archivefileid())
@@ -204,7 +204,7 @@ queueForFailure:;
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
     jta.push_back({activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(), 
-      mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt});
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt, nullopt});
     if (m_payload.has_activity_weight()) {
       RetrieveActivityDescription activityDescription;
       activityDescription.priority = m_payload.activity_weight().priority();
@@ -272,7 +272,7 @@ queueForTransfer:;
     mp.deserialize(m_payload.mountpolicy());
     std::list<RetrieveQueue::JobToAdd> jta;
     jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
-      mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt});
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName()});
     if (m_payload.has_activity_weight()) {
       RetrieveActivityDescription activityDescription;
       activityDescription.priority = m_payload.activity_weight().priority();
@@ -348,7 +348,7 @@ void RetrieveRequest::addJob(uint32_t copyNb, uint16_t maxRetriesWithinMount, ui
   tf->set_totalretries(0);
   tf->set_maxreportretries(maxReportRetries);
   tf->set_totalreportretries(0);
-  tf->set_status(serializers::RetrieveJobStatus::RJS_ToTransferForUser);
+  tf->set_status(serializers::RetrieveJobStatus::RJS_ToTransfer);
 }
 
 //------------------------------------------------------------------------------
@@ -375,7 +375,7 @@ auto RetrieveRequest::addTransferFailure(uint32_t copyNumber, uint64_t mountId, 
     }
     if(j.totalretries() < j.maxtotalretries()) {
       EnqueueingNextStep ret;
-        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransferForUser;
+        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransfer;
       if(j.retrieswithinmount() < j.maxretrieswithinmount())
         // Job can try again within this mount
         ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransferForUser;
@@ -539,6 +539,25 @@ optional<RetrieveActivityDescription> RetrieveRequest::getActivity() {
 }
 
 //------------------------------------------------------------------------------
+// RetrieveRequest::setDiskSystemName()
+//------------------------------------------------------------------------------
+void RetrieveRequest::setDiskSystemName(const std::string& diskSystemName) {
+  checkPayloadWritable();
+  m_payload.set_disk_system_name(diskSystemName);
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::getDiskSystemName()
+//------------------------------------------------------------------------------
+optional<std::string> RetrieveRequest::getDiskSystemName() {
+  checkPayloadReadable();
+  optional<std::string> ret;
+  if (m_payload.has_disk_system_name())
+    ret = m_payload.disk_system_name();
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // RetrieveRequest::dumpJobs()
 //------------------------------------------------------------------------------
 auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
@@ -608,10 +627,10 @@ bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId,
     if (j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure);
       for (auto & j2: m_payload.jobs()) 
-        if (j2.status() == serializers::RetrieveJobStatus::RJS_ToTransferForUser) return false;
+        if (j2.status() == serializers::RetrieveJobStatus::RJS_ToTransfer) return false;
       return true;
     } else {
-      j.set_status(serializers::RetrieveJobStatus::RJS_ToTransferForUser);
+      j.set_status(serializers::RetrieveJobStatus::RJS_ToTransfer);
       return false;
     }
   }
@@ -680,7 +699,7 @@ JobQueueType RetrieveRequest::getQueueType() {
   for (auto &j: m_payload.jobs()) {
     // Any job is to be transfered => To transfer
     switch(j.status()) {
-    case serializers::RetrieveJobStatus::RJS_ToTransferForUser:
+    case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return JobQueueType::JobsToTransferForUser;
       break;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
@@ -692,8 +711,6 @@ JobQueueType RetrieveRequest::getQueueType() {
       break;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure:
       return JobQueueType::JobsToReportToRepackForFailure;
-    case serializers::RetrieveJobStatus::RJS_ToTransferForRepack:
-      return JobQueueType::JobsToTransferForRepack;
     default: break;
     }
   }
@@ -701,12 +718,15 @@ JobQueueType RetrieveRequest::getQueueType() {
   return JobQueueType::FailedJobs;
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::getQueueType()
+//------------------------------------------------------------------------------
 JobQueueType RetrieveRequest::getQueueType(uint32_t copyNb){
   checkPayloadReadable();
   for(auto &j: m_payload.jobs()){
     if(j.copynb() == copyNb){
       switch(j.status()){
-        case serializers::RetrieveJobStatus::RJS_ToTransferForUser:
+        case serializers::RetrieveJobStatus::RJS_ToTransfer:
           return JobQueueType::JobsToTransferForUser;
         case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
           return JobQueueType::JobsToReportToRepackForSuccess;
@@ -716,8 +736,6 @@ JobQueueType RetrieveRequest::getQueueType(uint32_t copyNb){
           return JobQueueType::FailedJobs;
         case serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure:
           return JobQueueType::JobsToReportToRepackForFailure;
-        case serializers::RetrieveJobStatus::RJS_ToTransferForRepack:
-          return JobQueueType::JobsToTransferForRepack;
         default:
           return JobQueueType::FailedJobs;
       }
@@ -731,7 +749,7 @@ JobQueueType RetrieveRequest::getQueueType(uint32_t copyNb){
 //------------------------------------------------------------------------------
 std::string RetrieveRequest::statusToString(const serializers::RetrieveJobStatus& status) {
   switch(status) {
-  case serializers::RetrieveJobStatus::RJS_ToTransferForUser:
+  case serializers::RetrieveJobStatus::RJS_ToTransfer:
     return "ToTransfer";
   case serializers::RetrieveJobStatus::RJS_Failed:
     return "Failed";
@@ -779,7 +797,7 @@ auto RetrieveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent job
   switch (jobEvent)
   {
     case JobEvent::TransferFailed:
-      if (*currentStatus != RetrieveJobStatus::RJS_ToTransferForUser) {
+      if (*currentStatus != RetrieveJobStatus::RJS_ToTransfer) {
         // Wrong status, but the context leaves no ambiguity. Just warn.
         log::ScopedParamContainer params(lc);
         params.add("event", eventToString(jobEvent))
@@ -837,7 +855,7 @@ void RetrieveRequest::updateLifecycleTiming(serializers::RetrieveRequest& payloa
   LifecycleTimingsSerDeser lifeCycleSerDeser;
   lifeCycleSerDeser.deserialize(payload.lifecycle_timings());
   switch(retrieveJob.status()){
-    case RetrieveJobStatus::RJS_ToTransferForUser:
+    case RetrieveJobStatus::RJS_ToTransfer:
       if(retrieveJob.totalretries() == 0){
         //totalretries = 0 then this is the first selection of the request
         lifeCycleSerDeser.first_selected_time = time(nullptr);
@@ -907,6 +925,15 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
             af.deserialize(payload.archivefile());
             retRef.m_archiveFile = af;
             retRef.m_jobStatus = j.status();
+            if (payload.has_activity_weight()) {
+              retRef.m_retrieveActivityDescription = RetrieveActivityDescription{
+                payload.activity_weight().priority(), payload.activity_weight().disk_instance_name(),
+                payload.activity_weight().activity(), payload.activity_weight().creation_time(),
+                payload.activity_weight().weight(), 0
+              };
+            }
+            if (payload.has_disk_system_name())
+              retRef.m_diskSystemName = payload.disk_system_name();
             RetrieveRequest::updateLifecycleTiming(payload,j);
             LifecycleTimingsSerDeser lifeCycleSerDeser;
             lifeCycleSerDeser.deserialize(payload.lifecycle_timings());
@@ -956,6 +983,20 @@ const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncJobOwnerUpdater
 //------------------------------------------------------------------------------
 const RetrieveRequest::RepackInfo& RetrieveRequest::AsyncJobOwnerUpdater::getRepackInfo() {
   return m_repackInfo;
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveActivityDescription()
+//------------------------------------------------------------------------------
+const optional<RetrieveActivityDescription>& RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveActivityDescription() {
+  return m_retrieveActivityDescription;
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncJobOwnerUpdater::getDiskSystemName()
+//------------------------------------------------------------------------------
+const optional<std::string>& RetrieveRequest::AsyncJobOwnerUpdater::getDiskSystemName() {
+  return m_diskSystemName;
 }
 
 //------------------------------------------------------------------------------

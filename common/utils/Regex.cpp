@@ -27,10 +27,10 @@
 
 namespace cta { namespace utils {
 
-Regex::Regex(const char * re_str) : m_set(false) {
-  if (int rc = ::regcomp(&m_re, re_str, REG_EXTENDED)) {
+Regex::Regex(const std::string & re_str) : m_reStr(re_str), m_set(false) {
+  if (int rc = ::regcomp(&m_re, m_reStr.c_str(), REG_EXTENDED)) {
     std::string error("Could not compile regular expression: \"");
-    error += re_str;
+    error += m_reStr;
     error += "\"";
     char re_err[1024];
     if (::regerror(rc, &m_re, re_err, sizeof (re_err))) {
@@ -42,12 +42,16 @@ Regex::Regex(const char * re_str) : m_set(false) {
   m_set = true;
 }
 
+Regex::Regex(const Regex& o) {
+  Regex(o.m_reStr);
+}
+
 Regex::~Regex() {
   if (m_set)
     ::regfree(&m_re);
 }
 
-std::vector<std::string> Regex::exec(const std::string &s) {
+std::vector<std::string> Regex::exec(const std::string &s) const {
   regmatch_t matches[100];
   if (REG_NOMATCH != ::regexec(&m_re, s.c_str(), 100, matches, 0)) {
     std::vector<std::string> ret;

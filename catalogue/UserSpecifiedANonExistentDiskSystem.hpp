@@ -18,22 +18,28 @@
 
 #pragma once
 
-#include <string>
+#include "common/exception/UserError.hpp"
 
-#include "common/dataStructures/RequesterIdentity.hpp"
-#include "objectstore/cta.pb.h"
+namespace cta {
+namespace catalogue {
 
-namespace cta { namespace objectstore {
+/**
+ * User error thrown when a disk system specified does not exists.
+ */
+class UserSpecifiedANonExistentDiskSystem: public exception::UserError {
+public:
 
-struct RequesterIdentitySerDeser: public cta::common::dataStructures::RequesterIdentity {
+  /**
+   * Constructor.
+   *
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
+   */
+  UserSpecifiedANonExistentDiskSystem(const std::string &context = "", const bool embedBacktrace = true);
 
-  void serialize (cta::objectstore::serializers::RequesterIdentity & user) const {
-    user.set_name(name);
-    user.set_group(group);
-  }
+}; // class UserSpecifiedANonExistentDiskSystem
 
-  void deserialize (const cta::objectstore::serializers::RequesterIdentity & user) :
-    name(user.name()), group(user.group()) {}
-};
-
-}}
+} // namespace catalogue
+} // namespace cta

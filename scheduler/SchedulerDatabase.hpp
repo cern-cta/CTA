@@ -31,8 +31,10 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/CancelRetrieveRequest.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
+#include "disk/DiskSystem.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
@@ -268,11 +270,20 @@ public:
    * @param rqst The request.
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to quue the request.
+   * @param diskSystemName optional disk system name if the destination matches a declared one.
    * @param logContext context allowing logging db operation
    * @return the selected vid (mostly for logging)
    */
-  virtual std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest &rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) = 0;
+  struct RetrieveRequestInfo {
+    std::string selectedVid;
+    std::string requestId;
+  };
+  virtual RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest &rqst,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName,
+    log::LogContext &logContext) = 0;
+  
+  virtual void cancelRetrieve(const std::string & instanceName, const cta::common::dataStructures::CancelRetrieveRequest &rqst,
+    log::LogContext & lc) = 0;
 
   /**
    * Returns all of the existing retrieve jobs grouped by tape and then
@@ -339,6 +350,12 @@ public:
   /*============ Retrieve management: tape server side ======================*/
 
   class RetrieveJob;
+  
+  struct DiskSpaceReservationRequest: public std::map<std::string, uint64_t> {
+    void addRequest(const std::string &diskSystemName, uint64_t size);
+  };
+  
+public:
   class RetrieveMount {
   public:
     struct MountInfo {
@@ -356,7 +373,7 @@ public:
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, log::LogContext& logContext) = 0;
+      uint64_t bytesRequested, cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, log::LogContext& logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
@@ -377,6 +394,7 @@ public:
     } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::RetrieveRequest retrieveRequest;
+    optional<std::string> diskSystemName;
     uint32_t selectedCopyNb;
     bool isRepack = false;
     /** Set the job successful (async). Wait() and end of report happen in RetrieveMount::flushAsyncSuccessReports() */
@@ -455,9 +473,11 @@ public:
     /**
      * Add Retrieve subrequests to the repack request and update its statistics
      * @return the number of retrieve subrequests queued
-     */
+     */    
     virtual uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
-      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, log::LogContext & lc) = 0;
+      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, 
+      const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, disk::DiskSystemList diskSystemList,
+      log::LogContext & lc) = 0;
     virtual void expandDone() = 0;
     virtual void fail() = 0;
     virtual void requeueInToExpandQueue(log::LogContext &lc) = 0;
@@ -557,6 +577,10 @@ public:
     std::string logicalLibrary;   /**< The logical library (for a retrieve) */
     double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 ] ratio of existing 
                                    * mounts/quota (for faire share of mounts)*/
+    bool sleepingMount = false;   /**< Is the mount being slept due to lack of disk space? */
+    time_t sleepStartTime = 0;    /**< Start time for the sleeping for lack of disk space. */
+    std::string diskSystemSleptFor;/**< Name of (one of) the disk system(s) that could was too full to start more retrieves. */
+    uint64_t sleepTime = 0;       /**< Length of time to be slept for for this disk system. */
     uint32_t mountCount;          /**< The number of mounts for this tape pool (which is the current "chargeable" entity for quotas. */
     struct ActivityNameAndWeightedMountCount {
       std::string activity;

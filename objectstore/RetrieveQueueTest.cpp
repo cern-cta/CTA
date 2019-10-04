@@ -124,7 +124,8 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     ASSERT_EQ(minStartTime, rq.getJobsSummary().oldestJobStartTime);
     uint64_t nextExpectedFseq=0;
     while (rq.getJobsSummary().jobs) {
-      auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>());
+      auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>(), 
+          std::set<std::string>());
       std::set<std::string> jobsToSkip;
       std::list<std::string> jobsToDelete;
       for (auto &j: candidateJobs.candidates) {
@@ -135,7 +136,7 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
         jobsToDelete.emplace_back(j.address);
         nextExpectedFseq++;
       }
-      auto candidateJobs2 = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 1, jobsToSkip);
+      auto candidateJobs2 = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 1, jobsToSkip, std::set<std::string>());
       if (candidateJobs2.candidateFiles) {
         std::stringstream address;
         address << "someRequest-" << nextExpectedFseq;
@@ -245,7 +246,8 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
     ASSERT_EQ(0.2, jsB->weight);
     uint64_t nextExpectedFseq=0;
     while (rq.getJobsSummary().jobs) {
-      auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>());
+      auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>(),
+          std::set<std::string>());
       std::set<std::string> jobsToSkip;
       std::list<std::string> jobsToDelete;
       for (auto &j: candidateJobs.candidates) {
@@ -256,7 +258,7 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
         jobsToDelete.emplace_back(j.address);
         nextExpectedFseq++;
       }
-      auto candidateJobs2 = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 1, jobsToSkip);
+      auto candidateJobs2 = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 1, jobsToSkip, std::set<std::string>());
       if (candidateJobs2.candidateFiles) {
         std::stringstream address;
         address << "someRequest-" << nextExpectedFseq;

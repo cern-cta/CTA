@@ -217,7 +217,22 @@ public:
     OStoreDB & m_oStoreDB;
   public:
     const MountInfo & getMountInfo() override;
-    std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
+    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
+      cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, log::LogContext& logContext) override;
+  private:
+    void requeueJobBatch(std::list<std::unique_ptr<OStoreDB::RetrieveJob> >& jobBatch,
+      log::LogContext& logContext);
+    std::map<std::string, uint64_t> getExistingDrivesReservations(); 
+    void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
+    struct DiskSystemToSkip {
+      std::string name;
+      uint64_t sleepTime;
+      bool operator<(const DiskSystemToSkip & o) const { return name < o.name; }
+    };
+    std::set<DiskSystemToSkip> m_diskSystemsToSkip;
+  public:
+    /// Public but non overriding function used by retrieve jobs (on failure to transfer):
+    void releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
@@ -258,6 +273,7 @@ public:
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
     objectstore::RetrieveRequest::RepackInfo m_repackInfo;
     optional<objectstore::RetrieveActivityDescription> m_activityDescription;
+    optional<std::string> m_diskSystemName;
   };
   static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
 
@@ -296,8 +312,11 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
-  std::string queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override;
+  SchedulerDatabase::RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName, 
+    log::LogContext &logContext) override;
+  void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,
+    log::LogContext& lc) override;
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override;
   
@@ -345,7 +364,8 @@ public:
     RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB) :
     m_oStoreDB(oStoreDB), m_repackRequest(jobAddress, m_oStoreDB.m_objectStore){}
     uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
-      uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles,  log::LogContext& lc) override;
+      uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, disk::DiskSystemList diskSystemList, 
+      log::LogContext& lc) override;
     void expandDone() override;
     void fail() override;
     void requeueInToExpandQueue(log::LogContext& lc) override;

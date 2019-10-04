@@ -45,6 +45,7 @@ void cta::objectstore::Agent::initialize() {
   m_payload.set_timeout_us(120*1000*1000);
   m_payload.set_description("");
   m_payload.set_being_garbage_collected(false);
+  m_payload.set_gc_needed(false);
   m_payloadInterpreted = true;
 }
 
@@ -147,6 +148,17 @@ bool cta::objectstore::Agent::isBeingGarbageCollected() {
 void cta::objectstore::Agent::setBeingGarbageCollected() {
   checkPayloadWritable();
   m_payload.set_being_garbage_collected(true);
+}
+
+void cta::objectstore::Agent::setNeedsGarbageCollection() {
+  checkPayloadWritable();
+  m_payload.set_gc_needed(true);
+}
+
+bool cta::objectstore::Agent::needsGarbageCollection() {
+  checkPayloadReadable();
+  if (!m_payload.has_gc_needed()) return false;
+  return m_payload.gc_needed();
 }
 
 void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,

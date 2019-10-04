@@ -63,7 +63,7 @@ if [ "$VID_TO_REPACK" != "null" ]
 then
 echo
   echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack || exit 1
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack -p || exit 1
 else
   echo "No vid found to repack"
   exit 1
@@ -77,7 +77,7 @@ if [ "$VID_TO_REPACK" != "null" ]
 then
 echo
   echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack || exit 1
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack -p || exit 1
 else
   echo "No vid found to repack"
   exit 1
@@ -103,7 +103,7 @@ then
   echo "Waiting 20 seconds so that the RetrieveQueueStatisticsCache is flushed"
   sleep 20
   echo "Launching the repack request test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step2-RepackDisabledTape && echo "The repack request is Complete instead of Failed, it should be failed as the tape is disabled" && exit 1 || echo "REPACK FAILED, the tape is disabled so, Test OK"
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step2-RepackDisabledTape -p && echo "The repack request is Complete instead of Failed, it should be failed as the tape is disabled" && exit 1 || echo "REPACK FAILED, the tape is disabled so, Test OK"
 else
   echo "No vid found to repack"
   exit 1
@@ -111,7 +111,7 @@ fi;
 
 echo
 echo "Launching the repack request test on VID ${VID_TO_REPACK} with the --disabledtape flag"
-kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -d -r ${BASE_REPORT_DIRECTORY}/Step2-RepackDisabledTape || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -d -r ${BASE_REPORT_DIRECTORY}/Step2-RepackDisabledTape -p || exit 1
 
 echo "Reclaiming tape ${VID_TO_REPACK}"
 kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
@@ -133,7 +133,7 @@ if [ "$VID_TO_REPACK" != "null" ]
 then
 echo
   echo "Launching the repack test \"just move\" on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step3-RepackJustMove || exit 1
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step3-RepackJustMove -p || exit 1
 else
   echo "No vid found to repack"
   exit 1

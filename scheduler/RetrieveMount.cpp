@@ -19,6 +19,7 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "common/Timer.hpp"
 #include "common/log/TimingList.hpp"
+#include "disk/DiskSystem.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -111,7 +112,7 @@ std::string cta::RetrieveMount::getMediaType() const
 }
 
 //------------------------------------------------------------------------------
-// getVo()
+// getVendor()
 //------------------------------------------------------------------------------
 std::string cta::RetrieveMount::getVendor() const
 {
@@ -122,6 +123,9 @@ std::string cta::RetrieveMount::getVendor() const
     return sVendor.str();
 }
 
+//------------------------------------------------------------------------------
+// getCapacityInBytes()
+//------------------------------------------------------------------------------
 uint64_t cta::RetrieveMount::getCapacityInBytes() const {
     if(!m_dbMount.get())
         throw exception::Exception("In cta::RetrieveMount::getVendor(): got NULL dbMount");
@@ -135,9 +139,15 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
     log::LogContext& logContext) {
   if (!m_sessionRunning)
     throw SessionNotRunning("In RetrieveMount::getNextJobBatch(): trying to get job from complete/not started session");
-  // Try and get a new job from the DB
-  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> dbJobBatch(m_dbMount->getNextJobBatch(filesRequested,
-      bytesRequested, logContext));
+  // Get the current file systems list from the catalogue
+  disk::DiskSystemList diskSystemList;
+  diskSystemList = m_catalogue.getAllDiskSystems();
+  // TODO: the diskSystemFreeSpaceList could be made a member of the retrieve mount and cache the fetched values, limiting the re-querying
+  // of the disk systems free space.
+  disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList (diskSystemList);
+  // Try and get a new job from the DB. The DB mount (in memory object) is taking care of reserving the free space for the popped 
+  // elements and query the disk systems, via the diskSystemFreeSpaceList object.
+  auto dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, diskSystemFreeSpaceList, logContext);
   std::list<std::unique_ptr<RetrieveJob>> ret;
   // We prepare the response
   for (auto & sdrj: dbJobBatch) {
@@ -214,7 +224,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
     }
-    const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an standard exception";
+    const std::string msg_error="In RetrieveMount::reportJobsBatchWritten(): got an standard exception";
     logContext.log(cta::log::ERR, msg_error);
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
     // will be retried.

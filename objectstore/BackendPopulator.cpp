@@ -66,9 +66,11 @@ BackendPopulator::~BackendPopulator() throw() {
     agent.fetch();
     if (m_leaveNonEmptyAgentBehind && !agent.isEmpty()) {
       cta::log::ScopedParamContainer params(m_lc);
+      agent.setNeedsGarbageCollection();
+      agent.commit();
       params.add("agentObject", agent.getAddressIfSet())
             .add("ownedObjectCount", agent.getOwnershipList().size());
-      m_lc.log(log::WARNING, "In BackendPopulator::~BackendPopulator(): not deleting non-empty agent object, left for garbage collection.");
+      m_lc.log(log::INFO, "In BackendPopulator::~BackendPopulator(): not deleting non-empty agent object, left for garbage collection.");
       return;
     }
     agent.removeAndUnregisterSelf(m_lc);

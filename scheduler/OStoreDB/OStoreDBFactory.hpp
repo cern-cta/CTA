@@ -218,11 +218,16 @@ public:
     return m_OStoreDB.getRetrieveQueueStatistics(criteria, vidsToConsider);
   }
 
-  std::string queueRetrieve(common::dataStructures::RetrieveRequest& rqst,
-    const common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override {
-    return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
+  SchedulerDatabase::RetrieveRequestInfo queueRetrieve(common::dataStructures::RetrieveRequest& rqst,
+    const common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName,
+    log::LogContext &logContext) override {
+    return m_OStoreDB.queueRetrieve(rqst, criteria, diskSystemName, logContext);
   }
   
+  void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,
+    log::LogContext& lc) override {
+    m_OStoreDB.cancelRetrieve(instanceName, rqst, lc);
+  }
 
   void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, const bool forceDisabledTape, log::LogContext& lc) override {
     m_OStoreDB.queueRepack(vid, bufferURL, repackType, mountPolicy, forceDisabledTape, lc);

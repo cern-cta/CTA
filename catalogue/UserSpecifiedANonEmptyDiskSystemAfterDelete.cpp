@@ -1,6 +1,6 @@
-/**
+/*
  * The CERN Tape Archive (CTA) project
- * Copyright © 2018 CERN
+ * Copyright (C) 2015  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,11 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "RetrieveQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
+#include "UserSpecifiedANonEmptyDiskSystemAfterDelete.hpp"
 
-template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransferForRepack>::c_containerTypeName = "RetrieveQueueToTransferForRepack";
+namespace cta {
+namespace catalogue {
 
-}}
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+UserSpecifiedANonEmptyDiskSystemAfterDelete::UserSpecifiedANonEmptyDiskSystemAfterDelete(const std::string &context, const bool embedBacktrace):
+  UserError(context, embedBacktrace) {
+}
+
+} // namespace catalogue
+} // namespace cta

@@ -45,6 +45,7 @@ struct CancelRetrieveRequest {
   uint64_t archiveFileID;
   std::string dstURL;
   DiskFileInfo diskFileInfo;
+  std::string retrieveRequestId;
 
 }; // struct CancelRetrieveRequest
 

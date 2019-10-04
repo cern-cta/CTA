@@ -19,6 +19,7 @@
 # Utility for reloading systemctl when needed
 #--------------------------------------------
 %define systemdDaemonReload() if [ -e /usr/bin/systemctl ] ; then /usr/bin/systemctl daemon-reload; fi
+%define systemdTryRestart() if [ -e /usr/bin/systemctl ] ; then /usr/bin/systemctl try-restart %1; fi
 
 # General settings
 #-----------------
@@ -37,10 +38,10 @@ BuildRequires: cmake >= 2.6 redhat-rpm-config
 # The CTA client is the only component of CTA that can be compiled on both SLC6
 # and C77, therefore only the packages it depends on are required for SLC6
 %define radosVersion 2:12.2.2
-BuildRequires: xrootd-client-devel  >= 1:4.8.2
-BuildRequires: xrootd-devel         >= 1:4.8.2
-BuildRequires: xrootd-server-devel  >= 1:4.8.2
-BuildRequires: xrootd-private-devel >= 1:4.8.2
+BuildRequires: xrootd-client-devel  >= 1:4.10.0
+BuildRequires: xrootd-devel         >= 1:4.10.0
+BuildRequires: xrootd-server-devel  >= 1:4.10.0
+BuildRequires: xrootd-private-devel >= 1:4.10.0
 BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion}, 
 BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
 BuildRequires: gmock-devel >= 1.5.0 gtest-devel >= 1.5.0
@@ -110,6 +111,7 @@ Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
+Requires: eos-client
 %description -n cta-taped
 CERN Tape Archive:
 The tape server daemon
@@ -126,6 +128,7 @@ The tape server daemon
 %post -n cta-taped
 %systemd_post cta-taped.service
 %systemdDaemonReload
+%systemdTryRestart cta-taped.service
 
 %preun -n cta-taped
 %systemd_preun cta-taped.service
@@ -156,6 +159,7 @@ The xroot plugin
 /sbin/ldconfig
 %systemd_post cta-frontend.service
 %systemdDaemonReload
+%systemdTryRestart cta-frontend.service
 
 %preun -n cta-frontend
 %systemd_preun cta-frontend.service
@@ -339,6 +343,7 @@ The Remote Media Changer daemon (rmcd)
 %post -n cta-rmcd
 %systemd_post cta-rmcd.service
 %systemdDaemonReload
+%systemdTryRestart cta-rmcd.service
 
 %preun -n cta-rmcd
 %systemd_preun cta-rmcd.service
@@ -404,8 +409,21 @@ collects EOS disk copies that have been safely stored to tape.
 %post -n cta-fst-gcd
 %systemd_post cta-fst-gcd.service
 %systemdDaemonReload
+%systemdTryRestart cta-fst-gcd.service
+
 %preun -n cta-fst-gcd
 %systemd_preun cta-fst-gcd.service
+
 %postun -n cta-fst-gcd
 %systemd_postun cta-fst-gcd.service
 %systemdDaemonReload
+
+%package -n cta-systemtest-helpers
+Summary: Collection of utilities deployed in system test client containers.
+Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
+%description -n cta-systemtest-helpers
+Collection of utilities deployed in system test client containers.
+Currently contains a helper for the client-ar script, which should be installed alongside it.
+%files -n cta-systemtest-helpers
+%attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare

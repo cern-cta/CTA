@@ -156,6 +156,7 @@ message Agent {
   required uint64 timeout_us = 2002;
   repeated string ownedobjects = 2003;
   optional bool being_garbage_collected = 2004 [default = false];
+  optional bool gc_needed = 2005 [default = false];
 }
 
 message AgentRegister {
@@ -210,6 +211,12 @@ message ArchiveFile {
 
 // ------------- Drives handling  ----------------------------------------------
 
+message DiskSpaceReservation {
+  // Each drive keeps tabs of its intended 
+  required string disk_system_name = 5100;
+  required uint64 reserved_bytes = 5110;
+}
+
 message DriveConfig {
   required string category = 13000;
   required string key = 13001;
@@ -242,7 +249,7 @@ message DriveState {
   required bool desiredUp = 5019;
   required bool desiredForceDown = 5020;
   optional string currentvid = 5021;
-  optional string cta_version = 5034;
+  optional string cta_version = 5035;
   optional uint64 current_priority = 5028;
   optional string current_activity = 5029;
   optional double current_activity_weight = 5030;
@@ -253,9 +260,10 @@ message DriveState {
   optional uint64 next_priority = 5031;
   optional string next_activity = 5032;
   optional double next_activity_weight = 5033;
-  optional string dev_file_name = 5035;
-  optional string raw_library_slot = 5036;
-  repeated DriveConfig drive_config = 5037;
+  repeated DiskSpaceReservation disk_space_reservations = 5034;
+  optional string dev_file_name = 5036;
+  optional string raw_library_slot = 5037;
+  repeated DriveConfig drive_config = 5038;
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 
@@ -367,12 +375,11 @@ message ArchiveRequest {
 // of the request.
 
 enum RetrieveJobStatus {
-  RJS_ToTransferForUser = 1;
+  RJS_ToTransfer = 1;
   RJS_ToReportToUserForFailure = 997;
   RJS_Failed = 998;
   RJS_ToReportToRepackForSuccess = 1002; //For Retrieve request created by a Repack request
   RJS_ToReportToRepackForFailure = 1003;
-  RJS_ToTransferForRepack = 1004;
 }
 
 message SchedulerRetrieveRequest {
@@ -439,6 +446,7 @@ message RetrieveRequest {
   required bool isrepack = 9157;
   optional RetrieveRequestRepackInfo repack_info = 9158;
   optional LifecycleTimings lifecycle_timings = 9159;
+  optional string disk_system_name = 9161;
 }
 
 message ValueCountPair {
@@ -493,6 +501,7 @@ message RetrieveJobPointer {
   // For activity (if present), we need disk instance and activity name (priority is always provided)
   optional string disk_instance_name = 3109;
   optional string activity = 3110;
+  optional string destination_disk_system_name = 3111;
 }
 
 message RetrieveQueueShardPointer {
@@ -525,6 +534,9 @@ message RetrieveQueue {
   required uint64 oldestjobcreationtime = 10150;
   required uint64 mapsrebuildcount = 10160;
   required uint64 maxshardsize = 10170;
+  optional uint64 sleep_for_free_space_since = 10180;
+  optional string disk_system_slept_for = 10190;
+  optional uint64 sleep_time = 10200;
 }
 
 // ------------- Repack data strcutures ----------------------------------------

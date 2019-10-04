@@ -571,6 +571,60 @@ public:
   void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity) override;
   std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const override;
 
+  /**
+   * Returns all the disk systems within the CTA catalogue.
+   *
+   * @return The disk systems.
+   * requester group.
+   */
+  disk::DiskSystemList getAllDiskSystems() const override;
+  
+  /**
+   * Creates a disk system.
+   * 
+   * @param admin The administrator.
+   * @param name The name of the disk system.
+   * @param fileRegexp The regular expression allowing matching destination URLs
+   * for this disk system.
+   * @param freeSpaceQueryURL The query URL that describes a method to query the
+   * free space from the disk system.
+   * @param refreshInterval The refresh interval (seconds) defining how long do 
+   * we use a free space value.
+   * @param targetedFreeSpace The targeted free space (margin) based on the free
+   * space update latency (inherent to the file system and induced by the refresh 
+   * interval), and the expected external bandwidth from sources external to CTA.
+   * @param comment Comment.
+   */
+  void createDiskSystem(
+    const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name,
+    const std::string &fileRegexp,
+    const std::string &freeSpaceQueryURL,
+    const uint64_t refreshInterval,
+    const uint64_t targetedFreeSpace,
+    const uint64_t sleepTime,
+    const std::string &comment) override;
+  
+  /**
+   * Deletes a disk system.
+   * 
+   * @param name The name of the disk system.
+   */
+  void deleteDiskSystem(const std::string &name) override;
+   
+  void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &fileRegexp) override;
+  void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &freeSpaceQueryURL) override;
+  void modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t refreshInterval) override;
+  void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t targetedFreeSpace) override;
+  void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &comment) override;
+  void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin,
+    const std::string& name, const uint64_t sleepTime) override;
+
   
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid
@@ -816,6 +870,23 @@ protected:
    * @return True if the tape exists.
    */
   bool tapeExists(rdbms::Conn &conn, const std::string &vid) const;
+  
+  /**
+   * Returns true if the specified disk system exists.
+   *
+   * @param name The name identifier of the disk system.
+   * @return True if the tape exists.
+   */
+  bool diskSystemExists(const std::string &name) const override;  
+  
+  /**
+   * Returns true if the specified disk system exists.
+   *
+   * @param conn The database connection.
+   * @param name The name identifier of the disk system.
+   * @return True if the disk system exists.
+   */
+  bool diskSystemExists(rdbms::Conn &conn, const std::string &name) const;
 
   /**
    * Returns the list of tapes that meet the specified search criteria.

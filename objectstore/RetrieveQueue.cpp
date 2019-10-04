@@ -214,6 +214,19 @@ std::string RetrieveQueue::getVid() {
   return m_payload.vid();
 }
 
+void RetrieveQueue::resetSleepForFreeSpaceStartTime() {
+  checkPayloadWritable();
+  m_payload.clear_sleep_for_free_space_since();
+  m_payload.clear_disk_system_slept_for();
+}
+
+void RetrieveQueue::setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName, uint64_t sleepTime) {
+  checkPayloadWritable();
+  m_payload.set_sleep_for_free_space_since((uint64_t)time);
+  m_payload.set_disk_system_slept_for(diskSystemName);
+  m_payload.set_sleep_time(sleepTime);
+}
+
 std::string RetrieveQueue::dump() {  
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
@@ -531,7 +544,7 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
     }
     shardsDumps.emplace_back(std::list<JobDump>());
     for (auto & j: s->dumpJobs()) {
-      shardsDumps.back().emplace_back(JobDump({j.address, j.copyNb, j.size}));
+      shardsDumps.back().emplace_back(JobDump({j.address, j.copyNb, j.size, j.activityDescription, j.diskSystemName}));
     }
   nextShard:
     s++;
@@ -577,6 +590,13 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
     for (auto ra: retrieveActivityCountMap.getActivities(ret.priority)) {
       ret.activityCounts.push_back({ra.diskInstanceName, ra.activity, ra.weight, ra.count});
     }
+    if (m_payload.has_sleep_for_free_space_since()) {
+      JobsSummary::SleepInfo si;
+      si.diskSystemSleptFor = m_payload.disk_system_slept_for();
+      si.sleepStartTime = m_payload.sleep_for_free_space_since();
+      si.sleepTime = m_payload.sleep_time();
+      ret.sleepInfo = si;
+    }
   } else {
     ret.maxDrivesAllowed = 0;
     ret.priority = 0;
@@ -606,7 +626,7 @@ auto RetrieveQueue::dumpJobs() -> std::list<JobDump> {
       goto nextShard;
     }
     for (auto & j: s->dumpJobs()) {
-      ret.emplace_back(JobDump{j.address, j.copyNb, j.size});
+      ret.emplace_back(JobDump{j.address, j.copyNb, j.size, j.activityDescription, j.diskSystemName});
     }
   nextShard:
     s++; sf++;
@@ -614,7 +634,7 @@ auto RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-auto RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip) -> CandidateJobList {
+auto RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> & retrieveRequestsToSkip, const std::set<std::string> & diskSystemsToSkip) -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
   for(auto & rqsp: m_payload.retrievequeueshards()) {
@@ -623,7 +643,8 @@ auto RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::
       // Fetch the shard
       RetrieveQueueShard rqs(rqsp.address(), m_objectStore);
       rqs.fetchNoLock();
-      auto shardCandidates = rqs.getCandidateJobList(maxBytes - ret.candidateBytes, maxFiles - ret.candidateFiles, retrieveRequestsToSkip);
+      auto shardCandidates = rqs.getCandidateJobList(maxBytes - ret.candidateBytes, maxFiles - ret.candidateFiles,
+          retrieveRequestsToSkip, diskSystemsToSkip);
       ret.candidateBytes += shardCandidates.candidateBytes;
       ret.candidateFiles += shardCandidates.candidateFiles;
       // We overwrite the remaining values each time as the previous
