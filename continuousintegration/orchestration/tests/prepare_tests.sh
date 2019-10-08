@@ -75,6 +75,7 @@ echo "Preparing CTA configuration for tests"
 
   echo "Cleaning up leftovers from potential previous runs."
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm /eos/ctaeos/cta/*
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos find -f /eos/ctaeos/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf {}
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all  |             \
     jq -r '.[] | .vid ' | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli --            \
     cta-admin tape rm -v {}
