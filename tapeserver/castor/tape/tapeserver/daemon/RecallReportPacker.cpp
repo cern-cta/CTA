@@ -25,6 +25,7 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "common/log/Logger.hpp"
 #include "common/utils/utils.hpp"
+#include "objectstore/Backend.hpp"
 
 #include <signal.h>
 #include <iostream>
@@ -115,8 +116,15 @@ void RecallReportPacker::reportTestGoingToEnd(){
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
-  m_successfulRetrieveJob->asyncSetSuccessful();
-  parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
+  try{
+    m_successfulRetrieveJob->asyncSetSuccessful();
+    parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
+  } catch (const cta::objectstore::Backend::NoSuchObject &ex){
+    cta::log::ScopedParamContainer params(parent.m_lc);
+    params.add("ExceptionMSG", ex.getMessageValue())
+          .add("fileId", m_successfulRetrieveJob->archiveFile.archiveFileID);
+    parent.m_lc.log(cta::log::WARNING,"In RecallReportPacker::ReportSuccessful::execute(): call to m_successfulRetrieveJob->asyncSetSuccessful() failed, job does not exist in the objectstore.");
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -212,6 +220,11 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker){
   }
   try {
     m_failedRetrieveJob->transferFailed(m_failureLog, reportPacker.m_lc);
+  } catch (const cta::objectstore::Backend::NoSuchObject &ex){
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("ExceptionMSG", ex.getMessageValue())
+          .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::WARNING,"In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() , job does not exist in the objectstore.");
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())

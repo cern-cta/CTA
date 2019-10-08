@@ -50,6 +50,8 @@ public:
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles getTotalStatsFile();
   void setMountPolicy(const common::dataStructures::MountPolicy &mp);
   common::dataStructures::MountPolicy getMountPolicy();
+  void deleteAllSubrequests();
+  void setIsComplete(const bool complete);
   /**
    * Set the flag disabledTape to allow the mounting of a
    * disabled tape for file retrieval
@@ -159,6 +161,6 @@ public:
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
   AsyncOwnerAndStatusUpdater *asyncUpdateOwnerAndStatus(const std::string &owner, const std::string &previousOwner,
       cta::optional<serializers::RepackRequestStatus> newStatus);
-};
+  };
 
 }} // namespace cta::objectstore

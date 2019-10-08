@@ -19,6 +19,7 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "common/Timer.hpp"
 #include "common/log/TimingList.hpp"
+#include "objectstore/Backend.hpp"
 #include "disk/DiskSystem.hpp"
 
 //------------------------------------------------------------------------------
@@ -199,8 +200,19 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
             .add("bytes", bytes);
       tl.addToLog(params);
       //TODO : if repack, add log to say that the jobs were marked as RJS_Succeeded
-      logContext.log(cta::log::DEBUG,"In RetrieveMout::waitAndFinishSettingJobsBatchRetrieved(): deleted complete retrieve jobs.");
+      logContext.log(cta::log::DEBUG,"In cta::RetrieveMount::flushAsyncSuccessReports(): deleted complete retrieve jobs.");
     }
+  } catch(const cta::objectstore::Backend::NoSuchObject &ex){
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("exceptionMessageValue", ex.getMessageValue());
+    if (job.get()) {
+      params.add("fileId", job->archiveFile.archiveFileID)
+            .add("diskInstance", job->archiveFile.diskInstance)
+            .add("diskFileId", job->archiveFile.diskFileId)
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+    }
+    const std::string msg_error="In cta::RetrieveMount::flushAsyncSuccessReports(): unable to access jobs, they do not exist in the objectstore.";
+    logContext.log(cta::log::WARNING, msg_error);
   } catch(const cta::exception::Exception& e){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", e.getMessageValue());
@@ -210,7 +222,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
     }
-    const std::string msg_error="In RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(): got an exception";
+    const std::string msg_error="In cta::RetrieveMount::flushAsyncSuccessReports(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
     logContext.logBacktrace(cta::log::ERR, e.backtrace());
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
@@ -224,7 +236,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
     }
-    const std::string msg_error="In RetrieveMount::reportJobsBatchWritten(): got an standard exception";
+    const std::string msg_error="In cta::RetrieveMount::flushAsyncSuccessReports(): got an standard exception";
     logContext.log(cta::log::ERR, msg_error);
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
     // will be retried.

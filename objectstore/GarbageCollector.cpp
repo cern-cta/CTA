@@ -441,7 +441,8 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std:
                 .add("copyNb", arup.copyNb)
                 .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
                 .add("exceptionType", debugType);
-          lc.log(log::ERR, 
+          int logLevel = typeid(e) == typeid(Backend::NoSuchObject) ? log::WARNING : log::ERR;
+          lc.log(logLevel, 
               "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): "
               "failed to requeue gone/not owned archive job. Removed from queue.");
         } else {

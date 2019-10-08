@@ -3482,6 +3482,240 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   }
 }
 
+TEST_P(SchedulerTest, cancelRepackRequest) {
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = true;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+  
+  //Create a logical library in the catalogue
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  
+  std::ostringstream ossVid;
+  ossVid << s_vid << "_" << 1;
+  std::string vid = ossVid.str();
+  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+  //Create a repack destination tape
+  std::string vidDestination = "vidDestination";
+  catalogue.createTape(s_adminOnAdminHost,vidDestination, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+    disabledValue, false, readOnlyValue, comment);
+  
+  //Create a storage class in the catalogue
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = s_diskInstance;
+  storageClass.name = s_storageClassName;
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesPerTape = 10;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+  
+  //Simulate the writing of 10 files per tape in the catalogue
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  {
+    uint64_t archiveFileId = 1;
+    std::string currentVid = vid;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + archiveFileId);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
+      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = archiveFileId++;
+      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+      fileWritten.diskFilePath = diskFilePath.str();
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = currentVid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.size = archiveFileSize;
+      fileWritten.copyNb = 1;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    tapeFilesWrittenCopy1.clear();
+  }
+  //Test the expandRepackRequest method
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  
+  {
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+
+  {
+    cta::objectstore::RootEntry re(backend);
+    re.fetchNoLock();
+
+    std::string repackQueueAddress = re.getRepackQueueAddress(RepackQueueType::Pending);
+
+    cta::objectstore::RepackQueuePending repackQueuePending(repackQueueAddress,backend);
+    repackQueuePending.fetchNoLock();
+
+    std::string repackRequestAddress = repackQueuePending.getCandidateList(1,{}).candidates.front().address;
+
+    log::TimingList tl;
+    utils::Timer t;
+
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    ASSERT_EQ(vid,repackRequestToExpand->getRepackInfo().vid);
+
+    scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+    
+    scheduler.waitSchedulerDbSubthreadsComplete();
+    re.fetchNoLock();
+    //Get all retrieve subrequests in the RetrieveQueue
+    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid, cta::objectstore::JobQueueType::JobsToTransferForUser),backend);
+    rq.fetchNoLock();
+    for(auto & job: rq.dumpJobs()){
+      //Check that subrequests exist in the objectstore
+      cta::objectstore::RetrieveRequest retrieveReq(job.address,backend);
+      ASSERT_NO_THROW(retrieveReq.fetchNoLock());
+    }
+    scheduler.cancelRepack(s_adminOnAdminHost,vid,lc);
+    //Check that the subrequests are deleted from the objectstore
+    for(auto & job: rq.dumpJobs()){
+      cta::objectstore::RetrieveRequest retrieveReq(job.address,backend);
+      ASSERT_THROW(retrieveReq.fetchNoLock(),cta::objectstore::Backend::NoSuchObject);
+    }
+    //Check that the RepackRequest is deleted from the objectstore
+    ASSERT_THROW(cta::objectstore::RepackRequest(repackRequestAddress,backend).fetchNoLock(),cta::objectstore::Backend::NoSuchObject);
+  }
+  //Do another test to check the deletion of ArchiveSubrequests
+  {
+    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+
+  {
+    cta::objectstore::RootEntry re(backend);
+    re.fetchNoLock();
+
+    std::string repackQueueAddress = re.getRepackQueueAddress(RepackQueueType::Pending);
+
+    cta::objectstore::RepackQueuePending repackQueuePending(repackQueueAddress,backend);
+    repackQueuePending.fetchNoLock();
+
+    std::string repackRequestAddress = repackQueuePending.getCandidateList(1,{}).candidates.front().address;
+
+    log::TimingList tl;
+    utils::Timer t;
+
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+    
+    scheduler.waitSchedulerDbSubthreadsComplete();
+    {
+      std::unique_ptr<cta::TapeMount> mount;
+      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      std::unique_ptr<cta::RetrieveMount> retrieveMount;
+      retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
+      std::unique_ptr<cta::RetrieveJob> retrieveJob;
+
+      std::list<std::unique_ptr<cta::RetrieveJob>> executedJobs;
+      //For each tape we will see if the retrieve jobs are not null
+      for(uint64_t j = 1; j<=nbArchiveFilesPerTape; ++j)
+      {
+        auto jobBatch = retrieveMount->getNextJobBatch(1,archiveFileSize,lc);
+        retrieveJob.reset(jobBatch.front().release());
+        executedJobs.push_back(std::move(retrieveJob));
+      }
+      //Now, report the retrieve jobs to be completed
+      castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
+
+      rrp.startThreads();
+
+      //Report all jobs as succeeded
+      for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
+      {
+        rrp.reportCompletedJob(std::move(*it));
+      }
+
+      rrp.setDiskDone();
+      rrp.setTapeDone();
+
+      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+
+      rrp.reportEndOfSession();
+      rrp.waitThread();
+    }
+    {
+      //Do the reporting of RetrieveJobs, will transform the Retrieve request in Archive requests
+      while (true) {
+        auto rep = schedulerDB.getNextRepackReportBatch(lc);
+        if (nullptr == rep) break;
+        rep->report(lc);
+      }
+    }
+    re.fetchNoLock();
+    //Get all archive subrequests in the ArchiveQueue
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName, cta::objectstore::JobQueueType::JobsToTransferForRepack),backend);
+    aq.fetchNoLock();
+    for(auto & job: aq.dumpJobs()){
+      cta::objectstore::ArchiveRequest archiveReq(job.address,backend);
+      ASSERT_NO_THROW(archiveReq.fetchNoLock());
+    }
+    scheduler.cancelRepack(s_adminOnAdminHost,vid,lc);
+    //Check that the subrequests are deleted from the objectstore
+    for(auto & job: aq.dumpJobs()){
+      cta::objectstore::ArchiveRequest archiveReq(job.address,backend);
+      ASSERT_THROW(archiveReq.fetchNoLock(),cta::objectstore::Backend::NoSuchObject);
+    }
+    //Check that the RepackRequest is deleted from the objectstore
+    ASSERT_THROW(cta::objectstore::RepackRequest(repackRequestAddress,backend).fetchNoLock(),cta::objectstore::Backend::NoSuchObject);
+  }
+}
+
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;

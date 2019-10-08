@@ -1981,6 +1981,12 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
             rr.subrequest->asyncTransformToArchiveRequest(*m_oStoreDb.m_agentReference)
           )
         });
+      } catch (const cta::objectstore::Backend::NoSuchObject &ex){
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", rr.archiveFile.archiveFileID)
+              .add("subrequestAddress", rr.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::WARNING, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): failed to asyncTransformToArchiveRequest(), object does not exist in the objectstore.");
       } catch (exception::Exception & ex) {
         // We failed to archive the file (to create the request, in fact). So all the copyNbs 
         // can be counted as failed.
@@ -2036,6 +2042,12 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
           atar.subrequestInfo,
           sorterArchiveRequest
         });
+      } catch (const cta::objectstore::Backend::NoSuchObject &ex){
+         log::ScopedParamContainer params(lc);
+        params.add("fileId", atar.subrequestInfo.archiveFile.archiveFileID)
+              .add("subrequestAddress", atar.subrequestInfo.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::WARNING, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): async transformation failed on wait(). Object does not exist in the objectstore");
       } catch (exception::Exception & ex) {
         // We failed to archive the file (to create the request, in fact). So all the copyNbs 
         // can be counted as failed.
@@ -2087,12 +2099,18 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
         try {
           asyncDeleterAndReqs.push_back({*fs, 
               std::unique_ptr<RetrieveRequest::AsyncJobDeleter>(fs->subrequest->asyncDeleteJob())});
+        } catch (const cta::objectstore::Backend::NoSuchObject &ex) {
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", fs->archiveFile.archiveFileID)
+                .add("subrequestAddress", fs->subrequest->getAddressIfSet())
+                .add("exceptionMsg", ex.getMessageValue());
+          lc.log(log::WARNING, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): failed to asyncDelete() retrieve request. Object does not exist in the objectstore.");
         } catch (cta::exception::Exception &ex) {
           // Log the failure to delete.
           log::ScopedParamContainer params(lc);
           params.add("fileId", fs->archiveFile.archiveFileID)
                 .add("subrequestAddress", fs->subrequest->getAddressIfSet())
-                .add("excepitonMsg", ex.getMessageValue());
+                .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::ERR, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): failed to asyncDelete() retrieve request.");
         }
       }
@@ -2105,6 +2123,13 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
           params.add("fileId", adar.subrequestInfo.archiveFile.archiveFileID)
                 .add("subrequestAddress", adar.subrequestInfo.subrequest->getAddressIfSet());
           lc.log(log::INFO, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): deleted retrieve request after failure to transform in archive request.");
+        } catch (const cta::objectstore::Backend::NoSuchObject & ex) {
+          // Log the failure to delete.
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", adar.subrequestInfo.archiveFile.archiveFileID)
+                .add("subrequestAddress", adar.subrequestInfo.subrequest->getAddressIfSet())
+                .add("exceptionMsg", ex.getMessageValue());
+          lc.log(log::WARNING, "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): async deletion of retrieve request failed on wait(). Object does not exist in the objectstore.");
         } catch (cta::exception::Exception & ex) {
           // Log the failure to delete.
           log::ScopedParamContainer params(lc);
@@ -2194,6 +2219,12 @@ void OStoreDB::RepackRetrieveFailureReportBatch::report(log::LogContext& lc){
       retrieveRequestsToUnown.push_back(fs.subrequest->getAddressIfSet());
       try{
         asyncDeleterAndReqs.push_back({fs,std::unique_ptr<RetrieveRequest::AsyncJobDeleter>(fs.subrequest->asyncDeleteJob())});
+      } catch (cta::objectstore::Backend::NoSuchObject &ex) {
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", fs.archiveFile.archiveFileID)
+              .add("subrequestAddress", fs.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::WARNING, "In OStoreDB::RepackRetrieveFailureReportBatch::report(): failed to asyncDelete() retrieve request. Object does not exist in the objectstore.");
       } catch (cta::exception::Exception &ex) {
         // Log the failure to delete.
         log::ScopedParamContainer params(lc);
@@ -2215,6 +2246,13 @@ void OStoreDB::RepackRetrieveFailureReportBatch::report(log::LogContext& lc){
         timingList.addToLog(params);
         lc.log(log::INFO, "In OStoreDB::RepackRetrieveFailureReportBatch::report(): deleted retrieve request after multiple failures");
         timingList.clear();
+      } catch (const cta::objectstore::Backend::NoSuchObject & ex) {
+        // Log the failure to delete.
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", adar.subrequestInfo.archiveFile.archiveFileID)
+              .add("subrequestAddress", adar.subrequestInfo.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::WARNING, "In OStoreDB::RepackRetrieveFailureReportBatch::report(): async deletion of retrieve request failed on wait(). Object does not exist in the objectstore.");
       } catch (cta::exception::Exception & ex) {
         // Log the failure to delete.
         log::ScopedParamContainer params(lc);
@@ -2594,7 +2632,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
           throw  exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
         // We now have a hold of the repack request.
         // We should delete all the file level subrequests.
-        // TODO
+        rr.deleteAllSubrequests();
         // And then delete the request
         std::string repackRequestOwner = rr.getOwner();
         rr.remove();
@@ -3933,6 +3971,13 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
         }
         mountPolicy = osdbJob->m_jobSucceedForRepackReporter->m_MountPolicy;
         jobsToRequeueForRepackMap[osdbJob->m_repackInfo.repackRequestAddress].emplace_back(osdbJob);
+      } catch (cta::objectstore::Backend::NoSuchObject &ex){
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", osdbJob->archiveFile.archiveFileID)
+              .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
+              .add("exceptionMessage", ex.getMessageValue());
+        lc.log(log::WARNING, 
+            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed, job does not exist in the objectstore.");
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", osdbJob->archiveFile.archiveFileID)
@@ -4006,16 +4051,21 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
         params.add("fileId", requestToJobMap.at(fe.element->retrieveRequest)->archiveFile.archiveFileID)
               .add("copyNb", fe.element->copyNb)
               .add("requestObject", fe.element->retrieveRequest->getAddressIfSet());
+        std::string logMessage = "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for repack."
+          " Leaving request to be garbage collected.";
+        int priority = log::ERR;
         try {
           std::rethrow_exception(fe.failure);
+        } catch (cta::objectstore::Backend::NoSuchObject &ex) {
+          priority=log::WARNING;
+          logMessage = "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for repack, job does not exist in the objectstore.";
         } catch (cta::exception::Exception & ex) {
           params.add("exeptionMessage", ex.getMessageValue());
         } catch (std::exception & ex) {
           params.add("exceptionWhat", ex.what())
                 .add("exceptionTypeName", typeid(ex).name());
         }
-        lc.log(log::ERR, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for repack."
-          "Leaving request to be garbage collected.");
+        lc.log(priority, logMessage);
         // Add the failed request to the set.
         failedElements.insert(fe.element->retrieveRequest->getAddressIfSet());
       }
@@ -4168,6 +4218,11 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
               .add("jobs", list.second.size())
               .add("enqueueTime", t.secs());
         lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for reporting to repack.");
+      } catch (cta::objectstore::Backend::NoSuchObject &ex) {
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid", list.first)
+              .add("exceptionMSG", ex.getMessageValue());
+        lc.log(log::WARNING, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting to repack, jobs do not exist in the objectstore.");
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("tapeVid", list.first)
@@ -4632,6 +4687,13 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
                 newStatus)), 
               sri});
         }
+      } catch(const cta::objectstore::Backend::NoSuchObject &ex) {
+        // Log the error
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", sri.archiveFile.archiveFileID)
+              .add("subrequestAddress", sri.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::WARNING, "In OStoreDB::RepackArchiveReportBatch::report(): failed to asyncUpdateJobOwner(), object does not exist in the objectstore.");
       } catch (cta::exception::Exception & ex) {
         // Log the error
         log::ScopedParamContainer params(lc);
@@ -4643,6 +4705,13 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
     } else {
       try {
         deletersList.push_back({std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter>(ar.asyncDeleteRequest()), sri});
+      } catch(const cta::objectstore::Backend::NoSuchObject &ex) {
+        // Log the error
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", sri.archiveFile.archiveFileID)
+              .add("subrequestAddress", sri.subrequest->getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::WARNING, "In OStoreDB::RepackArchiveReportBatch::report(): failed to asyncDelete(), object does not exist in the objectstore.");
       } catch (cta::exception::Exception & ex) {
         // Log the error
         log::ScopedParamContainer params(lc);
@@ -4680,6 +4749,13 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
               .add("exceptionMsg", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async deletion of disk file failed.");
       }
+    } catch(const cta::objectstore::Backend::NoSuchObject &ex){
+      // Log the error
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
+          .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
+          .add("exceptionMsg", ex.getMessageValue());
+      lc.log(log::WARNING, "In OStoreDB::RepackArchiveReportBatch::report(): async deletion failed. Object does not exist in the objectstore.");
     } catch (cta::exception::Exception & ex) {
         // Log the error
         log::ScopedParamContainer params(lc);
@@ -4707,22 +4783,32 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async file not deleted.");
     }
   }
-  if(repackRequestStatus == objectstore::serializers::RepackRequestStatus::RRS_Complete){
-    //Repack Request is complete, delete the directory in the buffer
-    cta::disk::DirectoryFactory directoryFactory;
-    std::string directoryPath = cta::utils::getEnclosingPath(bufferURL);
-    std::unique_ptr<cta::disk::Directory> directory;
-    try{
-      directory.reset(directoryFactory.createDirectory(directoryPath));
-      directory->rmdir();
-      log::ScopedParamContainer params(lc);
-      params.add("repackRequestAddress", m_repackRequest.getAddressIfSet());
-      lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): deleted the "+directoryPath+" directory");
-    } catch (const cta::exception::Exception &ex){
-      log::ScopedParamContainer params(lc);
-      params.add("repackRequestAddress", m_repackRequest.getAddressIfSet())
-            .add("exceptionMsg", ex.getMessageValue());
-      lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the "+directoryPath+" directory");
+  if(repackRequestStatus == objectstore::serializers::RepackRequestStatus::RRS_Complete || repackRequestStatus == objectstore::serializers::RepackRequestStatus::RRS_Failed)
+  {
+    //Repack request is Complete or Failed, set it as complete
+    //to tell the cta-admin repack rm command not to try to delete all the subrequests again
+    cta::ScopedExclusiveLock sel(m_repackRequest);
+    m_repackRequest.fetch();
+    m_repackRequest.setIsComplete(true);
+    m_repackRequest.commit();
+    
+    if(repackRequestStatus == objectstore::serializers::RepackRequestStatus::RRS_Complete){
+      //Repack Request is complete, delete the directory in the buffer
+      cta::disk::DirectoryFactory directoryFactory;
+      std::string directoryPath = cta::utils::getEnclosingPath(bufferURL);
+      std::unique_ptr<cta::disk::Directory> directory;
+      try{
+        directory.reset(directoryFactory.createDirectory(directoryPath));
+        directory->rmdir();
+        log::ScopedParamContainer params(lc);
+        params.add("repackRequestAddress", m_repackRequest.getAddressIfSet());
+        lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): deleted the "+directoryPath+" directory");
+      } catch (const cta::exception::Exception &ex){
+        log::ScopedParamContainer params(lc);
+        params.add("repackRequestAddress", m_repackRequest.getAddressIfSet())
+              .add("exceptionMsg", ex.getMessageValue());
+        lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the "+directoryPath+" directory");
+      }
     }
   }
   for (auto & jou: jobOwnerUpdatersList) {
@@ -4732,6 +4818,13 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet());
       lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): async updated job.");
+    } catch(const cta::objectstore::Backend::NoSuchObject &ex){
+      // Log the error
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
+            .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
+            .add("exceptionMsg", ex.getMessageValue());
+      lc.log(log::WARNING, "In OStoreDB::RepackArchiveReportBatch::report(): async job update failed. Object does not exist in the objectstore.");
     } catch (cta::exception::Exception & ex) {
       // Log the error
       log::ScopedParamContainer params(lc);

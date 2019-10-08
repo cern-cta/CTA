@@ -603,6 +603,7 @@ message RepackRequest {
   required bool is_expand_started = 11562;
   required MountPolicy mount_policy = 11563;
   required bool force_disabled_tape = 11564;
+  required bool is_complete = 11565;
   repeated RepackSubRequestPointer subrequests = 11570;
 }
 

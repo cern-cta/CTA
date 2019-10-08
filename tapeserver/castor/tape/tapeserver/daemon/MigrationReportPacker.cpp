@@ -26,6 +26,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "common/utils/utils.hpp"
+#include "objectstore/Backend.hpp"
 
 #include <memory>
 #include <numeric>
@@ -197,6 +198,11 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
   }
   try {
     m_skippedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
+  } catch (cta::objectstore::Backend::NoSuchObject & ex){
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("ExceptionMSG", ex.getMessageValue())
+          .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::WARNING,"In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed(), job does not exist in the objectstore.");
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
@@ -346,7 +352,13 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
   }
   try {
     m_failedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
-  } catch (cta::exception::Exception & ex) {
+  } catch (cta::objectstore::Backend::NoSuchObject & ex){
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("ExceptionMSG", ex.getMessageValue())
+          .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::WARNING,"In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed(), job does not exist in the objectstore.");
+  } 
+  catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);

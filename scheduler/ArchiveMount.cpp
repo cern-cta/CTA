@@ -18,6 +18,7 @@
 
 #include "scheduler/ArchiveMount.hpp"
 #include "common/make_unique.hpp"
+#include "objectstore/Backend.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -218,6 +219,18 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
           .add("schedulerDbTime", schedulerDbTime)
           .add("totalTime", catalogueTime  + schedulerDbTime + clientReportingTime);
     logContext.log(log::INFO, "In ArchiveMount::reportJobsBatchWritten(): recorded a batch of archive jobs in metadata.");
+  } catch (const cta::objectstore::Backend::NoSuchObject& ex){
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("exceptionMessageValue", ex.getMessageValue());
+    if (job.get()) {
+      params.add("fileId", job->archiveFile.archiveFileID)
+            .add("diskInstance", job->archiveFile.diskInstance)
+            .add("diskFileId", job->archiveFile.diskFileId)
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
+            .add("reportURL", job->reportURL());
+    }
+    const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): job does not exist in the objectstore.";
+    logContext.log(cta::log::WARNING, msg_error);
   } catch(const cta::exception::Exception& e){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", e.getMessageValue());
