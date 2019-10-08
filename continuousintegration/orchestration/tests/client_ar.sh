@@ -146,7 +146,8 @@ echo "$(date +%s): ERROR_FILE=${ERROR_FILE}"
 EOS_BATCHFILE=$(mktemp --suffix=.eosh)
 echo "$(date +%s): EOS_BATCHFILE=${EOS_BATCHFILE}"
 
-dd if=/dev/urandom of=/tmp/testfile bs=1k count=${FILE_KB_SIZE} || exit 1
+# As we are skipping n bytes per file we need a bit more than the file size to accomodate dd to read ${FILE_KB_SIZE} skipping the n first bytes
+dd if=/dev/urandom of=/tmp/testfile bs=1k count=$((${FILE_KB_SIZE} + ${NB_FILES}*${NB_DIRS}/1024 + 1)) || exit 1
 
 if [[ $VERBOSE == 1 ]]; then
   tail -v -f /mnt/logs/tpsrv0*/rmcd/cta/cta-rmcd.log &
@@ -189,9 +190,10 @@ echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOSINSTANCE}."
   echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
+  TEST_FILE_NAME_SUBDIR=${TEST_FILE_NAME_BASE}$(printf %.2d ${subdir})
   for ((i=0;i<${NB_FILES};i++)); do
-    echo ${TEST_FILE_NAME_BASE}$(printf %.2d ${subdir})$(printf %.6d $i)
-  done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump xrdcp /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/TEST_FILE_NAME 2>${ERROR_DIR}/TEST_FILE_NAME && rm ${ERROR_DIR}/TEST_FILE_NAME || echo ERROR with xrootd transfer for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/TEST_FILE_NAME"
+    echo $(printf %.6d $i)
+done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "dd if=/tmp/testfile bs=1k 2>/dev/null | (dd bs=1 count=$((${subdir}*${NB_FILES})) of=/dev/null 2>/dev/null; dd bs=1 count=TEST_FILE_NUM of=/dev/null 2>/dev/null; dd bs=1k count=${FILE_KB_SIZE} 2>/dev/null) | XRD_LOGLEVEL=Dump xrdcp - root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM 2>${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM && rm ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM || echo ERROR with xrootd transfer for file ${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM, full logs in ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
   #done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdcp --silent /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/TEST_FILE_NAME
   #  done | xargs -n ${BATCH_SIZE} --max-procs=${NB_BATCH_PROCS} ./batch_xrdcp /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${subdir}
   echo Done.
