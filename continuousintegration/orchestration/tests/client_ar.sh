@@ -190,7 +190,8 @@ echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOSINSTANCE}."
   echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
-  TEST_FILE_NAME_SUBDIR=${TEST_FILE_NAME_BASE}$(printf %.2d ${subdir})
+  TEST_FILE_NAME_SUBDIR=${TEST_FILE_NAME_BASE}$(printf %.2d ${subdir}) # this is the target filename of xrdcp processes just need to add the filenumber in each directory
+  # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
   for ((i=0;i<${NB_FILES};i++)); do
     echo $(printf %.6d $i)
 done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "dd if=/tmp/testfile bs=1k 2>/dev/null | (dd bs=1 count=$((${subdir}*${NB_FILES})) of=/dev/null 2>/dev/null; dd bs=1 count=TEST_FILE_NUM of=/dev/null 2>/dev/null; dd bs=1k count=${FILE_KB_SIZE} 2>/dev/null) | XRD_LOGLEVEL=Dump xrdcp - root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM 2>${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM && rm ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM || echo ERROR with xrootd transfer for file ${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM, full logs in ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
