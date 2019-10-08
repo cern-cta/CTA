@@ -243,9 +243,10 @@ std::string Scheduler::queueRetrieve(
      .add("criteriaFileSize", queueCriteria.archiveFile.fileSize)
      .add("reconciliationTime", queueCriteria.archiveFile.reconciliationTime)
      .add("storageClass", queueCriteria.archiveFile.storageClass);
+  uint32_t copyNumber=0;
   for (auto & tf:queueCriteria.archiveFile.tapeFiles) {
     std::stringstream tc;
-    tc << "tapeCopy" << tf.copyNb;
+    tc << "tapeTapefile" << copyNumber++;
     spc.add(tc.str(), tf);
   }
   spc.add("selectedVid", requestInfo.selectedVid)
