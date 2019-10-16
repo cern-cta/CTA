@@ -66,6 +66,7 @@ int main(int argc, char ** argv) {
     re.fetch();
     re.addOrGetDriveRegisterPointerAndCommit(agr, el);
     re.addOrGetSchedulerGlobalLockAndCommit(agr,el);
+    ag.removeAndUnregisterSelf(lc);
     rel.release();
     std::cout << "New object store path: " << be->getParams()->toURL() << std::endl;
   } catch (std::exception & e) {
