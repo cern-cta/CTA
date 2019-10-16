@@ -709,9 +709,9 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
   // In Rados, locking a non-existing object will create it. This is not our intended
   // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
   // (while we own the lock).
-  struct timeval tv;
-  tv.tv_usec = 0;
-  tv.tv_sec = 240;
+  struct timeval radosLockExpirationTime;
+  radosLockExpirationTime.tv_usec = 0;
+  radosLockExpirationTime.tv_sec = 240;
   int rc;
   // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
   // by the number of tries (and capped by a maximum). Then the value will be randomized 
@@ -724,14 +724,14 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
     RadosTimeoutLogger rtl;
     if (lockType==LockType::Shared) {
       cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() {
-        rc = radosCtx.lock_shared(name, "lock", clientId, "", "", &tv, 0);
+        rc = radosCtx.lock_shared(name, "lock", clientId, "", "", &radosLockExpirationTime, 0);
         timingMeasurements.addSuccess(t.secs(), timeoutTimer.secs());
         return 0;
       }, "In BackendRados::lockBackoff(): failed radosCtx.lock_shared()");
       rtl.logIfNeeded("In BackendRados::lockBackoff(): radosCtx.lock_shared()", name);
     } else {
       cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() {
-        rc = radosCtx.lock_exclusive(name, "lock", clientId, "", &tv, 0);
+        rc = radosCtx.lock_exclusive(name, "lock", clientId, "", &radosLockExpirationTime, 0);
         timingMeasurements.addSuccess(t.secs(), timeoutTimer.secs());
         return 0;
       }, "In BackendRados::lockBackoff(): failed radosCtx.lock_exclusive()");
@@ -745,7 +745,7 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
     }
     if (-EBUSY != rc) break;
     if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
-      throw exception::Exception("In BackendRados::lockBackoff(): timeout.");
+      throw exception::Exception("In BackendRados::lockBackoff(): timeout : timeout set = "+std::to_string(timeout_us)+"usec, time to lock the object : "+std::to_string(timeoutTimer.usecs())+"usec");
     }
     timespec ts;
     auto latencyUsecs=t.usecs();
@@ -984,7 +984,8 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& na
         [this](){
           try {
             m_lockClient = BackendRados::createUniqueClientId();
-            m_backend.lock(m_name, 300*1000, BackendRados::LockType::Exclusive, m_lockClient);
+            //timeout for locking is 1 sec
+            m_backend.lock(m_name, 100*10000, BackendRados::LockType::Exclusive, m_lockClient);
             // Locking is done, we can launch the read operation (async).
             librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, fetchCallback, nullptr);
             RadosTimeoutLogger rtl;
@@ -1196,7 +1197,8 @@ BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& na
         [this](){
           try {
             m_lockClient = BackendRados::createUniqueClientId();
-            m_backend.lock(m_name, 300*1000, BackendRados::LockType::Exclusive, m_lockClient);
+            //Timeout to lock is 1 second
+            m_backend.lock(m_name, 100*10000, BackendRados::LockType::Exclusive, m_lockClient);
             // Locking is done, we can launch the remove operation (async).
             librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, deleteCallback, nullptr);
             m_radosTimeoutLogger.reset();
