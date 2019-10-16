@@ -103,7 +103,8 @@ void Sorter::insertArchiveRequest(std::shared_ptr<ArchiveRequest> archiveRequest
     } catch(const cta::exception::Exception &ex){
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveRequest->getArchiveFile().archiveFileID)
-            .add("exceptionMessage", ex.getMessageValue());
+            .add("exceptionMessage", ex.getMessageValue())
+            .add("status", ArchiveRequest::statusToString(job.status));
       lc.log(log::ERR,"In Sorter::insertArchiveJob() Failed to determine destination queue for Archive Job.");
     }
   }

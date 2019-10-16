@@ -459,6 +459,7 @@ public:
       cta::common::dataStructures::ArchiveFile archiveFile;
       std::set<uint32_t> copyNbsToRearchive;
       std::string fileBufferURL;
+      bool hasUserProvidedFile = false;
     };
     
     //Struct to hold the RepackRequest's total stats
@@ -467,7 +468,7 @@ public:
       uint64_t totalBytesToArchive = 0;
       uint64_t totalFilesToRetrieve = 0;
       uint64_t totalBytesToRetrieve = 0;
-      //TODO : userprovidedfiles and userprovidedbytes
+      uint64_t userProvidedFiles = 0;
     };
     
     /**

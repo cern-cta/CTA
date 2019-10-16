@@ -417,6 +417,7 @@ message RetrieveRequestRepackInfo {
   required string file_buffer_url = 9530;
   required uint64 fseq = 9540;
   required bool force_disabled_tape = 9560;
+  optional bool has_user_provided_file = 9163 [default = false];
 }
 
 // The different timings of the lifecycle of a RetrieveRequest (creation time, first select time, request complete)

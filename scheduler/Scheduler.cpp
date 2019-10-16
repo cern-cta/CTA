@@ -487,8 +487,15 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     cta::disk::DirectoryFactory dirFactory;
     dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
     if(dir->exist()){
-      //TODO : Repack tape repair workflow
-      //filesInDirectory = dir->getFilesName();
+      //Repack tape repair workflow
+      try{
+        filesInDirectory = dir->getFilesName();
+      } catch (const cta::exception::XrootCl &ex) {
+        log::ScopedParamContainer spc(lc);
+        spc.add("vid",repackInfo.vid);
+        spc.add("errorMessage",ex.getMessageValue());
+        lc.log(log::WARNING,"In Scheduler::expandRepackRequest(), received XRootdException while listing files in the buffer");
+      }
     } else {
       dir->mkdir();
     }
@@ -599,12 +606,33 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         cta::disk::DiskFileFactory fileFactory("",0,radosStriperPool);
         cta::disk::ReadFile *fileReader = fileFactory.createReadFile(dirBufferURL.str() + fileName.str());
         if(fileReader->size() == archiveFile.fileSize){
-          /*createArchiveSubrequest = true;
-          retrieveSubrequests.pop_back();*/
-          //TODO : We don't want to retrieve the file again, create archive subrequest
+          createArchiveSubrequest = true;
         }
       }
-      if(!createArchiveSubrequest){
+      if (!createArchiveSubrequest && retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) {
+        if(!createArchiveSubrequest){
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", retrieveSubRequest.archiveFile.archiveFileID)
+                .add("repackVid", repackInfo.vid);
+          lc.log(log::ERR, "In Scheduler::expandRepackRequest(): no fSeq found for this file on this tape.");
+          totalStatsFile.totalBytesToRetrieve -= retrieveSubRequest.archiveFile.fileSize;
+          totalStatsFile.totalFilesToRetrieve -= 1;
+          retrieveSubrequests.pop_back();
+        }
+      } else {
+        if(!createArchiveSubrequest){
+          totalStatsFile.totalBytesToRetrieve += retrieveSubRequest.archiveFile.fileSize;
+          totalStatsFile.totalFilesToRetrieve += 1;
+        } else {
+          totalStatsFile.userProvidedFiles += 1;
+          retrieveSubRequest.hasUserProvidedFile = true;
+        }
+        // We found some copies to rearchive. We still have to decide which file path we are going to use.
+        // File path will be base URL + /<VID>/<fSeq>
+        maxAddedFSeq = std::max(maxAddedFSeq,retrieveSubRequest.fSeq);
+        retrieveSubRequest.fileBufferURL = dirBufferURL.str() + fileName.str();
+      }
+      /*if(!createArchiveSubrequest){
         totalStatsFile.totalBytesToRetrieve += retrieveSubRequest.archiveFile.fileSize;
         totalStatsFile.totalFilesToRetrieve += 1;
         if (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) {
@@ -618,13 +646,10 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         } else {
           // We found some copies to rearchive. We still have to decide which file path we are going to use.
           // File path will be base URL + /<VID>/<fSeq>
-          /*std::stringstream fileBufferURL;
-          fileBufferURL << repackInfo.repackBufferBaseURL << "/" << repackInfo.vid << "/" 
-              << std::setw(9) << std::setfill('0') << rsr.fSeq;*/
           maxAddedFSeq = std::max(maxAddedFSeq,retrieveSubRequest.fSeq);
           retrieveSubRequest.fileBufferURL = dirBufferURL.str() + fileName.str();
         }
-      }
+      }*/
       expansionTimeReached = (elapsedTime >= m_repackRequestExpansionTimeLimit);
     }   
     // Note: the highest fSeq will be recorded internally in the following call.
@@ -656,7 +681,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     repackRequest->m_dbReq->requeueInToExpandQueue(lc);
     lc.log(log::INFO,"Repack Request requeued in ToExpand queue.");
   } else {
-    if(totalStatsFile.totalFilesToRetrieve == 0 || nbRetrieveSubrequestsQueued == 0){
+    if(totalStatsFile.totalFilesToArchive == 0 && (totalStatsFile.totalFilesToRetrieve == 0 || nbRetrieveSubrequestsQueued == 0)){
       //If no files have been retrieve, the repack buffer will have to be deleted
       //TODO : in case of Repack tape repair, we should not try to delete the buffer
       deleteRepackBuffer(std::move(dir));      

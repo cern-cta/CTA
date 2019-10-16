@@ -319,7 +319,15 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
                      .add("fileId", ar->getArchiveFile().archiveFileID);
               lc.log(log::INFO, "Selected archive request for requeueing to the corresponding queue");
               jobRequeued=true;
-            } catch (ArchiveRequest::JobNotQueueable &) {}
+            } catch (ArchiveRequest::JobNotQueueable &) {
+              log::ScopedParamContainer params3(lc);
+              params3.add("tapePool", j.tapePool)
+                     .add("containerIdentifier", containerIdentifier)
+                     .add("copynb", j.copyNb)
+                     .add("status",ArchiveRequest::statusToString(j.status))
+                     .add("fileId", ar->getArchiveFile().archiveFileID);
+              lc.log(log::WARNING, "Job garbage collected with a status not queueable. Leaving it as is.");
+            }
           }
         }
         if (!jobRequeued) {

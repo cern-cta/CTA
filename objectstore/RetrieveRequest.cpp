@@ -652,6 +652,8 @@ void RetrieveRequest::setRepackInfo(const RepackInfo& repackInfo) {
     for (auto cntr: repackInfo.copyNbsToRearchive) {
       m_payload.mutable_repack_info()->mutable_copy_nbs_to_rearchive()->Add(cntr);
     }
+
+    m_payload.mutable_repack_info()->set_has_user_provided_file(repackInfo.hasUserProvidedFile);
     m_payload.mutable_repack_info()->set_force_disabled_tape(repackInfo.forceDisabledTape);
     m_payload.mutable_repack_info()->set_file_buffer_url(repackInfo.fileBufferURL);
     m_payload.mutable_repack_info()->set_repack_request_address(repackInfo.repackRequestAddress);
@@ -945,6 +947,9 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
               }
               for (auto cntr: payload.repack_info().copy_nbs_to_rearchive()) {
                 ri.copyNbsToRearchive.insert(cntr);
+              }
+              if(payload.repack_info().has_has_user_provided_file()){
+                ri.hasUserProvidedFile = payload.repack_info().has_user_provided_file();
               }
               ri.fileBufferURL = payload.repack_info().file_buffer_url();
               ri.isRepack = true;

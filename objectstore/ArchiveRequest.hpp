@@ -64,7 +64,7 @@ public:
   serializers::ArchiveJobStatus getJobStatus(uint32_t copyNumber);
   void setJobStatus(uint32_t copyNumber, const serializers::ArchiveJobStatus & status);
   std::string getTapePoolForJob(uint32_t copyNumber);
-  std::string statusToString(const serializers::ArchiveJobStatus & status);
+  static std::string statusToString(const serializers::ArchiveJobStatus & status);
   enum class JobEvent {
     TransferFailed,
     ReportFailed

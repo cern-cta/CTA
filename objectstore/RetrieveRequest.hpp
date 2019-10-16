@@ -157,6 +157,7 @@ public:
     std::string repackRequestAddress;
     uint64_t fSeq;
     std::string fileBufferURL;
+    bool hasUserProvidedFile = false;
   };
   void setRepackInfo(const RepackInfo & repackInfo);
   RepackInfo getRepackInfo();
@@ -175,6 +176,9 @@ public:
       rrri.set_repack_request_address(repackRequestAddress);
       rrri.set_fseq(fSeq);
       rrri.set_force_disabled_tape(forceDisabledTape);
+      if(rrri.has_has_user_provided_file()){
+	rrri.set_has_user_provided_file(hasUserProvidedFile);
+      }
     }
     
     void deserialize(const cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
@@ -185,6 +189,9 @@ public:
       repackRequestAddress = rrri.repack_request_address();
       fSeq = rrri.fseq();
       forceDisabledTape = rrri.force_disabled_tape();
+      if(rrri.has_has_user_provided_file()){
+	hasUserProvidedFile = rrri.has_user_provided_file();
+      }
     }
   };
 private:

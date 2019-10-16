@@ -180,6 +180,7 @@ void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::T
   setTotalFileToArchive(totalStatsFiles.totalFilesToArchive);
   setTotalBytesToArchive(totalStatsFiles.totalBytesToArchive);
   setTotalBytesToRetrieve(totalStatsFiles.totalBytesToRetrieve);
+  setUserProvidedFiles(totalStatsFiles.userProvidedFiles);
 }
 
 void RepackRequest::setMountPolicy(const common::dataStructures::MountPolicy& mp){
@@ -246,9 +247,10 @@ void RepackRequest::setStatus(){
         return;
       }
     }
-    //Expand is finished or not, if we have retrieved files or not (first reporting), we are in Running,
+    //Expand is finished or not, if we have retrieved files or not (first reporting) or if we have archived files (repack tape repair workflow with all files
+    //provided by the user), we are in Running,
     //else we are in starting
-    if(m_payload.retrievedfiles() || m_payload.failedtoretrievefiles()){
+    if(m_payload.retrievedfiles() || m_payload.failedtoretrievefiles() || m_payload.archivedfiles() || m_payload.failedtoarchivefiles()){
       setStatus(common::dataStructures::RepackInfo::Status::Running);
     } else {
       setStatus(common::dataStructures::RepackInfo::Status::Starting);
@@ -384,6 +386,11 @@ void RepackRequest::setTotalBytesToArchive(const uint64_t nbBytesToArchive) {
   m_payload.set_totalbytestoarchive(nbBytesToArchive);
 }
 
+void RepackRequest::setUserProvidedFiles(const uint64_t userProvidedFiles){
+  checkPayloadWritable();
+  m_payload.set_userprovidedfiles(userProvidedFiles);
+}
+
 //------------------------------------------------------------------------------
 // RepackRequest::getTotalStatsFile()
 //------------------------------------------------------------------------------
@@ -394,6 +401,7 @@ cta::SchedulerDatabase::RepackRequest::TotalStatsFiles RepackRequest::getTotalSt
   ret.totalBytesToArchive = m_payload.totalbytestoarchive();
   ret.totalFilesToRetrieve = m_payload.totalfilestoretrieve();
   ret.totalFilesToArchive = m_payload.totalfilestoarchive();
+  ret.userProvidedFiles = m_payload.userprovidedfiles();
   return ret;
 }
 
@@ -411,8 +419,10 @@ void RepackRequest::reportRetriveSuccesses(SubrequestStatistics::List& retrieveS
       auto & p = pointerMap.at(rs.fSeq);
       if (!p.retrieveAccounted) {
         p.retrieveAccounted = true;
-        m_payload.set_retrievedbytes(m_payload.retrievedbytes() + rs.bytes);
-        m_payload.set_retrievedfiles(m_payload.retrievedfiles() + rs.files);
+        if(!rs.hasUserProvidedFile){
+          m_payload.set_retrievedbytes(m_payload.retrievedbytes() + rs.bytes);
+          m_payload.set_retrievedfiles(m_payload.retrievedfiles() + rs.files);
+        }
         didUpdate = true;
       }
     } catch (std::out_of_range &) {

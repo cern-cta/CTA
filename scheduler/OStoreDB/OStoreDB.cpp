@@ -1942,6 +1942,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
       ssl.back().bytes = rr.archiveFile.fileSize;
       ssl.back().files = 1;
       ssl.back().fSeq = rr.repackInfo.fSeq;
+      ssl.back().hasUserProvidedFile = rr.repackInfo.hasUserProvidedFile;
     }
     // Record it.
     timingList.insertAndReset("successStatsPrepareTime", t);
@@ -2386,6 +2387,9 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
       rRRepackInfo.isRepack = true;
       rRRepackInfo.forceDisabledTape = forceDisabledTape;
       rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
+      if(rsr.hasUserProvidedFile){
+        rRRepackInfo.hasUserProvidedFile = true;
+      }
       rr->setRepackInfo(rRRepackInfo);
       // Set the queueing parameters
       common::dataStructures::RetrieveFileQueueCriteria fileQueueCriteria;
@@ -2421,6 +2425,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
           failedCreationStats.bytes += rsr.archiveFile.fileSize;
           log::ScopedParamContainer params(lc);
           params.add("fileId", rsr.archiveFile.archiveFileID)
+                .add("forceDisabledTape",repackInfo.forceDisabledTape)
                 .add("repackVid", repackInfo.vid);
           lc.log(log::ERR,
               "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed.");
@@ -2446,6 +2451,16 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
         continue;
       }
     copyNbFound:;
+      if(rsr.hasUserProvidedFile) {
+          /**
+           * As the user has provided the file through the Repack buffer folder,
+           * we will not Retrieve the file from the tape. We create the Retrieve
+           * Request but directly with the status RJS_ToReportToRepackForSuccess so that 
+           * this retrieve request is queued in the RetrieveQueueToReportToRepackForSuccess
+           * and hence be transformed into an ArchiveRequest.
+           */
+          rr->setJobStatus(activeCopyNumber,serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
+      }
       // We have the best VID. The request is ready to be created after comleting its information.
       rr->setOwner(m_oStoreDB.m_agentReference->getAgentAddress());
       rr->setActiveCopyNumber(activeCopyNumber);
@@ -2538,6 +2553,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
     locks.clear();
     sorter.flushAll(lc);
   }
+  //General
   m_repackRequest.setLastExpandedFSeq(fSeq);
   m_repackRequest.commit();
   return nbRetrieveSubrequestsCreated;

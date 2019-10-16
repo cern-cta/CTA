@@ -105,6 +105,7 @@ public:
   void setTotalBytesToRetrieve(const uint64_t nbBytesToRetrieve);
   void setTotalFileToArchive(const uint64_t nbFilesToArchive);
   void setTotalBytesToArchive(const uint64_t nbBytesToArchive);
+  void setUserProvidedFiles(const uint64_t userProvidedFiles);
   
   struct SubrequestStatistics {
     uint64_t fSeq;
@@ -113,6 +114,7 @@ public:
     /// CopyNb is needed to record archive jobs statistics (we can have several archive jobs for the same fSeq)
     uint32_t copyNb = 0;
     bool subrequestDeleted = false;
+    bool hasUserProvidedFile = false;
     typedef std::list<SubrequestStatistics> List;
     bool operator< (const SubrequestStatistics & o) const { return fSeq < o.fSeq; }
   };

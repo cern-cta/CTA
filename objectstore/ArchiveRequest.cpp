@@ -461,6 +461,13 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
               .add("commitUnlockQueueTime", commitUnlockQueueTime)
               .add("sleepTime", sleepTime);
         lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): slept some time to not sit on the queue after GC requeueing.");
+      } catch (JobNotQueueable &ex){
+        log::ScopedParamContainer params(lc);
+        params.add("jobObject", getAddressIfSet())
+              .add("queueObject", queueObject)
+              .add("presumedOwner", presumedOwner)
+              .add("copyNb", j->copynb());
+        lc.log(log::WARNING, "Job garbage collected with a status not queueable, nothing to do.");
       } catch (...) {
         // We could not requeue the job: fail it.
         j->set_status(serializers::AJS_Failed);
@@ -772,8 +779,11 @@ JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& s
     return JobQueueType::JobsToReportToRepackForFailure; 
   case ArchiveJobStatus::AJS_Failed:
     return JobQueueType::FailedJobs;
+  case ArchiveJobStatus::AJS_Complete:
+  case ArchiveJobStatus::AJS_Abandoned:
+    throw JobNotQueueable("In ArchiveRequest::getQueueType(): status is "+ArchiveRequest::statusToString(status)+ "there for it is not queueable.");    
   default:
-    throw cta::exception::Exception("In ArchiveRequest::getQueueType(): invalid status for queueing.");
+    throw cta::exception::Exception("In ArchiveRequest::getQueueType(): unknown status for queueing.");
   }
 }
 
@@ -788,6 +798,10 @@ std::string ArchiveRequest::statusToString(const serializers::ArchiveJobStatus& 
     return "ToReportForTransfer";
   case serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure:
     return "ToReportForFailure";
+  case serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure:
+    return "ToReportToRepackForFailure";
+  case serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess:
+    return "ToReportToRepackForSuccess";
   case serializers::ArchiveJobStatus::AJS_Complete:
     return "Complete";
   case serializers::ArchiveJobStatus::AJS_Failed:
@@ -848,7 +862,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
       // Wrong status, but the context leaves no ambiguity. Just warn.
       log::ScopedParamContainer params(lc);
       params.add("event", eventToString(jobEvent))
-            .add("status", statusToString(*currentStatus))
+            .add("status", ArchiveRequest::statusToString(*currentStatus))
             .add("fileId", m_payload.archivefileid());
       lc.log(log::WARNING, "In ArchiveRequest::determineNextStep(): unexpected status. Assuming ToTransfer.");
     }
@@ -858,7 +872,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
       // Wrong status, but end status will be the same anyway.
       log::ScopedParamContainer params(lc);
       params.add("event", eventToString(jobEvent))
-              .add("status", statusToString(*currentStatus))
+              .add("status", ArchiveRequest::statusToString(*currentStatus))
             .add("fileId", m_payload.archivefileid());
       lc.log(log::WARNING, "In ArchiveRequest::determineNextStep(): unexpected status. Failing the job.");
     }

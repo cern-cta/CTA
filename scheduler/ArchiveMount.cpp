@@ -176,7 +176,14 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("fileId",job->archiveFile.archiveFileID)
             .add("type", "ReportSuccessful");
       logContext.log(cta::log::INFO, "In cta::ArchiveMount::reportJobsBatchTransferred(), archive job succesful.");
-      tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
+      try {
+        tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
+      } catch (const cta::exception::Exception &ex){
+        //We put the not validated job into this list in order to insert the job
+        //into the failedToReportArchiveJobs list in the exception catching block
+        validatedSuccessfulArchiveJobs.emplace_back(std::move(job));
+        throw ex;
+      }
       files++;
       bytes+=job->archiveFile.fileSize;
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
