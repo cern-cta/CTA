@@ -719,7 +719,9 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
   size_t backoff=1;
   utils::Timer t, timeoutTimer;
   RadosLockTimingLogger::Measurements timingMeasurements;
+  uint64_t nbTriesToLock = 0;
   while (true) {
+    nbTriesToLock++;
     TIMESTAMPEDPRINT(lockType==LockType::Shared?"Pre-lock (shared)":"Pre-lock (exclusive)");
     RadosTimeoutLogger rtl;
     if (lockType==LockType::Shared) {
@@ -745,7 +747,7 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
     }
     if (-EBUSY != rc) break;
     if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
-      throw exception::Exception("In BackendRados::lockBackoff(): timeout : timeout set = "+std::to_string(timeout_us)+"usec, time to lock the object : "+std::to_string(timeoutTimer.usecs())+"usec");
+      throw exception::Exception("In BackendRados::lockBackoff(): timeout : timeout set = "+std::to_string(timeout_us)+" usec, time to lock the object : "+std::to_string(timeoutTimer.usecs())+" usec, number of tries to lock = "+std::to_string(nbTriesToLock));
     }
     timespec ts;
     auto latencyUsecs=t.usecs();
