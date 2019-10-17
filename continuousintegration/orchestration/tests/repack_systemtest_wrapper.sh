@@ -60,7 +60,7 @@ kubectl -n ${NAMESPACE} cp repack_generate_report.sh client:/root/repack_generat
 roundTripRepack() {
   echo
   echo "***********************************************************"
-  echo "STEP 1. Launching a round trip repack \"just move\" request"
+  echo "STEP $1. Launching a round trip repack \"just move\" request"
   echo "***********************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
@@ -82,7 +82,7 @@ roundTripRepack() {
   then
   echo
     echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RoundTripRepack || exit 1
   else
     echo "No vid found to repack"
     exit 1
@@ -92,14 +92,14 @@ roundTripRepack() {
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
   echo 
   echo "*******************************************************************"
-  echo "STEP 1. Launching a round trip repack \"just move\" request TEST OK"
+  echo "STEP $1. Launching a round trip repack \"just move\" request TEST OK"
   echo "*******************************************************************"
 }
 
 repackDisableTape() {
   echo 
   echo "*****************************************************"
-  echo "STEP 2. Launching a Repack Request on a disabled tape"
+  echo "STEP $1. Launching a Repack Request on a disabled tape"
   echo "*****************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
@@ -111,7 +111,7 @@ repackDisableTape() {
     echo "Waiting 20 seconds so that the RetrieveQueueStatisticsCache is flushed"
     sleep 20
     echo "Launching the repack request test on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step2-RepackDisabledTape && echo "The repack request is Complete instead of Failed, it should be failed as the tape is disabled" && exit 1 || echo "REPACK FAILED, the tape is disabled so, Test OK"
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape && echo "The repack request is Complete instead of Failed, it should be failed as the tape is disabled" && exit 1 || echo "REPACK FAILED, the tape is disabled so, Test OK"
   else
     echo "No vid found to repack"
     exit 1
@@ -119,21 +119,21 @@ repackDisableTape() {
 
   echo
   echo "Launching the repack request test on VID ${VID_TO_REPACK} with the --disabledtape flag"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -d -r ${BASE_REPORT_DIRECTORY}/Step2-RepackDisabledTape || exit 1
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -d -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape || exit 1
 
   echo "Reclaiming tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   echo
   echo "*************************************************************"
-  echo "STEP 2. Launching a Repack Request on a disabled tape TEST OK"
+  echo "STEP $1. Launching a Repack Request on a disabled tape TEST OK"
   echo "*************************************************************"
 }
 
 repackJustMove() {
   echo 
   echo "*********************************************"
-  echo "STEP 3. Testing Repack \"Just move\" workflow"
+  echo "STEP $1. Testing Repack \"Just move\" workflow"
   echo "*********************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
@@ -141,7 +141,7 @@ repackJustMove() {
   then
   echo
     echo "Launching the repack test \"just move\" on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step3-RepackJustMove || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMove || exit 1
   else
     echo "No vid found to repack"
     exit 1
@@ -151,21 +151,21 @@ repackJustMove() {
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
   echo 
   echo "*****************************************************"
-  echo "STEP 3. Testing Repack \"Just move\" workflow TEST OK"
+  echo "STEP $1. Testing Repack \"Just move\" workflow TEST OK"
   echo "*****************************************************"
 }
 
 repackJustAddCopies() {
   echo
   echo "**************************************************************************"
-  echo "STEP 4. Testing Repack \"Just Add copies\" workflow with all copies on CTA"
+  echo "STEP $1. Testing Repack \"Just Add copies\" workflow with all copies on CTA"
   echo "**************************************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
   if [ "$VID_TO_REPACK" != "null" ] 
   then
     echo "Launching the repack \"just add copies\" test on VID ${VID_TO_REPACK} with all copies already on CTA"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -a -r ${BASE_REPORT_DIRECTORY}/Step4-JustAddCopiesAllCopiesInCTA || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -a -r ${BASE_REPORT_DIRECTORY}/Step$1-JustAddCopiesAllCopiesInCTA || exit 1
   else
     echo "No vid found to repack"
     exit 1
@@ -186,14 +186,14 @@ repackJustAddCopies() {
 
   echo
   echo "**********************************************************************************"
-  echo "STEP 4. Testing Repack \"Just Add copies\" workflow with all copies on CTA TEST OK"
+  echo "STEP $1. Testing Repack \"Just Add copies\" workflow with all copies on CTA TEST OK"
   echo "**********************************************************************************"
 }
 
 repackCancellation() {
   echo
   echo "***********************************"
-  echo "STEP 5. Testing Repack cancellation"
+  echo "STEP $1. Testing Repack cancellation"
   echo "***********************************"
 
   echo "Putting all drives down"
@@ -205,7 +205,7 @@ repackCancellation() {
   then
   echo
     echo "Launching a repack request on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step5-RepackCancellation & 2>/dev/null
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackCancellation & 2>/dev/null
     pid=$!
   else
     echo "No vid found to repack"
@@ -268,14 +268,14 @@ repackCancellation() {
   echo "Retrieve queue of VID ${VID_TO_REPACK} is empty, test OK"
 
   echo "*******************************************"
-  echo "STEP 5. Testing Repack cancellation TEST OK"
+  echo "STEP $1. Testing Repack cancellation TEST OK"
   echo "*******************************************"
 }
 
 repackMoveAndAddCopies() {
   echo
   echo "*******************************************************"
-  echo "STEP 6. Testing Repack \"Move and Add copies\" workflow"
+  echo "STEP $1. Testing Repack \"Move and Add copies\" workflow"
   echo "*******************************************************"
 
   tapepoolDestination1="ctasystest2"
@@ -338,21 +338,21 @@ repackMoveAndAddCopies() {
   echo "OK"
 
   echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 600 -r ${BASE_REPORT_DIRECTORY}/Step6-MoveAndAddCopies || exit 1
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 600 -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies || exit 1
 
   echo "Reclaimimg tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   echo
   echo "***************************************************************"
-  echo "STEP 6. Testing Repack \"Move and Add copies\" workflow TEST OK"
+  echo "STEP $1. Testing Repack \"Move and Add copies\" workflow TEST OK"
   echo "***************************************************************"
 }
 
 repackTapeRepair() {
   echo
   echo "*******************************************************"
-  echo "STEP 7. Testing Repack \"Tape Repair\" workflow"
+  echo "STEP $1. Testing Repack \"Tape Repair\" workflow"
   echo "*******************************************************"  
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
@@ -399,7 +399,7 @@ repackTapeRepair() {
     done
    
     echo "Launching a repack request on the vid ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step7-RepackTapeRepair ||      exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepair ||      exit 1
 
     repackLsResult=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]"`
     userProvidedFiles=`echo $repackLsResult | jq -r ".userProvidedFiles"`
@@ -431,6 +431,8 @@ repackTapeRepair() {
     else
        echo "archivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
     fi
+    echo "Reclaiming tape ${VID_TO_REPACK}"
+    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   else 
     echo "No file to inject, test not OK"
@@ -439,16 +441,16 @@ repackTapeRepair() {
 
   echo
   echo "*******************************************************"
-  echo "STEP 7. Testing Repack \"Tape Repair\" workflow TEST OK"
+  echo "STEP $1. Testing Repack \"Tape Repair\" workflow TEST OK"
   echo "*******************************************************"
 }
 
 #Execution of each tests
-roundTripRepack
-repackDisableTape
-archiveFiles 10 15
-repackJustMove
-repackJustAddCopies
-repackCancellation
-repackMoveAndAddCopies
-repackTapeRepair
+roundTripRepack 1
+repackDisableTape 2
+archiveFiles 1152 15
+repackJustMove 3
+repackTapeRepair 4
+repackJustAddCopies 5
+repackCancellation 6
+repackMoveAndAddCopies 7
