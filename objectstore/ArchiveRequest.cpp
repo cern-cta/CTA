@@ -776,7 +776,9 @@ JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& s
   case ArchiveJobStatus::AJS_ToReportToRepackForSuccess:
     return JobQueueType::JobsToReportToRepackForSuccess;
   case ArchiveJobStatus::AJS_ToReportToRepackForFailure:
-    return JobQueueType::JobsToReportToRepackForFailure; 
+    return JobQueueType::JobsToReportToRepackForFailure;
+  case ArchiveJobStatus::AJS_ToTransferForRepack:
+    return JobQueueType::JobsToTransferForRepack;
   case ArchiveJobStatus::AJS_Failed:
     return JobQueueType::FailedJobs;
   case ArchiveJobStatus::AJS_Complete:
