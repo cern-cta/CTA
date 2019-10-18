@@ -142,7 +142,7 @@ public:
   std::string at(ChecksumType type) const {
     try {
       return m_cs.at(type);
-    } catch(std::out_of_range) {
+    } catch(std::out_of_range &) {
       std::stringstream ss;
       ss << ChecksumTypeName.at(type) << " checksum not found. Checksum blob contents: "
          << *this;
