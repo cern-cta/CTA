@@ -2510,7 +2510,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
       params.add("fileID", aii.rsr.archiveFile.archiveFileID);
       std::stringstream copyNbList;
       bool first = true;
-      for (auto cn: aii.rsr.copyNbsToRearchive) { copyNbList << (first?"":" ") << cn; first = true; }
+      for (auto cn: aii.rsr.copyNbsToRearchive) { copyNbList << (first?"":" ") << cn; first = false; }
       params.add("copyNbsToRearchive", copyNbList.str())
             .add("subrequestObject", aii.request->getAddressIfSet())
             .add("fileBufferURL", aii.rsr.fileBufferURL);

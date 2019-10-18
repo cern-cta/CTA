@@ -337,9 +337,33 @@ repackMoveAndAddCopies() {
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin dr up VD.*
   echo "OK"
 
+  VID_TO_REPACK=$(getFirstVidContainingFiles)
+
   echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 600 -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies || exit 1
 
+  repackLsResult=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]"`
+  totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
+  totalFilesToArchive=`echo $repackLsResult | jq -r ".totalFilesToArchive"`
+  retrievedFiles=`echo $repackLsResult | jq -r ".retrievedFiles"`
+  archivedFiles=`echo $repackLsResult | jq -r ".archivedFiles"`
+  
+  if [[ $retrievedFiles != $totalFilesToRetrieve ]]
+  then
+    echo "RetrievedFiles ($retrievedFiles) != totalFilesToRetrieve ($totalFilesToRetrieve), test FAILED"
+    exit 1
+  else 
+    echo "RetrievedFiles ($retrievedFiles) = totalFilesToRetrieve ($totalFilesToRetrieve), OK"
+  fi
+
+  if [[ $archivedFiles != $totalFilesToArchive ]]
+  then
+    echo "ArchivedFiles ($archivedFiles) != totalFilesToArchive ($totalFilesToArchive), test FAILED"
+    exit 1
+  else
+     echo "ArchivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
+  fi
+  
   echo "Reclaimimg tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 

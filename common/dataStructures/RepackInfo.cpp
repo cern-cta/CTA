@@ -63,10 +63,10 @@ cta::objectstore::RepackQueueType RepackInfo::getQueueType(){
       return cta::objectstore::RepackQueueType::ToExpand;
     case RepackInfo::Status::Running:
     case RepackInfo::Status::Starting:
-      if(!isExpandFinished){
-        return cta::objectstore::RepackQueueType::ToExpand;
-      }
+      if(!isExpandFinished) return cta::objectstore::RepackQueueType::ToExpand;
+      goto explicit_default;
     default:
+    explicit_default:
       throw cta::exception::Exception("The status "+toString(status)+" have no corresponding queue.");
   }
 }
