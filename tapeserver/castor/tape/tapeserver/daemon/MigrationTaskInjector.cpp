@@ -112,7 +112,9 @@ namespace daemon {
   bool MigrationTaskInjector::synchronousInjection() {
     std::list<std::unique_ptr<cta::ArchiveJob> > jobs;
     try {
-      jobs = m_archiveMount.getNextJobBatch(m_maxFiles, m_maxBytes,m_lc);
+      //We multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
+      //(it is applied to ArchiveForUser and ArchiveForRepack batches)
+      jobs = m_archiveMount.getNextJobBatch(2 * m_maxFiles, 2 * m_maxBytes,m_lc);
     } catch (cta::exception::Exception & ex) {
       cta::log::ScopedParamContainer scoped(m_lc);
       scoped.add("transactionId", m_archiveMount.getMountTransactionId())
@@ -163,7 +165,7 @@ namespace daemon {
           throw castor::tape::tapeserver::daemon::ErrorFlag();
         }
         Request req = m_parent.m_queue.pop();
-        auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
+        auto jobs = m_parent.m_archiveMount.getNextJobBatch(2 * req.filesRequested, 2 * req.bytesRequested, m_parent.m_lc);
         uint64_t files=jobs.size();
         uint64_t bytes=0;
         for (auto & j:jobs) bytes+=j->archiveFile.fileSize;

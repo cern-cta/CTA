@@ -33,6 +33,7 @@
 #include "disk/DiskFileImplementations.hpp"
 #include "disk/RadosStriperPool.hpp"
 #include "OStoreDB/OStoreDB.hpp"
+#include "DiskReportRunner.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -1012,12 +1013,17 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       } catch (std::out_of_range &) {}
     }
     uint32_t effectiveExistingMounts = 0;
-    if (m->type == common::dataStructures::MountType::ArchiveForUser) effectiveExistingMounts = existingMounts;
+    if (common::dataStructures::getMountBasicType(m->type) == common::dataStructures::MountType::ArchiveAllTypes) effectiveExistingMounts = existingMounts;
     bool mountPassesACriteria = false;
-    
-    if (m->bytesQueued / (1 + effectiveExistingMounts) >= m_minBytesToWarrantAMount)
+    uint64_t minBytesToWarrantAMount = m_minBytesToWarrantAMount;
+    uint64_t minFilesToWarrantAMount = m_minFilesToWarrantAMount;
+    if(m->type == common::dataStructures::MountType::ArchiveForRepack){
+      minBytesToWarrantAMount *= 2;
+      minFilesToWarrantAMount *= 2;
+    }
+    if (m->bytesQueued / (1 + effectiveExistingMounts) >= minBytesToWarrantAMount)
       mountPassesACriteria = true;
-    if (m->filesQueued / (1 + effectiveExistingMounts) >= m_minFilesToWarrantAMount)
+    if (m->filesQueued / (1 + effectiveExistingMounts) >= minFilesToWarrantAMount)
       mountPassesACriteria = true;
     if (!effectiveExistingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minRequestAge))
       mountPassesACriteria = true;

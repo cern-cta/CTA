@@ -124,7 +124,7 @@ public:
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)
     m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.release()));
-    m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
+    m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
     objectstore::Helpers::flushRetrieveQueueStatisticsCache();
   }
 
@@ -162,7 +162,7 @@ public:
     using namespace cta;
     auto & catalogue=getCatalogue();
 
-    const std::string mountPolicyName = "mount_group";
+    const std::string mountPolicyName = s_mountPolicyName;
     const uint64_t archivePriority = 1;
     const uint64_t minArchiveRequestAge = 2;
     const uint64_t retrievePriority = 3;
@@ -253,7 +253,10 @@ protected:
   const std::string s_vid = "TestVid";
   const std::string s_mediaType = "TestMediaType";
   const std::string s_vendor = "TestVendor";
+  const std::string s_mountPolicyName = "mount_group";
   const bool s_defaultRepackDisabledTapeFlag = false;
+  const uint64_t s_minFilesToWarrantAMount = 5;
+  const uint64_t s_minBytesToWarrantAMount = 2*1000*1000;
   //TempFile m_tempSqliteFile;
 
 }; // class SchedulerTest
@@ -3715,6 +3718,117 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     ASSERT_THROW(cta::objectstore::RepackRequest(repackRequestAddress,backend).fetchNoLock(),cta::objectstore::Backend::NoSuchObject);
   }
 }
+
+TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan2TimesMinFilesWarrantAMount) {
+  using namespace cta;
+  using namespace cta::objectstore;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+
+  //Create environment for the test
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, libraryComment);
+  
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, 12345678,
+    false, false, false, "Comment");
+  
+  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,10000);
+  
+  Sorter sorter(agentReference,backend,catalogue);
+  for(uint64_t i = 0; i < s_minFilesToWarrantAMount; ++i) {
+    std::shared_ptr<cta::objectstore::ArchiveRequest> ar(new cta::objectstore::ArchiveRequest(agentReference.nextId("RepackSubRequest"),backend));
+    ar->initialize();
+    cta::common::dataStructures::ArchiveFile aFile;
+    aFile.archiveFileID = i;
+    aFile.diskFileId = "eos://diskFile";
+    aFile.checksumBlob.insert(cta::checksum::NONE, "");
+    aFile.creationTime = 0;
+    aFile.reconciliationTime = 0;
+    aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
+    aFile.diskInstance = "eoseos";
+    aFile.fileSize = 667;
+    aFile.storageClass = "sc";
+    ar->setArchiveFile(aFile);
+    ar->addJob(1, s_tapePoolName, agentReference.getAgentAddress(), 1, 1, 1);
+    ar->setJobStatus(1, serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
+    cta::common::dataStructures::MountPolicy mp;
+    mp.archiveMinRequestAge = 250000;
+    mp.maxDrivesAllowed = 1;
+    ar->setMountPolicy(mp);
+    ar->setArchiveReportURL("");
+    ar->setArchiveErrorReportURL("");
+    ar->setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
+    ar->setSrcURL("root://eoseos/myFile");
+    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    sorter.insertArchiveRequest(ar, agentReference, lc);
+    ar->insert();
+  }
+  
+  sorter.flushAll(lc);
+  
+  //As the scheduler minFilesToWarrantAMount is 5 and there is 5 ArchiveForRepack jobs queued
+  //the call to getNextMount should return an nullptr (10 files mini to have an ArchiveForRepack mount)
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
+ 
+  for(uint64_t i = s_minFilesToWarrantAMount; i < 2 * s_minFilesToWarrantAMount; ++i) {
+    std::shared_ptr<cta::objectstore::ArchiveRequest> ar(new cta::objectstore::ArchiveRequest(agentReference.nextId("RepackSubRequest"),backend));
+    ar->initialize();
+    cta::common::dataStructures::ArchiveFile aFile;
+    aFile.archiveFileID = i;
+    aFile.diskFileId = "eos://diskFile";
+    aFile.checksumBlob.insert(cta::checksum::NONE, "");
+    aFile.creationTime = 0;
+    aFile.reconciliationTime = 0;
+    aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
+    aFile.diskInstance = s_diskInstance;
+    aFile.fileSize = 667;
+    aFile.storageClass = s_storageClassName;
+    ar->setArchiveFile(aFile);
+    ar->addJob(1, s_tapePoolName, agentReference.getAgentAddress(), 1, 1, 1);
+    ar->setJobStatus(1, serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
+    cta::common::dataStructures::MountPolicy mp;
+    mp.archiveMinRequestAge = 250000;
+    mp.maxDrivesAllowed = 1;
+    ar->setMountPolicy(mp);
+    ar->setArchiveReportURL("");
+    ar->setArchiveErrorReportURL("");
+    ar->setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
+    ar->setSrcURL("root://eoseos/myFile");
+    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    sorter.insertArchiveRequest(ar, agentReference, lc);
+    ar->insert();
+  }
+  
+  sorter.flushAll(lc);
+  
+  //As there is now 10 files in the queue, the getNextMount method should return an ArchiveMount
+  //with 10 files in it
+  std::unique_ptr<cta::TapeMount> tapeMount = scheduler.getNextMount(s_libraryName,"drive0",lc);
+  ASSERT_NE(nullptr,tapeMount);
+  cta::ArchiveMount * archiveMount = dynamic_cast<cta::ArchiveMount *>(tapeMount.get());
+  archiveMount->getNextJobBatch(2 * s_minFilesToWarrantAMount,2 * s_minBytesToWarrantAMount, lc);
+  ASSERT_EQ(2 * s_minFilesToWarrantAMount,tapeMount->getNbFiles());
+}
+
 
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
