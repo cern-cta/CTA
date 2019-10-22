@@ -109,6 +109,8 @@ public:
     uint64_t fSeq = 0;
     std::string repackRequestAddress;
     std::string fileBufferURL;
+    //Map successful archive jobs copyNb to the destination vid where the archived file is located
+    std::map<uint32_t,std::string> jobsDestination;
   };
   void setRepackInfo(const RepackInfo & repackInfo);
   RepackInfo getRepackInfo();
@@ -165,6 +167,11 @@ public:
       arri.set_repack_request_address(repackRequestAddress);
       arri.set_fseq(fSeq);
       arri.set_file_buffer_url(fileBufferURL);
+      for(const auto &kv: jobsDestination){
+	auto jobDestination = arri.mutable_jobs_destination()->Add();
+	jobDestination->set_copy_nb(kv.first);
+	jobDestination->set_destination_vid(kv.second);
+      }
     }
     
     void deserialize(const cta::objectstore::serializers::ArchiveRequestRepackInfo & arri) {
@@ -172,6 +179,9 @@ public:
       fileBufferURL = arri.file_buffer_url();
       repackRequestAddress = arri.repack_request_address();
       fSeq = arri.fseq();
+      for(auto jobDestination: arri.jobs_destination()){
+	jobsDestination[jobDestination.copy_nb()] = jobDestination.destination_vid();
+      }
     }
   };
   
@@ -186,7 +196,7 @@ public:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
-  AsyncTransferSuccessfulUpdater * asyncUpdateTransferSuccessful(uint32_t copyNumber);
+  AsyncTransferSuccessfulUpdater * asyncUpdateTransferSuccessful(const std::string destinationVid, const uint32_t copyNumber);
   
   // An asynchronous request deleter class after report of success.
   class AsyncRequestDeleter {

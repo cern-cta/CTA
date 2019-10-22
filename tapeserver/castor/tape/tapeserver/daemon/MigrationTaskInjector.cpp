@@ -112,7 +112,7 @@ namespace daemon {
   bool MigrationTaskInjector::synchronousInjection() {
     std::list<std::unique_ptr<cta::ArchiveJob> > jobs;
     try {
-      //We multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
+      //First popping of files, we multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
       //(it is applied to ArchiveForUser and ArchiveForRepack batches)
       jobs = m_archiveMount.getNextJobBatch(2 * m_maxFiles, 2 * m_maxBytes,m_lc);
     } catch (cta::exception::Exception & ex) {

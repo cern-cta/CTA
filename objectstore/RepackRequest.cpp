@@ -148,6 +148,13 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.userProvidedFiles = m_payload.userprovidedfiles();
   ret.isExpandFinished = m_payload.is_expand_finished();
   ret.forceDisabledTape = m_payload.force_disabled_tape();
+  for(auto & rdi: m_payload.destination_infos()){
+    RepackInfo::RepackDestinationInfo rdiToInsert;
+    rdiToInsert.vid = rdi.vid();
+    rdiToInsert.files = rdi.files();
+    rdiToInsert.bytes = rdi.bytes();
+    ret.destinationInfos.emplace_back(rdiToInsert);
+  }
   if (m_payload.move_mode()) {
     if (m_payload.add_copies_mode()) {
       ret.type = RepackInfo::Type::MoveAndAddCopies;
@@ -200,6 +207,7 @@ void RepackRequest::deleteAllSubrequests() {
   checkPayloadWritable();
   std::list<std::unique_ptr<Backend::AsyncDeleter>> deleters;
   if(!m_payload.is_complete()){
+    m_payload.mutable_destination_infos()->Clear();
     try{
       for(auto itor = m_payload.mutable_subrequests()->begin(); itor != m_payload.mutable_subrequests()->end(); ++itor){
         //Avoid the race condition that can happen during expansion of the RepackRequest
@@ -217,6 +225,42 @@ void RepackRequest::deleteAllSubrequests() {
 void RepackRequest::setIsComplete(const bool isComplete){
   checkPayloadWritable();
   m_payload.set_is_complete(isComplete);
+}
+
+void RepackRequest::updateRepackDestinationInfos(const cta::common::dataStructures::ArchiveFile & archiveFile, const std::string & destinationVid){
+  checkPayloadWritable();
+  
+  bool rdiFound = false;
+  cta::objectstore::serializers::RepackDestinationInfo * info = nullptr;
+  for (auto rdiIter = m_payload.mutable_destination_infos()->begin(); !rdiFound && rdiIter != m_payload.mutable_destination_infos()->end(); ++rdiIter) {
+    //find the infos for the vid of the archived file
+    if(rdiIter->vid() == destinationVid){
+      info = &(*rdiIter);
+      rdiFound = true;
+    }
+  }
+  if(!rdiFound){
+    //info has to be created, create it and set its vid
+    //by default the files and the bytes = 0 (see cta.proto)
+    info = m_payload.mutable_destination_infos()->Add();
+    info->set_vid(destinationVid);
+  }
+  info->set_files(info->files() + 1);
+  info->set_bytes(info->bytes() + archiveFile.fileSize);
+}
+
+std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> RepackRequest::getRepackDestinationInfos(){
+  checkPayloadReadable();
+  
+  std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> ret;
+  for(auto rdiIter: m_payload.destination_infos()){
+    common::dataStructures::RepackInfo::RepackDestinationInfo rdi;
+    rdi.vid = rdiIter.vid();
+    rdi.files = rdiIter.files();
+    rdi.bytes = rdiIter.bytes();
+    ret.emplace_back(rdi);
+  }
+  return ret;
 }
 
 void RepackRequest::setForceDisabledTape(const bool disabledTape){
@@ -480,6 +524,9 @@ serializers::RepackRequestStatus RepackRequest::reportArchiveSuccesses(Subreques
       auto & p = pointerMap.at(as.fSeq);
       if (!p.archiveCopyNbsAccounted.count(as.copyNb)) {
         p.archiveCopyNbsAccounted.insert(as.copyNb);
+        cta::objectstore::ArchiveRequest ar(p.address,m_objectStore);
+        ar.fetchNoLock();
+        updateRepackDestinationInfos(ar.getArchiveFile(),as.destinationVid);
         m_payload.set_archivedbytes(m_payload.archivedbytes() + as.bytes);
         m_payload.set_archivedfiles(m_payload.archivedfiles() + as.files);
         p.subrequestDeleted = as.subrequestDeleted;

@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>
+#include <list>
 #include "objectstore/RepackQueueType.hpp"
 
 namespace cta {
@@ -30,6 +31,13 @@ namespace dataStructures {
  */
 struct RepackInfo {
 
+  struct RepackDestinationInfo {
+    std::string vid;
+    uint64_t files = 0;
+    uint64_t bytes = 0;
+    typedef std::list<RepackDestinationInfo> List;
+  };
+  
   std::string vid;
   std::string repackBufferBaseURL;
   enum class Type {
@@ -62,6 +70,7 @@ struct RepackInfo {
   uint64_t archivedFiles;
   bool isExpandFinished;
   bool forceDisabledTape;
+  RepackDestinationInfo::List destinationInfos;
 //  std::string tag;
 //  uint64_t totalFiles;
 //  uint64_t totalSize;

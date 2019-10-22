@@ -335,10 +335,16 @@ message ArchiveJob {
   repeated string reportfailurelogs = 4413;
 }
 
+message JobDestinationVid {
+  optional string destination_vid = 4414;
+  optional uint32 copy_nb = 4415;
+}
+
 message ArchiveRequestRepackInfo {
   required string repack_request_address = 4450;
   required string file_buffer_url = 4453;
   required uint64 fseq = 4455;
+  repeated JobDestinationVid jobs_destination = 4456; 
 }
 
 message ArchiveRequest {
@@ -573,6 +579,12 @@ message RepackSubRequestPointer {
   required bool subrequest_deleted = 10540;
 }
 
+message RepackDestinationInfo {
+  required string vid = 20000;
+  required uint64 files = 20001 [default = 0];
+  required uint64 bytes = 20002 [default = 0];
+}
+
 message RepackRequest {
   required string vid = 11000;
   required string buffer_url = 11005;
@@ -606,6 +618,7 @@ message RepackRequest {
   required bool force_disabled_tape = 11564;
   required bool is_complete = 11565;
   repeated RepackSubRequestPointer subrequests = 11570;
+  repeated RepackDestinationInfo destination_infos = 11571;
 }
 
 message RepackRequestIndexPointer {

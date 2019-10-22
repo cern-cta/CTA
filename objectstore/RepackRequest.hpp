@@ -52,6 +52,8 @@ public:
   common::dataStructures::MountPolicy getMountPolicy();
   void deleteAllSubrequests();
   void setIsComplete(const bool complete);
+  void updateRepackDestinationInfos(const common::dataStructures::ArchiveFile & archiveFile, const std::string & destinationVid);
+  std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> getRepackDestinationInfos();
   /**
    * Set the flag disabledTape to allow the mounting of a
    * disabled tape for file retrieval
@@ -115,6 +117,7 @@ public:
     uint32_t copyNb = 0;
     bool subrequestDeleted = false;
     bool hasUserProvidedFile = false;
+    std::string destinationVid;
     typedef std::list<SubrequestStatistics> List;
     bool operator< (const SubrequestStatistics & o) const { return fSeq < o.fSeq; }
   };

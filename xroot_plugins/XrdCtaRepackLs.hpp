@@ -80,6 +80,13 @@ namespace cta { namespace xrd {
 	  repackRequestItem->set_status(toString(repackRequest.status));
 	  //Last expanded fSeq is in reality the next FSeq to Expand. So last one is next - 1
 	  repackRequestItem->set_last_expanded_fseq(repackRequest.lastExpandedFseq != 0 ? repackRequest.lastExpandedFseq - 1 : 0);
+	  repackRequestItem->mutable_destination_infos()->Clear();
+	  for(auto destinationInfo: repackRequest.destinationInfos){
+	    auto * destinationInfoToInsert = repackRequestItem->mutable_destination_infos()->Add();
+	    destinationInfoToInsert->set_vid(destinationInfo.vid);
+	    destinationInfoToInsert->set_files(destinationInfo.files);
+	    destinationInfoToInsert->set_bytes(destinationInfo.bytes);
+	  }
 	  is_buffer_full = streambuf->Push(record);
 	}
 	

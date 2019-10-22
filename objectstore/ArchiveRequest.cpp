@@ -584,6 +584,9 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
             retRef.m_repackInfo.fileBufferURL = payload.repack_info().file_buffer_url();
             retRef.m_repackInfo.isRepack = payload.isrepack();
             retRef.m_repackInfo.repackRequestAddress = payload.repack_info().repack_request_address();
+            for(auto jobDestination: payload.repack_info().jobs_destination()){
+              retRef.m_repackInfo.jobsDestination[jobDestination.copy_nb()] = jobDestination.destination_vid();
+            }
             if (j->failurelogs_size()) {
               retRef.m_latestError = j->failurelogs(j->failurelogs_size()-1);
             }
@@ -663,12 +666,12 @@ ArchiveRequest::RepackInfo ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo()
 //------------------------------------------------------------------------------
 // ArchiveRequest::asyncUpdateTransferSuccessful()
 //------------------------------------------------------------------------------
-ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTransferSuccessful(const uint32_t copyNumber ) {
+ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTransferSuccessful(const std::string destinationVid, const uint32_t copyNumber ) {
   std::unique_ptr<AsyncTransferSuccessfulUpdater> ret(new AsyncTransferSuccessfulUpdater);  
   // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto retPtr = ret.get();
   ret->m_updaterCallback=
-    [this, copyNumber, retPtr](const std::string &in)->std::string { 
+    [this, destinationVid, copyNumber, retPtr](const std::string &in)->std::string { 
       // We have a locked and fetched object, so we just need to work on its representation.
       serializers::ObjectHeader oh;
       oh.ParseFromString(in);
@@ -680,11 +683,6 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
       serializers::ArchiveRequest payload;
       payload.ParseFromString(oh.payload());
       retPtr->m_repackInfo.isRepack = payload.isrepack();
-      if (payload.isrepack()) { // Default repack info is fine for the no repack case.
-        ArchiveRequest::RepackInfoSerDeser serDeser;
-        serDeser.deserialize(payload.repack_info());
-        retPtr->m_repackInfo = serDeser;
-      }
       if (!payload.isrepack()) { // Non-repack case. We only do one report per request.
         auto * jl = payload.mutable_jobs();
         bool otherJobsToTransfer = false;
@@ -713,6 +711,12 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
       } else { // Repack case, the report policy is different (report all jobs). So we just change the job's status.
         for (auto j: *payload.mutable_jobs()) {
           if (j.copynb() == copyNumber) {
+            ArchiveRequest::RepackInfoSerDeser serDeser;
+            serDeser.deserialize(payload.repack_info());
+            //Store the job destination vid in the repack info
+            serDeser.jobsDestination[copyNumber] = destinationVid;
+            serDeser.serialize(*(payload.mutable_repack_info()));
+            retPtr->m_repackInfo = serDeser;
             j.set_status(serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess);
             oh.set_payload(payload.SerializeAsString());
             return oh.SerializeAsString();
@@ -915,6 +919,9 @@ ArchiveRequest::RepackInfo ArchiveRequest::getRepackInfo(){
   ret.fileBufferURL = repackInfo.file_buffer_url();
   ret.isRepack = true;
   ret.repackRequestAddress = repackInfo.repack_request_address();
+  for(auto jobDestination: repackInfo.jobs_destination()){
+    ret.jobsDestination[jobDestination.copy_nb()] = jobDestination.destination_vid();
+  }
   return ret;
 }
 
@@ -924,6 +931,11 @@ void ArchiveRequest::setRepackInfo(const RepackInfo& repackInfo){
   repackInfoToWrite->set_repack_request_address(repackInfo.repackRequestAddress);
   repackInfoToWrite->set_file_buffer_url(repackInfo.fileBufferURL);
   repackInfoToWrite->set_fseq(repackInfo.fSeq);
+  for(const auto kv: repackInfo.jobsDestination){
+    auto jobDestination = repackInfoToWrite->mutable_jobs_destination()->Add();
+    jobDestination->set_copy_nb(kv.first);
+    jobDestination->set_destination_vid(kv.second);
+  }
 }
 
 //------------------------------------------------------------------------------

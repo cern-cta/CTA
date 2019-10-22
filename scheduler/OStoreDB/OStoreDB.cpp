@@ -4520,9 +4520,11 @@ void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
 void OStoreDB::ArchiveJob::asyncSucceedTransfer() {
   log::LogContext lc(m_oStoreDB.m_logger);
   log::ScopedParamContainer params(lc);
-  params.add("requestObject", m_archiveRequest.getAddressIfSet());
+  params.add("requestObject", m_archiveRequest.getAddressIfSet())
+        .add("destinationVid",tapeFile.vid)
+        .add("copyNb",tapeFile.copyNb);
   lc.log(log::DEBUG, "Will start async update archiveRequest for transfer success");
-  m_succesfulTransferUpdater.reset(m_archiveRequest.asyncUpdateTransferSuccessful(tapeFile.copyNb));
+  m_succesfulTransferUpdater.reset(m_archiveRequest.asyncUpdateTransferSuccessful(tapeFile.vid, tapeFile.copyNb));
 }
 
 //------------------------------------------------------------------------------
@@ -4626,6 +4628,7 @@ objectstore::RepackRequest::SubrequestStatistics::List OStoreDB::RepackArchiveRe
     ssl.back().files = 1;
     ssl.back().fSeq = sri.repackInfo.fSeq;
     ssl.back().copyNb = sri.archivedCopyNb;
+    ssl.back().destinationVid = sri.repackInfo.jobsDestination[sri.archivedCopyNb];
     for(auto &j: sri.archiveJobsStatusMap){
       if(j.first != sri.archivedCopyNb){
         if((j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete) && (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)){

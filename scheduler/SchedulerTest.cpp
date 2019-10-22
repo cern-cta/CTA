@@ -2186,6 +2186,9 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       ri.fetchNoLock();
       cta::objectstore::RepackRequest rr(ri.getRepackRequestAddress(vid),backend);
       rr.fetchNoLock();
+      ASSERT_EQ(vidDestination,rr.getRepackDestinationInfos().front().vid);
+      ASSERT_EQ(nbArchiveFilesPerTape,rr.getRepackDestinationInfos().front().files);
+      ASSERT_EQ(nbArchiveFilesPerTape * archiveFileSize,rr.getRepackDestinationInfos().front().bytes);
       ASSERT_EQ(common::dataStructures::RepackInfo::Status::Complete,rr.getInfo().status);
     }
   }
