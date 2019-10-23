@@ -172,7 +172,17 @@ if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | 
     exit 1
 fi
 
+echo 
+destinationInfos=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos"`
+if [[ `echo $destinationInfos | jq length` != 0 ]]
+then
+  header="DestinationVID\tNbFiles\ttotalSize\n"
+  { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
+fi
+
+echo
 echo "Repack request on VID ${VID_TO_REPACK} succeeded."
+echo
 
 exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} -r ${REPORT_DIRECTORY} ${ADD_COPIES_ONLY} &
 wait $!
