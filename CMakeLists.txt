@@ -122,7 +122,7 @@ ELSE(DEFINED PackageOnly)
   #endif (CMAKE_COMPILER_IS_GNUCC)
 
   if (OCCI_SUPPORT)
-    find_package (oracle-instantclient REQUIRED COMPONENTS ORACLE-INSTANTCLIENT_INCLUDE_DIRS ORACLE-INSTANTCLIENT_LIBRARIES ORACLE-INSTANTCLIENT_RPATH)
+    find_package (oracle-instantclient REQUIRED)
   endif (OCCI_SUPPORT)
 
   install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
