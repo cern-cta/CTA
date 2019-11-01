@@ -3,7 +3,7 @@
 . /opt/run/bin/init_pod.sh
 
 # oracle sqlplus client binary path
-ORACLE_SQLPLUS="/usr/bin/sqlplus64"
+ORACLE_SQLPLUS="/usr/lib/oracle/19.3/client64/bin/sqlplus"
 
 die() {
   stdbuf -i 0 -o 0 -e 0 echo "$@"
