@@ -142,7 +142,7 @@ void logStartOfDaemon(cta::log::Logger &log,
 
   std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
   params.splice(params.end(), commandLine.toLogParams());
-  log(log::INFO, "cta-taped started", params);
+  log(log::INFO, "Starting cta-taped", params);
 }
 
 //------------------------------------------------------------------------------
@@ -236,14 +236,14 @@ int main(const int argc, char **const argv) {
   } catch(exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("message", ex.getMessage().str())};
-    log(log::ERR, "Caught an unexpected CTA exception", params);
+    log(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
     sleep(1);
   } catch(std::exception &se) {
     std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
-    log(log::ERR, "Caught an unexpected standard exception", params);
+    log(log::ERR, "Caught an unexpected standard exception, cta-taped cannot start", params);
     sleep(1);
   } catch(...) {
-    log(log::ERR, "Caught an unexpected and unknown exception");
+    log(log::ERR, "Caught an unexpected and unknown exception, cta-taped cannot start");
     sleep(1);
   }
 
