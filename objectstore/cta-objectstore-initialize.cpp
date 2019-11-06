@@ -34,10 +34,10 @@
 #include <stdexcept>
 
 int main(int argc, char ** argv) {
+  std::unique_ptr<cta::objectstore::Backend> be;
   try {
     cta::log::StdoutLogger logger(cta::utils::getShortHostname(), "cta-objectstore-initialize");
     cta::log::LogContext lc(logger);
-    std::unique_ptr<cta::objectstore::Backend> be;
     if (1 == argc) {
       be.reset(new cta::objectstore::BackendVFS);
     } else if (2 == argc) {
@@ -66,11 +66,17 @@ int main(int argc, char ** argv) {
     re.fetch();
     re.addOrGetDriveRegisterPointerAndCommit(agr, el);
     re.addOrGetSchedulerGlobalLockAndCommit(agr,el);
-    ag.removeAndUnregisterSelf(lc);
+    {
+      cta::objectstore::ScopedExclusiveLock agentLock(ag);
+      ag.fetch();
+      ag.removeAndUnregisterSelf(lc);
+    }
     rel.release();
     std::cout << "New object store path: " << be->getParams()->toURL() << std::endl;
+    return EXIT_SUCCESS;
   } catch (std::exception & e) {
-    std::cerr << "Failed to initialise the root entry in a new VFS backend store"
+    std::cerr << "Failed to initialise the root entry in a new " << be->typeName() << " objectstore"
         << std::endl << e.what() << std::endl;
+    return EXIT_FAILURE;
   }
 }
