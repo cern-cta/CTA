@@ -83,7 +83,7 @@ public:
   const DiskSystemList &getDiskSystemList() { return m_systemList; }
 private:
   DiskSystemList &m_systemList;
-  uint64_t fetchEosFreeSpace(const std::string & instanceAddress, log::LogContext & lc);
+  uint64_t fetchEosFreeSpace(const std::string & instanceAddress, const std::string & spaceName,log::LogContext & lc);
   uint64_t fetchConstantFreeSpace(const std::string & instanceAddress, log::LogContext & lc);
 };
 

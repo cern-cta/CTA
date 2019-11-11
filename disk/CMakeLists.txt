@@ -37,6 +37,7 @@ set_property(TARGET ctadisk PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 add_library(ctadiskunittests SHARED
   CryptoPPTest.cpp
+  DiskSystemTest.cpp
 )
 
 set_property(TARGET ctadiskunittests PROPERTY SOVERSION "${CTA_SOVERSION}")

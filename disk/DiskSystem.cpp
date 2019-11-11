@@ -63,7 +63,7 @@ std::string DiskSystemList::getDSNAme(const std::string& fileURL) const {
 //------------------------------------------------------------------------------
 void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems, log::LogContext & lc) {
   // The real deal: go fetch the file system's free space.
-  cta::utils::Regex eosDiskSystem("^eos://(.*)$");
+  cta::utils::Regex eosDiskSystem("^eos:(.*):(.*)$");
   // For testing purposes
   cta::utils::Regex constantFreeSpaceDiskSystem("^constantFreeSpace:(.*)");
   for (auto const & ds: diskSystems) {
@@ -71,7 +71,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     std::vector<std::string> regexResult;
     regexResult = eosDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
     if (regexResult.size()) {
-      freeSpace = fetchEosFreeSpace(regexResult.at(1), lc);
+      freeSpace = fetchEosFreeSpace(regexResult.at(1), regexResult.at(2), lc);
       goto found;
     }
     regexResult = constantFreeSpaceDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
@@ -91,7 +91,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceAddress, log::LogContext & lc) {
+uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceAddress, const std::string &spaceName, log::LogContext & lc) {
   threading::SubProcess sp("/usr/bin/eos", {"/usr/bin/eos", std::string("root://")+instanceAddress, "space", "ls", "-m"});
   sp.wait();
   try {
@@ -110,7 +110,7 @@ uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceA
   // Look for the result line for default space.
   std::istringstream spStdoutIss(sp.stdout());
   std::string defaultSpaceLine;
-  utils::Regex defaultSpaceRe("^.*name=default .*$");
+  utils::Regex defaultSpaceRe("^.*name="+spaceName+" .*$");
   do {
     std::string spStdoutLine;
     std::getline(spStdoutIss, spStdoutLine);
