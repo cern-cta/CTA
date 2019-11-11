@@ -69,3 +69,6 @@ mgmofs.autosaveconfig true
 # Set the endpoint and resources for EOS/CTA Workflows
 mgmofs.protowfendpoint ctafrontend:10955
 mgmofs.protowfresource /ctafrontend
+
+# Set the EOS space to be used as the destination of prepare requests
+mgmofs.prepare.dest.space default
