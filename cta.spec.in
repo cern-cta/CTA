@@ -1,3 +1,6 @@
+# Avoid problem with official Oracle RPMS not listing libocci.so as a capability
+%global __requires_exclude ^libocci.so
+
 # Generic macros
 #---------------
 %define name cta
