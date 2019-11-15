@@ -1,3 +1,6 @@
+# Avoid problem with official Oracle RPMS not listing necessary capabilities
+%global __requires_exclude ^libocci.so|^libclntsh.so
+
 # Generic macros
 #---------------
 %define name cta
