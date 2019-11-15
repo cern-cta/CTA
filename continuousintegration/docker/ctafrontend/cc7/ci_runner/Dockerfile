@@ -60,7 +60,6 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       xrootd-client \
       xrootd-debuginfo \
       xrootd-server \
-      oracle-instantclient-tnsnames.ora \
   && \
     createrepo ${CTAREPODIR} \
   && \
