@@ -17,7 +17,7 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable ceph
 
   # install needed packages
-  yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
+  yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient19.3-sqlplus
   yum clean packages
 fi
 
