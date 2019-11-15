@@ -112,7 +112,7 @@ protected:
         }
     }
     catch (cta::exception::Exception & ex) {
-      scoped.add("exception_message", ex.getMessageValue());
+      scoped.add("exceptionMessage", ex.getMessageValue());
       m_logContext.log(cta::log::ERR,
         "Failed to mount the tape for read-only access");
       throw;
@@ -133,7 +133,7 @@ protected:
         m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
     }
     catch (cta::exception::Exception & ex) {
-      scoped.add("exception_message", ex.getMessageValue());
+      scoped.add("exceptionMessage", ex.getMessageValue());
       m_logContext.log(cta::log::ERR,
         "Failed to mount the tape for read/write access");
       throw;
@@ -154,7 +154,7 @@ protected:
       m_drive.waitUntilReady(60);
       cta::log::LogContext::ScopedParam sp0(m_logContext, cta::log::Param("loadTime", timer.secs()));
     }catch(const cta::exception::Exception& e){
-      cta::log::LogContext::ScopedParam sp01(m_logContext, cta::log::Param("exception_message", e.getMessageValue()));
+      cta::log::LogContext::ScopedParam sp01(m_logContext, cta::log::Param("exceptionMessage", e.getMessageValue()));
       m_logContext.log(cta::log::INFO, "Got timeout or error while waiting for drive to be ready.");
       throw;
     }

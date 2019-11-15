@@ -119,7 +119,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, m_this.m_logContext);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
-    scoped.add("exception_message", ex.getMessageValue());
+    scoped.add("exceptionMessage", ex.getMessageValue());
     m_this.m_logContext.log(cta::log::ERR, "Exception in TapeWriteSingleThread-TapeCleaning. Putting the drive down.");
     // As we do not throw exceptions from here, the watchdog signalling has
     // to occur from here.
@@ -568,7 +568,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logSCSIMetrics() {
   }
   catch (const cta::exception::Exception &ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exception_message", ex.getMessageValue());
+    scoped.add("exceptionMessage", ex.getMessageValue());
     m_logContext.log(cta::log::ERR, "Exception in logging mount general statistics");
   }
 
@@ -586,7 +586,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logSCSIMetrics() {
   }
   catch (const cta::exception::Exception &ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exception_message", ex.getMessageValue());
+    scoped.add("exceptionMessage", ex.getMessageValue());
     m_logContext.log(cta::log::ERR, "Exception in logging drive statistics");
   }
 
@@ -600,7 +600,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logSCSIMetrics() {
   }
   catch (const cta::exception::Exception &ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exception_message", ex.getMessageValue());
+    scoped.add("exceptionMessage", ex.getMessageValue());
     m_logContext.log(cta::log::ERR, "Exception in logging volume statistics");
   }
 }

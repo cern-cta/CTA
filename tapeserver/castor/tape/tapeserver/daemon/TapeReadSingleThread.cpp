@@ -126,7 +126,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
-    scoped.add("exception_message", ex.getMessageValue());
+    scoped.add("exceptionMessage", ex.getMessageValue());
     m_this.m_logContext.log(cta::log::ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.");
     try {
       if (currentErrorToCount.size()) {
@@ -182,7 +182,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
     return rs;
   }catch(cta::exception::Exception & ex){
       cta::log::ScopedParamContainer scoped(m_logContext); 
-      scoped.add("exception_message", ex.getMessageValue());
+      scoped.add("exceptionMessage", ex.getMessageValue());
       m_logContext.log(cta::log::ERR, "Failed to tapeFile::ReadSession");
       throw cta::exception::Exception("Tape's label is either missing or not valid"); 
   }  
@@ -433,7 +433,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logSCSIMetrics() {
   }
   catch (const cta::exception::Exception &ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exception_message", ex.getMessageValue());
+    scoped.add("exceptionMessage", ex.getMessageValue());
     m_logContext.log(cta::log::ERR, "Exception in logging mount general statistics");
   }
 
@@ -451,7 +451,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logSCSIMetrics() {
   }
   catch (const cta::exception::Exception &ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exception_message", ex.getMessageValue());
+    scoped.add("exceptionMessage", ex.getMessageValue());
     m_logContext.log(cta::log::ERR, "Exception in logging drive statistics");
   }
 
@@ -465,7 +465,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logSCSIMetrics() {
   }
   catch (const cta::exception::Exception &ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exception_message", ex.getMessageValue());
+    scoped.add("exceptionMessage", ex.getMessageValue());
     m_logContext.log(cta::log::ERR, "Exception in logging volume statistics");
   }
 }
