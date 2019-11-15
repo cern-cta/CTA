@@ -235,7 +235,7 @@ int main(const int argc, char **const argv) {
     programRc = cta::taped::exceptionThrowingMain(*commandLine, log);
   } catch(exception::Exception &ex) {
     std::list<cta::log::Param> params = {
-      cta::log::Param("message", ex.getMessage().str())};
+      cta::log::Param("exceptionMessage", ex.getMessage().str())};
     log(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
     sleep(1);
   } catch(std::exception &se) {
