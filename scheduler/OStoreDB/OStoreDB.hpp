@@ -254,6 +254,7 @@ public:
     virtual void asyncSetSuccessful() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
+    void abort(const std::string& abortReason, log::LogContext &lc) override;
     virtual ~RetrieveJob() override;
   private:
     // Can be instantiated from a mount (queue to transfer) or a report queue

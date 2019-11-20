@@ -21,7 +21,6 @@
 #include "OStoreDB.hpp"
 #include "MemQueues.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
-#include "objectstore/RetrieveQueueAlgorithms.hpp"
 #include "objectstore/RepackQueueAlgorithms.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/DriveState.hpp"
@@ -3699,8 +3698,43 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
     // Get the free space from disk systems involved.
     std::set<std::string> diskSystemNames;
     for (auto const & dsrr: diskSpaceReservationRequest) diskSystemNames.insert(dsrr.first);
+    std::list<std::unique_ptr<OStoreDB::RetrieveJob>> failedJobsFetchingDiskSystems;
     try {
       diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, logContext);
+    } catch(const cta::disk::DiskSystemFreeSpaceListException &ex){
+      //We could not find the disk system free space, we will abort all the jobs that belong to the failed-to-fetch disk systems
+      std::list<cta::objectstore::ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElement> jobsToAbort;
+      //Do not move the jobs that do not belong to the failed-to-fetch disk system
+      //We will use a stable_partition so that the failed-to-fetch diskSystemFreeSpace jobs are located at the end of the jobs.elements container
+      auto failedToFetchDiskSystemFirstElementIterator = std::stable_partition(jobs.elements.begin(),jobs.elements.end(),[&](cta::objectstore::ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElement& elt){
+        return elt.diskSystemName && (ex.m_failedDiskSystems.find(elt.diskSystemName.value()) == ex.m_failedDiskSystems.end());
+      });
+      //Insert the failed-to-fetch jobs into the jobs to abort list
+      jobsToAbort.insert(jobsToAbort.end(), std::make_move_iterator(failedToFetchDiskSystemFirstElementIterator),std::make_move_iterator(jobs.elements.end()));
+      //Remove the failed-to-fetch job from the jobs.elements container
+      jobs.elements.erase(failedToFetchDiskSystemFirstElementIterator,jobs.elements.end());
+      for(auto &j: jobsToAbort){
+        std::string diskSystemName = j.diskSystemName.value();
+        std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), m_oStoreDB, this));
+        rj->archiveFile = j.archiveFile;
+        rj->diskSystemName = j.diskSystemName;
+        rj->retrieveRequest = j.rr;
+        rj->selectedCopyNb = j.copyNb;
+        rj->isRepack = j.repackInfo.isRepack;
+        rj->m_repackInfo = j.repackInfo;
+        rj->m_jobOwned = true;
+        rj->m_mountId = mountInfo.mountId;
+        rj->abort(ex.m_failedDiskSystems.at(j.diskSystemName.value()).getMessageValue(),logContext);
+        log::ScopedParamContainer params(logContext);
+        params.add("diskSystemName", j.diskSystemName.value())
+              .add("failureReason", ex.m_failedDiskSystems.at(j.diskSystemName.value()).getMessageValue())
+              .add("fileId", j.archiveFile.archiveFileID)
+              .add("copyNb", j.copyNb)
+              .add("requestAddress",j.retrieveRequest->getAddressIfSet())
+              .add("isRepack", j.repackInfo.isRepack);
+        logContext.log(log::ERR, "In OStoreDB::RetrieveMount::getNextJobBatch(): unable to request EOS free space for the job.");
+        diskSystemNames.erase(diskSystemName);
+      }
     } catch (std::exception &ex) {
       // Leave a log message before letting the possible exception go up the stack.
       log::ScopedParamContainer params(logContext);
@@ -5175,6 +5209,45 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         return;
       }
     }
+  }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::abort()
+// Aborting a Retrieve job consists of throwing it in the bin :
+//  - If the retrieve job is from a User Retrieve Request, it will be queued in the RetrieveQueueFailed
+//  - If the retrieve job is from a Repack Retrieve Request, it will be queued in the RetrieveQueueToReportToRepackForFailure
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveJob::abort(const std::string& abortReason, log::LogContext& lc){
+  typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
+  typedef EnqueueingNextStep::NextStep NextStep;
+  
+  if(!m_jobOwned)
+    throw JobNotOwned("In OStoreDB::RetrieveJob::abort(): cannot abort a job not owned");
+  
+  // Lock the retrieve request. Fail the job.
+  objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
+  m_retrieveRequest.fetch();
+
+  // Algorithms suppose the objects are not locked
+  auto  rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
+
+  EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addReportAbort(selectedCopyNb, m_mountId, abortReason, lc);  
+  m_retrieveRequest.setJobStatus(selectedCopyNb, enQueueingNextStep.nextStatus);
+
+  m_retrieveRequest.commit();
+  switch(enQueueingNextStep.nextStep){
+    case NextStep::EnqueueForReportForRepack:
+    case NextStep::StoreInFailedJobsContainer: {
+      Sorter sorter(*m_oStoreDB.m_agentReference,m_oStoreDB.m_objectStore,m_oStoreDB.m_catalogue);
+      std::shared_ptr<objectstore::RetrieveRequest> rr = std::make_shared<objectstore::RetrieveRequest>(m_retrieveRequest);
+      sorter.insertRetrieveRequest(rr,*this->m_oStoreDB.m_agentReference,cta::optional<uint32_t>(selectedCopyNb),lc);
+      rrl.release();
+      sorter.flushOneRetrieve(lc);
+      return;
+    }
+    default:
+      throw cta::exception::Exception("In OStoreDB::RetrieveJob::abort(): Wrong EnqueueingNextStep for queueing the RetrieveRequest");
   }
 }
 

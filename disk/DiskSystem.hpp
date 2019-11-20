@@ -24,6 +24,7 @@
 #include <string>
 #include <list>
 #include <set>
+#include <common/exception/Exception.hpp>
 
 namespace cta { namespace disk {
 
@@ -37,6 +38,8 @@ namespace cta { namespace disk {
  *  - a targeted free space (margin) based on the free space update latency (inherent to the file system and induced by the refresh 
  *  interval), and the expected external bandwidth from sources external to CTA.
  */
+CTA_GENERATE_EXCEPTION_CLASS(FetchEosFreeSpaceException);
+
 struct DiskSystem {
   std::string name;
   std::string fileRegexp;
@@ -74,6 +77,13 @@ struct DiskSystemFreeSpace {
   uint64_t freeSpace;
   uint64_t targetedFreeSpace;
   time_t fetchTime;
+};
+
+class DiskSystemFreeSpaceListException: public cta::exception::Exception {
+public:
+  //Key = DiskSystemName
+  //Value = exception
+  std::map<std::string,cta::exception::Exception> m_failedDiskSystems;
 };
 
 class DiskSystemFreeSpaceList: public std::map<std::string, DiskSystemFreeSpace> {

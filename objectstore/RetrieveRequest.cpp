@@ -421,7 +421,35 @@ auto RetrieveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, 
   throw NoSuchJob("In RetrieveRequest::addJobFailure(): could not find job");
 }
 
-
+auto RetrieveRequest::addReportAbort(uint32_t copyNumber, uint64_t mountId, const std::string &abortReason,
+  log::LogContext &lc) -> EnqueueingNextStep 
+{
+  checkPayloadWritable();
+  EnqueueingNextStep ret;
+  for(int i = 0; i < m_payload.jobs_size(); ++i)
+  {
+    auto &j = *m_payload.mutable_jobs(i);
+    if(j.copynb() == copyNumber) {
+      if(j.lastmountwithfailure() == mountId) {
+        j.set_retrieswithinmount(j.retrieswithinmount() + 1);
+      } else {
+        j.set_retrieswithinmount(1);
+        j.set_lastmountwithfailure(mountId);
+      }
+      j.set_totalretries(j.totalretries() + 1);
+      *j.mutable_failurelogs()->Add() = abortReason;
+    }
+  }
+  
+  if(this->getRepackInfo().isRepack){
+    ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure;
+    ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReportForRepack;
+  } else {
+    ret.nextStatus = serializers::RetrieveJobStatus::RJS_Failed;
+    ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
+  }
+  return ret;
+}
 //------------------------------------------------------------------------------
 // RetrieveRequest::getLastActiveVid()
 //------------------------------------------------------------------------------

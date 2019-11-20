@@ -464,7 +464,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   lambdas.clear();
   db.waitSubthreadsComplete();
 
-  // Then load all archive jobs into memory
+  // Then load all retrieve jobs into memory
   // Create mount.
   auto moutInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, moutInfo->potentialMounts.size());
@@ -489,6 +489,97 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   ASSERT_EQ(bFiles, mi->potentialMounts.begin()->filesQueued);
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
   ASSERT_EQ("ds-B", mi->potentialMounts.begin()->diskSystemSleptFor);
+}
+
+
+TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
+  using namespace cta;
+#ifndef STDOUT_LOGGING
+  cta::log::DummyLogger dl("", "");
+#else
+  cta::log::StdoutLogger dl("", "");
+#endif
+  cta::log::LogContext lc(dl);
+
+  cta::SchedulerDatabase &db = getDb();
+
+  // Create the disk system list
+  cta::disk::DiskSystemList diskSystemList;
+
+  diskSystemList.push_back(cta::disk::DiskSystem{"ds-A", "$root://a.disk.system/", "constantFreeSpace:6000", 60, 0UL,
+      15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
+  diskSystemList.push_back(cta::disk::DiskSystem{"ds-Error", "$root://error.disk.system/", "constantFreeSpace-6000", 60, 0UL,
+    15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
+  diskSystemList.push_back(cta::disk::DiskSystem{"ds-Repack", "$eos://ctaeos//eos/ctaepos/repack/", "eos:ctaeos:spinners", 60, 0UL,
+    15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
+  cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList(diskSystemList);
+    
+  // Inject 10 retrieve jobs to the db.
+  const size_t filesToDo = 10;
+  std::atomic<size_t> aFiles(0);
+  std::atomic<size_t> bFiles(0);
+  std::list<std::future<void>> jobInsertions;
+  std::list<std::function<void()>> lambdas;
+  for (auto i: cta::range<size_t>(filesToDo)) {
+    lambdas.emplace_back(
+    [i,&db,&lc,&aFiles, &bFiles, diskSystemList](){
+      cta::common::dataStructures::RetrieveRequest rr;
+      cta::log::LogContext locallc=lc;
+      cta::common::dataStructures::RetrieveFileQueueCriteria rfqc;
+      rfqc.mountPolicy.name = "mountPolicy";
+      rfqc.mountPolicy.archivePriority = 1;
+      rfqc.mountPolicy.archiveMinRequestAge = 0;
+      rfqc.mountPolicy.retrievePriority = 1;
+      rfqc.mountPolicy.retrieveMinRequestAge = 0;
+      rfqc.mountPolicy.maxDrivesAllowed = 10;
+      rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
+      rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      rfqc.mountPolicy.comment = "comment";
+      rfqc.archiveFile.fileSize = 1000;
+      rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+      rfqc.archiveFile.tapeFiles.back().fSeq = i;
+      rfqc.archiveFile.tapeFiles.back().vid = "vid";
+      rr.creationLog = { "user", "host", time(nullptr)};
+      uuid_t fileUUID;
+      uuid_generate(fileUUID);
+      char fileUUIDStr[37];
+      uuid_unparse(fileUUID, fileUUIDStr);
+      rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr; 
+      rr.requester = { "user", "group" };
+      std::string dsName;
+      if (i%2) {
+        rr.dstURL = std::string("root://error.disk.system/") + std::to_string(i);
+        dsName = "ds-Error";
+        ++bFiles;
+      } else {
+        rr.dstURL = std::string("root://a.disk.system/") + std::to_string(i);
+        dsName = "ds-A";
+        ++aFiles;
+      }
+      db.queueRetrieve(rr, rfqc, dsName, locallc);
+    });
+    jobInsertions.emplace_back(std::async(std::launch::async,lambdas.back()));
+  }
+  for (auto &j: jobInsertions) { j.get(); }
+  jobInsertions.clear();
+  lambdas.clear();
+  db.waitSubthreadsComplete();
+  
+  // Then load all retrieve jobs into memory
+  // Create mount.
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
+  auto rjb = rm->getNextJobBatch(20,20*1000,diskSystemFreeSpaceList, lc);
+  //Files with successful fetch should be popped
+  ASSERT_EQ(aFiles, rjb.size());
+  
+  // The files that are in the "Error" DiskSystem should be queued in the RetrieveQueueFailed
+  cta::SchedulerDatabase::JobsFailedSummary failedRetrieves = db.getRetrieveJobsFailedSummary(lc);
+  ASSERT_EQ(filesToDo / 2,failedRetrieves.totalFiles);
+  ASSERT_EQ((filesToDo / 2) * 1000,failedRetrieves.totalBytes);
+  
+  ASSERT_EQ(0,rm->getNextJobBatch(20,20*1000,diskSystemFreeSpaceList, lc).size());
 }
 
 #undef TEST_MOCK_DB

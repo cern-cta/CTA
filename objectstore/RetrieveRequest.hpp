@@ -214,6 +214,7 @@ public:
   EnqueueingNextStep addTransferFailure(uint32_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
   //! Returns next step to take with the job
   EnqueueingNextStep addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
+  EnqueueingNextStep addReportAbort(uint32_t copyNumber, uint64_t mountId, const std::string &abortReason, log::LogContext &lc);
   //! Returns queue type depending on the compound statuses of all retrieve requests
   JobQueueType getQueueType();
   CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);

@@ -55,7 +55,7 @@ std::string DiskSystemList::getDSNAme(const std::string& fileURL) const {
       m_pointersAndRegexes.splice(m_pointersAndRegexes.begin(), m_pointersAndRegexes, pri);
     return pri->ds.name;
   }
-  throw std::out_of_range("In DiskSystemList::getFSNAme(): not match for fileURL");
+  throw std::out_of_range("In DiskSystemList::getDSNAme(): not match for fileURL");
 }
 
 //------------------------------------------------------------------------------
@@ -66,25 +66,36 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
   cta::utils::Regex eosDiskSystem("^eos:(.*):(.*)$");
   // For testing purposes
   cta::utils::Regex constantFreeSpaceDiskSystem("^constantFreeSpace:(.*)");
+  //Key = diskSystemName, Value = failureReason
+  std::map<std::string, cta::exception::Exception> failedToFetchDiskSystems;
   for (auto const & ds: diskSystems) {
-    uint64_t freeSpace;
-    std::vector<std::string> regexResult;
-    regexResult = eosDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
-    if (regexResult.size()) {
-      freeSpace = fetchEosFreeSpace(regexResult.at(1), regexResult.at(2), lc);
-      goto found;
+    uint64_t freeSpace = 0;
+    try {
+      std::vector<std::string> regexResult;
+      regexResult = eosDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
+      if (regexResult.size()) {
+        freeSpace = fetchEosFreeSpace(regexResult.at(1), regexResult.at(2), lc);
+        goto found;
+      }
+      regexResult = constantFreeSpaceDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
+      if (regexResult.size()) {
+        freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
+        goto found;
+      }
+      throw cta::disk::FetchEosFreeSpaceException("In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
+    } catch (const cta::disk::FetchEosFreeSpaceException &ex) {
+      failedToFetchDiskSystems[ds] = ex;
     }
-    regexResult = constantFreeSpaceDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
-     if (regexResult.size()) {
-      freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
-      goto found;
-    }
-    throw exception::Exception("In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
   found:
     DiskSystemFreeSpace & entry = operator [](ds);
     entry.freeSpace = freeSpace;
     entry.fetchTime = ::time(nullptr);
     entry.targetedFreeSpace = m_systemList.at(ds).targetedFreeSpace;
+  }
+  if(failedToFetchDiskSystems.size()){
+    cta::disk::DiskSystemFreeSpaceListException ex;
+    ex.m_failedDiskSystems = failedToFetchDiskSystems;
+    throw ex;
   }
 }
 
@@ -100,12 +111,12 @@ uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceA
         instanceAddress + " space ls -m\"");
   } catch (exception::Exception & ex) {
     ex.getMessage() << " instanceAddress: " << instanceAddress << " stderr: " << sp.stderr();
-    throw;
+    throw cta::disk::FetchEosFreeSpaceException(ex.getMessage().str());
   }
   if (sp.wasKilled()) {
     exception::Exception ex("In DiskSystemFreeSpaceList::fetchEosFreeSpace(): eos space ls -m killed by signal: ");
     ex.getMessage() << utils::toString(sp.killSignal());
-    throw ex;
+    throw cta::disk::FetchEosFreeSpaceException(ex.getMessage().str());
   }
   // Look for the result line for default space.
   std::istringstream spStdoutIss(sp.stdout());
@@ -120,19 +131,19 @@ uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceA
       goto defaultFound;
     }
   } while (!spStdoutIss.eof());
-  throw exception::Exception("In DiskSystemFreeSpaceList::fetchEosFreeSpace(): could not find line for default space.");
+  throw cta::disk::FetchEosFreeSpaceException("In DiskSystemFreeSpaceList::fetchEosFreeSpace(): could not find the \""+spaceName+"\" in the eos space ls -m result.");
   
 defaultFound:
   // Look for the parameters in the result line.
   utils::Regex rwSpaceRegex("sum.stat.statfs.capacity\\?configstatus@rw=([0-9]+) ");
   auto rwSpaceRes = rwSpaceRegex.exec(defaultSpaceLine);
   if (rwSpaceRes.empty())
-    throw exception::Exception(
+    throw cta::disk::FetchEosFreeSpaceException(
         "In DiskSystemFreeSpaceList::fetchEosFreeSpace(): failed to parse parameter sum.stat.statfs.capacity?configstatus@rw.");
   utils::Regex usedSpaceRegex("sum.stat.statfs.usedbytes=([0-9]+) ");
   auto usedSpaceRes = usedSpaceRegex.exec(sp.stdout());
   if (usedSpaceRes.empty())
-    throw exception::Exception("In DiskSystemFreeSpaceList::fetchEosFreeSpace(): failed to parse parameter sum.stat.statfs.usedbytes.");
+    throw cta::disk::FetchEosFreeSpaceException("In DiskSystemFreeSpaceList::fetchEosFreeSpace(): failed to parse parameter sum.stat.statfs.usedbytes.");
   return utils::toUint64(rwSpaceRes.at(1)) - utils::toUint64(usedSpaceRes.at(1));
 }
 

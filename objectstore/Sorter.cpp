@@ -198,8 +198,8 @@ void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const JobQueueType
     case JobQueueType::JobsToReportToRepackForFailure:
       this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForFailure>(vid,queueAddress,jobs,lc);
       break;
-      break;
     case JobQueueType::FailedJobs:
+      this->executeRetrieveAlgorithm<RetrieveQueueFailed>(vid,queueAddress,jobs,lc);
       break;
     default:
       throw cta::exception::Exception("In Sorter::dispatchRetrieveAlgorithm(), unknown JobQueueType");

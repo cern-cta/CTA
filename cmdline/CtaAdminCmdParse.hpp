@@ -368,7 +368,25 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" },
+			  "\n  This command allows to manage disk systems (useful for the backpressure).\n"
+			    "  A disksystem contains informations in order to query EOS for the free space remaining in a specific folder.\n\n"
+			    "  Before mounting for a Retrieval, the destination URL of each file to retrieve will be pattern-matched in order to identify the corresponding disksystem.\n"
+			    "  The matched disksystem will give informations to query the free space of the correct EOS space in order to backpressure if not enough free space is available.\n\n"
+			    "  Add a disksystem by using the \"add\" subcommand :\n"
+			    "   * Specify the name (--disksystem) of the disk system. This name must be unique as it is the identifier of the disk system\n"
+			    "   * Specify the file regex pattern (--fileregexp option) in order to assign a disk system name to a file to retrieve according to the destinationURL of this file\n"
+			    "   Example : If the disksystem's fileregexp is ^root://eos_instance//eos/cta(.*)eos.space=spinners, a file to retrieve with the destination URL\n"
+			    "   root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners will then match the corresponding disksystem\n"
+			    "   * Specify the informations to query the EOS free space by using the --freespacequeryurl\n"
+			    "   It should have the following format : eos:name_of_eos_instance:name_of_eos_space. Example : eos:ctaeos:spinners\n"
+			    "   * The refresh interval (--refreshinterval), in seconds, specify how long the queried free space will be use.\n"
+			    "   * The targeted free space (--targetedfreespace) based on the free space update latency (inherent to the file system and induced by the refresh  interval)\n"
+			    "   and the expected external bandwidth from sources external to CTA.\n"
+			    "   * The sleep time (--sleeptime) in seconds will tell the queue containing the Retrieve jobs to sleep so that it will not be popped during this amount of time.\n"
+			    "   If the targeted free space is reach, the queue will sleep during this amount of seconds."
+			    "\n\n"
+					 }},
 };
 
 

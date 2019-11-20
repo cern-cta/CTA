@@ -3832,6 +3832,141 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
   ASSERT_EQ(2 * s_minFilesToWarrantAMount,tapeMount->getNbFiles());
 }
 
+TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
+  using namespace cta;
+  unitTests::TempDirectory tempDirectory;
+  
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  
+  setupDefaultCatalogue();
+  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", tempDirectory.path(), "eos:ctaeos:default", 10, 10L*1000*1000*1000, 15*60, "no comment");
+  
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  std::string agentReferenceName = "expandRepackRequestTest";
+  std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
+ 
+  
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = true;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+  
+  //Create a logical library in the catalogue
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  
+  catalogue.createTape(s_adminOnAdminHost,s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+      disabledValue, fullValue, readOnlyValue, comment);
+  
+  //Create a storage class in the catalogue
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = s_diskInstance;
+  storageClass.name = s_storageClassName;
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesPerTape = 10;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+
+  //Simulate the writing of 10 files per tape in the catalogue
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  checksum::ChecksumBlob checksumBlob;
+  checksumBlob.insert(cta::checksum::ADLER32, "1234");
+  {
+    uint64_t archiveFileId = 1;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + archiveFileId);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<j;
+      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = archiveFileId++;
+      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+      fileWritten.diskFilePath = diskFilePath.str();
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumBlob = checksumBlob;
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = s_vid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.copyNb = 1;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    tapeFilesWrittenCopy1.clear();
+  }
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  
+  scheduler.queueRepack(admin,s_vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag, lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+  log::TimingList tl;
+  utils::Timer t;
+  scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  
+  {
+    std::unique_ptr<cta::TapeMount> mount;
+    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
+    std::unique_ptr<cta::RetrieveMount> retrieveMount;
+    retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
+    ASSERT_NE(nullptr, retrieveMount.get());
+    auto jobBatch = retrieveMount->getNextJobBatch(nbArchiveFilesPerTape,archiveFileSize * nbArchiveFilesPerTape,lc);
+    //0 job should be popped because the fetching of the EOS free space have failed.
+    ASSERT_EQ(0,jobBatch.size());
+  }
+  {
+    //The jobs should be queued in the RetrieveQueueToReportToRepackForFailure
+    cta::objectstore::RootEntry re(backend);
+    cta::objectstore::ScopedExclusiveLock sel(re);
+    re.fetch();
+
+    // Get the retrieveQueueToReportToRepackForFailure
+    // The queue is named after the repack request: we need to query the repack index
+    objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
+    ri.fetchNoLock();
+    
+    std::string retrieveQueueToReportToRepackForFailureAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(s_vid),cta::objectstore::JobQueueType::JobsToReportToRepackForFailure);
+    cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForFailureAddress,backend);
+
+    //Fetch the queue so that we can get the retrieve jobs from it
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+
+    ASSERT_EQ(rq.dumpJobs().size(),10);
+    for(auto& job: rq.dumpJobs()){
+      ASSERT_EQ(1,job.copyNb);
+      ASSERT_EQ(archiveFileSize,job.size);
+    }
+  }
+}
+
 
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
