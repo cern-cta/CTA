@@ -157,5 +157,6 @@ namespace unitTests {
       ASSERT_EQ(2,ex.m_failedDiskSystems.size());
     }
     ASSERT_EQ(200,diskSystemFreeSpaceList.at(constantFreeSpaceDiskSystem.name).freeSpace);
+
   }
 }
