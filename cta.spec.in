@@ -308,6 +308,7 @@ Scripts and utilities to faciliate working with the CTA catalogue
 Summary: Tools for migrating CASTOR to CTA
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
+Requires: cx_Oracle >= 7.1
 %description -n cta-migration-tools
 CERN Tape Archive:
 Tools for migrating the CASTOR catalogue to CTA and injecting CASTOR file and
