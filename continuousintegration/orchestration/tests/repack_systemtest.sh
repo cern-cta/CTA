@@ -160,6 +160,14 @@ while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] 
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_REPACK_TIMEOUT}; then
     echo "Timed out after ${WAIT_FOR_REPACK_TIMEOUT} seconds waiting for tape ${VID_TO_REPACK} to be repacked"
+    echo "Result of Repack ls"
+    admin_cta repack ls --vid ${VID_TO_REPACK}
+    destinationInfos=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos"`
+    if [[ `echo $destinationInfos | jq length` != 0 ]]
+    then
+      header="DestinationVID\tNbFiles\ttotalSize\n"
+      { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
+    fi
     exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} -r ${REPORT_DIRECTORY} ${ADD_COPIES_ONLY} &
     wait $!
     exit 1
@@ -167,6 +175,13 @@ while test 0 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] 
 done
 if test 1 = `admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.status == "Failed")] | length'`; then
     echo "Repack failed for tape ${VID_TO_REPACK}."
+    admin_cta repack ls --vid ${VID_TO_REPACK}
+    destinationInfos=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos"`
+    if [[ `echo $destinationInfos | jq length` != 0 ]]
+    then
+      header="DestinationVID\tNbFiles\ttotalSize\n"
+      { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
+    fi
     exec /root/repack_generate_report.sh -v ${VID_TO_REPACK} -r ${REPORT_DIRECTORY} ${ADD_COPIES_ONLY} &
     wait $!
     exit 1

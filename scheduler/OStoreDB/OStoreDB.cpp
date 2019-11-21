@@ -1118,7 +1118,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
       );
       insertedElements.emplace_back(CaRQF::InsertedElement{
         &j.job->m_retrieveRequest, tf_it->copyNb, tf_it->fSeq, j.job->archiveFile.fileSize,
-        common::dataStructures::MountPolicy(), serializers::RetrieveJobStatus::RJS_Failed,
+        common::dataStructures::MountPolicy(), 
         j.job->m_activityDescription, j.job->m_diskSystemName
       });
     }
@@ -4083,8 +4083,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     for (auto & req: repackRequestQueue.second) {
       insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb, 
           req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq, req->archiveFile.fileSize,
-          mountPolicy,
-          serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess, req->m_activityDescription, req->m_diskSystemName});
+          mountPolicy, req->m_activityDescription, req->m_diskSystemName});
       requestToJobMap[&req->m_retrieveRequest] = req;
        }
     RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -4869,13 +4868,15 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       jou.jobOwnerUpdater->wait();
       log::ScopedParamContainer params(lc);
       params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
-            .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet());
+            .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
+            .add("copyNb", jou.subrequestInfo.archivedCopyNb);
       lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): async updated job.");
     } catch(const cta::objectstore::Backend::NoSuchObject &ex){
       // Log the error
       log::ScopedParamContainer params(lc);
       params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
+            .add("copyNb", jou.subrequestInfo.archivedCopyNb)
             .add("exceptionMsg", ex.getMessageValue());
       lc.log(log::WARNING, "In OStoreDB::RepackArchiveReportBatch::report(): async job update failed. Object does not exist in the objectstore.");
     } catch (cta::exception::Exception & ex) {
@@ -4883,6 +4884,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       log::ScopedParamContainer params(lc);
       params.add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
+            .add("copyNb", jou.subrequestInfo.archivedCopyNb)
             .add("exceptionMsg", ex.getMessageValue());
       lc.log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.");
     }    
@@ -5039,7 +5041,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
         &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
-        serializers::RetrieveJobStatus::RJS_Failed, m_activityDescription, m_diskSystemName
+        m_activityDescription, m_diskSystemName
       });
       m_retrieveRequest.commit();
       rel.release();
@@ -5106,7 +5108,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
-        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToTransfer, 
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, 
         m_activityDescription, m_diskSystemName
       });
 
@@ -5170,8 +5172,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement{
-          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
-          serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure, m_activityDescription, m_diskSystemName
+          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, m_activityDescription, m_diskSystemName
         });
         caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);
@@ -5189,8 +5190,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement{
-          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
-          serializers::RetrieveJobStatus::RJS_Failed, m_activityDescription, m_diskSystemName
+          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, m_activityDescription, m_diskSystemName
         });
         caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);

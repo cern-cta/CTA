@@ -43,7 +43,6 @@ struct ContainerTraits<RetrieveQueue,C>
     uint64_t fSeq;
     uint64_t filesize;
     cta::common::dataStructures::MountPolicy policy;
-    serializers::RetrieveJobStatus status;
     optional<RetrieveActivityDescription> activityDescription;
     optional<std::string> diskSystemName;
     typedef std::list<InsertedElement> list;
