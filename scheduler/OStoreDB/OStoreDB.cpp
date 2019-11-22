@@ -4260,6 +4260,8 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
     }
     for (auto &list: insertedElementsLists) {
       retry:
+      int currentTotalRetries = 0;
+      int maxRetries = 10;
       try {
         utils::Timer tLocal;
         aqtrtrCa.referenceAndSwitchOwnership(list.first, m_oStoreDB.m_agentReference->getAgentAddress(), list.second, lc);
@@ -4274,14 +4276,29 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::WARNING, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting to repack, jobs do not exist in the objectstore.");
       } catch (const AqtrtrCa::OwnershipSwitchFailure &ex) {
+        //We are in the case where the ownership of the elements could not have been change (most probably because of a Rados lockbackoff error)
+        //We will then retry 10 times to requeue the failed jobs 
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid", list.first)
+              .add("numberOfRetries",currentTotalRetries)
+              .add("numberOfFailedToQueueElements",ex.failedElements.size())
+              .add("exceptionMSG", ex.getMessageValue());
+        lc.log(log::WARNING, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): unable to queue some elements because of an ownership switch failure, retrying another time");
         typedef objectstore::ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::OpFailure<AqtrtrCa::InsertedElement> OpFailure;
         list.second.remove_if([&ex](const AqtrtrCa::InsertedElement &elt){
-          //Remove the elements that are NOT in the failed elements list
+          //Remove the elements that are NOT in the failed elements list so that we only retry the failed elements
           return std::find_if(ex.failedElements.begin(),ex.failedElements.end(),[&elt](const OpFailure &insertedElement){
             return elt.archiveRequest->getAddressIfSet() == insertedElement.element->archiveRequest->getAddressIfSet() && elt.copyNb == insertedElement.element->copyNb;
           }) == ex.failedElements.end();
         });
-        goto retry;
+        currentTotalRetries ++;
+        if(currentTotalRetries <= maxRetries){
+          goto retry;
+        } else {
+          //All the retries have been done, throw an exception for logging the backtrace
+          //afterwards
+          throw cta::exception::Exception(ex.getMessageValue());
+        }
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("tapeVid", list.first)
