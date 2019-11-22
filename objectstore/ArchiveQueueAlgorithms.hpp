@@ -42,6 +42,9 @@ struct ContainerTraits<ArchiveQueue,C>
     cta::optional<cta::common::dataStructures::MountPolicy> mountPolicy;
     cta::optional<serializers::ArchiveJobStatus> newStatus;
     typedef std::list<InsertedElement> list;
+    bool operator==(InsertedElement & other){
+      return archiveRequest->getAddressIfSet() == other.archiveRequest->getAddressIfSet() && copyNb == other.copyNb;
+    }
   };
 
   typedef ArchiveRequest::JobDump ElementDescriptor;
@@ -109,7 +112,7 @@ struct ContainerTraits<ArchiveQueue,C>
   };
 
   struct OwnershipSwitchFailure: public cta::exception::Exception {
-    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
+    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {}; 
     typename OpFailure<InsertedElement>::list failedElements;
   };
 

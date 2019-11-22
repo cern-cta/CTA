@@ -4184,7 +4184,7 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch,
     log::LogContext & lc) {
-  std::set<cta::OStoreDB::ArchiveJob*> jobsToQueueForReportingToUser, jobsToQueueForReportingToRepack;
+  std::set<cta::OStoreDB::ArchiveJob*> jobsToQueueForReportingToUser, jobsToQueueForReportingToRepack, failedJobsToQueueForReportingForRepack;
   std::list<std::string> ajToUnown;
   utils::Timer t;
   log::TimingList timingList;
@@ -4259,6 +4259,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
       lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): will queue request for reporting to repack.");
     }
     for (auto &list: insertedElementsLists) {
+      retry:
       try {
         utils::Timer tLocal;
         aqtrtrCa.referenceAndSwitchOwnership(list.first, m_oStoreDB.m_agentReference->getAgentAddress(), list.second, lc);
@@ -4272,6 +4273,15 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
         params.add("tapeVid", list.first)
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::WARNING, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting to repack, jobs do not exist in the objectstore.");
+      } catch (const AqtrtrCa::OwnershipSwitchFailure &ex) {
+        typedef objectstore::ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::OpFailure<AqtrtrCa::InsertedElement> OpFailure;
+        list.second.remove_if([&ex](const AqtrtrCa::InsertedElement &elt){
+          //Remove the elements that are NOT in the failed elements list
+          return std::find_if(ex.failedElements.begin(),ex.failedElements.end(),[&elt](const OpFailure &insertedElement){
+            return elt.archiveRequest->getAddressIfSet() == insertedElement.element->archiveRequest->getAddressIfSet() && elt.copyNb == insertedElement.element->copyNb;
+          }) == ex.failedElements.end();
+        });
+        goto retry;
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("tapeVid", list.first)
