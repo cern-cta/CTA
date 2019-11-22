@@ -1090,6 +1090,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
   for(auto &j : jobsBatch) {
     switch(j->reportType) {
       case SchedulerDatabase::RetrieveJob::ReportType::FailureReport: {
+        j->fail();
         auto &vid = j->archiveFile.tapeFiles.at(j->selectedCopyNb).vid;
         failedQueues[vid].push_back(FailedJobToQueue{ castFromSchedDBJob(j) });
         break;
@@ -5304,6 +5305,17 @@ void OStoreDB::RetrieveJob::asyncSetSuccessful() {
     // set the user transfer request as successful (delete it).
     m_jobDelete.reset(m_retrieveRequest.asyncDeleteJob());
   }
+}
+
+void OStoreDB::RetrieveJob::fail() {
+  if(!m_jobOwned)
+    throw JobNotOwned("In OStoreDB::RetrieveJob::failReport: cannot fail a job not owned");
+
+  // Lock the retrieve request. Change the status of the job.
+  objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
+  m_retrieveRequest.fetch();
+  m_retrieveRequest.setJobStatus(this->selectedCopyNb,serializers::RetrieveJobStatus::RJS_Failed);
+  m_retrieveRequest.commit();
 }
 
 } // namespace cta

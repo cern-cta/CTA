@@ -402,6 +402,7 @@ public:
     virtual void failTransfer(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual void failReport(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual void abort(const std::string &abortReason, log::LogContext &lc) = 0;
+    virtual void fail() = 0;
     virtual ~RetrieveJob() {}
   private:
   };
