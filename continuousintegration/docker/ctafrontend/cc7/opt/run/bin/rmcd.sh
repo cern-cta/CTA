@@ -46,5 +46,6 @@ else
   # to get rmcd logs to stdout
   tail -F /var/log/cta/cta-rmcd.log &
 
-  /usr/bin/cta-rmcd -f /dev/smc
+  runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
+
 fi
