@@ -72,6 +72,20 @@ public:
   uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
 
   /**
+   * Returns a unique logical library ID that can be used by a new logical
+   * library within the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique logical library ID that can be used by a new logical
+   * library storage class within the catalogue.
+   */
+  uint64_t getNextLogicalLibraryId(rdbms::Conn &conn) override;
+
+  /**
    * Returns a unique storage class ID that can be used by a new storage class
    * within the catalogue.
    *

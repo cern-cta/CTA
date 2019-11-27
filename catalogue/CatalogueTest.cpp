@@ -2730,6 +2730,101 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   ASSERT_THROW(m_catalogue->deleteLogicalLibrary(logicalLibraryName), catalogue::UserSpecifiedANonEmptyLogicalLibrary);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+
+  const std::string libraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  const bool libraryIsDisabled= false;
+  m_catalogue->createLogicalLibrary(m_admin, libraryName, libraryIsDisabled, comment);
+
+  {
+    const auto libraries = m_catalogue->getLogicalLibraries();
+
+    ASSERT_EQ(1, libraries.size());
+
+    const auto &library = libraries.front();
+    ASSERT_EQ(libraryName, library.name);
+    ASSERT_FALSE(library.isDisabled);
+    ASSERT_EQ(comment, library.comment);
+
+    const common::dataStructures::EntryLog creationLog = library.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = library.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string newLibraryName = "new_logical_library";
+  m_catalogue->modifyLogicalLibraryName(m_admin, libraryName, newLibraryName);
+
+  {
+    const auto libraries = m_catalogue->getLogicalLibraries();
+
+    ASSERT_EQ(1, libraries.size());
+
+    const auto &library = libraries.front();
+    ASSERT_EQ(newLibraryName, library.name);
+    ASSERT_FALSE(library.isDisabled);
+    ASSERT_EQ(comment, library.comment);
+
+    const common::dataStructures::EntryLog creationLog = library.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryName_emptyStringCurrentLogicalLibraryName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+
+  const std::string libraryName = "logical_library";
+  const bool libraryIsDisabled = false;
+  const std::string comment = "Create logical library";
+  m_catalogue->createLogicalLibrary(m_admin, libraryName, libraryIsDisabled, comment);
+
+  const std::string newLibraryName = "new_logical_library";
+  ASSERT_THROW(m_catalogue->modifyLogicalLibraryName(m_admin, "", newLibraryName),
+    catalogue::UserSpecifiedAnEmptyStringLogicalLibraryName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryName_emptyStringNewLogicalLibraryName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+
+  const std::string libraryName = "logical_library";
+  const bool libraryIsDisabled = false;
+  const std::string comment = "Create logical library";
+  m_catalogue->createLogicalLibrary(m_admin, libraryName, libraryIsDisabled, comment);
+
+  {
+    const auto libraries = m_catalogue->getLogicalLibraries();
+
+    ASSERT_EQ(1, libraries.size());
+
+    const auto library = libraries.front();
+    ASSERT_EQ(libraryName, library.name);
+    ASSERT_FALSE(library.isDisabled);
+    ASSERT_EQ(comment, library.comment);
+
+    const common::dataStructures::EntryLog creationLog = library.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = library.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string newLibraryName = "";
+  ASSERT_THROW(m_catalogue->modifyLogicalLibraryName(m_admin, libraryName, newLibraryName),
+    catalogue::UserSpecifiedAnEmptyStringLogicalLibraryName);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
   using namespace cta;
       

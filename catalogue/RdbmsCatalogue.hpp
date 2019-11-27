@@ -294,6 +294,16 @@ public:
   void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool isDisabled, const std::string &comment) override;
   void deleteLogicalLibrary(const std::string &name) override;
   std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const override;
+
+  /**
+   * Modifies the name of the specified logical library.
+   *
+   * @param admin The administrator.
+   * @param currentName The current name of the logical library.
+   * @param newName The new name of the logical library.
+   */
+  void modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override;
+
   void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
   virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool disabledValue) override;
 
@@ -1336,6 +1346,20 @@ protected:
   virtual uint64_t getNextArchiveFileId(rdbms::Conn &conn) = 0;
 
   /**
+   * Returns a unique logical library ID that can be used by a new logical
+   * library within the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique logical library ID that can be used by a new logical
+   * library storage class within the catalogue.
+   */
+  virtual uint64_t getNextLogicalLibraryId(rdbms::Conn &conn) = 0;
+
+  /**
    * Returns a unique storage class ID that can be used by a new storage class
    * within the catalogue.
    *
@@ -1461,6 +1485,26 @@ protected:
    * @param storageClassName The name of the storage class.
    */
   bool storageClassIsUsedByArchiveFiles(rdbms::Conn &conn, const std::string &storageClassName) const;
+
+  /**
+   * Returns the ID of the specified logical library or nullopt if the logical
+   * library does not exist.
+   *
+   * @param conn The database connection.
+   * @param name The name of the tape pool.
+   * @return the ID of the specified tape pool.
+   */
+  optional<uint64_t> getLogicalLibraryId(rdbms::Conn &conn, const std::string &name) const;
+
+  /**
+   * Returns the ID of the specified tape pool or nullopt if it the tape pool
+   * does not exist.
+   *
+   * @param conn The database connection.
+   * @param name The name of the tape pool.
+   * @return the ID of the specified tape pool.
+   */
+  optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
 
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific

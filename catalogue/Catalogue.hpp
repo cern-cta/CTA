@@ -303,6 +303,16 @@ public:
   virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool isDisabled, const std::string &comment) = 0;
   virtual void deleteLogicalLibrary(const std::string &name) = 0;
   virtual std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const = 0;
+
+  /**
+   * Modifies the name of the specified logical library.
+   *
+   * @param admin The administrator.
+   * @param currentName The current name of the logical library.
+   * @param newName The new name of the logical library.
+   */
+  virtual void modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) = 0;
+
   virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
   virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool disabledValue) = 0;
 

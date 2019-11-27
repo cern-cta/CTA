@@ -209,6 +209,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getLogicalLibraries();}, m_maxTriesToConnect);
   }
 
+  void modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyLogicalLibraryName(admin, currentName, newName);}, m_maxTriesToConnect);
+  }
+
   void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyLogicalLibraryComment(admin, name, comment);}, m_maxTriesToConnect);
   }

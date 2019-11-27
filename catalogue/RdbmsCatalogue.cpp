@@ -1666,9 +1666,11 @@ void RdbmsCatalogue::createLogicalLibrary(
       throw exception::UserError(std::string("Cannot create logical library ") + name +
         " because a logical library with the same name already exists");
     }
+    const uint64_t logicalLibraryId = getNextLogicalLibraryId(conn);
     const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO LOGICAL_LIBRARY("
+        "LOGICAL_LIBRARY_ID,"
         "LOGICAL_LIBRARY_NAME,"
         "IS_DISABLED,"
 
@@ -1682,6 +1684,7 @@ void RdbmsCatalogue::createLogicalLibrary(
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
+        ":LOGICAL_LIBRARY_ID,"
         ":LOGICAL_LIBRARY_NAME,"
         ":IS_DISABLED,"
 
@@ -1696,6 +1699,7 @@ void RdbmsCatalogue::createLogicalLibrary(
         ":LAST_UPDATE_TIME)";
     auto stmt = conn.createStmt(sql);
 
+    stmt.bindUint64(":LOGICAL_LIBRARY_ID", logicalLibraryId);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
     stmt.bindBool(":IS_DISABLED", isDisabled);
 
@@ -1831,6 +1835,51 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibr
 }
 
 //------------------------------------------------------------------------------
+// modifyLogicalLibraryName
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &currentName, const std::string &newName) {
+  try {
+    if(currentName.empty()) {
+      throw UserSpecifiedAnEmptyStringLogicalLibraryName(
+        "Cannot modify logical library because the logical library name is an empty string");
+    }
+
+    if(newName.empty()) {
+      throw UserSpecifiedAnEmptyStringLogicalLibraryName(
+        "Cannot modify logical library because the new name is an empty string");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE LOGICAL_LIBRARY SET "
+        "LOGICAL_LIBRARY_NAME = :NEW_LOGICAL_LIBRARY_NAME,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "LOGICAL_LIBRARY_NAME = :CURRENT_LOGICAL_LIBRARY_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":NEW_LOGICAL_LIBRARY_NAME", newName);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":CURRENT_LOGICAL_LIBRARY_NAME", currentName);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify logical library ") + currentName + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // modifyLogicalLibraryComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
@@ -1952,72 +2001,72 @@ void RdbmsCatalogue::createTape(
       throw exception::UserError(std::string("Cannot create tape ") + vid +
         " because a tape with the same volume identifier already exists");
     }
-    if(!logicalLibraryExists(conn, logicalLibraryName)) {
+    const auto logicalLibraryId = getLogicalLibraryId(conn, logicalLibraryName);
+    if(!logicalLibraryId) {
       throw exception::UserError(std::string("Cannot create tape ") + vid + " because logical library " +
         logicalLibraryName + " does not exist");
     }
-    if(!tapePoolExists(conn, tapePoolName)) {
+    const auto tapePoolId = getTapePoolId(conn, tapePoolName);
+    if(!tapePoolId) {
       throw exception::UserError(std::string("Cannot create tape ") + vid + " because tape pool " +
         tapePoolName + " does not exist");
     }
     const time_t now = time(nullptr);
     const char *const sql =
-      "INSERT INTO TAPE("                  "\n"
-        "VID,"                             "\n"
-        "MEDIA_TYPE,"                      "\n"
-        "VENDOR,"                          "\n"
-        "LOGICAL_LIBRARY_NAME,"            "\n"
-        "TAPE_POOL_ID,"                    "\n"
-        "CAPACITY_IN_BYTES,"               "\n"
-        "DATA_IN_BYTES,"                   "\n"
-        "LAST_FSEQ,"                       "\n"
-        "IS_DISABLED,"                     "\n"
-        "IS_FULL,"                         "\n"
-        "IS_READ_ONLY,"                    "\n"
-        "IS_FROM_CASTOR,"                  "\n"
+      "INSERT INTO TAPE("          "\n"
+        "VID,"                     "\n"
+        "MEDIA_TYPE,"              "\n"
+        "VENDOR,"                  "\n"
+        "LOGICAL_LIBRARY_ID,"      "\n"
+        "TAPE_POOL_ID,"            "\n"
+        "CAPACITY_IN_BYTES,"       "\n"
+        "DATA_IN_BYTES,"           "\n"
+        "LAST_FSEQ,"               "\n"
+        "IS_DISABLED,"             "\n"
+        "IS_FULL,"                 "\n"
+        "IS_READ_ONLY,"            "\n"
+        "IS_FROM_CASTOR,"          "\n"
 
-        "USER_COMMENT,"                    "\n"
+        "USER_COMMENT,"            "\n"
 
-        "CREATION_LOG_USER_NAME,"          "\n"
-        "CREATION_LOG_HOST_NAME,"          "\n"
-        "CREATION_LOG_TIME,"               "\n"
+        "CREATION_LOG_USER_NAME,"  "\n"
+        "CREATION_LOG_HOST_NAME,"  "\n"
+        "CREATION_LOG_TIME,"       "\n"
 
-        "LAST_UPDATE_USER_NAME,"           "\n"
-        "LAST_UPDATE_HOST_NAME,"           "\n"
-        "LAST_UPDATE_TIME)"                "\n"
-      "SELECT"                             "\n"
-        ":VID,"                            "\n"
-        ":MEDIA_TYPE,"                     "\n"
-        ":VENDOR,"                         "\n"
-        ":LOGICAL_LIBRARY_NAME,"           "\n"
-        "TAPE_POOL_ID,"                    "\n"
-        ":CAPACITY_IN_BYTES,"              "\n"
-        ":DATA_IN_BYTES,"                  "\n"
-        ":LAST_FSEQ,"                      "\n"
-        ":IS_DISABLED,"                    "\n"
-        ":IS_FULL,"                        "\n"
-        ":IS_READ_ONLY,"                   "\n"
-        ":IS_FROM_CASTOR,"                 "\n"
+        "LAST_UPDATE_USER_NAME,"   "\n"
+        "LAST_UPDATE_HOST_NAME,"   "\n"
+        "LAST_UPDATE_TIME)"        "\n"
+      "VALUES("                    "\n"
+        ":VID,"                    "\n"
+        ":MEDIA_TYPE,"             "\n"
+        ":VENDOR,"                 "\n"
+        ":LOGICAL_LIBRARY_ID,"     "\n"
+        ":TAPE_POOL_ID,"           "\n"
+        ":CAPACITY_IN_BYTES,"      "\n"
+        ":DATA_IN_BYTES,"          "\n"
+        ":LAST_FSEQ,"              "\n"
+        ":IS_DISABLED,"            "\n"
+        ":IS_FULL,"                "\n"
+        ":IS_READ_ONLY,"           "\n"
+        ":IS_FROM_CASTOR,"         "\n"
 
-        ":USER_COMMENT,"                   "\n"
+        ":USER_COMMENT,"           "\n"
 
-        ":CREATION_LOG_USER_NAME,"         "\n"
-        ":CREATION_LOG_HOST_NAME,"         "\n"
-        ":CREATION_LOG_TIME,"              "\n"
+        ":CREATION_LOG_USER_NAME," "\n"
+        ":CREATION_LOG_HOST_NAME," "\n"
+        ":CREATION_LOG_TIME,"      "\n"
 
-        ":LAST_UPDATE_USER_NAME,"          "\n"
-        ":LAST_UPDATE_HOST_NAME,"          "\n"
-        ":LAST_UPDATE_TIME"                "\n"
-      "FROM "
-        "TAPE_POOL "                       "\n"
-      "WHERE "                             "\n"
-        "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+        ":LAST_UPDATE_USER_NAME,"  "\n"
+        ":LAST_UPDATE_HOST_NAME,"  "\n"
+        ":LAST_UPDATE_TIME"        "\n"
+      ")";
     auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":VID", vid);
     stmt.bindString(":MEDIA_TYPE", mediaType);
     stmt.bindString(":VENDOR", vendor);
-    stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+    stmt.bindUint64(":LOGICAL_LIBRARY_ID", logicalLibraryId.value());
+    stmt.bindUint64(":TAPE_POOL_ID", tapePoolId.value());
     stmt.bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
     stmt.bindUint64(":DATA_IN_BYTES", 0);
     stmt.bindUint64(":LAST_FSEQ", 0);
@@ -2035,8 +2084,6 @@ void RdbmsCatalogue::createTape(
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
-
-    stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
 
     stmt.executeNonQuery();
 
@@ -2212,7 +2259,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.VID AS VID,"
         "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
         "TAPE.VENDOR AS VENDOR,"
-        "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "TAPE_POOL.VO AS VO,"
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
@@ -2248,7 +2295,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       "FROM "
         "TAPE "
       "INNER JOIN TAPE_POOL ON "
-        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
+        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
+      "INNER JOIN LOGICAL_LIBRARY ON "
+        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID";
 
     if(searchCriteria.vid ||
        searchCriteria.mediaType ||
@@ -2281,7 +2330,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     }
     if(searchCriteria.logicalLibrary) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " TAPE.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+      sql += " LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.tapePool) {
@@ -2387,7 +2436,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         "TAPE.VID AS VID,"
         "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
         "TAPE.VENDOR AS VENDOR,"
-        "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "TAPE_POOL.VO AS VO,"
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
@@ -2423,7 +2472,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       "FROM "
         "TAPE "
       "INNER JOIN TAPE_POOL ON "
-        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
+        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
+      "INNER JOIN LOGICAL_LIBRARY ON "
+        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID";
 
     if(!vids.empty()) {
       sql += " WHERE ";
@@ -2513,7 +2564,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
         "TAPE.VID AS VID,"
         "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
         "TAPE.VENDOR AS VENDOR,"
-        "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "TAPE_POOL.VO AS VO,"
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
@@ -2549,7 +2600,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       "FROM "
         "TAPE "
       "INNER JOIN TAPE_POOL ON "
-        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
+        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
+      "INNER JOIN LOGICAL_LIBRARY ON "
+        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID";
 
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
@@ -2899,7 +2952,8 @@ void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
-        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME,"
+        "LOGICAL_LIBRARY_ID = "
+          "(SELECT LOGICAL_LIBRARY_ID FROM LOGICAL_LIBRARY WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME),"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
@@ -6188,6 +6242,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "TAPE.VID AS VID,"
         "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
         "TAPE.VENDOR AS VENDOR,"
+        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "TAPE_POOL.VO AS VO,"
         "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
@@ -6197,13 +6252,15 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "TAPE "
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
+      "INNER JOIN LOGICAL_LIBRARY ON "
+        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
       "WHERE "
-//      "LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
-//      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
-        "IS_DISABLED = '0' AND "
-        "IS_FULL = '0' AND "
-        "IS_READ_ONLY = '0' AND "
-        "IS_FROM_CASTOR = '0' AND "
+//      "TAPE.LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
+//      "TAPE.LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
+        "TAPE.IS_DISABLED = '0' AND "
+        "TAPE.IS_FULL = '0' AND "
+        "TAPE.IS_READ_ONLY = '0' AND "
+        "TAPE.IS_FROM_CASTOR = '0' AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
 
     auto conn = m_connPool.getConn();
@@ -6906,6 +6963,60 @@ uint64_t RdbmsCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::string &
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::isSetAndEmpty(const optional<std::string> &optionalStr) const {
   return optionalStr && optionalStr->empty();
+}
+
+//------------------------------------------------------------------------------
+// getLogicalLibraryId
+//------------------------------------------------------------------------------
+optional<uint64_t> RdbmsCatalogue::getLogicalLibraryId(rdbms::Conn &conn, const std::string &name) const {
+  try {
+    const char *const sql =
+      "SELECT"                                                         "\n"
+        "LOGICAL_LIBRARY_ID AS LOGICAL_LIBRARY_ID"                     "\n"
+      "FROM"                                                           "\n"
+        "LOGICAL_LIBRARY"                                              "\n"
+      "WHERE"                                                          "\n"
+        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    auto rset = stmt.executeQuery();
+    if(!rset.next()) {
+      return nullopt;
+    }
+    return rset.columnUint64("LOGICAL_LIBRARY_ID");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getTapePoolId
+//------------------------------------------------------------------------------
+optional<uint64_t> RdbmsCatalogue::getTapePoolId(rdbms::Conn &conn, const std::string &name) const {
+  try {
+    const char *const sql =
+      "SELECT"                                       "\n"
+        "TAPE_POOL_ID AS TAPE_POOL_ID"               "\n"
+      "FROM"                                         "\n"
+        "TAPE_POOL"                                  "\n"
+      "WHERE"                                        "\n"
+        "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":TAPE_POOL_NAME", name);
+    auto rset = stmt.executeQuery();
+    if(!rset.next()) {
+      return nullopt;
+    }
+    return rset.columnUint64("TAPE_POOL_ID");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
 }
 
 } // namespace catalogue

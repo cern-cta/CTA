@@ -97,6 +97,47 @@ uint64_t MysqlCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
 }
 
 //------------------------------------------------------------------------------
+// getNextLogicalLibraryId
+//------------------------------------------------------------------------------
+uint64_t MysqlCatalogue::getNextLogicalLibraryId(rdbms::Conn &conn) {
+  try {
+    rdbms::AutoRollback autoRollback(conn);
+
+    conn.executeNonQuery("START TRANSACTION");
+
+    {
+      const char *const sql =
+        "UPDATE LOGICAL_LIBRARY_ID SET ID = LAST_INSERT_ID(ID + 1)";
+      auto stmt = conn.createStmt(sql);
+      stmt.executeNonQuery();
+    }
+
+    uint64_t logicalLibraryId = 0;
+    {
+      const char *const sql =
+        "SELECT LAST_INSERT_ID() AS ID ";
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery();
+      if(!rset.next()) {
+        throw exception::Exception("LOGICAL_LIBRARY_ID table is empty");
+      }
+      logicalLibraryId = rset.columnUint64("ID");
+      if(rset.next()) {
+        throw exception::Exception("Found more than one ID counter in the LOGICAL_LIBRARY_ID table");
+      }
+    }
+    conn.commit();
+
+    return logicalLibraryId;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getNextStorageClassId
 //------------------------------------------------------------------------------
 uint64_t MysqlCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
