@@ -46,7 +46,11 @@ RUN yum install -y \
     # Newer version of CTA requires xroot >= 4.4.1-1...
     # therefore set epel priority to 4...
     # Create local repo for cta artifacts and to cache RPMs locally
-    mkdir -p ${CTAREPODIR}/RPMS/x86_64 ${LOCALORCHESTRATIONDIR}
+    mkdir -p ${CTAREPODIR}/RPMS/x86_64 ${LOCALORCHESTRATIONDIR} \
+  && \
+    # logrotate files must be 0644 or 0444
+    # .rpmnew files are ignored %config (no replace)
+    chmod 0644 /etc/logrotate.d/*
 
 # Add previously built rpms
 ADD build_rpm/RPM ${CTAREPODIR}
