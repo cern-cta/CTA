@@ -251,7 +251,8 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
     for(auto &aj: validatedSuccessfulArchiveJobs){
-      failedToReportArchiveJobs.push(std::move(aj));
+      if(aj.get())
+        failedToReportArchiveJobs.push(std::move(aj));
     }
     throw cta::ArchiveMount::FailedMigrationRecallResult(msg_error);
   } catch(const std::exception& e){
@@ -266,7 +267,8 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an standard exception";
     logContext.log(cta::log::ERR, msg_error);
     for(auto &aj: validatedSuccessfulArchiveJobs){
-      failedToReportArchiveJobs.push(std::move(aj));
+      if(aj.get())
+        failedToReportArchiveJobs.push(std::move(aj));
     }
     throw cta::ArchiveMount::FailedMigrationRecallResult(msg_error);
   }
