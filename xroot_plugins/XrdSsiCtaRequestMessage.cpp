@@ -451,7 +451,11 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    // converted to a valid uint64_t
    const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+     // Fall back to the old xattr format
+     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileID");
+     if(notification.file().xattr().end() == archiveFileIdItor) {
+       throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+     }
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
@@ -500,7 +504,11 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    // converted to a valid uint64_t
    const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+     // Fall back to the old xattr format
+     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileID");
+     if(notification.file().xattr().end() == archiveFileIdItor) {
+       throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+     }
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
@@ -552,7 +560,11 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
 
    const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+     // Fall back to the old xattr format
+     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileID");
+     if(notification.file().xattr().end() == archiveFileIdItor) {
+       throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+     }
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
