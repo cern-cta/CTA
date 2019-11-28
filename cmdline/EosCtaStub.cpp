@@ -239,11 +239,11 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
       }
       else if(argstr == "--diskfilepath")        notification.mutable_file()->set_lpath(argval);
       else if(argstr == "--storageclass")        {
-         google::protobuf::MapPair<std::string,std::string> sc("CTA_StorageClass", argval);
+         google::protobuf::MapPair<std::string,std::string> sc("sys.archive.storage_class", argval);
          notification.mutable_file()->mutable_xattr()->insert(sc);
       }
       else if(argstr == "--id")                  {
-         google::protobuf::MapPair<std::string,std::string> id("CTA_ArchiveFileId", argval);
+         google::protobuf::MapPair<std::string,std::string> id("sys.archive.file_id", argval);
          notification.mutable_file()->mutable_xattr()->insert(id);
       }
       else throw std::runtime_error("Unrecognised key " + argstr);

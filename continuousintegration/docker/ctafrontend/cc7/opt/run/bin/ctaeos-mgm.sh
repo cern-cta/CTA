@@ -264,7 +264,7 @@ fi
   eos mkdir ${CTA_TEST_DIR}
   eos chmod 555 ${CTA_TEST_DIR}
   eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp /eos/ctaeos/cta
-  eos attr set CTA_StorageClass=ctaStorageClass ${CTA_TEST_DIR}
+  eos attr set sys.archive.storage_class=ctaStorageClass ${CTA_TEST_DIR}
     
   # Link the attributes of CTA worklow directory to the test directory
   eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR}

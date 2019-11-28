@@ -331,13 +331,13 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    requester.name  = notification.cli().user().username();
    requester.group = notification.cli().user().groupname();
 
-   const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
+   const auto storageClassItor = notification.file().xattr().find("sys.archive_storage_class");
    if(notification.file().xattr().end() == storageClassItor) {
-     throw PbException(std::string(__FUNCTION__) + ": CTA_StorageClass extended attribute is not set");
+     throw PbException(std::string(__FUNCTION__) + ": sys.archive_storage_class extended attribute is not set");
    }
    const std::string storageClass = storageClassItor->second;
    if(storageClass.empty()) {
-     throw PbException(std::string(__FUNCTION__) + ": CTA_StorageClass extended attribute is set to an empty string");
+     throw PbException(std::string(__FUNCTION__) + ": sys.archive_storage_class extended attribute is set to an empty string");
    }
 
    cta::utils::Timer t;
@@ -353,10 +353,10 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    m_lc.log(cta::log::INFO, "In RequestMessage::processCREATE(): assigning new archive file ID.");
 
    // Set ArchiveFileId in xattrs
-   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.file_id", std::to_string(archiveFileId)));
    
    // Set the storage class in xattrs
-   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_StorageClass", storageClass));
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive_storage_class", storageClass));
 
    // Set response type
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -374,9 +374,9 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    checkIsNotEmptyString(notification.transport().report_url(),   "notification.transport.report_url");
 
    // Unpack message
-   const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
+   const auto storageClassItor = notification.file().xattr().find("sys.archive_storage_class");
    if(notification.file().xattr().end() == storageClassItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_StorageClass");
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive_storage_class");
    }
 
    cta::common::dataStructures::ArchiveRequest request;
@@ -399,9 +399,9 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
 
-   const auto archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
+   const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_ArchiveFileId");
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    uint64_t archiveFileId = 0;
@@ -449,9 +449,9 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
-   const auto archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
+   const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_ArchiveFileId");
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
@@ -498,9 +498,9 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
-   const auto archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
+   const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_ArchiveFileId");
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
@@ -550,9 +550,9 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
 
-   const auto archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
+   const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_ArchiveFileId");
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
