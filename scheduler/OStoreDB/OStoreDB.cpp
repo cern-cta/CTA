@@ -1753,8 +1753,8 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
   Carqtrtrfs algo(this->m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
-  re.fetchNoLock();
   while(true) {
+    re.fetchNoLock();
     auto queueList = re.dumpRetrieveQueues(JobQueueType::JobsToReportToRepackForSuccess);
     if (queueList.empty()) throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): no queue found.");
 
@@ -1798,8 +1798,8 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextFailedRet
   CaRqtrtrff algo(this->m_objectStore,*m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
-  re.fetchNoLock();
   while(true) {
+    re.fetchNoLock();
     auto queueList = re.dumpRetrieveQueues(JobQueueType::JobsToReportToRepackForFailure);
     if (queueList.empty()) throw NoRepackReportBatchFound("In OStoreDB::getNextFailedRetrieveRepackReportBatch(): no queue found.");
 
@@ -1842,8 +1842,8 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
   Caaqtrtrfs algo(this->m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
-  re.fetchNoLock();
   while(true) {
+    re.fetchNoLock();
     auto queueList = re.dumpArchiveQueues(JobQueueType::JobsToReportToRepackForSuccess);
     if (queueList.empty()) throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulArchiveRepackReportBatch(): no queue found.");
 
@@ -1885,8 +1885,8 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextFailedArc
   Caaqtrtrff algo(this->m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
-  re.fetchNoLock();
   while(true) {
+    re.fetchNoLock();
     auto queueList = re.dumpArchiveQueues(JobQueueType::JobsToReportToRepackForFailure);
     if (queueList.empty()) throw NoRepackReportBatchFound("In OStoreDB::getNextFailedArchiveRepackReportBatch(): no queue found.");
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.

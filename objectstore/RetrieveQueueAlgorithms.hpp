@@ -447,6 +447,9 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
           .add("queueObject", cont.getAddressIfSet())
           .add("Message", ex.getMessageValue());
     lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): could not delete a presumably empty queue");
+    if(typeid(ex) == typeid(cta::objectstore::RootEntry::RetrieveQueueNotEmpty)){
+      return false;
+    }
   }
   return true;
 }
