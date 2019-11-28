@@ -495,7 +495,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     archiveJob->validate();
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
-    std::queue<std::unique_ptr <cta::ArchiveJob >> failedToReportArchiveJobs;
+    std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems,failedToReportArchiveJobs, lc);
     archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
@@ -695,7 +695,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     archiveJob->validate();
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
-    std::queue<std::unique_ptr <cta::ArchiveJob >> failedToReportArchiveJobs;
+    std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems,failedToReportArchiveJobs, lc);
     archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
@@ -947,7 +947,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
-    std::queue<std::unique_ptr<cta::ArchiveJob>> failedToReportArchiveJobs;
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems,failedToReportArchiveJobs, lc);
     archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, archiveJobBatch.size());
@@ -2858,7 +2858,7 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
       archiveJob->validate();
       std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
       std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
-      std::queue<std::unique_ptr <cta::ArchiveJob >> failedToReportArchiveJobs;
+      std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
       sDBarchiveJobBatch.emplace(std::move(archiveJob));
       archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
       // Mark the tape full so we get one file per tape.

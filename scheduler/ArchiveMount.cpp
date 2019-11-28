@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iostream>
+
 #include "scheduler/ArchiveMount.hpp"
 #include "common/make_unique.hpp"
 #include "objectstore/Backend.hpp"
@@ -155,9 +157,10 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
 // reportJobsBatchWritten
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
-    std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, std::queue<std::unique_ptr<cta::ArchiveJob>>& failedToReportArchiveJobs,cta::log::LogContext& logContext) {
+    std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,cta::log::LogContext& logContext) {
   std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
   std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
+  std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> validatedSuccessfulDBArchiveJobs;
   std::unique_ptr<cta::ArchiveJob> job;
   try{
     uint64_t files=0;
@@ -181,7 +184,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       } catch (const cta::exception::Exception &ex){
         //We put the not validated job into this list in order to insert the job
         //into the failedToReportArchiveJobs list in the exception catching block
-        validatedSuccessfulArchiveJobs.emplace_back(std::move(job));
+        validatedSuccessfulDBArchiveJobs.emplace_back(std::move(job->m_dbJob));
         throw ex;
       }
       files++;
@@ -210,7 +213,6 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
     
     // Now get the db mount to mark the jobs as successful.
     // Extract the db jobs from the scheduler jobs.
-    std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> validatedSuccessfulDBArchiveJobs;
     for (auto &schJob: validatedSuccessfulArchiveJobs) {
       validatedSuccessfulDBArchiveJobs.emplace_back(std::move(schJob->m_dbJob));
     }
@@ -250,7 +252,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
     }
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
-    for(auto &aj: validatedSuccessfulArchiveJobs){
+    for(auto &aj: validatedSuccessfulDBArchiveJobs){
       if(aj.get())
         failedToReportArchiveJobs.push(std::move(aj));
     }
@@ -266,7 +268,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
     }
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an standard exception";
     logContext.log(cta::log::ERR, msg_error);
-    for(auto &aj: validatedSuccessfulArchiveJobs){
+    for(auto &aj: validatedSuccessfulDBArchiveJobs){
       if(aj.get())
         failedToReportArchiveJobs.push(std::move(aj));
     }

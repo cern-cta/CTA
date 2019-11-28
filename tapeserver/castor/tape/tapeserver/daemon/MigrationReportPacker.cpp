@@ -251,14 +251,14 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       reportPacker.m_lc.log(cta::log::INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
-    std::queue<std::unique_ptr<cta::ArchiveJob>> failedToReportArchiveJobs;
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     try{
       reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, failedToReportArchiveJobs, 
         reportPacker.m_lc);
     } catch(const cta::ArchiveMount::FailedMigrationRecallResult &ex){
       while(!failedToReportArchiveJobs.empty()){
         auto archiveJob = std::move(failedToReportArchiveJobs.front());
-        archiveJob->transferFailed(ex.getMessageValue(),reportPacker.m_lc);
+        archiveJob->failTransfer(ex.getMessageValue(),reportPacker.m_lc);
         failedToReportArchiveJobs.pop();
       }
       throw ex;
