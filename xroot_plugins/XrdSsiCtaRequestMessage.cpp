@@ -331,13 +331,17 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    requester.name  = notification.cli().user().username();
    requester.group = notification.cli().user().groupname();
 
-   const auto storageClassItor = notification.file().xattr().find("sys.archive_storage_class");
+   const auto storageClassItor = notification.file().xattr().find("sys.archive.storage_class");
    if(notification.file().xattr().end() == storageClassItor) {
-     throw PbException(std::string(__FUNCTION__) + ": sys.archive_storage_class extended attribute is not set");
+     // Fall back to old xattr format
+     storageClassItor = notification.file().xattr().find("CTA_StorageClass");
+     if(notification.file().xattr().end() == storageClassItor) {
+       throw PbException(std::string(__FUNCTION__) + ": sys.archive.storage_class extended attribute is not set");
+     }
    }
    const std::string storageClass = storageClassItor->second;
    if(storageClass.empty()) {
-     throw PbException(std::string(__FUNCTION__) + ": sys.archive_storage_class extended attribute is set to an empty string");
+     throw PbException(std::string(__FUNCTION__) + ": sys.archive.storage_class extended attribute is set to an empty string");
    }
 
    cta::utils::Timer t;
@@ -356,7 +360,7 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.file_id", std::to_string(archiveFileId)));
    
    // Set the storage class in xattrs
-   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive_storage_class", storageClass));
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.storage_class", storageClass));
 
    // Set response type
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -374,9 +378,9 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    checkIsNotEmptyString(notification.transport().report_url(),   "notification.transport.report_url");
 
    // Unpack message
-   const auto storageClassItor = notification.file().xattr().find("sys.archive_storage_class");
+   const auto storageClassItor = notification.file().xattr().find("sys.archive.storage_class");
    if(notification.file().xattr().end() == storageClassItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive_storage_class");
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.storage_class");
    }
 
    cta::common::dataStructures::ArchiveRequest request;
@@ -452,7 +456,7 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
      // Fall back to the old xattr format
-     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileID");
+     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
      if(notification.file().xattr().end() == archiveFileIdItor) {
        throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
      }
@@ -505,7 +509,7 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
      // Fall back to the old xattr format
-     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileID");
+     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
      if(notification.file().xattr().end() == archiveFileIdItor) {
        throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
      }
@@ -561,7 +565,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
      // Fall back to the old xattr format
-     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileID");
+     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
      if(notification.file().xattr().end() == archiveFileIdItor) {
        throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
      }
