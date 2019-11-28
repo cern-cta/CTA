@@ -331,7 +331,7 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    requester.name  = notification.cli().user().username();
    requester.group = notification.cli().user().groupname();
 
-   const auto storageClassItor = notification.file().xattr().find("sys.archive.storage_class");
+   auto storageClassItor = notification.file().xattr().find("sys.archive.storage_class");
    if(notification.file().xattr().end() == storageClassItor) {
      // Fall back to old xattr format
      storageClassItor = notification.file().xattr().find("CTA_StorageClass");
@@ -453,7 +453,7 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
-   const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
+   auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
      // Fall back to the old xattr format
      archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
@@ -506,7 +506,7 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
-   const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
+   auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
      // Fall back to the old xattr format
      archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
@@ -562,7 +562,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
 
-   const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
+   auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
      // Fall back to the old xattr format
      archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
