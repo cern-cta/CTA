@@ -6261,7 +6261,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "TAPE.IS_FULL = '0' AND "
         "TAPE.IS_READ_ONLY = '0' AND "
         "TAPE.IS_FROM_CASTOR = '0' AND "
-        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
 
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
