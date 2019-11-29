@@ -162,6 +162,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
   std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
   std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> validatedSuccessfulDBArchiveJobs;
   std::unique_ptr<cta::ArchiveJob> job;
+  std::string failedValidationJobReportURL;
   try{
     uint64_t files=0;
     uint64_t bytes=0;
@@ -184,6 +185,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       } catch (const cta::exception::Exception &ex){
         //We put the not validated job into this list in order to insert the job
         //into the failedToReportArchiveJobs list in the exception catching block
+        failedValidationJobReportURL = job->reportURL();
         validatedSuccessfulDBArchiveJobs.emplace_back(std::move(job->m_dbJob));
         throw ex;
       }
@@ -199,7 +201,14 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       tapeItemsWritten.emplace(tiwup.release());
     }
     utils::Timer t;
-    // Note: former content of ReportFlush::updateCatalogueWithTapeFilesWritten
+    
+    // Now get the db mount to mark the jobs as successful.
+    // Extract the db jobs from the scheduler jobs.
+    for (auto &schJob: validatedSuccessfulArchiveJobs) {
+      validatedSuccessfulDBArchiveJobs.emplace_back(std::move(schJob->m_dbJob));
+    }
+    validatedSuccessfulArchiveJobs.clear();
+    
     updateCatalogueWithTapeFilesWritten(tapeItemsWritten);
     catalogueTime=t.secs(utils::Timer::resetCounter);
     {
@@ -211,13 +220,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       logContext.log(cta::log::INFO, "Catalog updated for batch of jobs");   
     }
     
-    // Now get the db mount to mark the jobs as successful.
-    // Extract the db jobs from the scheduler jobs.
-    for (auto &schJob: validatedSuccessfulArchiveJobs) {
-      validatedSuccessfulDBArchiveJobs.emplace_back(std::move(schJob->m_dbJob));
-    }
-    
-    // We can now pass this list for the dbMount to process. We are done at that point.
+    // We can now pass  thevalidatedSuccessfulArchiveJobs list for the dbMount to process. We are done at that point.
     // Reporting to client will be queued if needed and done in another process.
     m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext);
     schedulerDbTime=t.secs(utils::Timer::resetCounter);
@@ -236,7 +239,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("diskInstance", job->archiveFile.diskInstance)
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-            .add("reportURL", job->reportURL());
+            .add("reportURL", failedValidationJobReportURL);
     }
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): job does not exist in the objectstore.";
     logContext.log(cta::log::WARNING, msg_error);
@@ -248,10 +251,17 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("diskInstance", job->archiveFile.diskInstance)
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-            .add("reportURL", job->reportURL());
+            .add("reportURL", failedValidationJobReportURL);
     }
     const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
+    //If validatedSuccessfulArchiveJobs has still jobs in it, it means that
+    //the validation job->validateAndGetTapeFileWritten() failed for one job and
+    //threw an exception. We will then have to fail all the others.
+    for(auto &ctaJob: validatedSuccessfulArchiveJobs){
+      if(ctaJob.get())
+        validatedSuccessfulDBArchiveJobs.emplace_back(std::move(ctaJob->m_dbJob));
+    }
     for(auto &aj: validatedSuccessfulDBArchiveJobs){
       if(aj.get())
         failedToReportArchiveJobs.push(std::move(aj));

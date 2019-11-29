@@ -258,7 +258,11 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     } catch(const cta::ArchiveMount::FailedMigrationRecallResult &ex){
       while(!failedToReportArchiveJobs.empty()){
         auto archiveJob = std::move(failedToReportArchiveJobs.front());
-        archiveJob->failTransfer(ex.getMessageValue(),reportPacker.m_lc);
+        try{
+          archiveJob->failTransfer(ex.getMessageValue(),reportPacker.m_lc);
+        } catch(const cta::exception::Exception &ex2) {
+          //If the failTransfer method fails, we can't do anything about it
+        }
         failedToReportArchiveJobs.pop();
       }
       throw ex;
