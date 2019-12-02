@@ -17,6 +17,8 @@
  */
 
 #include "common/exception/DatabaseCheckConstraintError.hpp"
+#include "common/exception/DatabasePrimaryKeyError.hpp"
+#include "common/exception/DatabaseUniqueError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/make_unique.hpp"
@@ -27,6 +29,7 @@
 #include "rdbms/wrapper/OcciStmt.hpp"
 
 #include <cstring>
+#include <iostream>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -268,9 +271,13 @@ void OcciStmt::executeNonQuery() {
       }
       throw exception::LostDatabaseConnection(msg.str());
     }
-    if(2290 == ex.getErrorCode()) {
+
+    switch(ex.getErrorCode()) {
+    case 1:
+      throw exception::DatabaseUniqueError(msg.str());
+    case 2290:
       throw exception::DatabaseCheckConstraintError(msg.str());
-    } else {
+    default:
       throw exception::Exception(msg.str());
     }
   }

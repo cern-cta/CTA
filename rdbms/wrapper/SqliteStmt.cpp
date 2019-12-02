@@ -19,6 +19,7 @@
 #include "common/exception/DatabaseCheckConstraintError.hpp"
 #include "common/exception/DatabaseConstraintError.hpp"
 #include "common/exception/DatabasePrimaryKeyError.hpp"
+#include "common/exception/DatabaseUniqueError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -286,12 +287,14 @@ void SqliteStmt::executeNonQuery() {
     msg << __FUNCTION__ << " failed for SQL statement " << getSqlForException() + ": " << Sqlite::rcToStr(stepRc);
 
     switch(stepRc) {
-    case SQLITE_CONSTRAINT_PRIMARYKEY:
-      throw exception::DatabasePrimaryKeyError(msg.str());
-    case SQLITE_CONSTRAINT_CHECK:
-      throw exception::DatabaseCheckConstraintError(msg.str());
     case SQLITE_CONSTRAINT:
       throw exception::DatabaseConstraintError(msg.str());
+    case SQLITE_CONSTRAINT_CHECK:
+      throw exception::DatabaseCheckConstraintError(msg.str());
+    case SQLITE_CONSTRAINT_PRIMARYKEY:
+      throw exception::DatabasePrimaryKeyError(msg.str());
+    case SQLITE_CONSTRAINT_UNIQUE:
+      throw exception::DatabaseUniqueError(msg.str());
     default:
       if ((stepRc & 0xFF) == SQLITE_CONSTRAINT)
         throw exception::DatabaseConstraintError(msg.str());

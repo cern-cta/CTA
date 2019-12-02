@@ -19,11 +19,13 @@
 #pragma once
 
 #include "common/exception/DatabaseCheckConstraintError.hpp"
+#include "common/exception/DatabaseUniqueError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 #include <libpq-fe.h>
 #include <string>
 
@@ -50,11 +52,13 @@ public:
       pgstr.erase(std::remove(pgstr.begin(), pgstr.end(), '\n'), pgstr.end());
     }
     std::string resstr;
+    bool uniqueViolation = false;
     bool checkViolation = false;
     if (nullptr != res) {
       resstr = "DB Result Status:" + std::to_string(PQresultStatus(res));
       const char *const e = PQresultErrorField(res, PG_DIAG_SQLSTATE);
       if (nullptr != e && '\0' != *e) {
+        uniqueViolation = 0 == std::strcmp("23505", e);
         checkViolation = 0 == std::strcmp("23514", e);
         resstr += " SQLState:" + std::string(e);
       }
@@ -89,6 +93,9 @@ public:
 
     if (badconn) {
       throw exception::LostDatabaseConnection(dbmsg);
+    }
+    if (uniqueViolation) {
+      throw exception::DatabaseUniqueError(dbmsg);
     }
     if (checkViolation) {
       throw exception::DatabaseCheckConstraintError(dbmsg);
