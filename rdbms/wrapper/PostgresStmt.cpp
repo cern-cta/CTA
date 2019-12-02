@@ -28,10 +28,11 @@
 #include "rdbms/wrapper/PostgresRset.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
+#include <algorithm>
 #include <exception>
+#include <pgsql/server/utils/errcodes.h>
 #include <sstream>
 #include <utility>
-#include <algorithm>
 
 namespace cta {
 namespace rdbms {
@@ -355,8 +356,9 @@ void PostgresStmt::executeNonQuery() {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) +
       " detected lost connection for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+      ex.getMessage().str());
+    throw;
   }
 }
 

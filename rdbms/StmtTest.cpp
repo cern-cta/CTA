@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/DatabaseConstraintError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
@@ -60,11 +61,12 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
 
   try {
     std::string sql =
-      "CREATE TABLE STMT_TEST("
-        "DOUBLE_COL FLOAT,"
-        "UINT64_COL UINT64TYPE,"
-        "STRING_COL VARCHAR(100),"
-        "BOOL_COL CHAR(1)"
+      "CREATE TABLE STMT_TEST("                                     "\n"
+      "  DOUBLE_COL FLOAT,"                                         "\n"
+      "  UINT64_COL UINT64TYPE,"                                    "\n"
+      "  STRING_COL VARCHAR(100),"                                  "\n"
+      "  BOOL_COL   CHAR(1) DEFAULT '0',"                           "\n"
+      "  CONSTRAINT BOOL_COL_BOOL_CK CHECK(BOOL_COL IN ('0', '1'))" "\n"
       ")";
 
     switch(m_login.dbType) {
@@ -380,6 +382,24 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_false) {
     ASSERT_EQ(insertValue,selectValue.value());
 
     ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindString_invalid_bool_value) {
+  using namespace cta::rdbms;
+
+  const std::string insertValue = "2"; // null, "0" and "1" are valid values
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST("
+        "BOOL_COL) "
+      "VALUES("
+        ":BOOL_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindString(":BOOL_COL", insertValue);
+    ASSERT_THROW(stmt.executeNonQuery(), cta::exception::DatabaseConstraintError);
   }
 }
 

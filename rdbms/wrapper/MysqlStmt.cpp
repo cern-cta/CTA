@@ -382,6 +382,9 @@ void MysqlStmt::executeNonQuery() {
       case ER_DUP_ENTRY:
         throw exception::DatabasePrimaryKeyError(std::string(__FUNCTION__) + " " +  msg);
         break;
+      case 4025: // Newer MariaDB versions have ER_CONSTRAINT_FAILED = 4025
+        throw exception::DatabaseConstraintError(std::string(__FUNCTION__) + " " +  msg);
+        break;
       }
 
       throw exception::Exception(std::string(__FUNCTION__) + " " +  msg);

@@ -25,10 +25,10 @@
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresColumn.hpp"
 
-#include <vector>
-#include <string>
-#include <memory>
 #include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace cta {
 namespace rdbms {

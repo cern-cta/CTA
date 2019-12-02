@@ -18,11 +18,14 @@
 
 #pragma once
 
+#include "common/exception/DatabaseConstraintError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
+
+#include <algorithm>
+#include <cstring>
 #include <libpq-fe.h>
 #include <string>
-#include <algorithm>
 
 namespace cta {
 namespace rdbms {
@@ -47,10 +50,12 @@ public:
       pgstr.erase(std::remove(pgstr.begin(), pgstr.end(), '\n'), pgstr.end());
     }
     std::string resstr;
+    bool checkViolation = false;
     if (nullptr != res) {
       resstr = "DB Result Status:" + std::to_string(PQresultStatus(res));
       const char *const e = PQresultErrorField(res, PG_DIAG_SQLSTATE);
       if (nullptr != e && '\0' != *e) {
+        checkViolation = 0 == std::strcmp("23514", e);
         resstr += " SQLState:" + std::string(e);
       }
     }
@@ -84,6 +89,9 @@ public:
 
     if (badconn) {
       throw exception::LostDatabaseConnection(dbmsg);
+    }
+    if (checkViolation) {
+      throw exception::DatabaseConstraintError(dbmsg);
     }
     throw exception::Exception(dbmsg);
   }
