@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintError.hpp"
+#include "common/exception/DatabaseCheckConstraintError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/make_unique.hpp"
@@ -269,7 +269,7 @@ void OcciStmt::executeNonQuery() {
       throw exception::LostDatabaseConnection(msg.str());
     }
     if(2290 == ex.getErrorCode()) {
-      throw exception::DatabaseConstraintError(msg.str());
+      throw exception::DatabaseCheckConstraintError(msg.str());
     } else {
       throw exception::Exception(msg.str());
     }

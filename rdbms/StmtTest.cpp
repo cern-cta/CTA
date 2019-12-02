@@ -16,7 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintError.hpp"
+#include "common/exception/DatabaseCheckConstraintError.hpp"
+#include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
@@ -399,7 +400,8 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString_invalid_bool_value) {
         ":BOOL_COL)";
     auto stmt = m_conn.createStmt(sql);
     stmt.bindString(":BOOL_COL", insertValue);
-    ASSERT_THROW(stmt.executeNonQuery(), cta::exception::DatabaseConstraintError);
+
+    ASSERT_THROW(stmt.executeNonQuery(), cta::exception::DatabaseCheckConstraintError);
   }
 }
 

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintError.hpp"
+#include "common/exception/DatabaseCheckConstraintError.hpp"
 #include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
@@ -383,7 +383,7 @@ void MysqlStmt::executeNonQuery() {
         throw exception::DatabasePrimaryKeyError(std::string(__FUNCTION__) + " " +  msg);
         break;
       case 4025: // Newer MariaDB versions have ER_CONSTRAINT_FAILED = 4025
-        throw exception::DatabaseConstraintError(std::string(__FUNCTION__) + " " +  msg);
+        throw exception::DatabaseCheckConstraintError(std::string(__FUNCTION__) + " " +  msg);
         break;
       }
 

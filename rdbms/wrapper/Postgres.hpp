@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/exception/DatabaseConstraintError.hpp"
+#include "common/exception/DatabaseCheckConstraintError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 
@@ -91,7 +91,7 @@ public:
       throw exception::LostDatabaseConnection(dbmsg);
     }
     if (checkViolation) {
-      throw exception::DatabaseConstraintError(dbmsg);
+      throw exception::DatabaseCheckConstraintError(dbmsg);
     }
     throw exception::Exception(dbmsg);
   }

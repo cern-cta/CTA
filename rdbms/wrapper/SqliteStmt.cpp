@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/DatabaseCheckConstraintError.hpp"
 #include "common/exception/DatabaseConstraintError.hpp"
 #include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
@@ -287,6 +288,8 @@ void SqliteStmt::executeNonQuery() {
     switch(stepRc) {
     case SQLITE_CONSTRAINT_PRIMARYKEY:
       throw exception::DatabasePrimaryKeyError(msg.str());
+    case SQLITE_CONSTRAINT_CHECK:
+      throw exception::DatabaseCheckConstraintError(msg.str());
     case SQLITE_CONSTRAINT:
       throw exception::DatabaseConstraintError(msg.str());
     default:
