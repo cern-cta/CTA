@@ -152,14 +152,9 @@ add_custom_command(OUTPUT mysql_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' mysql_catalogue_schema.sql | sed 's/$$/\"/' > mysql_catalogue_schema.cpp
   DEPENDS mysql_catalogue_schema.sql)
 
-add_custom_command(OUTPUT mysql_catalogue_schema_trigger.cpp
-  COMMAND sed 's/^/\ \ \"/' ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trigger.sql | sed 's/$$/\"/' > mysql_catalogue_schema_trigger.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trigger.sql)
-
-
 add_custom_command(OUTPUT MysqlCatalogueSchema.cpp
-  COMMAND sed -e '/CTA_SQL_SCHEMA/r mysql_catalogue_schema.cpp' -e '/CTA_SQL_TRIGGER/r mysql_catalogue_schema_trigger.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp > MysqlCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp mysql_catalogue_schema.cpp mysql_catalogue_schema_trigger.cpp)
+  COMMAND sed -e '/CTA_SQL_SCHEMA/r mysql_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp > MysqlCatalogueSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp mysql_catalogue_schema.cpp)
 
 # For Postgres
 add_custom_command(OUTPUT postgres_catalogue_schema.cpp

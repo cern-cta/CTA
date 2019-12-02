@@ -137,16 +137,6 @@ private:
   VerifyStatus verifySequenceNames(const std::list<std::string> &schemaSequenceNames, 
     const std::list<std::string> &dbSequenceNames) const;
   
-  /**
-   * Verifies trigger names in the database against the catalogue schema trigger names.
-   * Returns verification status as result.
-   * 
-   * @param schemaTriggerNames The list of the catalogue schema trigger names.
-   * @param dbTrgigerNames The list of the database trigger names.
-   * @return The verification status code.
-   */
-  VerifyStatus verifyTriggerNames(const std::list<std::string> &schemaTriggerNames, 
-    const std::list<std::string> &dbTrgigerNames) const;
 }; // class VerifySchemaCmd
 
 } // namespace catalogue

@@ -85,12 +85,6 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     {
        MysqlCatalogueSchema schema;
        executeNonQueries(conn, schema.sql);
-
-       // execute triggers
-       auto triggers = schema.triggers();
-       for (auto trigger: triggers) {
-         conn.executeNonQuery(trigger);
-       }
     }
     break;
   case rdbms::Login::DBTYPE_ORACLE:

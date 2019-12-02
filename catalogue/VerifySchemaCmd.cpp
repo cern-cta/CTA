@@ -129,16 +129,10 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const auto dbSequenceNames = conn.getSequenceNames();
   const VerifyStatus verifySequencesStatus = verifySequenceNames(schemaSequenceNames, dbSequenceNames);
 
-  std::cerr << "Checking trigger names..." << std::endl;
-  const auto schemaTriggerNames = schema->getSchemaTriggerNames();
-  const auto dbTriggerNames = conn.getTriggerNames();
-  const VerifyStatus verifyTriggersStatus = verifyTriggerNames(schemaTriggerNames, dbTriggerNames);
-  
   if (verifySchemaStatus    == VerifyStatus::ERROR ||
       verifyTablesStatus    == VerifyStatus::ERROR || 
       verifyIndexesStatus   == VerifyStatus::ERROR ||
       verifySequencesStatus == VerifyStatus::ERROR || 
-      verifyTriggersStatus  == VerifyStatus::ERROR ||
       verifyColumnsStatus   == VerifyStatus::ERROR ) {
     return 1;
   }
@@ -337,39 +331,6 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySequenceNames(const std::li
       const bool dbSequenceIsNotInSchema = schemaSequenceNames.end() == std::find(schemaSequenceNames.begin(), schemaSequenceNames.end(), sequenceName);
       if (dbSequenceIsNotInSchema) {
         std::cerr << "  INFO: the database sequence " << sequenceName << " not found in the schema" << std::endl;
-        if ( VerifyStatus::ERROR != status) {
-          status = VerifyStatus::INFO;
-        }
-      }
-    }
-    if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
-      std::cerr << "  OK" << std::endl;
-      status = VerifyStatus::OK;
-    }
-    return status;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// verifyTriggerNames
-//------------------------------------------------------------------------------
-VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTriggerNames(const std::list<std::string> &schemaTriggerNames, 
-  const std::list<std::string> &dbTriggerNames) const {
-  try {
-    VerifyStatus status = VerifyStatus::UNKNOWN;
-    for(auto &triggerName : schemaTriggerNames) {
-      const bool schemaTriggerIsNotInDb = dbTriggerNames.end() == std::find(dbTriggerNames.begin(), dbTriggerNames.end(), triggerName);
-      if (schemaTriggerIsNotInDb) {
-        std::cerr << "  ERROR: the schema trigger " << triggerName << " not found in the DB" << std::endl;
-        status = VerifyStatus::ERROR;
-      }
-    }
-    for(auto &triggerName : dbTriggerNames) {
-      const bool dbTriggerIsNotInSchema = schemaTriggerNames.end() == std::find(schemaTriggerNames.begin(), schemaTriggerNames.end(), triggerName);
-      if (dbTriggerIsNotInSchema) {
-        std::cerr << "  INFO: the database trigger " << triggerName << " not found in the schema" << std::endl;
         if ( VerifyStatus::ERROR != status) {
           status = VerifyStatus::INFO;
         }

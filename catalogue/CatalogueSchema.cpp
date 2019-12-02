@@ -29,12 +29,6 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 CatalogueSchema::CatalogueSchema(const std::string &sqlSchema): sql(sqlSchema) {
 }
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-CatalogueSchema::CatalogueSchema(const std::string &sqlSchema,
-  const std::string &sqlSchemaTrigger): sql(sqlSchema), sql_trigger(sqlSchemaTrigger) {
-}
 
 //------------------------------------------------------------------------------
 // getSchemaColumns
@@ -174,34 +168,6 @@ std::list<std::string> CatalogueSchema::getSchemaSequenceNames() const {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
   return schemaSequences;
-}
-
-//------------------------------------------------------------------------------
-// getSchemaTriggerNames
-//------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaTriggerNames() const {  
-  std::list<std::string> schemaTriggers;
-  std::string::size_type searchPos = 0;
-  std::string::size_type findResult = std::string::npos;
-  try {
-    while(std::string::npos != (findResult = sql_trigger.find(';', searchPos))) {
-      // Calculate the length of the current statement without the trailing ';'
-      const std::string::size_type stmtLen = findResult - searchPos;
-      const std::string sqlStmt = utils::trimString(sql_trigger.substr(searchPos, stmtLen));
-      searchPos = findResult + 1;
-
-      if(0 < sqlStmt.size()) { // Ignore empty statements
-        cta::utils::Regex tableTriggersRegex("CREATE TRIGGER `([a-zA-Z_]+)`");
-        auto triggerName = tableTriggersRegex.exec(sqlStmt);
-        if (2 == triggerName.size()) {
-          schemaTriggers.push_back(triggerName[1].c_str());
-        }
-      }
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-  return schemaTriggers;
 }
 
 //------------------------------------------------------------------------------

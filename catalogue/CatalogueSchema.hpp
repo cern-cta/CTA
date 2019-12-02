@@ -39,25 +39,10 @@ struct CatalogueSchema {
   CatalogueSchema(const std::string &sqlSchema);
   
   /**
-   * Constructor.
-   *
-   * @param sqlSchema The sql for the catalogue schema provided at compilation
-   * time.
-   * @param sqlTriggerSchema The sql for triggers in the catalogue schema provided
-   * at compilation time only for schemas that support triggers.
-   */
-  CatalogueSchema(const std::string &sqlSchema, const std::string &sqlTriggerSchema);
-  
-  /**
    * The schema.
    */
   const std::string sql;
   
-  /**
-   * The trigger.
-   */
-  const std::string sql_trigger;
-
   /**
    * Returns the names of all the tables in the catalogue schema.
    *
@@ -90,16 +75,6 @@ struct CatalogueSchema {
    * @return The names of all the sequences in the catalogue schema.
    */
   std::list<std::string> getSchemaSequenceNames() const;
-  
-  /**
-   * Returns the names of all the triggers in the catalogue schema.
-   * 
-   * if the underlying database technologies does not supported triggers then
-   * this method simply returns an empty list.*
-   * 
-   * @return The names of all the triggers in the catalogue schema.
-   */
-  std::list<std::string> getSchemaTriggerNames() const;
   
   /**
    * Returns the map of strings to uint64 for the catalogue SCHEMA_VERSION_MAJOR

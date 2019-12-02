@@ -26,36 +26,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 MysqlCatalogueSchema::MysqlCatalogueSchema(): CatalogueSchema(
   // CTA_SQL_SCHEMA - The contents of sqlite_catalogue_schema.cpp go here
-  , 
-  // CTA_SQL_TRIGGER - The contents of mysql_catalogue_schema_trigger.cpp go here
   ) {
-}
-
-std::vector<std::string>
-MysqlCatalogueSchema::triggers() {
-  std::vector<std::string> results;
-  // assume each trigger command starts with "CREATE TRIGGER"
-  const std::string trigger_prefix = "CREATE TRIGGER";
-
-  const std::string& sql_str = sql_trigger;
-
-  size_t idx = sql_str.find(trigger_prefix);
-
-  while (idx != std::string::npos) {
-    size_t idx_next = sql_str.find(trigger_prefix, idx+1);
-
-    size_t len = 0;
-    if (idx_next != std::string::npos) {
-      len = idx_next - idx;
-    } else {
-      len = idx_next;
-    }
-    std::string s = sql_str.substr(idx, len);
-    results.push_back(s);
-
-    idx = idx_next;
-  }
-  return results;
 }
 
 } // namespace catalogue
