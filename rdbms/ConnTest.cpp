@@ -132,7 +132,7 @@ TEST_P(cta_rdbms_ConnTest, loan_return_loan_conn_setAutocommitMode_AUTOCOMMIT_OF
 TEST_P(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQuery) {
   using namespace cta::rdbms;
 
-  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
+  const std::string sql = "CREATE TABLE CONN_TEST(ID INTEGER)";
 
   {
     const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
@@ -151,7 +151,7 @@ TEST_P(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQuery) {
 TEST_P(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_executeNonQuery) {
   using namespace cta::rdbms;
 
-  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
+  const std::string sql = "CREATE TABLE CONN_TEST(ID INTEGER)";
 
   // First in-memory database
   {
