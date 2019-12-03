@@ -119,6 +119,9 @@ void OcciStmt::bindOptionalUint64(const std::string &paramName, const optional<u
   }
 }
 
+//------------------------------------------------------------------------------
+// bindBlob
+//------------------------------------------------------------------------------
 void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
   throw exception::Exception("OcciStmt::bindBlob not implemented.");
 }
