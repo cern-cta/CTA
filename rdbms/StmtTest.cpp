@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseCheckConstraintError.hpp"
-#include "common/exception/DatabasePrimaryKeyError.hpp"
-#include "common/exception/DatabaseUniqueError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
+#include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/ConnPool.hpp"
+#include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/StmtTest.hpp"
+#include "rdbms/UniqueError.hpp"
 
 #include <gtest/gtest.h>
 
@@ -420,7 +420,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString_invalid_bool_value) {
     auto stmt = m_conn.createStmt(sql);
     stmt.bindString(":BOOL_COL", insertValue);
 
-    ASSERT_THROW(stmt.executeNonQuery(), cta::exception::DatabaseCheckConstraintError);
+    ASSERT_THROW(stmt.executeNonQuery(), CheckConstraintError);
   }
 }
 
@@ -474,10 +474,10 @@ TEST_P(cta_rdbms_StmtTest, insert_same_primary_twice) {
     case Login::DBTYPE_IN_MEMORY:
     case Login::DBTYPE_ORACLE:
     case Login::DBTYPE_POSTGRESQL:
-      ASSERT_THROW(stmt.executeNonQuery(), cta::exception::DatabaseUniqueError);
+      ASSERT_THROW(stmt.executeNonQuery(), UniqueError);
       break;
     default:
-      ASSERT_THROW(stmt.executeNonQuery(), cta::exception::DatabasePrimaryKeyError);
+      ASSERT_THROW(stmt.executeNonQuery(), PrimaryKeyError);
     }
   }
 }

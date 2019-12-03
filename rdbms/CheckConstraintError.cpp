@@ -16,23 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseUniqueError.hpp"
+#include "rdbms/CheckConstraintError.hpp"
 
 namespace cta {
-namespace exception {
+namespace rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DatabaseUniqueError::DatabaseUniqueError(const std::string &context, const bool embedBacktrace):
-  DatabaseConstraintError(context, embedBacktrace) {
+CheckConstraintError::CheckConstraintError(
+  const std::string &context,
+  const bool embedBacktrace):
+  ConstraintError(context, embedBacktrace) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-DatabaseUniqueError::~DatabaseUniqueError() noexcept {
+CheckConstraintError::~CheckConstraintError() noexcept {
 }
 
-} // namespace exception
+} // namespace rdbms
 } // namespace cta

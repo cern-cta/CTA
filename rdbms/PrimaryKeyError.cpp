@@ -16,23 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabasePrimaryKeyError.hpp"
+#include "rdbms/PrimaryKeyError.hpp"
 
 namespace cta {
-namespace exception {
+namespace rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DatabasePrimaryKeyError::DatabasePrimaryKeyError(const std::string &context, const bool embedBacktrace):
-  DatabaseConstraintError(context, embedBacktrace) {
+PrimaryKeyError::PrimaryKeyError(const std::string &context, const bool embedBacktrace):
+  ConstraintError(context, embedBacktrace) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-DatabasePrimaryKeyError::~DatabasePrimaryKeyError() noexcept {
+PrimaryKeyError::~PrimaryKeyError() noexcept {
 }
 
-} // namespace exception
+} // namespace rdbms
 } // namespace cta

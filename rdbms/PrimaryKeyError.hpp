@@ -18,18 +18,18 @@
 
 #pragma once
 
-#include "common/exception/DatabaseConstraintError.hpp"
+#include "rdbms/ConstraintError.hpp"
 
 #include <string>
 
 
-namespace cta    {
-namespace exception {
+namespace cta {
+namespace rdbms {
 
 /**
- * A database constraint error.
+ * A database constraint has been violated.
  */
-class DatabaseCheckConstraintError : public DatabaseConstraintError {
+class PrimaryKeyError : public ConstraintError {
 public:
 
   /**
@@ -40,15 +40,15 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  DatabaseCheckConstraintError(const std::string &context = "", const bool embedBacktrace = true);
+  PrimaryKeyError(const std::string &context = "", const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  ~DatabaseCheckConstraintError() noexcept override;
+  ~PrimaryKeyError() noexcept override;
   
-}; // class DatabaseCheckConstraintError
+}; // class PrimaryKeyError
 
-} // namespace exception
+} // namespace rdbms
 } // namespace cta

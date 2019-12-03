@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseCheckConstraintError.hpp"
-#include "common/exception/DatabasePrimaryKeyError.hpp"
-#include "common/exception/DatabaseUniqueError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "rdbms/CheckConstraintError.hpp"
+#include "rdbms/PrimaryKeyError.hpp"
+#include "rdbms/UniqueError.hpp"
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciConn.hpp"
 #include "rdbms/wrapper/OcciRset.hpp"
@@ -274,9 +274,9 @@ void OcciStmt::executeNonQuery() {
 
     switch(ex.getErrorCode()) {
     case 1:
-      throw exception::DatabaseUniqueError(msg.str());
+      throw UniqueError(msg.str());
     case 2290:
-      throw exception::DatabaseCheckConstraintError(msg.str());
+      throw CheckConstraintError(msg.str());
     default:
       throw exception::Exception(msg.str());
     }

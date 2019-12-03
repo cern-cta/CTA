@@ -21,15 +21,19 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 set (RDBMS_LIB_SRC_FILES
   AutoRollback.cpp
+  CheckConstraintError.cpp
   Conn.cpp
   ConnPool.cpp
+  ConstraintError.cpp
   Login.cpp
   LoginFactory.cpp
   NullDbValue.cpp
+  PrimaryKeyError.cpp
   rdbms.cpp
   Rset.cpp
   Stmt.cpp
-  StmtPool.cpp)
+  StmtPool.cpp
+  UniqueError.cpp)
 
 add_library (ctardbms SHARED
   ${RDBMS_LIB_SRC_FILES})

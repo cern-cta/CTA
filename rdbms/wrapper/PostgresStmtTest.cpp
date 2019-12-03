@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintError.hpp"
 #include "common/make_unique.hpp"
+#include "rdbms/ConstraintError.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresRset.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"

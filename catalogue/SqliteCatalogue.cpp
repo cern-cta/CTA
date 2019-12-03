@@ -19,8 +19,6 @@
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
-#include "common/exception/DatabaseConstraintError.hpp"
-#include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
@@ -28,6 +26,8 @@
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
+#include "rdbms/ConstraintError.hpp"
+#include "rdbms/PrimaryKeyError.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -418,7 +418,7 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
       row.diskFileOwnerUid = event.diskFileOwnerUid;
       row.diskFileGid = event.diskFileGid;
       insertArchiveFile(conn, row);
-    } catch(exception::DatabasePrimaryKeyError &) {
+    } catch(rdbms::PrimaryKeyError &) {
       // Ignore this error
     } catch(...) {
       throw;

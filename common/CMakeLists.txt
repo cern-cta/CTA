@@ -81,10 +81,6 @@ set (COMMON_LIB_SRC_FILES
   exception/Backtrace.cpp
   exception/BadAlloc.cpp
   exception/CommandLineNotParsed.cpp
-  exception/DatabaseCheckConstraintError.cpp  
-  exception/DatabaseConstraintError.cpp  
-  exception/DatabasePrimaryKeyError.cpp  
-  exception/DatabaseUniqueError.cpp  
   exception/DismountFailed.cpp  
   exception/ForceDismountFailed.cpp
   exception/Errnum.cpp

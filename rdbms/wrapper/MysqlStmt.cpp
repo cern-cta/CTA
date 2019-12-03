@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseCheckConstraintError.hpp"
-#include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 
+#include "rdbms/CheckConstraintError.hpp"
+#include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/wrapper/MysqlConn.hpp"
 #include "rdbms/wrapper/MysqlRset.hpp"
 #include "rdbms/wrapper/MysqlStmt.hpp"
@@ -380,10 +380,10 @@ void MysqlStmt::executeNonQuery() {
 
       switch(rc) {
       case ER_DUP_ENTRY:
-        throw exception::DatabasePrimaryKeyError(std::string(__FUNCTION__) + " " +  msg);
+        throw PrimaryKeyError(std::string(__FUNCTION__) + " " +  msg);
         break;
       case 4025: // Newer MariaDB versions have ER_CONSTRAINT_FAILED = 4025
-        throw exception::DatabaseCheckConstraintError(std::string(__FUNCTION__) + " " +  msg);
+        throw CheckConstraintError(std::string(__FUNCTION__) + " " +  msg);
         break;
       }
 

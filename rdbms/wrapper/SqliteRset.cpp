@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintError.hpp"
-#include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
+#include "rdbms/ConstraintError.hpp"
 #include "rdbms/NullDbValue.hpp"
+#include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/wrapper/Sqlite.hpp"
 #include "rdbms/wrapper/SqliteRset.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
@@ -158,9 +158,9 @@ bool SqliteRset::next() {
 
     switch(stepRc) {
     case SQLITE_CONSTRAINT_PRIMARYKEY:
-      throw exception::DatabasePrimaryKeyError(msg.str());
+      throw PrimaryKeyError(msg.str());
     case SQLITE_CONSTRAINT:
-      throw exception::DatabaseConstraintError(msg.str());
+      throw ConstraintError(msg.str());
     default:
       throw exception::Exception(msg.str());
     }

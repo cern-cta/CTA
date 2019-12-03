@@ -23,13 +23,13 @@
 #include <string>
 
 
-namespace cta    {
-namespace exception {
+namespace cta {
+namespace rdbms {
 
 /**
  * A database constraint error.
  */
-class DatabaseConstraintError : public cta::exception::Exception {
+class ConstraintError : public cta::exception::Exception {
 public:
 
   /**
@@ -40,15 +40,15 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  DatabaseConstraintError(const std::string &context = "", const bool embedBacktrace = true);
+  ConstraintError(const std::string &context = "", const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  ~DatabaseConstraintError() noexcept override;
+  ~ConstraintError() noexcept override;
   
-}; // class DatabaseConstraintError
+}; // class ConstraintError
 
-} // namespace exception
+} // namespace rdbms
 } // namespace cta

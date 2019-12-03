@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintError.hpp"
-#include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
+#include "rdbms/ConstraintError.hpp"
 #include "rdbms/NullDbValue.hpp"
+#include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/wrapper/Mysql.hpp"
 #include "rdbms/wrapper/MysqlRset.hpp"
 #include "rdbms/wrapper/MysqlStmt.hpp"

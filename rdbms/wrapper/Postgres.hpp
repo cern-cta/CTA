@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include "common/exception/DatabaseCheckConstraintError.hpp"
-#include "common/exception/DatabaseUniqueError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
+#include "rdbms/CheckConstraintError.hpp"
+#include "rdbms/UniqueError.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -95,10 +95,10 @@ public:
       throw exception::LostDatabaseConnection(dbmsg);
     }
     if (uniqueViolation) {
-      throw exception::DatabaseUniqueError(dbmsg);
+      throw UniqueError(dbmsg);
     }
     if (checkViolation) {
-      throw exception::DatabaseCheckConstraintError(dbmsg);
+      throw CheckConstraintError(dbmsg);
     }
     throw exception::Exception(dbmsg);
   }

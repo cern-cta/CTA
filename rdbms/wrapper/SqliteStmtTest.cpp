@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintError.hpp"
-#include "common/exception/DatabasePrimaryKeyError.hpp"
+#include "rdbms/ConstraintError.hpp"
+#include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteRset.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
@@ -362,6 +362,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
 
 TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primary_key) {
   using namespace cta;
+  using namespace cta::rdbms;
   using namespace cta::rdbms::wrapper;
 
   // Create a connection a memory resident database
@@ -402,12 +403,13 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
         ":COL1);";
     auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
-    ASSERT_THROW(stmt->executeNonQuery(), exception::DatabasePrimaryKeyError);
+    ASSERT_THROW(stmt->executeNonQuery(), PrimaryKeyError);
   }
 }
 
 TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_key) {
   using namespace cta;
+  using namespace cta::rdbms;
   using namespace cta::rdbms::wrapper;
 
   // Create a connection a memory resident database
@@ -449,7 +451,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
     auto stmt = conn.createStmt(sql);
     stmt->bindUint64(":COL1", 1);
     auto rset = stmt->executeQuery();
-    ASSERT_THROW(rset->next(), exception::DatabasePrimaryKeyError);
+    ASSERT_THROW(rset->next(), PrimaryKeyError);
   }
 }
 

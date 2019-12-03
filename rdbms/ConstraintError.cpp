@@ -16,23 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintError.hpp"
+#include "rdbms/ConstraintError.hpp"
 
 namespace cta {
-namespace exception {
+namespace rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DatabaseConstraintError::DatabaseConstraintError(const std::string &context, const bool embedBacktrace):
+ConstraintError::ConstraintError(const std::string &context, const bool embedBacktrace):
   Exception(context, embedBacktrace) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-DatabaseConstraintError::~DatabaseConstraintError() noexcept {
+ConstraintError::~ConstraintError() noexcept {
 }
 
-} // namespace exception
+} // namespace rdbms
 } // namespace cta

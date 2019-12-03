@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseCheckConstraintError.hpp"
-#include "common/exception/DatabaseConstraintError.hpp"
-#include "common/exception/DatabasePrimaryKeyError.hpp"
-#include "common/exception/DatabaseUniqueError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "rdbms/CheckConstraintError.hpp"
+#include "rdbms/ConstraintError.hpp"
+#include "rdbms/PrimaryKeyError.hpp"
+#include "rdbms/UniqueError.hpp"
 #include "rdbms/wrapper/Sqlite.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteRset.hpp"
@@ -288,16 +288,16 @@ void SqliteStmt::executeNonQuery() {
 
     switch(stepRc) {
     case SQLITE_CONSTRAINT:
-      throw exception::DatabaseConstraintError(msg.str());
+      throw ConstraintError(msg.str());
     case SQLITE_CONSTRAINT_CHECK:
-      throw exception::DatabaseCheckConstraintError(msg.str());
+      throw CheckConstraintError(msg.str());
     case SQLITE_CONSTRAINT_PRIMARYKEY:
-      throw exception::DatabasePrimaryKeyError(msg.str());
+      throw PrimaryKeyError(msg.str());
     case SQLITE_CONSTRAINT_UNIQUE:
-      throw exception::DatabaseUniqueError(msg.str());
+      throw UniqueError(msg.str());
     default:
       if ((stepRc & 0xFF) == SQLITE_CONSTRAINT)
-        throw exception::DatabaseConstraintError(msg.str());
+        throw ConstraintError(msg.str());
       else
         throw exception::Exception(msg.str());
     }
