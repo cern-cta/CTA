@@ -1,0 +1,180 @@
+\documentclass[aspectratio=149]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[super]{nth}
+\usepackage{censor}
+\usetheme{cern}
+
+% ADC meetings: Data carousel | (discussion) 
+% Thursday, 5 December   40/S2-D01 - Salle Dirac
+% https://indico.cern.ch/event/823341/#day-2019-12-05
+
+
+%09:00 → 10:30
+%ADC meetings: Data carousel | (discussion)¶ 40/S2-D01 - Salle Dirac
+%Conveners: Alexei Klimentov (Brookhaven National Laboratory (US)), David Cameron (University of Oslo (NO)), David Michael South (Deutsches Elektronen-Synchrotron (DE)), Johannes Elmsheuser (Brookhaven National Laboratory (US)), Mario Lassnig (CERN), Xin Zhao (Brookhaven National Laboratory (US))
+%
+%    09:00
+%    Materials : Tier-1s presentations (October-November splinter meetings), FTS, Rucio, ProdSys2¶ 1m
+%
+%09:01
+%Meeting goals¶ 10m
+%
+%can we agree on the way forward to cut the following two gaps in the meeting
+%
+%Gap 1 : between the throughput out of the tape system itself and the throughput delivered to users (rucio in this case)
+%--This is to tackle the issues along the staging chain, dCache, FTS, Rucio, PS2, etc, to minimize performance penalties to the original tape throughput
+%Gap 2 : between the nominal tape throughput and the current throughput out of tape
+%--This is about “smart writing”, by bigger files and/or better organizing files among tapes, to reach higher tape reading efficiency
+%Speakers: Alexei Klimentov (Brookhaven National Laboratory (US)), Mario Lassnig (CERN), Xin Zhao (Brookhaven National Laboratory (US))
+%09:11
+%Summary and highlights of Oct-Nov discussions with Tier 1s and CERN¶ 20m
+%Speakers: Alexei Klimentov (Brookhaven National Laboratory (US)), Mario Lassnig (CERN), Xin Zhao (Brookhaven National Laboratory (US))
+%09:31
+%ATLAS Sites (topical discussion)¶ 59m
+%
+%    Planning / notification / feedback /discussions
+%    What concerns sites have with tape system throughput (writing/reading) ?
+%    -- Active tape drives usage vs drives lifetime (data staging scenario)
+%    -- What are the bottlenecks at sites, any planned improvements ?
+%    -- What help do they need from ADC, dCache, FTS ? (e.g. sites want the staged files to be transferred out of disk buffer as soon as possible, avoid too many staging retries ...)
+%    Site staging profile
+%    -- Possible extension ?
+%    What can sites do w.r.t. “Smart writing” ?
+%    -- new features in tape system ?
+%    -- external users (eg. ADC/dCache) to create bigger files and/or better organize the order of files when writing to tape ?
+%    What are the special concerns for sites supporting multiple-VO ?
+%    -- Do we understand requirements and intended usage of tape resources of other VOs ?
+%    monitoring tools enough for sites? any suggestions on improving monitoring ?
+%
+%11:00 → 12:30
+%ADC meetings: Data carousel (II)¶ 40/S2-D01 - Salle Dirac
+%Conveners: Alexei Klimentov (Brookhaven National Laboratory (US)), David Cameron (University of Oslo (NO)), David Michael South (Deutsches Elektronen-Synchrotron (DE)), Johannes Elmsheuser (Brookhaven National Laboratory (US)), Mario Lassnig (CERN), Xin Zhao (Brookhaven National Laboratory (US))
+%
+%    11:00
+%    dCache global view and development roadmap¶ 25m
+%    Speaker: Mr Tigran Mkrtchyan (DESY)
+%    11:25
+%    Topical discussion¶ 1h
+%        7 out of 10 T1s run dCache as tape frontend
+%        Can dCache provide common solution to improve scalability of dCache HSM interface, something like ENDIT does for TSM sites, that will benefit all dCache sites ?
+%        Can dCache group files by datasets in writing to tapes, which will benefit all dCache T1s ?
+%        other tape frontend (CTA, StoRM)
+%        -- plans ?
+%        alternative protocol for tape access ?
+%        -- SRM vs QoS APIs ?
+
+ 
+
+% Based on CERN beamer theme by Jerome Belleman https://github.com/jeromebelleman/beamer-cern
+
+% The optional `\author` command defines the author and is displayed in the slide produced by the `\titlepage` command.
+\author{Eric Cano on behalf of the CTA team}
+
+% The optional `\title` command defines the title and is displayed in the slide produced by the `\titlepage` command.
+\title{CTA Smart writing}
+
+% The optional `\subtitle` command will add a smaller title below the main one, and will not be displayed in any of the slides' footer.
+\subtitle{Conceptual proposition}
+
+% The optional `\date` command will display a custom free text date on the all of the slides' footer. If omitted today's date will be used.
+\date{ADC meetings: Data carousel, 5 Dec 2019}
+
+\setcounter{tocdepth}{1}
+
+\begin{document}
+
+\frontcover
+
+% The optional `\titlepage` command will create a slide with the presentation's title, subtitle and author.
+\frame{\titlepage}
+
+% The optional `\tableofcontents` command will automatically create a table of contents based pm the sections.
+\frame{\tableofcontents}
+
+\section{The problem}
+\begin{frame}{What are we trying to solve?}
+  \begin{itemize}
+    \item Datasets are always read whole
+    \item Tape systems not dataset-aware during write
+    \begin{itemize}    
+      \item Files scattered over tapes $\Rightarrow$ more read mounts
+      \item Files interleaved with others within tape
+      
+      $\Rightarrow$ drive spends time positioning on reads
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{Files tagging by dataset name}
+\begin{frame}{Files tagging by dataset name}
+\begin{itemize}
+  \item Per-file property
+  \item Type = string
+  \begin{itemize}
+    \item Can we define a length cap? 
+  \end{itemize}
+  \item Only rely on comparison (no ordering, ranking...)
+\end{itemize}
+\end{frame}
+
+\section{User interface}
+\begin{frame}{File tagging}
+\begin{itemize}
+  \item On write, per file tagging
+  \begin{itemize}
+    \item Has to go through Rucio/FTS/EOS/CTA
+  \end{itemize}
+  \item Back tagging of existing files (several scenarios)
+  \begin{itemize}
+    \item Executed as a one-off, we could have rule based update script
+    \item More general: provide get/set operation per file and leave it to the user
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\section{Tape system optimization}
+\begin{frame}{Tape system optimizations}
+\begin{itemize}
+  \item Write optimization
+  \begin{itemize}
+    \item Divide archive queue in per-dataset sub-queue
+    \item Make write mounts stick to a dataset (until it is drained)
+    \begin{itemize}
+      \item $\Rightarrow$ Contiguous files, zero positioning on read
+    \end{itemize}
+    \item Possibly cap the per-dataset parallel writes
+    \begin{itemize}
+      \item $\Rightarrow$ Soft-limiting the spreading over tapes
+    \end{itemize}
+  \end{itemize}
+  \item Repack/defrag
+  \begin{itemize}
+    \item Repack can then write in an optimized manner (defrag)
+    \item Repack input (which files to read) could be dataset driven instead of tape driven
+    \begin{itemize}
+      \item If extra read mount cost bearable
+      \item Will have to take into account tape level constraints as well (will it be worth the complexity?)
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\section{Possible bonus features}
+\begin{frame}{Possible bonus features}
+\begin{itemize}
+  \item Multi-level tagging, allowing to better choose the {\em{}next} dataset in a mount
+  \item Retrieve by dataset (implies big changes in whole data transfer chain, and possibly hairy error handling)
+\end{itemize}
+\end{frame}
+%	a.	Tagging of new files, as they are written
+%	b.	Back tagging of pre-existing files
+%	… and of course user should be able to query this tag.
+%	2)	Queueing by tag in archive queue. This implies some changes in data structure (having sub-queue in archive queues). Once this is done, it is trivial to make the archive session sticky and make sure it will not switch to a second dataset.
+%	
+%	A bonus feature could be to add a second/several layer(s) of tagging (dataset of dataset) which would allow orienting the choice of the next dataset in a mount after finishing with one, but this is really secondary optimisation (but not expensive either while we’re at it).
+%	
+%	Once the old files are tagged, we could repack by dataset(s) to defragment the existing data (instead of tape oriented repack).
+
+\backcover
+
+\end{document}

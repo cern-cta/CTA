@@ -1,0 +1,11 @@
+*.aux
+*.bbl
+*.log
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+not_needed/
+*.blg
+cern-logo.pdf
