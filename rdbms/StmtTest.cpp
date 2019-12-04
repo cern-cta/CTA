@@ -193,7 +193,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64) {
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
 
-    const auto selectValue = rset.columnOptionalDouble("UINT64_COL");
+    const auto selectValue = rset.columnOptionalUint64("UINT64_COL");
 
     ASSERT_TRUE((bool)selectValue);
 
