@@ -1,7 +1,8 @@
 \documentclass[aspectratio=149]{beamer}
 \usepackage[utf8]{inputenc}
 \usepackage[super]{nth}
-\usepackage{censor}
+\usepackage{adjustbox}
+\usepackage[binary-units=true, per-mode=symbol]{siunitx}
 \usetheme{cern}
 
 % ADC meetings: Data carousel | (discussion) 
@@ -102,6 +103,13 @@
       
       $\Rightarrow$ drive spends time positioning on reads
     \end{itemize}
+    \item Making files bigger will impact tape performance
+    \begin{itemize}
+      \item Tape drive typically faster than file system (\SI{360}{\mega\byte\per\second} today, up to \SI{1}{\giga\byte\per\second} in the roadmaps)
+      \item Tape server memory should hold several files to allow streaming them in parallel
+      \item Typical tape server memory size: \SI{60}{\giga\byte}
+      \item Upper bound for efficient file size: \SI{10}{\giga\byte}
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
@@ -134,6 +142,7 @@
 
 \section{Tape system optimization}
 \begin{frame}{Tape system optimizations}
+\adjustbox{minipage=1.18\textwidth, scale=0.85}{
 \begin{itemize}
   \item Write optimization
   \begin{itemize}
@@ -153,10 +162,13 @@
     \item Repack input (which files to read) could be dataset driven instead of tape driven
     \begin{itemize}
       \item If extra read mount cost bearable
-      \item Will have to take into account tape level constraints as well (will it be worth the complexity?)
+      \item Will have to take into account tape level constraints as well
+      \item Make sure we empty old tapes and not re-repack a target tape
+      \item Will it be worth the complexity?
     \end{itemize}
   \end{itemize}
 \end{itemize}
+}
 \end{frame}
 
 \section{Possible bonus features}
@@ -166,14 +178,15 @@
   \item Retrieve by dataset (implies big changes in whole data transfer chain, and possibly hairy error handling)
 \end{itemize}
 \end{frame}
-%	a.	Tagging of new files, as they are written
-%	b.	Back tagging of pre-existing files
-%	… and of course user should be able to query this tag.
-%	2)	Queueing by tag in archive queue. This implies some changes in data structure (having sub-queue in archive queues). Once this is done, it is trivial to make the archive session sticky and make sure it will not switch to a second dataset.
-%	
-%	A bonus feature could be to add a second/several layer(s) of tagging (dataset of dataset) which would allow orienting the choice of the next dataset in a mount after finishing with one, but this is really secondary optimisation (but not expensive either while we’re at it).
-%	
-%	Once the old files are tagged, we could repack by dataset(s) to defragment the existing data (instead of tape oriented repack).
+
+
+\section{Conclusion}
+\begin{frame}{Conclusions}
+\begin{itemize}
+  \item Changes from outside the tape system (bigger files) will push us to a non-optimal working point
+  \item With proper hints tape system can optimize read access, knowing that access is done by full dataset
+\end{itemize}
+\end{frame}
 
 \backcover
 
