@@ -88,13 +88,38 @@ void OcciStmt::close() {
 }
 
 //------------------------------------------------------------------------------
+// bindUint16
+//------------------------------------------------------------------------------
+void OcciStmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {
+  try {
+    bindOptionalUint16(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalUint16
+//------------------------------------------------------------------------------
+void OcciStmt::bindOptionalUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+  try {
+    return bindOptionalInteger<uint16_t>(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindUint64
 //------------------------------------------------------------------------------
 void OcciStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
   try {
     bindOptionalUint64(paramName, paramValue);
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
   }
 }
 
@@ -103,19 +128,10 @@ void OcciStmt::bindUint64(const std::string &paramName, const uint64_t paramValu
 //------------------------------------------------------------------------------
 void OcciStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
   try {
-    const unsigned paramIdx = getParamIdx(paramName);
-    if(paramValue) {
-      // Bind integer as a string in order to support 64-bit integers
-      m_stmt->setString(paramIdx, std::to_string(paramValue.value()));
-    } else {
-      m_stmt->setNull(paramIdx, oracle::occi::OCCINUMBER);
-    }
+    return bindOptionalInteger<uint64_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + se.what());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
   }
 }
 

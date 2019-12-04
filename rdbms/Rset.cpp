@@ -95,6 +95,27 @@ std::string Rset::columnString(const std::string &colName) const {
 }
 
 //------------------------------------------------------------------------------
+// columnUint16
+//------------------------------------------------------------------------------
+uint16_t Rset::columnUint16(const std::string &colName) const {
+  try {
+    if(nullptr == m_impl) {
+      throw InvalidResultSet("This result set is invalid");
+    }
+
+    const optional<uint16_t> col = columnOptionalUint16(colName);
+    if(col) {
+      return col.value();
+    } else {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // columnUint64
 //------------------------------------------------------------------------------
 uint64_t Rset::columnUint64(const std::string &colName) const {
@@ -227,6 +248,21 @@ optional<std::string> Rset::columnOptionalString(const std::string &colName) con
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->columnOptionalString(colName);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// columnOptionalUint16
+//------------------------------------------------------------------------------
+optional<uint16_t> Rset::columnOptionalUint16(const std::string &colName) const {
+  try {
+    if(nullptr == m_impl) {
+      throw InvalidResultSet("This result set is invalid");
+    }
+    return m_impl->columnOptionalUint16(colName);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;

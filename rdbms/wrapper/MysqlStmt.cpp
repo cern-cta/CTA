@@ -171,13 +171,60 @@ MYSQL_STMT *MysqlStmt::get() const {
 }
 
 //------------------------------------------------------------------------------
+// bindUint16
+//------------------------------------------------------------------------------
+void MysqlStmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {
+  try {
+    bindOptionalUint16(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalUint16
+//------------------------------------------------------------------------------
+void MysqlStmt::bindOptionalUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+  try {
+    const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
+    const unsigned int idx = paramIdx - 1;
+
+    Mysql::Placeholder_Uint16* holder = dynamic_cast<Mysql::Placeholder_Uint16*>(m_placeholder[idx]);
+    // if already exists, try to reuse
+    if (!holder and m_placeholder[idx]) {
+      throw exception::Exception(std::string(__FUNCTION__) + " can't cast from Placeholder to Placeholder_Uint16. " );
+    }
+
+    if (!holder) {
+      holder = new Mysql::Placeholder_Uint16();
+      holder->idx = idx;
+      holder->length = sizeof(uint16_t);
+    }
+
+    if (paramValue) {
+      holder->val = paramValue.value();
+    } else {
+      holder->is_null = true;
+    }
+    // delete m_placeholder[idx]; // remove the previous placeholder
+
+    m_placeholder[idx] = holder;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindUint64
 //------------------------------------------------------------------------------
 void MysqlStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
   try {
     bindOptionalUint64(paramName, paramValue);
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
   }
 }
 
@@ -443,6 +490,9 @@ bool MysqlStmt::do_bind() {
     }
 
     switch(holder->get_buffer_type()) {
+    case Mysql::Placeholder::placeholder_uint16:
+      bind[idx].buffer_type = MYSQL_TYPE_SHORT;
+      break;
     case Mysql::Placeholder::placeholder_uint64:
       bind[idx].buffer_type = MYSQL_TYPE_LONGLONG;
       break;

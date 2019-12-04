@@ -87,6 +87,22 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
+  void bindUint16(const std::string &paramName, const uint16_t paramValue) override;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  void bindOptionalUint16(const std::string &paramName, const optional<uint16_t> &paramValue) override;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
   void bindUint64(const std::string &paramName, const uint64_t paramValue) override;
 
   /**
@@ -213,6 +229,30 @@ private:
    */
   oracle::occi::Statement *m_stmt;
 
+  /**
+   * Templated bind of an optional number.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  template <typename IntegerType> void bindOptionalInteger(const std::string &paramName,
+    const optional<IntegerType> &paramValue) {
+    try {
+      const unsigned paramIdx = getParamIdx(paramName);
+      if (paramValue) {
+        // Bind integer as a string in order to support 64-bit integers
+        m_stmt->setString(paramIdx, std::to_string(paramValue.value()));
+      } else {
+        m_stmt->setNull(paramIdx, oracle::occi::OCCINUMBER);
+      }
+    } catch (exception::Exception &ex) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+                                 getSqlForException() + ": " + ex.getMessage().str());
+    } catch (std::exception &se) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+                                 getSqlForException() + ": " + se.what());
+    }
+  }
 }; // class OcciStmt
 
 } // namespace wrapper

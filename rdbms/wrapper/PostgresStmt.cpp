@@ -20,7 +20,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/make_unique.hpp"
-#include "common/threading/RWLockWrLocker.hpp"
 #include "common/threading/RWLockRdLocker.hpp"
 
 #include "rdbms/wrapper/PostgresColumn.hpp"
@@ -104,30 +103,28 @@ void PostgresStmt::bindOptionalString(const std::string &paramName, const option
 }
 
 //------------------------------------------------------------------------------
+// bindOptionalUint16
+//------------------------------------------------------------------------------
+void PostgresStmt::bindOptionalUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+  try {
+    return bindOptionalInteger<uint16_t>(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " +
+                        getSqlForException() + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindOptionalUint64
 //------------------------------------------------------------------------------
 void PostgresStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
-  threading::RWLockWrLocker locker(m_lock);
-
   try {
-    const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
-
-    if (paramIdx==0 || paramIdx>m_paramValues.size()) {
-      throw exception::Exception(std::string("Bad index for paramName ") + paramName);
-    }
-
-    const unsigned int idx = paramIdx - 1;
-    if (paramValue) {
-      // we must not cause the vector m_paramValues to resize, otherwise the c-pointers can be invalidated
-      m_paramValues[idx] = std::to_string(paramValue.value());
-      m_paramValuesPtrs[idx] = m_paramValues[idx].c_str();
-    } else {
-      m_paramValues[idx].clear();
-      m_paramValuesPtrs[idx] = nullptr;
-    }
+    return bindOptionalInteger<uint64_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " +
+                        getSqlForException() + ": " + ex.getMessage().str());
+    throw;
   }
 }
 
@@ -147,13 +144,26 @@ void PostgresStmt::bindString(const std::string &paramName, const std::string &p
 }
 
 //------------------------------------------------------------------------------
+// bindUint16
+//------------------------------------------------------------------------------
+void PostgresStmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {
+  try {
+    bindOptionalUint16(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindUint64
 //------------------------------------------------------------------------------
 void PostgresStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
   try {
     bindOptionalUint64(paramName, paramValue);
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
   }
 }
 

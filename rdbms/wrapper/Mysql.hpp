@@ -32,6 +32,7 @@ typedef char my_bool;
 extern "C" void mysql_free_result(MYSQL_RES *result);
 
 #include <vector>
+#include <limits>
 #include <map>
 #include <memory>
 #include <stdint.h>
@@ -97,6 +98,7 @@ class Mysql {
     }
 
     enum buffer_types {
+      placeholder_uint16,
       placeholder_uint64,
       placeholder_string,
       placeholder_double,
@@ -112,11 +114,64 @@ class Mysql {
     virtual bool get_is_unsigned() = 0;
     virtual my_bool* get_error() { return &error; }
     // following is to access data
+    virtual uint16_t get_uint16() = 0;
     virtual uint64_t get_uint64() = 0;
     virtual std::string get_string() = 0;
     virtual double get_double() = 0;
     // helper
     virtual bool reset() = 0;
+  };
+
+  struct Placeholder_Uint16: Placeholder {
+    uint16_t val;
+
+    Placeholder_Uint16()
+      : Placeholder(), val(0) {
+
+    }
+
+    std::string show() override {
+      std::stringstream ss;
+      ss << "['" << idx << "' '" << is_null << "' '" << length << "' '" << val << "' '" << get_buffer_length() << "']";
+      return ss.str();
+    }
+
+    buffer_types get_buffer_type() override {
+      return placeholder_uint16;
+    }
+
+    void* get_buffer() override {
+      return &val;
+    }
+
+    unsigned long get_buffer_length() override {
+      return sizeof(uint16_t);
+    }
+
+    bool get_is_unsigned() override {
+      return true;
+    }
+
+    uint16_t get_uint16() override {
+      return val;
+    }
+
+    uint64_t get_uint64() override {
+      return val;
+    }
+
+    std::string get_string() override {
+      return std::to_string(val);
+    }
+
+    double get_double() override {
+      return val;
+    }
+
+    bool reset() override {
+      return false;
+    }
+
   };
 
   struct Placeholder_Uint64: Placeholder {
@@ -127,7 +182,7 @@ class Mysql {
 
     }
     
-    std::string show() {
+    std::string show() override {
       std::stringstream ss;
       ss << "['" << idx << "' '" << is_null << "' '" << length << "' '" << val << "' '" << get_buffer_length() << "']";
       return ss.str();
@@ -149,19 +204,29 @@ class Mysql {
       return true;
     }
 
-    uint64_t get_uint64() {
+    uint16_t get_uint16() override {
+      if(std::numeric_limits<uint16_t>::max() < val) {
+        std::ostringstream msg;
+        msg << "Cannot convert uint64 to uint16: Overflow: uint64=" << val <<
+          " maxUint16=" << std::numeric_limits<uint16_t>::max();
+        throw exception::Exception(msg.str());
+      }
       return val;
     }
 
-    std::string get_string() {
+    uint64_t get_uint64() override {
+      return val;
+    }
+
+    std::string get_string() override {
       return std::to_string(val);
     }
 
-    double get_double() {
+    double get_double() override {
       return val;
     }
 
-    bool reset() {
+    bool reset() override {
       return false;
     }
 
@@ -183,7 +248,7 @@ class Mysql {
       delete [] val;
     }
 
-    std::string show() {
+    std::string show() override {
       std::stringstream ss;
       ss << "['" << idx << "' '" << is_null << "' '" << length << "' '" << val << "' '" << get_buffer_length() << "']";
       return ss.str();
@@ -206,23 +271,34 @@ class Mysql {
       return false;
     }
 
+    uint16_t get_uint16() override {
+      const uint64_t i = std::stoll(val);
+      if(std::numeric_limits<uint16_t>::max() > i) {
+        std::ostringstream msg;
+        msg << "Failed to convert string to uint16: Overflow: string=" << val << " maxUint16=" <<
+          std::numeric_limits<uint16_t>::max();
+        throw exception::Exception(msg.str());
+      }
+      return i;
+    }
+
     // note: allow users try to convert from string to int, 
     //       but users need to catch the exception.
-    uint64_t get_uint64() {
+    uint64_t get_uint64() override {
       return std::stoll(val);
     }
 
-    std::string get_string() {
+    std::string get_string() override {
       return std::string(val, val+*get_length());
     }
 
     // note: allow users try to convert from string to int,
     //       but users need to catch the exception.
-    double get_double() {
+    double get_double() override {
       return std::stod(val);
     }
 
-    bool reset() {
+    bool reset() override {
       memset(val, 0, buf_sz);
       
       return true;
@@ -258,6 +334,10 @@ class Mysql {
 
     bool get_is_unsigned() override {
       return true;
+    }
+
+    uint16_t get_uint16() override {
+      throw val;
     }
 
     uint64_t get_uint64() override {

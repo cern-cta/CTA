@@ -66,6 +66,7 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
       "CREATE TABLE STMT_TEST("                                      "\n"
       "  ID         UINT64TYPE CONSTRAINT STMT_TEST_ID_NN NOT NULL," "\n"
       "  DOUBLE_COL FLOAT,"                                          "\n"
+      "  UINT16_COL UINT16TYPE,"                                     "\n"
       "  UINT64_COL UINT64TYPE,"                                     "\n"
       "  STRING_COL VARCHAR(100),"                                   "\n"
       "  BOOL_COL   CHAR(1) DEFAULT '0',"                            "\n"
@@ -77,16 +78,20 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
     case Login::DBTYPE_IN_MEMORY:
       break;
     case Login::DBTYPE_ORACLE:
+      utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
       utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
       utils::searchAndReplace(sql, "VARCHAR", "VARCHAR2");
       break;
     case Login::DBTYPE_SQLITE:
+      utils::searchAndReplace(sql, "UINT16TYPE", "INTEGER");
       utils::searchAndReplace(sql, "UINT64TYPE", "INTEGER");
       break;
     case Login::DBTYPE_MYSQL:
+      utils::searchAndReplace(sql, "UINT16TYPE", "SMALLINT UNSIGNED");
       utils::searchAndReplace(sql, "UINT64TYPE", "BIGINT UNSIGNED");
       break;
     case Login::DBTYPE_POSTGRESQL:
+      utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
       utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
       break;
     case Login::DBTYPE_NONE:
@@ -158,6 +163,164 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble) {
 
     const double diff = insertValue - selectValue.value();
     ASSERT_TRUE(0.000001 > diff);
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16) {
+  using namespace cta::rdbms;
+
+  const uint16_t insertValue = 1234;
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST(" "\n"
+      "  ID,"                  "\n"
+      "  UINT16_COL) "         "\n"
+      "VALUES("                "\n"
+      "  1,"                   "\n"
+      "  :UINT16_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindUint16(":UINT16_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT"                     "\n"
+      "  UINT16_COL AS UINT16_COL" "\n"
+      "FROM"                       "\n"
+      "  STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalUint16("UINT16_COL");
+
+    ASSERT_TRUE((bool)selectValue);
+
+    ASSERT_EQ(insertValue,selectValue.value());
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_2_pow_16_minus_1) {
+  using namespace cta::rdbms;
+
+  const uint16_t insertValue = 65535U;
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST(" "\n"
+      "  ID,"                  "\n"
+      "  UINT16_COL)"          "\n"
+      "VALUES("                "\n"
+      "  1,"                   "\n"
+      "  :UINT16_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindUint16(":UINT16_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT"                     "\n"
+      "  UINT16_COL AS UINT16_COL" "\n"
+      "FROM"                       "\n"
+      "  STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalUint16("UINT16_COL");
+
+    ASSERT_TRUE((bool)selectValue);
+
+    ASSERT_EQ(insertValue,selectValue.value());
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint16_null) {
+  using namespace cta::rdbms;
+
+  const cta::optional<uint16_t> insertValue; // Null value
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST(" "\n"
+      "  ID,"                  "\n"
+      "  UINT16_COL) "         "\n"
+      "VALUES("                "\n"
+      "  1,"                   "\n"
+      "  :UINT16_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindOptionalUint16(":UINT16_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT"                     "\n"
+      "  UINT16_COL AS UINT16_COL" "\n"
+      "FROM"                       "\n"
+      "  STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalUint16("UINT16_COL");
+
+    ASSERT_FALSE((bool)selectValue);
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint16) {
+  using namespace cta::rdbms;
+
+  const cta::optional<uint16_t> insertValue = 1234;
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST(" "\n"
+      "  ID,"                  "\n"
+      "  UINT16_COL) "         "\n"
+      "VALUES("                "\n"
+      "  1,"                   "\n"
+      "  :UINT16_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindOptionalUint16(":UINT16_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT"                     "\n"
+      "  UINT16_COL AS UINT16_COL" "\n"
+      "FROM"                       "\n"
+      "  STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalUint16("UINT16_COL");
+
+    ASSERT_TRUE((bool)selectValue);
+
+    ASSERT_EQ(insertValue,selectValue.value());
 
     ASSERT_FALSE(rset.next());
   }

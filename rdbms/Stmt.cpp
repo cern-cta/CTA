@@ -117,6 +117,38 @@ uint32_t Stmt::getParamIdx(const std::string &paramName) const {
 }
 
 //-----------------------------------------------------------------------------
+// bindUint16
+//-----------------------------------------------------------------------------
+void Stmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {
+  try {
+    if(nullptr != m_stmt) {
+      return m_stmt->bindUint16(paramName, paramValue);
+    } else {
+      throw exception::Exception("Stmt does not contain a cached statement");
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// bindOptionalUint16
+//-----------------------------------------------------------------------------
+void Stmt::bindOptionalUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+  try {
+    if(nullptr != m_stmt) {
+      return m_stmt->bindOptionalUint16(paramName, paramValue);
+    } else {
+      throw exception::Exception("Stmt does not contain a cached statement");
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//-----------------------------------------------------------------------------
 // bindUint64
 //-----------------------------------------------------------------------------
 void Stmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
