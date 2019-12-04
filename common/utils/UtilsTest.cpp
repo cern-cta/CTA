@@ -321,6 +321,51 @@ TEST_F(cta_UtilsTest, toUint16_too_big) {
   ASSERT_THROW(utils::toUint16("65536"), std::exception);
 }
 
+TEST_F(cta_UtilsTest, toUint32_12345) {
+  using namespace cta;
+
+  uint32_t i = 0;
+
+  ASSERT_NO_THROW(i = utils::toUint32("12345"));
+  ASSERT_EQ((uint32_t)12345, i);
+}
+
+TEST_F(cta_UtilsTest, toUint32_zero) {
+  using namespace cta;
+
+  uint32_t i = 0;
+
+  ASSERT_NO_THROW(i = utils::toUint32("0"));
+  ASSERT_EQ((uint32_t)0, i);
+}
+
+TEST_F(cta_UtilsTest, toUint32_4294967295) {
+  using namespace cta;
+
+  uint32_t i = 0;
+
+  ASSERT_NO_THROW(i = utils::toUint32("4294967295"));
+  ASSERT_EQ((uint32_t)4294967295, i);
+}
+
+TEST_F(cta_UtilsTest, toUint32_empty_string) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toUint32(""), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toUint32_negative) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toUint32("-12345"), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toUint32_too_big) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toUint32("4294967296"), std::exception);
+}
+
 TEST_F(cta_UtilsTest, toUid_12345) {
   using namespace cta;
 

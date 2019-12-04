@@ -525,6 +525,42 @@ uint16_t toUint16(const std::string &str) {
 }
 
 //------------------------------------------------------------------------------
+// toUint32
+//------------------------------------------------------------------------------
+uint32_t toUint32(const std::string &str) {
+  if(str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to uint32_t: An empty string is not"
+           " a valid unsigned integer";
+    throw exception::Exception(msg.str());
+  }
+
+  errno = 0;
+  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const int savedErrno = errno;
+  if(savedErrno) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uint32_t: " <<
+      errnoToString(savedErrno);
+    throw exception::Exception(msg.str());
+  }
+
+  if(0 > value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uint32_t: Negative number";
+    throw exception::Exception(msg.str());
+  }
+
+  if(4294967295 < value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uint32_t: Number too big";
+    throw exception::Exception(msg.str());
+  }
+
+  return value;
+}
+
+//------------------------------------------------------------------------------
 // toUid
 //------------------------------------------------------------------------------
 uid_t toUid(const std::string &str) {

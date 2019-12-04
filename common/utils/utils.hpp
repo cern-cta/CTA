@@ -248,6 +248,14 @@ namespace utils {
   uint16_t toUint16(const std::string &str);
 
   /**
+   * Converts the specified string to an unsigned integer.
+   *
+   * @param str The string.
+   * @return The unsigned integer.
+   */
+  uint32_t toUint32(const std::string &str);
+
+  /**
    * Converts the specified string to a uid.
    *
    * @param str The string.
