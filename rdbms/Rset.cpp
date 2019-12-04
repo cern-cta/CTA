@@ -270,6 +270,21 @@ optional<uint16_t> Rset::columnOptionalUint16(const std::string &colName) const 
 }
 
 //------------------------------------------------------------------------------
+// columnOptionalUint32
+//------------------------------------------------------------------------------
+optional<uint32_t> Rset::columnOptionalUint32(const std::string &colName) const {
+  try {
+    if(nullptr == m_impl) {
+      throw InvalidResultSet("This result set is invalid");
+    }
+    return m_impl->columnOptionalUint32(colName);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
 optional<uint64_t> Rset::columnOptionalUint64(const std::string &colName) const {

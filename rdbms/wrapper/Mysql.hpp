@@ -99,6 +99,7 @@ class Mysql {
 
     enum buffer_types {
       placeholder_uint16,
+      placeholder_uint32,
       placeholder_uint64,
       placeholder_string,
       placeholder_double,
@@ -115,6 +116,7 @@ class Mysql {
     virtual my_bool* get_error() { return &error; }
     // following is to access data
     virtual uint16_t get_uint16() = 0;
+    virtual uint32_t get_uint32() = 0;
     virtual uint64_t get_uint64() = 0;
     virtual std::string get_string() = 0;
     virtual double get_double() = 0;
@@ -153,6 +155,72 @@ class Mysql {
     }
 
     uint16_t get_uint16() override {
+      return val;
+    }
+
+    uint32_t get_uint32() override {
+      return val;
+    }
+
+    uint64_t get_uint64() override {
+      return val;
+    }
+
+    std::string get_string() override {
+      return std::to_string(val);
+    }
+
+    double get_double() override {
+      return val;
+    }
+
+    bool reset() override {
+      return false;
+    }
+
+  };
+
+  struct Placeholder_Uint32: Placeholder {
+    uint32_t val;
+
+    Placeholder_Uint32()
+      : Placeholder(), val(0) {
+
+    }
+
+    std::string show() override {
+      std::stringstream ss;
+      ss << "['" << idx << "' '" << is_null << "' '" << length << "' '" << val << "' '" << get_buffer_length() << "']";
+      return ss.str();
+    }
+
+    buffer_types get_buffer_type() override {
+      return placeholder_uint32;
+    }
+
+    void* get_buffer() override {
+      return &val;
+    }
+
+    unsigned long get_buffer_length() override {
+      return sizeof(uint32_t);
+    }
+
+    bool get_is_unsigned() override {
+      return true;
+    }
+
+    uint16_t get_uint16() override {
+      if(std::numeric_limits<uint16_t>::max() < val) {
+        std::ostringstream msg;
+        msg << "Cannot convert uint32 to uint16: Overflow: uint32=" << val <<
+          " maxUint16=" << std::numeric_limits<uint16_t>::max();
+        throw exception::Exception(msg.str());
+      }
+      return val;
+    }
+
+    uint32_t get_uint32() override {
       return val;
     }
 
@@ -209,6 +277,16 @@ class Mysql {
         std::ostringstream msg;
         msg << "Cannot convert uint64 to uint16: Overflow: uint64=" << val <<
           " maxUint16=" << std::numeric_limits<uint16_t>::max();
+        throw exception::Exception(msg.str());
+      }
+      return val;
+    }
+
+    uint32_t get_uint32() override {
+      if(std::numeric_limits<uint32_t>::max() < val) {
+        std::ostringstream msg;
+        msg << "Cannot convert uint64 to uint32: Overflow: uint64=" << val <<
+          " maxUint32=" << std::numeric_limits<uint32_t>::max();
         throw exception::Exception(msg.str());
       }
       return val;
@@ -282,6 +360,17 @@ class Mysql {
       return i;
     }
 
+    uint32_t get_uint32() override {
+      const uint64_t i = std::stoll(val);
+      if(std::numeric_limits<uint32_t>::max() > i) {
+        std::ostringstream msg;
+        msg << "Failed to convert string to uint32: Overflow: string=" << val << " maxUint32=" <<
+          std::numeric_limits<uint32_t>::max();
+        throw exception::Exception(msg.str());
+      }
+      return i;
+    }
+
     // note: allow users try to convert from string to int, 
     //       but users need to catch the exception.
     uint64_t get_uint64() override {
@@ -337,6 +426,10 @@ class Mysql {
     }
 
     uint16_t get_uint16() override {
+      throw val;
+    }
+
+    uint32_t get_uint32() override {
       throw val;
     }
 

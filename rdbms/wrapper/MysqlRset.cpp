@@ -139,6 +139,25 @@ optional<uint16_t> MysqlRset::columnOptionalUint16(const std::string &colName) c
 }
 
 //------------------------------------------------------------------------------
+// columnOptionalUint32
+//------------------------------------------------------------------------------
+optional<uint32_t> MysqlRset::columnOptionalUint32(const std::string &colName) const {
+  if (not m_fields.exists(colName)) {
+    throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
+    return nullopt;
+  }
+
+  Mysql::Placeholder* holder = m_stmt.columnHolder(colName); // m_holders[idx];
+
+  // the value can be null
+  if (holder->get_is_null() and *holder->get_is_null()) {
+    return nullopt;
+  }
+
+  return optional<uint32_t>(holder->get_uint32());
+}
+
+//------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
 optional<uint64_t> MysqlRset::columnOptionalUint64(const std::string &colName) const {

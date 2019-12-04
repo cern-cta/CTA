@@ -116,6 +116,19 @@ void PostgresStmt::bindOptionalUint16(const std::string &paramName, const option
 }
 
 //------------------------------------------------------------------------------
+// bindOptionalUint32
+//------------------------------------------------------------------------------
+void PostgresStmt::bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
+  try {
+    return bindOptionalInteger<uint32_t>(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " +
+                        getSqlForException() + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindOptionalUint64
 //------------------------------------------------------------------------------
 void PostgresStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
@@ -149,6 +162,18 @@ void PostgresStmt::bindString(const std::string &paramName, const std::string &p
 void PostgresStmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {
   try {
     bindOptionalUint16(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindUint32
+//------------------------------------------------------------------------------
+void PostgresStmt::bindUint32(const std::string &paramName, const uint32_t paramValue) {
+  try {
+    bindOptionalUint32(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;

@@ -112,6 +112,30 @@ void OcciStmt::bindOptionalUint16(const std::string &paramName, const optional<u
 }
 
 //------------------------------------------------------------------------------
+// bindUint32
+//------------------------------------------------------------------------------
+void OcciStmt::bindUint32(const std::string &paramName, const uint32_t paramValue) {
+  try {
+    bindOptionalUint32(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalUint32
+//------------------------------------------------------------------------------
+void OcciStmt::bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
+  try {
+    return bindOptionalInteger<uint32_t>(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindUint64
 //------------------------------------------------------------------------------
 void OcciStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {

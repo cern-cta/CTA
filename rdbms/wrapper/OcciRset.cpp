@@ -189,6 +189,32 @@ optional<uint16_t> OcciRset::columnOptionalUint16(const std::string &colName) co
 }
 
 //------------------------------------------------------------------------------
+// columnOptionalUint32
+//------------------------------------------------------------------------------
+optional<uint32_t> OcciRset::columnOptionalUint32(const std::string &colName) const {
+  try {
+    threading::Mutex locker(m_mutex);
+
+    const int colIdx = m_colNameToIdx.getIdx(colName);
+    const std::string stringValue = m_rset->getString(colIdx);
+    if(stringValue.empty()) {
+      return nullopt;
+    }
+    if(!utils::isValidUInt(stringValue)) {
+      throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
+                                 " which is not a valid unsigned integer");
+    }
+    return utils::toUint32(stringValue);
+  } catch(exception::Exception &ne) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+                               ne.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+                               se.what());
+  }
+}
+
+//------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
 optional<uint64_t> OcciRset::columnOptionalUint64(const std::string &colName) const {

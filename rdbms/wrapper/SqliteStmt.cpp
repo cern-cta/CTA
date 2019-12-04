@@ -183,6 +183,39 @@ void SqliteStmt::bindOptionalUint16(const std::string &paramName, const optional
 }
 
 //------------------------------------------------------------------------------
+// bindUint32
+//------------------------------------------------------------------------------
+void SqliteStmt::bindUint32(const std::string &paramName, const uint32_t paramValue) {
+  try {
+    bindOptionalUint32(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalUint32
+//------------------------------------------------------------------------------
+void SqliteStmt::bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
+  try {
+    const unsigned int paramIdx = getParamIdx(paramName);
+    int bindRc = 0;
+    if(paramValue) {
+      bindRc = sqlite3_bind_int(m_stmt, paramIdx, paramValue.value());
+    } else {
+      bindRc = sqlite3_bind_null(m_stmt, paramIdx);
+    }
+    if(SQLITE_OK != bindRc) {
+      throw exception::Exception(Sqlite::rcToStr(bindRc));
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+                               getSqlForException() + ": " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindUint64
 //------------------------------------------------------------------------------
 void SqliteStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {

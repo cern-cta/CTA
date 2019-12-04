@@ -125,6 +125,22 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
+  void bindUint32(const std::string &paramName, const uint32_t paramValue);
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  void bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue);
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
   void bindUint64(const std::string &paramName, const uint64_t paramValue);
 
   /**
