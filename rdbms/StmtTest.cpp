@@ -178,7 +178,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64) {
       "  1,"                   "\n"
       "  :UINT64_COL)";
     auto stmt = m_conn.createStmt(sql);
-    stmt.bindDouble(":UINT64_COL", insertValue);
+    stmt.bindUint64(":UINT64_COL", insertValue);
     stmt.executeNonQuery();
   }
 
