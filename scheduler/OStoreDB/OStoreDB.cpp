@@ -40,6 +40,7 @@
 #include "disk/DiskFile.hpp"
 #include <algorithm>
 #include <cmath>
+#include <numeric>      /* std::accumulate */
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 #include <stdexcept>
