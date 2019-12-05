@@ -73,6 +73,8 @@
 namespace cta {
 
 namespace catalogue {
+  
+CTA_GENERATE_EXCEPTION_CLASS(WrongSchemaVersionException);
 
 /**
  * Abstract class defining the interface to the CTA catalogue responsible for
@@ -719,6 +721,11 @@ public:
    * Checks that the most trivial query goes through. Throws an exception if not.
    */
   virtual void ping() = 0;
+  
+  /**
+   * Checks that the online database schema MAJOR version number matches the schema MAJOR version number defined in version.h
+   */
+  virtual void verifySchemaVersion() = 0;
   
   /**
    * Returns the map of strings to uint64 for the  SCHEMA_VERSION_MAJOR

@@ -57,6 +57,7 @@
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
+#include "version.h"
 
 #include <ctype.h>
 #include <memory>
@@ -6839,13 +6840,33 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::ping() {
   try {
-    const char *const sql = "SELECT COUNT(*) FROM CTA_CATALOGUE";
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
+    verifySchemaVersion();
+  } catch (WrongSchemaVersionException &){
+    throw;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// verifySchemaVersion
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::verifySchemaVersion() {
+  try {
+    std::map<std::string, uint64_t> schemaVersion = getSchemaVersion();
+    uint64_t schemaVersionMajor = schemaVersion.at("SCHEMA_VERSION_MAJOR");
+    uint64_t schemaVersionMinor = schemaVersion.at("SCHEMA_VERSION_MINOR");
+    if(schemaVersionMajor != (uint64_t) CTA_CATALOGUE_SCHEMA_VERSION_MAJOR){
+      std::ostringstream exceptionMsg;
+      exceptionMsg << "Catalogue schema MAJOR version differ : Database schema version is " << schemaVersionMajor << "." << schemaVersionMinor << ", CTA schema version is "<< CTA_CATALOGUE_SCHEMA_VERSION_MAJOR << "." << CTA_CATALOGUE_SCHEMA_VERSION_MINOR;
+      throw WrongSchemaVersionException(exceptionMsg.str());
+    }
+  } catch (exception::UserError &ex) {
+    throw;
+  } catch (exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

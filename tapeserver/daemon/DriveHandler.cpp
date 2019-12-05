@@ -936,6 +936,12 @@ int DriveHandler::runChild() {
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
   try {
     scheduler.ping(lc);
+  } catch (const cta::catalogue::WrongSchemaVersionException &ex) {
+    log::ScopedParamContainer param (lc);
+    param.add("errorMessage", ex.getMessageValue());
+    lc.log(log::CRIT, "In DriveHandler::runChild(): catalogue MAJOR version mismatch. Reporting fatal error.");
+    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   } catch (cta::exception::Exception &ex) {
     log::ScopedParamContainer param (lc);
     param.add("errorMessage", ex.getMessageValue());
