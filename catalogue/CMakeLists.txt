@@ -111,8 +111,8 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql 
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql 
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trailer.sql
-    | sed 's/UINT16TYPE/SMALLINT_UNSIGNED/g'
-    | sed 's/UINT32TYPE/INT_UNSIGNED/g'
+    | sed 's/UINT16TYPE/SMALLINT UNSIGNED/g'
+    | sed 's/UINT32TYPE/INT UNSIGNED/g'
     | sed 's/UINT64TYPE/BIGINT UNSIGNED/g'
     | sed 's/NUMERIC\([^\)]*\)/BIGINT UNSIGNED/g'
     | sed 's/CHECKSUM_BLOB_TYPE/VARBINARY\(200\)/g'
