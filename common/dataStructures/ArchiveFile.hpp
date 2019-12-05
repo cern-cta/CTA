@@ -64,10 +64,10 @@ struct ArchiveFile {
   class TapeFilesList: public std::list<TapeFile> {
   public:
     using std::list<TapeFile>::list;
-    TapeFile & at(uint32_t copyNb);
-    const TapeFile & at(uint32_t copyNb) const;
-    TapeFilesList::iterator find(uint32_t copyNb);
-    TapeFilesList::const_iterator find(uint32_t copyNb) const;
+    TapeFile & at(uint8_t copyNb);
+    const TapeFile & at(uint8_t copyNb) const;
+    TapeFilesList::iterator find(uint8_t copyNb);
+    TapeFilesList::const_iterator find(uint8_t copyNb) const;
   };
   TapeFilesList tapeFiles;
   time_t creationTime;

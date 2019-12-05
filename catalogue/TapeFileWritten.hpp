@@ -102,7 +102,7 @@ struct TapeFileWritten: public TapeItemWritten {
   /**
    * The copy number of the tape file.
    */
-  uint32_t copyNb;
+  uint8_t copyNb;
 
 }; // struct TapeFileWritten
 

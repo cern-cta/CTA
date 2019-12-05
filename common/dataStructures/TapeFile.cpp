@@ -56,7 +56,7 @@ bool TapeFile::operator!=(const TapeFile &rhs) const {
 //------------------------------------------------------------------------------
 // TapeFile::isActiveCopyNb
 //------------------------------------------------------------------------------
-bool TapeFile::isActiveCopyNb(uint32_t cnb) const {
+bool TapeFile::isActiveCopyNb(uint8_t cnb) const {
   return (cnb == copyNb) && supersededByVid.empty();
 }
 

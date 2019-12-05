@@ -64,7 +64,7 @@ struct TapeFile {
    * The copy number of the file. Copy numbers start from 1. Copy number 0 
    * is an invalid copy number. 
    */
-  uint32_t copyNb;
+  uint8_t copyNb;
   /**
    * The time the file recorded in the catalogue. 
    */
@@ -88,7 +88,7 @@ struct TapeFile {
   /**
    * Returns true if this tape file is both an active (not superseded) tape file and matches the copy number.
    */
-  bool isActiveCopyNb(uint32_t copyNb) const;
+  bool isActiveCopyNb(uint8_t copyNb) const;
 
 }; // struct TapeFile
 

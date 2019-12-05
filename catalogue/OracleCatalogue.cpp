@@ -801,7 +801,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         tapeFile.fSeq = selectRset.columnUint64("FSEQ");
         tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
         tapeFile.fileSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
-        tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
+        tapeFile.copyNb = selectRset.columnUint8("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
         if (!selectRset.columnIsNull("SSBY_VID")) {
