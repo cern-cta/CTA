@@ -96,10 +96,14 @@ target_link_libraries (ctacatalogue
   ctacommon
   ctardbms)
 
+#Generate insert_cta_catalogue_version.sql
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_catalogue_version.sql.in insert_cta_catalogue_version.sql)
+
 add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sql oracle_catalogue_schema.sql postgres_catalogue_schema.sql
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
+    insert_cta_catalogue_version.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
     | sed 's/UINT8TYPE/INTEGER/g'
     | sed 's/UINT16TYPE/INTEGER/g'
@@ -111,6 +115,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
   COMMAND cat 
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql 
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql 
+    insert_cta_catalogue_version.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trailer.sql
     | sed 's/UINT8TYPE/TINYINT UNSIGNED/g'
     | sed 's/UINT16TYPE/SMALLINT UNSIGNED/g'
@@ -122,6 +127,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
+    insert_cta_catalogue_version.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql
     | sed 's/UINT8TYPE/NUMERIC\(3, 0\)/g'
     | sed 's/UINT16TYPE/NUMERIC\(5, 0\)/g'
@@ -133,6 +139,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
+    insert_cta_catalogue_version.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_trailer.sql
     | sed 's/UINT8TYPE/NUMERIC\(3, 0\)/g'
     | sed 's/UINT16TYPE/NUMERIC\(5, 0\)/g'
@@ -142,6 +149,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     > postgres_catalogue_schema.sql
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
+    ${CMAKE_SOURCE_DIR}/cmake/CTAVersions.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql
