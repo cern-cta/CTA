@@ -487,7 +487,7 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    m_lc.log(cta::log::INFO, "In RequestMessage::processPREPARE(): queued file for retrieve.");
 
    // Set response type and add retrieve request reference as an extended attribute.
-   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_RetrieveRequestId", retrieveReqId));
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", retrieveReqId));
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -521,9 +521,9 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    }
    
    // The request Id should be stored as an extended attribute
-   const auto retrieveRequestIdItor = notification.file().xattr().find("CTA_RetrieveRequestId");
+   const auto retrieveRequestIdItor = notification.file().xattr().find("sys.cta.objectstore.id");
    if(notification.file().xattr().end() == retrieveRequestIdItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_RetrieveRequestId");
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.cta.objectstore.id");
    }
    const std::string retrieveRequestId = retrieveRequestIdItor->second;
    request.retrieveRequestId = retrieveRequestId;
@@ -542,7 +542,7 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    m_lc.log(cta::log::INFO, "In RequestMessage::processABORT_PREPARE(): canceled retrieve request.");
 
    // Set response type and remove reference to retrieve request in EOS extended attributes.
-   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_RetrieveRequestId", ""));
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", ""));
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
