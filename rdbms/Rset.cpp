@@ -95,6 +95,27 @@ std::string Rset::columnString(const std::string &colName) const {
 }
 
 //------------------------------------------------------------------------------
+// columnUint8
+//------------------------------------------------------------------------------
+uint8_t Rset::columnUint8(const std::string &colName) const {
+  try {
+    if(nullptr == m_impl) {
+      throw InvalidResultSet("This result set is invalid");
+    }
+
+    const optional<uint8_t> col = columnOptionalUint8(colName);
+    if(col) {
+      return col.value();
+    } else {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // columnUint16
 //------------------------------------------------------------------------------
 uint16_t Rset::columnUint16(const std::string &colName) const {

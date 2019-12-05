@@ -151,6 +151,18 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
+  uint8_t columnUint8(const std::string &colName) const;
+
+  /**
+   * Returns the value of the specified column as an integer.
+   *
+   * This method will throw an exception if the value of the specified column
+   * is nullptr.
+   *
+   * @param colName The name of the column.
+   * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
+   */
   uint16_t columnUint16(const std::string &colName) const;
 
   /**
