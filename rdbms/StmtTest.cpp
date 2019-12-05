@@ -66,6 +66,7 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
       "CREATE TABLE STMT_TEST("                                      "\n"
       "  ID         UINT64TYPE CONSTRAINT STMT_TEST_ID_NN NOT NULL," "\n"
       "  DOUBLE_COL FLOAT,"                                          "\n"
+      "  UINT8_COL  UINT8TYPE,"                                      "\n"
       "  UINT16_COL UINT16TYPE,"                                     "\n"
       "  UINT32_COL UINT32TYPE,"                                     "\n"
       "  UINT64_COL UINT64TYPE,"                                     "\n"
@@ -79,22 +80,26 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
     case Login::DBTYPE_IN_MEMORY:
       break;
     case Login::DBTYPE_ORACLE:
+      utils::searchAndReplace(sql, "UINT8TYPE", "NUMERIC(3, 0)");
       utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
       utils::searchAndReplace(sql, "UINT32TYPE", "NUMERIC(10, 0)");
       utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
       utils::searchAndReplace(sql, "VARCHAR", "VARCHAR2");
       break;
     case Login::DBTYPE_SQLITE:
+      utils::searchAndReplace(sql, "UINT8TYPE", "INTEGER");
       utils::searchAndReplace(sql, "UINT16TYPE", "INTEGER");
       utils::searchAndReplace(sql, "UINT32TYPE", "INTEGER");
       utils::searchAndReplace(sql, "UINT64TYPE", "INTEGER");
       break;
     case Login::DBTYPE_MYSQL:
+      utils::searchAndReplace(sql, "UINT8TYPE", "TINYINT UNSIGNED");
       utils::searchAndReplace(sql, "UINT16TYPE", "SMALLINT UNSIGNED");
       utils::searchAndReplace(sql, "UINT32TYPE", "INT UNSIGNED");
       utils::searchAndReplace(sql, "UINT64TYPE", "BIGINT UNSIGNED");
       break;
     case Login::DBTYPE_POSTGRESQL:
+      utils::searchAndReplace(sql, "UINT8TYPE", "NUMERIC(3, 0)");
       utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
       utils::searchAndReplace(sql, "UINT32TYPE", "NUMERIC(10, 0)");
       utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
@@ -168,6 +173,164 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble) {
 
     const double diff = insertValue - selectValue.value();
     ASSERT_TRUE(0.000001 > diff);
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8) {
+  using namespace cta::rdbms;
+
+  const uint8_t insertValue = 123;
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST(" "\n"
+      "  ID,"                  "\n"
+      "  UINT8_COL) "         "\n"
+      "VALUES("                "\n"
+      "  1,"                   "\n"
+      "  :UINT8_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindUint8(":UINT8_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT"                     "\n"
+      "  UINT8_COL AS UINT8_COL" "\n"
+      "FROM"                       "\n"
+      "  STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalUint8("UINT8_COL");
+
+    ASSERT_TRUE((bool)selectValue);
+
+    ASSERT_EQ(insertValue,selectValue.value());
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_2_pow_8_minus_1) {
+  using namespace cta::rdbms;
+
+  const uint8_t insertValue = 255U;
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST(" "\n"
+      "  ID,"                  "\n"
+      "  UINT8_COL)"          "\n"
+      "VALUES("                "\n"
+      "  1,"                   "\n"
+      "  :UINT8_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindUint8(":UINT8_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT"                     "\n"
+      "  UINT8_COL AS UINT8_COL" "\n"
+      "FROM"                       "\n"
+      "  STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalUint8("UINT8_COL");
+
+    ASSERT_TRUE((bool)selectValue);
+
+    ASSERT_EQ(insertValue,selectValue.value());
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint8_null) {
+  using namespace cta::rdbms;
+
+  const cta::optional<uint8_t> insertValue; // Null value
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST(" "\n"
+      "  ID,"                  "\n"
+      "  UINT8_COL) "         "\n"
+      "VALUES("                "\n"
+      "  1,"                   "\n"
+      "  :UINT8_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindOptionalUint8(":UINT8_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT"                     "\n"
+      "  UINT8_COL AS UINT8_COL" "\n"
+      "FROM"                       "\n"
+      "  STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalUint8("UINT8_COL");
+
+    ASSERT_FALSE((bool)selectValue);
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint8) {
+  using namespace cta::rdbms;
+
+  const cta::optional<uint8_t> insertValue = 123;
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST(" "\n"
+      "  ID,"                  "\n"
+      "  UINT8_COL) "         "\n"
+      "VALUES("                "\n"
+      "  1,"                   "\n"
+      "  :UINT8_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindOptionalUint8(":UINT8_COL", insertValue);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT"                     "\n"
+      "  UINT8_COL AS UINT8_COL" "\n"
+      "FROM"                       "\n"
+      "  STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    const auto selectValue = rset.columnOptionalUint8("UINT8_COL");
+
+    ASSERT_TRUE((bool)selectValue);
+
+    ASSERT_EQ(insertValue,selectValue.value());
 
     ASSERT_FALSE(rset.next());
   }

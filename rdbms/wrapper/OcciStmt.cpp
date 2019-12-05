@@ -88,6 +88,30 @@ void OcciStmt::close() {
 }
 
 //------------------------------------------------------------------------------
+// bindUint8
+//------------------------------------------------------------------------------
+void OcciStmt::bindUint8(const std::string &paramName, const uint8_t paramValue) {
+  try {
+    bindOptionalUint8(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalUint8
+//------------------------------------------------------------------------------
+void OcciStmt::bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
+  try {
+    return bindOptionalInteger<uint8_t>(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindUint16
 //------------------------------------------------------------------------------
 void OcciStmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {

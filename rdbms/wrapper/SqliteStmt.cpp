@@ -150,6 +150,39 @@ sqlite3_stmt *SqliteStmt::get() const {
 }
 
 //------------------------------------------------------------------------------
+// bindUint8
+//------------------------------------------------------------------------------
+void SqliteStmt::bindUint8(const std::string &paramName, const uint8_t paramValue) {
+  try {
+    bindOptionalUint8(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindOptionalUint8
+//------------------------------------------------------------------------------
+void SqliteStmt::bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
+  try {
+    const unsigned int paramIdx = getParamIdx(paramName);
+    int bindRc = 0;
+    if(paramValue) {
+      bindRc = sqlite3_bind_int(m_stmt, paramIdx, paramValue.value());
+    } else {
+      bindRc = sqlite3_bind_null(m_stmt, paramIdx);
+    }
+    if(SQLITE_OK != bindRc) {
+      throw exception::Exception(Sqlite::rcToStr(bindRc));
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+                               getSqlForException() + ": " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindUint16
 //------------------------------------------------------------------------------
 void SqliteStmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {

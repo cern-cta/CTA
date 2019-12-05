@@ -101,6 +101,22 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
+  virtual void bindUint8(const std::string &paramName, const uint8_t paramValue) = 0;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  virtual void bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) = 0;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
   virtual void bindUint16(const std::string &paramName, const uint16_t paramValue) = 0;
 
   /**

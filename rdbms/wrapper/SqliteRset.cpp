@@ -257,6 +257,22 @@ optional<std::string> SqliteRset::columnOptionalString(const std::string &colNam
 }
 
 //------------------------------------------------------------------------------
+// columnOptionalUint8
+//------------------------------------------------------------------------------
+optional<uint8_t> SqliteRset::columnOptionalUint8(const std::string &colName) const {
+  try {
+    const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
+    if(SQLITE_NULL == idxAndType.colType) {
+      return nullopt;
+    } else {
+      return optional<uint8_t>(sqlite3_column_int(m_stmt.get(), idxAndType.colIdx));
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // columnOptionalUint16
 //------------------------------------------------------------------------------
 optional<uint16_t> SqliteRset::columnOptionalUint16(const std::string &colName) const {

@@ -90,6 +90,22 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
+  void bindUint8(const std::string &paramName, const uint8_t paramValue) override;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
+  void bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) override;
+
+  /**
+   * Binds an SQL parameter.
+   *
+   * @param paramName The name of the parameter.
+   * @param paramValue The value to be bound.
+   */
   void bindUint16(const std::string &paramName, const uint16_t paramValue) override;
 
   /**

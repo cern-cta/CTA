@@ -255,6 +255,21 @@ optional<std::string> Rset::columnOptionalString(const std::string &colName) con
 }
 
 //------------------------------------------------------------------------------
+// columnOptionalUint8
+//------------------------------------------------------------------------------
+optional<uint8_t> Rset::columnOptionalUint8(const std::string &colName) const {
+  try {
+    if(nullptr == m_impl) {
+      throw InvalidResultSet("This result set is invalid");
+    }
+    return m_impl->columnOptionalUint8(colName);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // columnOptionalUint16
 //------------------------------------------------------------------------------
 optional<uint16_t> Rset::columnOptionalUint16(const std::string &colName) const {

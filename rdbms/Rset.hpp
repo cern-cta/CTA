@@ -189,6 +189,17 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
+  optional<uint8_t> columnOptionalUint8(const std::string &colName) const;
+
+  /**
+   * Returns the value of the specified column as an integer.
+   *
+   * This method will return a null column value as an optional with no value.
+   *
+   * @param colName The name of the column.
+   * @return The value of the specified column.
+   * @throw InvalidResultSet if the result is invalid.
+   */
   optional<uint16_t> columnOptionalUint16(const std::string &colName) const;
 
   /**
