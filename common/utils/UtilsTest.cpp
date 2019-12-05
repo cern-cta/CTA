@@ -276,6 +276,51 @@ TEST_F(cta_UtilsTest, errnoToString_EACCESS) {
   ASSERT_EQ(std::string("Permission denied"), str);
 }
 
+TEST_F(cta_UtilsTest, toUint8_123) {
+  using namespace cta;
+
+  uint8_t i = 0;
+
+  ASSERT_NO_THROW(i = utils::toUint8("123"));
+  ASSERT_EQ((uint8_t)123, i);
+}
+
+TEST_F(cta_UtilsTest, toUint8_zero) {
+  using namespace cta;
+
+  uint8_t i = 0;
+
+  ASSERT_NO_THROW(i = utils::toUint8("0"));
+  ASSERT_EQ((uint8_t)0, i);
+}
+
+TEST_F(cta_UtilsTest, toUint8_255) {
+  using namespace cta;
+
+  uint8_t i = 0;
+
+  ASSERT_NO_THROW(i = utils::toUint8("255"));
+  ASSERT_EQ((uint8_t)255, i);
+}
+
+TEST_F(cta_UtilsTest, toUint8_empty_string) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toUint8(""), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toUint8_negative) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toUint8("-123"), std::exception);
+}
+
+TEST_F(cta_UtilsTest, toUint8_too_big) {
+  using namespace cta;
+
+  ASSERT_THROW(utils::toUint8("256"), std::exception);
+}
+
 TEST_F(cta_UtilsTest, toUint16_12345) {
   using namespace cta;
 

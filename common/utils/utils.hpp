@@ -245,6 +245,14 @@ namespace utils {
    * @param str The string.
    * @return The unisgned integer.
    */
+  uint8_t toUint8(const std::string &str);
+
+  /**
+   * Converts the specified string to an unsigned integer.
+   *
+   * @param str The string.
+   * @return The unisgned integer.
+   */
   uint16_t toUint16(const std::string &str);
 
   /**

@@ -487,6 +487,41 @@ std::string errnoToString(const int errnoValue) {
   }
 }
 
+//------------------------------------------------------------------------------
+// toUint8
+//------------------------------------------------------------------------------
+uint8_t toUint8(const std::string &str) {
+  if(str.empty()) {
+    std::ostringstream msg;
+    msg << "Failed to convert empty string to uint8_t: An empty string is not"
+           " a valid unsigned integer";
+    throw exception::Exception(msg.str());
+  }
+
+  errno = 0;
+  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const int savedErrno = errno;
+  if(savedErrno) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uint8_t: " <<
+      errnoToString(savedErrno);
+    throw exception::Exception(msg.str());
+  }
+
+  if(0 > value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uint8_t: Negative number";
+    throw exception::Exception(msg.str());
+  }
+
+  if(255 < value) {
+    std::ostringstream msg;
+    msg << "Failed to convert \'" << str << "' to uint8_t: Number too big";
+    throw exception::Exception(msg.str());
+  }
+
+  return value;
+}
 
 //------------------------------------------------------------------------------
 // toUint16
