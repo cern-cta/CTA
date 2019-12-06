@@ -99,6 +99,12 @@ target_link_libraries (ctacatalogue
 #Generate insert_cta_catalogue_version.sql
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_catalogue_version.sql.in insert_cta_catalogue_version.sql)
 
+set(catalogue_schema_directory ${CMAKE_CURRENT_SOURCE_DIR}/${CTA_CATALOGUE_SCHEMA_VERSION_MAJOR}.${CTA_CATALOGUE_SCHEMA_VERSION_MINOR})
+
+add_custom_target(create_catalogue_schema_directory ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${catalogue_schema_directory} DEPENDS
+${CMAKE_SOURCE_DIR}/cmake/CTAVersions.cmake)
+
 add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sql oracle_catalogue_schema.sql postgres_catalogue_schema.sql
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
@@ -110,7 +116,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     | sed 's/UINT32TYPE/INTEGER/g'
     | sed 's/UINT64TYPE/INTEGER/g'
     | sed 's/CHECKSUM_BLOB_TYPE/BLOB\(200\)/g'
-    > sqlite_catalogue_schema.sql
+    | tee sqlite_catalogue_schema.sql ${catalogue_schema_directory}/sqlite_catalogue_schema.sql > /dev/null
   COMMAND cat 
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql 
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql 
@@ -121,7 +127,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     | sed 's/UINT32TYPE/INT UNSIGNED/g'
     | sed 's/UINT64TYPE/BIGINT UNSIGNED/g'
     | sed 's/CHECKSUM_BLOB_TYPE/VARBINARY\(200\)/g'
-    > mysql_catalogue_schema.sql
+    | tee mysql_catalogue_schema.sql ${catalogue_schema_directory}/mysql_catalogue_schema.sql > /dev/null
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
@@ -133,7 +139,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     | sed 's/UINT64TYPE/NUMERIC\(20, 0\)/g'
     | sed 's/VARCHAR/VARCHAR2/g'
     | sed 's/CHECKSUM_BLOB_TYPE/RAW\(200\)/g'
-    > oracle_catalogue_schema.sql
+    | tee oracle_catalogue_schema.sql ${catalogue_schema_directory}/oracle_catalogue_schema.sql > /dev/null
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
@@ -144,7 +150,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     | sed 's/UINT32TYPE/NUMERIC\(10, 0\)/g'
     | sed 's/UINT64TYPE/NUMERIC\(20, 0\)/g'
     | sed 's/CHECKSUM_BLOB_TYPE/BYTEA/g'
-    > postgres_catalogue_schema.sql
+    | tee postgres_catalogue_schema.sql ${catalogue_schema_directory}/postgres_catalogue_schema.sql > /dev/null
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_SOURCE_DIR}/cmake/CTAVersions.cmake
