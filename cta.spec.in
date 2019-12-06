@@ -191,10 +191,10 @@ Summary: CERN Tape Archive libraries
 Group: Application/CTA
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: protobuf3
-%description -n cta-lib-base
+%description -n cta-lib-common
 CERN Tape Archive:
 The shared libraries base
-%files -n cta-lib-base
+%files -n cta-lib-common
 %defattr(0755,root,root,-)
 %{_libdir}/libctacommon.so*
 
