@@ -137,6 +137,27 @@ uint16_t Rset::columnUint16(const std::string &colName) const {
 }
 
 //------------------------------------------------------------------------------
+// columnUint32
+//------------------------------------------------------------------------------
+uint32_t Rset::columnUint32(const std::string &colName) const {
+  try {
+    if(nullptr == m_impl) {
+      throw InvalidResultSet("This result set is invalid");
+    }
+
+    const optional<uint32_t> col = columnOptionalUint32(colName);
+    if(col) {
+      return col.value();
+    } else {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // columnUint64
 //------------------------------------------------------------------------------
 uint64_t Rset::columnUint64(const std::string &colName) const {
