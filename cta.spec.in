@@ -175,7 +175,7 @@ The xroot plugin
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
-Requires: cta-lib-base = %{version}-%{release}
+Requires: cta-lib-common = %{version}-%{release}
 %description -n cta-cli
 CERN Tape Archive:
 The xroot plugin
@@ -186,7 +186,7 @@ The xroot plugin
 %attr(0755,root,root) %{_bindir}/cta-wfe-test
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
 
-%package -n cta-lib-base
+%package -n cta-lib-common
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
@@ -196,7 +196,7 @@ CERN Tape Archive:
 The shared libraries base
 %files -n cta-lib-base
 %defattr(0755,root,root,-)
-%{_libdir}/libctabase.so*
+%{_libdir}/libctacommon.so*
 
 %package -n cta-lib
 Summary: CERN Tape Archive libraries
@@ -208,14 +208,13 @@ Requires: postgresql-libs
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: protobuf3
 Requires: zeromq
-Requires: cta-lib-base = %{version}-%{release}
+Requires: cta-lib-common = %{version}-%{release}
 %description -n cta-lib
 CERN Tape Archive:
 The shared libraries
 %files -n cta-lib
 %defattr(0755,root,root,-)
 %{_libdir}/libctacatalogue.so*
-%{_libdir}/libctacommon.so*
 #TODO: merge util and common
 %{_libdir}/libctascheduler.so*
 %{_libdir}/libctaobjectstore.so*
