@@ -30,9 +30,7 @@ include_directories (${XROOTD_INCLUDE_DIR})
 #
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
-
-set (COMMON_LIB_SRC_FILES
+set (BASE_LIB_SRC_FILES
   dataStructures/ActivitiesFairShareWeights.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
@@ -76,15 +74,27 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/WriteTestResult.cpp
   dataStructures/utils.cpp
   checksum/ChecksumBlob.cpp
+  exception/Backtrace.cpp
+  exception/Exception.cpp
+)
+
+add_library (ctabase SHARED
+  ${BASE_LIB_SRC_FILES})
+set_property(TARGET ctabase PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctabase PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+install (TARGETS ctabase DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
+
+set (COMMON_LIB_SRC_FILES
   exception/AcceptConnectionInterrupted.cpp
   exception/AcsQueryVolumeCmd.cpp
-  exception/Backtrace.cpp
   exception/BadAlloc.cpp
   exception/CommandLineNotParsed.cpp
   exception/DismountFailed.cpp  
   exception/ForceDismountFailed.cpp
   exception/Errnum.cpp
-  exception/Exception.cpp
   exception/InvalidArgument.cpp
   exception/InvalidConfigEntry.cpp
   exception/LostDatabaseConnection.cpp
@@ -157,6 +167,7 @@ set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacommon
+  ctabase
   XrdSsiPbEosCta
   pthread
   uuid

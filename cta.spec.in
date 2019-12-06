@@ -186,6 +186,18 @@ The xroot plugin
 %attr(0755,root,root) %{_bindir}/cta-wfe-test
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
 
+%package -n cta-lib-base
+Summary: CERN Tape Archive libraries
+Group: Application/CTA
+# Explicity require protobuf3 to avoid clash with eos-protobuf3
+Requires: protobuf3
+%description -n cta-lib-base
+CERN Tape Archive:
+The shared libraries base
+%files -n cta-lib-base
+%defattr(0755,root,root,-)
+%{_libdir}/libctabase.so*
+
 %package -n cta-lib
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
