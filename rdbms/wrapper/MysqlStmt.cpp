@@ -171,9 +171,9 @@ MYSQL_STMT *MysqlStmt::get() const {
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint8
+// bindUint8
 //------------------------------------------------------------------------------
-void MysqlStmt::bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
+void MysqlStmt::bindUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
     const unsigned int idx = paramIdx - 1;
@@ -205,9 +205,9 @@ void MysqlStmt::bindOptionalUint8(const std::string &paramName, const optional<u
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint16
+// bindUint16
 //------------------------------------------------------------------------------
-void MysqlStmt::bindOptionalUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+void MysqlStmt::bindUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
     const unsigned int idx = paramIdx - 1;
@@ -239,9 +239,9 @@ void MysqlStmt::bindOptionalUint16(const std::string &paramName, const optional<
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint32
+// bindUint32
 //------------------------------------------------------------------------------
-void MysqlStmt::bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
+void MysqlStmt::bindUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
     const unsigned int idx = paramIdx - 1;
@@ -273,9 +273,9 @@ void MysqlStmt::bindOptionalUint32(const std::string &paramName, const optional<
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint64
+// bindUint64
 //------------------------------------------------------------------------------
-void MysqlStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
+void MysqlStmt::bindUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
     const unsigned int idx = paramIdx - 1;
@@ -307,9 +307,9 @@ void MysqlStmt::bindOptionalUint64(const std::string &paramName, const optional<
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalDouble
+// bindDouble
 //------------------------------------------------------------------------------
-void MysqlStmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
+void MysqlStmt::bindDouble(const std::string &paramName, const optional<double> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
     const unsigned int idx = paramIdx - 1;
@@ -342,16 +342,16 @@ void MysqlStmt::bindOptionalDouble(const std::string &paramName, const optional<
 
 void MysqlStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
   try {
-    bindOptionalString(paramName, paramValue);
+    bindString(paramName, paramValue);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalString
+// bindString
 //------------------------------------------------------------------------------
-void MysqlStmt::bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) {
+void MysqlStmt::bindString(const std::string &paramName, const optional<std::string> &paramValue) {
   try {
     if(paramValue && paramValue.value().empty()) {
       throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "

@@ -69,9 +69,9 @@ PostgresStmt::~PostgresStmt() {
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalString
+// bindString
 //------------------------------------------------------------------------------
-void PostgresStmt::bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) {
+void PostgresStmt::bindString(const std::string &paramName, const optional<std::string> &paramValue) {
   threading::RWLockWrLocker locker(m_lock);
   try {
     if(paramValue && paramValue.value().empty()) {
@@ -103,11 +103,11 @@ void PostgresStmt::bindOptionalString(const std::string &paramName, const option
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint8
+// bindUint8
 //------------------------------------------------------------------------------
-void PostgresStmt::bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
+void PostgresStmt::bindUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
   try {
-    return bindOptionalInteger<uint8_t>(paramName, paramValue);
+    return bindInteger<uint8_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " +
                         getSqlForException() + ": " + ex.getMessage().str());
@@ -116,11 +116,11 @@ void PostgresStmt::bindOptionalUint8(const std::string &paramName, const optiona
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint16
+// bindUint16
 //------------------------------------------------------------------------------
-void PostgresStmt::bindOptionalUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+void PostgresStmt::bindUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
   try {
-    return bindOptionalInteger<uint16_t>(paramName, paramValue);
+    return bindInteger<uint16_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " +
                         getSqlForException() + ": " + ex.getMessage().str());
@@ -129,11 +129,11 @@ void PostgresStmt::bindOptionalUint16(const std::string &paramName, const option
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint32
+// bindUint32
 //------------------------------------------------------------------------------
-void PostgresStmt::bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
+void PostgresStmt::bindUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
   try {
-    return bindOptionalInteger<uint32_t>(paramName, paramValue);
+    return bindInteger<uint32_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " +
                         getSqlForException() + ": " + ex.getMessage().str());
@@ -142,11 +142,11 @@ void PostgresStmt::bindOptionalUint32(const std::string &paramName, const option
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint64
+// bindUint64
 //------------------------------------------------------------------------------
-void PostgresStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
+void PostgresStmt::bindUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
   try {
-    return bindOptionalInteger<uint64_t>(paramName, paramValue);
+    return bindInteger<uint64_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " +
                         getSqlForException() + ": " + ex.getMessage().str());
@@ -162,9 +162,9 @@ void PostgresStmt::bindBlob(const std::string &paramName, const std::string &par
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalDouble
+// bindDouble
 //------------------------------------------------------------------------------
-void PostgresStmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
+void PostgresStmt::bindDouble(const std::string &paramName, const optional<double> &paramValue) {
   threading::RWLockWrLocker locker(m_lock);
 
   try {

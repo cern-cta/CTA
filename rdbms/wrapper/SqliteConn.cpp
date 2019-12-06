@@ -252,7 +252,7 @@ std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tab
     "BLOB";
     
     auto stmt = createStmt(sql);
-    stmt->bindOptionalString(":TABLE_NAME", tableName);
+    stmt->bindString(":TABLE_NAME", tableName);
     auto rset = stmt->executeQuery();
     if (rset->next()) {
       auto tableSql = rset->columnOptionalString("SQL").value();     

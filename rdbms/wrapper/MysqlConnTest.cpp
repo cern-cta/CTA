@@ -194,14 +194,14 @@ TEST_F(DISABLED_cta_rdbms_wrapper_MysqlConnTest, create_stmt_named_binding) {
 
   // try to test with null
   stmt->bindUint64(":col1", 1);
-  stmt->bindOptionalString(":col2", optional<std::string>());
-  // stmt->bindOptionalString(":col2", nullopt);
+  stmt->bindString(":col2", optional<std::string>());
+  // stmt->bindString(":col2", nullopt);
   stmt->bindUint64(":col3", 3);
   stmt->executeNonQuery(AutocommitMode::AUTOCOMMIT_OFF);
 
-  stmt->bindOptionalUint64(":col1", nullopt);
-  stmt->bindOptionalString(":col2", optional<std::string>());
-  // stmt->bindOptionalString(":col2", nullopt);
+  stmt->bindUint64(":col1", nullopt);
+  stmt->bindString(":col2", optional<std::string>());
+  // stmt->bindString(":col2", nullopt);
   stmt->bindUint64(":col3", 3);
   stmt->executeNonQuery(AutocommitMode::AUTOCOMMIT_OFF);
 

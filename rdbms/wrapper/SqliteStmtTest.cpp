@@ -266,9 +266,9 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
         ":COL2,"
         ":COL3);";
     auto stmt = conn.createStmt(sql);
-    stmt->bindOptionalString(":COL1", std::string("one"));
-    stmt->bindOptionalString(":COL2", std::string("two"));
-    stmt->bindOptionalUint64(":COL3", 3);
+    stmt->bindString(":COL1", "one");
+    stmt->bindString(":COL2", "two");
+    stmt->bindUint64(":COL3", 3);
     stmt->executeNonQuery();
   }
 
@@ -390,7 +390,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
       "VALUES("
         ":COL1);";
     auto stmt = conn.createStmt(sql);
-    stmt->bindOptionalUint64(":COL1", 1);
+    stmt->bindUint64(":COL1", 1);
     stmt->executeNonQuery();
   }
 
@@ -402,7 +402,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
       "VALUES("
         ":COL1);";
     auto stmt = conn.createStmt(sql);
-    stmt->bindOptionalUint64(":COL1", 1);
+    stmt->bindUint64(":COL1", 1);
     ASSERT_THROW(stmt->executeNonQuery(), PrimaryKeyError);
   }
 }
@@ -437,7 +437,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
       "VALUES("
         ":COL1);";
     auto stmt = conn.createStmt(sql);
-    stmt->bindOptionalUint64(":COL1", 1);
+    stmt->bindUint64(":COL1", 1);
     stmt->executeNonQuery();
   }
 
@@ -449,7 +449,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
       "VALUES("
         ":COL1);";
     auto stmt = conn.createStmt(sql);
-    stmt->bindOptionalUint64(":COL1", 1);
+    stmt->bindUint64(":COL1", 1);
     auto rset = stmt->executeQuery();
     ASSERT_THROW(rset->next(), PrimaryKeyError);
   }

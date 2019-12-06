@@ -752,7 +752,7 @@ void RdbmsCatalogue::createTapePool(
     stmt.bindString(":VO", vo);
     stmt.bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
     stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
-    stmt.bindOptionalString(":SUPPLY", supply);
+    stmt.bindString(":SUPPLY", supply);
 
     stmt.bindString(":USER_COMMENT", comment);
 
@@ -1281,7 +1281,7 @@ void RdbmsCatalogue::modifyTapePoolSupply(const common::dataStructures::Security
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindOptionalString(":SUPPLY", optionalSupply);
+    stmt.bindString(":SUPPLY", optionalSupply);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -2701,7 +2701,7 @@ uint64_t RdbmsCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::string& 
     "WHERE VID = :VID ";
     
     auto stmt = conn.createStmt(sql);
-    
+
     stmt.bindString(":VID", vid);
     auto rset = stmt.executeQuery();
     rset.next();
@@ -3101,7 +3101,7 @@ void RdbmsCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::S
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindOptionalString(":ENCRYPTION_KEY_NAME", optionalEncryptionKeyName);
+    stmt.bindString(":ENCRYPTION_KEY_NAME", optionalEncryptionKeyName);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -4677,7 +4677,7 @@ void RdbmsCatalogue::createActivitiesFairShareWeight(const common::dataStructure
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":ACTIVITY", activity);
     stmt.bindString(":WEIGHT", std::to_string(weight));
-    
+
     stmt.bindString(":USER_COMMENT", comment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
@@ -4739,7 +4739,7 @@ void RdbmsCatalogue::modifyActivitiesFairShareWeight(const common::dataStructure
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":ACTIVITY", activity);
     stmt.bindString(":WEIGHT", std::to_string(weight));
-    
+
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
@@ -4969,22 +4969,22 @@ void RdbmsCatalogue::createDiskSystem(
         ":LAST_UPDATE_TIME)";
     auto stmt = conn.createStmt(sql);
 
-    stmt.bindString(":DISK_SYSTEM_NAME", name);
-    stmt.bindString(":FILE_REGEXP", fileRegexp);
-    stmt.bindString(":FREE_SPACE_QUERY_URL", freeSpaceQueryURL);
-    stmt.bindUint64(":REFRESH_INTERVAL", refreshInterval);
-    stmt.bindUint64(":TARGETED_FREE_SPACE", targetedFreeSpace);
-    stmt.bindUint64(":SLEEP_TIME", sleepTime);
+   stmt.bindString(":DISK_SYSTEM_NAME", name);
+   stmt.bindString(":FILE_REGEXP", fileRegexp);
+   stmt.bindString(":FREE_SPACE_QUERY_URL", freeSpaceQueryURL);
+   stmt.bindUint64(":REFRESH_INTERVAL", refreshInterval);
+   stmt.bindUint64(":TARGETED_FREE_SPACE", targetedFreeSpace);
+   stmt.bindUint64(":SLEEP_TIME", sleepTime);
 
-    stmt.bindString(":USER_COMMENT", comment);
+   stmt.bindString(":USER_COMMENT", comment);
 
-    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
-    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
-    stmt.bindUint64(":CREATION_LOG_TIME", now);
+   stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
+   stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
+   stmt.bindUint64(":CREATION_LOG_TIME", now);
 
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+   stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+   stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
   } catch(exception::UserError &) {
@@ -5008,7 +5008,7 @@ void RdbmsCatalogue::deleteDiskSystem(const std::string &name) {
         "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(delete_sql);
-    stmt.bindString(":DISK_SYSTEM_NAME", name);
+      stmt.bindString(":DISK_SYSTEM_NAME", name);
     stmt.executeNonQuery();
 
     // The delete statement will effect no rows and will not raise an error if
@@ -5133,11 +5133,11 @@ void RdbmsCatalogue::modifyDiskSystemRefreshInterval(const common::dataStructure
         "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":REFRESH_INTERVAL", refreshInterval);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":DISK_SYSTEM_NAME", name);
+      stmt.bindUint64(":REFRESH_INTERVAL", refreshInterval);
+      stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+      stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+      stmt.bindUint64(":LAST_UPDATE_TIME", now);
+      stmt.bindString(":DISK_SYSTEM_NAME", name);
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
@@ -5174,11 +5174,11 @@ void RdbmsCatalogue::modifyDiskSystemTargetedFreeSpace(const common::dataStructu
         "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":TARGETED_FREE_SPACE", targetedFreeSpace);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":DISK_SYSTEM_NAME", name);
+        stmt.bindUint64(":TARGETED_FREE_SPACE", targetedFreeSpace);
+        stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+        stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+        stmt.bindUint64(":LAST_UPDATE_TIME", now);
+        stmt.bindString(":DISK_SYSTEM_NAME", name);
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
@@ -6340,12 +6340,12 @@ void RdbmsCatalogue::insertTapeFile(
       " ( TAPE_FILE.VID <> :NEW_VID2 OR TAPE_FILE.FSEQ <> :NEW_FSEQ2 )";
 
       auto stmt = conn.createStmt(sql);
-      stmt.bindString(":NEW_VID",tapeFile.vid);
-      stmt.bindUint64(":NEW_FSEQ",tapeFile.fSeq);
-      stmt.bindString(":NEW_VID2",tapeFile.vid);
-      stmt.bindUint64(":NEW_FSEQ2",tapeFile.fSeq);
-      stmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
-      stmt.bindUint64(":COPY_NB",tapeFile.copyNb);
+      stmt.bindString(":NEW_VID", tapeFile.vid);
+      stmt.bindUint64(":NEW_FSEQ", tapeFile.fSeq);
+      stmt.bindString(":NEW_VID2", tapeFile.vid);
+      stmt.bindUint64(":NEW_FSEQ2", tapeFile.fSeq);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+      stmt.bindUint64(":COPY_NB", tapeFile.copyNb);
       stmt.executeNonQuery();
     }
     conn.commit();

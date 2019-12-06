@@ -150,9 +150,9 @@ sqlite3_stmt *SqliteStmt::get() const {
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint8
+// bindUint8
 //------------------------------------------------------------------------------
-void SqliteStmt::bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
+void SqliteStmt::bindUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
@@ -171,9 +171,9 @@ void SqliteStmt::bindOptionalUint8(const std::string &paramName, const optional<
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint16
+// bindUint16
 //------------------------------------------------------------------------------
-void SqliteStmt::bindOptionalUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+void SqliteStmt::bindUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
@@ -192,9 +192,9 @@ void SqliteStmt::bindOptionalUint16(const std::string &paramName, const optional
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint32
+// bindUint32
 //------------------------------------------------------------------------------
-void SqliteStmt::bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
+void SqliteStmt::bindUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
@@ -213,9 +213,9 @@ void SqliteStmt::bindOptionalUint32(const std::string &paramName, const optional
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint64
+// bindUint64
 //------------------------------------------------------------------------------
-void SqliteStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
+void SqliteStmt::bindUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
@@ -234,9 +234,9 @@ void SqliteStmt::bindOptionalUint64(const std::string &paramName, const optional
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalDouble
+// bindDouble
 //------------------------------------------------------------------------------
-void SqliteStmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
+void SqliteStmt::bindDouble(const std::string &paramName, const optional<double> &paramValue) {
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
@@ -273,9 +273,9 @@ void SqliteStmt::bindBlob(const std::string &paramName, const std::string &param
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalString
+// bindString
 //------------------------------------------------------------------------------
-void SqliteStmt::bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) {
+void SqliteStmt::bindString(const std::string &paramName, const optional<std::string> &paramValue) {
   try {
     if(paramValue && paramValue.value().empty()) {
       throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "

@@ -88,11 +88,11 @@ void OcciStmt::close() {
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint8
+// bindUint8
 //------------------------------------------------------------------------------
-void OcciStmt::bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
+void OcciStmt::bindUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
   try {
-    return bindOptionalInteger<uint8_t>(paramName, paramValue);
+    return bindInteger<uint8_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -100,11 +100,11 @@ void OcciStmt::bindOptionalUint8(const std::string &paramName, const optional<ui
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint16
+// bindUint16
 //------------------------------------------------------------------------------
-void OcciStmt::bindOptionalUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+void OcciStmt::bindUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
   try {
-    return bindOptionalInteger<uint16_t>(paramName, paramValue);
+    return bindInteger<uint16_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -112,11 +112,11 @@ void OcciStmt::bindOptionalUint16(const std::string &paramName, const optional<u
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint32
+// bindUint32
 //------------------------------------------------------------------------------
-void OcciStmt::bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
+void OcciStmt::bindUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
   try {
-    return bindOptionalInteger<uint32_t>(paramName, paramValue);
+    return bindInteger<uint32_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -124,11 +124,11 @@ void OcciStmt::bindOptionalUint32(const std::string &paramName, const optional<u
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalUint64
+// bindUint64
 //------------------------------------------------------------------------------
-void OcciStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
+void OcciStmt::bindUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
   try {
-    return bindOptionalInteger<uint64_t>(paramName, paramValue);
+    return bindInteger<uint64_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -143,9 +143,9 @@ void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramVa
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalDouble
+// bindDouble
 //------------------------------------------------------------------------------
-void OcciStmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
+void OcciStmt::bindDouble(const std::string &paramName, const optional<double> &paramValue) {
   try {
     const unsigned paramIdx = getParamIdx(paramName);
     if(paramValue) {
@@ -164,9 +164,9 @@ void OcciStmt::bindOptionalDouble(const std::string &paramName, const optional<d
 }
 
 //------------------------------------------------------------------------------
-// bindOptionalString
+// bindString
 //------------------------------------------------------------------------------
-void OcciStmt::bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) {
+void OcciStmt::bindString(const std::string &paramName, const optional<std::string> &paramValue) {
   try {
     if(paramValue && paramValue.value().empty()) {
       throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "

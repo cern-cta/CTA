@@ -188,7 +188,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble) {
   }
 }
 
-TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalDouble_null) {
+TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble_null) {
   using namespace cta::rdbms;
 
   const cta::optional<double> insertValue; // Null value
@@ -203,7 +203,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalDouble_null) {
       "  1,"                   "\n"
       "  :DOUBLE_COL)";
     auto stmt = m_conn.createStmt(sql);
-    stmt.bindOptionalDouble(":DOUBLE_COL", insertValue);
+    stmt.bindDouble(":DOUBLE_COL", insertValue);
     stmt.executeNonQuery();
   }
 
@@ -316,7 +316,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_2_pow_8_minus_1) {
   }
 }
 
-TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint8_null) {
+TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_null) {
   using namespace cta::rdbms;
 
   const cta::optional<uint8_t> insertValue; // Null value
@@ -331,7 +331,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint8_null) {
       "  1,"                   "\n"
       "  :UINT8_COL)";
     auto stmt = m_conn.createStmt(sql);
-    stmt.bindOptionalUint8(":UINT8_COL", insertValue);
+    stmt.bindUint8(":UINT8_COL", insertValue);
     stmt.executeNonQuery();
   }
 
@@ -356,47 +356,6 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint8_null) {
   }
 }
 
-TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint8) {
-  using namespace cta::rdbms;
-
-  const cta::optional<uint8_t> insertValue = 123;
-
-  // Insert a row into the test table
-  {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT8_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT8_COL)";
-    auto stmt = m_conn.createStmt(sql);
-    stmt.bindOptionalUint8(":UINT8_COL", insertValue);
-    stmt.executeNonQuery();
-  }
-
-  // Select the row back from the table
-  {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT8_COL AS UINT8_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
-    auto stmt = m_conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    ASSERT_TRUE(rset.next());
-
-    const auto selectValue = rset.columnOptionalUint8("UINT8_COL");
-
-    ASSERT_TRUE((bool)selectValue);
-
-    ASSERT_EQ(insertValue, selectValue.value());
-
-    ASSERT_EQ(insertValue, rset.columnUint8("UINT8_COL"));
-
-    ASSERT_FALSE(rset.next());
-  }
-}
 
 TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16) {
   using namespace cta::rdbms;
@@ -482,7 +441,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_2_pow_16_minus_1) {
   }
 }
 
-TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint16_null) {
+TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_null) {
   using namespace cta::rdbms;
 
   const cta::optional<uint16_t> insertValue; // Null value
@@ -497,7 +456,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint16_null) {
       "  1,"                   "\n"
       "  :UINT16_COL)";
     auto stmt = m_conn.createStmt(sql);
-    stmt.bindOptionalUint16(":UINT16_COL", insertValue);
+    stmt.bindUint16(":UINT16_COL", insertValue);
     stmt.executeNonQuery();
   }
 
@@ -517,48 +476,6 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint16_null) {
     ASSERT_FALSE((bool)selectValue);
 
     ASSERT_THROW(rset.columnUint16("UINT16_COL"), NullDbValue);
-
-    ASSERT_FALSE(rset.next());
-  }
-}
-
-TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint16) {
-  using namespace cta::rdbms;
-
-  const cta::optional<uint16_t> insertValue = 1234;
-
-  // Insert a row into the test table
-  {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT16_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT16_COL)";
-    auto stmt = m_conn.createStmt(sql);
-    stmt.bindOptionalUint16(":UINT16_COL", insertValue);
-    stmt.executeNonQuery();
-  }
-
-  // Select the row back from the table
-  {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT16_COL AS UINT16_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
-    auto stmt = m_conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    ASSERT_TRUE(rset.next());
-
-    const auto selectValue = rset.columnOptionalUint16("UINT16_COL");
-
-    ASSERT_TRUE((bool)selectValue);
-
-    ASSERT_EQ(insertValue, selectValue.value());
-
-    ASSERT_EQ(insertValue, rset.columnUint16("UINT16_COL"));
 
     ASSERT_FALSE(rset.next());
   }
@@ -647,7 +564,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_2_pow_32_minus_1) {
   }
 }
 
-TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint32_null) {
+TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_null) {
   using namespace cta::rdbms;
 
   const cta::optional<uint32_t> insertValue; // Null value
@@ -662,7 +579,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint32_null) {
       "  1,"                   "\n"
       "  :UINT32_COL)";
     auto stmt = m_conn.createStmt(sql);
-    stmt.bindOptionalUint32(":UINT32_COL", insertValue);
+    stmt.bindUint32(":UINT32_COL", insertValue);
     stmt.executeNonQuery();
   }
 
@@ -682,48 +599,6 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint32_null) {
     ASSERT_FALSE((bool)selectValue);
 
     ASSERT_THROW(rset.columnUint32("UINT32_COL"), NullDbValue);
-
-    ASSERT_FALSE(rset.next());
-  }
-}
-
-TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalUint32) {
-  using namespace cta::rdbms;
-
-  const cta::optional<uint32_t> insertValue = 1234;
-
-  // Insert a row into the test table
-  {
-    const char *const sql =
-      "INSERT INTO STMT_TEST(" "\n"
-      "  ID,"                  "\n"
-      "  UINT32_COL) "         "\n"
-      "VALUES("                "\n"
-      "  1,"                   "\n"
-      "  :UINT32_COL)";
-    auto stmt = m_conn.createStmt(sql);
-    stmt.bindOptionalUint32(":UINT32_COL", insertValue);
-    stmt.executeNonQuery();
-  }
-
-  // Select the row back from the table
-  {
-    const char *const sql =
-      "SELECT"                     "\n"
-      "  UINT32_COL AS UINT32_COL" "\n"
-      "FROM"                       "\n"
-      "  STMT_TEST";
-    auto stmt = m_conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    ASSERT_TRUE(rset.next());
-
-    const auto selectValue = rset.columnOptionalUint32("UINT32_COL");
-
-    ASSERT_TRUE((bool)selectValue);
-
-    ASSERT_EQ(insertValue, selectValue.value());
-
-    ASSERT_EQ(insertValue, rset.columnOptionalUint32("UINT32_COL"));
 
     ASSERT_FALSE(rset.next());
   }
@@ -855,7 +730,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_2) {
   }
 }
 
-TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalString_null) {
+TEST_P(cta_rdbms_StmtTest, insert_with_bindString_null) {
   using namespace cta::rdbms;
 
   const cta::optional<std::string> insertValue; // Null value
@@ -870,7 +745,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalString_null) {
       "  1,"                   "\n"
       "  :STRING_COL)";
     auto stmt = m_conn.createStmt(sql);
-    stmt.bindOptionalString(":STRING_COL", insertValue);
+    stmt.bindString(":STRING_COL", insertValue);
     stmt.executeNonQuery();
   }
 
@@ -937,7 +812,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString) {
   }
 }
 
-TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalBool_null) {
+TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_null) {
   using namespace cta::rdbms;
 
   const cta::optional<bool> insertValue; // Null value
@@ -952,7 +827,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindOptionalBool_null) {
       "  1,"                   "\n"
       "  :BOOL_COL)";
     auto stmt = m_conn.createStmt(sql);
-    stmt.bindOptionalBool(":BOOL_COL", insertValue);
+    stmt.bindBool(":BOOL_COL", insertValue);
     stmt.executeNonQuery();
   }
 
