@@ -863,4 +863,27 @@ TEST_F(cta_UtilsTest, searchAndReplace) {
   ASSERT_EQ("one replacement three four one replacement three four", str);
 }
 
+TEST_F(cta_UtilsTest, appendParameterXRootFileURL){
+  std::string fileURLTest = "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/test00000171?eos.lfn=fxid:b2&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default&oss.asize=15360";
+  std::string fileURL = fileURLTest;
+  cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","145");
+  //nothing should have changed
+  ASSERT_EQ(fileURLTest,fileURL);
+ 
+  fileURLTest = "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/test00000171";
+  fileURL = fileURLTest;
+  cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","15360");
+  ASSERT_EQ(fileURLTest+"?oss.asize=15360",fileURL);
+  
+  fileURLTest = "file://path_to_folder/path_to_file";
+  fileURL = fileURLTest;
+  cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","15360");
+  ASSERT_EQ(fileURLTest,fileURL);
+  
+  fileURLTest = "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/test00000171?eos.lfn=fxid:b2&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
+  fileURL = fileURLTest;
+  cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","15360");
+  ASSERT_EQ(fileURLTest+"&oss.asize=15360",fileURL);  
+}
+
 } // namespace unitTests

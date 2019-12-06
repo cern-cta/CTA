@@ -1185,6 +1185,10 @@ SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::data
   for (auto & tf: criteria.archiveFile.tapeFiles) {
     if (tf.vid == ret.selectedVid) {
       bestCopyNb = tf.copyNb;
+      // Appending the file size to the dstURL so that
+      // XrootD will fail to retrieve if there is not enough free space
+      // in the eos disk
+      rqst.appendFileSizeToDstURL(tf.fileSize);
       goto vidFound;
     }
   }
@@ -2339,6 +2343,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
       common::dataStructures::RetrieveRequest schedReq;
       schedReq.archiveFileID = rsr.archiveFile.archiveFileID;
       schedReq.dstURL = rsr.fileBufferURL;
+      schedReq.appendFileSizeToDstURL(rsr.archiveFile.fileSize);
       schedReq.diskFileInfo = rsr.archiveFile.diskFileInfo;
       // dsrr.errorReportURL:  We leave this bank as the reporting will be done to the repack request,
       // stored in the repack info.

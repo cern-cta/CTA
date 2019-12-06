@@ -19,6 +19,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta {
 namespace common {
@@ -57,6 +58,11 @@ std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj) {
      << " diskFileInfo=" << obj.diskFileInfo
      << " creationLog=" << obj.creationLog <<")";
   return os;
+}
+
+
+void RetrieveRequest::appendFileSizeToDstURL(const uint64_t fileSize) {
+  cta::utils::appendParameterXRootFileURL(dstURL,"oss.asize",std::to_string(fileSize));
 }
 
 } // namespace dataStructures

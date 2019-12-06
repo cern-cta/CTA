@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <vector>
 
+#include "Regex.hpp"
+
 namespace cta {
 namespace utils {
 
@@ -422,6 +424,17 @@ namespace utils {
    * Here, the CPU will interrupt the process with a memory protection error.
    */
   void segfault(void);
+  
+  /**
+   * Idempotently append the XRootD parameter to the fileURL
+   * If the fileURL is not an XRootD path (does not start with root://), 
+   * the fileURL will not be changed.
+   * If the fileURL already has this parameter, it will not be changed.
+   * @param fileURL [input, output]
+   * @param parameterName [input]
+   * @param value [input]
+   */
+  void appendParameterXRootFileURL(std::string &fileURL, const std::string &parameterName, const std::string &value);
 
 } // namespace utils
 

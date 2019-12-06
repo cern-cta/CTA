@@ -44,6 +44,13 @@ struct RetrieveRequest {
   bool operator==(const RetrieveRequest &rhs) const;
 
   bool operator!=(const RetrieveRequest &rhs) const;
+  
+  /**
+  * Idempotently append the fileSize to the dstURL
+  * The fileSize will be append only if the dstURL is an XRootD one
+  * @param fileSize the file size to append
+  */
+  void appendFileSizeToDstURL(const uint64_t fileSize);
 
   RequesterIdentity requester;
   uint64_t archiveFileID;

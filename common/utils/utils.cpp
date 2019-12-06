@@ -940,5 +940,25 @@ void segfault() {
   *((int *)nullptr) = 0;
 }
 
+//------------------------------------------------------------------------------
+// appendParameterXRootFileURL
+//------------------------------------------------------------------------------
+void appendParameterXRootFileURL(std::string &fileURL, const std::string &parameterName, const std::string &value){
+  cta::utils::Regex regexXrootFile("^(root://.*)$");
+  if(regexXrootFile.exec(fileURL).size()){
+    std::string parameterToAppend = parameterName+"="+value;
+    if(fileURL.find("?") == std::string::npos){
+      //No parameter at the end of the XRootd fileURL
+      fileURL.append("?"+parameterToAppend);
+      return;
+    }
+    //There are parameters in the fileURL, check if the parameter is 
+    //there or not
+    if(fileURL.find("&"+parameterName) == std::string::npos){
+      fileURL.append("&"+parameterToAppend);
+    }
+  }
+}
+
 } // namespace utils
 } // namespace cta
