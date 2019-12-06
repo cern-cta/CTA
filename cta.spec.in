@@ -175,7 +175,7 @@ The xroot plugin
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-base = %{version}-%{release}
 %description -n cta-cli
 CERN Tape Archive:
 The xroot plugin
@@ -208,6 +208,7 @@ Requires: postgresql-libs
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: protobuf3
 Requires: zeromq
+Requires: cta-lib-base = %{version}-%{release}
 %description -n cta-lib
 CERN Tape Archive:
 The shared libraries
