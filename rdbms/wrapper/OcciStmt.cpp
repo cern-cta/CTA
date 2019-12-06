@@ -88,35 +88,11 @@ void OcciStmt::close() {
 }
 
 //------------------------------------------------------------------------------
-// bindUint8
-//------------------------------------------------------------------------------
-void OcciStmt::bindUint8(const std::string &paramName, const uint8_t paramValue) {
-  try {
-    bindOptionalUint8(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
 // bindOptionalUint8
 //------------------------------------------------------------------------------
 void OcciStmt::bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
   try {
     return bindOptionalInteger<uint8_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindUint16
-//------------------------------------------------------------------------------
-void OcciStmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {
-  try {
-    bindOptionalUint16(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -136,35 +112,11 @@ void OcciStmt::bindOptionalUint16(const std::string &paramName, const optional<u
 }
 
 //------------------------------------------------------------------------------
-// bindUint32
-//------------------------------------------------------------------------------
-void OcciStmt::bindUint32(const std::string &paramName, const uint32_t paramValue) {
-  try {
-    bindOptionalUint32(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
 // bindOptionalUint32
 //------------------------------------------------------------------------------
 void OcciStmt::bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
   try {
     return bindOptionalInteger<uint32_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindUint64
-//------------------------------------------------------------------------------
-void OcciStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
-  try {
-    bindOptionalUint64(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -191,17 +143,6 @@ void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramVa
 }
 
 //------------------------------------------------------------------------------
-// bindDouble
-//------------------------------------------------------------------------------
-void OcciStmt::bindDouble(const std::string &paramName, const double paramValue) {
-  try {
-    bindOptionalDouble(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // bindOptionalDouble
 //------------------------------------------------------------------------------
 void OcciStmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
@@ -219,17 +160,6 @@ void OcciStmt::bindOptionalDouble(const std::string &paramName, const optional<d
   } catch(std::exception &se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
       getSqlForException() + ": " + se.what());
-  }
-}
-
-//------------------------------------------------------------------------------
-// bind
-//------------------------------------------------------------------------------
-void OcciStmt::bindString(const std::string &paramName, const std::string &paramValue) {
-  try {
-    bindOptionalString(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

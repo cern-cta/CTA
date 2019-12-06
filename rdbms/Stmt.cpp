@@ -121,11 +121,7 @@ uint32_t Stmt::getParamIdx(const std::string &paramName) const {
 //-----------------------------------------------------------------------------
 void Stmt::bindUint8(const std::string &paramName, const uint8_t paramValue) {
   try {
-    if(nullptr != m_stmt) {
-      return m_stmt->bindUint8(paramName, paramValue);
-    } else {
-      throw exception::Exception("Stmt does not contain a cached statement");
-    }
+    bindOptionalUint8(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -153,11 +149,7 @@ void Stmt::bindOptionalUint8(const std::string &paramName, const optional<uint8_
 //-----------------------------------------------------------------------------
 void Stmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {
   try {
-    if(nullptr != m_stmt) {
-      return m_stmt->bindUint16(paramName, paramValue);
-    } else {
-      throw exception::Exception("Stmt does not contain a cached statement");
-    }
+    bindOptionalUint16(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -185,11 +177,7 @@ void Stmt::bindOptionalUint16(const std::string &paramName, const optional<uint1
 //-----------------------------------------------------------------------------
 void Stmt::bindUint32(const std::string &paramName, const uint32_t paramValue) {
   try {
-    if(nullptr != m_stmt) {
-      return m_stmt->bindUint32(paramName, paramValue);
-    } else {
-      throw exception::Exception("Stmt does not contain a cached statement");
-    }
+    bindOptionalUint32(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -217,11 +205,7 @@ void Stmt::bindOptionalUint32(const std::string &paramName, const optional<uint3
 //-----------------------------------------------------------------------------
 void Stmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
   try {
-    if(nullptr != m_stmt) {
-      return m_stmt->bindUint64(paramName, paramValue);
-    } else {
-      throw exception::Exception("Stmt does not contain a cached statement");
-    }
+    bindOptionalUint64(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -249,11 +233,7 @@ void Stmt::bindOptionalUint64(const std::string &paramName, const optional<uint6
 //-----------------------------------------------------------------------------
 void Stmt::bindDouble(const std::string &paramName, const double paramValue) {
   try {
-    if(nullptr != m_stmt) {
-      return m_stmt->bindDouble(paramName, paramValue);
-    } else {
-      throw exception::Exception("Stmt does not contain a cached statement");
-    }
+    bindOptionalDouble(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -281,11 +261,7 @@ void Stmt::bindOptionalDouble(const std::string &paramName, const optional<doubl
 //-----------------------------------------------------------------------------
 void Stmt::bindBool(const std::string &paramName, const bool paramValue) {
   try {
-    if(nullptr != m_stmt) {
-      return m_stmt->bindBool(paramName, paramValue);
-    } else {
-      throw exception::Exception("Stmt does not contain a cached statement");
-    }
+    bindOptionalBool(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -329,11 +305,7 @@ void Stmt::bindBlob(const std::string &paramName, const std::string &paramValue)
 //-----------------------------------------------------------------------------
 void Stmt::bindString(const std::string &paramName, const std::string &paramValue) {
   try {
-    if(nullptr != m_stmt) {
-      return m_stmt->bindString(paramName, paramValue);
-    } else {
-      throw exception::Exception("Stmt does not contain a cached statement");
-    }
+    bindOptionalString(paramName, paramValue);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;

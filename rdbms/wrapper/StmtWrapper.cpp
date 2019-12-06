@@ -59,13 +59,6 @@ std::string StmtWrapper::getSqlForException(const std::string::size_type maxSqlL
 }
 
 //------------------------------------------------------------------------------
-// bindBool
-//------------------------------------------------------------------------------
-void StmtWrapper::bindBool(const std::string &paramName, const bool paramValue) {
-  bindOptionalBool(paramName, paramValue);
-}
-
-//------------------------------------------------------------------------------
 // bindOptionalBool
 //------------------------------------------------------------------------------
 void StmtWrapper::bindOptionalBool(const std::string &paramName, const optional<bool> &paramValue) {

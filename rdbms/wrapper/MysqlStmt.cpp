@@ -171,18 +171,6 @@ MYSQL_STMT *MysqlStmt::get() const {
 }
 
 //------------------------------------------------------------------------------
-// bindUint8
-//------------------------------------------------------------------------------
-void MysqlStmt::bindUint8(const std::string &paramName, const uint8_t paramValue) {
-  try {
-    bindOptionalUint8(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
 // bindOptionalUint8
 //------------------------------------------------------------------------------
 void MysqlStmt::bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
@@ -213,18 +201,6 @@ void MysqlStmt::bindOptionalUint8(const std::string &paramName, const optional<u
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
                                getSqlForException() + ": " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindUint16
-//------------------------------------------------------------------------------
-void MysqlStmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {
-  try {
-    bindOptionalUint16(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
   }
 }
 
@@ -263,18 +239,6 @@ void MysqlStmt::bindOptionalUint16(const std::string &paramName, const optional<
 }
 
 //------------------------------------------------------------------------------
-// bindUint32
-//------------------------------------------------------------------------------
-void MysqlStmt::bindUint32(const std::string &paramName, const uint32_t paramValue) {
-  try {
-    bindOptionalUint32(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
 // bindOptionalUint32
 //------------------------------------------------------------------------------
 void MysqlStmt::bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
@@ -305,18 +269,6 @@ void MysqlStmt::bindOptionalUint32(const std::string &paramName, const optional<
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
       getSqlForException() + ": " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindUint64
-//------------------------------------------------------------------------------
-void MysqlStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
-  try {
-    bindOptionalUint64(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
   }
 }
 
@@ -355,17 +307,6 @@ void MysqlStmt::bindOptionalUint64(const std::string &paramName, const optional<
 }
 
 //------------------------------------------------------------------------------
-// bindDouble
-//------------------------------------------------------------------------------
-void MysqlStmt::bindDouble(const std::string &paramName, const double paramValue) {
-  try {
-    bindOptionalDouble(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // bindOptionalDouble
 //------------------------------------------------------------------------------
 void MysqlStmt::bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) {
@@ -400,17 +341,6 @@ void MysqlStmt::bindOptionalDouble(const std::string &paramName, const optional<
 }
 
 void MysqlStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
-  try {
-    bindOptionalString(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindString
-//------------------------------------------------------------------------------
-void MysqlStmt::bindString(const std::string &paramName, const std::string &paramValue) {
   try {
     bindOptionalString(paramName, paramValue);
   } catch(exception::Exception &ex) {

@@ -215,7 +215,7 @@ std::map<std::string, std::string> PostgresConn::getColumns(const std::string &t
         "TABLE_NAME = :TABLE_NAME";
 
     auto stmt = createStmt(sql);
-    stmt->bindString(":TABLE_NAME", lowercaseTableName);
+    stmt->bindOptionalString(":TABLE_NAME", lowercaseTableName);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("COLUMN_NAME");

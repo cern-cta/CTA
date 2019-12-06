@@ -154,78 +154,11 @@ void PostgresStmt::bindOptionalUint64(const std::string &paramName, const option
   }
 }
 
+//------------------------------------------------------------------------------
+// bindBlob
+//------------------------------------------------------------------------------
 void PostgresStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
   throw exception::Exception("PostgresStmt::bindBlob not implemented.");
-}
-
-//------------------------------------------------------------------------------
-// bindString
-//------------------------------------------------------------------------------
-void PostgresStmt::bindString(const std::string &paramName, const std::string &paramValue) {
-  try {
-    bindOptionalString(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindUint8
-//------------------------------------------------------------------------------
-void PostgresStmt::bindUint8(const std::string &paramName, const uint8_t paramValue) {
-  try {
-    bindOptionalUint8(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindUint16
-//------------------------------------------------------------------------------
-void PostgresStmt::bindUint16(const std::string &paramName, const uint16_t paramValue) {
-  try {
-    bindOptionalUint16(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindUint32
-//------------------------------------------------------------------------------
-void PostgresStmt::bindUint32(const std::string &paramName, const uint32_t paramValue) {
-  try {
-    bindOptionalUint32(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindUint64
-//------------------------------------------------------------------------------
-void PostgresStmt::bindUint64(const std::string &paramName, const uint64_t paramValue) {
-  try {
-    bindOptionalUint64(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// bindDouble
-//------------------------------------------------------------------------------
-void PostgresStmt::bindDouble(const std::string &paramName, const double paramValue) {
-  try {
-    bindOptionalDouble(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
 }
 
 //------------------------------------------------------------------------------

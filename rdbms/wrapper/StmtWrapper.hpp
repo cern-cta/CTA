@@ -101,23 +101,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint8(const std::string &paramName, const uint8_t paramValue) = 0;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
   virtual void bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) = 0;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
-  virtual void bindUint16(const std::string &paramName, const uint16_t paramValue) = 0;
 
   /**
    * Binds an SQL parameter.
@@ -133,23 +117,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint32(const std::string &paramName, const uint32_t paramValue) = 0;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
   virtual void bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) = 0;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
-  virtual void bindUint64(const std::string &paramName, const uint64_t paramValue) = 0;
 
   /**
    * Binds an SQL parameter.
@@ -165,23 +133,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindDouble(const std::string &paramName, const double paramValue) = 0;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
   virtual void bindOptionalDouble(const std::string &paramName, const optional<double> &paramValue) = 0;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
-  void bindBool(const std::string &paramName, const bool paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -199,19 +151,7 @@ public:
    */ 
   virtual void bindBlob(const std::string &paramName, const std::string &paramValue) = 0;
 
-  /** 
-   * Binds an SQL parameter of type string.
-   *
-   * Please note that this method will throw an exception if the string
-   * parameter is empty.  If a null value is to be bound then the
-   * bindOptionalString() method should be used.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */ 
-  virtual void bindString(const std::string &paramName, const std::string &paramValue) = 0;
-
-  /** 
+  /**
    * Binds an SQL parameter of type optional-string.
    *
    * Please note that this method will throw an exception if the optional string

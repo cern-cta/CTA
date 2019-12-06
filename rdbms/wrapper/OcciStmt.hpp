@@ -87,23 +87,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint8(const std::string &paramName, const uint8_t paramValue) override;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
   void bindOptionalUint8(const std::string &paramName, const optional<uint8_t> &paramValue) override;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
-  void bindUint16(const std::string &paramName, const uint16_t paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -119,14 +103,6 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint32(const std::string &paramName, const uint32_t paramValue) override;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
   void bindOptionalUint32(const std::string &paramName, const optional<uint32_t> &paramValue) override;
 
   /**
@@ -135,23 +111,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint64(const std::string &paramName, const uint64_t paramValue) override;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
   void bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) override;
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
-  void bindDouble(const std::string &paramName, const double paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -168,18 +128,6 @@ public:
    * @param paramValue The value to be bound.
    */ 
   void bindBlob(const std::string &paramName, const std::string &paramValue) override;
-
-  /** 
-   * Binds an SQL parameter of type string.
-   *
-   * Please note that this method will throw an exception if the string
-   * parameter is empty.  If a null value is to be bound then the
-   * bindOptionalString() method should be used.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */ 
-  void bindString(const std::string &paramName, const std::string &paramValue) override;
 
   /** 
    * Binds an SQL parameter of type optional-string.

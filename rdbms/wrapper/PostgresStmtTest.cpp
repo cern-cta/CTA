@@ -250,9 +250,9 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_bind) {
         ":COL2,"
         ":COL3);";
     auto stmt = m_conn->createStmt(sql);
-    stmt->bindString(":COL1", "one");
-    stmt->bindString(":COL2", "two");
-    stmt->bindUint64(":COL3", 3);
+    stmt->bindOptionalString(":COL1", std::string("one"));
+    stmt->bindOptionalString(":COL2", std::string("two"));
+    stmt->bindOptionalUint64(":COL3", 3);
     stmt->executeNonQuery();
   }
 
@@ -402,7 +402,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeNonQuery_insert_viola
       "VALUES("
         ":COL1);";
     auto stmt = conn.createStmt(sql);
-    stmt->bindUint64(":COL1", 1);
+    stmt->bindOptionalUint64(":COL1", 1);
     stmt->executeNonQuery();
   }
 
@@ -414,7 +414,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeNonQuery_insert_viola
       "VALUES("
         ":COL1);";
     auto stmt = conn.createStmt(sql);
-    stmt->bindUint64(":COL1", 1);
+    stmt->bindOptionalUint64(":COL1", 1);
     ASSERT_THROW(stmt->executeNonQuery(), exception::Exception);
   }
 }
@@ -445,7 +445,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeQuery_insert_violatin
       "VALUES("
         ":COL1);";
     auto stmt = m_conn->createStmt(sql);
-    stmt->bindUint64(":COL1", 1);
+    stmt->bindOptionalUint64(":COL1", 1);
     stmt->executeNonQuery();
   }
 
@@ -457,7 +457,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeQuery_insert_violatin
       "VALUES("
         ":COL1);";
     auto stmt = m_conn->createStmt(sql);
-    stmt->bindUint64(":COL1", 1);
+    stmt->bindOptionalUint64(":COL1", 1);
     auto rset = stmt->executeQuery();
     ASSERT_THROW(rset->next(), exception::Exception);
   }
@@ -489,7 +489,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_large_uint64) {
       "VALUES("
         ":COL1);";
     auto stmt = m_conn->createStmt(sql);
-    stmt->bindUint64(":COL1", val);
+    stmt->bindOptionalUint64(":COL1", val);
 
     stmt->executeNonQuery();
   }
@@ -664,8 +664,8 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, nbaffected) {
       "UPDATE TEST SET COL1=:NEWVAL WHERE COL1=:OLDVAL";
 
     auto stmt = m_conn->createStmt(sql);
-    stmt->bindString(":NEWVAL", "val3");
-    stmt->bindString(":OLDVAL", "val1");
+    stmt->bindOptionalString(":NEWVAL", std::string("val3"));
+    stmt->bindOptionalString(":OLDVAL", std::string("val1"));
     stmt->executeNonQuery();
     ASSERT_EQ(2, stmt->getNbAffectedRows());
   }

@@ -219,7 +219,7 @@ std::map<std::string, std::string> MysqlConn::getColumns(const std::string &tabl
         "TABLE_NAME = :TABLE_NAME";
 
     auto stmt = createStmt(sql);
-    stmt->bindString(":TABLE_NAME", tableName);
+    stmt->bindOptionalString(":TABLE_NAME", tableName);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("COLUMN_NAME");
