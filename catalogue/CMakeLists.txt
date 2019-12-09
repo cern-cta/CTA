@@ -109,7 +109,6 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     | sed 's/UINT16TYPE/INTEGER/g'
     | sed 's/UINT32TYPE/INTEGER/g'
     | sed 's/UINT64TYPE/INTEGER/g'
-    | sed 's/NUMERIC\([^\)]*\)/INTEGER/g'
     | sed 's/CHECKSUM_BLOB_TYPE/BLOB\(200\)/g'
     > sqlite_catalogue_schema.sql
   COMMAND cat 
@@ -121,7 +120,6 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     | sed 's/UINT16TYPE/SMALLINT UNSIGNED/g'
     | sed 's/UINT32TYPE/INT UNSIGNED/g'
     | sed 's/UINT64TYPE/BIGINT UNSIGNED/g'
-    | sed 's/NUMERIC\([^\)]*\)/BIGINT UNSIGNED/g'
     | sed 's/CHECKSUM_BLOB_TYPE/VARBINARY\(200\)/g'
     > mysql_catalogue_schema.sql
   COMMAND cat
