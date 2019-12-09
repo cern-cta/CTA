@@ -67,8 +67,8 @@ roundTripRepack() {
   if [ "$VID_TO_REPACK" != "null" ] 
   then
   echo
-    echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack || exit 1
+    echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK} (with backpressure)"
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack -p || exit 1
   else
     echo "No vid found to repack"
     exit 1

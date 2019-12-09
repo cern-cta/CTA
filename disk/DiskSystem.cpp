@@ -128,23 +128,19 @@ uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpace(const std::string& instanceA
     auto res = defaultSpaceRe.exec(spStdoutLine);
     if (res.size()) {
       defaultSpaceLine = res.at(0);
-      goto defaultFound;
+      goto spaceNameFound;
     }
   } while (!spStdoutIss.eof());
   throw cta::disk::FetchEosFreeSpaceException("In DiskSystemFreeSpaceList::fetchEosFreeSpace(): could not find the \""+spaceName+"\" in the eos space ls -m result.");
   
-defaultFound:
+spaceNameFound:
   // Look for the parameters in the result line.
-  utils::Regex rwSpaceRegex("sum.stat.statfs.capacity\\?configstatus@rw=([0-9]+) ");
+  utils::Regex rwSpaceRegex("sum.stat.statfs.freebytes\\?configstatus@rw=([0-9]+) ");
   auto rwSpaceRes = rwSpaceRegex.exec(defaultSpaceLine);
   if (rwSpaceRes.empty())
     throw cta::disk::FetchEosFreeSpaceException(
         "In DiskSystemFreeSpaceList::fetchEosFreeSpace(): failed to parse parameter sum.stat.statfs.capacity?configstatus@rw.");
-  utils::Regex usedSpaceRegex("sum.stat.statfs.usedbytes=([0-9]+) ");
-  auto usedSpaceRes = usedSpaceRegex.exec(sp.stdout());
-  if (usedSpaceRes.empty())
-    throw cta::disk::FetchEosFreeSpaceException("In DiskSystemFreeSpaceList::fetchEosFreeSpace(): failed to parse parameter sum.stat.statfs.usedbytes.");
-  return utils::toUint64(rwSpaceRes.at(1)) - utils::toUint64(usedSpaceRes.at(1));
+  return utils::toUint64(rwSpaceRes.at(1));
 }
 
 //------------------------------------------------------------------------------
