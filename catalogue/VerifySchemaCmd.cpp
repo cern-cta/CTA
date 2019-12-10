@@ -23,12 +23,14 @@
 #include "catalogue/PostgresCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
+#include "catalogue/SQLiteSchemaInserter.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "rdbms/Login.hpp"
 #include "rdbms/AutocommitMode.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "Catalogue.hpp"
+#include "SchemaComparer.hpp"
+#include "SQLiteSchemaComparer.hpp"
 
 #include <algorithm>
 #include <map>
@@ -60,7 +62,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 0;
   }
 
-  const auto login = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
+  auto login = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   const uint64_t maxNbConns = 1;
   rdbms::ConnPool connPool(login, maxNbConns);
   auto conn = connPool.getConn();;
@@ -71,8 +73,16 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     std::cerr << "Cannot verify the database schema because the CTA_CATALOGUE table does not exists" << std::endl;
     return 1;
   }
-    
-  std::unique_ptr<CatalogueSchema> schema;
+  
+  log::DummyLogger dummyLog("dummy", "dummy");
+  const auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, login, maxNbConns, maxNbConns);
+  auto catalogue = catalogueFactory->create();
+  
+  std::unique_ptr<cta::catalogue::SchemaComparer> schemaComparer;
+  schemaComparer.reset(new cta::catalogue::SQLiteSchemaComparer(conn,login,*catalogue));
+  schemaComparer->compare();
+  
+  /*std::unique_ptr<CatalogueSchema> schema;
   switch(login.dbType) {
   case rdbms::Login::DBTYPE_IN_MEMORY:
   case rdbms::Login::DBTYPE_SQLITE:
@@ -96,7 +106,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       throw ex;
     }
   }
-
+ 
   if (nullptr == schema) {
     exception::Exception ex;
     ex.getMessage() << "The catalogue schema uninitialized";
@@ -135,7 +145,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       verifySequencesStatus == VerifyStatus::ERROR || 
       verifyColumnsStatus   == VerifyStatus::ERROR ) {
     return 1;
-  }
+  }*/
   return 0;
 }
 

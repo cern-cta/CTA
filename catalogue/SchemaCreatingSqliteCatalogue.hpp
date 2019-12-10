@@ -28,7 +28,10 @@ class CatalogueFactory;
 /**
  * Asbtract CTA catalogue class to be used for unit testing.
  */
+class SQLiteSchemaInserter;
+
 class SchemaCreatingSqliteCatalogue: public SqliteCatalogue {
+  friend class SQLiteSchemaInserter;
 public:
 
   /**
@@ -47,7 +50,8 @@ public:
     log::Logger &log,
     const std::string &filename,
     const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+    const uint64_t nbArchiveFileListingConns,
+    const bool createSchema = true);
 
   /**
    * Destructor.

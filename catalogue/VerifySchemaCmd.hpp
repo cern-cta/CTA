@@ -21,6 +21,7 @@
 #include "catalogue/CmdLineTool.hpp"
 #include "catalogue/CatalogueSchema.hpp"
 #include "rdbms/Conn.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta {
 namespace catalogue {

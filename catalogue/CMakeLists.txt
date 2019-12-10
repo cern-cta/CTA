@@ -285,6 +285,10 @@ install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
 
 add_executable(cta-catalogue-schema-verify
+  SQLiteSchemaInserter.cpp
+  SchemaComparer.cpp
+  SQLiteSchemaComparer.cpp
+  DbToSQLiteStatementTransformer.cpp
   VerifySchemaCmd.cpp
   VerifySchemaCmdLineArgs.cpp
   VerifySchemaCmdMain.cpp
