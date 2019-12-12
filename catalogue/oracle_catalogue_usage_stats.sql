@@ -24,15 +24,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
--- This table will be used to safely store the legacy CASTOR usage statistics
-CREATE TABLE CastorUsageStats (
-  gid NUMBER(6) DEFAULT 0 CONSTRAINT NN_CastorUsageStats_gid NOT NULL,
-  timestamp NUMBER  DEFAULT 0 CONSTRAINT NN_CastorUsageStats_ts NOT NULL,
-  maxFileId INTEGER, fileCount INTEGER, fileSize INTEGER,
-  segCount INTEGER, segSize INTEGER, segCompressedSize INTEGER,
-  seg2Count INTEGER, seg2Size INTEGER, seg2CompressedSize INTEGER
-);
-
 /* Get current time as a time_t (Unix time) */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
   epoch            TIMESTAMP WITH TIME ZONE;
