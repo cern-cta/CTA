@@ -63,7 +63,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   }
 
   auto login = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
-  const uint64_t maxNbConns = 10;
+  const uint64_t maxNbConns = 1;
   rdbms::ConnPool connPool(login, maxNbConns);
   auto conn = connPool.getConn();
   
@@ -74,22 +74,13 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 1;
   }
   
-  log::DummyLogger dummyLog("dummy", "dummy");
-  const auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, login, maxNbConns, maxNbConns);
-  auto catalogue = catalogueFactory->create();
-  
-  //Get the version of the catalogue
-  std::map<std::string, uint64_t> schemaVersion = catalogue->getSchemaVersion();
-  uint64_t schemaVersionMajor = schemaVersion.at("SCHEMA_VERSION_MAJOR");
-  uint64_t schemaVersionMinor = schemaVersion.at("SCHEMA_VERSION_MINOR");
-  std::string schemaVersionStr = std::to_string(schemaVersionMajor)+"."+std::to_string(schemaVersionMinor);
-  
   std::unique_ptr<cta::catalogue::SchemaComparer> schemaComparer;
-  schemaComparer.reset(new cta::catalogue::SQLiteSchemaComparer(login.dbType,schemaVersionStr,connPool));
+  schemaComparer.reset(new cta::catalogue::SQLiteSchemaComparer(login.dbType,conn));
   cta::catalogue::SchemaComparerResult res = schemaComparer->compare();
   std::cout << "Schema version : " << schemaComparer->getCatalogueVersion() << std::endl;
   std::cout << "Status of the checking : " << cta::catalogue::SchemaComparerResult::StatusToString(res.getStatus()) << std::endl;
   res.printDiffs();
+  schemaComparer.release();
   /*std::unique_ptr<CatalogueSchema> schema;
   switch(login.dbType) {
   case rdbms::Login::DBTYPE_IN_MEMORY:
@@ -122,9 +113,9 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   }
   
   std::cerr << "Checking schema version..." << std::endl;
-  //log::DummyLogger dummyLog("dummy", "dummy");
-  //const auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, login, maxNbConns, maxNbConns);
-  //const auto catalogue = catalogueFactory->create();  
+  log::DummyLogger dummyLog("dummy", "dummy");
+  const auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, login, maxNbConns, maxNbConns);
+  const auto catalogue = catalogueFactory->create();  
   const auto schemaDbVersion = catalogue->getSchemaVersion();
   const auto schemaVersion = schema->getSchemaVersion(); 
   const VerifyStatus verifySchemaStatus = verifySchemaVersion(schemaVersion, schemaDbVersion);

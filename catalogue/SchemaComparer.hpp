@@ -33,15 +33,16 @@ namespace catalogue {
 
 class SchemaComparer {
 public:
-  SchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType,const std::string &schemaVersion,cta::rdbms::ConnPool &connPool);
+  SchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType,cta::rdbms::Conn &conn);
   virtual ~SchemaComparer();
   virtual SchemaComparerResult compare() = 0;
   std::string getCatalogueVersion();
 protected:
   const cta::rdbms::Login::DbType &m_dbType;
-  const std::string &m_schemaVersion;
-  cta::rdbms::ConnPool &m_catalogueConnPool;
+  std::string m_catalogueSchemaVersion;
+  cta::rdbms::Conn &m_catalogueConn;
   std::unique_ptr<cta::catalogue::CatalogueMetadataGetter> m_catalogueMetadataGetter;
+  
 private:
   virtual SchemaComparerResult compareTables() = 0;
   virtual SchemaComparerResult compareIndexes() = 0;

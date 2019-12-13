@@ -25,7 +25,7 @@ namespace catalogue {
   
   class SQLiteSchemaInserter {
   public:
-    SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &catalogueDbType, const std::string &allVersionsSchemaDirectory,rdbms::ConnPool &sqliteConnPool);
+    SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &catalogueDbType, const std::string &allVersionsSchemaDirectory,rdbms::Conn &sqliteConn);
     void insert();    
     virtual ~SQLiteSchemaInserter();
   private:
@@ -34,7 +34,7 @@ namespace catalogue {
     std::string m_schemaVersion;
     cta::rdbms::Login::DbType m_dbType;
     std::string m_allVersionSchemaDirectory;
-    cta::rdbms::ConnPool & m_sqliteCatalogueConnPool;
+    cta::rdbms::Conn & m_sqliteCatalogueConn;
     std::string readSchemaFromFile();
     std::list<std::string> getAllStatementsFromSchema(const std::string &schema);
     std::string getDatabaseType();

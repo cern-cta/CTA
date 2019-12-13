@@ -27,7 +27,7 @@
 namespace cta {
 namespace catalogue {
   
-SQLiteSchemaInserter::SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &catalogueDbType, const std::string &allVersionsSchemaDirectory,rdbms::ConnPool &sqliteConnPool):m_schemaVersion(schemaVersion),m_dbType(catalogueDbType),m_allVersionSchemaDirectory(allVersionsSchemaDirectory), m_sqliteCatalogueConnPool(sqliteConnPool){}
+SQLiteSchemaInserter::SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &catalogueDbType, const std::string &allVersionsSchemaDirectory,rdbms::Conn &sqliteConn):m_schemaVersion(schemaVersion),m_dbType(catalogueDbType),m_allVersionSchemaDirectory(allVersionsSchemaDirectory), m_sqliteCatalogueConn(sqliteConn){}
 
 SQLiteSchemaInserter::~SQLiteSchemaInserter() {}
 
@@ -43,9 +43,8 @@ void SQLiteSchemaInserter::insert() {
 }
 
 void SQLiteSchemaInserter::executeStatements(const std::list<std::string> & stmts){
-  rdbms::Conn conn = m_sqliteCatalogueConnPool.getConn();
   for(auto& sqliteStatement: stmts){
-    auto stmt = conn.createStmt(sqliteStatement);
+    auto stmt = m_sqliteCatalogueConn.createStmt(sqliteStatement);
     stmt.executeNonQuery();
   }
 }

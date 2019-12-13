@@ -21,45 +21,72 @@
 namespace cta {
 namespace catalogue {
 
-CatalogueMetadataGetter::CatalogueMetadataGetter(cta::rdbms::ConnPool & connPool):m_connPool(connPool){}
+CatalogueMetadataGetter::CatalogueMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
+
+std::string CatalogueMetadataGetter::getCatalogueVersion(){
+  std::string schemaVersion;
+  const char *const sql =
+    "SELECT "
+      "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
+      "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR "
+    "FROM "
+      "CTA_CATALOGUE";
+
+  auto stmt = m_conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+
+  if(rset.next()) {
+    schemaVersion += std::to_string(rset.columnUint64("SCHEMA_VERSION_MAJOR"));
+    schemaVersion += ".";
+    schemaVersion += std::to_string(rset.columnUint64("SCHEMA_VERSION_MINOR"));
+    return schemaVersion;
+  } else {
+    throw exception::Exception("SCHEMA_VERSION_MAJOR,SCHEMA_VERSION_MINOR not found in the CTA_CATALOGUE");
+  }
+}
 
 CatalogueMetadataGetter::~CatalogueMetadataGetter() {}
 
-SQLiteCatalogueMetadataGetter::SQLiteCatalogueMetadataGetter(cta::rdbms::ConnPool & connPool):CatalogueMetadataGetter(connPool){}
+SQLiteCatalogueMetadataGetter::SQLiteCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
 SQLiteCatalogueMetadataGetter::~SQLiteCatalogueMetadataGetter(){}
 
 std::list<std::string> SQLiteCatalogueMetadataGetter::getIndexNames() {
-  rdbms::Conn connection = m_connPool.getConn();
-  std::list<std::string> indexNames = connection.getIndexNames();
-  connection.closeUnderlyingStmtsAndConn();
+  std::list<std::string> indexNames = m_conn.getIndexNames();
   indexNames.remove_if([](std::string& indexName){
     return ((indexName.find("sqlite_autoindex") != std::string::npos)); 
   });
   return indexNames;
 }
 
-OracleCatalogueMetadataGetter::OracleCatalogueMetadataGetter(cta::rdbms::ConnPool & connPool):CatalogueMetadataGetter(connPool){}
+std::list<std::string> SQLiteCatalogueMetadataGetter::getTableNames(){
+  return std::list<std::string>();
+}
+
+OracleCatalogueMetadataGetter::OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
 OracleCatalogueMetadataGetter::~OracleCatalogueMetadataGetter(){}
 
 std::list<std::string> OracleCatalogueMetadataGetter::getIndexNames() {
-  rdbms::Conn connection = m_connPool.getConn();
-  std::list<std::string> indexNames = connection.getIndexNames();
-  connection.closeUnderlyingStmtsAndConn();
+  std::list<std::string> indexNames = m_conn.getIndexNames();
   indexNames.remove_if([](std::string& indexName){
     return ((indexName.find("_UN") != std::string::npos) || (indexName.find("PK") != std::string::npos) || (indexName.find("_LLN") != std::string::npos)); 
   });
   return indexNames;
 }
 
+std::list<std::string> OracleCatalogueMetadataGetter::getTableNames() {
+  return std::list<std::string>();
+}
 
-CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::ConnPool & connPool) {
+
+
+CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {
   typedef rdbms::Login::DbType DbType;
   switch(dbType){
     case DbType::DBTYPE_IN_MEMORY:
     case DbType::DBTYPE_SQLITE:
-      return new SQLiteCatalogueMetadataGetter(connPool);
+      return new SQLiteCatalogueMetadataGetter(conn);
     case DbType::DBTYPE_ORACLE:
-      return new OracleCatalogueMetadataGetter(connPool);
+      return new OracleCatalogueMetadataGetter(conn);
     default:
       return nullptr;
   }

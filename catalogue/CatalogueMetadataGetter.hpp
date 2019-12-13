@@ -29,30 +29,34 @@ namespace catalogue {
 class CatalogueMetadataGetter {
 public:
   protected:
-    rdbms::ConnPool& m_connPool;
+    rdbms::Conn& m_conn;
   public:
-    CatalogueMetadataGetter(cta::rdbms::ConnPool & connPool);
+    CatalogueMetadataGetter(cta::rdbms::Conn & conn);
     virtual ~CatalogueMetadataGetter();
+    std::string getCatalogueVersion();
     virtual std::list<std::string> getIndexNames() = 0;
+    virtual std::list<std::string> getTableNames() = 0;
 };
 
 class SQLiteCatalogueMetadataGetter: public CatalogueMetadataGetter{
 public:
-  SQLiteCatalogueMetadataGetter(cta::rdbms::ConnPool & connPool);
+  SQLiteCatalogueMetadataGetter(cta::rdbms::Conn & conn);
   virtual ~SQLiteCatalogueMetadataGetter();
   std::list<std::string> getIndexNames() override;
+  std::list<std::string> getTableNames() override;
 };
 
 class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
   public:
-  OracleCatalogueMetadataGetter(cta::rdbms::ConnPool & connPool);
+  OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn);
   virtual ~OracleCatalogueMetadataGetter();
   std::list<std::string> getIndexNames() override;
+  std::list<std::string> getTableNames() override;
 };
 
 class CatalogueMetadataGetterFactory {
 public:
-  static CatalogueMetadataGetter* create(const rdbms::Login::DbType dbType, cta::rdbms::ConnPool & connPool);
+  static CatalogueMetadataGetter* create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn);
 };
 
 }}

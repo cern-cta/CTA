@@ -26,12 +26,13 @@
 
 namespace cta {
 namespace catalogue {
-SchemaComparer::SchemaComparer(const cta::rdbms::Login::DbType &dbType, const std::string &schemaVersion,rdbms::ConnPool &connPool): m_dbType(dbType),m_schemaVersion(schemaVersion),m_catalogueConnPool(connPool){
-  m_catalogueMetadataGetter.reset(CatalogueMetadataGetterFactory::create(dbType,m_catalogueConnPool));
+SchemaComparer::SchemaComparer(const cta::rdbms::Login::DbType &dbType, rdbms::Conn &conn): m_dbType(dbType),m_catalogueConn(conn){
+  m_catalogueMetadataGetter.reset(CatalogueMetadataGetterFactory::create(dbType,m_catalogueConn));
+  m_catalogueSchemaVersion = m_catalogueMetadataGetter->getCatalogueVersion();
 }
 
 std::string SchemaComparer::getCatalogueVersion(){
-  return m_schemaVersion;
+  return m_catalogueSchemaVersion;
 }
 
 SchemaComparer::~SchemaComparer() {

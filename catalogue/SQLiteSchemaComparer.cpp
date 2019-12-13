@@ -25,13 +25,13 @@
 namespace cta {
 namespace catalogue {
   
-SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, const std::string &schemaVersion, rdbms::ConnPool &catalogueConnPool): SchemaComparer(catalogueDbType,schemaVersion,catalogueConnPool) {
+SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn): SchemaComparer(catalogueDbType,catalogueConn) {
   log::DummyLogger dl("dummy","dummy");
-  
   auto login = rdbms::Login::parseString("in_memory");
-  m_sqliteConnPool.reset(new rdbms::ConnPool(login,1));
-  m_catalogueMetadataGetter.reset(CatalogueMetadataGetterFactory::create(catalogueDbType,catalogueConnPool));
-  m_sqliteSchemaMetadataGetter.reset(new SQLiteCatalogueMetadataGetter(*m_sqliteConnPool));
+  rdbms::ConnPool connPool(login,1);
+  rdbms::Conn conn = connPool.getConn();
+  m_sqliteConn = std::move(conn);
+  m_sqliteSchemaMetadataGetter.reset(new SQLiteCatalogueMetadataGetter(m_sqliteConn));
 }
 
 SQLiteSchemaComparer::~SQLiteSchemaComparer() {
@@ -41,15 +41,26 @@ SchemaComparerResult SQLiteSchemaComparer::compare(){
   SchemaComparerResult res;
   insertSchemaInSQLite();
   res += compareIndexes();
+  res += compareTables();
   return res;
 }
 
 SchemaComparerResult SQLiteSchemaComparer::compareTables(){
+  std::list<std::string> catalogueTables = m_catalogueMetadataGetter->getTableNames();
+  std::list<std::string> schemaTables = m_sqliteSchemaMetadataGetter->getTableNames();
+  std::cout<<"catalogue tables = "<<std::endl;
+  for(auto& catalogueTable: catalogueTables){
+    std::cout<<catalogueTable<<std::endl;
+  }
+  std::cout<<"schema tables = "<<std::endl;
+  for(auto& schemaTable: schemaTables){
+    std::cout<<schemaTable<<std::endl;
+  }
   return SchemaComparerResult();
 }
 
 void SQLiteSchemaComparer::insertSchemaInSQLite() {
-  cta::catalogue::SQLiteSchemaInserter schemaInserter(m_schemaVersion,m_dbType,"/home/cedric/CTA/catalogue/",*m_sqliteConnPool);
+  cta::catalogue::SQLiteSchemaInserter schemaInserter(m_catalogueSchemaVersion,m_dbType,"/home/cedric/CTA/catalogue/",m_sqliteConn);
   schemaInserter.insert();
 }
 

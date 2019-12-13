@@ -18,15 +18,13 @@
 #pragma once
 
 #include "SchemaComparer.hpp"
-#include "SchemaCreatingSqliteCatalogue.hpp"
-#include "InMemoryCatalogue.hpp"
 
 namespace cta {
 namespace catalogue {
   
 class SQLiteSchemaComparer: public SchemaComparer {
 public:
-  SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, const std::string &schemaVersion,rdbms::ConnPool &catalogueConnPool);
+  SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConnPool);
   SchemaComparerResult compare() override;
   virtual ~SQLiteSchemaComparer();
   
@@ -34,7 +32,7 @@ private:
   void insertSchemaInSQLite();
   SchemaComparerResult compareIndexes();
   SchemaComparerResult compareTables() override;
-  std::unique_ptr<rdbms::ConnPool> m_sqliteConnPool;
+  rdbms::Conn m_sqliteConn;
   std::unique_ptr<SQLiteCatalogueMetadataGetter> m_sqliteSchemaMetadataGetter;  
 };
 
