@@ -289,6 +289,8 @@ add_executable(cta-catalogue-schema-verify
   SchemaComparer.cpp
   SQLiteSchemaComparer.cpp
   DbToSQLiteStatementTransformer.cpp
+  SchemaComparerResult.cpp
+  CatalogueMetadataGetter.cpp
   VerifySchemaCmd.cpp
   VerifySchemaCmdLineArgs.cpp
   VerifySchemaCmdMain.cpp

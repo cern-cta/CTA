@@ -25,6 +25,7 @@
 
 namespace cta {
 namespace catalogue {
+  
 /**********************************/
 /* DbToSQLiteStatementTransformer */
 /**********************************/
@@ -38,14 +39,29 @@ std::string DbToSQLiteStatementTransformer::transform(){
   return m_statement;
 }
 
+/**********************************/
+/* DbToSQLiteStatementTransformer */
+/**********************************/
+
+/*****************************************************/
+/* CreateGlobalTempTableToSQLiteStatementTransformer */
+/*****************************************************/
+
 CreateGlobalTempTableToSQLiteStatementTransformer::CreateGlobalTempTableToSQLiteStatementTransformer(const std::string &statement):DbToSQLiteStatementTransformer(statement){}
 
 std::string CreateGlobalTempTableToSQLiteStatementTransformer::transform(){
   utils::searchAndReplace(m_statement,"GLOBAL TEMPORARY ","");
-  utils::searchAndReplace(m_statement,"ON COMMIT DELETE ROWS;",";");
+  utils::searchAndReplace(m_statement,"\nON COMMIT DELETE ROWS;",";");
   return m_statement;
 }
 
+/*****************************************************/
+/* CreateGlobalTempTableToSQLiteStatementTransformer */
+/*****************************************************/
+
+/**********************************/
+/* DeleteStatementTransformer     */
+/**********************************/
 
 DeleteStatementTransformer::DeleteStatementTransformer(const std::string& statement):DbToSQLiteStatementTransformer(statement){}
 
@@ -53,6 +69,13 @@ std::string DeleteStatementTransformer::transform(){
   return "";
 }
 
+/**********************************/
+/* DeleteStatementTransformer     */
+/**********************************/
+
+/*****************************************************/
+/* DbToSQLiteStatementTransformerFactory             */
+/*****************************************************/
 std::unique_ptr<DbToSQLiteStatementTransformer> DbToSQLiteStatementTransformerFactory::create(const std::string &statement){
   typedef DbToSQLiteStatementTransformerFactory::StatementType StatementType;
   StatementType stmtType = statementToStatementType(statement);
@@ -101,5 +124,9 @@ std::map<std::string,DbToSQLiteStatementTransformerFactory::StatementType> DbToS
   ret["INSERT INTO ([a-zA-Z_]+)"] = StatementType::SKIP;
   return ret;
 }
+
+/*****************************************************/
+/* DbToSQLiteStatementTransformerFactory             */
+/*****************************************************/
 
 }}

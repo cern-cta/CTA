@@ -24,22 +24,27 @@
 
 #pragma once
 
-#include "rdbms/Conn.hpp"
-#include "rdbms/Login.hpp"
-#include "catalogue/Catalogue.hpp"
+#include "rdbms/ConnPool.hpp"
+#include "SchemaComparerResult.hpp"
+#include "CatalogueMetadataGetter.hpp"
 
 namespace cta {
 namespace catalogue {
 
 class SchemaComparer {
 public:
-  SchemaComparer(cta::rdbms::Conn &connection, cta::rdbms::Login &login, cta::catalogue::Catalogue& catalogue);
+  SchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType,const std::string &schemaVersion,cta::rdbms::ConnPool &connPool);
   virtual ~SchemaComparer();
-  virtual void compare() = 0;
+  virtual SchemaComparerResult compare() = 0;
+  std::string getCatalogueVersion();
 protected:
-  cta::rdbms::Conn &m_conn;
-  cta::rdbms::Login &m_login;
-  cta::catalogue::Catalogue &m_catalogue;
+  const cta::rdbms::Login::DbType &m_dbType;
+  const std::string &m_schemaVersion;
+  cta::rdbms::ConnPool &m_catalogueConnPool;
+  std::unique_ptr<cta::catalogue::CatalogueMetadataGetter> m_catalogueMetadataGetter;
+private:
+  virtual SchemaComparerResult compareTables() = 0;
+  virtual SchemaComparerResult compareIndexes() = 0;
 };
 
 }}

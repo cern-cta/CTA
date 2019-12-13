@@ -30,13 +30,10 @@ SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(
   log::Logger &log,
   const std::string &filename,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const bool createSchema):
+  const uint64_t nbArchiveFileListingConns):
   SqliteCatalogue(log, filename, nbConns, nbArchiveFileListingConns) {
   try {
-    if(createSchema) {
-      createCatalogueSchema();
-    }
+    createCatalogueSchema();
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

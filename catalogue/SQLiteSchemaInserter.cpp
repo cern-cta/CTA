@@ -27,31 +27,27 @@
 namespace cta {
 namespace catalogue {
   
-SQLiteSchemaInserter::SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &dbType, const std::string &allVersionsSchemaDirectory,const std::string &sqliteFileName):m_schemaVersion(schemaVersion),m_dbType(dbType),m_allVersionSchemaDirectory(allVersionsSchemaDirectory),m_sqliteFileName(sqliteFileName) {
-  log::DummyLogger dl("dummy","dummy");
-  m_sqliteCatalogue = new SchemaCreatingSqliteCatalogue(dl,m_sqliteFileName,1,1,false);
-  m_conn = m_sqliteCatalogue->m_connPool.getConn();
-}
+SQLiteSchemaInserter::SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &catalogueDbType, const std::string &allVersionsSchemaDirectory,rdbms::ConnPool &sqliteConnPool):m_schemaVersion(schemaVersion),m_dbType(catalogueDbType),m_allVersionSchemaDirectory(allVersionsSchemaDirectory), m_sqliteCatalogueConnPool(sqliteConnPool){}
 
-SQLiteSchemaInserter::~SQLiteSchemaInserter() {
-  if(m_sqliteCatalogue != nullptr) {
-    delete m_sqliteCatalogue;
-  }
-  ::remove(m_sqliteFileName.c_str());
-}
-
+SQLiteSchemaInserter::~SQLiteSchemaInserter() {}
 
 void SQLiteSchemaInserter::insert() {
   std::list<std::string> statements = getAllStatementsFromSchema(readSchemaFromFile());
-  std::string transformedSchema;
+  std::list<std::string> sqliteStatements;
   for(auto& stmt: statements){
-    transformedSchema.append(DbToSQLiteStatementTransformerFactory::create(stmt)->transform());
+    std::string sqliteStatement = DbToSQLiteStatementTransformerFactory::create(stmt)->transform();
+    if(!sqliteStatement.empty())
+      sqliteStatements.emplace_back(sqliteStatement);
   }
-  m_sqliteCatalogue->executeNonQueries(m_conn,transformedSchema);
+  executeStatements(sqliteStatements);
 }
 
-void SQLiteSchemaInserter::executeStatements(const std::string &sqliteStatements){
-  
+void SQLiteSchemaInserter::executeStatements(const std::list<std::string> & stmts){
+  rdbms::Conn conn = m_sqliteCatalogueConnPool.getConn();
+  for(auto& sqliteStatement: stmts){
+    auto stmt = conn.createStmt(sqliteStatement);
+    stmt.executeNonQuery();
+  }
 }
 
 std::list<std::string> SQLiteSchemaInserter::getAllStatementsFromSchema(const std::string &schema){

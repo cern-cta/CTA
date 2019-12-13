@@ -15,26 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/* 
- * File:   SchemaComparer.cpp
- * Author: cedric
- * 
- * Created on December 10, 2019, 10:58 AM
- */
 
-#include "SchemaComparer.hpp"
+#pragma once
+
+#include <list>
+#include <string>
 
 namespace cta {
 namespace catalogue {
-SchemaComparer::SchemaComparer(const cta::rdbms::Login::DbType &dbType, const std::string &schemaVersion,rdbms::ConnPool &connPool): m_dbType(dbType),m_schemaVersion(schemaVersion),m_catalogueConnPool(connPool){
-  m_catalogueMetadataGetter.reset(CatalogueMetadataGetterFactory::create(dbType,m_catalogueConnPool));
-}
-
-std::string SchemaComparer::getCatalogueVersion(){
-  return m_schemaVersion;
-}
-
-SchemaComparer::~SchemaComparer() {
-}
+class SchemaComparerResult {
+public:
+  enum Status {
+    SUCCESS,
+    FAILED
+  };
+  static std::string StatusToString(const Status& status);
+  
+  SchemaComparerResult();
+  SchemaComparerResult(const SchemaComparerResult& orig);
+  SchemaComparerResult operator=(const SchemaComparerResult &other);
+  SchemaComparerResult operator+=(const SchemaComparerResult &other);
+  void printDiffs() const;
+  Status getStatus() const;
+  void addDiff(const std::string &diff);
+  virtual ~SchemaComparerResult();
+private:
+  std::list<std::string> m_diffs;
+  Status m_status;
+};
 
 }}

@@ -15,37 +15,59 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/* 
- * File:   SQLiteSchemaComparer.cpp
- * Author: cedric
- * 
- * Created on December 10, 2019, 11:34 AM
- */
+
+#include <algorithm>
 
 #include "SQLiteSchemaComparer.hpp"
 #include "SQLiteSchemaInserter.hpp"
+#include "common/log/DummyLogger.hpp"
+
 namespace cta {
 namespace catalogue {
   
-SQLiteSchemaComparer::SQLiteSchemaComparer(cta::rdbms::Conn &connection, cta::rdbms::Login &login, cta::catalogue::Catalogue& catalogue): SchemaComparer(connection,login,catalogue) {
+SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, const std::string &schemaVersion, rdbms::ConnPool &catalogueConnPool): SchemaComparer(catalogueDbType,schemaVersion,catalogueConnPool) {
+  log::DummyLogger dl("dummy","dummy");
+  
+  auto login = rdbms::Login::parseString("in_memory");
+  m_sqliteConnPool.reset(new rdbms::ConnPool(login,1));
+  m_catalogueMetadataGetter.reset(CatalogueMetadataGetterFactory::create(catalogueDbType,catalogueConnPool));
+  m_sqliteSchemaMetadataGetter.reset(new SQLiteCatalogueMetadataGetter(*m_sqliteConnPool));
 }
 
 SQLiteSchemaComparer::~SQLiteSchemaComparer() {
 }
 
-void SQLiteSchemaComparer::compare(){
+SchemaComparerResult SQLiteSchemaComparer::compare(){
+  SchemaComparerResult res;
   insertSchemaInSQLite();
-  //compare
-  //return the results
+  res += compareIndexes();
+  return res;
+}
+
+SchemaComparerResult SQLiteSchemaComparer::compareTables(){
+  return SchemaComparerResult();
 }
 
 void SQLiteSchemaComparer::insertSchemaInSQLite() {
-  std::map<std::string, uint64_t> schemaVersion = m_catalogue.getSchemaVersion();
-  uint64_t schemaVersionMajor = schemaVersion.at("SCHEMA_VERSION_MAJOR");
-  uint64_t schemaVersionMinor = schemaVersion.at("SCHEMA_VERSION_MINOR");
-  std::string schemaVersionStr = std::to_string(schemaVersionMajor)+"."+std::to_string(schemaVersionMinor);
-  cta::catalogue::SQLiteSchemaInserter schemaInserter(schemaVersionStr,m_login.dbType,"/home/cedric/CTA/catalogue/","/home/cedric/CTA-execute/sqliteDbFile");
+  cta::catalogue::SQLiteSchemaInserter schemaInserter(m_schemaVersion,m_dbType,"/home/cedric/CTA/catalogue/",*m_sqliteConnPool);
   schemaInserter.insert();
+}
+
+SchemaComparerResult SQLiteSchemaComparer::compareIndexes(){
+  SchemaComparerResult result;
+  std::list<std::string> catalogueIndexes = m_catalogueMetadataGetter->getIndexNames();
+  std::list<std::string> schemaIndexes = m_sqliteSchemaMetadataGetter->getIndexNames();
+  for(auto &ci: catalogueIndexes){
+    if(std::find(schemaIndexes.begin(),schemaIndexes.end(),ci) == schemaIndexes.end()){
+      result.addDiff("INDEX "+ci+" is missing in the schema but defined in the catalogue");
+    }
+  }
+  for(auto &si: schemaIndexes){
+    if(std::find(catalogueIndexes.begin(),catalogueIndexes.end(),si) == catalogueIndexes.end()){
+      result.addDiff("INDEX "+si+" is missing in the catalogue but is defined in the schema");
+    }
+  }
+  return result;
 }
 
 }}

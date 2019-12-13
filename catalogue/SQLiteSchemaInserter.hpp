@@ -18,30 +18,28 @@
 
 #pragma once
 #include "rdbms/Login.hpp"
-#include "SchemaCreatingSqliteCatalogue.hpp"
+#include "rdbms/ConnPool.hpp"
 
 namespace cta {
 namespace catalogue {
   
   class SQLiteSchemaInserter {
   public:
-    SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &dbType, const std::string &allVersionsSchemaDirectory,const std::string &sqliteFileName);
+    SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &catalogueDbType, const std::string &allVersionsSchemaDirectory,rdbms::ConnPool &sqliteConnPool);
     void insert();    
     virtual ~SQLiteSchemaInserter();
   private:
+    const std::string c_catalogueFileNameTrailer = "_catalogue_schema.sql";
+    
     std::string m_schemaVersion;
     cta::rdbms::Login::DbType m_dbType;
     std::string m_allVersionSchemaDirectory;
-    const std::string c_catalogueFileNameTrailer = "_catalogue_schema.sql";
-    std::string m_sqliteFileName;
-    cta::catalogue::SchemaCreatingSqliteCatalogue * m_sqliteCatalogue;
-    cta::rdbms::Conn m_conn;
-    
+    cta::rdbms::ConnPool & m_sqliteCatalogueConnPool;
     std::string readSchemaFromFile();
     std::list<std::string> getAllStatementsFromSchema(const std::string &schema);
     std::string getDatabaseType();
     std::string getSchemaFilePath();
-    void executeStatements(const std::string &statements);
+    void executeStatements(const std::list<std::string> &statements);
   };
   
 }}

@@ -15,20 +15,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "SchemaComparer.hpp"
-
 #pragma once
+
+#include "SchemaComparer.hpp"
+#include "SchemaCreatingSqliteCatalogue.hpp"
+#include "InMemoryCatalogue.hpp"
 
 namespace cta {
 namespace catalogue {
   
 class SQLiteSchemaComparer: public SchemaComparer {
 public:
-  SQLiteSchemaComparer(cta::rdbms::Conn &connection, cta::rdbms::Login &login, cta::catalogue::Catalogue& catalogue);
-  void compare() override;
+  SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, const std::string &schemaVersion,rdbms::ConnPool &catalogueConnPool);
+  SchemaComparerResult compare() override;
   virtual ~SQLiteSchemaComparer();
+  
 private:
   void insertSchemaInSQLite();
+  SchemaComparerResult compareIndexes();
+  SchemaComparerResult compareTables() override;
+  std::unique_ptr<rdbms::ConnPool> m_sqliteConnPool;
+  std::unique_ptr<SQLiteCatalogueMetadataGetter> m_sqliteSchemaMetadataGetter;  
 };
 
 }}
