@@ -114,7 +114,25 @@ target_link_libraries(cta-systemTests
   pthread
   ${PROTOBUF3_LIBRARIES})
 
-install(TARGETS cta-rdbmsUnitTests cta-unitTests cta-unitTests-multiProcess cta-systemTests DESTINATION usr/bin)
+add_executable(cta-immutable-file-test
+  ImmutableFileTest.cpp
+  ImmutableFileTestMain.cpp
+  ImmutableFileTestCmdLineArgs.cpp)
+
+set_property (TARGET cta-immutable-file-test APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
+
+target_link_libraries(cta-immutable-file-test
+  ctacommon)
+
+install(
+  TARGETS
+    cta-rdbmsUnitTests
+    cta-unitTests
+    cta-unitTests-multiProcess
+    cta-systemTests
+    cta-immutable-file-test
+  DESTINATION
+    usr/bin)
 
 install(TARGETS systemTestHelperTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

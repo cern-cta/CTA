@@ -245,6 +245,7 @@ Unit tests and system tests with virtual tape drives
 %defattr(0755,root,root,-)
 %{_libdir}/libsystemTestHelperTests.so*
 %{_libdir}/libcta-tapedSystemTests.so*
+%{_bindir}/cta-immutable-file-test
 %{_bindir}/cta-rdbmsUnitTests
 %{_bindir}/cta-rdbmsUnitTests-oracle.sh
 %{_bindir}/cta-unitTests
