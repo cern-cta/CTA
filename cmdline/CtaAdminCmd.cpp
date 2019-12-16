@@ -271,6 +271,7 @@ void CtaAdminCmd::send() const
             case HeaderType::SHOWQUEUES:                   formattedText.printShowQueuesHeader(); break;
             case HeaderType::STORAGECLASS_LS:              formattedText.printStorageClassLsHeader(); break;
             case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;
+            case HeaderType::TAPEFILE_LS:                  formattedText.printTapeFileLsHeader(); break;
             case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
             case HeaderType::DISKSYSTEM_LS:                formattedText.printDiskSystemLsHeader(); break;
             case HeaderType::NONE:

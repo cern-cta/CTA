@@ -209,6 +209,8 @@ const cmdLookup_t cmdLookup = {
    { "sc",                      AdminCmd::CMD_STORAGECLASS },
    { "tape",                    AdminCmd::CMD_TAPE },
    { "ta",                      AdminCmd::CMD_TAPE },
+   { "tapefile",                AdminCmd::CMD_TAPEFILE },
+   { "tf",                      AdminCmd::CMD_TAPEFILE },
    { "tapepool",                AdminCmd::CMD_TAPEPOOL },
    { "tp",                      AdminCmd::CMD_TAPEPOOL },
    { "disksystem",              AdminCmd::CMD_DISKSYSTEM },
@@ -367,6 +369,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
+   { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls" } }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" },
 			  "\n  This command allows to manage disk systems (useful for the backpressure).\n"
@@ -571,6 +574,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_disabled.optional(), opt_full.optional(), opt_readonly.optional(), opt_all.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
       { opt_vid, opt_force.optional() }},
+   /*----------------------------------------------------------------------------------------------------*/
+   {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    }, { opt_vid }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},

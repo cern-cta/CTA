@@ -213,6 +213,7 @@ private:
   admincmdstream_t processStorageClass_Ls;
   admincmdstream_t processTapePool_Ls;
   admincmdstream_t processTape_Ls;
+  admincmdstream_t processTapeFile_Ls;
   admincmdstream_t processRepack_Ls;
   admincmdstream_t processDiskSystem_Ls;
 
