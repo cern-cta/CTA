@@ -87,7 +87,7 @@ public:
   void print(const ShowQueuesItem &sq_item);
   void print(const StorageClassLsItem &scls_item);
   void print(const TapeLsItem &tals_item);
-  void print(const TapeFileLsItem &afls_item);
+  void print(const TapeFileLsItem &tfls_item);
   void print(const TapePoolLsItem &tpls_item);
   void print(const DiskSystemLsItem &dsls_item);
   
