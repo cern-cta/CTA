@@ -90,7 +90,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kSqItem:        std::cout << Log::DumpProtobuf(&record.sq_item());      break;
          case Data::kSclsItem:      std::cout << Log::DumpProtobuf(&record.scls_item());    break;
          case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
-         case Data::kTflsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
+         case Data::kTflsItem:      std::cout << Log::DumpProtobuf(&record.tfls_item());    break;
          case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
          case Data::kDslsItem:      std::cout << Log::DumpProtobuf(&record.dsls_item());    break;
          default:

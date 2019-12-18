@@ -864,40 +864,35 @@ void TextFormatter::printTapeFileLsHeader() {
 }
 
 void TextFormatter::print(const TapeFileLsItem &tfls_item) {
-  using namespace cta::checksum;
-
+  // Files can have multiple checksums of different types. The tabular output will
+  // display only the first checksum; the JSON output will list all checksums.
   std::string checksumType("NONE");
   std::string checksumValue;
 
-  ChecksumBlob csb;
-  ProtobufToChecksumBlob(tfls_item.af().csb(), csb);
-
-  // Files can have multiple checksums of different types. Display only the first checksum here. All
-  // checksums will be listed in JSON.
-  if(!csb.empty()) {
-    auto cs_it = csb.getMap().begin();
-    checksumType = ChecksumTypeName.at(cs_it->first);
-    checksumValue = "0x" + ChecksumBlob::ByteArrayToHex(cs_it->second);
+  if(!tfls_item.af().checksum().empty()) {
+    const google::protobuf::EnumDescriptor *descriptor = cta::common::ChecksumBlob::Checksum::Type_descriptor();
+    std::string name = descriptor->FindValueByNumber(tfls_item.af().checksum().begin()->type())->name();
+    checksumValue = "0x" + tfls_item.af().checksum().begin()->value();
   }
 
   push_back(
     tfls_item.af().archive_id(),
-    tfls_item.copy_nb(),
+    tfls_item.tf().copy_nb(),
     tfls_item.tf().vid(),
     tfls_item.tf().f_seq(),
     tfls_item.tf().block_id(),
-    tfls_item.af().disk_instance(),
-    tfls_item.af().disk_id(),
+    tfls_item.df().disk_instance(),
+    tfls_item.df().disk_id(),
     dataSizeToStr(tfls_item.af().size()),
     checksumType,
     checksumValue,
     tfls_item.af().storage_class(),
-    tfls_item.af().df().owner_id().uid(),
-    tfls_item.af().df().owner_id().gid(),
+    tfls_item.df().owner_id().uid(),
+    tfls_item.df().owner_id().gid(),
     timeToStr(tfls_item.af().creation_time()),
     tfls_item.tf().superseded_by_vid(),
     tfls_item.tf().superseded_by_f_seq(),
-    tfls_item.af().df().path()
+    tfls_item.df().path()
   );
 }
 
