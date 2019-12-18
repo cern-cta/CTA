@@ -35,6 +35,10 @@ class SchemaComparer {
 public:
   SchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType,cta::rdbms::Conn &conn);
   virtual ~SchemaComparer();
+  /**
+   * Compare the schema
+   * @return 
+   */
   virtual SchemaComparerResult compare() = 0;
   std::string getCatalogueVersion();
 protected:

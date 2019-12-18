@@ -17,10 +17,19 @@
  */
 
 #include "CatalogueMetadataGetter.hpp"
+#include <algorithm>
 
 namespace cta {
 namespace catalogue {
 
+void CatalogueMetadataGetter::removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval){
+  objects.remove_if([&wordsToTriggerRemoval](const std::string &object){
+    return std::find_if(wordsToTriggerRemoval.begin(), wordsToTriggerRemoval.end(),[&object](const std::string &wordTriggeringRemoval){
+      return object.find(wordTriggeringRemoval) != std::string::npos;
+    }) != wordsToTriggerRemoval.end();
+  });
+}
+  
 CatalogueMetadataGetter::CatalogueMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
 
 std::string CatalogueMetadataGetter::getCatalogueVersion(){
@@ -52,32 +61,38 @@ SQLiteCatalogueMetadataGetter::~SQLiteCatalogueMetadataGetter(){}
 
 std::list<std::string> SQLiteCatalogueMetadataGetter::getIndexNames() {
   std::list<std::string> indexNames = m_conn.getIndexNames();
-  indexNames.remove_if([](std::string& indexName){
-    return ((indexName.find("sqlite_autoindex") != std::string::npos)); 
-  });
+  removeObjectNameContaining(indexNames,{"sqlite_autoindex"});
   return indexNames;
 }
 
 std::list<std::string> SQLiteCatalogueMetadataGetter::getTableNames(){
-  return std::list<std::string>();
+  std::list<std::string> tableNames = m_conn.getTableNames();
+  removeObjectNameContaining(tableNames,{"sqlite_sequence"});
+  return tableNames;
 }
+
+std::map<std::string, std::string> SQLiteCatalogueMetadataGetter::getColumns(const std::string& tableName){
+  return m_conn.getColumns(tableName);
+}
+
 
 OracleCatalogueMetadataGetter::OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
 OracleCatalogueMetadataGetter::~OracleCatalogueMetadataGetter(){}
 
 std::list<std::string> OracleCatalogueMetadataGetter::getIndexNames() {
   std::list<std::string> indexNames = m_conn.getIndexNames();
-  indexNames.remove_if([](std::string& indexName){
-    return ((indexName.find("_UN") != std::string::npos) || (indexName.find("PK") != std::string::npos) || (indexName.find("_LLN") != std::string::npos)); 
-  });
+  removeObjectNameContaining(indexNames,{"_UN","PK","_LLN"});
   return indexNames;
 }
 
 std::list<std::string> OracleCatalogueMetadataGetter::getTableNames() {
-  return std::list<std::string>();
+  std::list<std::string> tableNames = m_conn.getTableNames();
+  return tableNames;
 }
 
-
+std::map<std::string, std::string> OracleCatalogueMetadataGetter::getColumns(const std::string& tableName){
+  return m_conn.getColumns(tableName);
+}
 
 CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {
   typedef rdbms::Login::DbType DbType;

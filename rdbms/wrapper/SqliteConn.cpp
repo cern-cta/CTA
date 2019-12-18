@@ -249,7 +249,8 @@ std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tab
     "CHAR|"
     "VARCHAR|"
     "VARCHAR2|"
-    "BLOB";
+    "BLOB|"
+    "RAW";
     
     auto stmt = createStmt(sql);
     stmt->bindString(":TABLE_NAME", tableName);

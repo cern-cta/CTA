@@ -27,15 +27,16 @@ namespace cta {
 namespace catalogue {
   
 class CatalogueMetadataGetter {
-public:
   protected:
     rdbms::Conn& m_conn;
+    void removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval);
   public:
     CatalogueMetadataGetter(cta::rdbms::Conn & conn);
     virtual ~CatalogueMetadataGetter();
     std::string getCatalogueVersion();
     virtual std::list<std::string> getIndexNames() = 0;
     virtual std::list<std::string> getTableNames() = 0;
+    virtual std::map<std::string,std::string> getColumns(const std::string& tableName) = 0;
 };
 
 class SQLiteCatalogueMetadataGetter: public CatalogueMetadataGetter{
@@ -44,6 +45,7 @@ public:
   virtual ~SQLiteCatalogueMetadataGetter();
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
+  std::map<std::string,std::string> getColumns(const std::string& tableName) override;
 };
 
 class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
@@ -52,6 +54,7 @@ class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
   virtual ~OracleCatalogueMetadataGetter();
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
+  std::map<std::string,std::string> getColumns(const std::string& tableName) override;
 };
 
 class CatalogueMetadataGetterFactory {

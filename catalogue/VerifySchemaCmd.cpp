@@ -29,8 +29,7 @@
 #include "rdbms/AutocommitMode.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "Catalogue.hpp"
-#include "SchemaComparer.hpp"
-#include "SQLiteSchemaComparer.hpp"
+#include "SchemaChecker.hpp"
 
 #include <algorithm>
 #include <map>
@@ -74,13 +73,10 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 1;
   }
   
-  std::unique_ptr<cta::catalogue::SchemaComparer> schemaComparer;
-  schemaComparer.reset(new cta::catalogue::SQLiteSchemaComparer(login.dbType,conn));
-  cta::catalogue::SchemaComparerResult res = schemaComparer->compare();
-  std::cout << "Schema version : " << schemaComparer->getCatalogueVersion() << std::endl;
-  std::cout << "Status of the checking : " << cta::catalogue::SchemaComparerResult::StatusToString(res.getStatus()) << std::endl;
-  res.printDiffs();
-  schemaComparer.release();
+  cta::catalogue::SchemaChecker schemaChecker(login.dbType,conn);
+  schemaChecker.compareSchema();
+  schemaChecker.checkNoParallelTables();
+
   /*std::unique_ptr<CatalogueSchema> schema;
   switch(login.dbType) {
   case rdbms::Login::DBTYPE_IN_MEMORY:
