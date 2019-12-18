@@ -155,54 +155,11 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       auto tf = record.mutable_tfls_item()->mutable_tf();
       tf->set_vid(jt->vid);
       tf->set_copy_nb(jt->copyNb);
-      tf->set_num_copies(99);
       tf->set_block_id(jt->blockId);
       tf->set_f_seq(jt->fSeq);
       tf->set_superseded_by_f_seq(jt->supersededByFSeq);
       tf->set_superseded_by_vid(jt->supersededByVid);
-#if 0
-message TapeFileLsItem {
-  // Differs from cta.common.ChecksumBlob.Checksum in that value is a decoded string not a byte array
-  message Checksum {
-    enum Type {
-      NONE                      = 0;       //< No checksum specified
-      ADLER32                   = 1;       //< Adler-32 checksum
-      CRC32                     = 2;       //< CRC-32 checksum
-      CRC32C                    = 3;       //< CRC-32C checksum
-      MD5                       = 4;       //< MD5 128-bit hash
-      SHA1                      = 5;       //< SHA-1 160-bit hash
-    }
-    Type type                   = 1;       //< Checksum type
-    string value                = 2;       //< Checksum value
-  }
-  message ArchiveFile {
-    uint64 archive_id           = 1;       //< Archive File ID
-    string storage_class        = 2;       //< Storage Class
-    uint64 creation_time        = 3;       //< Creation Time
-    repeated Checksum checksum  = 4;       //< Array of checksums
-    uint64 size                 = 5;       //< File size
-  }
-  message DiskFile {
-    string disk_id              = 1;       //< Disk file ID
-    string disk_instance        = 2;       //< Disk instance
-    cta.common.OwnerId owner_id = 3;       //< Owner user ID and group ID of the disk file
-    string path                 = 4;       //< Path of the disk file
-  }
-  message TapeFile {
-    string vid                  = 1;       //< Volume ID of the tape on which the file has been written
-    uint32 copy_nb              = 2;       //< Copy number
-    uint32 num_copies           = 3;       //< Number of tape copies of this file
-    uint64 block_id             = 4;       //< The position of the file on tape: Logical Block ID
-    uint64 f_seq                = 5;       //< The position of the file on tape: File Sequence number
-    uint64 superseded_by_f_seq  = 6;       //< The fSeq of the superseding tape file. Only valid if superseded_by_vid is not empty.
-    string superseded_by_vid    = 7;       //< The Volume ID of the tape file superseding this one. Can be empty.
-  }
 
-  ArchiveFile af                = 1;
-  DiskFile df                   = 2;
-  TapeFile tf                   = 3;
-}
-#endif
       // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
       // enough data to send to the client. The actual buffer size is double the block size,
       // so we can keep writing a few additional records after is_buffer_full is true. These
