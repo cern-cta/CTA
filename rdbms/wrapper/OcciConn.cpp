@@ -285,6 +285,34 @@ std::list<std::string> OcciConn::getTriggerNames() {
 }
 
 //------------------------------------------------------------------------------
+// getParallelTriggerNames
+//------------------------------------------------------------------------------
+std::list<std::string> OcciConn::getParallelTableNames() {
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "TABLE_NAME "
+      "FROM "
+        "USER_TABLES "
+      "WHERE "
+        "DEGREE NOT LIKE '%1%' "
+      "ORDER BY "
+        "TABLE_NAME";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("TABLE_NAME");
+      names.push_back(name.value());
+    }
+
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // isOpen
 //------------------------------------------------------------------------------
 bool OcciConn::isOpen() const {

@@ -143,6 +143,18 @@ public:
    * alphabetical order.
    */
   virtual std::list<std::string> getTriggerNames()  = 0;
+  
+  /**
+   * Returns the names of all the tables that have been set as PARALLEL
+   * in alphabetical order.
+   * 
+   * If the underlying database technologies does not support PARALLEL
+   * them this method simply returns an empty list.
+   * 
+   * @return the names of all the tables that have been set as PARALLEL
+   * in alphabetical order. 
+   */
+  virtual std::list<std::string> getParallelTableNames() = 0;
 
 }; // class ConnWrapper
 

@@ -47,7 +47,10 @@ SchemaChecker::Status SchemaChecker::compareSchema(){
 }
 
 void SchemaChecker::checkNoParallelTables(){
-  
+  std::list<std::string> parallelTables = m_catalogueConn.getParallelTableNames();
+  for(auto& table:parallelTables) {
+    std::cout << "WARNING : " << table << " is set as PARALLEL" << std::endl;
+  }
 }
 
 }}

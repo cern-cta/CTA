@@ -79,8 +79,8 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   if(!cmdLineArgs.allSchemaDirectoryPath.empty()){
     cta::catalogue::SchemaChecker schemaChecker(login.dbType,conn);
     schemaChecker.useSQLiteSchemaComparer(allSchemasDirectoryPath);
-    SchemaChecker::Status comparisonStatus = schemaChecker.compareSchema();
     schemaChecker.checkNoParallelTables();
+    SchemaChecker::Status comparisonStatus = schemaChecker.compareSchema();
 
     if(comparisonStatus == SchemaChecker::Status::FAILURE){
       return 1;

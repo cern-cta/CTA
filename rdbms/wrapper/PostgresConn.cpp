@@ -320,6 +320,10 @@ std::list<std::string> PostgresConn::getTriggerNames() {
   return std::list<std::string>();
 }
 
+std::list<std::string> PostgresConn::getParallelTableNames(){
+  return std::list<std::string>();
+}
+
 //------------------------------------------------------------------------------
 // isOpen
 //------------------------------------------------------------------------------

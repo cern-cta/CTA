@@ -338,6 +338,10 @@ std::list<std::string> MysqlConn::getTriggerNames() {
   }
 }
 
+std::list<std::string> MysqlConn::getParallelTableNames(){
+  return std::list<std::string>();
+}
+
 } // namespace wrapper
 } // namespace rdbms
 } // namespace cta

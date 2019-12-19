@@ -363,6 +363,11 @@ std::list<std::string> SqliteConn::getTriggerNames() {
   return std::list<std::string>();
 }
 
+
+std::list<std::string> SqliteConn::getParallelTableNames(){
+  return std::list<std::string>();
+}
+
 } // namespace wrapper
 } // namespace rdbms
 } // namespace cta
