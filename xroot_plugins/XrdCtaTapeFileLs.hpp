@@ -20,6 +20,7 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include <xroot_plugins/Namespace.hpp>
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 
 
@@ -50,6 +51,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   catalogue::ArchiveFileItor              m_tapeFileItor;                 //!< Iterator across files which have been archived
+  Namespace                               m_namespace;
 #if 0
   bool                                    m_isSummary;                       //!< Full listing or short summary?
   bool                                    m_isSummaryDone;                   //!< Summary has been sent
@@ -146,10 +148,10 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       // Disk file
       auto df = record.mutable_tfls_item()->mutable_df();
       df->set_disk_id(archiveFile.diskFileId);
+      df->set_path(m_namespace.getPath(archiveFile.diskFileId));
       df->set_disk_instance(archiveFile.diskInstance);
       df->mutable_owner_id()->set_uid(archiveFile.diskFileInfo.owner_uid);
       df->mutable_owner_id()->set_gid(archiveFile.diskFileInfo.gid);
-      df->set_path(archiveFile.diskFileInfo.path);
 
       // Tape file
       auto tf = record.mutable_tfls_item()->mutable_tf();

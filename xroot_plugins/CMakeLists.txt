@@ -35,7 +35,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 #
 # XRootD SSI plugin for CTA Frontend
 #
-add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp)
+add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp Namespace.cpp)
 target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctaobjectstore ctacatalogue)
 set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
