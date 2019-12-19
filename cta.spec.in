@@ -334,7 +334,8 @@ directory metadata into the EOS namespace.
 %attr(0644,root,root) %{_bindir}/begin_vo_export_to_cta.sh
 %attr(0644,root,root) %{_bindir}/export_production_tapepool_to_cta.sh
 %attr(0755,root,root) %{_bindir}/tapepool_castor_to_cta.py
-%attr(0755,root,root) %{_bindir}/complete_tapepool_export.py
+%attr(0755,root,root) %{_bindir}/zerolen_castor_to_cta.py
+%attr(0755,root,root) %{_bindir}/complete_cta_export.py
 %attr(0644,root,root) %{_bindir}/vmgr_reenable_tapepool.sh
 %attr(0644,root,root) %{_bindir}/cta-catalogue-remove-castor-tapes.py
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/castor-migration.conf.example
