@@ -24,7 +24,7 @@ namespace catalogue {
   
 class SQLiteSchemaComparer: public SchemaComparer {
 public:
-  SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn);
+  SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn, const std::string & allSchemasVersionPath);
   SchemaComparerResult compare() override;
   virtual ~SQLiteSchemaComparer();
   
@@ -37,7 +37,9 @@ private:
   typedef std::map<std::string, std::map<std::string, std::string>> TableColumns;
   SchemaComparerResult compareTableColumns(const TableColumns & tableColumns1, const std::string &originTableColumns1,const TableColumns & tableColumns2, const std::string &originTableColumns2);
   rdbms::Conn m_sqliteConn;
-  std::unique_ptr<SQLiteCatalogueMetadataGetter> m_sqliteSchemaMetadataGetter;  
+  std::unique_ptr<rdbms::ConnPool> m_sqliteConnPool;
+  std::unique_ptr<SQLiteCatalogueMetadataGetter> m_sqliteSchemaMetadataGetter;
+  const std::string m_allSchemasVersionPath;
 };
 
 }}

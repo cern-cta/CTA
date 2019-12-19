@@ -26,14 +26,18 @@ namespace catalogue{
     
 class SchemaChecker {
 public:
-  SchemaChecker(const cta::rdbms::Login::DbType &catalogueDbType,cta::rdbms::Conn &conn);
+  enum Status {
+    OK,
+    FAILURE
+  };
+  SchemaChecker(rdbms::Login::DbType dbType,cta::rdbms::Conn &conn);
   virtual ~SchemaChecker();
-  void setSchemaComparer(std::unique_ptr<SchemaComparer> schemaComparer);
-  void compareSchema();
+  void useSQLiteSchemaComparer(const std::string &allSchemasDirectoryPath);
+  Status compareSchema();
   void checkNoParallelTables();
 private:
-  const cta::rdbms::Login::DbType &m_dbType;
-  cta::rdbms::Conn &m_conn;
+  cta::rdbms::Login::DbType m_dbType;
+  cta::rdbms::Conn &m_catalogueConn;
   std::unique_ptr<SchemaComparer> m_schemaComparer;
 };
 

@@ -22,25 +22,28 @@
 namespace cta{
 namespace catalogue{
   
-SchemaChecker::SchemaChecker(const cta::rdbms::Login::DbType &catalogueDbType,cta::rdbms::Conn &conn):m_dbType(catalogueDbType),m_conn(conn) {
-  m_schemaComparer.reset(new SQLiteSchemaComparer(m_dbType,m_conn));
+SchemaChecker::SchemaChecker(rdbms::Login::DbType dbType,cta::rdbms::Conn &conn):m_dbType(dbType),m_catalogueConn(conn) {
 }
 
 SchemaChecker::~SchemaChecker() {
 }
 
-void SchemaChecker::setSchemaComparer(std::unique_ptr<SchemaComparer> schemaComparer){
-  if(m_schemaComparer != nullptr){
-    m_schemaComparer.release();
-  }
-  m_schemaComparer = std::move(schemaComparer);
+void SchemaChecker::useSQLiteSchemaComparer(const std::string &allSchemasVersionPath){
+  m_schemaComparer.reset(new SQLiteSchemaComparer(m_dbType,m_catalogueConn,allSchemasVersionPath));
 }
 
-void SchemaChecker::compareSchema(){
+SchemaChecker::Status SchemaChecker::compareSchema(){
+  if(m_schemaComparer == nullptr){
+    throw cta::exception::Exception("No schema comparer used. Please specify the schema comparer by using the methods useXXXXSchemaComparer(schemaComparer)");
+  }
   cta::catalogue::SchemaComparerResult res = m_schemaComparer->compare();
   std::cout << "Schema version : " << m_schemaComparer->getCatalogueVersion() << std::endl;
-  std::cout << "Status of the checking : " << cta::catalogue::SchemaComparerResult::StatusToString(res.getStatus()) << std::endl;
   res.printDiffs();
+  std::cout << "Status of the checking : " << cta::catalogue::SchemaComparerResult::StatusToString(res.getStatus()) << std::endl;
+  if(res.getStatus() == SchemaComparerResult::Status::FAILED){
+    return SchemaChecker::FAILURE;
+  }
+  return SchemaChecker::OK;
 }
 
 void SchemaChecker::checkNoParallelTables(){

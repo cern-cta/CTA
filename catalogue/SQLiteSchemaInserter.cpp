@@ -27,7 +27,7 @@
 namespace cta {
 namespace catalogue {
   
-SQLiteSchemaInserter::SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &catalogueDbType, const std::string &allVersionsSchemaDirectory,rdbms::Conn &sqliteConn):m_schemaVersion(schemaVersion),m_dbType(catalogueDbType),m_allVersionSchemaDirectory(allVersionsSchemaDirectory), m_sqliteCatalogueConn(sqliteConn){}
+SQLiteSchemaInserter::SQLiteSchemaInserter(const std::string & schemaVersion, const cta::rdbms::Login::DbType &catalogueDbType, const std::string &allSchemasVersionPath,rdbms::Conn &sqliteConn):m_schemaVersion(schemaVersion),m_dbType(catalogueDbType),m_allSchemasVersionPath(allSchemasVersionPath), m_sqliteCatalogueConn(sqliteConn){}
 
 SQLiteSchemaInserter::~SQLiteSchemaInserter() {}
 
@@ -81,7 +81,7 @@ std::string SQLiteSchemaInserter::readSchemaFromFile() {
 }
 
 std::string SQLiteSchemaInserter::getSchemaFilePath() {
-  return m_allVersionSchemaDirectory+m_schemaVersion+"/"+getDatabaseType()+c_catalogueFileNameTrailer;
+  return m_allSchemasVersionPath+m_schemaVersion+"/"+getDatabaseType()+c_catalogueFileNameTrailer;
 }
 
 std::string SQLiteSchemaInserter::getDatabaseType() {

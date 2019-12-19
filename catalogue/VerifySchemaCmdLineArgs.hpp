@@ -38,6 +38,8 @@ struct VerifySchemaCmdLineArgs {
    * database.
    */
   std::string dbConfigPath;
+  
+  std::string allSchemaDirectoryPath;
 
   /**
    * Constructor that parses the specified command-line arguments.

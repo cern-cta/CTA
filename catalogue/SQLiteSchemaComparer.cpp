@@ -25,17 +25,18 @@
 namespace cta {
 namespace catalogue {
   
-SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn): SchemaComparer(catalogueDbType,catalogueConn) {
+SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn, const std::string & allSchemasVersionPath): SchemaComparer(catalogueDbType,catalogueConn),m_allSchemasVersionPath(allSchemasVersionPath) {
   log::DummyLogger dl("dummy","dummy");
   auto login = rdbms::Login::parseString("in_memory");
-  rdbms::ConnPool connPool(login,1);
-  rdbms::Conn conn = connPool.getConn();
-  m_sqliteConn = std::move(conn);
+  m_sqliteConnPool.reset(new rdbms::ConnPool(login,1));
+  m_sqliteConn = std::move(m_sqliteConnPool->getConn());
   m_sqliteSchemaMetadataGetter.reset(new SQLiteCatalogueMetadataGetter(m_sqliteConn));
 }
 
 SQLiteSchemaComparer::~SQLiteSchemaComparer() {
-  m_sqliteSchemaMetadataGetter.release();
+  //Release the connection before the connPool is deleted
+  m_sqliteConn.~Conn();
+  m_sqliteConnPool.reset();
 }
 
 SchemaComparerResult SQLiteSchemaComparer::compare(){
@@ -54,7 +55,7 @@ SchemaComparerResult SQLiteSchemaComparer::compareTables(){
 }
 
 void SQLiteSchemaComparer::insertSchemaInSQLite() {
-  cta::catalogue::SQLiteSchemaInserter schemaInserter(m_catalogueSchemaVersion,m_dbType,"/home/cedric/CTA/catalogue/",m_sqliteConn);
+  cta::catalogue::SQLiteSchemaInserter schemaInserter(m_catalogueSchemaVersion,m_dbType,m_allSchemasVersionPath,m_sqliteConn);
   schemaInserter.insert();
 }
 

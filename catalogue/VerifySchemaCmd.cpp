@@ -30,6 +30,7 @@
 #include "common/log/DummyLogger.hpp"
 #include "Catalogue.hpp"
 #include "SchemaChecker.hpp"
+#include "SQLiteSchemaComparer.hpp"
 
 #include <algorithm>
 #include <map>
@@ -60,6 +61,8 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     printUsage(m_out);
     return 0;
   }
+  
+  std::string allSchemasDirectoryPath = cmdLineArgs.allSchemaDirectoryPath;
 
   auto login = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   const uint64_t maxNbConns = 1;
@@ -73,75 +76,83 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 1;
   }
   
-  cta::catalogue::SchemaChecker schemaChecker(login.dbType,conn);
-  schemaChecker.compareSchema();
-  schemaChecker.checkNoParallelTables();
+  if(!cmdLineArgs.allSchemaDirectoryPath.empty()){
+    cta::catalogue::SchemaChecker schemaChecker(login.dbType,conn);
+    schemaChecker.useSQLiteSchemaComparer(allSchemasDirectoryPath);
+    SchemaChecker::Status comparisonStatus = schemaChecker.compareSchema();
+    schemaChecker.checkNoParallelTables();
 
-  /*std::unique_ptr<CatalogueSchema> schema;
-  switch(login.dbType) {
-  case rdbms::Login::DBTYPE_IN_MEMORY:
-  case rdbms::Login::DBTYPE_SQLITE:
-    schema.reset(new SqliteCatalogueSchema);
-    break;
-  case rdbms::Login::DBTYPE_POSTGRESQL:
-    schema.reset(new PostgresCatalogueSchema);
-    break;
-  case rdbms::Login::DBTYPE_MYSQL:
-    schema.reset(new MysqlCatalogueSchema);
-    break;
-  case rdbms::Login::DBTYPE_ORACLE:
-    schema.reset(new OracleCatalogueSchema);
-    break;
-  case rdbms::Login::DBTYPE_NONE:
-    throw exception::Exception("Cannot verify a catalogue without a database type");
-  default:
-    {
-      exception::Exception ex;
-      ex.getMessage() << "Unknown database type: value=" << login.dbType;
-      throw ex;
+    if(comparisonStatus == SchemaChecker::Status::FAILURE){
+      return 1;
     }
+    return 0;
+  } else {
+    std::unique_ptr<CatalogueSchema> schema;
+    switch(login.dbType) {
+    case rdbms::Login::DBTYPE_IN_MEMORY:
+    case rdbms::Login::DBTYPE_SQLITE:
+      schema.reset(new SqliteCatalogueSchema);
+      break;
+    case rdbms::Login::DBTYPE_POSTGRESQL:
+      schema.reset(new PostgresCatalogueSchema);
+      break;
+    case rdbms::Login::DBTYPE_MYSQL:
+      schema.reset(new MysqlCatalogueSchema);
+      break;
+    case rdbms::Login::DBTYPE_ORACLE:
+      schema.reset(new OracleCatalogueSchema);
+      break;
+    case rdbms::Login::DBTYPE_NONE:
+      throw exception::Exception("Cannot verify a catalogue without a database type");
+    default:
+      {
+        exception::Exception ex;
+        ex.getMessage() << "Unknown database type: value=" << login.dbType;
+        throw ex;
+      }
+    }
+
+    if (nullptr == schema) {
+      exception::Exception ex;
+      ex.getMessage() << "The catalogue schema uninitialized";
+        throw ex;
+    }
+
+    std::cerr << "Checking schema version..." << std::endl;
+    log::DummyLogger dummyLog("dummy", "dummy");
+    const auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, login, maxNbConns, maxNbConns);
+    const auto catalogue = catalogueFactory->create();  
+    const auto schemaDbVersion = catalogue->getSchemaVersion();
+    const auto schemaVersion = schema->getSchemaVersion(); 
+    const VerifyStatus verifySchemaStatus = verifySchemaVersion(schemaVersion, schemaDbVersion);
+
+    std::cerr << "Checking table names..." << std::endl;
+    const auto schemaTableNames = schema->getSchemaTableNames();
+    const auto dbTableNames = conn.getTableNames();
+    const VerifyStatus verifyTablesStatus = verifyTableNames(schemaTableNames, dbTableNames);
+
+    std::cerr << "Checking columns in tables..." << std::endl;
+    const VerifyStatus verifyColumnsStatus = verifyColumns(schemaTableNames, dbTableNames, *schema, conn);
+
+    std::cerr << "Checking index names..." << std::endl;
+    const auto schemaIndexNames = schema->getSchemaIndexNames();
+    const auto dbIndexNames = conn.getIndexNames();
+    const VerifyStatus verifyIndexesStatus = verifyIndexNames(schemaIndexNames, dbIndexNames);
+
+    std::cerr << "Checking sequence names..." << std::endl;
+    const auto schemaSequenceNames = schema->getSchemaSequenceNames();
+    const auto dbSequenceNames = conn.getSequenceNames();
+    const VerifyStatus verifySequencesStatus = verifySequenceNames(schemaSequenceNames, dbSequenceNames);
+
+    if (verifySchemaStatus    == VerifyStatus::ERROR ||
+        verifyTablesStatus    == VerifyStatus::ERROR || 
+        verifyIndexesStatus   == VerifyStatus::ERROR ||
+        verifySequencesStatus == VerifyStatus::ERROR || 
+        verifyColumnsStatus   == VerifyStatus::ERROR ) {
+      return 1;
+    }
+    return 0;
   }
- 
-  if (nullptr == schema) {
-    exception::Exception ex;
-    ex.getMessage() << "The catalogue schema uninitialized";
-      throw ex;
-  }
-  
-  std::cerr << "Checking schema version..." << std::endl;
-  log::DummyLogger dummyLog("dummy", "dummy");
-  const auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, login, maxNbConns, maxNbConns);
-  const auto catalogue = catalogueFactory->create();  
-  const auto schemaDbVersion = catalogue->getSchemaVersion();
-  const auto schemaVersion = schema->getSchemaVersion(); 
-  const VerifyStatus verifySchemaStatus = verifySchemaVersion(schemaVersion, schemaDbVersion);
-
-  std::cerr << "Checking table names..." << std::endl;
-  const auto schemaTableNames = schema->getSchemaTableNames();
-  const auto dbTableNames = conn.getTableNames();
-  const VerifyStatus verifyTablesStatus = verifyTableNames(schemaTableNames, dbTableNames);
-  
-  std::cerr << "Checking columns in tables..." << std::endl;
-  const VerifyStatus verifyColumnsStatus = verifyColumns(schemaTableNames, dbTableNames, *schema, conn);
-
-  std::cerr << "Checking index names..." << std::endl;
-  const auto schemaIndexNames = schema->getSchemaIndexNames();
-  const auto dbIndexNames = conn.getIndexNames();
-  const VerifyStatus verifyIndexesStatus = verifyIndexNames(schemaIndexNames, dbIndexNames);
-
-  std::cerr << "Checking sequence names..." << std::endl;
-  const auto schemaSequenceNames = schema->getSchemaSequenceNames();
-  const auto dbSequenceNames = conn.getSequenceNames();
-  const VerifyStatus verifySequencesStatus = verifySequenceNames(schemaSequenceNames, dbSequenceNames);
-
-  if (verifySchemaStatus    == VerifyStatus::ERROR ||
-      verifyTablesStatus    == VerifyStatus::ERROR || 
-      verifyIndexesStatus   == VerifyStatus::ERROR ||
-      verifySequencesStatus == VerifyStatus::ERROR || 
-      verifyColumnsStatus   == VerifyStatus::ERROR ) {
-    return 1;
-  }*/
-  return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -149,7 +160,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 bool VerifySchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn) const {
   const auto names = conn.getTableNames();
-  for(auto &name : names) {
+  for(const auto &name : names) {
     if(tableName == name) {
       return true;
     }

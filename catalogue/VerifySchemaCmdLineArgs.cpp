@@ -32,6 +32,7 @@ VerifySchemaCmdLineArgs::VerifySchemaCmdLineArgs(const int argc, char *const *co
   help(false) {
 
   static struct option longopts[] = {
+    {"schemaversionsdirectory",required_argument,NULL,'s'},
     {"help", no_argument, NULL, 'h'},
     {NULL  ,           0, NULL,   0}
   };
@@ -41,15 +42,18 @@ VerifySchemaCmdLineArgs::VerifySchemaCmdLineArgs(const int argc, char *const *co
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":h", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":hs:", longopts, NULL)) != -1) {
     switch(opt) {
     case 'h':
       help = true;
       break;
+    case 's':
+      allSchemaDirectoryPath = optarg;
+      break;
     case ':': // Missing parameter
       {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
+        ex.getMessage() << "The -" << (char)optopt << " option requires a parameter";
         throw ex;
       }
     case '?': // Unknown option
