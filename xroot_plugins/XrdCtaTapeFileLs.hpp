@@ -32,7 +32,8 @@ namespace cta { namespace xrd {
 class TapeFileLsStream : public XrdCtaStream
 {
 public:
-  TapeFileLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  TapeFileLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
+                   const std::string &endpoint, const std::string &token);
 
 private:
   /*!
@@ -62,8 +63,10 @@ private:
 
 
 TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
-  cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-    XrdCtaStream(catalogue, scheduler)
+  cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
+  const std::string &endpoint, const std::string &token) :
+    XrdCtaStream(catalogue, scheduler),
+    m_namespace(endpoint, token)
 #if 0
     m_isSummary(requestMsg.has_flag(admin::OptionBoolean::SUMMARY)),
     m_isSummaryDone(false)

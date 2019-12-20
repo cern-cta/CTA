@@ -111,7 +111,7 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    const std::list<log::Param> params = {log::Param("version", CTA_VERSION)};
    log::Logger &log = *m_log;
 
-   // Initialise the catalogue
+   // Initialise the Catalogue
    const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
    auto catalogue_numberofconnections = config.getOptionValueInt("cta.catalogue.numberofconnections");
    if(!catalogue_numberofconnections.first) {
@@ -149,11 +149,17 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
       // If not, never mind
    }
    
-   //Initialize the repack buffer URL
+   // Get the repack buffer URL
    auto repackBufferURLConf = config.getOptionValueStr("cta.repack.repack_buffer_url");
    if(repackBufferURLConf.first){
      m_repackBufferURL = repackBufferURLConf.second;
    }
+
+   // Get the endpoint for namespace queries
+   auto nsEndpointConf = config.getOptionValueStr("cta.ns.endpoint");
+   m_nsEndpoint = nsEndpointConf.first ? nsEndpointConf.second : "";
+   auto nsTokenConf = config.getOptionValueStr("cta.ns.token");
+   m_nsToken = nsTokenConf.first ? nsTokenConf.second : "";
   
    // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
    auto aht = new cta::objectstore::AgentHeartbeatThread(m_backendPopulator->getAgentReference(), *m_backend, *m_log);

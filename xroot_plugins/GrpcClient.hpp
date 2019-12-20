@@ -1,6 +1,6 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
- * @brief          CTA Frontend Tape Namespace query class
+ * @brief          Obtain metadata from EOS namespace using gRPC
  * @copyright      Copyright 2019 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
@@ -18,21 +18,42 @@
 
 #pragma once
 
-#include <string>
-#include <xroot_plugins/GrpcClient.hpp>
+#include <grpc++/grpc++.h>
+#include "Rpc.grpc.pb.h"
 
-namespace cta { 
+namespace eos {
+namespace client {
 
-class Namespace
+class GrpcClient
 {
 public:
-  Namespace(const std::string &endpoint, const std::string &token) :
-    m_grpcClient(::eos::client::GrpcClient::Create(endpoint, token)) { }
+  explicit GrpcClient(std::shared_ptr<grpc::Channel> channel) :
+    stub_(eos::rpc::Eos::NewStub(channel)),
+    m_tag(0) { }
 
-  std::string getPath(const std::string &diskFileId);
+  // factory function
+  static std::unique_ptr<GrpcClient> Create(std::string endpoint, std::string token);
+
+  // Obtain container or file metadata
+  eos::rpc::MDResponse GetMD(eos::rpc::TYPE type, uint64_t id, const std::string &path);
+
+  void set_token(const std::string &token) {
+    m_token = token;
+  }
+
+  std::string token() const {
+    return m_token;
+  }
+
+  void *nextTag() {
+    return reinterpret_cast<void*>(++m_tag);
+  }
 
 private:
-  std::unique_ptr<::eos::client::GrpcClient> m_grpcClient;
+  std::unique_ptr<eos::rpc::Eos::Stub> stub_;
+  bool m_SSL;
+  std::string m_token;
+  uint64_t m_tag;
 };
 
-} // namespace cta
+}} // namespace eos::client

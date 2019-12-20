@@ -16,10 +16,16 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string>
 #include <xroot_plugins/Namespace.hpp>
 
 
 std::string cta::Namespace::getPath(const std::string &diskFileId) {
-  return "/path/to/file/" + diskFileId;
+  // diskFileId is sent to CTA as a uint64_t, but we store it as a decimal string:
+  //   XrdSsiCtaRequestMessage.cpp: request.diskFileID = std::to_string(notification.file().fid());
+  // Here we convert it back to make the namespace query
+  uint64_t id = strtoul(diskFileId.c_str(), NULL, 0);
+  if(id == 0) return ("Invalid disk ID");
+  auto response = m_grpcClient->GetMD(eos::rpc::FILE, id, "");
+
+  return response.fmd().name().empty() ? "Bad response from nameserver" : response.fmd().path();
 }
