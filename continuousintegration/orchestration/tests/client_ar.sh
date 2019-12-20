@@ -182,6 +182,17 @@ echo "$(date +%s): Creating test dir in eos: ${EOS_DIR}"
 
 eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR} || die "Cannot create directory ${EOS_DIR} in eos instance ${EOSINSTANCE}."
 
+echo
+echo "Listing the EOS extended attributes of ${EOS_DIR}"
+eos root://${EOSINSTANCE} attr ls ${EOS_DIR}
+echo
+
+# Don't call die yet because we know cta-immutable-file-test will fail until
+# a bug fixed version of EOS is implemeneted and used
+#cta-immutable-file-test root://${EOSINSTANCE}/${EOS_DIR}/immutable_file || die "The cta-immutable-file-test failed."
+#echo yes | cta-immutable-file-test root://${EOSINSTANCE}/${EOS_DIR}/immutable_file || die "The cta-immutable-file-test failed."
+echo yes | cta-immutable-file-test root://${EOSINSTANCE}/${EOS_DIR}/immutable_file
+
 # Create directory for xrootd error reports
 ERROR_DIR="/dev/shm/$(basename ${EOS_DIR})"
 mkdir ${ERROR_DIR}
