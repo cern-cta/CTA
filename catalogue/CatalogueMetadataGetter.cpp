@@ -29,6 +29,14 @@ void CatalogueMetadataGetter::removeObjectNameContaining(std::list<std::string>&
     }) != wordsToTriggerRemoval.end();
   });
 }
+
+void CatalogueMetadataGetter::removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval){
+  objects.remove_if([&wordsNotToTriggerRemoval](const std::string &object){
+    return std::find_if(wordsNotToTriggerRemoval.begin(), wordsNotToTriggerRemoval.end(),[&object](const std::string &wordsNotToTriggeringRemoval){
+      return object.find(wordsNotToTriggeringRemoval) == std::string::npos;
+    }) != wordsNotToTriggerRemoval.end();
+  });
+}
   
 CatalogueMetadataGetter::CatalogueMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
 
@@ -59,7 +67,9 @@ std::list<std::string> CatalogueMetadataGetter::getTableNames(){
 }
 
 std::list<std::string> CatalogueMetadataGetter::getIndexNames(){
-  return m_conn.getIndexNames();
+  std::list<std::string> indexNames = m_conn.getIndexNames();
+  removeObjectNameNotContaining(indexNames,{"_IDX"});
+  return indexNames;
 }
 
 std::map<std::string,std::string> CatalogueMetadataGetter::getColumns(const std::string& tableName){
@@ -87,14 +97,11 @@ std::map<std::string, std::string> SQLiteCatalogueMetadataGetter::getColumns(con
   return CatalogueMetadataGetter::getColumns(tableName);
 }
 
-
 OracleCatalogueMetadataGetter::OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
 OracleCatalogueMetadataGetter::~OracleCatalogueMetadataGetter(){}
 
 std::list<std::string> OracleCatalogueMetadataGetter::getIndexNames() {
-  std::list<std::string> indexNames = CatalogueMetadataGetter::getIndexNames();
-  removeObjectNameContaining(indexNames,{"_UN","PK","_LLN"});
-  return indexNames;
+  return CatalogueMetadataGetter::getIndexNames();
 }
 
 std::list<std::string> OracleCatalogueMetadataGetter::getTableNames() {
@@ -110,9 +117,7 @@ MySQLCatalogueMetadataGetter::MySQLCatalogueMetadataGetter(cta::rdbms::Conn& con
 MySQLCatalogueMetadataGetter::~MySQLCatalogueMetadataGetter(){}
 
 std::list<std::string> MySQLCatalogueMetadataGetter::getIndexNames() {
-  std::list<std::string> indexNames = CatalogueMetadataGetter::getIndexNames();
-  //removeObjectNameContaining(indexNames,{"User","Grantor", "_ID", "_NAME"});
-  return indexNames;
+  return CatalogueMetadataGetter::getIndexNames();
 }
 
 std::list<std::string> MySQLCatalogueMetadataGetter::getTableNames() {
