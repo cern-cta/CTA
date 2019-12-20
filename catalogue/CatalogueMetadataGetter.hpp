@@ -34,9 +34,9 @@ class CatalogueMetadataGetter {
     CatalogueMetadataGetter(cta::rdbms::Conn & conn);
     virtual ~CatalogueMetadataGetter();
     std::string getCatalogueVersion();
-    virtual std::list<std::string> getIndexNames() = 0;
-    virtual std::list<std::string> getTableNames() = 0;
-    virtual std::map<std::string,std::string> getColumns(const std::string& tableName) = 0;
+    virtual std::list<std::string> getIndexNames();
+    virtual std::list<std::string> getTableNames();
+    virtual std::map<std::string,std::string> getColumns(const std::string& tableName);
 };
 
 class SQLiteCatalogueMetadataGetter: public CatalogueMetadataGetter{
@@ -55,6 +55,24 @@ class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
   std::map<std::string,std::string> getColumns(const std::string& tableName) override;
+};
+
+class MySQLCatalogueMetadataGetter: public CatalogueMetadataGetter{
+  public:
+    MySQLCatalogueMetadataGetter(cta::rdbms::Conn &conn);
+    virtual ~MySQLCatalogueMetadataGetter();
+    std::list<std::string> getIndexNames() override;
+    std::list<std::string> getTableNames() override;
+    std::map<std::string,std::string> getColumns(const std::string& tableName) override;
+};
+
+class PostgresCatalogueMetadataGetter: public CatalogueMetadataGetter{
+  public:
+    PostgresCatalogueMetadataGetter(cta::rdbms::Conn &conn);
+    virtual ~PostgresCatalogueMetadataGetter();
+    std::list<std::string> getIndexNames() override;
+    std::list<std::string> getTableNames() override;
+    std::map<std::string,std::string> getColumns(const std::string& tableName) override;
 };
 
 class CatalogueMetadataGetterFactory {

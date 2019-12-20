@@ -54,25 +54,37 @@ std::string CatalogueMetadataGetter::getCatalogueVersion(){
   }
 }
 
+std::list<std::string> CatalogueMetadataGetter::getTableNames(){
+  return m_conn.getTableNames();
+}
+
+std::list<std::string> CatalogueMetadataGetter::getIndexNames(){
+  return m_conn.getIndexNames();
+}
+
+std::map<std::string,std::string> CatalogueMetadataGetter::getColumns(const std::string& tableName){
+  return m_conn.getColumns(tableName);
+}
+
 CatalogueMetadataGetter::~CatalogueMetadataGetter() {}
 
 SQLiteCatalogueMetadataGetter::SQLiteCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
 SQLiteCatalogueMetadataGetter::~SQLiteCatalogueMetadataGetter(){}
 
 std::list<std::string> SQLiteCatalogueMetadataGetter::getIndexNames() {
-  std::list<std::string> indexNames = m_conn.getIndexNames();
+  std::list<std::string> indexNames = CatalogueMetadataGetter::getIndexNames();
   removeObjectNameContaining(indexNames,{"sqlite_autoindex"});
   return indexNames;
 }
 
 std::list<std::string> SQLiteCatalogueMetadataGetter::getTableNames(){
-  std::list<std::string> tableNames = m_conn.getTableNames();
+  std::list<std::string> tableNames = CatalogueMetadataGetter::getTableNames();
   removeObjectNameContaining(tableNames,{"sqlite_sequence"});
   return tableNames;
 }
 
 std::map<std::string, std::string> SQLiteCatalogueMetadataGetter::getColumns(const std::string& tableName){
-  return m_conn.getColumns(tableName);
+  return CatalogueMetadataGetter::getColumns(tableName);
 }
 
 
@@ -80,18 +92,50 @@ OracleCatalogueMetadataGetter::OracleCatalogueMetadataGetter(cta::rdbms::Conn & 
 OracleCatalogueMetadataGetter::~OracleCatalogueMetadataGetter(){}
 
 std::list<std::string> OracleCatalogueMetadataGetter::getIndexNames() {
-  std::list<std::string> indexNames = m_conn.getIndexNames();
+  std::list<std::string> indexNames = CatalogueMetadataGetter::getIndexNames();
   removeObjectNameContaining(indexNames,{"_UN","PK","_LLN"});
   return indexNames;
 }
 
 std::list<std::string> OracleCatalogueMetadataGetter::getTableNames() {
-  std::list<std::string> tableNames = m_conn.getTableNames();
+  std::list<std::string> tableNames = CatalogueMetadataGetter::getTableNames();
   return tableNames;
 }
 
 std::map<std::string, std::string> OracleCatalogueMetadataGetter::getColumns(const std::string& tableName){
-  return m_conn.getColumns(tableName);
+  return CatalogueMetadataGetter::getColumns(tableName);
+}
+
+MySQLCatalogueMetadataGetter::MySQLCatalogueMetadataGetter(cta::rdbms::Conn& conn):CatalogueMetadataGetter(conn) {}
+MySQLCatalogueMetadataGetter::~MySQLCatalogueMetadataGetter(){}
+
+std::list<std::string> MySQLCatalogueMetadataGetter::getIndexNames() {
+  std::list<std::string> indexNames = CatalogueMetadataGetter::getIndexNames();
+  //removeObjectNameContaining(indexNames,{"User","Grantor", "_ID", "_NAME"});
+  return indexNames;
+}
+
+std::list<std::string> MySQLCatalogueMetadataGetter::getTableNames() {
+  return CatalogueMetadataGetter::getTableNames();
+}
+
+std::map<std::string, std::string> MySQLCatalogueMetadataGetter::getColumns(const std::string& tableName){
+  return CatalogueMetadataGetter::getColumns(tableName);
+}
+
+PostgresCatalogueMetadataGetter::PostgresCatalogueMetadataGetter(cta::rdbms::Conn& conn):CatalogueMetadataGetter(conn) {}
+PostgresCatalogueMetadataGetter::~PostgresCatalogueMetadataGetter(){}
+
+std::list<std::string> PostgresCatalogueMetadataGetter::getIndexNames() {
+  return CatalogueMetadataGetter::getIndexNames();
+}
+
+std::list<std::string> PostgresCatalogueMetadataGetter::getTableNames() {
+  return CatalogueMetadataGetter::getTableNames();
+}
+
+std::map<std::string, std::string> PostgresCatalogueMetadataGetter::getColumns(const std::string& tableName){
+  return CatalogueMetadataGetter::getColumns(tableName);
 }
 
 CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {
@@ -102,8 +146,12 @@ CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Lo
       return new SQLiteCatalogueMetadataGetter(conn);
     case DbType::DBTYPE_ORACLE:
       return new OracleCatalogueMetadataGetter(conn);
+    case DbType::DBTYPE_MYSQL:
+      return new MySQLCatalogueMetadataGetter(conn);
+    case DbType::DBTYPE_POSTGRESQL:
+      return new PostgresCatalogueMetadataGetter(conn);
     default:
-      return nullptr;
+      throw cta::exception::Exception("In CatalogueMetadataGetterFactory::create(), can't get CatalogueMetadataGetter for dbType "+rdbms::Login::dbTypeToString(dbType));
   }
 }
 

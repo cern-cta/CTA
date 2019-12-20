@@ -296,7 +296,7 @@ std::list<std::string> OcciConn::getParallelTableNames() {
       "FROM "
         "USER_TABLES "
       "WHERE "
-        "DEGREE NOT LIKE '%1%' "
+        "TRIM(DEGREE) NOT LIKE '1' "
       "ORDER BY "
         "TABLE_NAME";
     auto stmt = createStmt(sql);
