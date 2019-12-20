@@ -107,8 +107,12 @@ void VerifySchemaCmdLineArgs::printUsage(std::ostream &os) {
     "        The path to the file containing the connection details of the CTA" << std::endl <<
     "        catalogue database" << std::endl <<
     "Options:" << std::endl <<
-    "    -h,--help" << std::endl <<
-    "        Prints this usage message" << std::endl;
+    "    -h,--help" << std::endl <<     
+    "        Prints this usage message" << std::endl <<
+    "    -s,--schemaversionsdirectory " << std::endl <<
+    "        Specify the path of the directory where the schema .sql files are located." << std::endl <<
+    "        Example : if the schema sql files are located in /tmp/schema/VERSION_MAJOR.VERSION_MINOR/DATABASETYPE_catalogue_schema.sql " << std::endl <<
+    "                  the path should be /tmp/schema/" << std::endl;
 }
 
 } // namespace catalogue
