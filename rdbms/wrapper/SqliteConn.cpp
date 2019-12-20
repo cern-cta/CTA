@@ -255,6 +255,7 @@ std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tab
     "INT|"
     "TINYINT|"
     "VARBINARY|"
+    "BYTEA|"
     "RAW";
     
     auto stmt = createStmt(sql);
