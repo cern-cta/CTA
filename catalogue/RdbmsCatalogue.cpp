@@ -1381,6 +1381,15 @@ void RdbmsCatalogue::createArchiveRoute(
         << "->" << tapePoolName << " because it already exists";
       throw ue;
     }
+    {
+      const auto routes = getArchiveRoutes(conn, diskInstanceName, storageClassName, tapePoolName);
+      if(!routes.empty()) {
+        exception::UserError ue;
+        ue.getMessage() << "Cannot create archive route " << diskInstanceName << ":" << storageClassName << "," << copyNb
+          << "->" << tapePoolName << " because a route already exists for this storage class and tape pool";
+        throw ue;
+      }
+    }
     if(!storageClassExists(conn, diskInstanceName, storageClassName)) {
       exception::UserError ue;
       ue.getMessage() << "Cannot create archive route " << diskInstanceName << ":" << storageClassName << "," << copyNb
@@ -1527,6 +1536,90 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
         "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME, COPY_NB";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    while (rset.next()) {
+      common::dataStructures::ArchiveRoute route;
+
+      route.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
+      route.storageClassName = rset.columnString("STORAGE_CLASS_NAME");
+      route.copyNb = rset.columnUint64("COPY_NB");
+      route.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      route.comment = rset.columnString("USER_COMMENT");
+      route.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      route.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      route.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      route.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      route.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      route.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+      routes.push_back(route);
+    }
+
+    return routes;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getArchiveRoutes
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes(
+  const std::string &diskInstanceName, const std::string &storageClassName,
+  const std::string &tapePoolName) const {
+  try {
+    auto conn = m_connPool.getConn();
+    return getArchiveRoutes(conn, diskInstanceName, storageClassName, tapePoolName);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getArchiveRoutes
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes(rdbms::Conn &conn,
+  const std::string &diskInstanceName, const std::string &storageClassName, const std::string &tapePoolName) const {
+  try {
+    std::list<common::dataStructures::ArchiveRoute> routes;
+    const char *const sql =
+      "SELECT"                                                            "\n"
+        "STORAGE_CLASS.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"         "\n"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"         "\n"
+        "ARCHIVE_ROUTE.COPY_NB AS COPY_NB,"                               "\n"
+        "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"                     "\n"
+
+        "ARCHIVE_ROUTE.USER_COMMENT AS USER_COMMENT,"                     "\n"
+
+        "ARCHIVE_ROUTE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME," "\n"
+        "ARCHIVE_ROUTE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME," "\n"
+        "ARCHIVE_ROUTE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"           "\n"
+
+        "ARCHIVE_ROUTE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"   "\n"
+        "ARCHIVE_ROUTE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"   "\n"
+        "ARCHIVE_ROUTE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME"              "\n"
+      "FROM"                                                              "\n"
+        "ARCHIVE_ROUTE"                                                   "\n"
+      "INNER JOIN STORAGE_CLASS ON"                                       "\n"
+        "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID" "\n"
+      "INNER JOIN TAPE_POOL ON"                                           "\n"
+        "ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID"             "\n"
+      "WHERE"                                                             "\n"
+        "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND"      "\n"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND"      "\n"
+        "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME"                      "\n"
+      "ORDER BY"                                                          "\n"
+        "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME, COPY_NB";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
+    stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       common::dataStructures::ArchiveRoute route;

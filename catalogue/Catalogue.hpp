@@ -299,6 +299,25 @@ public:
     const uint32_t copyNb) = 0;
 
   virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const = 0;
+
+  /**
+   * @return the archive routes of the given storage class and destination tape
+   * pool.
+   *
+   * Under normal circumstances this method should return either 0 or 1 route.
+   * For a given storage class there should be no more than one route to any
+   * given tape pool.
+   *
+   * @param diskInstanceName The name of the disk instance to which the storage
+   * class belongs.
+   * @param storageClassName The name of the storage class which is only
+   * guaranteed to be unique within its disk instance.
+   * @param tapePoolName The name of the tape pool.
+   */
+  virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(
+    const std::string &diskInstanceName, const std::string &storageClassName,
+    const std::string &tapePoolName) const = 0;
+
   virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) = 0;
   virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) = 0;
 

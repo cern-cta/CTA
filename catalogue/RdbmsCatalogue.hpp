@@ -288,6 +288,25 @@ public:
     const uint32_t copyNb) override;
 
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
+
+  /**
+   * @return the archive routes of the given storage class and destination tape
+   * pool.
+   *
+   * Under normal circumstances this method should return either 0 or 1 route.
+   * For a given storage class there should be no more than one route to any
+   * given tape pool.
+   *
+   * @param diskInstanceName The name of the disk instance to which the storage
+   * class belongs.
+   * @param storageClassName The name of the storage class which is only
+   * guaranteed to be unique within its disk instance.
+   * @param tapePoolName The name of the tape pool.
+   */
+  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(
+    const std::string &diskInstanceName, const std::string &storageClassName,
+    const std::string &tapePoolName) const override;
+
   void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) override;
   void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) override;
 
@@ -874,6 +893,24 @@ protected:
    */
   bool archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &storageClassName,
     const uint32_t copyNb) const;
+
+  /**
+   * @return the archive routes of the given storage class and destination tape
+   * pool.
+   *
+   * Under normal circumstances this method should return either 0 or 1 route.
+   * For a given storage class there should be no more than one route to any
+   * given tape pool.
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance to which the storage
+   * class belongs.
+   * @param storageClassName The name of the storage class which is only
+   * guaranteed to be unique within its disk instance.
+   * @param tapePoolName The name of the tape pool.
+   */
+  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(rdbms::Conn &conn,
+    const std::string &diskInstanceName, const std::string &storageClassName, const std::string &tapePoolName) const;
 
   /**
    * Returns true if the specified tape exists.

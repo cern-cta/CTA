@@ -189,6 +189,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveRoutes();}, m_maxTriesToConnect);
   }
 
+  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string &diskInstanceName, const std::string &storageClassName, const std::string &tapePoolName) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveRoutes(diskInstanceName, storageClassName, tapePoolName);}, m_maxTriesToConnect);
+  }
+
   void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyArchiveRouteTapePoolName(admin, instanceName, storageClassName, copyNb, tapePoolName);}, m_maxTriesToConnect);
   }

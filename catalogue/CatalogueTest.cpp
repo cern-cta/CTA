@@ -1734,27 +1734,52 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes(storageClass.diskInstance, storageClass.name, tapePoolName).empty());
+
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
   m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName, comment);
       
-  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+  {
+    const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
       
-  ASSERT_EQ(1, routes.size());
+    ASSERT_EQ(1, routes.size());
       
-  const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(storageClass.diskInstance, route.diskInstanceName);
-  ASSERT_EQ(storageClass.name, route.storageClassName);
-  ASSERT_EQ(copyNb, route.copyNb);
-  ASSERT_EQ(tapePoolName, route.tapePoolName);
-  ASSERT_EQ(comment, route.comment);
+    const common::dataStructures::ArchiveRoute route = routes.front();
+    ASSERT_EQ(storageClass.diskInstance, route.diskInstanceName);
+    ASSERT_EQ(storageClass.name, route.storageClassName);
+    ASSERT_EQ(copyNb, route.copyNb);
+    ASSERT_EQ(tapePoolName, route.tapePoolName);
+    ASSERT_EQ(comment, route.comment);
 
-  const common::dataStructures::EntryLog creationLog = route.creationLog;
-  ASSERT_EQ(m_admin.username, creationLog.username);
-  ASSERT_EQ(m_admin.host, creationLog.host);
+    const common::dataStructures::EntryLog creationLog = route.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
   
-  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
-  ASSERT_EQ(creationLog, lastModificationLog);
+    const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  {
+    const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes(
+      storageClass.diskInstance, storageClass.name, tapePoolName);
+      
+    ASSERT_EQ(1, routes.size());
+      
+    const common::dataStructures::ArchiveRoute route = routes.front();
+    ASSERT_EQ(storageClass.diskInstance, route.diskInstanceName);
+    ASSERT_EQ(storageClass.name, route.storageClassName);
+    ASSERT_EQ(copyNb, route.copyNb);
+    ASSERT_EQ(tapePoolName, route.tapePoolName);
+    ASSERT_EQ(comment, route.comment);
+
+    const common::dataStructures::EntryLog creationLog = route.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolName) {
