@@ -2137,6 +2137,37 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
   ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb,
     tapePoolName, comment), exception::Exception);
 }
+  
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  const uint32_t copyNb1 = 1;
+  const std::string comment1 = "Create archive route for copy 1";
+  m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb1, tapePoolName, comment1);
+
+  const uint32_t copyNb2 = 2;
+  const std::string comment2 = "Create archive route for copy 2";
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb2,
+    tapePoolName, comment2), exception::UserError);
+}
 
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   using namespace cta;
