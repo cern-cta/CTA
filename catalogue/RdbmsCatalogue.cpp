@@ -4907,7 +4907,7 @@ std::list<common::dataStructures::ActivitiesFairShareWeights> RdbmsCatalogue::ge
       auto diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
       try {
         activity = & activitiesMap.at(diskInstanceName);
-      } catch (std::out_of_range) {
+      } catch (std::out_of_range &) {
         activity = & activitiesMap[diskInstanceName];
         activity->diskInstance = diskInstanceName;
       }
