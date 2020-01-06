@@ -81,19 +81,16 @@ std::unique_ptr<DbToSQLiteStatementTransformer> DbToSQLiteStatementTransformerFa
   StatementType stmtType = statementToStatementType(statement);
   std::unique_ptr<DbToSQLiteStatementTransformer> ret;
   switch(stmtType){
-    case StatementType::CREATE_TABLE:
-    case StatementType::CREATE_INDEX:
-    case StatementType::INSERT_INTO_CTA_VERSION:
-      ret.reset(new DbToSQLiteStatementTransformer(statement));
-      break;
     case StatementType::CREATE_GLOBAL_TEMPORARY_TABLE:
       ret.reset(new CreateGlobalTempTableToSQLiteStatementTransformer(statement));
       break;
-    case StatementType::CREATE_SEQUENCE:
+    case StatementType::CREATE_SEQUENCE://CREATE SEQUENCE is not SQLite compatible, we delete this statement
     case StatementType::SKIP:
       ret.reset(new DeleteStatementTransformer(statement));
       break;
     default:
+      //CREATE TABLE, CREATE INDEX, INSERT INTO CTA_VERSION, OTHERS
+      //If the statement does not need modification, we return it as it is
       ret.reset(new DbToSQLiteStatementTransformer(statement));
       break;
   }

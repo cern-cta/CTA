@@ -25,7 +25,11 @@
 
 namespace cta {
 namespace catalogue {
-  
+
+/**
+ * This class is used to get the Metadata (table names, columns, indexes) of the database accessed via the connection given in parameters
+ * It will simply call the methods from the connection (Conn) instance and adapt or not the metadata returned.  
+ */  
 class CatalogueMetadataGetter {
   protected:
     rdbms::Conn& m_conn;
@@ -41,6 +45,9 @@ class CatalogueMetadataGetter {
     virtual std::map<std::string,std::string> getColumns(const std::string& tableName);
 };
 
+/**
+ * Specific SQLite Catalogue metadata getter
+ */
 class SQLiteCatalogueMetadataGetter: public CatalogueMetadataGetter{
 public:
   SQLiteCatalogueMetadataGetter(cta::rdbms::Conn & conn);
@@ -50,6 +57,9 @@ public:
   std::map<std::string,std::string> getColumns(const std::string& tableName) override;
 };
 
+/**
+ * Specific Oracle Catalogue metadata getter
+ */
 class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
   public:
   OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn);
@@ -59,6 +69,9 @@ class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
   std::map<std::string,std::string> getColumns(const std::string& tableName) override;
 };
 
+/**
+ * Specific MySQL Catalogue metadata getter
+ */
 class MySQLCatalogueMetadataGetter: public CatalogueMetadataGetter{
   public:
     MySQLCatalogueMetadataGetter(cta::rdbms::Conn &conn);
@@ -68,6 +81,9 @@ class MySQLCatalogueMetadataGetter: public CatalogueMetadataGetter{
     std::map<std::string,std::string> getColumns(const std::string& tableName) override;
 };
 
+/**
+ * Specific Postgres Catalogue metadata getter
+ */
 class PostgresCatalogueMetadataGetter: public CatalogueMetadataGetter{
   public:
     PostgresCatalogueMetadataGetter(cta::rdbms::Conn &conn);
@@ -77,6 +93,12 @@ class PostgresCatalogueMetadataGetter: public CatalogueMetadataGetter{
     std::map<std::string,std::string> getColumns(const std::string& tableName) override;
 };
 
+/**
+ * Factory of MetadataGetter allowing to instanciate the correct metadata getter according to the database type given in parameter
+ * @param dbType the database type in order to instanciate the correct metadata getter
+ * @param conn the connection of the database to get the metadata from
+ * @return the correct CatalogueMetadataGetter instance
+ */
 class CatalogueMetadataGetterFactory {
 public:
   static CatalogueMetadataGetter* create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn);

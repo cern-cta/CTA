@@ -31,15 +31,31 @@
 namespace cta {
 namespace catalogue {
 
+/**
+ * This class is used to compare the schema that is running against the database accessible
+ * via the connection given in the constructor
+ */
 class SchemaComparer {
 public:
+  /**
+   * Constructs a SchemaComparer
+   * @param catalogueDbType the database type of the database to compare
+   * @param conn the connection of the database to compare the schema
+   */
   SchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType,cta::rdbms::Conn &conn);
+  /**
+   * Destructor
+   */
   virtual ~SchemaComparer();
   /**
-   * Compare the schema
-   * @return 
+   * Compare the schema to compare against the database 
+   * @return a SchemaComparerResult object that will contain the differences if there are some
    */
   virtual SchemaComparerResult compare() = 0;
+  /**
+   * Return the catalogue version of the schema located in the database to compare
+   * @return the catalogue version of the schema located in the database to compare
+   */
   std::string getCatalogueVersion();
 protected:
   const cta::rdbms::Login::DbType &m_dbType;
@@ -48,7 +64,15 @@ protected:
   std::unique_ptr<cta::catalogue::CatalogueMetadataGetter> m_catalogueMetadataGetter;
   
 private:
+  /**
+   * Compare the tables of the schema against the catalogue database
+   * @return a SchemaComparerResult that will contain the differences if there are some
+   */
   virtual SchemaComparerResult compareTables() = 0;
+  /**
+   * Compare the indexes of the schema against the catalogue database
+   * @return a SchemaComparerResult that will contain the differences if there are some
+   */
   virtual SchemaComparerResult compareIndexes() = 0;
 };
 

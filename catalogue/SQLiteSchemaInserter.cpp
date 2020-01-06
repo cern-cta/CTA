@@ -32,9 +32,11 @@ SQLiteSchemaInserter::SQLiteSchemaInserter(const std::string & schemaVersion, co
 SQLiteSchemaInserter::~SQLiteSchemaInserter() {}
 
 void SQLiteSchemaInserter::insert() {
+  //Get all the statements from the correct .sql files
   std::list<std::string> statements = getAllStatementsFromSchema(readSchemaFromFile());
   std::list<std::string> sqliteStatements;
   for(auto& stmt: statements){
+    //Transform the statements in order to make them compatible with the SQLite database
     std::string sqliteStatement = DbToSQLiteStatementTransformerFactory::create(stmt)->transform();
     if(!sqliteStatement.empty())
       sqliteStatements.emplace_back(sqliteStatement);

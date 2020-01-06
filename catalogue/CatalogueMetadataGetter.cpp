@@ -74,6 +74,7 @@ std::list<std::string> CatalogueMetadataGetter::getTableNames(){
 
 std::list<std::string> CatalogueMetadataGetter::getIndexNames(){
   std::list<std::string> indexNames = m_conn.getIndexNames();
+  //We just want indexes created by the user, their name are finishing by _IDX or by _I
   cta::utils::Regex regexIndexes("(.*_IDX$)|(.*_I$)");
   removeObjectNameNotMatches(indexNames,regexIndexes);
   return indexNames;
@@ -90,12 +91,14 @@ SQLiteCatalogueMetadataGetter::~SQLiteCatalogueMetadataGetter(){}
 
 std::list<std::string> SQLiteCatalogueMetadataGetter::getIndexNames() {
   std::list<std::string> indexNames = CatalogueMetadataGetter::getIndexNames();
+  //We do not want the sqlite_autoindex created automatically by SQLite
   removeObjectNameContaining(indexNames,{"sqlite_autoindex"});
   return indexNames;
 }
 
 std::list<std::string> SQLiteCatalogueMetadataGetter::getTableNames(){
   std::list<std::string> tableNames = CatalogueMetadataGetter::getTableNames();
+  //We do not want the sqlite_sequence tables created automatically by SQLite
   removeObjectNameContaining(tableNames,{"sqlite_sequence"});
   return tableNames;
 }

@@ -22,9 +22,22 @@
 namespace cta {
 namespace catalogue {
   
+/**
+ * This class allows to compare a catalogue schema against a InMemory SQLite catalogue schema
+ */
 class SQLiteSchemaComparer: public SchemaComparer {
 public:
+  /**
+   * Constructs a SQLiteSchemaComparer
+   * @param catalogueDbType
+   * @param catalogueConn
+   * @param allSchemasVersionPath
+   */
   SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn, const std::string & allSchemasVersionPath);
+  /**
+   * Compare the catalogue schema against the InMemory SQLite catalogue schema
+   * @return a SchemaComparerResult object that will contain the differences if there are some
+   */
   SchemaComparerResult compare() override;
   virtual ~SQLiteSchemaComparer();
   

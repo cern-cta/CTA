@@ -34,7 +34,7 @@ void SchemaChecker::useSQLiteSchemaComparer(const std::string &allSchemasVersion
 
 SchemaChecker::Status SchemaChecker::compareSchema(){
   if(m_schemaComparer == nullptr){
-    throw cta::exception::Exception("No schema comparer used. Please specify the schema comparer by using the methods useXXXXSchemaComparer(schemaComparer)");
+    throw cta::exception::Exception("No schema comparer used. Please specify the schema comparer by using the methods useXXXXSchemaComparer()");
   }
   cta::catalogue::SchemaComparerResult res = m_schemaComparer->compare();
   std::cout << "Schema version : " << m_schemaComparer->getCatalogueVersion() << std::endl;
