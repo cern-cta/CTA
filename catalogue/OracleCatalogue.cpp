@@ -623,11 +623,11 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
     try {
       occiStmt->executeArrayUpdate(archiveFileBatch.nbRows);
     } catch(oracle::occi::BatchSQLException &be) {
-      const int nbFailedRows = be.getFailedRowCount();
+      const unsigned int nbFailedRows = be.getFailedRowCount();
       exception::Exception ex;
       ex.getMessage() << "Caught a BatchSQLException" << nbFailedRows;
       bool foundErrorOtherThanUniqueConstraint = false;
-      for (int row = 0; row < nbFailedRows; row++ ) {
+      for (unsigned int row = 0; row < nbFailedRows; row++ ) {
         oracle::occi::SQLException err = be.getException(row);
         const unsigned int rowIndex = be.getRowNum(row);
         const int errorCode = err.getErrorCode();
