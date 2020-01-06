@@ -56,8 +56,7 @@ public:
   /**
    * Destructor.
    */
-  ~CatalogueRetryWrapper() override {
-  }
+  ~CatalogueRetryWrapper() override = default;
 
   /**
    * Deletion of the copy assignment operator.
@@ -233,7 +232,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteTape(vid);}, m_maxTriesToConnect);
   }
 
-  std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria &searchCriteria = TapeSearchCriteria()) const override {
+  std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria &searchCriteria) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapes(searchCriteria);}, m_maxTriesToConnect);
   }
 
@@ -321,7 +320,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyRequesterGroupMountRuleComment(admin, instanceName, requesterGroupName, comment);}, m_maxTriesToConnect);
   }
 
-  virtual void createMountPolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) override {
+  void createMountPolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createMountPolicy(admin, name, archivePriority, minArchiveRequestAge, retrievePriority, minRetrieveRequestAge, maxDrivesAllowed, comment);}, m_maxTriesToConnect);
   }
 
@@ -433,7 +432,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemSleepTime(admin, name, sleepTime);}, m_maxTriesToConnect);
   }
   
-  ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
+  ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
   }
 
@@ -445,7 +444,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesForRepackItor(vid, startFSeq);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::ArchiveFileSummary getTapeFileSummary(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
+  common::dataStructures::ArchiveFileSummary getTapeFileSummary(const TapeFileSearchCriteria &searchCriteria) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapeFileSummary(searchCriteria);}, m_maxTriesToConnect);
   }
 
