@@ -31,6 +31,7 @@ class CatalogueMetadataGetter {
     rdbms::Conn& m_conn;
     void removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval);
     void removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval);
+    void removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex);
   public:
     CatalogueMetadataGetter(cta::rdbms::Conn & conn);
     virtual ~CatalogueMetadataGetter();

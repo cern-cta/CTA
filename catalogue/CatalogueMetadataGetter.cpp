@@ -37,6 +37,12 @@ void CatalogueMetadataGetter::removeObjectNameNotContaining(std::list<std::strin
     }) != wordsNotToTriggerRemoval.end();
   });
 }
+
+void CatalogueMetadataGetter::removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
+  objects.remove_if([&regex](const std::string &object){
+    return !regex.has_match(object);
+  });
+}
   
 CatalogueMetadataGetter::CatalogueMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
 
@@ -68,7 +74,8 @@ std::list<std::string> CatalogueMetadataGetter::getTableNames(){
 
 std::list<std::string> CatalogueMetadataGetter::getIndexNames(){
   std::list<std::string> indexNames = m_conn.getIndexNames();
-  removeObjectNameNotContaining(indexNames,{"_IDX"});
+  cta::utils::Regex regexIndexes("(.*_IDX$)|(.*_I$)");
+  removeObjectNameNotMatches(indexNames,regexIndexes);
   return indexNames;
 }
 
