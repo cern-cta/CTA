@@ -19,7 +19,6 @@
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/CreateAdminUserCmd.hpp"
 #include "catalogue/CreateAdminUserCmdLineArgs.hpp"
-#include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
