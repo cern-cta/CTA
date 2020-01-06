@@ -310,7 +310,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     // allow checking fSeq coherency.
     // determine the number of files
     size_t filesCount=std::count_if(events.cbegin(), events.cend(), 
-        [](const TapeItemWrittenPointer &e){return typeid(*e)==typeid(TapeFileWritten);});
+        [](const TapeItemWrittenPointer &e) -> bool {return typeid(*e)==typeid(TapeFileWritten);});
     TapeFileBatch tapeFileBatch(filesCount);
     
     std::set<TapeFileWritten> fileEvents;
