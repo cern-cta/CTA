@@ -84,6 +84,13 @@ int ImmutableFileTest::exceptionThrowingMain(const int argc, char *const *const 
     return 0;
   }
 
+  if(userConfirmsDestroyFile(cmdLine.fileUrl.GetURL())) {
+    m_out << "Starting destructive test on file " << cmdLine.fileUrl.GetURL() << std::endl;
+  } else {
+    m_out << "Aborting" << std::endl;
+    return 0;
+  }
+
   if(cmdLine.fileUrl.IsLocalFile()) {
     exception::Exception ex;
     ex.getMessage() << cmdLine.fileUrl.GetURL() << " is local";
@@ -115,6 +122,23 @@ int ImmutableFileTest::exceptionThrowingMain(const int argc, char *const *const 
   }
 
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// userConfirmsDestroyFile
+//------------------------------------------------------------------------------
+bool ImmutableFileTest::userConfirmsDestroyFile(const std::string &fileUrl) const {
+  m_out << "WARNING" << std::endl;
+  m_out << "You are about to destroy file " << fileUrl << std::endl;
+  m_out << "Are you sure you want to continue?" << std::endl;
+
+  std::string userResponse;
+  while(userResponse != "yes" && userResponse != "no") {
+    m_out << "Please type either \"yes\" or \"no\" > ";
+    std::getline(m_in, userResponse);
+  }
+
+  return userResponse == "yes";
 }
 
 //------------------------------------------------------------------------------

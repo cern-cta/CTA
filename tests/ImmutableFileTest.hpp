@@ -75,6 +75,14 @@ private:
   int exceptionThrowingMain(const int argc, char *const *const argv);
 
   /**
+   * Asks the user to confirm that they want to destroy the specified file.
+   *
+   * @param fileUrl The URL of the file.
+   * @return True if the user confirmed.
+   */
+  bool userConfirmsDestroyFile(const std::string &fileUrl) const;
+
+  /**
    * @return True if the specified file exists
    * @param url The XRootD URL of the file to be tested.
    */
