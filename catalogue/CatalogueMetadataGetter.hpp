@@ -36,6 +36,7 @@ class CatalogueMetadataGetter {
     void removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval);
     void removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval);
     void removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex);
+    void removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex);
   public:
     CatalogueMetadataGetter(cta::rdbms::Conn & conn);
     virtual ~CatalogueMetadataGetter();
@@ -43,6 +44,7 @@ class CatalogueMetadataGetter {
     virtual std::list<std::string> getIndexNames();
     virtual std::list<std::string> getTableNames();
     virtual std::map<std::string,std::string> getColumns(const std::string& tableName);
+    virtual std::list<std::string> getConstraintNames(const std::string& tableName);
 };
 
 /**
@@ -55,6 +57,14 @@ public:
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
   std::map<std::string,std::string> getColumns(const std::string& tableName) override;
+  std::list<std::string> getConstraintNames(const std::string &tableName) override;
+  /**
+   * Get the constraint names but filters the result to be compatible with the database type passed in parameter
+   * @param tableName the table for which we want the constraint
+   * @param dbType the database type for which the results will be compatible
+   * @return  the constraint names filtered in order to be compatible with the database type passed in parameter
+   */
+  std::list<std::string> getConstraintNames(const std::string &tableName, cta::rdbms::Login::DbType dbType);
 };
 
 /**
@@ -67,6 +77,7 @@ class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
   std::map<std::string,std::string> getColumns(const std::string& tableName) override;
+  std::list<std::string> getConstraintNames(const std::string &tableName) override;
 };
 
 /**
@@ -79,6 +90,7 @@ class MySQLCatalogueMetadataGetter: public CatalogueMetadataGetter{
     std::list<std::string> getIndexNames() override;
     std::list<std::string> getTableNames() override;
     std::map<std::string,std::string> getColumns(const std::string& tableName) override;
+    std::list<std::string> getConstraintNames(const std::string &tableName) override;
 };
 
 /**
@@ -91,6 +103,7 @@ class PostgresCatalogueMetadataGetter: public CatalogueMetadataGetter{
     std::list<std::string> getIndexNames() override;
     std::list<std::string> getTableNames() override;
     std::map<std::string,std::string> getColumns(const std::string& tableName) override;
+    std::list<std::string> getConstraintNames(const std::string &tableName) override;
 };
 
 /**

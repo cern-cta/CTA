@@ -155,6 +155,17 @@ public:
    * in alphabetical order. 
    */
   virtual std::list<std::string> getParallelTableNames() = 0;
+  
+  /**
+   * Returns the Constraint names of a given table in the database schema
+   * 
+   * If the underlying database technologies does not support constraints informations
+   * this method simply returns an empty list.
+   * 
+   * @param tableName the table name to get the constraint names from
+   * @return the list of the names of the constraints that the given table has.
+   */
+  virtual std::list<std::string> getConstraintNames(const std::string &tableName) = 0;
 
 }; // class ConnWrapper
 

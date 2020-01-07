@@ -38,7 +38,7 @@ public:
     SUCCESS,
     FAILED
   };
-  static std::string StatusToString(const Status& status);
+  static std::string statusToString(const Status& status);
   
   SchemaComparerResult();
   SchemaComparerResult(const SchemaComparerResult& orig);

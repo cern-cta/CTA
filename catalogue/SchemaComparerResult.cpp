@@ -62,18 +62,18 @@ SchemaComparerResult::Status SchemaComparerResult::getStatus() const {
 
 void SchemaComparerResult::printDiffs() const {
   for(auto &diff: m_diffs){
-    std::cout << diff << std::endl;
+    std::cout << "  ERROR: " << diff << std::endl;
   }
 }
 
-std::string SchemaComparerResult::StatusToString(const Status& status){
+std::string SchemaComparerResult::statusToString(const Status& status){
   switch(status){
     case Status::SUCCESS:
       return "SUCCESS";
     case Status::FAILED:
       return "FAILED";
     default:
-      return "UnknownStatus";
+      return "  UnknownStatus";
   }
 }
 

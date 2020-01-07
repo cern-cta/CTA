@@ -285,7 +285,7 @@ std::list<std::string> OcciConn::getTriggerNames() {
 }
 
 //------------------------------------------------------------------------------
-// getParallelTriggerNames
+// getParallelTableNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getParallelTableNames() {
   try {
@@ -306,6 +306,32 @@ std::list<std::string> OcciConn::getParallelTableNames() {
       names.push_back(name.value());
     }
 
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getConstraintNames
+//------------------------------------------------------------------------------
+std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName){
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "CONSTRAINT_NAME "
+      "FROM "
+        "USER_CONSTRAINTS "
+      "WHERE "
+        "TABLE_NAME=:TABLE_NAME";
+    auto stmt = createStmt(sql);
+    stmt->bindString(":TABLE_NAME",tableName);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("CONSTRAINT_NAME");
+      names.push_back(name.value());
+    }
     return names;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

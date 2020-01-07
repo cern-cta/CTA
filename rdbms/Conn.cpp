@@ -230,9 +230,23 @@ std::list<std::string> Conn::getTriggerNames() {
   }
 }
 
+//------------------------------------------------------------------------------
+// getParallelTableNames
+//------------------------------------------------------------------------------
 std::list<std::string> Conn::getParallelTableNames(){
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getParallelTableNames();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// getConstraintNames
+//------------------------------------------------------------------------------
+std::list<std::string> Conn::getConstraintNames(const std::string &tableName) {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getConstraintNames(tableName);
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
   }

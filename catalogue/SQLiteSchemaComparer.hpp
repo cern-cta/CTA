@@ -38,17 +38,18 @@ public:
    * Compare the catalogue schema against the InMemory SQLite catalogue schema
    * @return a SchemaComparerResult object that will contain the differences if there are some
    */
-  SchemaComparerResult compare() override;
+  SchemaComparerResult compareAll() override;
+  SchemaComparerResult compareIndexes() override;
+  SchemaComparerResult compareTables() override;
+  
   virtual ~SQLiteSchemaComparer();
   
 private:
   void insertSchemaInSQLite();
-  SchemaComparerResult compareIndexes();
-  SchemaComparerResult compareTables() override;
   SchemaComparerResult compareItems(const std::string &itemType, const std::list<std::string>& itemsFromCatalogue, const std::list<std::string>& itemsFromSQLite);
   SchemaComparerResult compareTables(const std::list<std::string> &catalogueTables, const std::list<std::string> &schemaTables);
   typedef std::map<std::string, std::map<std::string, std::string>> TableColumns;
-  SchemaComparerResult compareTableColumns(const TableColumns & tableColumns1, const std::string &originTableColumns1,const TableColumns & tableColumns2, const std::string &originTableColumns2);
+  SchemaComparerResult compareTableColumns(const TableColumns & schema1TableColumns, const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type);
   rdbms::Conn m_sqliteConn;
   std::unique_ptr<rdbms::ConnPool> m_sqliteConnPool;
   std::unique_ptr<SQLiteCatalogueMetadataGetter> m_sqliteSchemaMetadataGetter;

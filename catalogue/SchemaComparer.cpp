@@ -26,7 +26,7 @@
 
 namespace cta {
 namespace catalogue {
-SchemaComparer::SchemaComparer(const cta::rdbms::Login::DbType &dbType, rdbms::Conn &conn): m_dbType(dbType),m_catalogueConn(conn){
+SchemaComparer::SchemaComparer(const cta::rdbms::Login::DbType &dbType, rdbms::Conn &conn): m_dbType(dbType),m_catalogueConn(conn),m_compareTableConstraints((m_dbType != cta::rdbms::Login::DBTYPE_MYSQL)){
   m_catalogueMetadataGetter.reset(CatalogueMetadataGetterFactory::create(dbType,m_catalogueConn));
   m_catalogueSchemaVersion = m_catalogueMetadataGetter->getCatalogueVersion();
 }

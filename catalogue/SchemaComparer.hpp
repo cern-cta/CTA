@@ -51,19 +51,7 @@ public:
    * Compare the schema to compare against the database 
    * @return a SchemaComparerResult object that will contain the differences if there are some
    */
-  virtual SchemaComparerResult compare() = 0;
-  /**
-   * Return the catalogue version of the schema located in the database to compare
-   * @return the catalogue version of the schema located in the database to compare
-   */
-  std::string getCatalogueVersion();
-protected:
-  const cta::rdbms::Login::DbType &m_dbType;
-  std::string m_catalogueSchemaVersion;
-  cta::rdbms::Conn &m_catalogueConn;
-  std::unique_ptr<cta::catalogue::CatalogueMetadataGetter> m_catalogueMetadataGetter;
-  
-private:
+  virtual SchemaComparerResult compareAll() = 0;
   /**
    * Compare the tables of the schema against the catalogue database
    * @return a SchemaComparerResult that will contain the differences if there are some
@@ -74,6 +62,17 @@ private:
    * @return a SchemaComparerResult that will contain the differences if there are some
    */
   virtual SchemaComparerResult compareIndexes() = 0;
+  /**
+   * Return the catalogue version of the schema located in the database to compare
+   * @return the catalogue version of the schema located in the database to compare
+   */
+  std::string getCatalogueVersion();
+protected:
+  const cta::rdbms::Login::DbType &m_dbType;
+  std::string m_catalogueSchemaVersion;
+  cta::rdbms::Conn &m_catalogueConn;
+  std::unique_ptr<cta::catalogue::CatalogueMetadataGetter> m_catalogueMetadataGetter;
+  bool m_compareTableConstraints;
 };
 
 }}

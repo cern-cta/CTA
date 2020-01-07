@@ -209,6 +209,17 @@ public:
    * in alphabetical order. 
    */  
   std::list<std::string> getParallelTableNames();
+  
+  /**
+   * Returns the Constraint names of a given table in the database schema
+   * 
+   * If the underlying database technologies does not support constraints informations
+   * this method simply returns an empty list.
+   * 
+   * @param tableName the table name to get the constraint names from
+   * @return the list of the names of the constraints that the given table has.
+   */
+  std::list<std::string> getConstraintNames(const std::string &tableName);
 
   /**
    * Get a pointer to the connection wrapper implementation

@@ -338,7 +338,17 @@ std::list<std::string> MysqlConn::getTriggerNames() {
   }
 }
 
+//------------------------------------------------------------------------------
+// getParallelTableNames
+//------------------------------------------------------------------------------
 std::list<std::string> MysqlConn::getParallelTableNames(){
+  return std::list<std::string>();
+}
+
+//------------------------------------------------------------------------------
+// getConstraintNames
+//------------------------------------------------------------------------------
+std::list<std::string> MysqlConn::getConstraintNames(const std::string& tableName){
   return std::list<std::string>();
 }
 

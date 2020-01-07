@@ -43,6 +43,12 @@ void CatalogueMetadataGetter::removeObjectNameNotMatches(std::list<std::string> 
     return !regex.has_match(object);
   });
 }
+
+void CatalogueMetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
+  objects.remove_if([&regex](const std::string &object){
+    return regex.has_match(object);
+  });
+}
   
 CatalogueMetadataGetter::CatalogueMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
 
@@ -84,6 +90,10 @@ std::map<std::string,std::string> CatalogueMetadataGetter::getColumns(const std:
   return m_conn.getColumns(tableName);
 }
 
+std::list<std::string> CatalogueMetadataGetter::getConstraintNames(const std::string &tableName){
+  return m_conn.getConstraintNames(tableName);
+}
+
 CatalogueMetadataGetter::~CatalogueMetadataGetter() {}
 
 SQLiteCatalogueMetadataGetter::SQLiteCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
@@ -107,6 +117,18 @@ std::map<std::string, std::string> SQLiteCatalogueMetadataGetter::getColumns(con
   return CatalogueMetadataGetter::getColumns(tableName);
 }
 
+std::list<std::string> SQLiteCatalogueMetadataGetter::getConstraintNames(const std::string &tableName){
+  return CatalogueMetadataGetter::getConstraintNames(tableName);
+}
+
+std::list<std::string> SQLiteCatalogueMetadataGetter::getConstraintNames(const std::string &tableName, cta::rdbms::Login::DbType dbType){
+  std::list<std::string> constraintNames = getConstraintNames(tableName);
+  if(dbType == cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL){
+    removeObjectNameMatches(constraintNames,cta::utils::Regex("(^NN_)|(_NN$)"));
+  }
+  return constraintNames;
+}
+
 OracleCatalogueMetadataGetter::OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
 OracleCatalogueMetadataGetter::~OracleCatalogueMetadataGetter(){}
 
@@ -121,6 +143,10 @@ std::list<std::string> OracleCatalogueMetadataGetter::getTableNames() {
 
 std::map<std::string, std::string> OracleCatalogueMetadataGetter::getColumns(const std::string& tableName){
   return CatalogueMetadataGetter::getColumns(tableName);
+}
+
+std::list<std::string> OracleCatalogueMetadataGetter::getConstraintNames(const std::string& tableName){
+  return CatalogueMetadataGetter::getConstraintNames(tableName);
 }
 
 MySQLCatalogueMetadataGetter::MySQLCatalogueMetadataGetter(cta::rdbms::Conn& conn):CatalogueMetadataGetter(conn) {}
@@ -138,6 +164,10 @@ std::map<std::string, std::string> MySQLCatalogueMetadataGetter::getColumns(cons
   return CatalogueMetadataGetter::getColumns(tableName);
 }
 
+std::list<std::string> MySQLCatalogueMetadataGetter::getConstraintNames(const std::string& tableName){
+  return CatalogueMetadataGetter::getConstraintNames(tableName);
+}
+
 PostgresCatalogueMetadataGetter::PostgresCatalogueMetadataGetter(cta::rdbms::Conn& conn):CatalogueMetadataGetter(conn) {}
 PostgresCatalogueMetadataGetter::~PostgresCatalogueMetadataGetter(){}
 
@@ -151,6 +181,10 @@ std::list<std::string> PostgresCatalogueMetadataGetter::getTableNames() {
 
 std::map<std::string, std::string> PostgresCatalogueMetadataGetter::getColumns(const std::string& tableName){
   return CatalogueMetadataGetter::getColumns(tableName);
+}
+
+std::list<std::string> PostgresCatalogueMetadataGetter::getConstraintNames(const std::string& tableName){
+  return CatalogueMetadataGetter::getConstraintNames(tableName);
 }
 
 CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {

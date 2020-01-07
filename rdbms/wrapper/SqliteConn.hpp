@@ -173,6 +173,13 @@ public:
   std::list<std::string> getParallelTableNames() override;
   
   /**
+   * Returns the Constraint names of a given table in the database schema
+   * @param tableName the table name to get the constraint names from
+   * @return the list of the names of the constraints that the given table has.
+   */
+  std::list<std::string> getConstraintNames(const std::string &tableName) override;
+  
+  /**
    * This is an SqliteConn specific method that prints the database schema to
    * the specified output stream.
    *

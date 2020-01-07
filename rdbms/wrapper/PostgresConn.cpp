@@ -320,8 +320,46 @@ std::list<std::string> PostgresConn::getTriggerNames() {
   return std::list<std::string>();
 }
 
+//------------------------------------------------------------------------------
+// getParallelTableNames
+//------------------------------------------------------------------------------
 std::list<std::string> PostgresConn::getParallelTableNames(){
   return std::list<std::string>();
+}
+//------------------------------------------------------------------------------
+// getConstraintNames
+//------------------------------------------------------------------------------
+std::list<std::string> PostgresConn::getConstraintNames(const std::string& tableName){
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "CON.CONNAME AS CONSTRAINT_NAME "
+      "FROM "
+        "PG_CATALOG.PG_CONSTRAINT CON "
+      "INNER JOIN PG_CATALOG.PG_CLASS REL "
+        "ON REL.OID=CON.CONRELID "
+      "INNER JOIN PG_CATALOG.PG_NAMESPACE NSP "
+        "ON NSP.OID = CONNAMESPACE "
+      "WHERE "
+        "REL.RELNAME=:TABLE_NAME";
+    auto stmt = createStmt(sql);
+    std::string localTableName = tableName;
+    utils::toLower(localTableName);
+    stmt->bindString(":TABLE_NAME",localTableName);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("CONSTRAINT_NAME");
+      if(name) {
+        utils::toUpper(name.value());
+        names.push_back(name.value());
+      }
+    }
+
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

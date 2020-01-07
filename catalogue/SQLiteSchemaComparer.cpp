@@ -31,6 +31,7 @@ SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &cata
   m_sqliteConnPool.reset(new rdbms::ConnPool(login,1));
   m_sqliteConn = std::move(m_sqliteConnPool->getConn());
   m_sqliteSchemaMetadataGetter.reset(new SQLiteCatalogueMetadataGetter(m_sqliteConn));
+  insertSchemaInSQLite();
 }
 
 SQLiteSchemaComparer::~SQLiteSchemaComparer() {
@@ -39,11 +40,10 @@ SQLiteSchemaComparer::~SQLiteSchemaComparer() {
   m_sqliteConnPool.reset();
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compare(){
+SchemaComparerResult SQLiteSchemaComparer::compareAll(){
   SchemaComparerResult res;
-  insertSchemaInSQLite();
-  res += compareIndexes();
   res += compareTables();
+  res += compareIndexes();
   return res;
 }
 
@@ -84,45 +84,53 @@ SchemaComparerResult SQLiteSchemaComparer::compareTables(const std::list<std::st
   SchemaComparerResult result;
   std::map<std::string, std::map<std::string, std::string>> catalogueTableColumns;
   std::map<std::string, std::map<std::string, std::string>> schemaTableColumns;
+  std::map<std::string,std::list<std::string>> catalogueTableConstraints;
+  std::map<std::string, std::list<std::string>> schemaTableConstraints;
+  
   for(auto &catalogueTable: catalogueTables){
     catalogueTableColumns[catalogueTable] = m_catalogueMetadataGetter->getColumns(catalogueTable);
+    catalogueTableConstraints[catalogueTable] = m_catalogueMetadataGetter->getConstraintNames(catalogueTable);
   }
   
   for(auto &schemaTable: schemaTables){
     schemaTableColumns[schemaTable] = m_sqliteSchemaMetadataGetter->getColumns(schemaTable);
+    if(m_compareTableConstraints) {
+      schemaTableConstraints[schemaTable] = m_sqliteSchemaMetadataGetter->getConstraintNames(schemaTable,m_dbType);
+      result += compareItems("IN TABLE "+schemaTable+", CONSTRAINT",catalogueTableConstraints[schemaTable],schemaTableConstraints[schemaTable]);
+    }
   }
   
-  result +=  compareTableColumns(catalogueTableColumns,"catalogue",schemaTableColumns,"schema");
-  result +=  compareTableColumns(schemaTableColumns,"schema",catalogueTableColumns,"catalogue");
+  result += compareTableColumns(catalogueTableColumns,"catalogue",schemaTableColumns,"schema");
+  result += compareTableColumns(schemaTableColumns,"schema",catalogueTableColumns,"catalogue");
   
   return result;
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareTableColumns(const TableColumns & firstSchemaTableColumns, const std::string &schema1Type,const TableColumns & secondSchemaTableColumns, const std::string &schema2Type){
+SchemaComparerResult SQLiteSchemaComparer::compareTableColumns(const TableColumns & schema1TableColumns, const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type){
   SchemaComparerResult result;
-  for(auto &kvFirstSchemaTableColumns: firstSchemaTableColumns){
+  for(auto &kvFirstSchemaTableColumns: schema1TableColumns){
     //For each firstSchema table, get the corresponding secondSchema table
     //If it does not exist, add a difference and go ahead
     //otherwise, get the columns/types of the table from the firstSchema and do the comparison
     //against the columns/types of the same table from the secondSchema
-    std::string firstSchemaTableName = kvFirstSchemaTableColumns.first;
+    std::string schema1TableName = kvFirstSchemaTableColumns.first;
     try {
-      std::map<std::string, std::string> mapSecondSchemaColumnType = secondSchemaTableColumns.at(firstSchemaTableName);
-      std::map<std::string, std::string> mapFirstSchemaColumnType = kvFirstSchemaTableColumns.second;
-      for(auto &kvFirstSchemaColumn: mapFirstSchemaColumnType){
-        std::string firstSchemaColumnName = kvFirstSchemaColumn.first;
-        std::string firstSchemaColumnType = kvFirstSchemaColumn.second;
+      std::map<std::string, std::string> mapSchema2ColumnType = schema2TableColumns.at(schema1TableName);
+      std::map<std::string, std::string> mapSchema1ColumnType = kvFirstSchemaTableColumns.second;
+      for(auto &kvFirstSchemaColumn: mapSchema1ColumnType){
+        std::string schema1ColumnName = kvFirstSchemaColumn.first;
+        std::string schema1ColumnType = kvFirstSchemaColumn.second;
         try {
-          std::string schemaColumnType = mapSecondSchemaColumnType.at(firstSchemaColumnName);
-          if( firstSchemaColumnType != schemaColumnType){
-            result.addDiff("TABLE "+firstSchemaTableName+" from "+schema1Type+" has a column named "+firstSchemaColumnName+" that has a type "+firstSchemaColumnType+" that does not match the column type from the "+schema2Type+" ("+schemaColumnType+")");
+          std::string schemaColumnType = mapSchema2ColumnType.at(schema1ColumnName);
+          if( schema1ColumnType != schemaColumnType){
+            result.addDiff("TABLE "+schema1TableName+" from "+schema1Type+" has a column named "+schema1ColumnName+" that has a type "+schema1ColumnType+" that does not match the column type from the "+schema2Type+" ("+schemaColumnType+")");
           }
         } catch (const std::out_of_range &) {
-          result.addDiff("TABLE "+firstSchemaTableName+" from "+schema1Type+" has a column named " + firstSchemaColumnName + " that is missing in the "+schema2Type+".");
+          result.addDiff("TABLE "+schema1TableName+" from "+schema1Type+" has a column named " + schema1ColumnName + " that is missing in the "+schema2Type+".");
         }
       }
     } catch (const std::out_of_range &) {
-      result.addDiff("TABLE "+firstSchemaTableName+" is missing in the "+schema2Type+" but is defined in the "+schema1Type+".");
+      result.addDiff("TABLE "+schema1TableName+" is missing in the "+schema2Type+" but is defined in the "+schema1Type+".");
     }
   }
   return result;

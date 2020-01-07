@@ -369,9 +369,52 @@ std::list<std::string> SqliteConn::getTriggerNames() {
   return std::list<std::string>();
 }
 
-
+//------------------------------------------------------------------------------
+// getParallelTableNames
+//------------------------------------------------------------------------------
 std::list<std::string> SqliteConn::getParallelTableNames(){
   return std::list<std::string>();
+}
+
+//------------------------------------------------------------------------------
+// getConstraintNames
+//------------------------------------------------------------------------------
+std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableName){
+  try {
+    std::list<std::string> constraintNames;
+    const char *const sql = 
+    "SELECT "
+      "SQL AS SQL "
+    "FROM "
+      "SQLITE_MASTER "
+    "WHERE TYPE = 'table' "
+      "AND NAME = :TABLE_NAME ";
+    auto stmt = createStmt(sql);
+    stmt->bindString(":TABLE_NAME", tableName);
+    auto rset = stmt->executeQuery();
+    if (rset->next()) {
+      auto tableSql = rset->columnOptionalString("SQL").value();     
+      tableSql += std::string(","); // hack for parsing          
+      std::string::size_type searchPosComma = 0;
+      std::string::size_type findResultComma = std::string::npos;
+      while(std::string::npos != (findResultComma = tableSql.find(',', searchPosComma))) {
+        const std::string::size_type stmtLenComma = findResultComma - searchPosComma;
+        const std::string sqlStmtComma = utils::trimString(tableSql.substr(searchPosComma, stmtLenComma));
+        searchPosComma = findResultComma + 1;
+        if(0 < sqlStmtComma.size()) { // Ignore empty statements
+          const std::string constraintSQL = "CONSTRAINT ([a-zA-Z_0-9]+)";
+          cta::utils::Regex constraintSQLRegex(constraintSQL.c_str());
+          auto constraintSql = constraintSQLRegex.exec(sqlStmtComma);
+          if (2 == constraintSql.size()) {
+            constraintNames.emplace_back(constraintSql[1]);
+          }
+        }
+      }     
+    }
+    return constraintNames;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 } // namespace wrapper

@@ -36,11 +36,24 @@ SchemaChecker::Status SchemaChecker::compareSchema(){
   if(m_schemaComparer == nullptr){
     throw cta::exception::Exception("No schema comparer used. Please specify the schema comparer by using the methods useXXXXSchemaComparer()");
   }
-  cta::catalogue::SchemaComparerResult res = m_schemaComparer->compare();
+  SchemaComparerResult totalResult;
   std::cout << "Schema version : " << m_schemaComparer->getCatalogueVersion() << std::endl;
-  res.printDiffs();
-  std::cout << "Status of the checking : " << cta::catalogue::SchemaComparerResult::StatusToString(res.getStatus()) << std::endl;
-  if(res.getStatus() == SchemaComparerResult::Status::FAILED){
+  std::cout << "Checking indexes..." << std::endl;
+  cta::catalogue::SchemaComparerResult resIndex = m_schemaComparer->compareIndexes();
+  totalResult += resIndex;
+  resIndex.printDiffs();
+  std::cout <<"  "<<resIndex.statusToString(resIndex.getStatus())<<std::endl;
+  if(m_dbType == rdbms::Login::DbType::DBTYPE_MYSQL){
+    std::cout << "Checking tables and columns..." << std::endl;
+  } else {
+    std::cout << "Checking tables, columns and constraints..." << std::endl;
+  }
+  cta::catalogue::SchemaComparerResult resTables = m_schemaComparer->compareTables();
+  totalResult += resTables;
+  resTables.printDiffs();
+  std::cout <<"  "<<resTables.statusToString(resTables.getStatus())<<std::endl;
+  std::cout << "Status of the checking : " << cta::catalogue::SchemaComparerResult::statusToString(totalResult.getStatus()) << std::endl;
+  if(totalResult.getStatus() == SchemaComparerResult::Status::FAILED){
     return SchemaChecker::FAILURE;
   }
   return SchemaChecker::OK;
