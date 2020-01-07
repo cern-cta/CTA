@@ -245,7 +245,6 @@ Unit tests and system tests with virtual tape drives
 %defattr(0755,root,root,-)
 %{_libdir}/libsystemTestHelperTests.so*
 %{_libdir}/libcta-tapedSystemTests.so*
-%{_bindir}/cta-immutable-file-test
 %{_bindir}/cta-rdbmsUnitTests
 %{_bindir}/cta-rdbmsUnitTests-oracle.sh
 %{_bindir}/cta-unitTests
@@ -277,6 +276,17 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
+
+%package -n cta-immutable-file-test
+Summary: CERN Tape Archive: command-line tool for testing immutable files
+Group: Application/CTA
+Requires: cta-lib-common = %{version}-%{release}
+%description -n cta-immutable-file-test
+CERN Tape Archive:
+Command-line tool for testing immutable files
+%files -n cta-immutable-file-test
+%defattr(0755,root,root,-)
+%{_bindir}/cta-immutable-file-test
 
 %package -n cta-objectstore-tools
 Summary: CERN Tape Archive: object store tools
