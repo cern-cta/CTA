@@ -120,6 +120,7 @@ add_executable(cta-immutable-file-test
   ImmutableFileTestCmdLineArgs.cpp)
 
 set_property (TARGET cta-immutable-file-test APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
+set_property (TARGET cta-immutable-file-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 target_link_libraries(cta-immutable-file-test
   ctacommon)
