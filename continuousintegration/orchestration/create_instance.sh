@@ -329,6 +329,7 @@ kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user
 # Add this for SSI prococol buffer workflow (xrootd >=4.8.2)
 #echo "mgmofs.protowfendpoint ctafrontend:10955" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
 #echo "mgmofs.protowfresource /ctafrontend" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
+#echo "mgmofs.tapeenabled true" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
 
 
 # allow eos to start

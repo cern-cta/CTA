@@ -72,3 +72,6 @@ mgmofs.protowfresource /ctafrontend
 
 # Set the EOS space to be used as the destination of prepare requests
 mgmofs.prepare.dest.space default
+
+# Enable tape support
+mgmofs.tapeenabled true

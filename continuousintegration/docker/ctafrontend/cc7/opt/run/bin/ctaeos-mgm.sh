@@ -65,6 +65,9 @@ EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 echo "mgmofs.protowfendpoint ctafrontend:10955" >> /etc/xrd.cf.mgm
 echo "mgmofs.protowfresource /ctafrontend"  >> /etc/xrd.cf.mgm
 
+# Enable tape support
+echo "mgmofs.tapeenabled true"  >> /etc/xrd.cf.mgm
+
 # Add configmap based configuration (initially Namespace)
 test -f /etc/config/eos/xrd.cf.mgm && cat /etc/config/eos/xrd.cf.mgm >> /etc/xrd.cf.mgm
 
