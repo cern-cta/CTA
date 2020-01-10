@@ -345,8 +345,14 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    }
 
    cta::utils::Timer t;
+   uint64_t archiveFileId;
 
-   const uint64_t archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, requester, m_lc);
+   // For testing, this storage class will always fail on CLOSEW. Allow it to pass CREATE and don't allocate an archive Id from the pool.
+   if(storageClassItor->second == "fail_on_closew_test") {
+     archiveFileId = std::numeric_limits<uint64_t>::max();
+   } else {
+     archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, requester, m_lc);
+   }
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
@@ -384,8 +390,8 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    }
 
    // For testing, this storage class will always fail
-   if(storageClassItor->second == "fail_archive_requests_test") {
-      throw PbException("File is in fail_archive_requests_test storage class, which always fails.");
+   if(storageClassItor->second == "fail_on_closew_test") {
+      throw PbException("File is in fail_on_closew_test storage class, which always fails.");
    }
 
    cta::common::dataStructures::ArchiveRequest request;
