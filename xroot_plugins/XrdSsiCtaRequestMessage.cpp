@@ -383,6 +383,11 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
      throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.storage_class");
    }
 
+   // For testing, this storage class will always fail
+   if(storageClassItor->second == "fail_archive_requests_test") {
+      throw PbException("File is in fail_archive_requests_test storage class, which always fails.");
+   }
+
    cta::common::dataStructures::ArchiveRequest request;
    checksum::ProtobufToChecksumBlob(notification.file().csb(), request.checksumBlob);
    request.diskFileInfo.owner_uid = notification.file().owner().uid();
