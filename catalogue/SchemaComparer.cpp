@@ -35,6 +35,10 @@ std::string SchemaComparer::getCatalogueVersion(){
   return m_catalogueSchemaVersion;
 }
 
+void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader){
+  m_schemaSqlStatementsReader = std::move(schemaSqlStatementsReader);
+}
+
 SchemaComparer::~SchemaComparer() {
 }
 

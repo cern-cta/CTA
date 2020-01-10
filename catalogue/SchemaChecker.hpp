@@ -61,18 +61,9 @@ public:
    * statements defined in the allSchemasDirectoryPath and will compare what is in SQLite with 
    * what is in the catalogue database.
    * 
-   * @param allSchemasDirectoryPath the path where all the schemas sql files are located.
-   * This directory should contains all the directories containing the schema creation script specific to a schema VERSION
-   * Example of the content of the directory :
-   * catalogue
-   * |-- 1.0
-   * |  |-- oracle_catalogue_schema.sql
-   * |  |-- postgres_catalogue_schema.sql
-   * |  |....
-   * |-- 1.1
-   * |  |-- ...
+   * @param allSchemaVersionsDirectoryPath the schema sql statement reader used to get the schema
    */
-  void useSQLiteSchemaComparer(const std::string &allSchemasDirectoryPath);
+  void useSQLiteSchemaComparer(cta::optional<std::string> allSchemaVersionsDirectoryPath);
   /**
    * Compare the schema by using a SchemaComparer
    * @throws Exception if no SchemaComparer has been set.

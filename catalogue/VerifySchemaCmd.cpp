@@ -78,7 +78,8 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   
   if(!cmdLineArgs.allSchemaDirectoryPath.empty()){
     cta::catalogue::SchemaChecker schemaChecker(login.dbType,conn);
-    schemaChecker.useSQLiteSchemaComparer(allSchemasDirectoryPath);
+    cta::optional<std::string> allSchemasDirectoryPathOpt(allSchemasDirectoryPath);
+    schemaChecker.useSQLiteSchemaComparer(allSchemasDirectoryPathOpt);
     SchemaChecker::Status comparisonStatus = schemaChecker.compareSchema();
     schemaChecker.checkNoParallelTables();
     if(comparisonStatus == SchemaChecker::Status::FAILURE){

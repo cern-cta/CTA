@@ -189,6 +189,10 @@ add_custom_command(OUTPUT PostgresCatalogueSchema.cpp
   COMMAND sed -e '/CTA_SQL_SCHEMA/r postgres_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp > PostgresCatalogueSchema.cpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp postgres_catalogue_schema.cpp)
 
+add_custom_target(
+  CreateAllSchemasMap ALL 
+  ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
@@ -286,6 +290,7 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta D
 
 add_executable(cta-catalogue-schema-verify
   SQLiteSchemaInserter.cpp
+  SchemaSqlStatementsReader.cpp
   SchemaComparer.cpp
   SQLiteSchemaComparer.cpp
   DbToSQLiteStatementTransformer.cpp

@@ -1,0 +1,86 @@
+/**
+ * The CERN Tape Archive (CTA) project
+ * Copyright © 2018 CERN
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "rdbms/Login.hpp"
+
+namespace cta{ namespace catalogue {
+  
+class SchemaSqlStatementsReader {
+public:
+  SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType);
+  SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig);
+  virtual ~SchemaSqlStatementsReader();
+  virtual std::list<std::string> getStatements();
+protected:
+  cta::rdbms::Login::DbType m_dbType;
+  /**
+  * Separates the statements and put them in a std::list<std::string> 
+  * @param schema the sql statements put all together
+  * @return a list containing separated statements from the schema passed in parameter
+  */
+  std::list<std::string> getAllStatementsFromSchema(const std::string &schema);
+  /**
+  * Returns the string corresponding to the database type
+  * @return the string corresponding to the database type
+  */
+  std::string getDatabaseType();
+};
+
+/*
+* This DirectoryVersionsSqlStatementsReader reads the sql statements from the files located in the allSchemasVersionPath directory
+* This directory should contains all the directories containing the schema creation script specific to a schema VERSION
+* Example of the content of the directory :
+* catalogue
+* |-- 1.0
+* |  |-- oracle_catalogue_schema.sql
+* |  |-- postgres_catalogue_schema.sql
+* |  |....
+* |-- 1.1
+* |  |-- ...
+* */
+class DirectoryVersionsSqlStatementsReader: public SchemaSqlStatementsReader{
+  public:
+    DirectoryVersionsSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion, const std::string &allSchemasVersionPath);
+    DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig);
+    virtual ~DirectoryVersionsSqlStatementsReader();
+    virtual std::list<std::string> getStatements();
+private:
+  std::string m_catalogueVersion;
+  std::string m_allSchemasVersionPath;
+  const std::string c_catalogueFileNameTrailer = "_catalogue_schema.sql";
+  /**
+  * Return the schema located in SCHEMA_VERSION/dbType_catalogue_schema.sql
+  * @return the string containing the sql statements for the creation of the schema
+  */
+  std::string readSchemaFromFile();
+  std::string getSchemaFilePath();
+};
+
+class MapSqlStatementsReader: public SchemaSqlStatementsReader{
+  public:
+    MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion);
+    MapSqlStatementsReader(const MapSqlStatementsReader& orig);
+    virtual ~MapSqlStatementsReader();
+    virtual std::list<std::string> getStatements();
+private:
+  std::string m_catalogueVersion;
+};
+
+}}

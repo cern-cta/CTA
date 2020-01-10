@@ -51,7 +51,7 @@ CreateGlobalTempTableToSQLiteStatementTransformer::CreateGlobalTempTableToSQLite
 
 std::string CreateGlobalTempTableToSQLiteStatementTransformer::transform(){
   utils::searchAndReplace(m_statement,"GLOBAL TEMPORARY ","");
-  utils::searchAndReplace(m_statement,"\nON COMMIT DELETE ROWS;",";");
+  utils::searchAndReplace(m_statement,"ON COMMIT DELETE ROWS;",";");
   return m_statement;
 }
 

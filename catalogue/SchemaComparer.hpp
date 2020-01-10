@@ -27,6 +27,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "SchemaComparerResult.hpp"
 #include "CatalogueMetadataGetter.hpp"
+#include "SchemaSqlStatementsReader.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -67,11 +68,19 @@ public:
    * @return the catalogue version of the schema located in the database to compare
    */
   std::string getCatalogueVersion();
+  
+  /**
+   * Sets the way the schema sql statements will be read to do the schemas comparison
+   * @param schemaSqlStatementsReader the reader used to get the schema sql statements in order to do schema comparison
+   */
+  void setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader);
+  
 protected:
   const cta::rdbms::Login::DbType &m_dbType;
   std::string m_catalogueSchemaVersion;
   cta::rdbms::Conn &m_catalogueConn;
   std::unique_ptr<cta::catalogue::CatalogueMetadataGetter> m_catalogueMetadataGetter;
+  std::unique_ptr<SchemaSqlStatementsReader> m_schemaSqlStatementsReader;
   bool m_compareTableConstraints;
 };
 

@@ -31,9 +31,8 @@ public:
    * Constructs a SQLiteSchemaComparer
    * @param catalogueDbType
    * @param catalogueConn
-   * @param allSchemasVersionPath
    */
-  SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn, const std::string & allSchemasVersionPath);
+  SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn);
   /**
    * Compare the catalogue schema against the InMemory SQLite catalogue schema
    * @return a SchemaComparerResult object that will contain the differences if there are some
@@ -53,7 +52,7 @@ private:
   rdbms::Conn m_sqliteConn;
   std::unique_ptr<rdbms::ConnPool> m_sqliteConnPool;
   std::unique_ptr<SQLiteCatalogueMetadataGetter> m_sqliteSchemaMetadataGetter;
-  const std::string m_allSchemasVersionPath;
+  bool m_isSchemaInserted = false;
 };
 
 }}

@@ -25,13 +25,12 @@
 namespace cta {
 namespace catalogue {
   
-SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn, const std::string & allSchemasVersionPath): SchemaComparer(catalogueDbType,catalogueConn),m_allSchemasVersionPath(allSchemasVersionPath) {
+SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn): SchemaComparer(catalogueDbType,catalogueConn) {
   log::DummyLogger dl("dummy","dummy");
   auto login = rdbms::Login::parseString("in_memory");
   m_sqliteConnPool.reset(new rdbms::ConnPool(login,1));
   m_sqliteConn = std::move(m_sqliteConnPool->getConn());
   m_sqliteSchemaMetadataGetter.reset(new SQLiteCatalogueMetadataGetter(m_sqliteConn));
-  insertSchemaInSQLite();
 }
 
 SQLiteSchemaComparer::~SQLiteSchemaComparer() {
@@ -41,6 +40,7 @@ SQLiteSchemaComparer::~SQLiteSchemaComparer() {
 }
 
 SchemaComparerResult SQLiteSchemaComparer::compareAll(){
+  insertSchemaInSQLite();
   SchemaComparerResult res;
   res += compareTables();
   res += compareIndexes();
@@ -48,6 +48,7 @@ SchemaComparerResult SQLiteSchemaComparer::compareAll(){
 }
 
 SchemaComparerResult SQLiteSchemaComparer::compareTables(){
+  insertSchemaInSQLite();
   std::list<std::string> catalogueTables = m_catalogueMetadataGetter->getTableNames();
   std::list<std::string> schemaTables = m_sqliteSchemaMetadataGetter->getTableNames();
   SchemaComparerResult res = compareTables(catalogueTables,schemaTables);
@@ -55,11 +56,19 @@ SchemaComparerResult SQLiteSchemaComparer::compareTables(){
 }
 
 void SQLiteSchemaComparer::insertSchemaInSQLite() {
-  cta::catalogue::SQLiteSchemaInserter schemaInserter(m_catalogueSchemaVersion,m_dbType,m_allSchemasVersionPath,m_sqliteConn);
-  schemaInserter.insert();
+  if(!m_isSchemaInserted){
+    if(m_schemaSqlStatementsReader != nullptr){
+      cta::catalogue::SQLiteSchemaInserter schemaInserter(m_sqliteConn);
+      schemaInserter.insert(m_schemaSqlStatementsReader->getStatements());
+    } else {
+      throw cta::exception::Exception("In SQLiteSchemaComparer::insertSchemaInSQLite(): unable to insert schema in sqlite because no SchemaSqlStatementReader has been set.");
+    }
+  }
+  m_isSchemaInserted = true;
 }
 
 SchemaComparerResult SQLiteSchemaComparer::compareIndexes(){
+  insertSchemaInSQLite();
   std::list<std::string> catalogueIndexes = m_catalogueMetadataGetter->getIndexNames();
   std::list<std::string> schemaIndexes = m_sqliteSchemaMetadataGetter->getIndexNames();
   return compareItems("INDEX", catalogueIndexes, schemaIndexes);

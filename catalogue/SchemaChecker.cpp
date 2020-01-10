@@ -28,8 +28,15 @@ SchemaChecker::SchemaChecker(rdbms::Login::DbType dbType,cta::rdbms::Conn &conn)
 SchemaChecker::~SchemaChecker() {
 }
 
-void SchemaChecker::useSQLiteSchemaComparer(const std::string &allSchemasVersionPath){
-  m_schemaComparer.reset(new SQLiteSchemaComparer(m_dbType,m_catalogueConn,allSchemasVersionPath));
+void SchemaChecker::useSQLiteSchemaComparer(const cta::optional<std::string> allSchemasVersionsDirectory){
+  m_schemaComparer.reset(new SQLiteSchemaComparer(m_dbType,m_catalogueConn));
+   std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader;
+  if(allSchemasVersionsDirectory){
+    schemaSqlStatementsReader.reset(new DirectoryVersionsSqlStatementsReader(m_dbType,m_schemaComparer->getCatalogueVersion(),allSchemasVersionsDirectory.value()));
+  } else {
+    schemaSqlStatementsReader.reset(new MapSqlStatementsReader(m_dbType,m_schemaComparer->getCatalogueVersion()));
+  }
+  m_schemaComparer->setSchemaSqlStatementsReader(std::move(schemaSqlStatementsReader));
 }
 
 SchemaChecker::Status SchemaChecker::compareSchema(){
