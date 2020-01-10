@@ -52,13 +52,10 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   catalogue::ArchiveFileItor              m_tapeFileItor;                 //!< Iterator across files which have been archived
+  bool                                    m_isLookupNamespace;            //!< Do we need to look up filenames in the namespace?
   Namespace                               m_namespace;
-#if 0
-  bool                                    m_isSummary;                       //!< Full listing or short summary?
-  bool                                    m_isSummaryDone;                   //!< Summary has been sent
-#endif
 
-  static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";       //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";    //!< Identifier for log messages
 };
 
 
@@ -67,10 +64,6 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   const std::string &endpoint, const std::string &token) :
     XrdCtaStream(catalogue, scheduler),
     m_namespace(endpoint, token)
-#if 0
-    m_isSummary(requestMsg.has_flag(admin::OptionBoolean::SUMMARY)),
-    m_isSummaryDone(false)
-#endif
 {
   using namespace cta::admin;
 
@@ -103,7 +96,10 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
     m_tapeFileItor = m_catalogue.getArchiveFilesItor(m_searchCriteria);
   }
 #endif
-  cta::catalogue::TapeFileSearchCriteria  searchCriteria;
+  auto isLookupNamespace = requestMsg.getOptional(OptionBoolean::LOOKUP_NAMESPACE);
+  m_isLookupNamespace = isLookupNamespace ? isLookupNamespace.value() : false;
+
+  cta::catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = requestMsg.getRequired(OptionString::VID);
   m_tapeFileItor = m_catalogue.getArchiveFilesItor(searchCriteria);
 }
@@ -151,10 +147,12 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       // Disk file
       auto df = record.mutable_tfls_item()->mutable_df();
       df->set_disk_id(archiveFile.diskFileId);
-      df->set_path(m_namespace.getPath(archiveFile.diskFileId));
       df->set_disk_instance(archiveFile.diskInstance);
       df->mutable_owner_id()->set_uid(archiveFile.diskFileInfo.owner_uid);
       df->mutable_owner_id()->set_gid(archiveFile.diskFileInfo.gid);
+      if(m_isLookupNamespace) {
+        df->set_path(m_namespace.getPath(archiveFile.diskFileId));
+      }
 
       // Tape file
       auto tf = record.mutable_tfls_item()->mutable_tf();
