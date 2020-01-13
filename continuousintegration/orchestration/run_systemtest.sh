@@ -31,7 +31,7 @@ SYSTEMTEST_TIMEOUT=3600
 die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-e <eos_configmap>] [-a <additional_k8_resources>] [-k] [-O] [-D | -d <database_configmap>] [-S]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-e <eos_configmap>] [-a <additional_k8_resources>] [-k] [-O] [-D | -d <database_configmap>] [-S] [-U]
 
 Options:
   -b    The directory containing both the source and the build tree for CTA. It will be mounted RO in the
@@ -42,6 +42,7 @@ Options:
   -D    use Oracle account associated to this node (wipe content before tests), by default use local sqlite DB
   -S    Use systemd to manage services inside containers
   -a    additional kubernetes resources added to the kubernetes namespace
+  -U    Run database unit test only
 
 
 Create a kubernetes instance and launch the system test script specified.
@@ -55,11 +56,11 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:d:s:p:b:e:a:B:t:kDOS" o; do
+while getopts "n:d:s:p:b:e:a:B:t:kDOSU" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
-            test -f ${systemtest_script} || error="${error}Objectstore configmap file ${config_objectstore} does not exist\n"
+            test -f ${systemtest_script} || error="${error}systemtest script file ${systemtest_script} does not exist\n"
             ;;
         n)
             namespace=${OPTARG}
@@ -97,6 +98,10 @@ while getopts "n:d:s:p:b:e:a:B:t:kDOS" o; do
             ;;
         S)
             usesystemd=1
+            ;;
+        U)
+            CREATE_OPTS="${CREATE_OPTS} -U"
+            PREFLIGHTTEST_SCRIPT='/usr/bin/true' # we do not run preflight test in the context of unit tests
             ;;
         *)
             usage

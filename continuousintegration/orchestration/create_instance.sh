@@ -23,11 +23,14 @@ usesystemd=0
 keepdatabase=1
 keepobjectstore=1
 
+# By default run the standard test no oracle dbunittests
+runoracleunittests=0
+
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
       [-p <gitlab pipeline ID> | -b <build tree base> -B <CTA build tree subdir> [-E <EOS build tree subdir>]] \
-      [-S] [-D] [-O] [-m [mhvtl|ibm]]
+      [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U]
 
 Options:
   -S    Use systemd to manage services inside containers
@@ -38,13 +41,14 @@ Options:
   -D	wipe database content during initialization phase (database content is kept by default)
   -O	wipe objectstore content during initialization phase (objectstore content is kept by default)
   -a    additional kubernetes resources added to the kubernetes namespace
+  -U    Run database unit test only
 EOF
 exit 1
 }
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:e:a:p:b:B:E:SDOm:" o; do
+while getopts "n:o:d:e:a:p:b:B:E:SDOUm:" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -89,6 +93,9 @@ while getopts "n:o:d:e:a:p:b:B:E:SDOm:" o; do
             ;;
         D)
             keepdatabase=0
+            ;;
+        U)
+            runoracleunittests=1
             ;;
         *)
             usage
@@ -255,27 +262,30 @@ fi
 kubectl get pod init -a --namespace=${instance} | grep -q Completed || die "TIMED OUT"
 echo OK
 
-echo "Running database unit-tests"
-kubectl create -f ${poddir}/pod-oracleunittests.yaml --namespace=${instance}
+if [ $runoracleunittests == 1 ] ; then
+  echo "Running database unit-tests"
+  kubectl create -f ${poddir}/pod-oracleunittests.yaml --namespace=${instance}
 
-echo -n "Waiting for oracleunittests"
-for ((i=0; i<400; i++)); do
-  echo -n "."
-  kubectl get pod oracleunittests -a --namespace=${instance} | egrep -q 'Completed|Error' && break
-  sleep 1
-done
+  echo -n "Waiting for oracleunittests"
+  for ((i=0; i<400; i++)); do
+    echo -n "."
+    kubectl get pod oracleunittests -a --namespace=${instance} | egrep -q 'Completed|Error' && break
+    sleep 1
+  done
 
-kubectl --namespace=${instance} logs oracleunittests
+  kubectl --namespace=${instance} logs oracleunittests
 
-# database unit-tests went wrong => exit now with error
-if $(kubectl get pod oracleunittests -a --namespace=${instance} | grep -q Error); then
-	echo "init pod in Error status here are its last log lines:"
-	kubectl --namespace=${instance} logs oracleunittests --tail 10
-	die "ERROR: init pod in ErERROR: oracleunittests pod in Error state. Initialization failed."
+  # database unit-tests went wrong => exit now with error
+  if $(kubectl get pod oracleunittests -a --namespace=${instance} | grep -q Error); then
+    echo "init pod in Error status here are its last log lines:"
+    kubectl --namespace=${instance} logs oracleunittests --tail 10
+    die "ERROR: oracleunittests pod in Error state. Initialization failed."
+  fi
+
+  # database unit-tests were successful => exit now with success
+  exit 0
 fi
 
-kubectl get pod init -a --namespace=${instance} | grep -q Completed || die "TIMED OUT"
-echo OK
 
 echo "Launching pods"
 
