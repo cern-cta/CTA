@@ -151,6 +151,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     | sed 's/UINT64TYPE/NUMERIC\(20, 0\)/g'
     | sed 's/CHECKSUM_BLOB_TYPE/BYTEA/g'
     | tee postgres_catalogue_schema.sql ${catalogue_schema_directory}/postgres_catalogue_schema.sql > /dev/null
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_SOURCE_DIR}/cmake/CTAVersions.cmake
@@ -161,7 +162,10 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql)
+    ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
+    ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
+)
 
 add_custom_command(OUTPUT sqlite_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
@@ -188,11 +192,6 @@ add_custom_command(OUTPUT postgres_catalogue_schema.cpp
 add_custom_command(OUTPUT PostgresCatalogueSchema.cpp
   COMMAND sed -e '/CTA_SQL_SCHEMA/r postgres_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp > PostgresCatalogueSchema.cpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp postgres_catalogue_schema.cpp)
-
-add_custom_target(
-  CreateAllSchemasMap ALL 
-  ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
-)
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
