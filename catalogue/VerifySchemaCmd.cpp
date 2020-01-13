@@ -61,8 +61,6 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     printUsage(m_out);
     return 0;
   }
-  
-  std::string allSchemasDirectoryPath = cmdLineArgs.allSchemaDirectoryPath;
 
   auto login = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   const uint64_t maxNbConns = 1;
@@ -76,17 +74,16 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 1;
   }
   
-  if(!cmdLineArgs.allSchemaDirectoryPath.empty()){
-    cta::catalogue::SchemaChecker schemaChecker(login.dbType,conn);
-    cta::optional<std::string> allSchemasDirectoryPathOpt(allSchemasDirectoryPath);
-    schemaChecker.useSQLiteSchemaComparer(allSchemasDirectoryPathOpt);
-    SchemaChecker::Status comparisonStatus = schemaChecker.compareSchema();
-    schemaChecker.checkNoParallelTables();
-    if(comparisonStatus == SchemaChecker::Status::FAILURE){
-      return 1;
-    }
-    return 0;
-  } else {
+  cta::catalogue::SchemaChecker schemaChecker(login.dbType,conn);
+  cta::optional<std::string> allSchemasDirectoryPathOpt;
+  schemaChecker.useSQLiteSchemaComparer(allSchemasDirectoryPathOpt);
+  SchemaChecker::Status comparisonStatus = schemaChecker.compareSchema();
+  schemaChecker.checkNoParallelTables();
+  if(comparisonStatus == SchemaChecker::Status::FAILURE){
+    return 1;
+  }
+  return 0;
+  /*
     std::unique_ptr<CatalogueSchema> schema;
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
@@ -151,8 +148,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
         verifyColumnsStatus   == VerifyStatus::ERROR ) {
       return 1;
     }
-    return 0;
-  }
+    return 0;*/
 }
 
 //------------------------------------------------------------------------------

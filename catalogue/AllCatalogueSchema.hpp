@@ -27,7 +27,8 @@ namespace catalogue{
       static std::map<std::string,std::map<std::string,std::string>> mapSchema; 
   };
   
-  std::map<std::string,std::map<std::string,std::string>> AllCatalogueSchema::mapSchema = 
+  std::map<std::string,std::map<std::string,std::string>> AllCatalogueSchema::mapSchema = /* ALL_SCHEMA_MAP */
+
 {
   {"1.0",
     {
@@ -1220,9 +1221,7 @@ namespace catalogue{
   "ALTER TABLE ARCHIVE_FILE ADD CONSTRAINT"
   "  ARCHIVE_FILE_DIN_DFI_UN UNIQUE(DISK_INSTANCE_NAME, DISK_FILE_ID) DEFERRABLE INITIALLY IMMEDIATE;"
       },
-    }
-  },
-};
+    }  },};
 	  
 }}
 

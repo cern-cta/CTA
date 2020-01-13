@@ -27,8 +27,10 @@ die() {
 
 databaseTypes=('oracle' 'mysql' 'sqlite' 'postgres')
 schemaPostfix='_catalogue_schema.sql'
-
 cd $1
+tempFilePath="./temp"
+
+trap "rm -f $tempFilePath" EXIT
 
 schemaVersionsDirectories=`find . -type d -regex '^./[0-9]+\.[0-9]+$'`
 
@@ -51,8 +53,12 @@ do
       },
 "
   done
-  mapSchemaCode+="    }\n"
-  mapSchemaCode+="  },\n"
+  mapSchemaCode+="    }"
+  mapSchemaCode+="  },"
 done
 mapSchemaCode+="};"
-awk -v r="$mapSchemaCode" '{gsub(/ALL_SCHEMA_MAP/,r)}1' ./AllCatalogueSchema.hpp.in > ./AllCatalogueSchema.hpp || die "Unable to create the map containing all catalogue schemas"
+echo "$mapSchemaCode" > $tempFilePath
+sed "/ALL_SCHEMA_MAP/r $tempFilePath" ./AllCatalogueSchema.hpp.in > ./AllCatalogueSchema.hpp || die "Unable to create the map containing all catalogue schemas"
+#awk -v r="$mapSchemaCode" '{gsub(/ALL_SCHEMA_MAP/,r)}1' ./AllCatalogueSchema.hpp.in > ./AllCatalogueSchema.hpp || die "Unable to create the map containing all catalogue schemas"
+
+exit 0

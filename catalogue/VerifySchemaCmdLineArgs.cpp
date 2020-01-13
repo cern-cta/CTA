@@ -32,7 +32,6 @@ VerifySchemaCmdLineArgs::VerifySchemaCmdLineArgs(const int argc, char *const *co
   help(false) {
 
   static struct option longopts[] = {
-    {"schemaversionsdirectory",required_argument,NULL,'s'},
     {"help", no_argument, NULL, 'h'},
     {NULL  ,           0, NULL,   0}
   };
@@ -42,13 +41,10 @@ VerifySchemaCmdLineArgs::VerifySchemaCmdLineArgs(const int argc, char *const *co
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":hs:", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":h", longopts, NULL)) != -1) {
     switch(opt) {
     case 'h':
       help = true;
-      break;
-    case 's':
-      allSchemaDirectoryPath = optarg;
       break;
     case ':': // Missing parameter
       {
@@ -108,11 +104,7 @@ void VerifySchemaCmdLineArgs::printUsage(std::ostream &os) {
     "        catalogue database" << std::endl <<
     "Options:" << std::endl <<
     "    -h,--help" << std::endl <<     
-    "        Prints this usage message" << std::endl <<
-    "    -s,--schemaversionsdirectory " << std::endl <<
-    "        Specify the path of the directory where the schema .sql files are located." << std::endl <<
-    "        Example : if the schema sql files are located in /tmp/schema/VERSION_MAJOR.VERSION_MINOR/DATABASETYPE_catalogue_schema.sql " << std::endl <<
-    "                  the path should be /tmp/schema/" << std::endl;
+    "        Prints this usage message" << std::endl;
 }
 
 } // namespace catalogue

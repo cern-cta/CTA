@@ -27,7 +27,7 @@ namespace catalogue{
       static std::map<std::string,std::map<std::string,std::string>> mapSchema; 
   };
   
-  std::map<std::string,std::map<std::string,std::string>> AllCatalogueSchema::mapSchema = ALL_SCHEMA_MAP
+  std::map<std::string,std::map<std::string,std::string>> AllCatalogueSchema::mapSchema = /* ALL_SCHEMA_MAP */
 	  
 }}
 
