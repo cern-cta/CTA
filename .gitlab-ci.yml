@@ -270,7 +270,7 @@ dbunittests_oracle:
   stage: test
   retry: 1
   script:
-    - export NAMESPACE="dbunittests_oracle-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
+    - export NAMESPACE="dbunittestsoracle-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
     - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s /usr/bin/true -O -D -U -t 600
   artifacts:
     when: always
