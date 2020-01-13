@@ -65,10 +65,10 @@ int ImmutableFileTest::main(const int argc, char *const *const argv) {
   // Reaching this point means the command has failed, an exception was throw
   // and errorMessage has been set accordingly
 
-  m_err << errorMessage << std::endl;
+  m_out << errorMessage << std::endl;
   if(cmdLineNotParsed) {
-    m_err << std::endl;
-    ImmutableFileTestCmdLineArgs::printUsage(m_err);
+    m_out << std::endl;
+    ImmutableFileTestCmdLineArgs::printUsage(m_out);
   }
   return 1;
 }
@@ -84,8 +84,11 @@ int ImmutableFileTest::exceptionThrowingMain(const int argc, char *const *const 
     return 0;
   }
 
-  if(userConfirmsDestroyFile(cmdLine.fileUrl.GetURL())) {
-    m_out << "Starting destructive test on file " << cmdLine.fileUrl.GetURL() << std::endl;
+  const bool runTests = userConfirmsDestroyFile(cmdLine.fileUrl.GetURL());
+
+  m_out << std::endl;
+  if(runTests) {
+    m_out << "Starting destructive test on " << cmdLine.fileUrl.GetURL() << std::endl;
   } else {
     m_out << "Aborting" << std::endl;
     return 0;
@@ -96,32 +99,56 @@ int ImmutableFileTest::exceptionThrowingMain(const int argc, char *const *const 
     ex.getMessage() << cmdLine.fileUrl.GetURL() << " is local";
     throw ex;
   }
+
+  m_out << std::endl;
   if(fileExists(cmdLine.fileUrl)) {
     m_out << cmdLine.fileUrl.GetURL() << " already exists" << std::endl;
+    m_out << "About to delete " << cmdLine.fileUrl.GetURL() << std::endl;
     deleteFile(cmdLine.fileUrl);
     m_out << "Deleted " << cmdLine.fileUrl.GetURL() << std::endl;
   } else {
     m_out << cmdLine.fileUrl.GetURL() << " does not exist yet" << std::endl;
   }
 
-  m_out << "Ready to create " << cmdLine.fileUrl.GetURL()  << std::endl;
-  m_out << std::endl;
+  bool oneOrMoreTestsFailed = true; // Guilty until proven innocent
   try {
-    testOpenCloseFile(cmdLine.fileUrl, XrdCl::OpenFlags::New, 0);
-    testOpenCloseFile(cmdLine.fileUrl, XrdCl::OpenFlags::Delete | XrdCl::OpenFlags::Write, 0);
-    testOpenCloseFile(cmdLine.fileUrl, XrdCl::OpenFlags::Write, kXR_NotAuthorized);
-    testOpenCloseFile(cmdLine.fileUrl, XrdCl::OpenFlags::Update, kXR_NotAuthorized);
-    testOpenCloseFile(cmdLine.fileUrl, XrdCl::OpenFlags::Append, kXR_NotAuthorized);
+    // Create the file
+    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::New                             , "CONTENTS1",                 0);
+
+    // Re-create the file
+    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Delete | XrdCl::OpenFlags::Write, "CONTENTS2",                 0);
+
+    // Try to open the file for modification
+    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Write                           ,          "", kXR_NotAuthorized);
+    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Update                          ,          "", kXR_NotAuthorized);
+    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Append                          ,          "", kXR_NotAuthorized);
+    oneOrMoreTestsFailed = false;
+  } catch(exception::Exception &ex) {
+    m_out << ex.getMessage().str() << std::endl;
+  } catch(std::exception &se) {
+    m_out << se.what() << std::endl;
   } catch(...) {
-    try {
-      deleteFile(cmdLine.fileUrl);
-    } catch(...) {
-      // Do nothing
-    }
-    throw;
+    m_out << "Caught an unknown exception" << std::endl;
   }
 
-  return 0;
+  m_out << std::endl;
+  if(fileExists(cmdLine.fileUrl)) {
+    m_out << "Test file still exists after the tests" << std::endl;
+    try {
+      deleteFile(cmdLine.fileUrl);
+      m_out << "Successfully deleted test file" << std::endl;
+    } catch(exception::Exception &ex) {
+      m_out << "Failed to delete test file: " << ex.getMessage().str() << std::endl;
+    } catch(std::exception &se) {
+      m_out << "Failed to delete test file: " << se.what() << std::endl;
+    } catch(...) {
+      m_out << "Failed to delete test file: Caught an unknown exception" << std::endl;
+    }
+  } else {
+    m_out << cmdLine.fileUrl.GetURL() << " does not exist after the tests" << std::endl;
+  }
+
+  return oneOrMoreTestsFailed ? 1 : 0;
 }
 
 //------------------------------------------------------------------------------
@@ -129,7 +156,7 @@ int ImmutableFileTest::exceptionThrowingMain(const int argc, char *const *const 
 //------------------------------------------------------------------------------
 bool ImmutableFileTest::userConfirmsDestroyFile(const std::string &fileUrl) const {
   m_out << "WARNING" << std::endl;
-  m_out << "You are about to destroy file " << fileUrl << std::endl;
+  m_out << "You are about to destroy the file with URL " << fileUrl << std::endl;
   m_out << "Are you sure you want to continue?" << std::endl;
 
   std::string userResponse;
@@ -148,7 +175,6 @@ bool ImmutableFileTest::fileExists(const XrdCl::URL &url) {
   XrdCl::FileSystem fs(url);
   XrdCl::StatInfo *info = 0;
   const XrdCl::XRootDStatus statStatus = fs.Stat(url.GetPath(), info);
-  if(!statStatus.IsOK()) m_out << statStatus.ToStr() << std::endl;
   return statStatus.IsOK();
 }
 
@@ -167,59 +193,70 @@ void ImmutableFileTest::deleteFile(const XrdCl::URL &url) {
 }
 
 //------------------------------------------------------------------------------
-// testOpenCloseFile
+// testFile
 //------------------------------------------------------------------------------
-void ImmutableFileTest::testOpenCloseFile(const XrdCl::URL &url,
-  const XrdCl::OpenFlags::Flags openFlags, const uint32_t expectedOpenErrNo) {
-  bool testPassed = false;
-  std::ostringstream msg;
+void ImmutableFileTest::testFile(const XrdCl::URL &url, const XrdCl::OpenFlags::Flags openFlags,
+  const std::string &contents, const uint32_t expectedOpenErrNo) {
+  bool testPassed = true;  // Innocent until proven guilty
   const bool expectedSuccess = 0 == expectedOpenErrNo;
   XrdCl::File file;
 
-  m_out << "START OF TEST: Opening " << url.GetURL() << " with flags \"" << openFlagsToString(openFlags) << "\"" <<
+  m_out << std::endl;
+  m_out << "START OF TEST" << std::endl;
+  m_out << "Opening file with flags \"" << openFlagsToString(openFlags) << "\"" <<
     " expecting " << xErrorCodeToString(expectedOpenErrNo) << std::endl;
 
   const XrdCl::Access::Mode openMode = XrdCl::Access::UR | XrdCl::Access::UW;
   const XrdCl::XRootDStatus openStatus = file.Open(url.GetURL(), openFlags, openMode);
   {
     if (expectedSuccess) {
-      if(openStatus.IsOK()) {
-        testPassed = true;
-        msg << "Succeeded to open file as expected";
+      if (openStatus.IsOK()) {
+        m_out << "Succeeded to open file as expected" << std::endl;
       } else {
         testPassed = false;
-        msg << "Failure when success was expected: Failed to open file: " << openStatus.ToStr();
+        m_out << "Failure when success was expected: Failed to open file: " << openStatus.ToStr() << std::endl;
       }
     } else {
       if (openStatus.IsOK()) {
         testPassed = false;
-        msg << "Success when failure was expected: Successfully opened file";
+        m_out << "Success when failure was expected: Successfully opened file" << std::endl;
       } else {
         if (expectedOpenErrNo == openStatus.errNo) {
-          testPassed = true;
-          msg << "Successfully got " << xErrorCodeToString(expectedOpenErrNo);
+          m_out << "Successfully got " << xErrorCodeToString(expectedOpenErrNo) << std::endl;
         } else {
           testPassed = false;
-          msg << "Unexpectedly got " << xErrorCodeToString(openStatus.errNo);
+          m_out << "Unexpectedly got " << xErrorCodeToString(openStatus.errNo) << std::endl;
         }
       }
     }
   }
 
-  if (openStatus.IsOK()){
+  if (testPassed && !contents.empty()) {
+    const uint64_t offset = 0;
+    const uint16_t timeout = 0;
+    const XrdCl::XRootDStatus writeStatus = file.Write(offset, contents.size(), contents.c_str(), timeout);
+
+    if (writeStatus.IsOK()) {
+      m_out << "Successfully wrote \"" << contents << "\" to the beginning of the file" << std::endl;
+    } else {
+      testPassed = false;
+      m_out << "Failed to write to file: " << writeStatus.ToStr() << std::endl;
+    }
+  }
+
+  if (openStatus.IsOK()) {
     const XrdCl::XRootDStatus closeStatus = file.Close();
     if (!closeStatus.IsOK()) {
-      exception::Exception ex;
-      ex.getMessage() << "Failed to close \"" << url.GetURL() << "\" :" << closeStatus.ToStr();
-      throw ex;
+      testPassed = false;
+      m_out << "Failed to close file:" << closeStatus.ToStr() << std::endl;
     }
   }
 
   if(testPassed) {
-    m_out << "END   OF TEST: PASSED: " << msg.str() << std::endl;
+    m_out << "TEST PASSED" << std::endl;
   } else {
     exception::Exception ex;
-    ex.getMessage() << "END   OF TEST: FAILED: " << msg.str();
+    ex.getMessage() << "TEST FAILED";
     throw ex;
   }
 }

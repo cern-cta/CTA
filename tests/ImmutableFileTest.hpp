@@ -103,9 +103,11 @@ private:
    *
    * @param url The XRootD URL of the file to be tested.
    * @param openFlags The XRootD flags to be used when opening the file.
+   * @param contents Optional contents to be written to the file.  An empty
+   * string means don't write anything.
    * @param expectecErrNo The expected errNo result of opening the file.
    */
-  void testOpenCloseFile(const XrdCl::URL &url, const XrdCl::OpenFlags::Flags openFlags,
+  void testFile(const XrdCl::URL &url, const XrdCl::OpenFlags::Flags openFlags, const std::string &contents,
     const uint32_t expectedOpenErrNo);
 
   /**
