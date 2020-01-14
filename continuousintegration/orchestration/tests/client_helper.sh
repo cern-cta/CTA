@@ -12,6 +12,7 @@
 
 EOSPOWER_USER="poweruser1"
 CTAADMIN_USER="ctaadmin2"
+EOSADMIN_USER="eosadmin1"
 USER="user1"
 
 die() {
@@ -60,3 +61,20 @@ eospower_kdestroy() {
   eospower_klist
 }
 
+eosadmin_eos() {
+  XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 eos -r 0 0 $@
+}
+
+eosadmin_klist() {
+  KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 klist
+}
+
+eosadmin_kinit() {
+  KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 kinit -kt /root/${EOSADMIN_USER}.keytab ${EOSADMIN_USER}@TEST.CTA
+  eosadmin_klist
+}
+
+eosadmin_kdestroy() {
+  KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 kdestroy
+  eosadmin_klist
+}

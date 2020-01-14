@@ -189,6 +189,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username c
 
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/poweruser1.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/poweruser1.keytab; mkdir -p /tmp/poweruser1"
+kubectl --namespace=${NAMESPACE} exec kdc cat /root/eosadmin1.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/eosadmin1.keytab; mkdir -p /tmp/eosadmin1"
 
 ###
 # Filling services in DNS on all pods

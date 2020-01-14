@@ -220,7 +220,11 @@ fi
 
   # Add user daemon to sudoers this is to allow recalls for the moment using this command
   #  XrdSecPROTOCOL=sss xrdfs ctaeos prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
-  eos vid set membership 2 +sudo
+  eos vid set membership $(id -u daemon) +sudo
+
+  # Add eosadmin1 and eosadmin2 users are sudoers
+  eos vid set membership $(id -u eosadmin1) +sudo
+  eos vid set membership $(id -u eosadmin2) +sudo
 
   eos node set ${eoshost} on
   eos space set default on
