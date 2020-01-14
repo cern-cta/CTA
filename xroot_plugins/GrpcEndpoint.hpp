@@ -40,11 +40,9 @@ class EndpointMap
 {
 public:
   EndpointMap(NamespaceMap_t nsMap) {
-#if 0
     for(auto &ns : nsMap) {
-      m_endpointMap[ns.first] = Endpoint(ns.second);
+      m_endpointMap.insert(std::make_pair(ns.first, Endpoint(ns.second)));
     }
-#endif
   }
 
   std::string getPath(const std::string &diskInstance, const std::string &diskFileId) const {

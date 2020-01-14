@@ -160,7 +160,7 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    //m_nsEndpoint = nsEndpointConf.first ? nsEndpointConf.second : "";
    auto nsTokenConf = config.getOptionValueStr("cta.ns.token");
    //m_nsToken = nsTokenConf.first ? nsTokenConf.second : "";
-   //m_namespaceMap["endpoint"] = Namespace(nsEndpointConf.second, nsTokenConf.second);
+   m_namespaceMap.insert(std::make_pair("endpoint", Namespace(nsEndpointConf.second, nsTokenConf.second)));
   
    // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
    auto aht = new cta::objectstore::AgentHeartbeatThread(m_backendPopulator->getAgentReference(), *m_backend, *m_log);
