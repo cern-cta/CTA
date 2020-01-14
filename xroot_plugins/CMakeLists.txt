@@ -37,7 +37,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 #
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp
                              ../cmdline/CtaAdminCmdParse.cpp
-                             Namespace.cpp GrpcClient.cpp)
+                             GrpcClient.cpp GrpcEndpoint.cpp)
 target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctaobjectstore ctacatalogue
                       EosMigration ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
 set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})

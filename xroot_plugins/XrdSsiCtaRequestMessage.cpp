@@ -1484,7 +1484,7 @@ void RequestMessage::processTapeFile_Ls(cta::xrd::Response &response, XrdSsiStre
   using namespace cta::admin;
 
   // Create a XrdSsi stream object to return the results
-  stream = new TapeFileLsStream(*this, m_catalogue, m_scheduler, m_nsEndpoint, m_nsToken);
+  stream = new TapeFileLsStream(*this, m_catalogue, m_scheduler, m_namespaceMap);
 
   response.set_show_header(HeaderType::TAPEFILE_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);

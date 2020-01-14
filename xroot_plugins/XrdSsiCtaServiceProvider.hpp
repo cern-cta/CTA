@@ -18,14 +18,15 @@
 
 #pragma once
 
-#include "common/Configuration.hpp"
-#include "common/utils/utils.hpp"
-#include "objectstore/BackendPopulator.hpp"
-#include "objectstore/BackendFactory.hpp"
-#include "scheduler/Scheduler.hpp"
-#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
-#include "objectstore/AgentHeartbeatThread.hpp"
-#include "XrdSsiPbLog.hpp"
+#include <common/Configuration.hpp>
+#include <common/utils/utils.hpp>
+#include <objectstore/BackendPopulator.hpp>
+#include <objectstore/BackendFactory.hpp>
+#include <scheduler/Scheduler.hpp>
+#include <scheduler/OStoreDB/OStoreDBWithAgent.hpp>
+#include <objectstore/AgentHeartbeatThread.hpp>
+#include <xroot_plugins/Namespace.hpp>
+#include <XrdSsiPbLog.hpp>
 
 #include <XrdSsi/XrdSsiProvider.hh>
 
@@ -110,14 +111,9 @@ public:
    cta::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
 
    /*!
-    * Get the endpoint for namespace queries
+    * Get the endpoints for namespace queries
     */
-   std::string getNsEndpoint() const { return m_nsEndpoint; }
-
-   /*!
-    * Get the token for namespace queries
-    */
-   std::string getNsToken() const { return m_nsToken; }
+   cta::NamespaceMap_t getNamespaceMap() const { return m_namespaceMap; }
 
 private:
    /*!
@@ -154,8 +150,7 @@ private:
    std::unique_ptr<cta::Scheduler>                     m_scheduler;           //!< The scheduler
    std::unique_ptr<cta::log::Logger>                   m_log;                 //!< The logger
    cta::optional<std::string>		               m_repackBufferURL;     //!< The repack buffer URL
-   std::string                                         m_nsEndpoint;          //!< Endpoint for namespace queries
-   std::string                                         m_nsToken;             //!< Authentication token for namespace queries
+   cta::NamespaceMap_t                                 m_namespaceMap;        //!< Endpoints for namespace queries
    UniquePtrAgentHeartbeatThread                       m_agentHeartbeat;      //!< Agent heartbeat thread
 
    static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";    //!< Identifier for log messages

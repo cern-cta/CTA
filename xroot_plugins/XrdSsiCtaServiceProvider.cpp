@@ -157,9 +157,10 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
 
    // Get the endpoint for namespace queries
    auto nsEndpointConf = config.getOptionValueStr("cta.ns.endpoint");
-   m_nsEndpoint = nsEndpointConf.first ? nsEndpointConf.second : "";
+   //m_nsEndpoint = nsEndpointConf.first ? nsEndpointConf.second : "";
    auto nsTokenConf = config.getOptionValueStr("cta.ns.token");
-   m_nsToken = nsTokenConf.first ? nsTokenConf.second : "";
+   //m_nsToken = nsTokenConf.first ? nsTokenConf.second : "";
+   //m_namespaceMap["endpoint"] = Namespace(nsEndpointConf.second, nsTokenConf.second);
   
    // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
    auto aht = new cta::objectstore::AgentHeartbeatThread(m_backendPopulator->getAgentReference(), *m_backend, *m_log);

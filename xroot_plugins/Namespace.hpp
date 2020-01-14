@@ -1,7 +1,7 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
  * @brief          CTA Frontend Tape Namespace query class
- * @copyright      Copyright 2019 CERN
+ * @copyright      Copyright 2020 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -18,21 +18,22 @@
 
 #pragma once
 
-#include <string>
-#include <xroot_plugins/GrpcClient.hpp>
+#include <map>
+#include <iostream> // for testing
 
 namespace cta { 
 
-class Namespace
+struct Namespace
 {
-public:
-  Namespace(const std::string &endpoint, const std::string &token) :
-    m_grpcClient(::eos::client::GrpcClient::Create(endpoint, token)) { }
+  Namespace(const std::string &ep, const std::string &tk) :
+    endpoint(ep), token(tk) {
+std::cerr << "Created namespace endpoint " << endpoint << " with token " << token << std::endl;
+  }
 
-  std::string getPath(const std::string &diskFileId);
-
-private:
-  std::unique_ptr<::eos::client::GrpcClient> m_grpcClient;
+  std::string endpoint;
+  std::string token;
 };
 
-} // namespace cta
+typedef std::map<std::string, Namespace> NamespaceMap_t;
+
+} // namespace cta::grpc

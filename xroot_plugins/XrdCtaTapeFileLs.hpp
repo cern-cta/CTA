@@ -20,7 +20,7 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-#include <xroot_plugins/Namespace.hpp>
+#include <xroot_plugins/GrpcEndpoint.hpp>
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 
 
@@ -32,8 +32,15 @@ namespace cta { namespace xrd {
 class TapeFileLsStream : public XrdCtaStream
 {
 public:
+  // Constructor when we need gRPC namespace lookups
   TapeFileLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
-                   const std::string &endpoint, const std::string &token);
+                   const NamespaceMap_t &nsMap);
+
+  // Constructor when we do not require namespace lookups
+  TapeFileLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+    TapeFileLsStream(requestMsg, catalogue, scheduler, NamespaceMap_t()) {
+    m_LookupNamespace = false;
+  }
 
 private:
   /*!
@@ -51,9 +58,9 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
-  catalogue::ArchiveFileItor              m_tapeFileItor;                 //!< Iterator across files which have been archived
-  bool                                    m_isLookupNamespace;            //!< Do we need to look up filenames in the namespace?
-  Namespace                               m_namespace;
+  catalogue::ArchiveFileItor    m_tapeFileItor;       //!< Iterator across files which have been archived
+  grpc::EndpointMap             m_endpoints;          //!< List of gRPC endpoints
+  bool                          m_LookupNamespace;    //!< True if namespace lookup is required
 
   static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";    //!< Identifier for log messages
 };
@@ -61,13 +68,15 @@ private:
 
 TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
-  const std::string &endpoint, const std::string &token) :
+  const NamespaceMap_t &nsMap) :
     XrdCtaStream(catalogue, scheduler),
-    m_namespace(endpoint, token)
+    m_endpoints(nsMap)
 {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapeFileLsStream() constructor");
+
+  m_LookupNamespace = true;
 
 #if 0
   if(!requestMsg.has_flag(OptionBoolean::ALL))
@@ -95,9 +104,9 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   if(!m_isSummary) {
     m_tapeFileItor = m_catalogue.getArchiveFilesItor(m_searchCriteria);
   }
-#endif
   auto isLookupNamespace = requestMsg.getOptional(OptionBoolean::LOOKUP_NAMESPACE);
   m_isLookupNamespace = isLookupNamespace ? isLookupNamespace.value() : false;
+#endif
 
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = requestMsg.getRequired(OptionString::VID);
@@ -150,8 +159,8 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       df->set_disk_instance(archiveFile.diskInstance);
       df->mutable_owner_id()->set_uid(archiveFile.diskFileInfo.owner_uid);
       df->mutable_owner_id()->set_gid(archiveFile.diskFileInfo.gid);
-      if(m_isLookupNamespace) {
-        df->set_path(m_namespace.getPath(archiveFile.diskFileId));
+      if(m_LookupNamespace) {
+        df->set_path(m_endpoints.getPath(archiveFile.diskInstance, archiveFile.diskFileId));
       }
 
       // Tape file
