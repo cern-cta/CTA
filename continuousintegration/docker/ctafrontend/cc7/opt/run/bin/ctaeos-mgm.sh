@@ -270,7 +270,7 @@ fi
   # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
   eos mkdir ${CTA_TEST_DIR}
   eos chmod 555 ${CTA_TEST_DIR}
-  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp /eos/ctaeos/cta
+  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u,u:root:+u ${CTA_TEST_DIR}
   eos attr set sys.archive.storage_class=ctaStorageClass ${CTA_TEST_DIR}
     
   # Link the attributes of CTA worklow directory to the test directory
