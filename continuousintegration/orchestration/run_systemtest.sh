@@ -26,7 +26,8 @@ PREFLIGHTTEST_SCRIPT='tests/preflighttest.sh'
 PREFLIGHTTEST_TIMEOUT=60
 # default systemtest timeout is 1 hour
 SYSTEMTEST_TIMEOUT=3600
-
+# by default do not cleanup leftover namespaces
+cleanup_namespaces=0
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
@@ -43,7 +44,7 @@ Options:
   -S    Use systemd to manage services inside containers
   -a    additional kubernetes resources added to the kubernetes namespace
   -U    Run database unit test only
-
+  -C    Cleanup leftover kubernetes namespaces
 
 Create a kubernetes instance and launch the system test script specified.
 Makes sure the created instance is cleaned up at the end and return the status of the system test.
@@ -56,7 +57,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:d:s:p:b:e:a:B:t:kDOSU" o; do
+while getopts "n:d:s:p:b:e:a:B:t:kDOSUC" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -102,6 +103,9 @@ while getopts "n:d:s:p:b:e:a:B:t:kDOSU" o; do
         U)
             CREATE_OPTS="${CREATE_OPTS} -U"
             PREFLIGHTTEST_SCRIPT='/usr/bin/true' # we do not run preflight test in the context of unit tests
+            ;;
+        C)
+            cleanup_namespaces=1
             ;;
         *)
             usage
@@ -155,6 +159,12 @@ fi
 log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
 mkdir -p ${log_dir}
 
+if [ $cleanup_namespaces == 1 ]; then
+    echo "Cleaning up old namespaces:"
+    kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | egrep '\-[0-9]+git'
+    kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | egrep '\-[0-9]+git' | xargs -itoto ./delete_instance.sh -n toto -D
+    echo DONE
+fi
 
 function execute_log {
   mycmd=$1

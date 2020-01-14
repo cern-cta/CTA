@@ -237,7 +237,7 @@ archiveretrieve:
   retry: 1
   script:
     - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
-    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/archive_retrieve.sh -O -D -t 2400
+    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/archive_retrieve.sh -O -D -t 2400 -C
   artifacts:
     when: always
     expire_in: 30 days
@@ -254,7 +254,7 @@ repack:
   retry: 1
   script:
     - export NAMESPACE="repack-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
-    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/repack_systemtest_wrapper.sh -O -D -t 2400
+    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/repack_systemtest_wrapper.sh -O -D -t 2400 -C
   artifacts:
     when: always
     expire_in: 30 days
@@ -271,7 +271,7 @@ dbunittests_oracle:
   retry: 1
   script:
     - export NAMESPACE="dbunittestsoracle-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
-    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s /usr/bin/true -O -D -U -t 600
+    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s /usr/bin/true -O -D -U -t 600 -C
   artifacts:
     when: always
     expire_in: 30 days
