@@ -236,7 +236,7 @@ repackCancellation() {
 
   echo
   echo "Checking that the Retrieve queue of the VID ${VID_TO_REPACK} contains the Retrieve Requests created from the Repack Request expansion"
-  nbFilesOnTapeToRepack=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json archivefile ls --vid ${VID_TO_REPACK} | jq "length"`
+  nbFilesOnTapeToRepack=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK} | jq "length"`
   echo "Nb files on tape = $nbFilesOnTapeToRepack"
   
   nbFilesOnQueue=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles"` 
@@ -388,7 +388,7 @@ repackTapeRepair() {
   
   echo "Getting files to inject into the repack buffer directory"
   
-  afls=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json archivefile ls --vid ${VID_TO_REPACK}`
+  tfls=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK}`
   nbFileToInject=10
   
   if [[ $nbFileToInject != 0 ]]
@@ -406,7 +406,7 @@ repackTapeRepair() {
 
     for i in $(seq 0 $(( nbFileToInject - 1 )) )
     do
-      diskId=`echo $afls | jq -r ". [$i] | .af.diskId"` || break
+      diskId=`echo $tfls | jq -r ". [$i] | .df.diskId"` || break
       diskIds[$i]=$diskId
       pathFileToInject=`kubectl -n ${NAMESPACE} exec ctaeos -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
       pathOfFilesToInject[$i]=$pathFileToInject
@@ -418,7 +418,7 @@ repackTapeRepair() {
     
     for i in $(seq 0 $(( nbFileToInject - 1)) )
     do
-      fseqFile=`echo $afls | jq -r ". [] | select(.af.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
+      fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
       kubectl -n ${NAMESPACE} exec ctaeos -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
     done
    
