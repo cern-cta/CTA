@@ -111,6 +111,11 @@ public:
    cta::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
 
    /*!
+    * Populate the namespace endpoint configuration from a keytab file
+    */
+   void setNamespaceMap(const std::string &keytab_file);
+
+   /*!
     * Get the endpoints for namespace queries
     */
    cta::NamespaceMap_t getNamespaceMap() const { return m_namespaceMap; }
