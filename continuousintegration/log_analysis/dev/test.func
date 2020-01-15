@@ -46,7 +46,7 @@ wait_dot()
 getArchiveFileList()
 {
   ERRFILE=/tmp/getArchiveFileListErr.$$
-  FILE_LIST=$(cta-admin af ls --instance ${EOS_INSTANCE} --diskid ${1} --header 2>${ERRFILE})
+  FILE_LIST=$(cta-admin archivefile ls --instance ${EOS_INSTANCE} --diskid ${1} --header 2>${ERRFILE})
   [ $? -eq 0 ] || FILE_LIST=$(<${ERRFILE})
   rm -f ${ERRFILE}
   echo ${FILE_LIST} | grep --quiet "does not exist"
