@@ -18,14 +18,15 @@
 
 #pragma once
 
-#include "common/Configuration.hpp"
-#include "common/utils/utils.hpp"
-#include "objectstore/BackendPopulator.hpp"
-#include "objectstore/BackendFactory.hpp"
-#include "scheduler/Scheduler.hpp"
-#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
-#include "objectstore/AgentHeartbeatThread.hpp"
-#include "XrdSsiPbLog.hpp"
+#include <common/Configuration.hpp>
+#include <common/utils/utils.hpp>
+#include <objectstore/BackendPopulator.hpp>
+#include <objectstore/BackendFactory.hpp>
+#include <scheduler/Scheduler.hpp>
+#include <scheduler/OStoreDB/OStoreDBWithAgent.hpp>
+#include <objectstore/AgentHeartbeatThread.hpp>
+#include <xroot_plugins/Namespace.hpp>
+#include <XrdSsiPbLog.hpp>
 
 #include <XrdSsi/XrdSsiProvider.hh>
 
@@ -104,7 +105,20 @@ public:
     */
    cta::log::LogContext getLogContext() const { return cta::log::LogContext(*m_log); }
    
+   /*!
+    * Get the repack buffer URL
+    */
    cta::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
+
+   /*!
+    * Populate the namespace endpoint configuration from a keytab file
+    */
+   void setNamespaceMap(const std::string &keytab_file);
+
+   /*!
+    * Get the endpoints for namespace queries
+    */
+   cta::NamespaceMap_t getNamespaceMap() const { return m_namespaceMap; }
 
 private:
    /*!
@@ -141,6 +155,7 @@ private:
    std::unique_ptr<cta::Scheduler>                     m_scheduler;           //!< The scheduler
    std::unique_ptr<cta::log::Logger>                   m_log;                 //!< The logger
    cta::optional<std::string>		               m_repackBufferURL;     //!< The repack buffer URL
+   cta::NamespaceMap_t                                 m_namespaceMap;        //!< Endpoints for namespace queries
    UniquePtrAgentHeartbeatThread                       m_agentHeartbeat;      //!< Agent heartbeat thread
 
    static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";    //!< Identifier for log messages

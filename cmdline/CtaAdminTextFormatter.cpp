@@ -840,6 +840,62 @@ void TextFormatter::print(const TapeLsItem &tals_item) {
   );
 }
 
+void TextFormatter::printTapeFileLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "archive id",
+    "copy no",
+    "vid",
+    "fseq",
+    "block id",
+    "instance",
+    "disk id",
+    "size",
+    "checksum type",
+    "checksum value",
+    "storage class",
+    "owner",
+    "group",
+    "creation time",
+    "sc vid", // superceded
+    "sc fseq",
+    "path"
+  );
+}
+
+void TextFormatter::print(const TapeFileLsItem &tfls_item) {
+  // Files can have multiple checksums of different types. The tabular output will
+  // display only the first checksum; the JSON output will list all checksums.
+  std::string checksumType("NONE");
+  std::string checksumValue;
+
+  if(!tfls_item.af().checksum().empty()) {
+    const google::protobuf::EnumDescriptor *descriptor = cta::common::ChecksumBlob::Checksum::Type_descriptor();
+    std::string name = descriptor->FindValueByNumber(tfls_item.af().checksum().begin()->type())->name();
+    checksumValue = "0x" + tfls_item.af().checksum().begin()->value();
+  }
+
+  push_back(
+    tfls_item.af().archive_id(),
+    tfls_item.tf().copy_nb(),
+    tfls_item.tf().vid(),
+    tfls_item.tf().f_seq(),
+    tfls_item.tf().block_id(),
+    tfls_item.df().disk_instance(),
+    tfls_item.df().disk_id(),
+    dataSizeToStr(tfls_item.af().size()),
+    checksumType,
+    checksumValue,
+    tfls_item.af().storage_class(),
+    tfls_item.df().owner_id().uid(),
+    tfls_item.df().owner_id().gid(),
+    timeToStr(tfls_item.af().creation_time()),
+    tfls_item.tf().superseded_by_vid(),
+    tfls_item.tf().superseded_by_f_seq(),
+    tfls_item.df().path()
+  );
+}
+
 void TextFormatter::printTapePoolLsHeader() {
   push_back("HEADER");
   push_back(

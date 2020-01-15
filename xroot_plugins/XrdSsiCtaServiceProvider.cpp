@@ -101,7 +101,7 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
       } else if (loggerURL.second.substr(0, 5) == "file:") {
          m_log.reset(new log::FileLogger(shortHostname, "cta-frontend", loggerURL.second.substr(5), loggerLevel));
       } else {
-         throw exception::Exception(std::string("Unknown log URL: ") + loggerURL.second);
+         throw exception::UserError(std::string("Unknown log URL: ") + loggerURL.second);
       }
    } catch(exception::Exception &ex) {
       std::string ex_str("Failed to instantiate object representing CTA logging system: ");
@@ -111,11 +111,11 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    const std::list<log::Param> params = {log::Param("version", CTA_VERSION)};
    log::Logger &log = *m_log;
 
-   // Initialise the catalogue
+   // Initialise the Catalogue
    const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
    auto catalogue_numberofconnections = config.getOptionValueInt("cta.catalogue.numberofconnections");
    if(!catalogue_numberofconnections.first) {
-      throw exception::Exception("cta.catalogue.numberofconnections is not set in configuration file " + cfgFn);
+      throw exception::UserError("cta.catalogue.numberofconnections is not set in configuration file " + cfgFn);
    }
    const uint64_t nbArchiveFileListingConns = 2;
 
@@ -129,7 +129,7 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    // Initialise the Backend
    auto objectstore_backendpath = config.getOptionValueStr("cta.objectstore.backendpath");
    if(!objectstore_backendpath.first) {
-      throw exception::Exception("cta.objectstore.backendpath is not set in configuration file " + cfgFn);
+      throw exception::UserError("cta.objectstore.backendpath is not set in configuration file " + cfgFn);
    }
    m_backend = std::move(cta::objectstore::BackendFactory::createBackend(objectstore_backendpath.second, *m_log));
    m_backendPopulator = cta::make_unique<cta::objectstore::BackendPopulator>(*m_backend, "Frontend", cta::log::LogContext(*m_log));
@@ -149,10 +149,18 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
       // If not, never mind
    }
    
-   //Initialize the repack buffer URL
+   // Get the repack buffer URL
    auto repackBufferURLConf = config.getOptionValueStr("cta.repack.repack_buffer_url");
    if(repackBufferURLConf.first){
      m_repackBufferURL = repackBufferURLConf.second;
+   }
+
+   // Get the endpoint for namespace queries
+   auto nsConf = config.getOptionValueStr("cta.ns.config");
+   if(nsConf.first) {
+      setNamespaceMap(nsConf.second);
+   } else {
+      Log::Msg(XrdSsiPb::Log::WARNING, LOG_SUFFIX, "warning: 'cta.ns.config' not specified; namespace queries are disabled");
    }
   
    // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
@@ -162,6 +170,40 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
 
    // All done
    log(log::INFO, std::string("cta-frontend started"), params);
+}
+
+void XrdSsiCtaServiceProvider::setNamespaceMap(const std::string &keytab_file)
+{
+   // Open the keytab file for reading
+   std::ifstream file(keytab_file);
+   if(!file) {
+      throw cta::exception::UserError("Failed to open namespace keytab configuration file " + keytab_file);
+   }
+
+   // Parse the keytab line by line
+   std::string line;
+   for(int lineno = 0; std::getline(file, line); ++lineno) {
+      // Strip out comments
+      auto pos = line.find('#');
+      if(pos != std::string::npos) {
+         line.resize(pos);
+      }
+
+      // Parse one line
+      std::stringstream ss(line);
+      std::string diskInstance;
+      std::string endpoint;
+      std::string token;
+      std::string eol;
+      ss >> diskInstance >> endpoint >> token >> eol;
+
+      // Ignore blank lines, all other lines must have exactly 3 elements
+      if(token.empty() || !eol.empty()) {
+         if(diskInstance.empty() && endpoint.empty() && token.empty()) continue;
+         throw cta::exception::UserError("Could not parse namespace keytab configuration file line " + std::to_string(lineno) + ": " + line);
+      }
+      m_namespaceMap.insert(std::make_pair(diskInstance, cta::Namespace(endpoint, token)));
+   }
 }
 
 XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold)

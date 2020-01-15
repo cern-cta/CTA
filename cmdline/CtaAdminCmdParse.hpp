@@ -209,6 +209,8 @@ const cmdLookup_t cmdLookup = {
    { "sc",                      AdminCmd::CMD_STORAGECLASS },
    { "tape",                    AdminCmd::CMD_TAPE },
    { "ta",                      AdminCmd::CMD_TAPE },
+   { "tapefile",                AdminCmd::CMD_TAPEFILE },
+   { "tf",                      AdminCmd::CMD_TAPEFILE },
    { "tapepool",                AdminCmd::CMD_TAPEPOOL },
    { "tp",                      AdminCmd::CMD_TAPEPOOL },
    { "disksystem",              AdminCmd::CMD_DISKSYSTEM },
@@ -250,14 +252,15 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
 
    // hasOption options
    { "--checkchecksum",         OptionBoolean::CHECK_CHECKSUM },
+   { "--disabledtape",		OptionBoolean::DISABLED },
    { "--extended",              OptionBoolean::EXTENDED },
    { "--justarchive",           OptionBoolean::JUSTARCHIVE },
    { "--justmove",              OptionBoolean::JUSTMOVE },
    { "--justaddcopies",         OptionBoolean::JUSTADDCOPIES },
    { "--justretrieve",          OptionBoolean::JUSTRETRIEVE },
    { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
-   { "--summary",               OptionBoolean::SUMMARY },
-   { "--disabledtape",		OptionBoolean::DISABLED } 
+   { "--lookupnamespace",       OptionBoolean::LOOKUP_NAMESPACE },
+   { "--summary",               OptionBoolean::SUMMARY }
 };
 
 
@@ -367,6 +370,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
+   { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls" } }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" },
 			  "\n  This command allows to manage disk systems (useful for the backpressure).\n"
@@ -427,6 +431,7 @@ const Option opt_log                  { Option::OPT_FLAG, "--log",              
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>",
                                         "--logicallibrary" };
+const Option opt_lookupns             { Option::OPT_FLAG, "--lookupnamespace",       "-l",   "" };
 const Option opt_maxdrivesallowed     { Option::OPT_UINT, "--maxdrivesallowed",      "-d",   " <max_drives_allowed>" };
 const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type>" };
 const Option opt_minarchiverequestage { Option::OPT_UINT, "--minarchiverequestage",  "--aa", " <min_request_age>" };
@@ -571,6 +576,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_disabled.optional(), opt_full.optional(), opt_readonly.optional(), opt_all.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
       { opt_vid, opt_force.optional() }},
+   /*----------------------------------------------------------------------------------------------------*/
+   {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    }, { opt_vid, opt_lookupns.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},

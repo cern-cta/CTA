@@ -34,6 +34,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaRequesterMountRuleLs.hpp"
 #include "XrdCtaShowQueues.hpp"
 #include "XrdCtaTapeLs.hpp"
+#include "XrdCtaTapeFileLs.hpp"
 #include "XrdCtaStorageClassLs.hpp"
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdCtaDiskSystemLs.hpp"
@@ -218,6 +219,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                break;
             case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LABEL):
                processTape_Label(response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS):
+               processTapeFile_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD):
                processTapePool_Add(response);
@@ -1485,6 +1489,24 @@ void RequestMessage::processTape_Label(cta::xrd::Response &response)
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
+
+void RequestMessage::processTapeFile_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
+{
+  using namespace cta::admin;
+
+  auto isLookupNamespace = getOptional(OptionBoolean::LOOKUP_NAMESPACE);
+
+  if(isLookupNamespace && isLookupNamespace.value()) {
+    // Get a stream including filename lookup in the namespace
+    stream = new TapeFileLsStream(*this, m_catalogue, m_scheduler, m_namespaceMap);
+  } else {
+    // Get a stream without namespace lookup
+    stream = new TapeFileLsStream(*this, m_catalogue, m_scheduler);
+  }
+
+  response.set_show_header(HeaderType::TAPEFILE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
 
 
 void RequestMessage::processTapePool_Add(cta::xrd::Response &response)
