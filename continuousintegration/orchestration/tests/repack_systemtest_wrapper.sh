@@ -55,7 +55,6 @@ kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${REPACK_BUFFER_URL}
 
 source ./repack_helper.sh
 kubectl -n ${NAMESPACE} cp repack_systemtest.sh client:/root/repack_systemtest.sh
-kubectl -n ${NAMESPACE} cp repack_generate_report.sh client:/root/repack_generate_report.sh
 
 roundTripRepack() {
   echo

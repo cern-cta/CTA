@@ -43,7 +43,6 @@ kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
 kubectl -n ${NAMESPACE} cp client_ar.sh client:/root/client_ar.sh
 kubectl -n ${NAMESPACE} cp multiple_repack.sh client:/root/multiple_repack.sh
 kubectl -n ${NAMESPACE} cp repack_systemtest.sh client:/root/repack_systemtest.sh
-kubectl -n ${NAMESPACE} cp repack_generate_report.sh client:/root/repack_generate_report.sh
 
 NB_FILES_PER_TAPE=1000
 
