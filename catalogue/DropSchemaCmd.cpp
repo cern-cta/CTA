@@ -136,6 +136,9 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
+      "TEMP_TAPE_FILE",
+      "DATABASECHANGELOGLOCK", /* Liquibase specific table */
+      "DATABASECHANGELOG", /* Liquibase specific table */
       "ARCHIVE_FILE",
       "ARCHIVE_FILE_ID",
       "TAPE",
@@ -170,6 +173,9 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
+      "TEMP_TAPE_FILE",
+      "DATABASECHANGELOGLOCK", /* Liquibase specific table */
+      "DATABASECHANGELOG", /* Liquibase specific table */
       "ARCHIVE_FILE",
       "ARCHIVE_FILE_ID",
       "TAPE",
@@ -246,6 +252,9 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "TAPE",
       "TEMP_TAPE_FILE_BATCH",
       "TEMP_TAPE_FILE_INSERTION_BATCH",
+      "TEMP_TAPE_FILE",
+      "DATABASECHANGELOGLOCK", /* Liquibase specific table */
+      "DATABASECHANGELOG", /* Liquibase specific table */
       "TEMP_REMOVE_CASTOR_METADATA",
       "REQUESTER_MOUNT_RULE",
       "REQUESTER_GROUP_MOUNT_RULE",
@@ -285,6 +294,9 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
+      "TEMP_TAPE_FILE",
+      "DATABASECHANGELOGLOCK", /* Liquibase specific table */
+      "DATABASECHANGELOG", /* Liquibase specific table */
       "ARCHIVE_FILE",
       "TAPE",
       "REQUESTER_MOUNT_RULE",
