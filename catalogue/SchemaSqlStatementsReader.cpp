@@ -156,8 +156,18 @@ MapSqlStatementsReader::~MapSqlStatementsReader() {
 }
 
 std::list<std::string> MapSqlStatementsReader::getStatements(){
-  std::string schema = AllCatalogueSchema::mapSchema[m_catalogueVersion][getDatabaseType()];
-  return getAllStatementsFromSchema(schema);
+  std::map<std::string,std::string> mapVersionSchemas;
+  try {
+    mapVersionSchemas = AllCatalogueSchema::mapSchema.at(m_catalogueVersion);
+  } catch(const std::out_of_range &ex){
+    throw cta::exception::Exception("No schema has been found for version number "+m_catalogueVersion);
+  }
+  try {
+    std::string schema = mapVersionSchemas.at(getDatabaseType());
+    return getAllStatementsFromSchema(schema);
+  } catch(const std::out_of_range &ex){
+    throw cta::exception::Exception("No schema has been found for database type "+getDatabaseType());
+  }
 }
 
 }}
