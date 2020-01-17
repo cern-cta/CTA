@@ -75,7 +75,9 @@ std::string CatalogueMetadataGetter::getCatalogueVersion(){
 }
 
 std::list<std::string> CatalogueMetadataGetter::getTableNames(){
-  return m_conn.getTableNames();
+  std::list<std::string> tableNames = m_conn.getTableNames();
+  removeObjectNameContaining(tableNames,{"DATABASECHANGELOG","DATABASECHANGELOGLOCK"});
+  return tableNames;
 }
 
 std::list<std::string> CatalogueMetadataGetter::getIndexNames(){
