@@ -328,6 +328,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
  * Map string list options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionStrList::Key> strListOptions = {
+   { "--fidfile",               OptionStrList::FILE_ID },
    { "--vidfile",               OptionStrList::VID }
 };
 
@@ -413,6 +414,7 @@ const Option opt_drivename_cmd        { Option::OPT_CMD,  "--drive",            
 const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",             "-e",   " <\"true\" or \"false\">" };
 const Option opt_encryptionkeyname    { Option::OPT_STR,  "--encryptionkeyname",     "-k",   " <encryption_key_name>" };
 const Option opt_extended             { Option::OPT_FLAG, "--extended",              "-x",   "" };
+const Option opt_fidfile              { Option::OPT_STR_LIST, "--fidfile",           "-i",   " <filename>" };
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
 const Option opt_firstfseq            { Option::OPT_UINT, "--firstfseq",             "-f",   " <first_fseq>" };
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
@@ -573,7 +575,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(),
         opt_logicallibrary.optional(), opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(),
-        opt_disabled.optional(), opt_full.optional(), opt_readonly.optional(), opt_all.optional() }},
+        opt_disabled.optional(), opt_full.optional(), opt_readonly.optional(), opt_fidfile.optional(), opt_all.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
       { opt_vid, opt_force.optional() }},
    /*----------------------------------------------------------------------------------------------------*/

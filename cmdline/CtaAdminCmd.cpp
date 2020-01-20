@@ -398,7 +398,20 @@ void CtaAdminCmd::readListFromFile(cta::admin::OptionStrList &str_list, const st
       while(!ss.eof()) {
          std::string item;
          ss >> item;
-         if(!item.empty()) {
+         // skip blank lines or lines consisting only of whitespace
+         if(item.empty()) continue;
+
+         if(str_list.key() == OptionStrList::FILE_ID) {
+            // Special handling for file id lists. The output from "eos find --fid <fid> /path" is:
+            //   path=/path fid=<fid>
+            // We are only interested in the list of <fid>s
+            if(item.substr(0, 4) == "fid=") {
+               str_list.add_item(item.substr(4));
+            } else {
+               continue;
+            }
+         } else {
+            // default case: add all items
             str_list.add_item(item);
          }
       }
