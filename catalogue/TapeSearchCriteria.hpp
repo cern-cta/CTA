@@ -19,8 +19,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
-#include "common/optional.hpp"
+#include <common/optional.hpp>
 
 namespace cta {
 namespace catalogue {
@@ -86,6 +87,10 @@ struct TapeSearchCriteria {
    */
   optional<bool> readOnly;
 
+  /**
+   * List of disk file IDs to search for.
+   */
+  optional<std::vector<std::string>> diskFileIds;
 }; // struct TapeSearchCriteria
 
 } // namespace catalogue

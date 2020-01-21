@@ -66,25 +66,26 @@ TapeLsStream::TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Cat
 
   cta::catalogue::TapeSearchCriteria searchCriteria;
    
-  if(!requestMsg.has_flag(OptionBoolean::ALL)) {
-    bool has_any = false; // set to true if at least one optional option is set
+  bool has_any = false; // set to true if at least one optional option is set
 
-    // Get the search criteria from the optional options
+  // Get the search criteria from the optional options
 
-    searchCriteria.disabled        = requestMsg.getOptional(OptionBoolean::DISABLED,       &has_any);
-    searchCriteria.readOnly        = requestMsg.getOptional(OptionBoolean::READ_ONLY,      &has_any);
-    searchCriteria.full            = requestMsg.getOptional(OptionBoolean::FULL,           &has_any);
-    searchCriteria.capacityInBytes = requestMsg.getOptional(OptionUInt64::CAPACITY,        &has_any);
-    searchCriteria.logicalLibrary  = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
-    searchCriteria.tapePool        = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);
-    searchCriteria.vo              = requestMsg.getOptional(OptionString::VO,              &has_any);
-    searchCriteria.vid             = requestMsg.getOptional(OptionString::VID,             &has_any);
-    searchCriteria.mediaType       = requestMsg.getOptional(OptionString::MEDIA_TYPE,      &has_any);
-    searchCriteria.vendor          = requestMsg.getOptional(OptionString::VENDOR,          &has_any);
+  searchCriteria.disabled        = requestMsg.getOptional(OptionBoolean::DISABLED,       &has_any);
+  searchCriteria.readOnly        = requestMsg.getOptional(OptionBoolean::READ_ONLY,      &has_any);
+  searchCriteria.full            = requestMsg.getOptional(OptionBoolean::FULL,           &has_any);
+  searchCriteria.capacityInBytes = requestMsg.getOptional(OptionUInt64::CAPACITY,        &has_any);
+  searchCriteria.logicalLibrary  = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
+  searchCriteria.tapePool        = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);
+  searchCriteria.vo              = requestMsg.getOptional(OptionString::VO,              &has_any);
+  searchCriteria.vid             = requestMsg.getOptional(OptionString::VID,             &has_any);
+  searchCriteria.mediaType       = requestMsg.getOptional(OptionString::MEDIA_TYPE,      &has_any);
+  searchCriteria.vendor          = requestMsg.getOptional(OptionString::VENDOR,          &has_any);
+  searchCriteria.diskFileIds     = requestMsg.getOptional(OptionStrList::FILE_ID,        &has_any);
 
-    if(!has_any) {
-      throw cta::exception::UserError("Must specify at least one search option, or --all");
-    }
+  if(!(requestMsg.has_flag(OptionBoolean::ALL) || has_any)) {
+    throw cta::exception::UserError("Must specify at least one search option, or --all");
+  } else if(requestMsg.has_flag(OptionBoolean::ALL) && has_any) {
+    throw cta::exception::UserError("Cannot specify --all together with other search options, they are mutually exclusive");
   }
 
   m_tapeList = m_catalogue.getTapes(searchCriteria);
