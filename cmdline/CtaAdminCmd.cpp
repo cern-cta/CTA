@@ -404,9 +404,14 @@ void CtaAdminCmd::readListFromFile(cta::admin::OptionStrList &str_list, const st
          if(str_list.key() == OptionStrList::FILE_ID) {
             // Special handling for file id lists. The output from "eos find --fid <fid> /path" is:
             //   path=/path fid=<fid>
-            // We are only interested in the list of <fid>s
+            // We discard everything except the list of fids. <fid> is a zero-padded hexadecimal number,
+            // but in the CTA catalogue we store disk IDs as a decimal string, so we need to convert it.
             if(item.substr(0, 4) == "fid=") {
-               str_list.add_item(item.substr(4));
+               auto fid = strtol(item.substr(4).c_str(), nullptr, 16);
+               if(fid < 1 || fid == LONG_MAX) {
+                 throw std::runtime_error(item + " is not a valid file ID");
+               }
+               str_list.add_item(std::to_string(fid));
             } else {
                continue;
             }
