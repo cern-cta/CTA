@@ -2347,6 +2347,19 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
   if(isSetAndEmpty(searchCriteria.vo)) throw exception::UserError("Virtual organisation cannot be an empty string");
 
   try {
+    // Inject disk file IDs into a temporary table
+    if(searchCriteria.diskFileIds) {
+      conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+      if(searchCriteria.diskFileIds.value().empty()) throw exception::UserError("Disk file ID list cannot be empty");
+      std::string insertDiskIdSql = "INSERT INTO TEMP_DISK_ID_LOOKUP(DISK_FILE_ID) VALUES(:DISK_FILE_ID)";
+      for(auto &diskFileId: searchCriteria.diskFileIds.value()) {
+        auto insertDiskIdStmt = conn.createStmt(insertDiskIdSql);
+        insertDiskIdStmt.bindString(":DISK_FILE_ID", diskFileId);
+        insertDiskIdStmt.executeNonQuery();
+      }
+      conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    }
+
     std::list<common::dataStructures::Tape> tapes;
     std::string sql =
       "SELECT "
@@ -2402,7 +2415,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.capacityInBytes ||
        searchCriteria.disabled ||
        searchCriteria.full ||
-       searchCriteria.readOnly) {
+       searchCriteria.readOnly ||
+       searchCriteria.diskFileIds) {
       sql += " WHERE ";
     }
 
@@ -2455,6 +2469,18 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.readOnly) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " TAPE.IS_READ_ONLY = :IS_READ_ONLY";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.diskFileIds) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " VID IN ("
+         "SELECT UNIQUE A.VID "
+         "FROM "
+           "TAPE_FILE A, ARCHIVE_FILE B, TEMP_DISK_ID_LOOKUP C "
+         "WHERE "
+           "A.ARCHIVE_FILE_ID = B.ARCHIVE_FILE_ID AND "
+           "B.DISK_FILE_ID = C.DISK_FILE_ID"
+         ")";
       addedAWhereConstraint = true;
     }
 
