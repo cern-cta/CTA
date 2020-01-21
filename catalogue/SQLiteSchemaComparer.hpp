@@ -51,7 +51,7 @@ private:
   SchemaComparerResult compareTableColumns(const TableColumns & schema1TableColumns, const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type);
   rdbms::Conn m_sqliteConn;
   std::unique_ptr<rdbms::ConnPool> m_sqliteConnPool;
-  std::unique_ptr<SQLiteCatalogueMetadataGetter> m_sqliteSchemaMetadataGetter;
+  std::unique_ptr<SchemaMetadataGetter> m_schemaMetadataGetter;
   bool m_isSchemaInserted = false;
 };
 

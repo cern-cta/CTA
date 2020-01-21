@@ -22,7 +22,10 @@
 namespace cta {
 namespace catalogue {
 
-void CatalogueMetadataGetter::removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval){
+  
+MetadataGetter::~MetadataGetter(){}
+  
+void MetadataGetter::removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval){
   objects.remove_if([&wordsToTriggerRemoval](const std::string &object){
     return std::find_if(wordsToTriggerRemoval.begin(), wordsToTriggerRemoval.end(),[&object](const std::string &wordTriggeringRemoval){
       return object.find(wordTriggeringRemoval) != std::string::npos;
@@ -30,7 +33,7 @@ void CatalogueMetadataGetter::removeObjectNameContaining(std::list<std::string>&
   });
 }
 
-void CatalogueMetadataGetter::removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval){
+void MetadataGetter::removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval){
   objects.remove_if([&wordsNotToTriggerRemoval](const std::string &object){
     return std::find_if(wordsNotToTriggerRemoval.begin(), wordsNotToTriggerRemoval.end(),[&object](const std::string &wordsNotToTriggeringRemoval){
       return object.find(wordsNotToTriggeringRemoval) == std::string::npos;
@@ -38,13 +41,13 @@ void CatalogueMetadataGetter::removeObjectNameNotContaining(std::list<std::strin
   });
 }
 
-void CatalogueMetadataGetter::removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
+void MetadataGetter::removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
   objects.remove_if([&regex](const std::string &object){
     return !regex.has_match(object);
   });
 }
 
-void CatalogueMetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
+void MetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex){
   objects.remove_if([&regex](const std::string &object){
     return regex.has_match(object);
   });
@@ -93,7 +96,10 @@ std::map<std::string,std::string> CatalogueMetadataGetter::getColumns(const std:
 }
 
 std::list<std::string> CatalogueMetadataGetter::getConstraintNames(const std::string &tableName){
-  return m_conn.getConstraintNames(tableName);
+  std::list<std::string> constraintNames = m_conn.getConstraintNames(tableName);
+  //This constraint is added by ALTER TABLE, we can't check its existence for now
+  removeObjectNameContaining(constraintNames,{"CATALOGUE_STATUS_CONTENT_CK"});
+  return constraintNames;
 }
 
 CatalogueMetadataGetter::~CatalogueMetadataGetter() {}
@@ -113,14 +119,6 @@ std::list<std::string> SQLiteCatalogueMetadataGetter::getTableNames(){
   //We do not want the sqlite_sequence tables created automatically by SQLite
   removeObjectNameContaining(tableNames,{"sqlite_sequence"});
   return tableNames;
-}
-
-std::list<std::string> SQLiteCatalogueMetadataGetter::getConstraintNames(const std::string &tableName, cta::rdbms::Login::DbType dbType){
-  std::list<std::string> constraintNames = CatalogueMetadataGetter::getConstraintNames(tableName);
-  if(dbType == cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL){
-    removeObjectNameMatches(constraintNames,cta::utils::Regex("(^NN_)|(_NN$)"));
-  }
-  return constraintNames;
 }
 
 OracleCatalogueMetadataGetter::OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
@@ -149,5 +147,33 @@ CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Lo
   }
 }
 
+/**
+ * SCHEMA METADATA GETTER methods
+ */
+SchemaMetadataGetter::SchemaMetadataGetter(std::unique_ptr<SQLiteCatalogueMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType):m_dbType(dbType) {
+  m_sqliteCatalogueMetadataGetter = std::move(sqliteCatalogueMetadataGetter);
+}
+
+std::list<std::string> SchemaMetadataGetter::getIndexNames() {
+  return m_sqliteCatalogueMetadataGetter->getIndexNames();
+}
+
+std::list<std::string> SchemaMetadataGetter::getTableNames() {
+  return m_sqliteCatalogueMetadataGetter->getTableNames();
+}
+
+std::map<std::string,std::string> SchemaMetadataGetter::getColumns(const std::string& tableName) {
+  return m_sqliteCatalogueMetadataGetter->getColumns(tableName);
+}
+
+std::list<std::string> SchemaMetadataGetter::getConstraintNames(const std::string& tableName) {
+  std::list<std::string> constraintNames = m_sqliteCatalogueMetadataGetter->getConstraintNames(tableName);
+  if(m_dbType == cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL){
+    //If the database to compare is POSTGRESQL, we cannot compare NOT NULL CONSTRAINT names
+    //indeed, POSTGRESQL can not give the NOT NULL constraint names
+    removeObjectNameMatches(constraintNames,cta::utils::Regex("(^NN_)|(_NN$)"));
+  }
+  return constraintNames;
+}
 
 }}
