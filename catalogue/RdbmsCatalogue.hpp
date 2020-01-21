@@ -1508,6 +1508,14 @@ protected:
   bool isSetAndEmpty(const optional<std::string> &optionalStr) const;
 
   /**
+   * Returns true if the specified optional string list is both set and empty.
+   *
+   * @param optionalStr The optional string list.
+   * @return True if the specified optional string list is both set and empty.
+   */
+  bool isSetAndEmpty(const optional<std::vector<std::string>> &optionalStrList) const;
+
+  /**
    * Returns true if the specified storage class is currently being used by one
    * or more archive routes.
    *

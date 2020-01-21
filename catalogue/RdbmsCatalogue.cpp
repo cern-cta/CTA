@@ -2345,21 +2345,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
   if(isSetAndEmpty(searchCriteria.logicalLibrary)) throw exception::UserError("Logical library cannot be an empty string");
   if(isSetAndEmpty(searchCriteria.tapePool)) throw exception::UserError("Tape pool cannot be an empty string");
   if(isSetAndEmpty(searchCriteria.vo)) throw exception::UserError("Virtual organisation cannot be an empty string");
+  if(isSetAndEmpty(searchCriteria.diskFileIds)) throw exception::UserError("Disk file ID list cannot be empty");
 
   try {
-    // Inject disk file IDs into a temporary table
-    if(searchCriteria.diskFileIds) {
-      conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-      if(searchCriteria.diskFileIds.value().empty()) throw exception::UserError("Disk file ID list cannot be empty");
-      std::string insertDiskIdSql = "INSERT INTO TEMP_DISK_ID_LOOKUP(DISK_FILE_ID) VALUES(:DISK_FILE_ID)";
-      for(auto &diskFileId: searchCriteria.diskFileIds.value()) {
-        auto insertDiskIdStmt = conn.createStmt(insertDiskIdSql);
-        insertDiskIdStmt.bindString(":DISK_FILE_ID", diskFileId);
-        insertDiskIdStmt.executeNonQuery();
-      }
-      conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
-    }
-
     std::list<common::dataStructures::Tape> tapes;
     std::string sql =
       "SELECT "
@@ -2417,7 +2405,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.full ||
        searchCriteria.readOnly ||
        searchCriteria.diskFileIds) {
-      sql += " WHERE ";
+      sql += " WHERE";
     }
 
     bool addedAWhereConstraint = false;
@@ -2476,10 +2464,11 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " VID IN ("
          "SELECT UNIQUE A.VID "
          "FROM "
-           "TAPE_FILE A, ARCHIVE_FILE B, TEMP_DISK_ID_LOOKUP C "
+           "TAPE_FILE A, ARCHIVE_FILE B "
          "WHERE "
            "A.ARCHIVE_FILE_ID = B.ARCHIVE_FILE_ID AND "
-           "B.DISK_FILE_ID = C.DISK_FILE_ID"
+           "B.DISK_FILE_ID IN (:DISK_FID0)"
+           //"B.DISK_FILE_ID IN (:DISK_FID0, :DISK_FID1, :DISK_FID2, :DISK_FID3, :DISK_FID4, :DISK_FID5, :DISK_FID6, :DISK_FID7, :DISK_FID8, :DISK_FID9)"
          ")";
       addedAWhereConstraint = true;
     }
@@ -2499,41 +2488,62 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
     if(searchCriteria.readOnly) stmt.bindBool(":IS_READ_ONLY", searchCriteria.readOnly.value());
 
-    auto rset = stmt.executeQuery();
-    while (rset.next()) {
-      common::dataStructures::Tape tape;
+    // Disk file ID lookup requires multiple queries
+    std::vector<std::string>::const_iterator diskFileId_it;
+    std::set<std::string> vidsInList;
+    if(searchCriteria.diskFileIds) diskFileId_it = searchCriteria.diskFileIds.value().begin();
+    int num_queries = searchCriteria.diskFileIds ? searchCriteria.diskFileIds.value().size() : 1;
 
-      tape.vid = rset.columnString("VID");
-      tape.mediaType = rset.columnString("MEDIA_TYPE");
-      tape.vendor = rset.columnString("VENDOR");
-      tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
-      tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
-      tape.vo = rset.columnString("VO");
-      tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
-      tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
-      tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
-      tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
-      tape.disabled = rset.columnBool("IS_DISABLED");
-      tape.full = rset.columnBool("IS_FULL");
-      tape.readOnly = rset.columnBool("IS_READ_ONLY");
-      tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
-      
-      tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
-      tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-      tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
-      
-      tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
-      tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
+    for(int i = 0; i < num_queries; ++i) {
+      if(searchCriteria.diskFileIds) {
+        stmt.bindString(":DISK_FID0", *diskFileId_it++);
+      }
 
-      tape.comment = rset.columnString("USER_COMMENT");
-      tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
-      tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
-      tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
-      tape.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
-      tape.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
-      tape.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+      auto rset = stmt.executeQuery();
+      while (rset.next()) {
+        auto vid = rset.columnString("VID");
+        if(vidsInList.count(vid) == 1) continue;
+        vidsInList.insert(vid);
 
-      tapes.push_back(tape);
+        common::dataStructures::Tape tape;
+
+        tape.vid = vid;
+        tape.mediaType = rset.columnString("MEDIA_TYPE");
+        tape.vendor = rset.columnString("VENDOR");
+        tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
+        tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+        tape.vo = rset.columnString("VO");
+        tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
+        tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+        tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+        tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+        tape.disabled = rset.columnBool("IS_DISABLED");
+        tape.full = rset.columnBool("IS_FULL");
+        tape.readOnly = rset.columnBool("IS_READ_ONLY");
+        tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
+
+        tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
+        tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+        tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+
+        tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
+        tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
+
+        tape.comment = rset.columnString("USER_COMMENT");
+        tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+        tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+        tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+        tape.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+        tape.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+        tape.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+        tapes.push_back(tape);
+      }
+    }
+    if(searchCriteria.diskFileIds) {
+      // When searching by diskFileId, results are not guaranteed to be in sorted order
+      using namespace common::dataStructures;
+      tapes.sort([](const Tape &a, const Tape &b) { return a.vid < b.vid; });
     }
 
     return tapes;
@@ -7103,6 +7113,13 @@ uint64_t RdbmsCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::string &
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::isSetAndEmpty(const optional<std::string> &optionalStr) const {
   return optionalStr && optionalStr->empty();
+}
+
+//------------------------------------------------------------------------------
+// isSetAndEmpty
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::isSetAndEmpty(const optional<std::vector<std::string>> &optionalStrList) const {
+  return optionalStrList && optionalStrList->empty();
 }
 
 //------------------------------------------------------------------------------

@@ -85,7 +85,7 @@ TapeLsStream::TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Cat
   if(!(requestMsg.has_flag(OptionBoolean::ALL) || has_any)) {
     throw cta::exception::UserError("Must specify at least one search option, or --all");
   } else if(requestMsg.has_flag(OptionBoolean::ALL) && has_any) {
-    throw cta::exception::UserError("Cannot specify --all together with other search options, they are mutually exclusive");
+    throw cta::exception::UserError("Cannot specify --all together with other search options");
   }
 
   m_tapeList = m_catalogue.getTapes(searchCriteria);
