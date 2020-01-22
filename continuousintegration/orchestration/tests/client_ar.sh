@@ -65,14 +65,15 @@ tapefile_ls()
   # 1. Query EOS namespace to get a list of file IDs
   # 2. Pipe to "tape ls" to get the list of tapes where those files are archived
   # 3. Pipe to "tapefile ls" to list the contents of those tapes
-  # 4. Grep the path to ensure we only return files from the original namespace query
   eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
   env KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin --json tape ls --fidfile /dev/stdin |\
   jq '.[] | .vid' |\
   xargs -n1 env KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin --json tapefile ls --lookupnamespace --vid |\
-  jq '.[] | .df.path' |\
-  sed 's/"//g' |\
-  grep "^${EOS_DIR}"
+  jq '.[] | .df.path'
+  # Optionally we could filter to show only files in the specified directory:
+  #sed 's/"//g' |\
+  #grep "^${EOS_DIR}"
+  # (but first gRPC must be configured)
 }
 
 
