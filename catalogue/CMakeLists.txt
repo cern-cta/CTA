@@ -165,6 +165,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_catalogue_version.sql.in
 )
 
 add_custom_command(OUTPUT sqlite_catalogue_schema.cpp
