@@ -66,7 +66,7 @@ tapefile_ls()
   eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
   admin_cta --json tape ls --fidfile /dev/stdin |\
   jq '.[] | .vid' |\
-  xargs admin_cta --json tapefile ls --lookupnamespace --vid |\
+  xargs env KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta_admin --json tapefile ls --lookupnamespace --vid |\
   admin_cta --json tf ls --lookupnamespace --vid | jq '.[] | .df.path' |\
   sed 's/"//g' |\
   grep "^${EOS_DIR}"
