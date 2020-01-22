@@ -2462,7 +2462,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.diskFileIds) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " VID IN ("
-         "SELECT UNIQUE A.VID "
+         "SELECT DISTINCT A.VID "
          "FROM "
            "TAPE_FILE A, ARCHIVE_FILE B "
          "WHERE "

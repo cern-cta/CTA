@@ -3751,19 +3751,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    std::vector<std::string> diskFileIds;
-    diskFileIds.push_back("1");
-    searchCriteria.diskFileIds = diskFileIds;
-    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
-    ASSERT_EQ(1, tapes.size());
-    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
-    ASSERT_EQ(1, vidToTape.size());
-    ASSERT_EQ("vid1", vidToTape.begin()->first);
-    ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
-  }
-
-  {
-    catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = "non_existent_vid";
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_TRUE(tapes.empty());
@@ -3957,6 +3944,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.copyNb               = 1;
     file1Written.tapeDrive            = "tape_drive";
     m_catalogue->filesWrittenToTape(file1WrittenSet);
+  }
+
+  {
+    // Check that a lookup of diskFileId 5678 returns 1 tape
+    catalogue::TapeSearchCriteria searchCriteria;
+    std::vector<std::string> diskFileIds;
+    diskFileIds.push_back("5678");
+    searchCriteria.diskFileIds = diskFileIds;
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(1, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+    ASSERT_EQ("vid1", vidToTape.begin()->first);
+    ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
   }
 
   {
