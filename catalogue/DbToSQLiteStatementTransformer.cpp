@@ -50,7 +50,7 @@ std::string DbToSQLiteStatementTransformer::transform(){
 CreateGlobalTempTableToSQLiteStatementTransformer::CreateGlobalTempTableToSQLiteStatementTransformer(const std::string &statement):DbToSQLiteStatementTransformer(statement){}
 
 std::string CreateGlobalTempTableToSQLiteStatementTransformer::transform(){
-  utils::searchAndReplace(m_statement,"GLOBAL TEMPORARY ","");
+  utils::searchAndReplace(m_statement,"GLOBAL TEMPORARY","TEMPORARY");
   utils::searchAndReplace(m_statement,"ON COMMIT DELETE ROWS;",";");
   return m_statement;
 }
