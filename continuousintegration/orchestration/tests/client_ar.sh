@@ -56,18 +56,21 @@ annotate() {
 }
 
 
-# Provide an EOS directory and list all filenames under that directory which are on tape.
-# This replaces "cta-admin archivefile ls --all" which is deprecated in favour of "tapefile ls"
-# Output is sent to stdout
+# Provide an EOS directory and list all filenames under that directory which are on tape. Output is sent to stdout.
+# This replaces "cta-admin archivefile ls" which is deprecated in favour of "tapefile ls"
 tapefile_ls()
 {
   EOS_DIR=${1:-${EOS_BASEDIR}}
 
+  # 1. Query EOS namespace to get a list of file IDs
+  # 2. Pipe to "tape ls" to get the list of tapes where those files are archived
+  # 3. Pipe to "tapefile ls" to list the contents of those tapes
+  # 4. Grep the path to ensure we only return files from the original namespace query
   eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
-  admin_cta --json tape ls --fidfile /dev/stdin |\
+  env KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin --json tape ls --fidfile /dev/stdin |\
   jq '.[] | .vid' |\
-  xargs env KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin --json tapefile ls --lookupnamespace --vid |\
-  admin_cta --json tf ls --lookupnamespace --vid | jq '.[] | .df.path' |\
+  xargs -n1 env KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin --json tapefile ls --lookupnamespace --vid |\
+  jq '.[] | .df.path' |\
   sed 's/"//g' |\
   grep "^${EOS_DIR}"
 }
