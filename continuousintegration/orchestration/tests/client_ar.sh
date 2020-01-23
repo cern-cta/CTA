@@ -56,26 +56,26 @@ annotate() {
 }
 
 
-# Provide an EOS directory and list all filenames under that directory which are on tape. Output is sent to stdout.
-# This replaces "cta-admin archivefile ls" which is deprecated in favour of "tapefile ls"
-tapefile_ls()
+# Provide an EOS directory and return the list of tapes containing files under that directory
+nsls_tapes()
 {
   EOS_DIR=${1:-${EOS_BASEDIR}}
 
   # 1. Query EOS namespace to get a list of file IDs
   # 2. Pipe to "tape ls" to get the list of tapes where those files are archived
-  VIDLIST=$(eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
+  eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
     admin_cta --json tape ls --fidfile /dev/stdin |\
-    jq '.[] | .vid' | sed 's/"//g')
-  # 3. Feed vids to "tapefile ls" to list the contents of those tapes
-  for vid in ${VIDLIST}
+    jq '.[] | .vid' | sed 's/"//g'
+}
+
+# Provide a list of tapes and list the filenames of the files stored on those tapes
+tapefile_ls()
+{
+  for vid in $*
   do
     admin_cta --json tapefile ls --lookupnamespace --vid ${vid} |\
     jq '.[] | .df.path'
   done
-  # If gRPC is configured in CI, we could filter to ensure we only list files in the specified
-  # directory and not other files which may be on the same tape:
-  #   | grep "^${EOS_DIR}"
 }
 
 
@@ -507,7 +507,8 @@ if [[ $REMOVE == 1 ]]; then
     die "Could not launch cta-admin command."
   fi
   # recount the files on tape as the workflows may have gone further...
-  INITIALFILESONTAPE=$(tapefile_ls ${EOS_DIR} | wc -l)
+  VIDLIST=$(nsls_tapes ${EOS_DIR})
+  INITIALFILESONTAPE=$(tapefile_ls ${VIDLIST} | wc -l)
   echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
   #XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
   KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
@@ -534,7 +535,7 @@ if [[ $REMOVE == 1 ]]; then
       echo "Timed out after ${WAIT_FOR_DELETED_FILE_TIMEOUT} seconds waiting for file to be deleted from tape"
       break
     fi
-    FILESONTAPE=$(tapefile_ls ${EOS_DIR} > >(wc -l) 2> >(cat > /tmp/ctaerr))
+    FILESONTAPE=$(tapefile_ls ${VIDLIST} > >(wc -l) 2> >(cat > /tmp/ctaerr))
     if [[ $(cat /tmp/ctaerr | wc -l) -gt 0 ]]; then
       echo "cta-admin COMMAND FAILED!!"
       echo "ERROR CTA ERROR MESSAGE:"
@@ -554,7 +555,7 @@ if [[ $REMOVE == 1 ]]; then
   if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
     LASTCOUNT=${DELETED}
     echo "Some files have not been deleted:"
-    tapefile_ls ${EOS_DIR}
+    tapefile_ls ${VIDLIST}
   else
     echo "All files have been deleted"
     LASTCOUNT=${RETRIEVED}
