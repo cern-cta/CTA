@@ -64,16 +64,18 @@ tapefile_ls()
 
   # 1. Query EOS namespace to get a list of file IDs
   # 2. Pipe to "tape ls" to get the list of tapes where those files are archived
-  # 3. Pipe to "tapefile ls" to list the contents of those tapes
-  eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
-  env KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin --json tape ls --fidfile /dev/stdin |\
-  jq '.[] | .vid' |\
-  xargs -n1 env KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin --json tapefile ls --lookupnamespace --vid |\
-  jq '.[] | .df.path'
-  # Optionally we could filter to show only files in the specified directory:
-  #sed 's/"//g' |\
-  #grep "^${EOS_DIR}"
-  # (but first gRPC must be configured)
+  VIDLIST=$(eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
+    admin_cta --json tape ls --fidfile /dev/stdin |\
+    jq '.[] | .vid' | sed 's/"//g')
+  # 3. Feed vids to "tapefile ls" to list the contents of those tapes
+  for vid in ${VIDLIST}
+  do
+    admin_cta --json tapefile ls --lookupnamespace --vid ${vid} |\
+    jq '.[] | .df.path'
+  done
+  # If gRPC is configured in CI, we could filter to ensure we only list files in the specified
+  # directory and not other files which may be on the same tape:
+  #   | grep "^${EOS_DIR}"
 }
 
 
