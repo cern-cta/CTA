@@ -746,15 +746,22 @@ public:
    */
   void ping() override;
   
+  /**
+   * Checks that the online database schema MAJOR version number matches the schema MAJOR version number defined in version.h
+   */
   void verifySchemaVersion() override;
   
   /**
-   * Returns the map of strings to uint64 for the  SCHEMA_VERSION_MAJOR
-   * and SCHEMA_VERSION_MINOR.
+   * Returns the SchemaVersion object corresponding to the catalogue schema version:
+   * - SCHEMA_VERSION_MAJOR
+   * - SCHEMA_VERSION_MINOR
+   * - SCHEMA_VERSION_MAJOR_NEXT (future major version number of the schema in case of upgrade)
+   * - SCHEMA_VERSION_MINOR_NEXT (future minor version number of the schema in case of upgrade)
+   * - STATUS (UPGRADING or COMPLETE)	
    * 
-   * @return The map for SCHEMA_VERSION_MAJOR and SCHEMA_VERSION_MINOR  values.
+   * @return The SchemaVersion object corresponding to the catalogue schema version
    */
-  std::map<std::string, uint64_t> getSchemaVersion() const override;
+  SchemaVersion getSchemaVersion() const override;
   
   /**
    * Returns the names of all the tables in the database schema in alphabetical

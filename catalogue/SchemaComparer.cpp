@@ -26,14 +26,7 @@
 
 namespace cta {
 namespace catalogue {
-SchemaComparer::SchemaComparer(const cta::rdbms::Login::DbType &dbType, rdbms::Conn &conn): m_dbType(dbType),m_catalogueConn(conn),m_compareTableConstraints((m_dbType != cta::rdbms::Login::DBTYPE_MYSQL)){
-  m_catalogueMetadataGetter.reset(CatalogueMetadataGetterFactory::create(dbType,m_catalogueConn));
-  m_catalogueSchemaVersion = m_catalogueMetadataGetter->getCatalogueVersion();
-}
-
-std::string SchemaComparer::getCatalogueVersion(){
-  return m_catalogueSchemaVersion;
-}
+SchemaComparer::SchemaComparer(CatalogueMetadataGetter &catalogueMetadataGetter): m_catalogueMetadataGetter(catalogueMetadataGetter),m_compareTableConstraints((m_catalogueMetadataGetter.getDbType() != cta::rdbms::Login::DBTYPE_MYSQL)){}
 
 void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader){
   m_schemaSqlStatementsReader = std::move(schemaSqlStatementsReader);

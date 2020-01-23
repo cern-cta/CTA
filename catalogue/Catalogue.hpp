@@ -62,6 +62,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/optional.hpp"
+#include "SchemaVersion.hpp"
 
 #include <list>
 #include <map>
@@ -747,12 +748,16 @@ public:
   virtual void verifySchemaVersion() = 0;
   
   /**
-   * Returns the map of strings to uint64 for the  SCHEMA_VERSION_MAJOR
-   * and SCHEMA_VERSION_MINOR.
+   * Returns the SchemaVersion object corresponding to the catalogue schema version:
+   * - SCHEMA_VERSION_MAJOR
+   * - SCHEMA_VERSION_MINOR
+   * - SCHEMA_VERSION_MAJOR_NEXT (future major version number of the schema in case of upgrade)
+   * - SCHEMA_VERSION_MINOR_NEXT (future minor version number of the schema in case of upgrade)
+   * - STATUS (UPGRADING or COMPLETE)	
    * 
-   * @return The map for SCHEMA_VERSION_MAJOR and SCHEMA_VERSION_MINOR  values.
+   * @return The SchemaVersion object corresponding to the catalogue schema version
    */
-  virtual std::map<std::string, uint64_t> getSchemaVersion() const = 0;
+  virtual SchemaVersion getSchemaVersion() const = 0;
 
   /**
    * Returns true if the specified tape pool exists.

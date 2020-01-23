@@ -75,6 +75,12 @@ public:
    * It will display a warning with the table name if this is the case
    */
   void checkNoParallelTables();
+  
+  /**
+   * Checks if the catalogue database schema is upgrading or not
+   */
+  void checkSchemaNotUpgrading();
+  
 private:
   /**
    * Catalogue-to-check database type
@@ -88,6 +94,12 @@ private:
    * SchemaComparer class to compare the database schema
    */
   std::unique_ptr<SchemaComparer> m_schemaComparer;
+  
+  /**
+   * Catalogue metadata getter that allows to query the
+   * metadatas of the catalogue database
+   */
+  std::unique_ptr<CatalogueMetadataGetter> m_catalogueMetadataGetter;
 };
 
 }}

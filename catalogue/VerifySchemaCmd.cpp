@@ -79,6 +79,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   schemaChecker.useSQLiteSchemaComparer(allSchemasDirectoryPathOpt);
   SchemaChecker::Status comparisonStatus = schemaChecker.compareSchema();
   schemaChecker.checkNoParallelTables();
+  schemaChecker.checkSchemaNotUpgrading();
   if(comparisonStatus == SchemaChecker::Status::FAILURE){
     return 1;
   }

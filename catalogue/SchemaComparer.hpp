@@ -40,10 +40,9 @@ class SchemaComparer {
 public:
   /**
    * Constructs a SchemaComparer
-   * @param catalogueDbType the database type of the database to compare
-   * @param conn the connection of the database to compare the schema
+   * @param catalogueMetadataGetter the catalogue metadata getter to compare the catalogue schema content
    */
-  SchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType,cta::rdbms::Conn &conn);
+  SchemaComparer(CatalogueMetadataGetter &catalogueMetadataGetter);
   /**
    * Destructor
    */
@@ -63,12 +62,7 @@ public:
    * @return a SchemaComparerResult that will contain the differences if there are some
    */
   virtual SchemaComparerResult compareIndexes() = 0;
-  /**
-   * Return the catalogue version of the schema located in the database to compare
-   * @return the catalogue version of the schema located in the database to compare
-   */
-  std::string getCatalogueVersion();
-  
+
   /**
    * Sets the way the schema sql statements will be read to do the schemas comparison
    * @param schemaSqlStatementsReader the reader used to get the schema sql statements in order to do schema comparison
@@ -76,10 +70,7 @@ public:
   void setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader);
   
 protected:
-  const cta::rdbms::Login::DbType &m_dbType;
-  std::string m_catalogueSchemaVersion;
-  cta::rdbms::Conn &m_catalogueConn;
-  std::unique_ptr<cta::catalogue::CatalogueMetadataGetter> m_catalogueMetadataGetter;
+  cta::catalogue::CatalogueMetadataGetter & m_catalogueMetadataGetter;
   std::unique_ptr<SchemaSqlStatementsReader> m_schemaSqlStatementsReader;
   bool m_compareTableConstraints;
 };

@@ -23,18 +23,19 @@ namespace cta{
 namespace catalogue{
   
 SchemaChecker::SchemaChecker(rdbms::Login::DbType dbType,cta::rdbms::Conn &conn):m_dbType(dbType),m_catalogueConn(conn) {
+  m_catalogueMetadataGetter.reset(CatalogueMetadataGetterFactory::create(m_dbType,m_catalogueConn)); 
 }
 
 SchemaChecker::~SchemaChecker() {
 }
 
 void SchemaChecker::useSQLiteSchemaComparer(const cta::optional<std::string> allSchemasVersionsDirectory){
-  m_schemaComparer.reset(new SQLiteSchemaComparer(m_dbType,m_catalogueConn));
+  m_schemaComparer.reset(new SQLiteSchemaComparer(*m_catalogueMetadataGetter));
    std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader;
   if(allSchemasVersionsDirectory){
-    schemaSqlStatementsReader.reset(new DirectoryVersionsSqlStatementsReader(m_dbType,m_schemaComparer->getCatalogueVersion(),allSchemasVersionsDirectory.value()));
+    schemaSqlStatementsReader.reset(new DirectoryVersionsSqlStatementsReader(m_dbType,m_catalogueMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>(),allSchemasVersionsDirectory.value()));
   } else {
-    schemaSqlStatementsReader.reset(new MapSqlStatementsReader(m_dbType,m_schemaComparer->getCatalogueVersion()));
+    schemaSqlStatementsReader.reset(new MapSqlStatementsReader(m_dbType,m_catalogueMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>()));
   }
   m_schemaComparer->setSchemaSqlStatementsReader(std::move(schemaSqlStatementsReader));
 }
@@ -44,7 +45,7 @@ SchemaChecker::Status SchemaChecker::compareSchema(){
     throw cta::exception::Exception("No schema comparer used. Please specify the schema comparer by using the methods useXXXXSchemaComparer()");
   }
   SchemaComparerResult totalResult;
-  std::cout << "Schema version : " << m_schemaComparer->getCatalogueVersion() << std::endl;
+  std::cout << "Schema version : " << m_catalogueMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>() << std::endl;
   std::cout << "Checking indexes..." << std::endl;
   cta::catalogue::SchemaComparerResult resIndex = m_schemaComparer->compareIndexes();
   totalResult += resIndex;
@@ -67,9 +68,16 @@ SchemaChecker::Status SchemaChecker::compareSchema(){
 }
 
 void SchemaChecker::checkNoParallelTables(){
-  std::list<std::string> parallelTables = m_catalogueConn.getParallelTableNames();
+  std::list<std::string> parallelTables = m_catalogueMetadataGetter->getParallelTableNames();
   for(auto& table:parallelTables) {
     std::cout << "WARNING : TABLE " << table << " is set as PARALLEL" << std::endl;
+  }
+}
+
+void SchemaChecker::checkSchemaNotUpgrading(){
+  SchemaVersion catalogueVersion = m_catalogueMetadataGetter->getCatalogueVersion();
+  if(catalogueVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){
+    std::cout << "WARNING : The status of the schema is " << catalogueVersion.getStatus<std::string>() << ", the future version is " << catalogueVersion.getSchemaVersionNext<std::string>() << std::endl;
   }
 }
 

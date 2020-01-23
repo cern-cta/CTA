@@ -55,8 +55,7 @@ void MetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, co
   
 CatalogueMetadataGetter::CatalogueMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
 
-std::string CatalogueMetadataGetter::getCatalogueVersion(){
-  std::string schemaVersion;
+SchemaVersion CatalogueMetadataGetter::getCatalogueVersion(){
   const char *const sql =
     "SELECT "
       "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
@@ -68,12 +67,40 @@ std::string CatalogueMetadataGetter::getCatalogueVersion(){
   auto rset = stmt.executeQuery();
 
   if(rset.next()) {
-    schemaVersion += std::to_string(rset.columnUint64("SCHEMA_VERSION_MAJOR"));
-    schemaVersion += ".";
-    schemaVersion += std::to_string(rset.columnUint64("SCHEMA_VERSION_MINOR"));
-    return schemaVersion;
+    SchemaVersion::Builder schemaVersionBuilder;
+    schemaVersionBuilder.schemaVersionMajor(rset.columnUint64("SCHEMA_VERSION_MAJOR"))
+                        .schemaVersionMinor(rset.columnUint64("SCHEMA_VERSION_MINOR"))
+                        //By default, the status is set as COMPLETE (to be backward-compatible with version 1.0 of the schema)
+                        .status(SchemaVersion::Status::COMPLETE);
+
+    //The cta-catalogue-schema-verify tool has to be backward-compatible with version 1.0
+    //of the schema that does not have the NEXT_SCHEMA_VERSION_MAJOR, NEXT_SCHEMA_VERSION_MINOR and the STATUS column
+    const char *const sql2 =
+    "SELECT "
+        "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MAJOR AS NEXT_SCHEMA_VERSION_MAJOR,"
+        "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MINOR AS NEXT_SCHEMA_VERSION_MINOR,"
+        "CTA_CATALOGUE.STATUS AS STATUS "
+      "FROM "
+        "CTA_CATALOGUE";
+    
+    auto stmt2 = m_conn.createStmt(sql2);
+    try{
+      auto rset2 = stmt2.executeQuery();
+      if(rset2.next()){
+        auto schemaVersionMajorNext = rset2.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR");
+        auto schemaVersionMinorNext = rset2.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
+        auto schemaStatus = rset2.columnString("STATUS");
+        if(schemaVersionMajorNext && schemaVersionMinorNext){
+          schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
+                              .nextSchemaVersionMinor(schemaVersionMinorNext.value())
+                              .status(schemaStatus);
+        }
+      }
+    } catch (const cta::exception::Exception &ex){
+    }
+    return schemaVersionBuilder.build();
   } else {
-    throw exception::Exception("SCHEMA_VERSION_MAJOR,SCHEMA_VERSION_MINOR not found in the CTA_CATALOGUE");
+    throw exception::Exception("CTA_CATALOGUE does not contain any row");
   }
 }
 
@@ -102,6 +129,10 @@ std::list<std::string> CatalogueMetadataGetter::getConstraintNames(const std::st
   return constraintNames;
 }
 
+std::list<std::string> CatalogueMetadataGetter::getParallelTableNames(){
+  return m_conn.getParallelTableNames();
+}
+
 CatalogueMetadataGetter::~CatalogueMetadataGetter() {}
 
 SQLiteCatalogueMetadataGetter::SQLiteCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
@@ -121,14 +152,27 @@ std::list<std::string> SQLiteCatalogueMetadataGetter::getTableNames(){
   return tableNames;
 }
 
+cta::rdbms::Login::DbType SQLiteCatalogueMetadataGetter::getDbType(){
+  return cta::rdbms::Login::DbType::DBTYPE_SQLITE;
+}
+
 OracleCatalogueMetadataGetter::OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
 OracleCatalogueMetadataGetter::~OracleCatalogueMetadataGetter(){}
+cta::rdbms::Login::DbType OracleCatalogueMetadataGetter::getDbType(){
+  return cta::rdbms::Login::DbType::DBTYPE_ORACLE;
+}
 
 MySQLCatalogueMetadataGetter::MySQLCatalogueMetadataGetter(cta::rdbms::Conn& conn):CatalogueMetadataGetter(conn) {}
 MySQLCatalogueMetadataGetter::~MySQLCatalogueMetadataGetter(){}
+cta::rdbms::Login::DbType MySQLCatalogueMetadataGetter::getDbType(){
+  return cta::rdbms::Login::DbType::DBTYPE_MYSQL;
+}
 
 PostgresCatalogueMetadataGetter::PostgresCatalogueMetadataGetter(cta::rdbms::Conn& conn):CatalogueMetadataGetter(conn) {}
 PostgresCatalogueMetadataGetter::~PostgresCatalogueMetadataGetter(){}
+cta::rdbms::Login::DbType PostgresCatalogueMetadataGetter::getDbType(){
+  return cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL;
+}
 
 CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {
   typedef rdbms::Login::DbType DbType;

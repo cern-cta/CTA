@@ -21,6 +21,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 #include "SchemaCreatingSqliteCatalogue.hpp"
+#include "SchemaVersion.hpp"
 #include <list>
 
 namespace cta {
@@ -54,11 +55,13 @@ class CatalogueMetadataGetter: public MetadataGetter {
   public:
     CatalogueMetadataGetter(cta::rdbms::Conn & conn);
     virtual ~CatalogueMetadataGetter();
-    std::string getCatalogueVersion();
+    SchemaVersion getCatalogueVersion();
     virtual std::list<std::string> getIndexNames();
     virtual std::list<std::string> getTableNames();
     virtual std::map<std::string,std::string> getColumns(const std::string& tableName);
     virtual std::list<std::string> getConstraintNames(const std::string& tableName);
+    virtual std::list<std::string> getParallelTableNames();
+    virtual cta::rdbms::Login::DbType getDbType() = 0;
 };
 
 /**
@@ -70,6 +73,7 @@ public:
   virtual ~SQLiteCatalogueMetadataGetter();
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
+  cta::rdbms::Login::DbType getDbType() override;
 };
 
 /**
@@ -78,6 +82,7 @@ public:
 class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
   public:
   OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn);
+  cta::rdbms::Login::DbType getDbType() override;
   virtual ~OracleCatalogueMetadataGetter();
 };
 
@@ -87,6 +92,7 @@ class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
 class MySQLCatalogueMetadataGetter: public CatalogueMetadataGetter{
   public:
     MySQLCatalogueMetadataGetter(cta::rdbms::Conn &conn);
+    cta::rdbms::Login::DbType getDbType() override;
     virtual ~MySQLCatalogueMetadataGetter();
 };
 
@@ -96,6 +102,7 @@ class MySQLCatalogueMetadataGetter: public CatalogueMetadataGetter{
 class PostgresCatalogueMetadataGetter: public CatalogueMetadataGetter{
   public:
     PostgresCatalogueMetadataGetter(cta::rdbms::Conn &conn);
+    cta::rdbms::Login::DbType getDbType() override;
     virtual ~PostgresCatalogueMetadataGetter();
 };
 

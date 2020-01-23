@@ -55,6 +55,7 @@ set (CATALOGUE_LIB_SRC_FILES
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
   SqliteCatalogueFactory.cpp
+  SchemaVersion.cpp
   TapeForWriting.cpp
   UserSpecifiedANonEmptyLogicalLibrary.cpp
   UserSpecifiedANonEmptyTape.cpp

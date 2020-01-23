@@ -468,7 +468,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->verifySchemaVersion();}, m_maxTriesToConnect);
   }
 
-  std::map<std::string, uint64_t> getSchemaVersion() const override {
+  SchemaVersion getSchemaVersion() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getSchemaVersion();}, m_maxTriesToConnect);
   }
 

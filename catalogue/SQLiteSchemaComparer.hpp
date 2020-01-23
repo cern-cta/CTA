@@ -29,10 +29,10 @@ class SQLiteSchemaComparer: public SchemaComparer {
 public:
   /**
    * Constructs a SQLiteSchemaComparer
-   * @param catalogueDbType
-   * @param catalogueConn
+   * @param catalogueMetadataGetter the catalogue metadata getter to compare the catalogue schema content with the SQLite
+   * database one
    */
-  SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn);
+  SQLiteSchemaComparer(CatalogueMetadataGetter &catalogueMetadataGetter);
   /**
    * Compare the catalogue schema against the InMemory SQLite catalogue schema
    * @return a SchemaComparerResult object that will contain the differences if there are some

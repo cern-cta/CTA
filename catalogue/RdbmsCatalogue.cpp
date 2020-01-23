@@ -58,6 +58,7 @@
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "version.h"
+#include "SchemaVersion.hpp"
 
 #include <ctype.h>
 #include <memory>
@@ -6985,13 +6986,16 @@ void RdbmsCatalogue::ping() {
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::verifySchemaVersion() {
   try {
-    std::map<std::string, uint64_t> schemaVersion = getSchemaVersion();
-    uint64_t schemaVersionMajor = schemaVersion.at("SCHEMA_VERSION_MAJOR");
-    uint64_t schemaVersionMinor = schemaVersion.at("SCHEMA_VERSION_MINOR");
-    if(schemaVersionMajor != (uint64_t) CTA_CATALOGUE_SCHEMA_VERSION_MAJOR){
+    SchemaVersion schemaVersion = getSchemaVersion();
+    auto schemaVersionMajorMinor = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>();
+    if(schemaVersionMajorMinor.first != (uint64_t) CTA_CATALOGUE_SCHEMA_VERSION_MAJOR){
       std::ostringstream exceptionMsg;
-      exceptionMsg << "Catalogue schema MAJOR version differ : Database schema version is " << schemaVersionMajor << "." << schemaVersionMinor << ", CTA schema version is "<< CTA_CATALOGUE_SCHEMA_VERSION_MAJOR << "." << CTA_CATALOGUE_SCHEMA_VERSION_MINOR;
+      exceptionMsg << "Catalogue schema MAJOR version differ : Database schema version is " << schemaVersionMajorMinor.first << "." << schemaVersionMajorMinor.second << ", CTA schema version is "<< CTA_CATALOGUE_SCHEMA_VERSION_MAJOR << "." << CTA_CATALOGUE_SCHEMA_VERSION_MINOR;
       throw WrongSchemaVersionException(exceptionMsg.str());
+    }
+    if(schemaVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){
+      std::ostringstream exceptionMsg;
+      exceptionMsg << "Catalogue schema is in status "+schemaVersion.getStatus<std::string>()+", next schema version is "<<schemaVersion.getSchemaVersionNext<std::string>();
     }
   } catch (exception::UserError &ex) {
     throw;
@@ -7004,13 +7008,16 @@ void RdbmsCatalogue::verifySchemaVersion() {
 //------------------------------------------------------------------------------
 // getSchemaVersion
 //------------------------------------------------------------------------------
-std::map<std::string, uint64_t> RdbmsCatalogue::getSchemaVersion() const {
+SchemaVersion RdbmsCatalogue::getSchemaVersion() const {
   try {
     std::map<std::string, uint64_t> schemaVersion;
     const char *const sql =
       "SELECT "
         "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
-        "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR "
+        "CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR,"
+        "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MAJOR AS NEXT_SCHEMA_VERSION_MAJOR,"
+        "CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MINOR AS NEXT_SCHEMA_VERSION_MINOR,"
+        "CTA_CATALOGUE.STATUS AS STATUS "
       "FROM "
         "CTA_CATALOGUE";
 
@@ -7019,11 +7026,19 @@ std::map<std::string, uint64_t> RdbmsCatalogue::getSchemaVersion() const {
     auto rset = stmt.executeQuery();
     
     if(rset.next()) {
-      schemaVersion.insert(std::make_pair("SCHEMA_VERSION_MAJOR", rset.columnUint64("SCHEMA_VERSION_MAJOR")));
-      schemaVersion.insert(std::make_pair("SCHEMA_VERSION_MINOR", rset.columnUint64("SCHEMA_VERSION_MINOR")));
-      return schemaVersion;
+      SchemaVersion::Builder schemaVersionBuilder;
+        schemaVersionBuilder.schemaVersionMajor(rset.columnUint64("SCHEMA_VERSION_MAJOR"))
+                            .schemaVersionMinor(rset.columnUint64("SCHEMA_VERSION_MINOR"))
+                            .status(rset.columnString("STATUS"));
+        auto schemaVersionMajorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR");
+        auto schemaVersionMinorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
+        if(schemaVersionMajorNext && schemaVersionMinorNext){
+          schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
+                              .nextSchemaVersionMinor(schemaVersionMinorNext.value());
+        }
+        return schemaVersionBuilder.build();
     } else {
-      throw exception::Exception("SCHEMA_VERSION_MAJOR,SCHEMA_VERSION_MINOR not found in the CTA_CATALOGUE");
+      throw exception::Exception("CTA_CATALOGUE does not contain any row");
     } 
   } catch(exception::UserError &) {
     throw;

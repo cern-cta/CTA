@@ -25,7 +25,7 @@
 namespace cta {
 namespace catalogue {
   
-SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &catalogueDbType, rdbms::Conn &catalogueConn): SchemaComparer(catalogueDbType,catalogueConn) {
+SQLiteSchemaComparer::SQLiteSchemaComparer(CatalogueMetadataGetter &catalogueMetadataGetter): SchemaComparer(catalogueMetadataGetter) {
   log::DummyLogger dl("dummy","dummy");
   auto login = rdbms::Login::parseString("in_memory");
   //Create SQLite connection
@@ -34,7 +34,7 @@ SQLiteSchemaComparer::SQLiteSchemaComparer(const cta::rdbms::Login::DbType &cata
   //Create the Metadata getter
   std::unique_ptr<SQLiteCatalogueMetadataGetter> sqliteCatalogueMetadataGetter(new SQLiteCatalogueMetadataGetter(m_sqliteConn));
   //Create the Schema Metadata Getter that will filter the SQLite schema metadata according to the catalogue database type we would like to compare
-  m_schemaMetadataGetter.reset(new SchemaMetadataGetter(std::move(sqliteCatalogueMetadataGetter),catalogueDbType));
+  m_schemaMetadataGetter.reset(new SchemaMetadataGetter(std::move(sqliteCatalogueMetadataGetter),catalogueMetadataGetter.getDbType()));
 }
 
 SQLiteSchemaComparer::~SQLiteSchemaComparer() {
@@ -53,7 +53,7 @@ SchemaComparerResult SQLiteSchemaComparer::compareAll(){
 
 SchemaComparerResult SQLiteSchemaComparer::compareTables(){
   insertSchemaInSQLite();
-  std::list<std::string> catalogueTables = m_catalogueMetadataGetter->getTableNames();
+  std::list<std::string> catalogueTables = m_catalogueMetadataGetter.getTableNames();
   std::list<std::string> schemaTables = m_schemaMetadataGetter->getTableNames();
   SchemaComparerResult res = compareTables(catalogueTables,schemaTables);
   return res;
@@ -73,7 +73,7 @@ void SQLiteSchemaComparer::insertSchemaInSQLite() {
 
 SchemaComparerResult SQLiteSchemaComparer::compareIndexes(){
   insertSchemaInSQLite();
-  std::list<std::string> catalogueIndexes = m_catalogueMetadataGetter->getIndexNames();
+  std::list<std::string> catalogueIndexes = m_catalogueMetadataGetter.getIndexNames();
   std::list<std::string> schemaIndexes = m_schemaMetadataGetter->getIndexNames();
   return compareItems("INDEX", catalogueIndexes, schemaIndexes);
 }
@@ -101,8 +101,8 @@ SchemaComparerResult SQLiteSchemaComparer::compareTables(const std::list<std::st
   std::map<std::string, std::list<std::string>> schemaTableConstraints;
   
   for(auto &catalogueTable: catalogueTables){
-    catalogueTableColumns[catalogueTable] = m_catalogueMetadataGetter->getColumns(catalogueTable);
-    catalogueTableConstraints[catalogueTable] = m_catalogueMetadataGetter->getConstraintNames(catalogueTable);
+    catalogueTableColumns[catalogueTable] = m_catalogueMetadataGetter.getColumns(catalogueTable);
+    catalogueTableConstraints[catalogueTable] = m_catalogueMetadataGetter.getConstraintNames(catalogueTable);
   }
   
   for(auto &schemaTable: schemaTables){
