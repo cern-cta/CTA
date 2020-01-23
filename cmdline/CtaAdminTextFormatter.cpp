@@ -76,16 +76,15 @@ void TextFormatter::flush() {
     is_header = true;
     m_outputBuffer.erase(m_outputBuffer.begin());
     if(m_outputBuffer.empty()) return;
+    auto numCols = m_outputBuffer.front().size();
+    m_colSize.resize(numCols);
   }
-
-  auto numCols = m_outputBuffer.front().size();
-  std::vector<unsigned int> colSize(numCols);
 
   // Calculate column widths
   for(auto &l : m_outputBuffer) {
-    if(l.size() != numCols) throw std::runtime_error("TextFormatter::flush(): incorrect number of columns");
+    if(l.size() != m_colSize.size()) throw std::runtime_error("TextFormatter::flush(): incorrect number of columns");
     for(size_t c = 0; c < l.size(); ++c) {
-      if(colSize.at(c) < l.at(c).size()) colSize[c] = l.at(c).size();
+      if(m_colSize.at(c) < l.at(c).size()) m_colSize[c] = l.at(c).size();
     }
   }
 
@@ -94,8 +93,8 @@ void TextFormatter::flush() {
     if(is_header) { std::cout << TEXT_RED; }
     for(size_t c = 0; c < l.size(); ++c) {
       std::cout << std::setfill(' ')
-                << std::setw(colSize.at(c)+1)
-                << std::right
+                << std::setw(m_colSize.at(c))
+                << (c < l.size()-1 ? std::right : std::left)
                 << (l.at(c).empty() ? "-" : l.at(c))
                 << ' ';
     }

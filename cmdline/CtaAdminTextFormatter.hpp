@@ -145,6 +145,7 @@ private:
   //! Flush buffer to stdout
   void flush();
 
+  std::vector<unsigned int> m_colSize;                              //!< Array of column sizes
   unsigned int m_bufLines;                                          //!< Number of text lines to buffer before flushing formatted output
   std::vector<std::vector<std::string>> m_outputBuffer;             //!< Buffer for text output (not used for JSON)
 
