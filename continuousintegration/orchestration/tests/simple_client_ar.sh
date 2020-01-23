@@ -74,6 +74,9 @@ echo "********"
   eos root://${EOSINSTANCE} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}
   eos root://${EOSINSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 
+# Delete the file so it doesn't interfere with tests in client_ar.sh
+echo "eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}"
+eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}
 
 msgNum=$(grep "\"File suc" /mnt/logs/tpsrv*/taped/cta/cta-taped.log | grep ${TEST_FILE_NAME} | tail -n 4 | wc -l)
 if [ $msgNum == "4" ]; then
