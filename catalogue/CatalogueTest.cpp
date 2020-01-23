@@ -394,11 +394,11 @@ TEST_P(cta_catalogue_CatalogueTest, createAdminUser_emptyStringComment) {
     catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteAdminUser_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteAdminUser_non_existent) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
-  ASSERT_THROW(m_catalogue->deleteAdminUser("non_existant_admin_user"), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteAdminUser("non_existent_admin_user"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment) {
@@ -677,11 +677,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass_non_existent) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
-  ASSERT_THROW(m_catalogue->deleteStorageClass("non_existant_disk_instance", "non_existant_storage_class"),
+  ASSERT_THROW(m_catalogue->deleteStorageClass("non_existent_disk_instance", "non_existent_storage_class"),
     exception::UserError);
 }
 
@@ -1154,11 +1154,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringComment) {
     catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_non_existent) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
-  ASSERT_THROW(m_catalogue->deleteTapePool("non_existant_tape_pool"), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteTapePool("non_existent_tape_pool"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo) {
@@ -2240,11 +2240,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute_non_existent) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
-  ASSERT_THROW(m_catalogue->deleteArchiveRoute("non_existant_disk_instance", "non_existant_storage_class", 1234),
+  ASSERT_THROW(m_catalogue->deleteArchiveRoute("non_existent_disk_instance", "non_existent_storage_class", 1234),
     exception::UserError);
 }
 
@@ -2716,11 +2716,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_existent) {
   using namespace cta;
       
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-  ASSERT_THROW(m_catalogue->deleteLogicalLibrary("non_existant_logical_library"),
+  ASSERT_THROW(m_catalogue->deleteLogicalLibrary("non_existent_logical_library"),
     catalogue::UserSpecifiedANonExistentLogicalLibrary);
 }
 
@@ -3654,6 +3654,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.diskFileIds = std::vector<std::string>();
+    ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = "vid1";
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
@@ -3745,7 +3751,16 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.vid = "non_existant_vid";
+    searchCriteria.vid = "non_existent_vid";
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_TRUE(tapes.empty());
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    std::vector<std::string> diskFileIds;
+    diskFileIds.push_back("non_existent_fid");
+    searchCriteria.diskFileIds = diskFileIds;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_TRUE(tapes.empty());
   }
@@ -3929,6 +3944,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.copyNb               = 1;
     file1Written.tapeDrive            = "tape_drive";
     m_catalogue->filesWrittenToTape(file1WrittenSet);
+  }
+
+  {
+    // Check that a lookup of diskFileId 5678 returns 1 tape
+    catalogue::TapeSearchCriteria searchCriteria;
+    std::vector<std::string> diskFileIds;
+    diskFileIds.push_back("5678");
+    searchCriteria.diskFileIds = diskFileIds;
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(1, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+    ASSERT_EQ("vid1", vidToTape.begin()->first);
+    ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
   }
 
   {
@@ -4178,11 +4207,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   ASSERT_FALSE(m_catalogue->getTapes().empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteTape_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteTape_non_existent) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
-  ASSERT_THROW(m_catalogue->deleteTape("non_exsitant_tape"), catalogue::UserSpecifiedANonExistentTape);
+  ASSERT_THROW(m_catalogue->deleteTape("non_existent_tape"), catalogue::UserSpecifiedANonExistentTape);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
@@ -6235,11 +6264,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMountPolicy) {
   ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteMountPolicy_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteMountPolicy_non_existent) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
-  ASSERT_THROW(m_catalogue->deleteMountPolicy("non_existant_mount_policy"), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteMountPolicy("non_existent_mount_policy"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyArchivePriority) {
@@ -6834,13 +6863,13 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_same_twice) {
     comment), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_non_existant_mount_policy) {
+TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_non_existent_mount_policy) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
 
   const std::string comment = "Create mount rule for requester";
-  const std::string mountPolicyName = "non_existant_mount_policy";
+  const std::string mountPolicyName = "non_existent_mount_policy";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   ASSERT_THROW(m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
@@ -6891,11 +6920,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule) {
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule_non_existent) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
-  ASSERT_THROW(m_catalogue->deleteRequesterMountRule("non_existant_disk_instance", "non_existant_requester"),
+  ASSERT_THROW(m_catalogue->deleteRequesterMountRule("non_existent_disk_instance", "non_existent_requester"),
     exception::UserError);
 }
 
@@ -7308,13 +7337,13 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_same_twice) {
     requesterGroupName, comment), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_non_existant_mount_policy) {
+TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_non_existent_mount_policy) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
 
   const std::string comment = "Create mount rule for requester group";
-  const std::string mountPolicyName = "non_existant_mount_policy";
+  const std::string mountPolicyName = "non_existent_mount_policy";
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterGroupName = "requester_group";
   ASSERT_THROW(m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
@@ -7365,11 +7394,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule) {
   ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule_non_existent) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
-  ASSERT_THROW(m_catalogue->deleteRequesterGroupMountRule("non_existant_disk_isntance", "non_existant_requester_group"),
+  ASSERT_THROW(m_catalogue->deleteRequesterGroupMountRule("non_existent_disk_isntance", "non_existent_requester_group"),
     exception::UserError);
 }
 
@@ -8677,12 +8706,12 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_group_without_inst
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_disk_file_group) {
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_disk_file_group) {
   using namespace cta;
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskInstance = "non_existant_disk_instance";
+  searchCriteria.diskInstance = "non_existent_disk_instance";
   searchCriteria.diskFileGid = NON_EXISTENT_DISK_FILE_GID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
@@ -8699,13 +8728,13 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_id_without_instanc
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_disk_file_id) {
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_disk_file_id) {
   using namespace cta;
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskInstance = "non_existant_disk_instance";
-  searchCriteria.diskFileId = "non_existant_disk_file_id";
+  searchCriteria.diskInstance = "non_existent_disk_instance";
+  searchCriteria.diskFileId = "non_existent_disk_file_id";
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -8721,13 +8750,13 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_path_without_insta
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_disk_file_path) {
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_disk_file_path) {
   using namespace cta;
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskInstance = "non_existant_disk_instance";
-  searchCriteria.diskFilePath = "non_existant_disk_file_path";
+  searchCriteria.diskInstance = "non_existent_disk_instance";
+  searchCriteria.diskFilePath = "non_existent_disk_file_path";
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -8743,18 +8772,18 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_user_without_insta
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_disk_file_user) {
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_disk_file_user) {
   using namespace cta;
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskInstance = "non_existant_disk_instance";
+  searchCriteria.diskInstance = "non_existent_disk_instance";
   searchCriteria.diskFileOwnerUid = NON_EXISTENT_DISK_FILE_OWNER_UID;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existant_storage_class_without_disk_instance) {
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existent_storage_class_without_disk_instance) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
@@ -8794,36 +8823,36 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existant_storage_class_witho
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_storage_class) {
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_storage_class) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskInstance = "non_existant_disk_instance";
-  searchCriteria.storageClass = "non_existant_storage_class";
+  searchCriteria.diskInstance = "non_existent_disk_instance";
+  searchCriteria.storageClass = "non_existent_storage_class";
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_tape_pool) {
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_tape_pool) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.tapePool = "non_existant_tape_pool";
+  searchCriteria.tapePool = "non_existent_tape_pool";
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_vid) {
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_vid) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.vid = "non_existant_vid";
+  searchCriteria.vid = "non_existent_vid";
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -12779,7 +12808,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   ASSERT_THROW(m_catalogue->deleteArchiveFile("another_disk_instance", archiveFileId, dummyLc), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_non_existent) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
@@ -12787,7 +12816,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_non_exi
   m_catalogue->deleteArchiveFile("disk_instance", 12345678, dummyLc);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existant_tape) {
+TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existent_tape) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
@@ -13181,11 +13210,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteDiskSystem) {
   ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, deleteDiskSystem_non_existant) {
+TEST_P(cta_catalogue_CatalogueTest, deleteDiskSystem_non_existent) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
-  ASSERT_THROW(m_catalogue->deleteDiskSystem("non_exsitant_disk_system"), catalogue::UserSpecifiedANonExistentDiskSystem);
+  ASSERT_THROW(m_catalogue->deleteDiskSystem("non_existent_disk_system"), catalogue::UserSpecifiedANonExistentDiskSystem);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFileRegexp) {
