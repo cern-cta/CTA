@@ -32,7 +32,7 @@ tempFilePath="./temp"
 
 trap "rm -f $tempFilePath" EXIT
 
-schemaVersionsDirectories=`find . -type d -regex '^./[0-9]+\.[0-9]+$'`
+schemaVersionsDirectories=`find . -type d -regex '^./[0-9]+\.[0-9]+$' | sort`
 
 mapSchemaCode='
 {
@@ -54,7 +54,8 @@ do
 "
   done
   mapSchemaCode+="    }"
-  mapSchemaCode+="  },"
+  mapSchemaCode+="  },
+"
 done
 mapSchemaCode+="};"
 echo "$mapSchemaCode" > $tempFilePath

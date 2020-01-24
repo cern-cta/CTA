@@ -30,4 +30,3 @@ namespace catalogue{
   std::map<std::string,std::map<std::string,std::string>> AllCatalogueSchema::mapSchema = /* ALL_SCHEMA_MAP */
 	  
 }}
-
