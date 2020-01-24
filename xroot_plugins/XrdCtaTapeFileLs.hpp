@@ -47,9 +47,6 @@ private:
    * Can we close the stream?
    */
   virtual bool isDone() const {
-#if 0
-    return m_isSummary ? m_isSummaryDone : !m_tapeFileItor.hasMore();
-#endif
     return !m_tapeFileItor.hasMore();
   }
 
@@ -78,36 +75,6 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
 
   m_LookupNamespace = true;
 
-#if 0
-  if(!requestMsg.has_flag(OptionBoolean::ALL))
-  {
-    bool has_any = false; // set to true if at least one optional option is set
-
-    // Get the search criteria from the optional options
-
-    m_searchCriteria.archiveFileId    = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
-    m_searchCriteria.tapeFileCopyNb   = requestMsg.getOptional(OptionUInt64::COPY_NUMBER,     &has_any);
-    m_searchCriteria.diskFileId       = requestMsg.getOptional(OptionString::DISKID,          &has_any);
-    m_searchCriteria.vid              = requestMsg.getOptional(OptionString::VID,             &has_any);
-    m_searchCriteria.tapePool         = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);
-    m_searchCriteria.diskFileOwnerUid = requestMsg.getOptional(OptionUInt64::OWNER_UID,       &has_any);
-    m_searchCriteria.diskFileGid      = requestMsg.getOptional(OptionUInt64::GID,             &has_any);
-    m_searchCriteria.storageClass     = requestMsg.getOptional(OptionString::STORAGE_CLASS,   &has_any);
-    m_searchCriteria.diskFilePath     = requestMsg.getOptional(OptionString::PATH,            &has_any);
-    m_searchCriteria.diskInstance     = requestMsg.getOptional(OptionString::INSTANCE,        &has_any);
-
-    if(!has_any) {
-      throw cta::exception::UserError("Must specify at least one search option, or --all");
-    }
-  }
-
-  if(!m_isSummary) {
-    m_tapeFileItor = m_catalogue.getArchiveFilesItor(m_searchCriteria);
-  }
-  auto isLookupNamespace = requestMsg.getOptional(OptionBoolean::LOOKUP_NAMESPACE);
-  m_isLookupNamespace = isLookupNamespace ? isLookupNamespace.value() : false;
-#endif
-
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = requestMsg.getRequired(OptionString::VID);
   m_tapeFileItor = m_catalogue.getArchiveFilesItor(searchCriteria);
@@ -115,21 +82,6 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
 
 
 int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-#if 0
-  // Special handling for -S (Summary) option
-  if(m_isSummary) {
-    common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(m_searchCriteria);
-
-    Data record;
-    record.mutable_tfls_summary()->set_total_files(summary.totalFiles);
-    record.mutable_tfls_summary()->set_total_size(summary.totalBytes);
-    streambuf->Push(record);
-
-    m_isSummaryDone = true;
-    return streambuf->Size();
-  }
-#endif
-
   for(bool is_buffer_full = false; m_tapeFileItor.hasMore() && !is_buffer_full; )
   {
     const cta::common::dataStructures::ArchiveFile archiveFile = m_tapeFileItor.next();
