@@ -363,9 +363,11 @@ void CtaAdminCmd::addOption(const Option &option, const std::string &value)
       }
       case Option::OPT_UINT: try {
          auto key = uint64Options.at(option.get_key());
+         int64_t val_int = std::stol(value);
+         if(val_int < 0) throw std::out_of_range("value is negative");
          auto new_opt = admincmd_ptr->add_option_uint64();
          new_opt->set_key(key);
-         new_opt->set_value(std::stoul(value));
+         new_opt->set_value(val_int);
          break;
       } catch(std::invalid_argument &) {
          throw std::runtime_error(value + " is not a valid uint64: " + option.help());
