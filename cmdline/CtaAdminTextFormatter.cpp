@@ -33,7 +33,8 @@ namespace admin {
 
 std::string TextFormatter::doubleToStr(double value, char unit) {
   std::stringstream ss;
-  ss << std::fixed << std::setprecision(1) << value << unit;
+  ss << std::fixed << std::setprecision(1) << value;
+  if(unit != '\0') ss << unit;
   return ss.str();
 }
 
@@ -92,9 +93,13 @@ void TextFormatter::flush() {
   for(auto &l : m_outputBuffer) {
     if(is_header) { std::cout << TEXT_RED; }
     for(size_t c = 0; c < l.size(); ++c) {
+      // flush right, except for paths, which are flush left
+      auto flush = ((is_header && l.at(c) == "path") ||
+                     l.at(c).substr(0,1)  == "/") ? std::left : std::right;
+
       std::cout << std::setfill(' ')
                 << std::setw(m_colSize.at(c))
-                << (c < l.size()-1 ? std::right : std::left)
+                << flush
                 << (l.at(c).empty() ? "-" : l.at(c))
                 << ' ';
     }
