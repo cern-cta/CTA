@@ -1541,7 +1541,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
   try {
     ri.setAddress(re.getRepackIndexAddress());
   } catch (cta::exception::Exception &) {
-    throw NoSuchRepackRequest("In OStoreDB::getRepackInfo(): No repack request for this VID (index not present).");
+    throw exception::UserError("In OStoreDB::getRepackInfo(): No repack request for this VID (index not present).");
   }
   ri.fetchNoLock();
   auto rrAddresses = ri.getRepackRequestsAddresses();
@@ -1556,7 +1556,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
       } catch (cta::exception::Exception &) {}
     }
   }
-  throw NoSuchRepackRequest("In OStoreDB::getRepackInfo(): No repack request for this VID.");
+  throw exception::UserError("In OStoreDB::getRepackInfo(): No repack request for this VID.");
 }
 
 //------------------------------------------------------------------------------
@@ -2640,7 +2640,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
   try {
     ri.setAddress(re.getRepackIndexAddress());
   } catch (cta::exception::Exception &) {
-    throw NoSuchRepackRequest("In OStoreDB::cancelRepack(): No repack request for this VID (index not present).");
+    throw exception::UserError("In OStoreDB::cancelRepack(): No repack request for this VID (index not present).");
   }
   ri.fetchNoLock();
   auto rrAddresses = ri.getRepackRequestsAddresses();
@@ -2651,7 +2651,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
         ScopedExclusiveLock rrl(rr);
         rr.fetch();
         if (rr.getInfo().vid != vid)
-          throw  exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
+          throw exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
         // We now have a hold of the repack request.
         // We should delete all the file level subrequests.
         rr.deleteAllSubrequests();
@@ -2678,7 +2678,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
       } catch (cta::exception::Exception &) {}
     }
   }
-  throw NoSuchRepackRequest("In OStoreDB::cancelRepack(): No repack request for this VID.");
+  throw exception::UserError("In OStoreDB::cancelRepack(): No repack request for this VID.");
 }
 
 //------------------------------------------------------------------------------
