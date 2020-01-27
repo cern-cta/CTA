@@ -88,7 +88,7 @@ DriveLsStream::DriveLsStream(const RequestMessage &requestMsg, cta::catalogue::C
     }
 
     if(m_driveList.empty()) {
-      throw exception::UserError(std::string("No such drive: ") + driveRegexOpt.value());
+      throw exception::UserError(std::string("Drive ") + driveRegexOpt.value() + " not found.");
     }
   }
 
