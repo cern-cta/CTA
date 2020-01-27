@@ -113,15 +113,14 @@ int ImmutableFileTest::exceptionThrowingMain(const int argc, char *const *const 
   bool oneOrMoreTestsFailed = true; // Guilty until proven innocent
   try {
     // Create the file
-    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::New                             , "CONTENTS1",                 0);
+    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::New, XrdCl::Access::UR, "CONTENTS1", 0);
 
     // Re-create the file
-    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Delete | XrdCl::OpenFlags::Write, "CONTENTS2",                 0);
+    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Delete | XrdCl::OpenFlags::Write, XrdCl::Access::UR, "CONTENTS2", 0);
 
     // Try to open the file for modification
-    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Write                           ,          "", kXR_NotAuthorized);
-    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Update                          ,          "", kXR_NotAuthorized);
-    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Append                          ,          "", kXR_NotAuthorized);
+    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Write , XrdCl::Access::None, "", kXR_NotAuthorized);
+    testFile(cmdLine.fileUrl, XrdCl::OpenFlags::Update, XrdCl::Access::None, "", kXR_NotAuthorized);
     oneOrMoreTestsFailed = false;
   } catch(exception::Exception &ex) {
     m_out << ex.getMessage().str() << std::endl;
@@ -196,17 +195,16 @@ void ImmutableFileTest::deleteFile(const XrdCl::URL &url) {
 // testFile
 //------------------------------------------------------------------------------
 void ImmutableFileTest::testFile(const XrdCl::URL &url, const XrdCl::OpenFlags::Flags openFlags,
-  const std::string &contents, const uint32_t expectedOpenErrNo) {
+  const XrdCl::Access::Mode openMode, const std::string &contents, const uint32_t expectedOpenErrNo) {
   bool testPassed = true;  // Innocent until proven guilty
   const bool expectedSuccess = 0 == expectedOpenErrNo;
   XrdCl::File file;
 
   m_out << std::endl;
   m_out << "START OF TEST" << std::endl;
-  m_out << "Opening file with flags \"" << openFlagsToString(openFlags) << "\"" <<
-    " expecting " << xErrorCodeToString(expectedOpenErrNo) << std::endl;
+  m_out << "Opening file with flags \"" << openFlagsToString(openFlags) << "\"" << " and mode \"" <<
+    openModeToString(openMode) << "\" expecting " << xErrorCodeToString(expectedOpenErrNo) << std::endl;
 
-  const XrdCl::Access::Mode openMode = XrdCl::Access::UR | XrdCl::Access::UW;
   const XrdCl::XRootDStatus openStatus = file.Open(url.GetURL(), openFlags, openMode);
   {
     if (expectedSuccess) {
@@ -265,6 +263,10 @@ void ImmutableFileTest::testFile(const XrdCl::URL &url, const XrdCl::OpenFlags::
 // openFlagsToString
 //------------------------------------------------------------------------------
 std::string ImmutableFileTest::openFlagsToString(XrdCl::OpenFlags::Flags flags) {
+  if (XrdCl::OpenFlags::None == flags) {
+    return "None";
+  }
+
   typedef std::pair<XrdCl::OpenFlags::Flags, std::string> FlagAndName;
   std::list<FlagAndName> allFlags;
   allFlags.emplace_back(XrdCl::OpenFlags::Compress, "Compress");
@@ -302,6 +304,50 @@ std::string ImmutableFileTest::openFlagsToString(XrdCl::OpenFlags::Flags flags) 
       result << " | ";
     }
     result << "ONE OR MORE UNKNOWN FLAGS";
+  }
+
+  return result.str();
+}
+
+//------------------------------------------------------------------------------
+// openModeToString
+//------------------------------------------------------------------------------
+std::string ImmutableFileTest::openModeToString(XrdCl::Access::Mode mode) {
+  if (XrdCl::Access::None == mode) {
+    return "None";
+  }
+
+  typedef std::pair<XrdCl::Access::Mode, std::string> ModeAndName;
+  std::list<ModeAndName> allModes;
+  allModes.emplace_back(XrdCl::Access::UR, "UR");
+  allModes.emplace_back(XrdCl::Access::UW, "UW");
+  allModes.emplace_back(XrdCl::Access::UX, "UX");
+  allModes.emplace_back(XrdCl::Access::GR, "GR");
+  allModes.emplace_back(XrdCl::Access::GW, "GW");
+  allModes.emplace_back(XrdCl::Access::GX, "GX");
+  allModes.emplace_back(XrdCl::Access::OR, "OR");
+  allModes.emplace_back(XrdCl::Access::OW, "OW");
+  allModes.emplace_back(XrdCl::Access::OX, "OX");
+
+  std::ostringstream result;
+  for(const auto &modeAndName : allModes) {
+    const XrdCl::Access::Mode modeToSearchFor = modeAndName.first;
+    const std::string &name = modeAndName.second;
+
+    if(mode & modeToSearchFor) {
+      if(!result.str().empty()) {
+        result << " | ";
+      }
+      result << name;
+      mode &= ~modeToSearchFor;
+    }
+  }
+
+  if(0 != mode) {
+    if(!result.str().empty()) {
+      result << " | ";
+    }
+    result << "ONE OR MORE UNKNOWN MODE PERMISSIONS";
   }
 
   return result.str();

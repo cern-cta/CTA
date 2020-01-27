@@ -103,19 +103,28 @@ private:
    *
    * @param url The XRootD URL of the file to be tested.
    * @param openFlags The XRootD flags to be used when opening the file.
+   * @param openMode The XRootD mode permissions to be used when opening the
+   * file.
    * @param contents Optional contents to be written to the file.  An empty
    * string means don't write anything.
    * @param expectecErrNo The expected errNo result of opening the file.
    */
-  void testFile(const XrdCl::URL &url, const XrdCl::OpenFlags::Flags openFlags, const std::string &contents,
-    const uint32_t expectedOpenErrNo);
+  void testFile(const XrdCl::URL &url, const XrdCl::OpenFlags::Flags openFlags, const XrdCl::Access::Mode openMode,
+    const std::string &contents, const uint32_t expectedOpenErrNo);
 
   /**
    * @return The string representation of the specified XRootD "open file"
    * flags.
-   * @param flags The XRootD "open file" flags
+   * @param flags The XRootD "open file" flags.
    */
   std::string openFlagsToString(XrdCl::OpenFlags::Flags flags);
+
+  /**
+   * @return The string representation of the specified XRootD "open file"
+   * mode permissions.
+   * @param mode The XRootD "open file" mode permissions.
+   */
+  std::string openModeToString(XrdCl::Access::Mode mode);
 
   /**
    * @return The string representation of the specified XErrorCode.

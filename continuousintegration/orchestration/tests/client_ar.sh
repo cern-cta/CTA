@@ -210,11 +210,7 @@ echo "Listing the EOS extended attributes of ${EOS_DIR}"
 eos root://${EOSINSTANCE} attr ls ${EOS_DIR}
 echo
 
-# Don't call die yet because we know cta-immutable-file-test will fail until
-# a bug fixed version of EOS is implemeneted and used
-#cta-immutable-file-test root://${EOSINSTANCE}/${EOS_DIR}/immutable_file || die "The cta-immutable-file-test failed."
-#echo yes | cta-immutable-file-test root://${EOSINSTANCE}/${EOS_DIR}/immutable_file || die "The cta-immutable-file-test failed."
-echo yes | cta-immutable-file-test root://${EOSINSTANCE}/${EOS_DIR}/immutable_file
+echo yes | cta-immutable-file-test root://${EOSINSTANCE}/${EOS_DIR}/immutable_file || die "The cta-immutable-file-test failed."
 
 # Create directory for xrootd error reports
 ERROR_DIR="/dev/shm/$(basename ${EOS_DIR})"
