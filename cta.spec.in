@@ -178,7 +178,7 @@ Group: Application/CTA
 Requires: cta-lib-common = %{version}-%{release}
 %description -n cta-cli
 CERN Tape Archive:
-The xroot plugin
+The command line utilities
 %files -n cta-cli
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-admin
