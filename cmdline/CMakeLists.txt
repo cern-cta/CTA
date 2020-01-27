@@ -17,7 +17,6 @@
 cmake_minimum_required (VERSION 2.6)
 
 find_package(xrootdclient REQUIRED)
-find_package(xrootd REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
 # XRootD SSI
@@ -33,7 +32,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 # cta-admin <admin_command> is the SSI version of "cta <admin_command>"
 #
 add_executable(cta-admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp CtaAdminTextFormatter.cpp)
-target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsi-4 XrdSsiLib XrdUtils ctacommon)
+target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsiLib XrdUtils ctacommon)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 #
@@ -44,7 +43,7 @@ set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 #
 find_package(cryptopp REQUIRED)
 add_executable(cta-wfe-test EosCtaStub.cpp)
-target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsi-4 XrdSsiLib XrdUtils)
+target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
 set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-admin DESTINATION usr/bin)
