@@ -39,6 +39,16 @@ cta::admin::TextFormatter formattedText(1000);
 namespace XrdSsiPb {
 
 /*!
+ * User error exception
+ */
+class UserException : public std::runtime_error
+{
+public:
+  UserException(const std::string &err_msg) : std::runtime_error(err_msg) {}
+};
+
+
+/*!
  * Alert callback.
  *
  * Defines how Alert messages should be logged
@@ -283,7 +293,7 @@ void CtaAdminCmd::send() const
          isHeaderSent = true;
          break;
       case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-      case Response::RSP_ERR_USER:
+      case Response::RSP_ERR_USER:                         throw XrdSsiPb::UserException(response.message_txt());
       case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
       default:                                             throw XrdSsiPb::PbException("Invalid response type.");
    }
@@ -490,6 +500,10 @@ int main(int argc, const char **argv)
       std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
    } catch (XrdSsiPb::XrdSsiException &ex) {
       std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
+   } catch (XrdSsiPb::UserException &ex) {
+      if(CtaAdminCmd::isJson()) std::cout << CtaAdminCmd::jsonCloseDelim();
+      std::cerr << ex.what() << std::endl;
+      return 2;
    } catch (std::runtime_error &ex) {
       std::cerr << ex.what() << std::endl;
    } catch (std::exception &ex) {
