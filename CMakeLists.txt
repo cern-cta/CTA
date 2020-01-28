@@ -135,7 +135,6 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(eos_cta)
 
-  add_subdirectory(upgrade_db)
   add_subdirectory(migration)
 
   add_subdirectory(cmdline)
