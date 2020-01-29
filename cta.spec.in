@@ -320,7 +320,6 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-drop
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-verify
 %attr(0755,root,root) %{_bindir}/cta-database-poll
-%attr(0755,root,root) %{_bindir}/cta-upgrade-db
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-admin-user-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-drop.1cta.gz
