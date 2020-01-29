@@ -302,7 +302,24 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
     auto rqSummary = rqueue.getJobsSummary();
-    if (rqSummary.jobs) {
+    bool isPotentialMount = false;
+    auto vidToTapeMap = m_catalogue.getTapesByVid({rqp.vid});
+    if(vidToTapeMap.at(rqp.vid).disabled){
+      //Check if there are Repack Retrieve requests with forceDisabledTape flag in the queue
+      for(auto &job: rqueue.dumpJobs()){
+        cta::objectstore::RetrieveRequest rr(job.address,this->m_objectStore);
+        rr.fetchNoLock();
+        if(rr.getRepackInfo().forceDisabledTape){
+          //At least one Retrieve job is a Repack Retrieve job with the tape disabled flag,
+          //we have a potential mount.
+          isPotentialMount = true;
+          break;
+        }
+      }
+    } else {
+      isPotentialMount = true;
+    }
+    if (rqSummary.jobs && isPotentialMount) {
       // Check if we have activities and if all the jobs are covered by one or not (possible mixed case).
       bool jobsWithoutActivity = true;
       if (rqSummary.activityCounts.size()) {
@@ -370,7 +387,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         }
       }
     } else {
-      tmdi.queueTrimRequired = true;
+      if(!rqSummary.jobs)
+        tmdi.queueTrimRequired = true;
     }
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params (logContext);
@@ -3694,8 +3712,8 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
     // Compute the necessary space in each targeted disk system.
     std::map<std::string, uint64_t> spaceMap;
     for (auto &j: jobs.elements)
-        if (j.diskSystemName)
-          diskSpaceReservationRequest.addRequest(j.diskSystemName.value(), j.archiveFile.fileSize);
+      if (j.diskSystemName)
+        diskSpaceReservationRequest.addRequest(j.diskSystemName.value(), j.archiveFile.fileSize);
     // Get the existing reservation map from drives (including this drive's previous pending reservations).
     auto previousDrivesReservations = getExistingDrivesReservations();
     typedef std::pair<std::string, uint64_t> Res;

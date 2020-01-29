@@ -940,21 +940,22 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   // The library information is not know for the tapes involved in retrieves. We 
   // need to query the catalogue now about all those tapes.
   // Build the list of tapes.
-  std::set<std::string> tapeSet;
+  std::set<std::string> retrieveTapeSet;
   for (auto &m:mountInfo->potentialMounts) {
-    if (m.type==common::dataStructures::MountType::Retrieve) tapeSet.insert(m.vid);
+    if (m.type==common::dataStructures::MountType::Retrieve) retrieveTapeSet.insert(m.vid);
   }
-  if (tapeSet.size()) {
-    auto tapesInfo=m_catalogue.getTapesByVid(tapeSet);
+  common::dataStructures::VidToTapeMap retrieveTapesInfo;
+  if (retrieveTapeSet.size()) {
+    retrieveTapesInfo=m_catalogue.getTapesByVid(retrieveTapeSet);
     getTapeInfoTime = timer.secs(utils::Timer::resetCounter);
     for (auto &m:mountInfo->potentialMounts) {
       if (m.type==common::dataStructures::MountType::Retrieve) {
-        m.logicalLibrary=tapesInfo[m.vid].logicalLibraryName;
-        m.tapePool=tapesInfo[m.vid].tapePoolName;
-        m.vendor = tapesInfo[m.vid].vendor;
-        m.mediaType = tapesInfo[m.vid].mediaType;
-        m.vo = tapesInfo[m.vid].vo;
-        m.capacityInBytes = tapesInfo[m.vid].capacityInBytes;
+        m.logicalLibrary=retrieveTapesInfo[m.vid].logicalLibraryName;
+        m.tapePool=retrieveTapesInfo[m.vid].tapePoolName;
+        m.vendor = retrieveTapesInfo[m.vid].vendor;
+        m.mediaType = retrieveTapesInfo[m.vid].mediaType;
+        m.vo = retrieveTapesInfo[m.vid].vo;
+        m.capacityInBytes = retrieveTapesInfo[m.vid].capacityInBytes;
       }
     }
   }
@@ -965,11 +966,11 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   // We cannot filter the archives yet
   for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
     if (m->type == common::dataStructures::MountType::Retrieve && m->logicalLibrary != logicalLibraryName) {
-      m = mountInfo->potentialMounts.erase(m);
+        m = mountInfo->potentialMounts.erase(m);
     } else {
       m++;
+      }
     }
-  }
   
   // With the existing mount list, we can now populate the potential mount list
   // with the per tape pool existing mount statistics.
@@ -1039,9 +1040,9 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       params.add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
             .add("bytesQueued", m->bytesQueued)
-            .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+            .add("minBytesToWarrantMount", minBytesToWarrantAMount)
             .add("filesQueued", m->filesQueued)
-            .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+            .add("minFilesToWarrantMount", minFilesToWarrantAMount)
             .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("existingMounts", existingMounts)

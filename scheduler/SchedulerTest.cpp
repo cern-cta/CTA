@@ -2737,6 +2737,149 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   }
 }
 
+TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = true;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+  
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  
+  std::ostringstream ossVid;
+  ossVid << s_vid << "_" << 1;
+  std::string vid = ossVid.str();
+  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+  
+  //Create a storage class in the catalogue
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = s_diskInstance;
+  storageClass.name = s_storageClassName;
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesPerTape = 10;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+  
+  //Simulate the writing of 10 files in 1 tape in the catalogue
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  {
+    uint64_t archiveFileId = 1;
+    std::string currentVid = vid;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + archiveFileId);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
+      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = archiveFileId++;
+      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+      fileWritten.diskFilePath = diskFilePath.str();
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = currentVid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.size = archiveFileSize;
+      fileWritten.copyNb = 1;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    tapeFilesWrittenCopy1.clear();
+  }
+  //Test the queueing of the Retrieve Request and try to mount after having disabled the tape
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  {
+    std::string diskInstance="disk_instance";
+    cta::common::dataStructures::RetrieveRequest rReq;
+    rReq.archiveFileID=1;
+    rReq.requester.name = s_userName;
+    rReq.requester.group = "someGroup";
+    rReq.dstURL = "dst_url";
+    scheduler.queueRetrieve(diskInstance, rReq, lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+  //disabled the tape
+  catalogue.setTapeDisabled(admin,vid,true);
+  
+  //No mount should be returned by getNextMount
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, "drive0", lc));
+  
+  //enable the tape
+  catalogue.setTapeDisabled(admin,vid, false);
+  
+  //A mount should be returned by getNextMount
+  ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
+  
+  //disable the tape
+  catalogue.setTapeDisabled(admin,vid, true);
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
+  
+  //Queue a Repack Request with --disabledtape flag set to force Retrieve Mount for disabled tape
+  scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,true, lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  log::TimingList tl;
+  utils::Timer t;
+
+  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+
+  scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  /*
+   * Test expected behaviour for NOW:
+   * The getNextMount should return a mount as the tape is disabled and there are repack --disabledtape retrieve jobs in it
+   * We will then get the Repack AND USER jobs from the getNextJobBatch
+   */
+  auto nextMount = scheduler.getNextMount(s_libraryName,"drive0",lc);
+  ASSERT_NE(nullptr,nextMount);
+  std::unique_ptr<cta::RetrieveMount> retrieveMount;
+  retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(nextMount.release()));
+  auto jobBatch = retrieveMount->getNextJobBatch(20,20*archiveFileSize,lc);
+  ASSERT_EQ(11,jobBatch.size()); //1 user job + 10 Repack jobs = 11 jobs in the batch
+}
+
 TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
   using namespace cta;
 
@@ -3967,7 +4110,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   }
 }
 
-
+  
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
