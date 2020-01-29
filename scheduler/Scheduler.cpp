@@ -1098,17 +1098,6 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), 
         [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return common::dataStructures::getMountBasicType(m.type) == common::dataStructures::MountType::ArchiveAllTypes; } )) {
     tapeList = m_catalogue.getTapesForWriting(logicalLibraryName);
-    
-    //filter the tapes that are currently used by repack so that we do not mount them for Archival
-    //This solves the scenario when a user set a currently-repacking tape full flag to false
-    //(will trigger an archive mount on it)
-    std::list<cta::common::dataStructures::RepackInfo> repacks = this->getRepacks();
-    tapeList.remove_if([&repacks](const cta::catalogue::TapeForWriting& tapeForWriting){
-      return std::find_if(repacks.begin(),repacks.end(),[&tapeForWriting](const cta::common::dataStructures::RepackInfo& repackReq){
-        return tapeForWriting.vid == repackReq.vid;
-      }) != repacks.end();
-    });
-    
     getTapeForWriteTime = timer.secs(utils::Timer::resetCounter);
   }
         
