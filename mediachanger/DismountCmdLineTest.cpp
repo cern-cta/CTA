@@ -66,117 +66,83 @@ protected:
   }
 };
 
-TEST_F(cta_mediachanger_DismountCmdLineTest, acs) {
-  using namespace cta::mediachanger;
-
-  Argcv *args = new Argcv();
-  m_argsList.push_back(args);
-  args->argc = 3;
-  args->argv = new char *[4];
-  args->argv[0] = dupString("cta-mediachanger-dismount");
-  args->argv[1] = dupString("vid");
-  args->argv[2] = dupString("acs1,2,3,4");
-  args->argv[3] = NULL;
-
-  std::unique_ptr<DismountCmdLine> cmdLine;
-  ASSERT_NO_THROW(cmdLine.reset(new DismountCmdLine(args->argc, args->argv)));
-
-  ASSERT_FALSE(cmdLine->getHelp());
-  ASSERT_FALSE(cmdLine->getDebug());
-  ASSERT_FALSE(cmdLine->getForce());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
-    cmdLine->getDriveLibrarySlot().getLibraryType());
-  ASSERT_EQ(std::string("acs1,2,3,4"),
-    cmdLine->getDriveLibrarySlot().str());
-}
-
 TEST_F(cta_mediachanger_DismountCmdLineTest, copy_constructor) {
   using namespace cta::mediachanger;
 
-  Argcv *args = new Argcv();
+  Argcv *args= new Argcv();
   m_argsList.push_back(args);
   args->argc = 3;
-  args->argv = new char *[4];
+  args->argv = new char *[4]; 
   args->argv[0] = dupString("cta-mediachanger-dismount");
   args->argv[1] = dupString("vid");
-  args->argv[2] = dupString("acs1,2,3,4");
+  args->argv[2] = dupString("smc1");
   args->argv[3] = NULL;
 
   DismountCmdLine cmdLine1(args->argc, args->argv);
   ASSERT_FALSE(cmdLine1.getHelp());
   ASSERT_FALSE(cmdLine1.getDebug());
   ASSERT_FALSE(cmdLine1.getForce());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
-    cmdLine1.getDriveLibrarySlot().getLibraryType());
-  ASSERT_EQ(std::string("acs1,2,3,4"),
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine1.getDriveLibrarySlot().getLibraryType());
+  ASSERT_EQ(std::string("smc1"),
     cmdLine1.getDriveLibrarySlot().str());
 
   DismountCmdLine cmdLine2(cmdLine1);
   ASSERT_FALSE(cmdLine2.getHelp());
   ASSERT_FALSE(cmdLine2.getDebug());
   ASSERT_FALSE(cmdLine2.getForce());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI,
     cmdLine2.getDriveLibrarySlot().getLibraryType());
-  ASSERT_EQ(std::string("acs1,2,3,4"),
-    cmdLine2.getDriveLibrarySlot().str());
+  ASSERT_EQ(std::string("smc1"), cmdLine2.getDriveLibrarySlot().str());
 }
 
 TEST_F(cta_mediachanger_DismountCmdLineTest, assignment) {
   using namespace cta::mediachanger;
 
-  Argcv *args1 = new Argcv();
+  Argcv *args1= new Argcv();
   m_argsList.push_back(args1);
   args1->argc = 3;
-  args1->argv = new char *[4];
+  args1->argv = new char *[4]; 
   args1->argv[0] = dupString("cta-mediachanger-dismount");
   args1->argv[1] = dupString("vid");
-  args1->argv[2] = dupString("acs1,2,3,4");
+  args1->argv[2] = dupString("smc1");
   args1->argv[3] = NULL;
 
   DismountCmdLine cmdLine1(args1->argc, args1->argv);
   ASSERT_FALSE(cmdLine1.getHelp());
   ASSERT_FALSE(cmdLine1.getDebug());
   ASSERT_FALSE(cmdLine1.getForce());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
-    cmdLine1.getDriveLibrarySlot().getLibraryType());
-  ASSERT_EQ(std::string("acs1,2,3,4"),
-    cmdLine1.getDriveLibrarySlot().str());
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine1.getDriveLibrarySlot().getLibraryType());
+  ASSERT_EQ(std::string("smc1"), cmdLine1.getDriveLibrarySlot().str());
 
-  Argcv *args2 = new Argcv();
+  Argcv *args2= new Argcv();
   m_argsList.push_back(args2);
   args2->argc = 3;
-  args2->argv = new char *[4];
+  args2->argv = new char *[4]; 
   args2->argv[0] = dupString("cta-mediachanger-dismount");
   args2->argv[1] = dupString("vid");
-  args2->argv[2] = dupString("acs5,6,7,8");
+  args2->argv[2] = dupString("smc2");
   args2->argv[3] = NULL;
 
   DismountCmdLine cmdLine2(args2->argc, args2->argv);
   ASSERT_FALSE(cmdLine2.getHelp());
   ASSERT_FALSE(cmdLine2.getDebug());
   ASSERT_FALSE(cmdLine2.getForce());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
-    cmdLine2.getDriveLibrarySlot().getLibraryType());
-  ASSERT_EQ(std::string("acs5,6,7,8"),
-    cmdLine2.getDriveLibrarySlot().str());
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine2.getDriveLibrarySlot().getLibraryType());
+  ASSERT_EQ(std::string("smc2"), cmdLine2.getDriveLibrarySlot().str());
 
   cmdLine1 = cmdLine2;
 
   ASSERT_FALSE(cmdLine1.getHelp());
   ASSERT_FALSE(cmdLine1.getDebug());
   ASSERT_FALSE(cmdLine1.getForce());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
-    cmdLine1.getDriveLibrarySlot().getLibraryType());
-  ASSERT_EQ(std::string("acs5,6,7,8"),
-    cmdLine1.getDriveLibrarySlot().str());
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine1.getDriveLibrarySlot().getLibraryType());
+  ASSERT_EQ(std::string("smc2"), cmdLine1.getDriveLibrarySlot().str());
 
   ASSERT_FALSE(cmdLine2.getHelp());
   ASSERT_FALSE(cmdLine2.getDebug());
   ASSERT_FALSE(cmdLine2.getForce());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS,
-    cmdLine2.getDriveLibrarySlot().getLibraryType());
-  ASSERT_EQ(std::string("acs5,6,7,8"),
-    cmdLine2.getDriveLibrarySlot().str());
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine2.getDriveLibrarySlot().getLibraryType());
+  ASSERT_EQ(std::string("smc2"), cmdLine2.getDriveLibrarySlot().str());
 }
 
 TEST_F(cta_mediachanger_DismountCmdLineTest, scsi) {

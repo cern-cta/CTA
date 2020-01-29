@@ -23,9 +23,7 @@
 #include "mediachanger/MountCmdLine.hpp"
 
 #include <exception>
-#include <google/protobuf/stubs/common.h>
 #include <iostream>
-#include <zmq.h>
 
 /**
  * An exception throwing version of main().
@@ -45,7 +43,6 @@ int main(const int argc, char *const *const argv) {
 
   try {
     const int rc = exceptionThrowingMain(argc, argv);
-    google::protobuf::ShutdownProtobufLibrary();
     return rc;
   } catch(cta::exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
@@ -59,7 +56,6 @@ int main(const int argc, char *const *const argv) {
   // and errorMessage has been set accordingly
 
   std::cerr << "Aborting: " << errorMessage << std::endl;
-  google::protobuf::ShutdownProtobufLibrary();
   return 1;
 }
 

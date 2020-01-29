@@ -91,8 +91,6 @@ void MediaChangerFacade::forceDismountTape(const std::string &vid, const Library
 MediaChangerProxy &MediaChangerFacade::getProxy(const TapeLibraryType libraryType) {
   try {
     switch(libraryType) {
-    case TAPE_LIBRARY_TYPE_ACS:
-      return m_acsProxy;
     case TAPE_LIBRARY_TYPE_MANUAL:
       return m_mmcProxy;
     case TAPE_LIBRARY_TYPE_SCSI:

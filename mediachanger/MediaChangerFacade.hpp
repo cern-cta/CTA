@@ -19,7 +19,6 @@
 #pragma once
 
 #include "common/log/Logger.hpp"
-#include "mediachanger/AcsProxy.hpp"
 #include "mediachanger/LibrarySlot.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/MmcProxy.hpp"
@@ -90,11 +89,6 @@ public:
   void forceDismountTape(const std::string &vid, const LibrarySlot &slot);
 
 private:
-
-  /**
-   * ACS media changer proxy.
-   */
-  AcsProxy m_acsProxy;
 
   /**
    * Manual media changer proxy.

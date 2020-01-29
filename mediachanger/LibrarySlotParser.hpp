@@ -19,7 +19,6 @@
 #pragma once
 
 #include "mediachanger/LibrarySlot.hpp"
-#include "mediachanger/AcsLibrarySlot.hpp"
 #include "mediachanger/ManualLibrarySlot.hpp"
 #include "mediachanger/ScsiLibrarySlot.hpp"
 
@@ -67,14 +66,6 @@ private:
     const std::string &str);
 
   /**
-   * Returns true if the type of the specified tape library slot is ACS.
-   *
-   * @param str The string representation of the tape library slot.
-   * @return True if the type if the library slot is ACS.
-   */
-  static bool isAcs(const std::string &str);
-
-  /**
    * Returns true if the type of the specified tape library slot is manual.
    *
    * @param str The string representation of the tape library slot.
@@ -100,14 +91,6 @@ private:
    */
   static cta::mediachanger::LibrarySlot *parse(
     const cta::mediachanger::TapeLibraryType libraryType,
-    const std::string &str);
-
-  /**
-   * Parses the specified string representation of an ACS library slot.
-   *
-   * @param str The string representation of the tape library slot.
-   */
-  static cta::mediachanger::AcsLibrarySlot *parseAcsLibrarySlot(
     const std::string &str);
 
   /**

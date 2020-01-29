@@ -34,15 +34,6 @@ protected:
   }
 };
 
-TEST_F(cta_mediachanger_LibrarySlotParserTest, acs) {
-  using namespace cta::mediachanger;
-
-  std::unique_ptr<LibrarySlot> slot;
-  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("acs1,2,3,4")));
-  ASSERT_NE((LibrarySlot*)0, slot.get());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_ACS, slot->getLibraryType());
-}
-
 TEST_F(cta_mediachanger_LibrarySlotParserTest, manual) {
   using namespace cta::mediachanger;
 

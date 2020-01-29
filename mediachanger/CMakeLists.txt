@@ -18,23 +18,12 @@ cmake_minimum_required (VERSION 2.6)
 add_subdirectory(castorrmc)
 find_package(openssl REQUIRED)
 find_package(Protobuf3 REQUIRED)
-find_package(zeromq REQUIRED)
-
-file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
-PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
-include_directories (${PROTOBUF3_INCLUDE_DIRS})
-add_library(ctamediachangerprotobuf ${ProtoSources})
-target_link_libraries (ctamediachangerprotobuf
-  ${PROTOBUF3_LIBRARIES})
 
 set (MEDIACHANGER_LIB_SRC_FILES
-  AcsLibrarySlot.cpp
-  AcsProxy.cpp
   CmdLine.cpp
   CmdLineTool.cpp
   CommonMarshal.cpp
   DebugBuf.cpp
-  Frame.cpp
   io.cpp
   IpAndPort.cpp
   LibrarySlot.cpp
@@ -43,7 +32,6 @@ set (MEDIACHANGER_LIB_SRC_FILES
   MediaChangerFacade.cpp
   MediaChangerProxy.cpp
   MessageHeader.cpp
-  messages.cpp
   MmcProxy.cpp
   RmcMarshal.cpp
   RmcMarshal.hpp
@@ -51,12 +39,7 @@ set (MEDIACHANGER_LIB_SRC_FILES
   RmcProxy.cpp
   RmcUnmountMsgBody.cpp
   ScsiLibrarySlot.cpp
-  TapeLibraryType.cpp
-  ZmqContextSingleton.cpp
-  ZmqMsg.cpp
-  ZmqSocket.cpp
-  ZmqSocketST.cpp
-  ZmqSocketMT.cpp)
+  TapeLibraryType.cpp)
 
 add_library (ctamediachanger SHARED
   ${MEDIACHANGER_LIB_SRC_FILES})
@@ -65,14 +48,11 @@ set_property(TARGET ctamediachanger PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctamediachanger
   ctacommon
-  ctamediachangerprotobuf
-  ssl
-  zmq)
+  ssl)
 
 install (TARGETS ctamediachanger DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
-  AcsLibrarySlotTest.cpp
   DismountCmdLine.cpp
   DismountCmdLineTest.cpp
   IoTest.cpp

@@ -38,7 +38,6 @@ cta::mediachanger::LibrarySlot::~LibrarySlot() {
 //------------------------------------------------------------------------------
 cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlot::
   getLibraryTypeOfSlot(const std::string &slot) {
-  if(0 == slot.find("acs"))    return TAPE_LIBRARY_TYPE_ACS;
   if(0 == slot.find("manual")) return TAPE_LIBRARY_TYPE_MANUAL;
   if(0 == slot.find("smc"))    return TAPE_LIBRARY_TYPE_SCSI;
 

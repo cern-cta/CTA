@@ -26,7 +26,6 @@ namespace mediachanger {
  */
 enum TapeLibraryType {
   TAPE_LIBRARY_TYPE_NONE,
-  TAPE_LIBRARY_TYPE_ACS,
   TAPE_LIBRARY_TYPE_MANUAL,
   TAPE_LIBRARY_TYPE_SCSI};
   

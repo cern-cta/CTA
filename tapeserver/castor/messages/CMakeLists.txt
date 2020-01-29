@@ -22,7 +22,6 @@ include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 
 find_package(openssl REQUIRED)
 find_package(Protobuf3 REQUIRED)
-find_package(zeromq REQUIRED)
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
