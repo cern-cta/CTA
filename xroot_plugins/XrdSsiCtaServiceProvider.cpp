@@ -123,7 +123,13 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
      auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(*m_log, catalogueLogin,
        catalogue_numberofconnections.second, nbArchiveFileListingConns);
      m_catalogue = catalogueFactory->create();
-     m_catalogue->ping();
+     try{
+      m_catalogue->ping();
+     } catch(cta::exception::Exception& ex){
+       log::LogContext lc(*m_log);
+       lc.log(cta::log::ERR,ex.getMessageValue());
+       throw ex;
+     }
    }
 
    // Initialise the Backend
