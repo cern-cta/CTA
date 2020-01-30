@@ -127,6 +127,12 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt.executeNonQuery();
     }
+    
+    for(auto &tapeFile: archiveFile->tapeFiles){
+      //We deleted the TAPE_FILE so the tapes containing them should be set as dirty
+      setTapeDirty(conn,tapeFile.vid);
+    }
+    
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
     {

@@ -2361,11 +2361,14 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
         "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "TAPE.NB_MASTER_FILES AS NB_MASTER_FILES,"
+        "TAPE.MASTER_DATA_IN_BYTES AS MASTER_DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
         "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
         "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
+        "TAPE.DIRTY AS DIRTY,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2517,12 +2520,15 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
         tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
         tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+        tape.nbMasterFiles = rset.columnUint64("NB_MASTER_FILES");
+        tape.masterDataInBytes = rset.columnUint64("MASTER_DATA_IN_BYTES");
         tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
         tape.disabled = rset.columnBool("IS_DISABLED");
         tape.full = rset.columnBool("IS_FULL");
         tape.readOnly = rset.columnBool("IS_READ_ONLY");
         tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
-
+        tape.dirty = rset.columnBool("DIRTY");
+        
         tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
         tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
         tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
@@ -2857,6 +2863,20 @@ void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) 
   }
 }
 
+void RdbmsCatalogue::setTapeDirty(rdbms::Conn& conn, const std::string& vid) const {
+  try {
+    const char * const sql = 
+    "UPDATE TAPE SET DIRTY='1' WHERE VID = :VID";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
 void RdbmsCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStructures::SecurityIdentity& admin, const std::string& vid) const {
   try {
     const time_t now = time(nullptr);
@@ -2867,7 +2887,8 @@ void RdbmsCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStru
         "IS_FULL = '0',"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME,"
+        "DIRTY = '1' "
       "WHERE "
         "VID = :VID";
     auto stmt = conn.createStmt(sql);
@@ -6112,7 +6133,8 @@ void RdbmsCatalogue::updateTape(
         "LAST_FSEQ = :LAST_FSEQ,"
         "DATA_IN_BYTES = DATA_IN_BYTES + :DATA_IN_BYTES,"
         "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME = :LAST_WRITE_TIME "
+        "LAST_WRITE_TIME = :LAST_WRITE_TIME,"
+        "DIRTY='1' "
       "WHERE "
         "VID = :VID";
     auto stmt = conn.createStmt(sql);

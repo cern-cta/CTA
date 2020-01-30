@@ -114,7 +114,10 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tape_item->set_from_castor(tape.isFromCastor);
     tape_item->set_read_mount_count(tape.readMountCount);
     tape_item->set_write_mount_count(tape.writeMountCount);
-
+    tape_item->set_nb_master_files(tape.nbMasterFiles);
+    tape_item->set_master_data_in_bytes(tape.masterDataInBytes);
+    tape_item->set_dirty(tape.dirty);
+    
     if(tape.labelLog) {
       ::cta::common::TapeLog * labelLog = tape_item->mutable_label_log();
       labelLog->set_drive(tape.labelLog.value().drive);

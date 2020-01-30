@@ -426,6 +426,13 @@ public:
   void deleteTapeFiles(rdbms::Conn &conn, const std::string& vid) const;
   
   /**
+   * Set the DIRTY flag to true
+   * @param conn the database connection
+   * @param vid	the vid in which we want to set it as dirty
+   */
+  void setTapeDirty(rdbms::Conn &conn, const std::string &vid) const;
+  
+  /**
    * Reset the counters of a tape
    * @param conn the database connection
    * @param admin the administrator

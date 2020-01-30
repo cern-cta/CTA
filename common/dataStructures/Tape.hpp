@@ -51,6 +51,8 @@ struct Tape {
   std::string vo;
   uint64_t capacityInBytes;
   uint64_t dataOnTapeInBytes;
+  uint64_t nbMasterFiles;
+  uint64_t masterDataInBytes;
 
   /**
    * The optional name of the encryption key.
@@ -63,7 +65,8 @@ struct Tape {
   bool full;
   bool disabled;
   bool readOnly;
-  bool isFromCastor;  
+  bool isFromCastor;
+  bool dirty;
   uint64_t readMountCount;
   uint64_t writeMountCount;
   EntryLog creationLog;

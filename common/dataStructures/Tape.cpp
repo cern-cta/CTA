@@ -31,9 +31,12 @@ Tape::Tape():
   lastFSeq(0),
   capacityInBytes(0), 
   dataOnTapeInBytes(0),
+  nbMasterFiles(0),
+  masterDataInBytes(0),
   full(false),
   disabled(false),
-  readOnly(false) {}
+  readOnly(false)
+  {}
 
 //------------------------------------------------------------------------------
 // operator==
