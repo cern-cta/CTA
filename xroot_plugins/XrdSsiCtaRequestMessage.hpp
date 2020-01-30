@@ -36,6 +36,7 @@ public:
     m_scheddb(service->getSchedDb()),
     m_catalogue(service->getCatalogue()),
     m_scheduler(service->getScheduler()),
+    m_archiveFileMaxSize(service->getArchiveFileMaxSize()),
     m_repackBufferURL(service->getRepackBufferURL()),
     m_namespaceMap(service->getNamespaceMap()),
     m_lc(service->getLogContext()) {
@@ -271,6 +272,7 @@ private:
   cta::OStoreDBWithAgent                               &m_scheddb;            //!< Reference to CTA ObjectStore
   cta::catalogue::Catalogue                            &m_catalogue;          //!< Reference to CTA Catalogue
   cta::Scheduler                                       &m_scheduler;          //!< Reference to CTA Scheduler
+  uint64_t                                              m_archiveFileMaxSize; //!< Maximum allowed file size for archive requests
   optional<std::string>				        m_repackBufferURL;    //!< Repack buffer URL
   NamespaceMap_t                                        m_namespaceMap;       //!< Identifiers for namespace queries
   cta::log::LogContext                                  m_lc;                 //!< CTA Log Context

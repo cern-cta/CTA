@@ -104,7 +104,12 @@ public:
     * Get the log context for this Service
     */
    cta::log::LogContext getLogContext() const { return cta::log::LogContext(*m_log); }
-   
+
+   /*!
+    * Get the maximum file size for an archive request
+    */
+   uint64_t getArchiveFileMaxSize() const { return m_archiveFileMaxSize; }
+
    /*!
     * Get the repack buffer URL
     */
@@ -148,6 +153,7 @@ private:
 
    // Member variables
 
+   uint64_t                                            m_archiveFileMaxSize;  //!< Maximum allowed file size for archive requests
    std::unique_ptr<cta::objectstore::Backend>          m_backend;             //!< VFS backend for the objectstore DB
    std::unique_ptr<cta::objectstore::BackendPopulator> m_backendPopulator;    //!< Object used to populate the backend
    std::unique_ptr<cta::OStoreDBWithAgent>             m_scheddb;             //!< DB/Object Store of persistent objects

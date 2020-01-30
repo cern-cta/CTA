@@ -148,7 +148,12 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    } catch (std::bad_cast &) {
       // If not, never mind
    }
-   
+
+   // Initialise the Frontend
+   auto archiveFileMaxSize = config.getOptionValueInt("cta.archivefile.max_size_gb");
+   m_archiveFileMaxSize = archiveFileMaxSize.first ? archiveFileMaxSize.second : 2048; // GB
+   m_archiveFileMaxSize *= 1024*1024*1024; // bytes
+
    // Get the repack buffer URL
    auto repackBufferURLConf = config.getOptionValueStr("cta.repack.repack_buffer_url");
    if(repackBufferURLConf.first){

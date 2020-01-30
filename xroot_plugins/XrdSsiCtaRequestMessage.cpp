@@ -393,9 +393,15 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
      throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.storage_class");
    }
 
-   // For testing, this storage class will always fail
+   // For testing: this storage class will always fail
    if(storageClassItor->second == "fail_on_closew_test") {
       throw PbException("File is in fail_on_closew_test storage class, which always fails.");
+   }
+
+   // Disallow archival of files above the specified limit
+   if(notification.file().size() > m_archiveFileMaxSize) {
+      throw exception::UserError("Archive request rejected: file size (" + std::to_string(notification.file().size()) +
+                                 " bytes) exceeds maximum allowed size (" + std::to_string(m_archiveFileMaxSize) + " bytes)");
    }
 
    cta::common::dataStructures::ArchiveRequest request;
@@ -417,7 +423,6 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
-
    const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
      throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
