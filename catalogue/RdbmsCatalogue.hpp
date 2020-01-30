@@ -757,7 +757,7 @@ public:
    * - SCHEMA_VERSION_MINOR
    * - SCHEMA_VERSION_MAJOR_NEXT (future major version number of the schema in case of upgrade)
    * - SCHEMA_VERSION_MINOR_NEXT (future minor version number of the schema in case of upgrade)
-   * - STATUS (UPGRADING or COMPLETE)	
+   * - STATUS (UPGRADING or PRODUCTION)	
    * 
    * @return The SchemaVersion object corresponding to the catalogue schema version
    */

@@ -70,8 +70,8 @@ SchemaVersion CatalogueMetadataGetter::getCatalogueVersion(){
     SchemaVersion::Builder schemaVersionBuilder;
     schemaVersionBuilder.schemaVersionMajor(rset.columnUint64("SCHEMA_VERSION_MAJOR"))
                         .schemaVersionMinor(rset.columnUint64("SCHEMA_VERSION_MINOR"))
-                        //By default, the status is set as COMPLETE (to be backward-compatible with version 1.0 of the schema)
-                        .status(SchemaVersion::Status::COMPLETE);
+                        //By default, the status is set as PRODUCTION (to be backward-compatible with version 1.0 of the schema)
+                        .status(SchemaVersion::Status::PRODUCTION);
 
     //The cta-catalogue-schema-verify tool has to be backward-compatible with version 1.0
     //of the schema that does not have the NEXT_SCHEMA_VERSION_MAJOR, NEXT_SCHEMA_VERSION_MINOR and the STATUS column

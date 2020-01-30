@@ -79,8 +79,8 @@ SchemaVersion::MajorMinor SchemaVersion::getSchemaVersionNext() const {
 template<>
 std::string SchemaVersion::getStatus() const {
   switch(m_status){
-    case COMPLETE:
-      return "COMPLETE";
+    case PRODUCTION:
+      return "PRODUCTION";
     case UPGRADING:
       return "UPGRADING";
     default:
@@ -147,7 +147,7 @@ SchemaVersion::Builder& SchemaVersion::Builder::status(const SchemaVersion::Stat
 }
 
 std::map<std::string,SchemaVersion::Status> SchemaVersion::Builder::s_mapStringStatus {
-  {"COMPLETE",Status::COMPLETE},
+  {"PRODUCTION",Status::PRODUCTION},
   {"UPGRADING",Status::UPGRADING}
 };
 
@@ -155,7 +155,7 @@ void SchemaVersion::Builder::validate() const {
   if(!m_schemaVersionMajorSet || !m_schemaVersionMinorSet){
     throw cta::exception::Exception("In SchemaVersion::Builder::validate(), schemaVersionMajor or schemaVersionMinor have not been set.");
   }
-  if(m_schemaVersion.m_nextSchemaVersionMajor && m_schemaVersion.m_nextSchemaVersionMinor && m_schemaVersion.m_status == SchemaVersion::Status::COMPLETE){
+  if(m_schemaVersion.m_nextSchemaVersionMajor && m_schemaVersion.m_nextSchemaVersionMinor && m_schemaVersion.m_status == SchemaVersion::Status::PRODUCTION){
     throw cta::exception::Exception("In SchemaVersion::Builder::validate(), status is "+m_schemaVersion.getStatus<std::string>()+" but nextSchemaVersionMajor and nextSchemaVersionMinor are defined");
   }
   if(!m_schemaVersion.m_nextSchemaVersionMajor && !m_schemaVersion.m_nextSchemaVersionMinor && m_schemaVersion.m_status == SchemaVersion::Status::UPGRADING){

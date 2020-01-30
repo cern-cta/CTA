@@ -33,7 +33,7 @@ public:
   
   enum Status{
     UPGRADING,
-    COMPLETE
+    PRODUCTION
   };
   
   SchemaVersion(const SchemaVersion& orig);
