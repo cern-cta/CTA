@@ -59,6 +59,15 @@ SchemaComparerResult SQLiteSchemaComparer::compareTables(){
   return res;
 }
 
+SchemaComparerResult SQLiteSchemaComparer::compareTablesInList(const std::list<std::string> tableNamesToCompare){
+  insertSchemaInSQLite();
+  std::list<std::string> catalogueTables = m_catalogueMetadataGetter.getTableNames();
+  std::list<std::string> schemaTables = m_schemaMetadataGetter->getTableNames();
+  SchemaComparerResult res = compareTables(catalogueTables,schemaTables);
+  //TODO use the list of table names to compare
+  return res;
+}
+
 void SQLiteSchemaComparer::insertSchemaInSQLite() {
   if(!m_isSchemaInserted){
     if(m_schemaSqlStatementsReader != nullptr){

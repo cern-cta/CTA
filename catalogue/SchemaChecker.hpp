@@ -45,25 +45,11 @@ public:
     OK,
     FAILURE
   };
-  /**
-   * Constructor of the SchemaChecker class
-   * @param dbType the type of the database to check against
-   * @param conn the connection of the database to check
-   */
-  SchemaChecker(rdbms::Login::DbType dbType,cta::rdbms::Conn &conn);
+  
   /**
    * Destructor
    */
   virtual ~SchemaChecker();
-  /**
-   * Set the SQLiteSchemaComparer in order to run the schema comparison.
-   * The SQLiteSchemaComparer creates a InMemory SQLite database with the
-   * statements defined in the allSchemasDirectoryPath and will compare what is in SQLite with 
-   * what is in the catalogue database.
-   * 
-   * @param allSchemaVersionsDirectoryPath the schema sql statement reader used to get the schema
-   */
-  void useSQLiteSchemaComparer(cta::optional<std::string> allSchemaVersionsDirectoryPath);
   /**
    * Compare the schema by using a SchemaComparer
    * @throws Exception if no SchemaComparer has been set.
@@ -81,7 +67,30 @@ public:
    */
   void checkSchemaNotUpgrading();
   
+  class Builder {
+  public:
+    Builder(cta::rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);
+    Builder & useSQLiteSchemaComparer();
+    Builder & useDirectorySchemaReader(const std::string &allSchemasVersionsDirectory);
+    Builder & useMapStatementsReader();
+    Builder & useStringStatementsReader();
+    std::unique_ptr<SchemaChecker> build();
+  private:
+    cta::rdbms::Login::DbType m_dbType;
+    cta::rdbms::Conn &m_catalogueConn;
+    std::unique_ptr<SchemaComparer> m_schemaComparer;
+    std::unique_ptr<CatalogueMetadataGetter> m_catalogueMetadataGetter;
+    std::unique_ptr<SchemaSqlStatementsReader> m_schemaSqlStatementsReader;
+  };
+  
 private:
+  /**
+   * Constructor of the SchemaChecker class
+   * @param dbType the type of the database to check against
+   * @param conn the connection of the database to check
+   */
+  SchemaChecker(rdbms::Login::DbType dbType,cta::rdbms::Conn &conn);
+  
   /**
    * Catalogue-to-check database type
    */

@@ -289,7 +289,7 @@ set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPAT
 install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
 
-add_executable(cta-catalogue-schema-verify
+set (SCHEMA_CHECKER_LIB_SRC_FILES
   SQLiteSchemaInserter.cpp
   SchemaSqlStatementsReader.cpp
   SchemaComparer.cpp
@@ -298,16 +298,22 @@ add_executable(cta-catalogue-schema-verify
   SchemaComparerResult.cpp
   SchemaChecker.cpp
   CatalogueMetadataGetter.cpp
-  VerifySchemaCmd.cpp
-  VerifySchemaCmdLineArgs.cpp
-  VerifySchemaCmdMain.cpp
   CatalogueSchema.cpp
   OracleCatalogueSchema.cpp
   SqliteCatalogueSchema.cpp
   PostgresCatalogueSchema.cpp
-  MysqlCatalogueSchema.cpp)
+  MysqlCatalogueSchema.cpp
+)
 
-target_link_libraries(cta-catalogue-schema-verify ctacatalogue)
+add_library (ctaschemachecker SHARED
+   ${SCHEMA_CHECKER_LIB_SRC_FILES})
+
+add_executable(cta-catalogue-schema-verify
+  VerifySchemaCmd.cpp
+  VerifySchemaCmdLineArgs.cpp
+  VerifySchemaCmdMain.cpp)
+
+target_link_libraries(cta-catalogue-schema-verify ctacatalogue ctaschemachecker)
 set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 

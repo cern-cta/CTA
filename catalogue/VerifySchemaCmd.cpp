@@ -74,12 +74,15 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 1;
   }
   
-  cta::catalogue::SchemaChecker schemaChecker(login.dbType,conn);
-  cta::optional<std::string> allSchemasDirectoryPathOpt;
-  schemaChecker.useSQLiteSchemaComparer(allSchemasDirectoryPathOpt);
-  SchemaChecker::Status comparisonStatus = schemaChecker.compareSchema();
-  schemaChecker.checkNoParallelTables();
-  schemaChecker.checkSchemaNotUpgrading();
+  SchemaChecker::Builder schemaCheckerBuilder(login.dbType,conn);
+   std::unique_ptr<SchemaChecker> schemaChecker(schemaCheckerBuilder
+                        .useMapStatementsReader()
+                        .useSQLiteSchemaComparer()
+                        .build());
+  
+  SchemaChecker::Status comparisonStatus = schemaChecker->compareSchema();
+  schemaChecker->checkNoParallelTables();
+  schemaChecker->checkSchemaNotUpgrading();
   if(comparisonStatus == SchemaChecker::Status::FAILURE){
     return 1;
   }

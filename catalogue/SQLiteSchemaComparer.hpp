@@ -40,7 +40,8 @@ public:
   SchemaComparerResult compareAll() override;
   SchemaComparerResult compareIndexes() override;
   SchemaComparerResult compareTables() override;
-  
+  SchemaComparerResult compareTablesInList(const std::list<std::string> tableNamesToCompare) override;
+
   virtual ~SQLiteSchemaComparer();
   
 private:

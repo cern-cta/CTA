@@ -62,6 +62,13 @@ public:
    * @return a SchemaComparerResult that will contain the differences if there are some
    */
   virtual SchemaComparerResult compareIndexes() = 0;
+  
+  /**
+   * Compare only the tables in the list given in parameter
+   * @param tableNamesToCompare the tables to compare between the Schema and the database
+   * @return a SchemaComparerResult that will contain the differences if there are some
+   */
+  virtual SchemaComparerResult compareTablesInList(const std::list<std::string> tableNamesToCompare) = 0;
 
   /**
    * Sets the way the schema sql statements will be read to do the schemas comparison

@@ -24,6 +24,7 @@ namespace cta{ namespace catalogue {
   
 class SchemaSqlStatementsReader {
 public:
+  SchemaSqlStatementsReader();
   SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType);
   SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig);
   virtual ~SchemaSqlStatementsReader();
@@ -81,6 +82,12 @@ class MapSqlStatementsReader: public SchemaSqlStatementsReader{
     virtual std::list<std::string> getStatements();
 private:
   std::string m_catalogueVersion;
+};
+
+class StringSqlStatementsReader: public SchemaSqlStatementsReader{
+public:
+  StringSqlStatementsReader();
+  virtual std::list<std::string> getStatements();
 };
 
 }}

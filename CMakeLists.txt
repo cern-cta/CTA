@@ -150,8 +150,11 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(scheduler)
   add_subdirectory(tapeserver)
   add_subdirectory(XRootdSSiRmcd)
+  
+  add_subdirectory(statistics)
 
   add_subdirectory(continuousintegration/orchestration/tests)
+
 
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in

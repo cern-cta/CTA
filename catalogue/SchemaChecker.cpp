@@ -29,17 +29,6 @@ SchemaChecker::SchemaChecker(rdbms::Login::DbType dbType,cta::rdbms::Conn &conn)
 SchemaChecker::~SchemaChecker() {
 }
 
-void SchemaChecker::useSQLiteSchemaComparer(const cta::optional<std::string> allSchemasVersionsDirectory){
-  m_schemaComparer.reset(new SQLiteSchemaComparer(*m_catalogueMetadataGetter));
-   std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader;
-  if(allSchemasVersionsDirectory){
-    schemaSqlStatementsReader.reset(new DirectoryVersionsSqlStatementsReader(m_dbType,m_catalogueMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>(),allSchemasVersionsDirectory.value()));
-  } else {
-    schemaSqlStatementsReader.reset(new MapSqlStatementsReader(m_dbType,m_catalogueMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>()));
-  }
-  m_schemaComparer->setSchemaSqlStatementsReader(std::move(schemaSqlStatementsReader));
-}
-
 SchemaChecker::Status SchemaChecker::compareSchema(){
   if(m_schemaComparer == nullptr){
     throw cta::exception::Exception("No schema comparer used. Please specify the schema comparer by using the methods useXXXXSchemaComparer()");
@@ -80,5 +69,41 @@ void SchemaChecker::checkSchemaNotUpgrading(){
     std::cout << "WARNING : The status of the schema is " << catalogueVersion.getStatus<std::string>() << ", the future version is " << catalogueVersion.getSchemaVersionNext<std::string>() << std::endl;
   }
 }
+
+SchemaChecker::Builder::Builder(cta::rdbms::Login::DbType dbType, cta::rdbms::Conn& conn):m_dbType(dbType),m_catalogueConn(conn){
+  m_catalogueMetadataGetter.reset(CatalogueMetadataGetterFactory::create(m_dbType,m_catalogueConn)); 
+}
+
+SchemaChecker::Builder & SchemaChecker::Builder::useSQLiteSchemaComparer(){
+  m_schemaComparer.reset(new SQLiteSchemaComparer(*m_catalogueMetadataGetter));
+  return *this;
+}
+
+SchemaChecker::Builder& SchemaChecker::Builder::useDirectorySchemaReader(const std::string& allSchemasVersionsDirectory) {
+    m_schemaSqlStatementsReader.reset(new DirectoryVersionsSqlStatementsReader(m_dbType,m_catalogueMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>(),allSchemasVersionsDirectory));
+    return *this;
+}
+
+SchemaChecker::Builder& SchemaChecker::Builder::useMapStatementsReader() {
+  m_schemaSqlStatementsReader.reset(new MapSqlStatementsReader(m_dbType,m_catalogueMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>()));
+  return *this;
+}
+
+SchemaChecker::Builder& SchemaChecker::Builder::useStringStatementsReader() {
+  m_schemaSqlStatementsReader.reset(new StringSqlStatementsReader());
+  return *this;
+}
+
+std::unique_ptr<SchemaChecker> SchemaChecker::Builder::build() {
+  std::unique_ptr<SchemaChecker> schemaChecker(new SchemaChecker(m_dbType,m_catalogueConn));
+  if(m_schemaComparer != nullptr){
+    schemaChecker->m_schemaComparer = std::move(m_schemaComparer);
+    schemaChecker->m_schemaComparer->setSchemaSqlStatementsReader(std::move(m_schemaSqlStatementsReader));
+    return std::move(schemaChecker);
+  }
+  throw cta::exception::Exception("SchemaChecker::Builder::build(), a SchemaComparer should be set using the useXXXXSchemaComparer() method");
+}
+
+
 
 }}

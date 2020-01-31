@@ -34,6 +34,8 @@ namespace cta{ namespace catalogue{
 //////////////////////////////////////////////////////////////////
 // SchemaSqlStatementsReader
 //////////////////////////////////////////////////////////////////
+SchemaSqlStatementsReader::SchemaSqlStatementsReader(){}  
+  
 SchemaSqlStatementsReader::SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType):m_dbType(dbType) {
 }
 
@@ -168,6 +170,16 @@ std::list<std::string> MapSqlStatementsReader::getStatements(){
   } catch(const std::out_of_range &ex){
     throw cta::exception::Exception("No schema has been found for database type "+getDatabaseType());
   }
+}
+
+//////////////////////////////////////////////////////////////////
+// StringSqlStatementsReader
+//////////////////////////////////////////////////////////////////
+StringSqlStatementsReader::StringSqlStatementsReader():SchemaSqlStatementsReader(){}
+
+//TODO : Refactor 
+std::list<std::string>  StringSqlStatementsReader::getStatements(){
+  return std::list<std::string>();
 }
 
 }}
