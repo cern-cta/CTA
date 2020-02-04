@@ -64,7 +64,7 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker;
   catalogueChecker = catalogueCheckerBuilder.build();
   
-  SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID"});
+  SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID","NB_MASTER_FILES","MASTER_DATA_IN_BYTES"});
   SchemaChecker::Status tapeFileTableStatus = catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"ARCHIVE_FILE_ID"});
   SchemaChecker::Status archiveFileTableStatus = catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE",{"SIZE_IN_BYTES"});
   
@@ -87,7 +87,7 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
 // printUsage
 //------------------------------------------------------------------------------
 void StatisticsUpdateCmd::printUsage(std::ostream &os) {
-  StatisticsUpdateCmd::printUsage(os);
+  StatisticsUpdateCmdLineArgs::printUsage(os);
 }
 
 

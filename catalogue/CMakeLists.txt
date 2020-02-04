@@ -308,6 +308,8 @@ set (SCHEMA_CHECKER_LIB_SRC_FILES
 add_library (ctaschemachecker SHARED
    ${SCHEMA_CHECKER_LIB_SRC_FILES})
 
+install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
 add_executable(cta-catalogue-schema-verify
   VerifySchemaCmd.cpp
   VerifySchemaCmdLineArgs.cpp

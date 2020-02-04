@@ -72,7 +72,7 @@ add_executable(cta-statistics-save
   MysqlStatisticsSchema.cpp
 )
 
-target_link_libraries (cta-statistics-save ctastatistics ctacatalogue ctaschemachecker)
+target_link_libraries (cta-statistics-save ctastatistics)
 
 set_property(TARGET cta-statistics-save APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 set_property(TARGET cta-statistics-save APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
@@ -85,7 +85,7 @@ add_executable(cta-statistics-update
   StatisticsUpdateCmdMain.cpp
 )
 
-target_link_libraries (cta-statistics-update ctacatalogue ctaschemachecker)
+target_link_libraries (cta-statistics-update ctastatistics)
 
 set_property(TARGET cta-statistics-update APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 set_property(TARGET cta-statistics-update APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
