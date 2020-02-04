@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "StatisticsCmd.hpp"
+#include "StatisticsSaveCmd.hpp"
 
 #include <iostream>
 
@@ -24,6 +24,6 @@
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
-  cta::statistics::StatisticsCmd cmd(std::cin, std::cout, std::cerr);
+  cta::statistics::StatisticsSaveCmd cmd(std::cin, std::cout, std::cerr);
   return cmd.main(argc, argv);
 }

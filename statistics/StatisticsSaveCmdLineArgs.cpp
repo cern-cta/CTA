@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "StatisticsCmdLineArgs.hpp"
+#include "StatisticsSaveCmdLineArgs.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 
 #include <getopt.h>
@@ -29,7 +29,7 @@ namespace statistics {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StatisticsCmdLineArgs::StatisticsCmdLineArgs(const int argc, char *const *const argv):
+StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const *const argv):
   help(false) {
 
   static struct option longopts[] = {
@@ -101,10 +101,10 @@ StatisticsCmdLineArgs::StatisticsCmdLineArgs(const int argc, char *const *const 
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void StatisticsCmdLineArgs::printUsage(std::ostream &os) {
+void StatisticsSaveCmdLineArgs::printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    "    cta-statistics --catalogueconf catalogueDbConnectionFile --statisticsconf statisticsDbConnectionFile [options]" << std::endl <<
+    "    cta-statistics-save --catalogueconf catalogueDbConnectionFile --statisticsconf statisticsDbConnectionFile [options]" << std::endl <<
     "Where:" << std::endl <<
     "    catalogueDbConnectionFile" << std::endl <<
     "        The path to the file containing the connection details of the CTA" << std::endl <<

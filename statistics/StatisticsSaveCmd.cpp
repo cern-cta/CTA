@@ -18,7 +18,7 @@
 
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/AutocommitMode.hpp"
-#include "StatisticsCmd.hpp"
+#include "StatisticsSaveCmd.hpp"
 #include "StatisticsSchema.hpp"
 #include "catalogue/SchemaChecker.hpp"
 #include "MysqlStatisticsSchema.hpp"
@@ -30,22 +30,22 @@ namespace statistics {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StatisticsCmd::StatisticsCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
+StatisticsSaveCmd::StatisticsSaveCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
 CmdLineTool(inStream, outStream, errStream) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-StatisticsCmd::~StatisticsCmd() noexcept {
+StatisticsSaveCmd::~StatisticsSaveCmd() noexcept {
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int StatisticsCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace cta::catalogue;
-  const StatisticsCmdLineArgs cmdLineArgs(argc, argv);
+  const StatisticsSaveCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
     printUsage(m_out);
@@ -87,7 +87,7 @@ int StatisticsCmd::exceptionThrowingMain(const int argc, char *const *const argv
 //------------------------------------------------------------------------------
 // tableExists
 //------------------------------------------------------------------------------
-bool StatisticsCmd::tableExists(const std::string tableName, rdbms::Conn &conn) const {
+bool StatisticsSaveCmd::tableExists(const std::string tableName, rdbms::Conn &conn) const {
   const auto names = conn.getTableNames();
   for(const auto &name : names) {
     if(tableName == name) {
@@ -100,8 +100,8 @@ bool StatisticsCmd::tableExists(const std::string tableName, rdbms::Conn &conn) 
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void StatisticsCmd::printUsage(std::ostream &os) {
-  StatisticsCmdLineArgs::printUsage(os);
+void StatisticsSaveCmd::printUsage(std::ostream &os) {
+  StatisticsSaveCmdLineArgs::printUsage(os);
 }
 
 

@@ -27,7 +27,7 @@ namespace statistics {
  * Structure to store the command-line arguments of the command-line tool
  * named cta-statistics
  */
-struct StatisticsCmdLineArgs {
+struct StatisticsSaveCmdLineArgs {
   /**
    * True if the usage message should be printed.
    */
@@ -52,7 +52,7 @@ struct StatisticsCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  StatisticsCmdLineArgs(const int argc, char *const *const argv);
+  StatisticsSaveCmdLineArgs(const int argc, char *const *const argv);
 
   /**
    * Prints the usage message of the command-line tool.

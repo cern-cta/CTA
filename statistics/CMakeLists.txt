@@ -23,9 +23,9 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 set (STATISTICS_LIB_SRC_FILES
-  StatisticsCmd.cpp
-  StatisticsCmdLineArgs.cpp
-  StatisticsCmdMain.cpp
+  StatisticsSaveCmd.cpp
+  StatisticsSaveCmdLineArgs.cpp
+  StatisticsSaveCmdMain.cpp
   StatisticsSchema.cpp
 )
 
@@ -68,27 +68,16 @@ install (FILES ${CMAKE_SOURCE_DIR}/catalogue/cta-catalogue.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-add_executable(cta-statistics
-  StatisticsCmd.cpp
-  StatisticsCmdLineArgs.cpp
-  StatisticsCmdMain.cpp
+add_executable(cta-statistics-save
+  StatisticsSaveCmd.cpp
+  StatisticsSaveCmdLineArgs.cpp
+  StatisticsSaveCmdMain.cpp
   MysqlStatisticsSchema.cpp
 )
 
-target_link_libraries (cta-statistics ctastatistics ctacatalogue ctaschemachecker)
+target_link_libraries (cta-statistics-save ctastatistics ctacatalogue ctaschemachecker)
 
-set_property(TARGET cta-statistics APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+set_property(TARGET cta-statistics-save APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-statistics-save APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
-install (TARGETS cta-statistics DESTINATION /usr/bin)
-
-set (STATISTICS_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
-  StatisticsCmdLineArgsTest.cpp
-)
-
-add_library (ctastatisticscmdlineunittests SHARED
-  ${STATISTICS_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES})
-set_property(TARGET ctastatisticscmdlineunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctastatisticscmdlineunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-install (TARGETS ctastatisticscmdlineunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS cta-statistics-save DESTINATION /usr/bin)
