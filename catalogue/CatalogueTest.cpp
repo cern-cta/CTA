@@ -10690,7 +10690,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
     ASSERT_EQ(1, tapes.size());
     const common::dataStructures::Tape &tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
-    ASSERT_TRUE(tape.dirty);
   }
 
   {
@@ -12504,10 +12503,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
   log::LogContext dummyLc(m_dummyLog);
   m_catalogue->deleteArchiveFile("disk_instance", archiveFileId, dummyLc);
-  
-  for(auto &tape:m_catalogue->getTapes()){
-    ASSERT_TRUE(tape.dirty);
-  }
   
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 }
@@ -14622,7 +14617,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
-    ASSERT_TRUE(tape.dirty);
 
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);

@@ -2368,7 +2368,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.IS_FULL AS IS_FULL,"
         "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
         "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
-        "TAPE.DIRTY AS DIRTY,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -2527,7 +2526,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         tape.full = rset.columnBool("IS_FULL");
         tape.readOnly = rset.columnBool("IS_READ_ONLY");
         tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
-        tape.dirty = rset.columnBool("DIRTY");
         
         tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
         tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -2883,12 +2881,14 @@ void RdbmsCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStru
     const char * const sql =
     "UPDATE TAPE SET "
         "DATA_IN_BYTES = 0,"
+        "MASTER_DATA_IN_BYTES = 0,"
         "LAST_FSEQ = 0,"
+        "NB_MASTER_FILES = 0,"
         "IS_FULL = '0',"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME,"
-        "DIRTY = '1' "
+        "DIRTY = '0' "
       "WHERE "
         "VID = :VID";
     auto stmt = conn.createStmt(sql);
