@@ -15,17 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "SchemaComparer.hpp"
+#include "StatisticsSchema.hpp"
+#include "catalogue/CatalogueSchema.hpp"
 
-namespace cta {
-namespace catalogue {
-SchemaComparer::SchemaComparer(const std::string databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter): m_databaseToCheckName(databaseToCheckName),m_databaseMetadataGetter(catalogueMetadataGetter),m_compareTableConstraints((m_databaseMetadataGetter.getDbType() != cta::rdbms::Login::DBTYPE_MYSQL)){}
-
-void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader){
-  m_schemaSqlStatementsReader = std::move(schemaSqlStatementsReader);
-}
-
-SchemaComparer::~SchemaComparer() {
-}
-
+namespace cta { namespace statistics {
+  
+  StatisticsSchema::StatisticsSchema(const std::string &sqlSchema):CatalogueSchema(sqlSchema){}
 }}

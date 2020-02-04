@@ -19,6 +19,7 @@
 #pragma once
 
 #include "rdbms/Login.hpp"
+#include "CatalogueSchema.hpp"
 
 namespace cta{ namespace catalogue {
   
@@ -84,10 +85,12 @@ private:
   std::string m_catalogueVersion;
 };
 
-class StringSqlStatementsReader: public SchemaSqlStatementsReader{
+class CppSchemaStatementsReader: public SchemaSqlStatementsReader{
 public:
-  StringSqlStatementsReader();
-  virtual std::list<std::string> getStatements();
+  CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema schema);
+  std::list<std::string> getStatements();
+private:
+  const cta::catalogue::CatalogueSchema m_schema;
 };
 
 }}

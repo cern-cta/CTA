@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CatalogueMetadataGetter.hpp"
+#include "DatabaseMetadataGetter.hpp"
 #include <algorithm>
 
 namespace cta {
@@ -53,9 +53,9 @@ void MetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, co
   });
 }
   
-CatalogueMetadataGetter::CatalogueMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
+DatabaseMetadataGetter::DatabaseMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
 
-SchemaVersion CatalogueMetadataGetter::getCatalogueVersion(){
+SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
   const char *const sql =
     "SELECT "
       "CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,"
@@ -104,13 +104,13 @@ SchemaVersion CatalogueMetadataGetter::getCatalogueVersion(){
   }
 }
 
-std::list<std::string> CatalogueMetadataGetter::getTableNames(){
+std::list<std::string> DatabaseMetadataGetter::getTableNames(){
   std::list<std::string> tableNames = m_conn.getTableNames();
   removeObjectNameContaining(tableNames,{"DATABASECHANGELOG","DATABASECHANGELOGLOCK"});
   return tableNames;
 }
 
-std::list<std::string> CatalogueMetadataGetter::getIndexNames(){
+std::list<std::string> DatabaseMetadataGetter::getIndexNames(){
   std::list<std::string> indexNames = m_conn.getIndexNames();
   //We just want indexes created by the user, their name are finishing by _IDX or by _I
   cta::utils::Regex regexIndexes("(.*_IDX$)|(.*_I$)");
@@ -118,74 +118,74 @@ std::list<std::string> CatalogueMetadataGetter::getIndexNames(){
   return indexNames;
 }
 
-std::map<std::string,std::string> CatalogueMetadataGetter::getColumns(const std::string& tableName){
+std::map<std::string,std::string> DatabaseMetadataGetter::getColumns(const std::string& tableName){
   return m_conn.getColumns(tableName);
 }
 
-std::list<std::string> CatalogueMetadataGetter::getConstraintNames(const std::string &tableName){
+std::list<std::string> DatabaseMetadataGetter::getConstraintNames(const std::string &tableName){
   std::list<std::string> constraintNames = m_conn.getConstraintNames(tableName);
   //This constraint is added by ALTER TABLE, we can't check its existence for now
   removeObjectNameContaining(constraintNames,{"CATALOGUE_STATUS_CONTENT_CK"});
   return constraintNames;
 }
 
-std::list<std::string> CatalogueMetadataGetter::getParallelTableNames(){
+std::list<std::string> DatabaseMetadataGetter::getParallelTableNames(){
   return m_conn.getParallelTableNames();
 }
 
-CatalogueMetadataGetter::~CatalogueMetadataGetter() {}
+DatabaseMetadataGetter::~DatabaseMetadataGetter() {}
 
-SQLiteCatalogueMetadataGetter::SQLiteCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
-SQLiteCatalogueMetadataGetter::~SQLiteCatalogueMetadataGetter(){}
+SQLiteDatabaseMetadataGetter::SQLiteDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
+SQLiteDatabaseMetadataGetter::~SQLiteDatabaseMetadataGetter(){}
 
-std::list<std::string> SQLiteCatalogueMetadataGetter::getIndexNames() {
-  std::list<std::string> indexNames = CatalogueMetadataGetter::getIndexNames();
+std::list<std::string> SQLiteDatabaseMetadataGetter::getIndexNames() {
+  std::list<std::string> indexNames = DatabaseMetadataGetter::getIndexNames();
   //We do not want the sqlite_autoindex created automatically by SQLite
   removeObjectNameContaining(indexNames,{"sqlite_autoindex"});
   return indexNames;
 }
 
-std::list<std::string> SQLiteCatalogueMetadataGetter::getTableNames(){
-  std::list<std::string> tableNames = CatalogueMetadataGetter::getTableNames();
+std::list<std::string> SQLiteDatabaseMetadataGetter::getTableNames(){
+  std::list<std::string> tableNames = DatabaseMetadataGetter::getTableNames();
   //We do not want the sqlite_sequence tables created automatically by SQLite
   removeObjectNameContaining(tableNames,{"sqlite_sequence"});
   return tableNames;
 }
 
-cta::rdbms::Login::DbType SQLiteCatalogueMetadataGetter::getDbType(){
+cta::rdbms::Login::DbType SQLiteDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_SQLITE;
 }
 
-OracleCatalogueMetadataGetter::OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn):CatalogueMetadataGetter(conn){}
-OracleCatalogueMetadataGetter::~OracleCatalogueMetadataGetter(){}
-cta::rdbms::Login::DbType OracleCatalogueMetadataGetter::getDbType(){
+OracleDatabaseMetadataGetter::OracleDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
+OracleDatabaseMetadataGetter::~OracleDatabaseMetadataGetter(){}
+cta::rdbms::Login::DbType OracleDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_ORACLE;
 }
 
-MySQLCatalogueMetadataGetter::MySQLCatalogueMetadataGetter(cta::rdbms::Conn& conn):CatalogueMetadataGetter(conn) {}
-MySQLCatalogueMetadataGetter::~MySQLCatalogueMetadataGetter(){}
-cta::rdbms::Login::DbType MySQLCatalogueMetadataGetter::getDbType(){
+MySQLDatabaseMetadataGetter::MySQLDatabaseMetadataGetter(cta::rdbms::Conn& conn):DatabaseMetadataGetter(conn) {}
+MySQLDatabaseMetadataGetter::~MySQLDatabaseMetadataGetter(){}
+cta::rdbms::Login::DbType MySQLDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_MYSQL;
 }
 
-PostgresCatalogueMetadataGetter::PostgresCatalogueMetadataGetter(cta::rdbms::Conn& conn):CatalogueMetadataGetter(conn) {}
-PostgresCatalogueMetadataGetter::~PostgresCatalogueMetadataGetter(){}
-cta::rdbms::Login::DbType PostgresCatalogueMetadataGetter::getDbType(){
+PostgresDatabaseMetadataGetter::PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn):DatabaseMetadataGetter(conn) {}
+PostgresDatabaseMetadataGetter::~PostgresDatabaseMetadataGetter(){}
+cta::rdbms::Login::DbType PostgresDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL;
 }
 
-CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {
+DatabaseMetadataGetter * DatabaseMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {
   typedef rdbms::Login::DbType DbType;
   switch(dbType){
     case DbType::DBTYPE_IN_MEMORY:
     case DbType::DBTYPE_SQLITE:
-      return new SQLiteCatalogueMetadataGetter(conn);
+      return new SQLiteDatabaseMetadataGetter(conn);
     case DbType::DBTYPE_ORACLE:
-      return new OracleCatalogueMetadataGetter(conn);
+      return new OracleDatabaseMetadataGetter(conn);
     case DbType::DBTYPE_MYSQL:
-      return new MySQLCatalogueMetadataGetter(conn);
+      return new MySQLDatabaseMetadataGetter(conn);
     case DbType::DBTYPE_POSTGRESQL:
-      return new PostgresCatalogueMetadataGetter(conn);
+      return new PostgresDatabaseMetadataGetter(conn);
     default:
       throw cta::exception::Exception("In CatalogueMetadataGetterFactory::create(), can't get CatalogueMetadataGetter for dbType "+rdbms::Login::dbTypeToString(dbType));
   }
@@ -194,24 +194,24 @@ CatalogueMetadataGetter * CatalogueMetadataGetterFactory::create(const rdbms::Lo
 /**
  * SCHEMA METADATA GETTER methods
  */
-SchemaMetadataGetter::SchemaMetadataGetter(std::unique_ptr<SQLiteCatalogueMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType):m_dbType(dbType) {
-  m_sqliteCatalogueMetadataGetter = std::move(sqliteCatalogueMetadataGetter);
+SchemaMetadataGetter::SchemaMetadataGetter(std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType):m_dbType(dbType) {
+  m_sqliteDatabaseMetadataGetter = std::move(sqliteCatalogueMetadataGetter);
 }
 
 std::list<std::string> SchemaMetadataGetter::getIndexNames() {
-  return m_sqliteCatalogueMetadataGetter->getIndexNames();
+  return m_sqliteDatabaseMetadataGetter->getIndexNames();
 }
 
 std::list<std::string> SchemaMetadataGetter::getTableNames() {
-  return m_sqliteCatalogueMetadataGetter->getTableNames();
+  return m_sqliteDatabaseMetadataGetter->getTableNames();
 }
 
 std::map<std::string,std::string> SchemaMetadataGetter::getColumns(const std::string& tableName) {
-  return m_sqliteCatalogueMetadataGetter->getColumns(tableName);
+  return m_sqliteDatabaseMetadataGetter->getColumns(tableName);
 }
 
 std::list<std::string> SchemaMetadataGetter::getConstraintNames(const std::string& tableName) {
-  std::list<std::string> constraintNames = m_sqliteCatalogueMetadataGetter->getConstraintNames(tableName);
+  std::list<std::string> constraintNames = m_sqliteDatabaseMetadataGetter->getConstraintNames(tableName);
   if(m_dbType == cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL){
     //If the database to compare is POSTGRESQL, we cannot compare NOT NULL CONSTRAINT names
     //indeed, POSTGRESQL can not give the NOT NULL constraint names

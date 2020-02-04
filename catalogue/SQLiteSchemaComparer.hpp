@@ -29,10 +29,11 @@ class SQLiteSchemaComparer: public SchemaComparer {
 public:
   /**
    * Constructs a SQLiteSchemaComparer
+   * @param databaseToCheckName the database name to compare.
    * @param catalogueMetadataGetter the catalogue metadata getter to compare the catalogue schema content with the SQLite
    * database one
    */
-  SQLiteSchemaComparer(CatalogueMetadataGetter &catalogueMetadataGetter);
+  SQLiteSchemaComparer(const std::string databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter);
   /**
    * Compare the catalogue schema against the InMemory SQLite catalogue schema
    * @return a SchemaComparerResult object that will contain the differences if there are some
@@ -40,14 +41,14 @@ public:
   SchemaComparerResult compareAll() override;
   SchemaComparerResult compareIndexes() override;
   SchemaComparerResult compareTables() override;
-  SchemaComparerResult compareTablesInList(const std::list<std::string> tableNamesToCompare) override;
+  SchemaComparerResult compareTablesLocatedInSchema() override;
 
   virtual ~SQLiteSchemaComparer();
   
 private:
   void insertSchemaInSQLite();
-  SchemaComparerResult compareItems(const std::string &itemType, const std::list<std::string>& itemsFromCatalogue, const std::list<std::string>& itemsFromSQLite);
-  SchemaComparerResult compareTables(const std::list<std::string> &catalogueTables, const std::list<std::string> &schemaTables);
+  SchemaComparerResult compareItems(const std::string &itemType, const std::list<std::string>& itemsFromDatabase, const std::list<std::string>& itemsFromSQLite);
+  SchemaComparerResult compareTables(const std::list<std::string> &databaseTables, const std::list<std::string> &schemaTables);
   typedef std::map<std::string, std::map<std::string, std::string>> TableColumns;
   SchemaComparerResult compareTableColumns(const TableColumns & schema1TableColumns, const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type);
   rdbms::Conn m_sqliteConn;

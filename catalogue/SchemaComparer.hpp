@@ -26,7 +26,7 @@
 
 #include "rdbms/ConnPool.hpp"
 #include "SchemaComparerResult.hpp"
-#include "CatalogueMetadataGetter.hpp"
+#include "DatabaseMetadataGetter.hpp"
 #include "SchemaSqlStatementsReader.hpp"
 
 namespace cta {
@@ -42,7 +42,7 @@ public:
    * Constructs a SchemaComparer
    * @param catalogueMetadataGetter the catalogue metadata getter to compare the catalogue schema content
    */
-  SchemaComparer(CatalogueMetadataGetter &catalogueMetadataGetter);
+  SchemaComparer(const std::string databaseToCheckName, DatabaseMetadataGetter &databaseMetadataGetter);
   /**
    * Destructor
    */
@@ -64,12 +64,11 @@ public:
   virtual SchemaComparerResult compareIndexes() = 0;
   
   /**
-   * Compare only the tables in the list given in parameter
-   * @param tableNamesToCompare the tables to compare between the Schema and the database
+   * Compare only the tables that are located in the schema
+   * This is useful when want to compare ONLY tables that are defined in a schema
    * @return a SchemaComparerResult that will contain the differences if there are some
    */
-  virtual SchemaComparerResult compareTablesInList(const std::list<std::string> tableNamesToCompare) = 0;
-
+  virtual SchemaComparerResult compareTablesLocatedInSchema() = 0;
   /**
    * Sets the way the schema sql statements will be read to do the schemas comparison
    * @param schemaSqlStatementsReader the reader used to get the schema sql statements in order to do schema comparison
@@ -77,7 +76,8 @@ public:
   void setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader);
   
 protected:
-  cta::catalogue::CatalogueMetadataGetter & m_catalogueMetadataGetter;
+  const std::string  m_databaseToCheckName;
+  cta::catalogue::DatabaseMetadataGetter & m_databaseMetadataGetter;
   std::unique_ptr<SchemaSqlStatementsReader> m_schemaSqlStatementsReader;
   bool m_compareTableConstraints;
 };

@@ -1,6 +1,6 @@
-/**
+/*
  * The CERN Tape Archive (CTA) project
- * Copyright © 2018 CERN
+ * Copyright (C) 2015  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,17 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "SchemaComparer.hpp"
+
+#pragma once
+
+#include "StatisticsSchema.hpp"
+
+#include <string>
 
 namespace cta {
-namespace catalogue {
-SchemaComparer::SchemaComparer(const std::string databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter): m_databaseToCheckName(databaseToCheckName),m_databaseMetadataGetter(catalogueMetadataGetter),m_compareTableConstraints((m_databaseMetadataGetter.getDbType() != cta::rdbms::Login::DBTYPE_MYSQL)){}
+namespace statistics {
 
-void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader){
-  m_schemaSqlStatementsReader = std::move(schemaSqlStatementsReader);
-}
 
-SchemaComparer::~SchemaComparer() {
-}
+struct MysqlStatisticsSchema: public StatisticsSchema {
+  /**
+   * Constructor.
+   */
+  MysqlStatisticsSchema();
+};
 
-}}
+} // namespace statistics
+} // namespace cta

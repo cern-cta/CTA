@@ -19,7 +19,9 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/AutocommitMode.hpp"
 #include "StatisticsCmd.hpp"
+#include "StatisticsSchema.hpp"
 #include "catalogue/SchemaChecker.hpp"
+#include "MysqlStatisticsSchema.hpp"
 
 
 namespace cta {
@@ -42,15 +44,13 @@ StatisticsCmd::~StatisticsCmd() noexcept {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int StatisticsCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+  using namespace cta::catalogue;
   const StatisticsCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
     printUsage(m_out);
     return 0;
   }
-  
-  std::cout << cmdLineArgs.catalogueDbConfigPath << std::endl;
-  std::cout << cmdLineArgs.statisticsDbConfigPath << std::endl;
 
   const uint64_t maxNbConns = 1;
     
@@ -58,16 +58,31 @@ int StatisticsCmd::exceptionThrowingMain(const int argc, char *const *const argv
   rdbms::ConnPool catalogueConnPool(loginCatalogue, maxNbConns);
   auto catalogueConn = catalogueConnPool.getConn();
   
-  auto loginStatistics = rdbms::Login::parseFile(cmdLineArgs.statisticsDbConfigPath);
+  /*auto loginStatistics = rdbms::Login::parseFile(cmdLineArgs.statisticsDbConfigPath);
   rdbms::ConnPool statisticsConnPool(loginStatistics, maxNbConns);
-  auto statisticsConn = statisticsConnPool.getConn();
+  auto statisticsConn = statisticsConnPool.getConn();*/
 
-  /*cta::catalogue::SchemaChecker catalogueSchemaChecker(loginCatalogue.dbType,catalogueConn);
-  cta::catalogue::SchemaChecker statisticsSchemaChecker(loginStatistics.dbType,statisticsConn);*/
+  SchemaChecker::Builder catalogueCheckerBuilder("catalogue",loginCatalogue.dbType,catalogueConn);
+  std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker;
+  catalogueChecker = catalogueCheckerBuilder.build();
   
-//  catalogueSchemaChecker.useSQLiteSchemaComparer();
+  SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID"});
+  SchemaChecker::Status tapeFileTableStatus = catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"ARCHIVE_FILE_ID"});
+  SchemaChecker::Status archiveFileTableStatus = catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE",{"SIZE_IN_BYTES"});
   
-  return 0;
+  if(tapeTableStatus == SchemaChecker::Status::FAILURE || tapeFileTableStatus == SchemaChecker::Status::FAILURE || archiveFileTableStatus == SchemaChecker::Status::FAILURE){
+    return EXIT_FAILURE;
+  }
+ 
+  /*SchemaChecker::Builder statisticsCheckerBuilder("statistics",loginStatistics.dbType,statisticsConn);
+  cta::statistics::MysqlStatisticsSchema mysqlSchema;
+  std::unique_ptr<SchemaChecker> statisticsChecker = 
+  statisticsCheckerBuilder.useCppSchemaStatementsReader(mysqlSchema)
+                          .useSQLiteSchemaComparer()
+                          .build();
+  statisticsChecker->compareTablesLocatedInSchema();*/
+  
+  return EXIT_SUCCESS;
 }
 //------------------------------------------------------------------------------
 // tableExists

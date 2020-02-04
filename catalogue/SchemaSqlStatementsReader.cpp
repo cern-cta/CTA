@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <fstream>
+#include <iostream>
 
 #include "SchemaSqlStatementsReader.hpp"
 #include "SqliteCatalogueSchema.hpp"
@@ -173,13 +174,13 @@ std::list<std::string> MapSqlStatementsReader::getStatements(){
 }
 
 //////////////////////////////////////////////////////////////////
-// StringSqlStatementsReader
+// CppSchemaStatementsReader
 //////////////////////////////////////////////////////////////////
-StringSqlStatementsReader::StringSqlStatementsReader():SchemaSqlStatementsReader(){}
 
-//TODO : Refactor 
-std::list<std::string>  StringSqlStatementsReader::getStatements(){
-  return std::list<std::string>();
+CppSchemaStatementsReader::CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema schema):m_schema(schema) {}
+
+std::list<std::string> CppSchemaStatementsReader::getStatements(){
+  return getAllStatementsFromSchema(m_schema.sql);
 }
 
 }}

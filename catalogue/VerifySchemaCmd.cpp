@@ -74,8 +74,8 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 1;
   }
   
-  SchemaChecker::Builder schemaCheckerBuilder(login.dbType,conn);
-   std::unique_ptr<SchemaChecker> schemaChecker(schemaCheckerBuilder
+  SchemaChecker::Builder schemaCheckerBuilder("catalogue",login.dbType,conn);
+  std::unique_ptr<SchemaChecker> schemaChecker(schemaCheckerBuilder
                         .useMapStatementsReader()
                         .useSQLiteSchemaComparer()
                         .build());

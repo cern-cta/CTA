@@ -25,14 +25,14 @@
 namespace cta {
 namespace catalogue {
   
-SQLiteSchemaComparer::SQLiteSchemaComparer(CatalogueMetadataGetter &catalogueMetadataGetter): SchemaComparer(catalogueMetadataGetter) {
+SQLiteSchemaComparer::SQLiteSchemaComparer(const std::string databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter): SchemaComparer(databaseToCheckName,catalogueMetadataGetter) {
   log::DummyLogger dl("dummy","dummy");
   auto login = rdbms::Login::parseString("in_memory");
   //Create SQLite connection
   m_sqliteConnPool.reset(new rdbms::ConnPool(login,1));
   m_sqliteConn = std::move(m_sqliteConnPool->getConn());
   //Create the Metadata getter
-  std::unique_ptr<SQLiteCatalogueMetadataGetter> sqliteCatalogueMetadataGetter(new SQLiteCatalogueMetadataGetter(m_sqliteConn));
+  std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter(new SQLiteDatabaseMetadataGetter(m_sqliteConn));
   //Create the Schema Metadata Getter that will filter the SQLite schema metadata according to the catalogue database type we would like to compare
   m_schemaMetadataGetter.reset(new SchemaMetadataGetter(std::move(sqliteCatalogueMetadataGetter),catalogueMetadataGetter.getDbType()));
 }
@@ -53,18 +53,22 @@ SchemaComparerResult SQLiteSchemaComparer::compareAll(){
 
 SchemaComparerResult SQLiteSchemaComparer::compareTables(){
   insertSchemaInSQLite();
-  std::list<std::string> catalogueTables = m_catalogueMetadataGetter.getTableNames();
+  std::list<std::string> catalogueTables = m_databaseMetadataGetter.getTableNames();
   std::list<std::string> schemaTables = m_schemaMetadataGetter->getTableNames();
   SchemaComparerResult res = compareTables(catalogueTables,schemaTables);
   return res;
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareTablesInList(const std::list<std::string> tableNamesToCompare){
+SchemaComparerResult SQLiteSchemaComparer::compareTablesLocatedInSchema(){
   insertSchemaInSQLite();
-  std::list<std::string> catalogueTables = m_catalogueMetadataGetter.getTableNames();
+  std::list<std::string> databaseTables = m_databaseMetadataGetter.getTableNames();
   std::list<std::string> schemaTables = m_schemaMetadataGetter->getTableNames();
-  SchemaComparerResult res = compareTables(catalogueTables,schemaTables);
-  //TODO use the list of table names to compare
+  databaseTables.remove_if([schemaTables](const std::string& catalogueTable){
+    return std::find_if(schemaTables.begin(),schemaTables.end(),[catalogueTable](const std::string& schemaTable){
+      return schemaTable == catalogueTable;
+    }) == schemaTables.end();
+  });
+  SchemaComparerResult res = compareTables(databaseTables,schemaTables);
   return res;
 }
 
@@ -82,48 +86,48 @@ void SQLiteSchemaComparer::insertSchemaInSQLite() {
 
 SchemaComparerResult SQLiteSchemaComparer::compareIndexes(){
   insertSchemaInSQLite();
-  std::list<std::string> catalogueIndexes = m_catalogueMetadataGetter.getIndexNames();
+  std::list<std::string> catalogueIndexes = m_databaseMetadataGetter.getIndexNames();
   std::list<std::string> schemaIndexes = m_schemaMetadataGetter->getIndexNames();
   return compareItems("INDEX", catalogueIndexes, schemaIndexes);
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareItems(const std::string &itemType, const std::list<std::string>& itemsFromCatalogue, const std::list<std::string>& itemsFromSQLite){
+SchemaComparerResult SQLiteSchemaComparer::compareItems(const std::string &itemType, const std::list<std::string>& itemsFromDatabase, const std::list<std::string>& itemsFromSQLite){
   SchemaComparerResult result;
-  for(auto &catalogueItem: itemsFromCatalogue){
-    if(std::find(itemsFromSQLite.begin(),itemsFromSQLite.end(),catalogueItem) == itemsFromSQLite.end()){
-      result.addDiff(itemType+" "+catalogueItem+" is missing in the schema but defined in the catalogue");
+  for(auto &databaseItem: itemsFromDatabase){
+    if(std::find(itemsFromSQLite.begin(),itemsFromSQLite.end(),databaseItem) == itemsFromSQLite.end()){
+      result.addDiff(itemType+" "+databaseItem+" is missing in the schema but defined in the "+m_databaseToCheckName+" database.");
     }
   }
   for(auto &sqliteItem: itemsFromSQLite){
-    if(std::find(itemsFromCatalogue.begin(),itemsFromCatalogue.end(),sqliteItem) == itemsFromCatalogue.end()){
-      result.addDiff(itemType+" "+sqliteItem+" is missing in the catalogue but is defined in the schema");
+    if(std::find(itemsFromDatabase.begin(),itemsFromDatabase.end(),sqliteItem) == itemsFromDatabase.end()){
+      result.addDiff(itemType+" "+sqliteItem+" is missing in the "+m_databaseToCheckName+" database but is defined in the schema.");
     }
   }
   return result;
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareTables(const std::list<std::string>& catalogueTables, const std::list<std::string>& schemaTables){
+SchemaComparerResult SQLiteSchemaComparer::compareTables(const std::list<std::string>& databaseTables, const std::list<std::string>& schemaTables){
   SchemaComparerResult result;
-  std::map<std::string, std::map<std::string, std::string>> catalogueTableColumns;
+  std::map<std::string, std::map<std::string, std::string>> databaseTableColumns;
   std::map<std::string, std::map<std::string, std::string>> schemaTableColumns;
-  std::map<std::string,std::list<std::string>> catalogueTableConstraints;
+  std::map<std::string,std::list<std::string>> databaseTableConstraints;
   std::map<std::string, std::list<std::string>> schemaTableConstraints;
   
-  for(auto &catalogueTable: catalogueTables){
-    catalogueTableColumns[catalogueTable] = m_catalogueMetadataGetter.getColumns(catalogueTable);
-    catalogueTableConstraints[catalogueTable] = m_catalogueMetadataGetter.getConstraintNames(catalogueTable);
+  for(auto &databaseTable: databaseTables){
+    databaseTableColumns[databaseTable] = m_databaseMetadataGetter.getColumns(databaseTable);
+    databaseTableConstraints[databaseTable] = m_databaseMetadataGetter.getConstraintNames(databaseTable);
   }
   
   for(auto &schemaTable: schemaTables){
     schemaTableColumns[schemaTable] = m_schemaMetadataGetter->getColumns(schemaTable);
     if(m_compareTableConstraints) {
       schemaTableConstraints[schemaTable] = m_schemaMetadataGetter->getConstraintNames(schemaTable);
-      result += compareItems("IN TABLE "+schemaTable+", CONSTRAINT",catalogueTableConstraints[schemaTable],schemaTableConstraints[schemaTable]);
+      result += compareItems("IN TABLE "+schemaTable+", CONSTRAINT",databaseTableConstraints[schemaTable],schemaTableConstraints[schemaTable]);
     }
   }
   
-  result += compareTableColumns(catalogueTableColumns,"catalogue",schemaTableColumns,"schema");
-  result += compareTableColumns(schemaTableColumns,"schema",catalogueTableColumns,"catalogue");
+  result += compareTableColumns(databaseTableColumns,m_databaseToCheckName+" database",schemaTableColumns,"schema");
+  result += compareTableColumns(schemaTableColumns,"schema",databaseTableColumns,m_databaseToCheckName+" database");
   
   return result;
 }

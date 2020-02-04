@@ -49,12 +49,12 @@ public:
  * This class is used to get the Metadata (table names, columns, indexes) of the database accessed via the connection given in parameters
  * It will simply call the methods from the connection (Conn) instance and adapt or not the metadata returned.  
  */  
-class CatalogueMetadataGetter: public MetadataGetter {
+class DatabaseMetadataGetter: public MetadataGetter {
   protected:
     rdbms::Conn& m_conn;
   public:
-    CatalogueMetadataGetter(cta::rdbms::Conn & conn);
-    virtual ~CatalogueMetadataGetter();
+    DatabaseMetadataGetter(cta::rdbms::Conn & conn);
+    virtual ~DatabaseMetadataGetter();
     SchemaVersion getCatalogueVersion();
     virtual std::list<std::string> getIndexNames();
     virtual std::list<std::string> getTableNames();
@@ -65,56 +65,56 @@ class CatalogueMetadataGetter: public MetadataGetter {
 };
 
 /**
- * Specific SQLite Catalogue metadata getter
+ * Specific SQLite database metadata getter
  */
-class SQLiteCatalogueMetadataGetter: public CatalogueMetadataGetter{
+class SQLiteDatabaseMetadataGetter: public DatabaseMetadataGetter{
 public:
-  SQLiteCatalogueMetadataGetter(cta::rdbms::Conn & conn);
-  virtual ~SQLiteCatalogueMetadataGetter();
+  SQLiteDatabaseMetadataGetter(cta::rdbms::Conn & conn);
+  virtual ~SQLiteDatabaseMetadataGetter();
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
   cta::rdbms::Login::DbType getDbType() override;
 };
 
 /**
- * Specific Oracle Catalogue metadata getter
+ * Specific Oracle database metadata getter
  */
-class OracleCatalogueMetadataGetter: public CatalogueMetadataGetter{
+class OracleDatabaseMetadataGetter: public DatabaseMetadataGetter{
   public:
-  OracleCatalogueMetadataGetter(cta::rdbms::Conn & conn);
+  OracleDatabaseMetadataGetter(cta::rdbms::Conn & conn);
   cta::rdbms::Login::DbType getDbType() override;
-  virtual ~OracleCatalogueMetadataGetter();
+  virtual ~OracleDatabaseMetadataGetter();
 };
 
 /**
- * Specific MySQL Catalogue metadata getter
+ * Specific MySQL database metadata getter
  */
-class MySQLCatalogueMetadataGetter: public CatalogueMetadataGetter{
+class MySQLDatabaseMetadataGetter: public DatabaseMetadataGetter{
   public:
-    MySQLCatalogueMetadataGetter(cta::rdbms::Conn &conn);
+    MySQLDatabaseMetadataGetter(cta::rdbms::Conn &conn);
     cta::rdbms::Login::DbType getDbType() override;
-    virtual ~MySQLCatalogueMetadataGetter();
+    virtual ~MySQLDatabaseMetadataGetter();
 };
 
 /**
- * Specific Postgres Catalogue metadata getter
+ * Specific Postgres database metadata getter
  */
-class PostgresCatalogueMetadataGetter: public CatalogueMetadataGetter{
+class PostgresDatabaseMetadataGetter: public DatabaseMetadataGetter{
   public:
-    PostgresCatalogueMetadataGetter(cta::rdbms::Conn &conn);
+    PostgresDatabaseMetadataGetter(cta::rdbms::Conn &conn);
     cta::rdbms::Login::DbType getDbType() override;
-    virtual ~PostgresCatalogueMetadataGetter();
+    virtual ~PostgresDatabaseMetadataGetter();
 };
 
 /**
  * Factory of MetadataGetter allowing to instanciate the correct metadata getter according to the database type given in parameter
  * @param dbType the database type in order to instanciate the correct metadata getter
  * @param conn the connection of the database to get the metadata from
- * @return the correct CatalogueMetadataGetter instance
+ * @return the correct DatabaseMetadataGetter instance
  */
-class CatalogueMetadataGetterFactory {
+class DatabaseMetadataGetterFactory {
 public:
-  static CatalogueMetadataGetter* create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn);
+  static DatabaseMetadataGetter* create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn);
 };
 
 /**
@@ -122,11 +122,11 @@ public:
  */
 class SchemaMetadataGetter: public MetadataGetter{
 protected:
-  std::unique_ptr<SQLiteCatalogueMetadataGetter> m_sqliteCatalogueMetadataGetter;
+  std::unique_ptr<SQLiteDatabaseMetadataGetter> m_sqliteDatabaseMetadataGetter;
   //The database type we would like to compare the SQLite schema against (used for filtering the results)
   cta::rdbms::Login::DbType m_dbType;
 public:
-  SchemaMetadataGetter(std::unique_ptr<SQLiteCatalogueMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType);
+  SchemaMetadataGetter(std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType);
   virtual std::list<std::string> getIndexNames() override;
   virtual std::list<std::string> getTableNames() override;
   virtual std::map<std::string,std::string> getColumns(const std::string& tableName) override;

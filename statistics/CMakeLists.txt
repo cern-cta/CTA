@@ -26,9 +26,10 @@ set (STATISTICS_LIB_SRC_FILES
   StatisticsCmd.cpp
   StatisticsCmdLineArgs.cpp
   StatisticsCmdMain.cpp
+  StatisticsSchema.cpp
 )
 
-add_library (ctastatistics
+add_library (ctastatistics SHARED
    ${STATISTICS_LIB_SRC_FILES})
 
 set_property(TARGET ctastatistics PROPERTY SOVERSION "${CTA_SOVERSION}")
@@ -42,6 +43,27 @@ target_link_libraries (ctastatistics
   ctaschemachecker
   ctardbms)
 
+add_custom_command (OUTPUT mysql_statistics_schema.sql
+COMMAND cat 
+    ${CMAKE_CURRENT_SOURCE_DIR}/common_statistics_schema.sql 
+    | sed 's/UINT8TYPE/TINYINT UNSIGNED/g'
+    | sed 's/UINT16TYPE/SMALLINT UNSIGNED/g'
+    | sed 's/UINT32TYPE/INT UNSIGNED/g'
+    | sed 's/UINT64TYPE/BIGINT UNSIGNED/g'
+    | sed 's/CHECKSUM_BLOB_TYPE/VARBINARY\(200\)/g'
+    | tee mysql_statistics_schema.sql > /dev/null
+DEPENDS  ${CMAKE_CURRENT_SOURCE_DIR}/common_statistics_schema.sql
+)
+
+# For Mysql
+add_custom_command(OUTPUT mysql_statistics_schema.cpp
+  COMMAND sed 's/^/\ \ \"/' mysql_statistics_schema.sql | sed 's/$$/\"/' > mysql_statistics_schema.cpp
+  DEPENDS mysql_statistics_schema.sql)
+
+add_custom_command(OUTPUT MysqlStatisticsSchema.cpp
+  COMMAND sed -e '/CTA_SQL_SCHEMA/r mysql_statistics_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/MysqlStatisticsSchema.before_SQL.cpp > MysqlStatisticsSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/MysqlStatisticsSchema.before_SQL.cpp mysql_statistics_schema.cpp)
+
 install (FILES ${CMAKE_SOURCE_DIR}/catalogue/cta-catalogue.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
@@ -50,13 +72,15 @@ add_executable(cta-statistics
   StatisticsCmd.cpp
   StatisticsCmdLineArgs.cpp
   StatisticsCmdMain.cpp
+  MysqlStatisticsSchema.cpp
 )
 
-target_link_libraries (cta-statistics ctacatalogue ctaschemachecker)
-set_property(TARGET cta-statistics APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+target_link_libraries (cta-statistics ctastatistics ctacatalogue ctaschemachecker)
+
+set_property(TARGET cta-statistics APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS cta-statistics DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-statistics.1cta DESTINATION /usr/share/man/man1)
 
 set (STATISTICS_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
   StatisticsCmdLineArgsTest.cpp

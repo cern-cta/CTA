@@ -297,7 +297,7 @@ set (SCHEMA_CHECKER_LIB_SRC_FILES
   DbToSQLiteStatementTransformer.cpp
   SchemaComparerResult.cpp
   SchemaChecker.cpp
-  CatalogueMetadataGetter.cpp
+  DatabaseMetadataGetter.cpp
   CatalogueSchema.cpp
   OracleCatalogueSchema.cpp
   SqliteCatalogueSchema.cpp

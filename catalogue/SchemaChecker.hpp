@@ -20,6 +20,7 @@
 #include "rdbms/Login.hpp"
 #include "rdbms/Conn.hpp"
 #include "SchemaComparer.hpp"
+#include "CatalogueSchema.hpp"
 
 namespace cta{
 namespace catalogue{
@@ -67,19 +68,29 @@ public:
    */
   void checkSchemaNotUpgrading();
   
+  /**
+   * Compare the schema tables whose names are located in the tableList parameter
+   * @param tableList the table names we would like to compare
+   * @return a Status OK or FAILURE
+   */
+  Status compareTablesLocatedInSchema();
+  
+  Status checkTableContainsColumns(const std::string &tableName, const std::list<std::string> columnNames);
+  
   class Builder {
   public:
-    Builder(cta::rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);
+    Builder(const std::string databaseToCheckName, const cta::rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);
     Builder & useSQLiteSchemaComparer();
     Builder & useDirectorySchemaReader(const std::string &allSchemasVersionsDirectory);
     Builder & useMapStatementsReader();
-    Builder & useStringStatementsReader();
+    Builder & useCppSchemaStatementsReader(const cta::catalogue::CatalogueSchema schema);
     std::unique_ptr<SchemaChecker> build();
   private:
+    const std::string m_databaseToCheckName;
     cta::rdbms::Login::DbType m_dbType;
     cta::rdbms::Conn &m_catalogueConn;
     std::unique_ptr<SchemaComparer> m_schemaComparer;
-    std::unique_ptr<CatalogueMetadataGetter> m_catalogueMetadataGetter;
+    std::unique_ptr<DatabaseMetadataGetter> m_databaseMetadataGetter;
     std::unique_ptr<SchemaSqlStatementsReader> m_schemaSqlStatementsReader;
   };
   
@@ -89,8 +100,9 @@ private:
    * @param dbType the type of the database to check against
    * @param conn the connection of the database to check
    */
-  SchemaChecker(rdbms::Login::DbType dbType,cta::rdbms::Conn &conn);
+  SchemaChecker(const std::string databaseToCheckName, rdbms::Login::DbType dbType,cta::rdbms::Conn &conn);
   
+  const std::string m_databaseToCheckName;
   /**
    * Catalogue-to-check database type
    */
@@ -108,7 +120,9 @@ private:
    * Catalogue metadata getter that allows to query the
    * metadatas of the catalogue database
    */
-  std::unique_ptr<CatalogueMetadataGetter> m_catalogueMetadataGetter;
+  std::unique_ptr<DatabaseMetadataGetter> m_databaseMetadataGetter;
+  
+  void checkSchemaComparerNotNull(const std::string & methodName);
 };
 
 }}
