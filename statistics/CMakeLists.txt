@@ -23,9 +23,6 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 set (STATISTICS_LIB_SRC_FILES
-  StatisticsSaveCmd.cpp
-  StatisticsSaveCmdLineArgs.cpp
-  StatisticsSaveCmdMain.cpp
   StatisticsSchema.cpp
 )
 
@@ -81,3 +78,16 @@ set_property(TARGET cta-statistics-save APPEND PROPERTY INSTALL_RPATH ${PROTOBUF
 set_property(TARGET cta-statistics-save APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS cta-statistics-save DESTINATION /usr/bin)
+
+add_executable(cta-statistics-update
+  StatisticsUpdateCmd.cpp
+  StatisticsUpdateCmdLineArgs.cpp
+  StatisticsUpdateCmdMain.cpp
+)
+
+target_link_libraries (cta-statistics-update ctacatalogue ctaschemachecker)
+
+set_property(TARGET cta-statistics-update APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-statistics-update APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+
+install (TARGETS cta-statistics-update DESTINATION /usr/bin)

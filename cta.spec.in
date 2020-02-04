@@ -222,6 +222,7 @@ The shared libraries
 %{_libdir}/libctardbms.so*
 %{_libdir}/libctardbmswrapper.so*
 %{_libdir}/libctadisk.so*
+%{_libdir}/libctastatistics.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.conf.example
 
 #CTA-lib installs libraries so we need ldconfig.
@@ -319,6 +320,7 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-verify
 %attr(0755,root,root) %{_bindir}/cta-database-poll
 %attr(0755,root,root) %{_bindir}/cta-statistics-save
+%attr(0755,root,root) %{_bindir}/cta-statistics-update
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-admin-user-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-drop.1cta.gz

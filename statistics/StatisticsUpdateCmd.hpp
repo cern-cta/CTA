@@ -22,7 +22,7 @@
 #include "catalogue/CatalogueSchema.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
-#include "StatisticsSaveCmdLineArgs.hpp"
+#include "StatisticsUpdateCmdLineArgs.hpp"
 
 namespace cta {
 namespace statistics {
@@ -30,7 +30,7 @@ namespace statistics {
 /**
  * Command-line tool for verifying the catalogue schema.
  */
-class StatisticsSaveCmd: public cta::catalogue::CmdLineTool {
+class StatisticsUpdateCmd: public cta::catalogue::CmdLineTool {
 public:
 
   /**
@@ -40,12 +40,12 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  StatisticsSaveCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  StatisticsUpdateCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
 
   /**
    * Destructor.
    */
-  ~StatisticsSaveCmd() noexcept;
+  ~StatisticsUpdateCmd() noexcept;
 
 private:
 

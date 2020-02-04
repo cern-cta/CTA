@@ -18,11 +18,9 @@
 
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/AutocommitMode.hpp"
-#include "StatisticsSaveCmd.hpp"
-#include "StatisticsSchema.hpp"
+#include "statistics/StatisticsUpdateCmd.hpp"
 #include "catalogue/SchemaChecker.hpp"
-#include "MysqlStatisticsSchema.hpp"
-
+#include "statistics/StatisticsUpdateCmdLineArgs.hpp"
 
 namespace cta {
 namespace statistics {
@@ -30,22 +28,22 @@ namespace statistics {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StatisticsSaveCmd::StatisticsSaveCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
+StatisticsUpdateCmd::StatisticsUpdateCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
 CmdLineTool(inStream, outStream, errStream) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-StatisticsSaveCmd::~StatisticsSaveCmd() noexcept {
+StatisticsUpdateCmd::~StatisticsUpdateCmd() noexcept {
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace cta::catalogue;
-  const StatisticsSaveCmdLineArgs cmdLineArgs(argc, argv);
+  const StatisticsUpdateCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
     printUsage(m_out);
@@ -84,24 +82,12 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   
   return EXIT_SUCCESS;
 }
-//------------------------------------------------------------------------------
-// tableExists
-//------------------------------------------------------------------------------
-bool StatisticsSaveCmd::tableExists(const std::string tableName, rdbms::Conn &conn) const {
-  const auto names = conn.getTableNames();
-  for(const auto &name : names) {
-    if(tableName == name) {
-      return true;
-    }
-  }
-  return false;
-}
 
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void StatisticsSaveCmd::printUsage(std::ostream &os) {
-  StatisticsSaveCmdLineArgs::printUsage(os);
+void StatisticsUpdateCmd::printUsage(std::ostream &os) {
+  StatisticsUpdateCmd::printUsage(os);
 }
 
 
