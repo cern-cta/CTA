@@ -2855,6 +2855,7 @@ void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) 
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.executeNonQuery();
+    setTapeDirty(conn,vid);
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
