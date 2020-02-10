@@ -2,8 +2,8 @@
 
 # Utility script to run postgresql tests like in CI.
 
-if ! rpm -q --quiet rh-postgresql96-postgresql-server; then
-  echo "Please install the package rh-postgresql96-postgresql-server to run this script."
+if ! rpm -q --quiet rh-postgresql12-postgresql-server; then
+  echo "Please install the package rh-postgresql12-postgresql-server to run this script."
   exit 1
 fi
 
@@ -25,8 +25,8 @@ mkdir -p ${POSTGRESQL_DATA_DIR}
 chown -R postgres:postgres ${POSTGRESQL_DATA_DIR}
 mkdir -p ${POSTGRESQL_LOG_DIR}
 chown -R postgres:postgres ${POSTGRESQL_LOG_DIR}
-export LD_LIBRARY_PATH=/opt/rh/rh-postgresql96/root/usr/lib64
-POSTGRES_BIN=/opt/rh/rh-postgresql96/root/usr/bin
+export LD_LIBRARY_PATH=/opt/rh/rh-postgresql12/root/usr/lib64
+POSTGRES_BIN=/opt/rh/rh-postgresql12/root/usr/bin
 echo POSTGRES_BIN=${POSTGRES_BIN}
 (cd / ; 
 runuser -u postgres -- ${POSTGRES_BIN}/initdb -D ${POSTGRESQL_DATA_DIR}
