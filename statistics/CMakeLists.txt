@@ -24,6 +24,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 set (STATISTICS_LIB_SRC_FILES
   StatisticsSchema.cpp
+  TapeStatisticsUpdater.cpp
 )
 
 add_library (ctastatistics SHARED

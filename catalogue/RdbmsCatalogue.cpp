@@ -3588,6 +3588,17 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
   }
 }
 
+void RdbmsCatalogue::setTapeDirty(const std::string& vid) {
+  try {
+    auto conn = m_connPool.getConn();
+    setTapeDirty(conn,vid);
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
 //------------------------------------------------------------------------------
 // modifyTapeComment
 //------------------------------------------------------------------------------

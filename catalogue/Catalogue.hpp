@@ -464,6 +464,9 @@ public:
   virtual void setTapeIsFromCastorInUnitTests(const std::string &vid) = 0;
 
   virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) = 0;
+  
+  virtual void setTapeDirty(const std::string & vid) = 0;
+  
   virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) = 0;
 
   virtual void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) = 0;

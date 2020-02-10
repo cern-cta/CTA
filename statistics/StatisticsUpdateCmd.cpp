@@ -21,6 +21,8 @@
 #include "statistics/StatisticsUpdateCmd.hpp"
 #include "catalogue/SchemaChecker.hpp"
 #include "statistics/StatisticsUpdateCmdLineArgs.hpp"
+#include "common/Timer.hpp"
+#include "TapeStatisticsUpdater.hpp"
 
 namespace cta {
 namespace statistics {
@@ -55,10 +57,6 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   auto loginCatalogue = rdbms::Login::parseFile(cmdLineArgs.catalogueDbConfigPath);
   rdbms::ConnPool catalogueConnPool(loginCatalogue, maxNbConns);
   auto catalogueConn = catalogueConnPool.getConn();
-  
-  /*auto loginStatistics = rdbms::Login::parseFile(cmdLineArgs.statisticsDbConfigPath);
-  rdbms::ConnPool statisticsConnPool(loginStatistics, maxNbConns);
-  auto statisticsConn = statisticsConnPool.getConn();*/
 
   SchemaChecker::Builder catalogueCheckerBuilder("catalogue",loginCatalogue.dbType,catalogueConn);
   std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker;
@@ -71,14 +69,12 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   if(tapeTableStatus == SchemaChecker::Status::FAILURE || tapeFileTableStatus == SchemaChecker::Status::FAILURE || archiveFileTableStatus == SchemaChecker::Status::FAILURE){
     return EXIT_FAILURE;
   }
- 
-  /*SchemaChecker::Builder statisticsCheckerBuilder("statistics",loginStatistics.dbType,statisticsConn);
-  cta::statistics::MysqlStatisticsSchema mysqlSchema;
-  std::unique_ptr<SchemaChecker> statisticsChecker = 
-  statisticsCheckerBuilder.useCppSchemaStatementsReader(mysqlSchema)
-                          .useSQLiteSchemaComparer()
-                          .build();
-  statisticsChecker->compareTablesLocatedInSchema();*/
+  
+  std::unique_ptr<TapeStatisticsUpdater> updater = TapeStatisticsUpdaterFactory::create(loginCatalogue.dbType,catalogueConn);
+  std::cout<<"Updating tape statistics in the catalogue..."<<std::endl;
+  cta::utils::Timer t;
+  updater->updateTapeStatistics();
+  std::cout<<"Updated catalogue tape statistics in "<<t.secs()<<", "<<updater->getNbUpdatedTapes()<<" tape(s) have been updated"<<std::endl;  
   
   return EXIT_SUCCESS;
 }

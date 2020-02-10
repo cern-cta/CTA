@@ -299,6 +299,10 @@ public:
   void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeDisabled(admin, vid, disabledValue);}, m_maxTriesToConnect);
   }
+  
+  void setTapeDirty(const std::string & vid) override {
+    return retryOnLostConnection(m_log,[&]{ return m_catalogue->setTapeDirty(vid);}, m_maxTriesToConnect);
+  }
 
   void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeComment(admin, vid, comment);}, m_maxTriesToConnect);

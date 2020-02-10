@@ -208,7 +208,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       validatedSuccessfulDBArchiveJobs.emplace_back(std::move(schJob->m_dbJob));
     }
     validatedSuccessfulArchiveJobs.clear();
-    
+
     updateCatalogueWithTapeFilesWritten(tapeItemsWritten);
     catalogueTime=t.secs(utils::Timer::resetCounter);
     {

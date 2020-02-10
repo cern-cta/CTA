@@ -128,9 +128,15 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       stmt.executeNonQuery();
     }
     
+    std::set<std::string> vidsToSetDirty;
+    //We will insert the vids to set dirty in a set so that
+    //we limit the calls to setTapeDirty to the number of tapes that contained the deleted tape files 
     for(auto &tapeFile: archiveFile->tapeFiles){
-      //We deleted the TAPE_FILE so the tapes containing them should be set as dirty
-      setTapeDirty(conn,tapeFile.vid);
+      vidsToSetDirty.insert(tapeFile.vid);
+    }
+    
+    for(auto &vidToSetDirty: vidsToSetDirty){
+       setTapeDirty(conn,vidToSetDirty);
     }
     
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);

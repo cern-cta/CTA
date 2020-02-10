@@ -714,6 +714,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
     rdbms::Rset selectRset = selectStmt.executeQuery();
     const auto selectFromArchiveFileTime = t.secs();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
+    std::set<std::string> vidsToSetDirty;
     while(selectRset.next()) {
       if(nullptr == archiveFile.get()) {
         archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
@@ -736,6 +737,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         // Add the tape file to the archive file's in-memory structure
         common::dataStructures::TapeFile tapeFile;
         tapeFile.vid = selectRset.columnString("VID");
+        vidsToSetDirty.insert(tapeFile.vid);
         tapeFile.fSeq = selectRset.columnUint64("FSEQ");
         tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
         tapeFile.fileSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
@@ -809,9 +811,9 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
       stmt.executeNonQuery();
     }
     
-    for(auto &tapeFile: archiveFile->tapeFiles){
+    for(auto &vidToSetDirty: vidsToSetDirty){
       //We deleted the TAPE_FILE so the tapes containing them should be set as dirty
-      setTapeDirty(conn,tapeFile.vid);
+      setTapeDirty(conn,vidToSetDirty);
     }
     
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);

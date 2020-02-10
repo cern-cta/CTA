@@ -4645,6 +4645,9 @@ objectstore::ArchiveRequest::RepackInfo OStoreDB::ArchiveJob::getRepackInfoAfter
 // OStoreDB::RepackArchiveSuccessesReportBatch::report()
 //------------------------------------------------------------------------------
 void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
+  objectstore::RepackRequest req(m_repackRequest.getAddressIfSet(),this->m_oStoreDb.m_objectStore);
+  req.fetchNoLock();
+  this->m_oStoreDb.m_catalogue.setTapeDirty(req.getInfo().vid);
   OStoreDB::RepackArchiveReportBatch::report(lc);
 }
 
