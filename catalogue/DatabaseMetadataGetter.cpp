@@ -158,8 +158,16 @@ cta::rdbms::Login::DbType SQLiteDatabaseMetadataGetter::getDbType(){
 
 OracleDatabaseMetadataGetter::OracleDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
 OracleDatabaseMetadataGetter::~OracleDatabaseMetadataGetter(){}
+
 cta::rdbms::Login::DbType OracleDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_ORACLE;
+}
+
+std::list<std::string> OracleDatabaseMetadataGetter::getTableNames(){
+  std::list<std::string> tableNames = DatabaseMetadataGetter::getTableNames();
+  //Ignore migration-related tables
+  removeObjectNameContaining(tableNames,{"ERR$_TAPE_FILE","TEMP_REMOVE_CASTOR_METADATA"});
+  return tableNames;
 }
 
 MySQLDatabaseMetadataGetter::MySQLDatabaseMetadataGetter(cta::rdbms::Conn& conn):DatabaseMetadataGetter(conn) {}

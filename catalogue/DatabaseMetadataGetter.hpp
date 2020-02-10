@@ -83,6 +83,7 @@ class OracleDatabaseMetadataGetter: public DatabaseMetadataGetter{
   public:
   OracleDatabaseMetadataGetter(cta::rdbms::Conn & conn);
   cta::rdbms::Login::DbType getDbType() override;
+  std::list<std::string> getTableNames() override;
   virtual ~OracleDatabaseMetadataGetter();
 };
 
