@@ -456,3 +456,13 @@ Collection of utilities deployed in system test client containers.
 Currently contains a helper for the client-ar script, which should be installed alongside it.
 %files -n cta-systemtest-helpers
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
+
+%changelog
+* Tue Feb 11 2020 julien.leduc (at) cern.ch - 1.0-4
+- Upgrade the catalogue schema from version 1.0 to 1.1 before updating CTA components.
+- Added cta-admin tapefile ls command
+- Scheduler does not schedule a mount if a tape is disabled (unless for a Repack with the --disabledtape flag set)
+- Added a new schema verification tool (cta-catalogue-schema-verify)
+- Added a new tape statistic updater tool (cta-statistics-update)
+- Added backward-compatible Catalogue schema changes
+- CASTOR-To-CTA migration improvements
