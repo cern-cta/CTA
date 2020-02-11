@@ -441,7 +441,9 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", archiveFileId).add("schedulerTime", t.secs());
+   params.add("fileId", archiveFileId);
+   params.add("schedulerTime", t.secs());
+   params.add("requesterInstance", notification.wf().requester_instance());
    m_lc.log(cta::log::INFO, "In RequestMessage::processCLOSEW(): queued file for archive.");
 
    // Set response type
