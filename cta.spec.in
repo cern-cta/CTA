@@ -458,7 +458,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
-* Tue Feb 11 2020 julien.leduc (at) cern.ch - 1.0-4
+* Tue Feb 11 2020 julien.leduc (at) cern.ch - 1.1-0
 - Upgrade the catalogue schema from version 1.0 to 1.1 before updating CTA components.
 - Added cta-admin tapefile ls command
 - Scheduler does not schedule a mount if a tape is disabled (unless for a Repack with the --disabledtape flag set)
@@ -466,3 +466,9 @@ Currently contains a helper for the client-ar script, which should be installed 
 - Added a new tape statistic updater tool (cta-statistics-update)
 - Added backward-compatible Catalogue schema changes
 - CASTOR-To-CTA migration improvements
+- Various changes and improvements to cta-admin tool
+- CTA Frontend has configurable maximum file size limit (cta.archivefile.max_size_gb), default 2TB
+- CTA Frontend logs which FST sent the archive request
+- New configuration file for gRPC namespace endpoints so CTA can query EOS namespace
+- Archive requests sent to hard-coded fail_on_closew_test storage class will always fail with an error
+

@@ -1,4 +1,4 @@
-# v1.0-4
+# v1.1-0
 
 ## Summary
 
@@ -7,6 +7,7 @@
 - cta-admin tapefile ls command: list the tape files located in a specific tape
 - New schema verification tool (cta-catalogue-schema-verify)
 - New tape statistic updater tool (cta-statistics-update)
+- CTA Frontend has configurable maximum file size limit (cta.archivefile.max_size_gb), default 2TB
 - TODO : New features ?
 
 ### Modifications
@@ -17,6 +18,9 @@
   - UNIQUE CONSTRAINT on ARCHIVE_ROUTE (UNIQUE(STORAGE_CLASS_ID, TAPE_POOL_ID))
   - Creation of an INDEX ARCHIVE_FILE_DFI_IDX on ARCHIVE_FILE(DISK_FILE_ID)
   - Added 3 columns to the TAPE table : NB_MASTER_FILES, MASTER_DATA_IN_BYTES, DIRTY
+- Minor changes to cta-admin command syntax
+- New configuration file for gRPC namespace endpoints so CTA can query EOS namespace
+- Archive requests sent to hard-coded fail_on_closew_test storage class will always fail with an error
 
 ### Bug fixes
 
@@ -25,6 +29,9 @@
 ### Improvements 
 
 - CASTOR-To-CTA migration improvements
+- Better cta-admin parameter checking and column formatting
+- cta-admin --json handles user errors from the Frontend by outputting an empty array [] on stdout and error message on stderr. Error code 1 is returned for protocol errors and code 2 is returned for user errors.
+- CTA Frontend logs which FST sent the archive request
 
 ## Package changes
 
