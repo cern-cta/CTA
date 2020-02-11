@@ -370,8 +370,11 @@ void MysqlStmt::bindString(const std::string &paramName, const optional<std::str
     }
 
     if (!holder) {
-      const unsigned int buf_size = 4096;
-      holder = new Mysql::Placeholder_String(buf_size); // hard code buffer length
+      unsigned int buf_size = 4096; // hard code buffer length
+      if(paramValue){
+        buf_size = paramValue.value().size() + 1; // +1 for CR+LF
+      }
+      holder = new Mysql::Placeholder_String(buf_size);
       holder->idx = idx;
     }
 
@@ -599,12 +602,9 @@ bool MysqlStmt::do_bind_results() {
     case MYSQL_TYPE_VARCHAR:
     case MYSQL_TYPE_VAR_STRING:
     case MYSQL_TYPE_STRING:
+    case MYSQL_TYPE_LONG_BLOB:
       {
-        const unsigned int buf_size  = 4096;
-        if (buf_size < m_fields_info->maxsizes[i]) {
-          throw exception::Exception(std::string(__FUNCTION__) + " buf size < m_fields_info->maxsizes[" + std::to_string(i) + "]");
-        }
-        Mysql::Placeholder_String* holder_ = new Mysql::Placeholder_String(buf_size);
+        Mysql::Placeholder_String* holder_ = new Mysql::Placeholder_String(m_fields_info->maxsizes[i]);
 
         holder = holder_;
         bind[i].buffer_type = MYSQL_TYPE_STRING;

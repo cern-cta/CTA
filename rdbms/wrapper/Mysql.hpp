@@ -481,7 +481,7 @@ class Mysql {
     }
 
     std::string get_string() override {
-      return std::string(val, val+*get_length());
+      return std::string(val,*get_length());
     }
 
     // note: allow users try to convert from string to int,
