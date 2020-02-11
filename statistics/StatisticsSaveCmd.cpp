@@ -58,29 +58,27 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   rdbms::ConnPool catalogueConnPool(loginCatalogue, maxNbConns);
   auto catalogueConn = catalogueConnPool.getConn();
   
-  /*auto loginStatistics = rdbms::Login::parseFile(cmdLineArgs.statisticsDbConfigPath);
+  auto loginStatistics = rdbms::Login::parseFile(cmdLineArgs.statisticsDbConfigPath);
   rdbms::ConnPool statisticsConnPool(loginStatistics, maxNbConns);
-  auto statisticsConn = statisticsConnPool.getConn();*/
+  auto statisticsConn = statisticsConnPool.getConn();
 
   SchemaChecker::Builder catalogueCheckerBuilder("catalogue",loginCatalogue.dbType,catalogueConn);
   std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker;
   catalogueChecker = catalogueCheckerBuilder.build();
   
-  SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID"});
-  SchemaChecker::Status tapeFileTableStatus = catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"ARCHIVE_FILE_ID"});
-  SchemaChecker::Status archiveFileTableStatus = catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE",{"SIZE_IN_BYTES"});
+  SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID","NB_MASTER_FILES","MASTER_DATA_IN_BYTES","DIRTY"});
   
-  if(tapeTableStatus == SchemaChecker::Status::FAILURE || tapeFileTableStatus == SchemaChecker::Status::FAILURE || archiveFileTableStatus == SchemaChecker::Status::FAILURE){
+  if(tapeTableStatus == SchemaChecker::Status::FAILURE){
     return EXIT_FAILURE;
   }
  
-  /*SchemaChecker::Builder statisticsCheckerBuilder("statistics",loginStatistics.dbType,statisticsConn);
+  SchemaChecker::Builder statisticsCheckerBuilder("statistics",loginStatistics.dbType,statisticsConn);
   cta::statistics::MysqlStatisticsSchema mysqlSchema;
   std::unique_ptr<SchemaChecker> statisticsChecker = 
   statisticsCheckerBuilder.useCppSchemaStatementsReader(mysqlSchema)
                           .useSQLiteSchemaComparer()
                           .build();
-  statisticsChecker->compareTablesLocatedInSchema();*/
+  statisticsChecker->compareTablesLocatedInSchema();
   
   return EXIT_SUCCESS;
 }
