@@ -49,7 +49,8 @@ RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
         m_retrieveMount(retrieveMount),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold),
-        m_useRAO(false) {}
+        m_useRAO(false),
+        m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()){}
 //------------------------------------------------------------------------------
 //destructor
 //------------------------------------------------------------------------------
@@ -112,6 +113,29 @@ void RecallTaskInjector::setPromise() {
     throw cta::exception::Exception(std::string("In RecallTaskInjector::setPromise() got std::exception: ") + exc.what());
   }
 }
+
+/**
+ * Idempotently tell the TapeReadSingleThread
+ * that the first TapeRead tasks have been injected.
+ * If we do not do that, as the RecallTaskInjector has to do some
+ * RAO query, the TapeReadSingleThread would start without any tasks
+ * and will tell the RecallTaskInjector to stop
+ */
+void RecallTaskInjector::setFirstTasksInjectedPromise() {
+  if(!m_promiseFirstTaskInjectedSet){
+    m_firstTasksInjectedPromise.set_value();
+    m_promiseFirstTaskInjectedSet = true;
+  }
+}
+
+/**
+ * This method is used by the TapeReadSingleThread to wait
+ * the first injection of TapeRead tasks
+ */
+void RecallTaskInjector::waitForFirstTasksInjectedPromise(){
+  m_firstTasksInjectedFuture.wait();
+}
+
 //------------------------------------------------------------------------------
 //injectBulkRecalls
 //------------------------------------------------------------------------------
@@ -196,9 +220,14 @@ void RecallTaskInjector::injectBulkRecalls() {
     m_tapeReader.push(trt);
     m_lc.log(cta::log::INFO, "Created tasks for recalling a file");
   }
+  if(njobs > 0){
+    //At least one task has been created, we tell the TapeReadSingleThread that
+    //it can start its infinite loop
+    setFirstTasksInjectedPromise();
+  }
   m_lc.log(cta::log::INFO, recallOrderLog.str());
   m_jobs.clear();
-  LogContext::ScopedParam sp03(m_lc, Param("nbFile", m_jobs.size()));
+  LogContext::ScopedParam sp03(m_lc, Param("nbFile", njobs));
   m_lc.log(cta::log::INFO, "Finished processing batch of recall tasks from client");
 }
 //------------------------------------------------------------------------------
@@ -273,6 +302,7 @@ void RecallTaskInjector::WorkerThread::run()
   if (m_parent.m_useRAO) {
     /* RecallTaskInjector is waiting to have access to the drive in order
      * to perform the RAO query;
+     * This waitForPromise() call means that the drive is mounted 
      */
     m_parent.waitForPromise();
     try {

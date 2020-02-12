@@ -323,6 +323,11 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       // Then we will loop on the tasks as they get from 
       // the task injector
+      
+      // We wait the task injector to finish inserting its first batch
+      // before launching the loop.
+      // We do it with a promise
+      m_taskInjector->waitForFirstTasksInjectedPromise();
       std::unique_ptr<TapeReadTask> task;
       m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring);
       while(true) {

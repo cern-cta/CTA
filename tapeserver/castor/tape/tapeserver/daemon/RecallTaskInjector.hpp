@@ -128,6 +128,20 @@ public:
   void waitForPromise();
 
   void setPromise();
+  
+  /**
+   * This method will tell the TapeReadSingleThread that the
+   * first batch of tasks has been injected
+   * by the RecallTaskInjector
+   */
+  void setFirstTasksInjectedPromise();
+  
+  /**
+   * This method will be called by the TapeReadSingleThread
+   * so that TapeReadSingleThread will wait the first batch
+   * of tasks to be injected by the RecallTaskInjector
+   */
+  void waitForFirstTasksInjectedPromise();
 
 private:
   /**
@@ -239,6 +253,11 @@ private:
    */
   std::promise<void> m_raoPromise;
   std::future<void> m_raoFuture;
+
+  std::promise<void> m_firstTasksInjectedPromise;
+  std::future<void> m_firstTasksInjectedFuture;
+  
+  bool m_promiseFirstTaskInjectedSet = false;
 };
 
 } //end namespace daemon
