@@ -8,7 +8,6 @@
 - New schema verification tool (cta-catalogue-schema-verify)
 - New tape statistic updater tool (cta-statistics-update)
 - CTA Frontend has configurable maximum file size limit (cta.archivefile.max_size_gb), default 2TB
-- TODO : New features ?
 
 ### Modifications
 
