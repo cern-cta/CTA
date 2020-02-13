@@ -34,7 +34,7 @@
 
 ## Package changes
 
-TODO: put the versions of EOS, XRootD, and Oracle versions with which CTA is compiled against
+- eos-4.6.8 which brings the delete on close feature
 
 ## Upgrade Instructions from v1.0-3
 
