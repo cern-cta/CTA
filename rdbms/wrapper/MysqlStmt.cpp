@@ -362,23 +362,22 @@ void MysqlStmt::bindString(const std::string &paramName, const optional<std::str
 
     const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
     const unsigned int idx = paramIdx - 1;
-
-    Mysql::Placeholder_String* holder = dynamic_cast<Mysql::Placeholder_String*>(m_placeholder[idx]);
-    // if already exists, try to reuse
-    if (!holder and m_placeholder[idx]) {
-      throw exception::Exception(std::string(__FUNCTION__) + " can't cast from Placeholder to Placeholder_String. " );
+    
+    if(m_placeholder[idx]){
+      delete m_placeholder[idx];
     }
-
-    if (!holder) {
-      const unsigned int buf_size = 4096;
-      holder = new Mysql::Placeholder_String(buf_size); // hard code buffer length
-      holder->idx = idx;
-    }
+    
+    unsigned int buf_size = 0;
+    if(paramValue){
+      buf_size = paramValue.value().size() + 1;
+    } 
+    Mysql::Placeholder_String * holder = new Mysql::Placeholder_String(buf_size); // hard code buffer length
+    holder->idx = idx;
 
     if (paramValue) {
       holder->length = paramValue.value().size();
 
-      if (holder->length >= holder->get_buffer_length()) {
+      if (holder->length > holder->get_buffer_length()) {
         throw exception::Exception(std::string(__FUNCTION__) + " length >= buffer_length");
       }
 
@@ -393,7 +392,7 @@ void MysqlStmt::bindString(const std::string &paramName, const optional<std::str
     holder->is_null= is_null;
 
     // delete m_placeholder[idx]; // remove the previous placeholder
-
+    
     m_placeholder[idx] = holder;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
@@ -599,8 +598,9 @@ bool MysqlStmt::do_bind_results() {
     case MYSQL_TYPE_VARCHAR:
     case MYSQL_TYPE_VAR_STRING:
     case MYSQL_TYPE_STRING:
+    case MYSQL_TYPE_LONG_BLOB:
       {
-        const unsigned int buf_size  = 4096;
+        const unsigned int buf_size  = m_fields_info->maxsizes[i] + 1;
         if (buf_size < m_fields_info->maxsizes[i]) {
           throw exception::Exception(std::string(__FUNCTION__) + " buf size < m_fields_info->maxsizes[" + std::to_string(i) + "]");
         }
