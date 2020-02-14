@@ -62,17 +62,22 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   auto statisticsSchema = StatisticsSchemaFactory::create(loginStatistics.dbType);
   
   if(cmdLineArgs.buildDatabase){
+    //Build the database
     buildStatisticsDatabase(statisticsConn,*statisticsSchema);
     return EXIT_SUCCESS;
   }
   
   if(cmdLineArgs.dropDatabase){
+    //drop the database
     if(userConfirmDropStatisticsSchemaFromDb(loginStatistics)){
-      dropStatisticsDatabase(statisticsConn);
+      dropStatisticsDatabase(statisticsConn,*statisticsSchema);
     }
     return EXIT_SUCCESS;
   }
     
+  //Save the CTA statistics
+  
+  //Check the content of the CTA catalogue
   auto loginCatalogue = rdbms::Login::parseFile(cmdLineArgs.catalogueDbConfigPath);
   rdbms::ConnPool catalogueConnPool(loginCatalogue, maxNbConns);
   auto catalogueConn = catalogueConnPool.getConn();
@@ -87,6 +92,7 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
     return EXIT_FAILURE;
   }
  
+  //Check that the schema tables are in the statistics database
   SchemaChecker::Builder statisticsCheckerBuilder("statistics",loginStatistics.dbType,statisticsConn);
   std::unique_ptr<SchemaChecker> statisticsChecker = 
   statisticsCheckerBuilder.useCppSchemaStatementsReader(*statisticsSchema)
@@ -94,19 +100,9 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
                           .build();
   statisticsChecker->compareTablesLocatedInSchema();
   
+  //Compute the statistics
+  
   return EXIT_SUCCESS;
-}
-//------------------------------------------------------------------------------
-// tableExists
-//------------------------------------------------------------------------------
-bool StatisticsSaveCmd::tableExists(const std::string tableName, rdbms::Conn &conn) const {
-  const auto names = conn.getTableNames();
-  for(const auto &name : names) {
-    if(tableName == name) {
-      return true;
-    }
-  }
-  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -117,21 +113,24 @@ void StatisticsSaveCmd::printUsage(std::ostream &os) {
 }
 
 void StatisticsSaveCmd::verifyCmdLineArgs(const StatisticsSaveCmdLineArgs& cmdLineArgs) const {
+  bool catalogueDbConfigPathEmpty = cmdLineArgs.catalogueDbConfigPath.empty();
+  bool statisticsDbConfigPathEmpty = cmdLineArgs.statisticsDbConfigPath.empty();
+  
   if(cmdLineArgs.buildDatabase && cmdLineArgs.dropDatabase){
     throw cta::exception::Exception("--build and --drop are mutually exclusive.");
   }
-  if(cmdLineArgs.buildDatabase && !cmdLineArgs.catalogueDbConfigPath.empty()){
+  if(cmdLineArgs.buildDatabase && !catalogueDbConfigPathEmpty){
     throw cta::exception::Exception("The catalogue database configuration file should not be provided when --build flag is set.");
   }
-  if(cmdLineArgs.dropDatabase && !cmdLineArgs.catalogueDbConfigPath.empty()){
+  if(cmdLineArgs.dropDatabase && !catalogueDbConfigPathEmpty){
     throw cta::exception::Exception("The catalogue database configuration file should not be provided when --drop flag is set.");
   }
-  if(cmdLineArgs.buildDatabase && cmdLineArgs.statisticsDbConfigPath.empty()){
+  if(statisticsDbConfigPathEmpty && (cmdLineArgs.buildDatabase || cmdLineArgs.dropDatabase)){
     throw cta::exception::Exception("The statistics database configuration file should be provided.");
   }
-  if(cmdLineArgs.dropDatabase && cmdLineArgs.statisticsDbConfigPath.empty()){
-    throw cta::exception::Exception("The statistics database configuration file should be provided.");
-  }
+  if((!cmdLineArgs.buildDatabase && !cmdLineArgs.dropDatabase) && (catalogueDbConfigPathEmpty || statisticsDbConfigPathEmpty)){
+    throw cta::exception::Exception("You should provide the catalogue database and the statistics database connection files.");
+  } 
 }
 
 void StatisticsSaveCmd::buildStatisticsDatabase(cta::rdbms::Conn& statisticsDatabaseConn, const StatisticsSchema& statisticsSchema) {
@@ -152,10 +151,10 @@ bool StatisticsSaveCmd::userConfirmDropStatisticsSchemaFromDb(const rdbms::Login
   return userResponse == "yes";
 }
 
-void StatisticsSaveCmd::dropStatisticsDatabase(cta::rdbms::Conn& statisticsDatabaseConn) {
+void StatisticsSaveCmd::dropStatisticsDatabase(cta::rdbms::Conn& statisticsDatabaseConn,const StatisticsSchema& statisticsSchema) {
   try {
     std::list<std::string> tablesInDb = statisticsDatabaseConn.getTableNames();
-    std::list<std::string> statisticsTables = {"CTA_STATISTICS"};
+    std::list<std::string> statisticsTables = statisticsSchema.getSchemaTableNames();
     for(auto & tableToDrop: statisticsTables){
       const bool tableToDropIsInDb = (tablesInDb.end() != std::find(tablesInDb.begin(), tablesInDb.end(), tableToDrop));
       if(tableToDropIsInDb) {

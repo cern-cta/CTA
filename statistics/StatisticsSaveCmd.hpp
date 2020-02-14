@@ -65,24 +65,34 @@ private:
    * @param os The output stream to which the usage message is to be printed.
    */
   void printUsage(std::ostream &os) override;
-
-  /**
-   * Returns true if the table with the specified name exists in the database
-   * schema of the specified database connection.
-   *
-   * @param tableName The name of the database table.
-   * @param conn The database connection.
-   * @return True if the table exists.
-   */
-  bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
   
+  /**
+   * Verifies the user input
+   * throws an exception if the command line args
+   * are not correct
+   * @param cmdLineArgs the command line arguments provided by the user
+   */
   void verifyCmdLineArgs(const StatisticsSaveCmdLineArgs& cmdLineArgs) const;
   
+  /**
+   * Create the tables needed to fill the CTA statistics database
+   * @param statisticsDatabaseConn the database where the CTA statistics will be stored
+   * @param statisticsSchema the schema that will be used to insert the CTA statistics tables
+   */
   void buildStatisticsDatabase(cta::rdbms::Conn &statisticsDatabaseConn,const StatisticsSchema & statisticsSchema);
   
+  /**
+   * Asks the user if he really wants to drop the CTA statistics tables from the database 
+   * @param dbLogin the CTA statistics database
+   * @return true if the user confirmed, false otherwise
+   */
   bool userConfirmDropStatisticsSchemaFromDb(const rdbms::Login &dbLogin);
   
-  void dropStatisticsDatabase(cta::rdbms::Conn &statisticsDatabaseConn);
+  /**
+   * Drop the tables associated to the CTA statistics
+   * @param statisticsDatabaseConn the database where the CTA statistics tables will be deleted
+   */
+  void dropStatisticsDatabase(cta::rdbms::Conn &statisticsDatabaseConn, const StatisticsSchema & statisticsSchema);
   
 }; // class VerifySchemaCmd
 
