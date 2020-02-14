@@ -35,6 +35,8 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   static struct option longopts[] = {
     {"catalogueconf",required_argument,NULL,'c'},
     {"statisticsconf",required_argument,NULL,'s'},
+    {"build",no_argument, NULL, 'b'},
+    {"drop", no_argument, NULL, 'd'},
     {"help", no_argument, NULL, 'h'},
     {NULL  ,           0, NULL,   0}
   };
@@ -44,7 +46,7 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":hc:s:", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":hbdc:s:", longopts, NULL)) != -1) {
     switch(opt) {
     case 'h':
       help = true;
@@ -54,6 +56,12 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
       break;
     case 's':
       statisticsDbConfigPath = optarg;
+      break;
+    case 'b':
+      buildDatabase = true;
+      break;
+    case 'd':
+      dropDatabase = true;
       break;
     case ':': // Missing parameter
       {
@@ -91,9 +99,9 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   const int nbArgs = argc - 1;
 
   // Check the number of arguments
-  if(nbArgs != 4) {
+  if(nbArgs < 2 ) {
     exception::CommandLineNotParsed ex;
-    ex.getMessage() << "Wrong number of command-line arguments: expected=4 actual=" << nbArgs;
+    ex.getMessage() << "At least 2 arguments should be provided." << nbArgs;
     throw ex;
   }
 }

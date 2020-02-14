@@ -23,6 +23,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 #include "StatisticsSaveCmdLineArgs.hpp"
+#include "StatisticsSchema.hpp"
 
 namespace cta {
 namespace statistics {
@@ -74,6 +75,14 @@ private:
    * @return True if the table exists.
    */
   bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
+  
+  void verifyCmdLineArgs(const StatisticsSaveCmdLineArgs& cmdLineArgs) const;
+  
+  void buildStatisticsDatabase(cta::rdbms::Conn &statisticsDatabaseConn,const StatisticsSchema & statisticsSchema);
+  
+  bool userConfirmDropStatisticsSchemaFromDb(const rdbms::Login &dbLogin);
+  
+  void dropStatisticsDatabase(cta::rdbms::Conn &statisticsDatabaseConn);
   
 }; // class VerifySchemaCmd
 

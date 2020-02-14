@@ -600,7 +600,7 @@ bool MysqlStmt::do_bind_results() {
     case MYSQL_TYPE_STRING:
     case MYSQL_TYPE_LONG_BLOB:
       {
-        const unsigned int buf_size  = m_fields_info->maxsizes[i] + 1;
+        const unsigned int buf_size  = m_fields_info->maxsizes[i] + 1; // +1 For CR+LF
         if (buf_size < m_fields_info->maxsizes[i]) {
           throw exception::Exception(std::string(__FUNCTION__) + " buf size < m_fields_info->maxsizes[" + std::to_string(i) + "]");
         }

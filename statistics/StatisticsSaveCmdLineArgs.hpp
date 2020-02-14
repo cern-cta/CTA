@@ -46,6 +46,16 @@ struct StatisticsSaveCmdLineArgs {
   std::string statisticsDbConfigPath;
   
   /**
+   * True if the --build flag has been provided
+   */
+  bool buildDatabase = false;
+  
+  /**
+   * True if the --drop flag has been provided
+  */
+  bool dropDatabase = false;
+  
+  /**
    * Constructor that parses the specified command-line arguments.
    *
    * @param argc The number of command-line arguments including the name of the

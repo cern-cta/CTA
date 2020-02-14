@@ -22,25 +22,6 @@ include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
-set (STATISTICS_LIB_SRC_FILES
-  StatisticsSchema.cpp
-  TapeStatisticsUpdater.cpp
-)
-
-add_library (ctastatistics SHARED
-   ${STATISTICS_LIB_SRC_FILES})
-
-set_property(TARGET ctastatistics PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctastatistics PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-install (TARGETS ctastatistics DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-target_link_libraries (ctastatistics
-  ctacatalogue
-  ctacommon
-  ctaschemachecker
-  ctardbms)
-
 add_custom_command (OUTPUT mysql_statistics_schema.sql
 COMMAND cat 
     ${CMAKE_CURRENT_SOURCE_DIR}/common_statistics_schema.sql 
@@ -61,6 +42,27 @@ add_custom_command(OUTPUT mysql_statistics_schema.cpp
 add_custom_command(OUTPUT MysqlStatisticsSchema.cpp
   COMMAND sed -e '/CTA_SQL_SCHEMA/r mysql_statistics_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/MysqlStatisticsSchema.before_SQL.cpp > MysqlStatisticsSchema.cpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/MysqlStatisticsSchema.before_SQL.cpp mysql_statistics_schema.cpp)
+
+set (STATISTICS_LIB_SRC_FILES
+  StatisticsSchema.cpp
+  MysqlStatisticsSchema.cpp
+  StatisticsSchemaFactory.cpp
+  TapeStatisticsUpdater.cpp
+)
+
+add_library (ctastatistics SHARED
+   ${STATISTICS_LIB_SRC_FILES})
+
+set_property(TARGET ctastatistics PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctastatistics PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+install (TARGETS ctastatistics DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+target_link_libraries (ctastatistics
+  ctacatalogue
+  ctacommon
+  ctaschemachecker
+  ctardbms)
 
 install (FILES ${CMAKE_SOURCE_DIR}/catalogue/cta-catalogue.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
