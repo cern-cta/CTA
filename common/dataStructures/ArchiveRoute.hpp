@@ -42,11 +42,6 @@ struct ArchiveRoute {
   bool operator!=(const ArchiveRoute &rhs) const;
 
   /**
-   * The name of the disk instance to which the storage class belongs.
-   */
-  std::string diskInstanceName;
-
-  /**
    * The name of the storage class which is only guranateed to be unique within
    * its disk instance.
    */
@@ -63,7 +58,7 @@ struct ArchiveRoute {
   std::string comment;
   
   typedef std::map<uint32_t, ArchiveRoute> StorageClassMap;
-  typedef std::map<std::tuple<std::string/*disk instance*/, std::string /*storage class*/>, StorageClassMap> FullMap;
+  typedef std::map<std::string /*storage class*/, StorageClassMap> FullMap;
 
 }; // struct ArchiveRoute
 

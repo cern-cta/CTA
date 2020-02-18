@@ -323,8 +323,8 @@ void RdbmsCatalogue::createStorageClass(
     }
 
     auto conn = m_connPool.getConn();
-    if(storageClassExists(conn, storageClass.diskInstance, storageClass.name)) {
-      throw exception::UserError(std::string("Cannot create storage class ") + storageClass.diskInstance + ":" +
+    if(storageClassExists(conn, storageClass.name)) {
+      throw exception::UserError(std::string("Cannot create storage class : ") +
         storageClass.name + " because it already exists");
     }
     const uint64_t storageClassId = getNextStorageClassId(conn);
@@ -389,20 +389,17 @@ void RdbmsCatalogue::createStorageClass(
 //------------------------------------------------------------------------------
 // storageClassExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::storageClassExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::storageClassExists(rdbms::Conn &conn,
   const std::string &storageClassName) const {
   try {
     const char *const sql =
       "SELECT "
-        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
         "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
       "FROM "
         "STORAGE_CLASS "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     auto rset = stmt.executeQuery();
     return rset.next();
@@ -417,7 +414,7 @@ bool RdbmsCatalogue::storageClassExists(rdbms::Conn &conn, const std::string &di
 //------------------------------------------------------------------------------
 // deleteStorageClass
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) {
+void RdbmsCatalogue::deleteStorageClass(const std::string &storageClassName) {
   try {
     auto conn = m_connPool.getConn();
 
@@ -435,16 +432,14 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &diskInstanceName, con
       "DELETE FROM "
         "STORAGE_CLASS "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql);
 
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
 
     stmt.executeNonQuery();
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot delete storage-class ") + diskInstanceName + ":" +
+      throw exception::UserError(std::string("Cannot delete storage-class : ") +
         storageClassName + " because it does not exist");
     }
   } catch(exception::UserError &) {
@@ -569,7 +564,7 @@ std::list<common::dataStructures::StorageClass> RdbmsCatalogue::getStorageClasse
 // modifyStorageClassNbCopies
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &instanceName, const std::string &name, const uint64_t nbCopies) {
+  const std::string &name, const uint64_t nbCopies) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -579,7 +574,6 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
@@ -587,12 +581,11 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", name);
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify storage class ") + instanceName + ":" + name +
+      throw exception::UserError(std::string("Cannot modify storage class : ") + name +
         " because it does not exist");
     }
   } catch(exception::UserError &) {
@@ -607,7 +600,7 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
 // modifyStorageClassComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &instanceName, const std::string &name, const std::string &comment) {
+  const std::string &name, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -617,7 +610,6 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
@@ -625,12 +617,11 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", name);
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify storage class ") + instanceName + ":" + name +
+      throw exception::UserError(std::string("Cannot modify storage class : ") + name +
         " because it does not exist");
     }
   } catch(exception::UserError &) {
@@ -645,7 +636,7 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
 // modifyStorageClassName
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &instanceName, const std::string &currentName, const std::string &newName) {
+  const std::string &currentName, const std::string &newName) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -655,20 +646,23 @@ void RdbmsCatalogue::modifyStorageClassName(const common::dataStructures::Securi
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :CURRENT_STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
+    if(newName != currentName){
+      if(storageClassExists(conn,newName)){
+        throw exception::UserError(std::string("Cannot modify the storage class name ") + currentName +". The new name : " + newName+" already exists in the database.");
+      }
+    }
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":NEW_STORAGE_CLASS_NAME", newName);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt.bindString(":CURRENT_STORAGE_CLASS_NAME", currentName);
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify storage class ") + instanceName + ":" + currentName +
+      throw exception::UserError(std::string("Cannot modify storage class : ") + currentName +
         " because it does not exist");
     }
   } catch(exception::UserError &) {
@@ -952,7 +946,7 @@ bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &d
 //------------------------------------------------------------------------------
 // archiveRouteExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn,
   const std::string &storageClassName, const uint32_t copyNb) const {
   try {
     const char *const sql =
@@ -964,11 +958,9 @@ bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &di
       "INNER JOIN STORAGE_CLASS ON "
         "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "WHERE "
-        "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
         "ARCHIVE_ROUTE.COPY_NB = :COPY_NB";
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindUint64(":COPY_NB", copyNb);
     auto rset = stmt.executeQuery();
@@ -1349,16 +1341,11 @@ void RdbmsCatalogue::modifyTapePoolName(const common::dataStructures::SecurityId
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createArchiveRoute(
   const common::dataStructures::SecurityIdentity &admin,
-  const std::string &diskInstanceName,
   const std::string &storageClassName,
   const uint32_t copyNb,
   const std::string &tapePoolName,
   const std::string &comment) {
   try {
-    if(diskInstanceName.empty()) {
-      throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create archive route because disk instance name is an"
-        " empty string");
-    }
     if(storageClassName.empty()) {
       throw UserSpecifiedAnEmptyStringStorageClassName("Cannot create archive route because storage class name is an"
         " empty string");
@@ -1376,31 +1363,31 @@ void RdbmsCatalogue::createArchiveRoute(
 
     const time_t now = time(nullptr);
     auto conn = m_connPool.getConn();
-    if(archiveRouteExists(conn, diskInstanceName, storageClassName, copyNb)) {
+    if(archiveRouteExists(conn, storageClassName, copyNb)) {
       exception::UserError ue;
-      ue.getMessage() << "Cannot create archive route " << diskInstanceName << ":" << storageClassName << "," << copyNb
+      ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
         << "->" << tapePoolName << " because it already exists";
       throw ue;
     }
     {
-      const auto routes = getArchiveRoutes(conn, diskInstanceName, storageClassName, tapePoolName);
+      const auto routes = getArchiveRoutes(conn, storageClassName, tapePoolName);
       if(!routes.empty()) {
         exception::UserError ue;
-        ue.getMessage() << "Cannot create archive route " << diskInstanceName << ":" << storageClassName << "," << copyNb
+        ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
           << "->" << tapePoolName << " because a route already exists for this storage class and tape pool";
         throw ue;
       }
     }
-    if(!storageClassExists(conn, diskInstanceName, storageClassName)) {
+    if(!storageClassExists(conn, storageClassName)) {
       exception::UserError ue;
-      ue.getMessage() << "Cannot create archive route " << diskInstanceName << ":" << storageClassName << "," << copyNb
-        << "->" << tapePoolName << " because storage class " << diskInstanceName << ":" << storageClassName <<
+      ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
+        << "->" << tapePoolName << " because storage class " << ":" << storageClassName <<
         " does not exist";
       throw ue;
     }
     if(!tapePoolExists(conn, tapePoolName)) {
       exception::UserError ue;
-      ue.getMessage() << "Cannot create archive route " << diskInstanceName << ":" << storageClassName << "," << copyNb
+      ue.getMessage() << "Cannot create archive route " << ": " << storageClassName << "," << copyNb
         << "->" << tapePoolName << " because tape pool " << tapePoolName + " does not exist";
       throw ue;
     }
@@ -1437,11 +1424,9 @@ void RdbmsCatalogue::createArchiveRoute(
       "FROM "
         "STORAGE_CLASS "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql);
 
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindUint64(":COPY_NB", copyNb);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
@@ -1468,7 +1453,7 @@ void RdbmsCatalogue::createArchiveRoute(
 //------------------------------------------------------------------------------
 // deleteArchiveRoute
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteArchiveRoute(const std::string &diskInstanceName, const std::string &storageClassName,
+void RdbmsCatalogue::deleteArchiveRoute(const std::string &storageClassName,
   const uint32_t copyNb) {
   try {
     const char *const sql =
@@ -1481,19 +1466,17 @@ void RdbmsCatalogue::deleteArchiveRoute(const std::string &diskInstanceName, con
           "FROM "
             "STORAGE_CLASS "
           "WHERE "
-            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
             "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindUint64(":COPY_NB", copyNb);
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
       exception::UserError ue;
-      ue.getMessage() << "Cannot delete archive route for storage-class " << diskInstanceName + ":" + storageClassName +
+      ue.getMessage() << "Cannot delete archive route for storage-class " << ":" + storageClassName +
         " and copy number " << copyNb << " because it does not exist";
       throw ue;
     }
@@ -1513,7 +1496,6 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
     std::list<common::dataStructures::ArchiveRoute> routes;
     const char *const sql =
       "SELECT "
-        "STORAGE_CLASS.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_ROUTE.COPY_NB AS COPY_NB,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
@@ -1541,7 +1523,6 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
     while (rset.next()) {
       common::dataStructures::ArchiveRoute route;
 
-      route.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
       route.storageClassName = rset.columnString("STORAGE_CLASS_NAME");
       route.copyNb = rset.columnUint64("COPY_NB");
       route.tapePoolName = rset.columnString("TAPE_POOL_NAME");
@@ -1569,11 +1550,11 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
 // getArchiveRoutes
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes(
-  const std::string &diskInstanceName, const std::string &storageClassName,
+  const std::string &storageClassName,
   const std::string &tapePoolName) const {
   try {
     auto conn = m_connPool.getConn();
-    return getArchiveRoutes(conn, diskInstanceName, storageClassName, tapePoolName);
+    return getArchiveRoutes(conn, storageClassName, tapePoolName);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -1586,12 +1567,11 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
 // getArchiveRoutes
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes(rdbms::Conn &conn,
-  const std::string &diskInstanceName, const std::string &storageClassName, const std::string &tapePoolName) const {
+  const std::string &storageClassName, const std::string &tapePoolName) const {
   try {
     std::list<common::dataStructures::ArchiveRoute> routes;
     const char *const sql =
       "SELECT"                                                            "\n"
-        "STORAGE_CLASS.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"         "\n"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"         "\n"
         "ARCHIVE_ROUTE.COPY_NB AS COPY_NB,"                               "\n"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"                     "\n"
@@ -1612,20 +1592,17 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
       "INNER JOIN TAPE_POOL ON"                                           "\n"
         "ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID"             "\n"
       "WHERE"                                                             "\n"
-        "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND"      "\n"
         "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND"      "\n"
         "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME"                      "\n"
       "ORDER BY"                                                          "\n"
         "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME, COPY_NB";
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       common::dataStructures::ArchiveRoute route;
 
-      route.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
       route.storageClassName = rset.columnString("STORAGE_CLASS_NAME");
       route.copyNb = rset.columnUint64("COPY_NB");
       route.tapePoolName = rset.columnString("TAPE_POOL_NAME");
@@ -1653,7 +1630,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
 // modifyArchiveRouteTapePoolName
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb,
+  const std::string &storageClassName, const uint32_t copyNb,
   const std::string &tapePoolName) {
   try {
     const time_t now = time(nullptr);
@@ -1670,7 +1647,6 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
           "FROM "
             "STORAGE_CLASS "
           "WHERE "
-            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
             "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
@@ -1679,14 +1655,13 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindUint64(":COPY_NB", copyNb);
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
       exception::UserError ue;
-      ue.getMessage() << "Cannot modify archive route for storage-class " << instanceName + ":" + storageClassName +
+      ue.getMessage() << "Cannot modify archive route for storage-class " << ":" + storageClassName +
         " and copy number " << copyNb << " because either it or tape pool " + tapePoolName + " does not exist";
       throw ue;
     }
@@ -1702,7 +1677,7 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
 // modifyArchiveRouteComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb,
+  const std::string &storageClassName, const uint32_t copyNb,
   const std::string &comment) {
   try {
     const time_t now = time(nullptr);
@@ -1719,7 +1694,6 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
           "FROM "
             "STORAGE_CLASS "
           "WHERE "
-            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
             "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
@@ -1728,14 +1702,13 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":DISK_INSTANCE_NAME", instanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindUint64(":COPY_NB", copyNb);
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
       exception::UserError ue;
-      ue.getMessage() << "Cannot modify archive route for storage-class " << instanceName + ":" + storageClassName +
+      ue.getMessage() << "Cannot modify archive route for storage-class " << ":" + storageClassName +
         " and copy number " << copyNb << " because it does not exist";
       throw ue;
     }
@@ -5445,7 +5418,7 @@ void RdbmsCatalogue::modifyDiskSystemSleepTime(const common::dataStructures::Sec
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row) {
   try {
-    if(!storageClassExists(conn, row.diskInstance, row.storageClassName)) {
+    if(!storageClassExists(conn, row.storageClassName)) {
       throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
         " does not exist");
     }
@@ -5583,8 +5556,8 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
   }
 
   if(searchCriteria.diskInstance && searchCriteria.storageClass) {
-    if(!storageClassExists(conn, searchCriteria.diskInstance.value(), searchCriteria.storageClass.value())) {
-      throw exception::UserError(std::string("Storage class ") + searchCriteria.diskInstance.value() + "::" +
+    if(!storageClassExists(conn, searchCriteria.storageClass.value())) {
+      throw exception::UserError(std::string("Storage class ") + "::" +
         searchCriteria.storageClass.value() + " does not exist");
     }
   }
@@ -5927,19 +5900,19 @@ void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &dri
 uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user) {
   try {
-    const auto storageClass = StorageClass(diskInstanceName, storageClassName);
+    const auto storageClass = StorageClass(storageClassName);
     const auto copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass);
     const auto expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass);
 
     // Check that the number of archive routes is correct
     if(copyToPoolMap.empty()) {
       exception::UserError ue;
-      ue.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " has no archive routes";
+      ue.getMessage() << "Storage class " << storageClassName << " has no archive routes";
       throw ue;
     }
     if(copyToPoolMap.size() != expectedNbRoutes) {
       exception::UserError ue;
-      ue.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " does not have the"
+      ue.getMessage() << "Storage class " << storageClassName << " does not have the"
         " expected number of archive routes routes: expected=" << expectedNbRoutes << ", actual=" <<
         copyToPoolMap.size();
       throw ue;
@@ -5980,19 +5953,19 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
   const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user) {
   try {
-    const StorageClass storageClass = StorageClass(diskInstanceName, storageClassName);
+    const StorageClass storageClass = StorageClass(storageClassName);
     const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass);
     const uint64_t expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass);
 
     // Check that the number of archive routes is correct
     if(copyToPoolMap.empty()) {
       exception::UserError ue;
-      ue.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " has no archive routes";
+      ue.getMessage() << "Storage class " << diskInstanceName << ": " << storageClassName << " has no archive routes";
       throw ue;
     }
     if(copyToPoolMap.size() != expectedNbRoutes) {
       exception::UserError ue;
-      ue.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " does not have the"
+      ue.getMessage() << "Storage class " << diskInstanceName << ": " << storageClassName << " does not have the"
         " expected number of archive routes routes: expected=" << expectedNbRoutes << ", actual=" <<
         copyToPoolMap.size();
       throw ue;
@@ -6057,10 +6030,8 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
       "INNER JOIN TAPE_POOL ON "
         "ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "WHERE "
-        "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
@@ -6111,10 +6082,8 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const Sto
       "INNER JOIN STORAGE_CLASS ON "
         "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "WHERE "
-        "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
     auto rset = stmt.executeQuery();
     if(!rset.next()) {

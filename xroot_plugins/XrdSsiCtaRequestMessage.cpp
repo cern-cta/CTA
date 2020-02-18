@@ -718,13 +718,12 @@ void RequestMessage::processArchiveRoute_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   auto &in       = getRequired(OptionString::INSTANCE);
    auto &scn      = getRequired(OptionString::STORAGE_CLASS);
    auto &cn       = getRequired(OptionUInt64::COPY_NUMBER);
    auto &tapepool = getRequired(OptionString::TAPE_POOL);
    auto &comment  = getRequired(OptionString::COMMENT);
 
-   m_catalogue.createArchiveRoute(m_cliIdentity, in, scn, cn, tapepool, comment);
+   m_catalogue.createArchiveRoute(m_cliIdentity, scn, cn, tapepool, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -735,17 +734,16 @@ void RequestMessage::processArchiveRoute_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   auto &in       = getRequired(OptionString::INSTANCE);
    auto &scn      = getRequired(OptionString::STORAGE_CLASS);
    auto &cn       = getRequired(OptionUInt64::COPY_NUMBER);
    auto  tapepool = getOptional(OptionString::TAPE_POOL);
    auto  comment  = getOptional(OptionString::COMMENT);
 
    if(comment) {
-      m_catalogue.modifyArchiveRouteComment(m_cliIdentity, in, scn, cn, comment.value());
+      m_catalogue.modifyArchiveRouteComment(m_cliIdentity, scn, cn, comment.value());
    }
    if(tapepool) {
-      m_catalogue.modifyArchiveRouteTapePoolName(m_cliIdentity, in, scn, cn, tapepool.value());
+      m_catalogue.modifyArchiveRouteTapePoolName(m_cliIdentity, scn, cn, tapepool.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -757,11 +755,10 @@ void RequestMessage::processArchiveRoute_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   auto &in  = getRequired(OptionString::INSTANCE);
    auto &scn = getRequired(OptionString::STORAGE_CLASS);
    auto &cn  = getRequired(OptionUInt64::COPY_NUMBER);
 
-   m_catalogue.deleteArchiveRoute(in, scn, cn);
+   m_catalogue.deleteArchiveRoute(scn, cn);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1329,16 +1326,15 @@ void RequestMessage::processStorageClass_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   auto &in      = getRequired(OptionString::INSTANCE);
    auto &scn     = getRequired(OptionString::STORAGE_CLASS);
    auto  comment = getOptional(OptionString::COMMENT);
    auto  cn      = getOptional(OptionUInt64::COPY_NUMBER);
 
    if(comment) {
-      m_catalogue.modifyStorageClassComment(m_cliIdentity, in, scn, comment.value());
+      m_catalogue.modifyStorageClassComment(m_cliIdentity, scn, comment.value());
    }
    if(cn) {
-      m_catalogue.modifyStorageClassNbCopies(m_cliIdentity, in, scn, cn.value());
+      m_catalogue.modifyStorageClassNbCopies(m_cliIdentity, scn, cn.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1350,10 +1346,9 @@ void RequestMessage::processStorageClass_Rm(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   auto &in  = getRequired(OptionString::INSTANCE);
    auto &scn = getRequired(OptionString::STORAGE_CLASS);
 
-   m_catalogue.deleteStorageClass(in, scn);
+   m_catalogue.deleteStorageClass(scn);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

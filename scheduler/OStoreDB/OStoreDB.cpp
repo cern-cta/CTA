@@ -2374,7 +2374,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
       // Set the repack info.
       RetrieveRequest::RepackInfo rRRepackInfo;
       try {
-        for (auto & ar: archiveRoutesMap.at(std::make_tuple(rsr.archiveFile.diskInstance, rsr.archiveFile.storageClass))) {
+        for (auto & ar: archiveRoutesMap.at(rsr.archiveFile.storageClass)) {
           rRRepackInfo.archiveRouteMap[ar.second.copyNb] = ar.second.tapePoolName;
         }
         //Check that we do not have the same destination tapepool for two different copyNb
@@ -2397,9 +2397,9 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
         std::stringstream storageClassList;
         bool first=true;
         for (auto & sc: archiveRoutesMap) {
-          std::string diskInstance, storageClass;
-          std::tie(diskInstance, storageClass) = sc.first;
-          storageClassList << (first?"":" ") << "di=" << diskInstance << " sc=" << storageClass << " rc=" << sc.second.size();
+          std::string storageClass;
+          storageClass = sc.first;
+          storageClassList << (first?"":" ") << " sc=" << storageClass << " rc=" << sc.second.size();
         }
         params.add("storageClassList", storageClassList.str());
         lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubrequests(): not such archive route.");

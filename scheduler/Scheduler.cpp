@@ -470,7 +470,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   cta::common::dataStructures::ArchiveRoute::FullMap archiveRoutesMap;
   for(auto route: routes){
     //insert the route into the map to allow a quick retrieval
-    archiveRoutesMap[std::make_pair(route.diskInstanceName,route.storageClassName)][route.copyNb] = route;
+    archiveRoutesMap[route.storageClassName][route.copyNb] = route;
   }
   uint64_t fSeq;
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles totalStatsFile;
@@ -548,7 +548,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       if(repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies){
         //We are in the case where we possibly need to create new copies (if the number of copies the storage class of the current ArchiveFile 
         //is greater than the number of tape files we have in the current ArchiveFile)
-        auto archiveFileRoutes = archiveRoutesMap[std::make_pair(archiveFile.diskInstance,archiveFile.storageClass)];
+        auto archiveFileRoutes = archiveRoutesMap[archiveFile.storageClass];
         auto storageClassItor = std::find_if(storageClasses.begin(),storageClasses.end(),[&archiveFile](const common::dataStructures::StorageClass& sc){
           return sc.name == archiveFile.storageClass;
         });

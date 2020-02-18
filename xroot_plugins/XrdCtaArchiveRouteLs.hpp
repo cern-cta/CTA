@@ -73,7 +73,6 @@ int ArchiveRouteLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto &ar      = m_archiveRouteList.front();
     auto  ar_item = record.mutable_arls_item();
 
-    ar_item->set_instance(ar.diskInstanceName);
     ar_item->set_storage_class(ar.storageClassName);
     ar_item->set_copy_number(ar.copyNb);
     ar_item->set_tapepool(ar.tapePoolName);

@@ -225,26 +225,22 @@ public:
   /**
    * Deletes the specified storage class.
    *
-   * @param diskInstanceName The name of the disk instance to which the
-   * storage class belongs.
    * @param stoargeClassName The name of the storage class which is only
    * guaranteed to be unique within its disk isntance.
    */
-  void deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) override;
+  void deleteStorageClass(const std::string &storageClassName) override;
 
   std::list<common::dataStructures::StorageClass> getStorageClasses() const override;
-  void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) override;
-  void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const std::string &comment) override;
+  void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) override;
+  void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
 
   /**
    * Modifies the name of the specified storage class.
    *
-   * @param diskInstanceName The name of the disk instance to which the
-   * storage class belongs.
    * @param currentName The current name of the storage class.
    * @param newName The new name of the storage class.
    */
-  void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &currentName, const std::string &newName) override;
+  void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override;
 
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override;
   void deleteTapePool(const std::string &name) override;
@@ -266,7 +262,6 @@ public:
 
   void createArchiveRoute(
     const common::dataStructures::SecurityIdentity &admin,
-    const std::string &diskInstanceName,
     const std::string &storageClassName,
     const uint32_t copyNb,
     const std::string &tapePoolName,
@@ -276,14 +271,10 @@ public:
   /**
    * Deletes the specified archive route.
    *
-   * @param diskInstanceName The name of the disk instance to which the storage
-   * class belongs.
-   * @param storageClassName The name of the storage class which is only
-   * guaranteed to be unique within its disk instance.
+   * @param storageClassName The name of the storage class which is unique
    * @param copyNb The copy number of the tape file.
    */
   void deleteArchiveRoute(
-    const std::string &diskInstanceName,
     const std::string &storageClassName, 
     const uint32_t copyNb) override;
 
@@ -297,18 +288,15 @@ public:
    * For a given storage class there should be no more than one route to any
    * given tape pool.
    *
-   * @param diskInstanceName The name of the disk instance to which the storage
-   * class belongs.
-   * @param storageClassName The name of the storage class which is only
-   * guaranteed to be unique within its disk instance.
+   * @param storageClassName The name of the storage class which is unique
    * @param tapePoolName The name of the tape pool.
    */
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(
-    const std::string &diskInstanceName, const std::string &storageClassName,
+    const std::string &storageClassName,
     const std::string &tapePoolName) const override;
 
-  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) override;
-  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) override;
+  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) override;
+  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) override;
 
   void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool isDisabled, const std::string &comment) override;
   void deleteLogicalLibrary(const std::string &name) override;
@@ -818,13 +806,10 @@ protected:
    * Returns true if the specified storage class exists.
    *
    * @param conn The database connection.
-   * @param diskInstanceName The name of the disk instance to which the storage
-   * class belongs.
    * @param storageClassName The name of the storage class.
    * @return True if the storage class exists.
    */
-  bool storageClassExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &storageClassName)
-    const;
+  bool storageClassExists(rdbms::Conn &conn, const std::string &storageClassName) const;
 
   /**
    * Returns true if the specified tape pool exists.
@@ -899,14 +884,12 @@ protected:
    * Returns true if the specified archive route exists.
    *
    * @param conn The database connection.
-   * @param diskInstanceName The name of the disk instance to which the storage
-   * class belongs.
    * @param storageClassName The name of the storage class which is only
    * guaranteed to be unique within its disk instance.
    * @param copyNb The copy number of the tape file.
    * @return True if the archive route exists.
    */
-  bool archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &storageClassName,
+  bool archiveRouteExists(rdbms::Conn &conn, const std::string &storageClassName,
     const uint32_t copyNb) const;
 
   /**
@@ -918,14 +901,12 @@ protected:
    * given tape pool.
    *
    * @param conn The database connection.
-   * @param diskInstanceName The name of the disk instance to which the storage
-   * class belongs.
    * @param storageClassName The name of the storage class which is only
    * guaranteed to be unique within its disk instance.
    * @param tapePoolName The name of the tape pool.
    */
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(rdbms::Conn &conn,
-    const std::string &diskInstanceName, const std::string &storageClassName, const std::string &tapePoolName) const;
+    const std::string &storageClassName, const std::string &tapePoolName) const;
 
   /**
    * Returns true if the specified tape exists.
@@ -1166,10 +1147,6 @@ protected:
    * instance and the name of the storage class.
    */
   struct StorageClass {
-    /**
-     * The name of the disk instance to which the storage class belongs.
-     */
-    std::string diskInstanceName;
 
     /**
      * The name of the storage class which is only guaranteed to be unique
@@ -1180,12 +1157,10 @@ protected:
     /**
      * Constructor.
      *
-     * @param dIN The name of the disk instance to which the storage class
-     * belongs.
      * @param sN The name of the storage class which is only guaranteed to be
      * unique within its disk instance.
      */
-    StorageClass(const std::string &d, const std::string &s): diskInstanceName(d), storageClassName(s) {
+    StorageClass(const std::string &s): storageClassName(s) {
     }
 
     /**
@@ -1196,7 +1171,7 @@ protected:
      * side of the operator.
      */
     bool operator<(const StorageClass &rhs) const {
-      return diskInstanceName < rhs.diskInstanceName || storageClassName < rhs.storageClassName;
+      return storageClassName < rhs.storageClassName;
     }
   }; // struct StorageClass
 

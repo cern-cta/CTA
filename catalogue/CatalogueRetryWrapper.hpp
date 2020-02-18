@@ -120,24 +120,24 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createStorageClass(admin, storageClass);}, m_maxTriesToConnect);
   }
 
-  void deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteStorageClass(diskInstanceName, storageClassName);}, m_maxTriesToConnect);
+  void deleteStorageClass(const std::string &storageClassName) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteStorageClass(storageClassName);}, m_maxTriesToConnect);
   }
 
   std::list<common::dataStructures::StorageClass> getStorageClasses() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getStorageClasses();}, m_maxTriesToConnect);
   }
 
-  void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassNbCopies(admin, instanceName, name, nbCopies);}, m_maxTriesToConnect);
+  void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassNbCopies(admin, name, nbCopies);}, m_maxTriesToConnect);
   }
 
-  void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassComment(admin, instanceName, name, comment);}, m_maxTriesToConnect);
+  void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassComment(admin, name, comment);}, m_maxTriesToConnect);
   }
 
-  void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &currentName, const std::string &newName) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassName(admin, instanceName, currentName, newName);}, m_maxTriesToConnect);
+  void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassName(admin, currentName, newName);}, m_maxTriesToConnect);
   }
 
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override {
@@ -176,28 +176,28 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapePoolName(admin, currentName, newName);}, m_maxTriesToConnect);
   }
 
-  void createArchiveRoute(const common::dataStructures::SecurityIdentity &admin, const std::string &diskInstanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->createArchiveRoute(admin, diskInstanceName, storageClassName, copyNb, tapePoolName, comment);}, m_maxTriesToConnect);
+  void createArchiveRoute(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createArchiveRoute(admin, storageClassName, copyNb, tapePoolName, comment);}, m_maxTriesToConnect);
   }
 
-  void deleteArchiveRoute(const std::string &diskInstanceName, const std::string &storageClassName, const uint32_t copyNb) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteArchiveRoute(diskInstanceName, storageClassName, copyNb);}, m_maxTriesToConnect);
+  void deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteArchiveRoute(storageClassName, copyNb);}, m_maxTriesToConnect);
   }
 
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveRoutes();}, m_maxTriesToConnect);
   }
 
-  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string &diskInstanceName, const std::string &storageClassName, const std::string &tapePoolName) const override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveRoutes(diskInstanceName, storageClassName, tapePoolName);}, m_maxTriesToConnect);
+  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string &storageClassName, const std::string &tapePoolName) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveRoutes(storageClassName, tapePoolName);}, m_maxTriesToConnect);
   }
 
-  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyArchiveRouteTapePoolName(admin, instanceName, storageClassName, copyNb, tapePoolName);}, m_maxTriesToConnect);
+  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyArchiveRouteTapePoolName(admin, storageClassName, copyNb, tapePoolName);}, m_maxTriesToConnect);
   }
 
-  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyArchiveRouteComment(admin, instanceName, storageClassName, copyNb, comment);}, m_maxTriesToConnect);
+  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyArchiveRouteComment(admin, storageClassName, copyNb, comment);}, m_maxTriesToConnect);
   }
 
   void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool isDisabled, const std::string &comment) override {

@@ -238,26 +238,22 @@ public:
   /**
    * Deletes the specified storage class.
    *
-   * @param diskInstanceName The name of the disk instance to which the
-   * storage class belongs.
-   * @param stoargeClassName The name of the storage class which is only
+   * @param storageClassName The name of the storage class which is only
    * guaranteed to be unique within its disk isntance.
    */
-  virtual void deleteStorageClass(const std::string &diskInstanceName, const std::string &storageClassName) = 0;
+  virtual void deleteStorageClass(const std::string &storageClassName) = 0;
 
   virtual std::list<common::dataStructures::StorageClass> getStorageClasses() const = 0;
-  virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const uint64_t nbCopies) = 0;
-  virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &name, const std::string &comment) = 0;
+  virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) = 0;
+  virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
 
   /**
    * Modifies the name of the specified storage class.
    *
-   * @param diskInstanceName The name of the disk instance to which the
-   * storage class belongs.
    * @param currentName The current name of the storage class.
    * @param newName The new name of the storage class.
    */
-  virtual void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &currentName, const std::string &newName) = 0;
+  virtual void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) = 0;
 
   virtual void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) = 0;
   virtual void deleteTapePool(const std::string &name) = 0;
@@ -279,7 +275,6 @@ public:
 
   virtual void createArchiveRoute(
     const common::dataStructures::SecurityIdentity &admin,
-    const std::string &diskInstanceName,
     const std::string &storageClassName,
     const uint32_t copyNb,
     const std::string &tapePoolName,
@@ -288,14 +283,10 @@ public:
   /**
    * Deletes the specified archive route.
    *
-   * @param diskInstanceName The name of the disk instance to which the storage
-   * class belongs.
-   * @param storageClassName The name of the storage class which is only
-   * guaranteed to be unique within its disk instance.
+   * @param storageClassName The name of the storage class which is unique
    * @param copyNb The copy number of the tape file.
    */
   virtual void deleteArchiveRoute(
-    const std::string &diskInstanceName,
     const std::string &storageClassName,
     const uint32_t copyNb) = 0;
 
@@ -309,18 +300,15 @@ public:
    * For a given storage class there should be no more than one route to any
    * given tape pool.
    *
-   * @param diskInstanceName The name of the disk instance to which the storage
-   * class belongs.
-   * @param storageClassName The name of the storage class which is only
-   * guaranteed to be unique within its disk instance.
+   * @param storageClassName The name of the storage class which is unique
    * @param tapePoolName The name of the tape pool.
    */
   virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(
-    const std::string &diskInstanceName, const std::string &storageClassName,
+    const std::string &storageClassName,
     const std::string &tapePoolName) const = 0;
 
-  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) = 0;
-  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) = 0;
+  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) = 0;
+  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) = 0;
 
   virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool isDisabled, const std::string &comment) = 0;
   virtual void deleteLogicalLibrary(const std::string &name) = 0;

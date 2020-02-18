@@ -224,7 +224,7 @@ public:
       tapePoolComment);
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
-    catalogue.createArchiveRoute(s_adminOnAdminHost, s_diskInstance, s_storageClassName, copyNb, s_tapePoolName,
+    catalogue.createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
       archiveRouteComment);
   }
 
@@ -3180,11 +3180,11 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 3;
   storageClass.comment = "Create storage class";
-  catalogue.modifyStorageClassNbCopies(admin,storageClass.diskInstance,storageClass.name,storageClass.nbCopies);
+  catalogue.modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
   
   //Create the two archive routes for the new copies
-  catalogue.createArchiveRoute(admin,storageClass.diskInstance,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
-  catalogue.createArchiveRoute(admin,storageClass.diskInstance,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
+  catalogue.createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
+  catalogue.createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
   
   //Create two other destinationTape
   std::string vidDestination1 = "vidDestination1";
@@ -3422,11 +3422,11 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 3;
   storageClass.comment = "Create storage class";
-  catalogue.modifyStorageClassNbCopies(admin,storageClass.diskInstance,storageClass.name,storageClass.nbCopies);
+  catalogue.modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
   
   //Create the two archive routes for the new copies
-  catalogue.createArchiveRoute(admin,storageClass.diskInstance,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
-  catalogue.createArchiveRoute(admin,storageClass.diskInstance,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
+  catalogue.createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
+  catalogue.createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
   
   //Create two other destinationTape and one for the move workflow
   std::string vidDestination1 = "vidDestination1";

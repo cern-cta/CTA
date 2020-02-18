@@ -34,8 +34,7 @@ ArchiveRoute::ArchiveRoute():
 // operator==
 //------------------------------------------------------------------------------
 bool ArchiveRoute::operator==(const ArchiveRoute &rhs) const {
-  return diskInstanceName==rhs.diskInstanceName
-      && storageClassName==rhs.storageClassName
+  return storageClassName==rhs.storageClassName
       && copyNb==rhs.copyNb
       && tapePoolName==rhs.tapePoolName
       && creationLog==rhs.creationLog
@@ -54,8 +53,7 @@ bool ArchiveRoute::operator!=(const ArchiveRoute &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const ArchiveRoute &obj) {
-  os << "(diskInstanceName=" << obj.diskInstanceName
-     << " storageClassName=" << obj.storageClassName
+  os << "(storageClassName=" << obj.storageClassName
      << " copyNb=" << obj.copyNb
      << " tapePoolName=" << obj.tapePoolName
      << " creationLog=" << obj.creationLog
