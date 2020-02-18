@@ -293,7 +293,7 @@ std::map<std::string, uint64_t> DriveState::getDiskSpaceReservations() {
 //------------------------------------------------------------------------------
 void DriveState::addDiskSpaceReservation(const std::string& diskSystemName, uint64_t bytes) {
   checkPayloadWritable();
-  for (auto dsr: *m_payload.mutable_disk_space_reservations()) {
+  for (auto &dsr: *m_payload.mutable_disk_space_reservations()) {
     if (dsr.disk_system_name() == diskSystemName) {
       dsr.set_reserved_bytes(dsr.reserved_bytes() + bytes);
       return;
@@ -310,7 +310,7 @@ void DriveState::addDiskSpaceReservation(const std::string& diskSystemName, uint
 void DriveState::substractDiskSpaceReservation(const std::string& diskSystemName, uint64_t bytes) {
   checkPayloadWritable();
   size_t index=0;
-  for (auto dsr: *m_payload.mutable_disk_space_reservations()) {
+  for (auto &dsr: *m_payload.mutable_disk_space_reservations()) {
     if (dsr.disk_system_name() == diskSystemName) {
       if (bytes > dsr.reserved_bytes())
         throw NegativeDiskSpaceReservationReached(

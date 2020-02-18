@@ -3901,6 +3901,7 @@ void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest
           .add("objectName", ds.getAddressIfSet());
     lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
   }
+  //TODO BUG HERE, see mountId=\"10\" in downloads/tpsrv0*
   ds.commit();
 }
 
