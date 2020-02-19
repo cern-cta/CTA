@@ -8,8 +8,11 @@ data:
   xrd.cf.mgm: |
     mgmofs.nslib /usr/lib64/libEosNsQuarkdb.so
     mgmofs.qdbcluster localhost:7777
+    mgmofs.qdbpassword_file  /etc/eos.keytab
+
   xrootd-quarkdb.cfg: |
     xrd.port 7777
     xrd.protocol redis:7777 /usr/lib64/libXrdQuarkDB.so
     redis.mode standalone
     redis.database /var/lib/quarkdb/quarkdb1
+    redis.password_file  /etc/eos.keytab.xrootd

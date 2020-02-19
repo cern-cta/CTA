@@ -25,6 +25,13 @@ chown -R xrootd:xrootd ${QUARKDB_DIRECTORY}
 
 cp -f ${QUARKDB_CONFIG} /etc/xrootd/xrootd-quarkdb.cfg
 
+# quarkdb is starting as xrootd user and mgm as daemon
+# the password file must be 400 for each service...
+# for now copy and chown, later run quarkdb as daemon and use /etc/eos.keytab for both
+cp /etc/eos.keytab /etc/eos.keytab.xrootd
+chmod 400 /etc/eos.keytab.xrootd
+chown xrootd:xrootd /etc/eos.keytab.xrootd
+
 systemctl start xrootd@quarkdb
 
 systemctl status xrootd@quarkdb

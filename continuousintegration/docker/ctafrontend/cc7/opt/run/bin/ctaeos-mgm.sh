@@ -71,9 +71,6 @@ echo "mgmofs.tapeenabled true"  >> /etc/xrd.cf.mgm
 # Add configmap based configuration (initially Namespace)
 test -f /etc/config/eos/xrd.cf.mgm && cat /etc/config/eos/xrd.cf.mgm >> /etc/xrd.cf.mgm
 
-# quarkDB only for systemd initially...
-cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/start_quarkdb.sh
-
 # prepare eos startup
   # skip systemd for eos initscripts
     export SYSTEMCTL_SKIP_REDIRECT=1
@@ -90,6 +87,9 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
     chown daemon:root /var/eos/config/${eoshost}
   touch   /var/eos/config/${eoshost}/default.eoscf
     chown daemon:daemon /var/eos/config/${eoshost}/default.eoscf
+
+# quarkDB only for systemd initially...
+cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/start_quarkdb.sh
 
 # add taped SSS must be in a kubernetes secret
 #echo >> /etc/eos.keytab
