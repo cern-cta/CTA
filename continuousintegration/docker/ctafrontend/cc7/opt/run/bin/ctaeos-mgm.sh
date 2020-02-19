@@ -164,11 +164,15 @@ else
   test -e /usr/lib64/libjemalloc.so.1 && echo "Using jemalloc for EOS processes"
   test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
 
+  # Using /opt/eos/xrootd/bin/xrootd if it exists
+  # this is valid for CI because eos-xrootd rpm is pulled as a dependency of eos-server only if needed
+  # ie: specified at build time in EOS CI.
+  XRDPROG=/usr/bin/xrootd; test -e /opt/eos/xrootd/bin/xrootd && XRDPROG=/opt/eos/xrootd/bin/xrootd
   # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
   #/etc/init.d/eos start
-    /usr/bin/xrootd -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
-    /usr/bin/xrootd -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
-    /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
+    ${XRDPROG} -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
+    ${XRDPROG} -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
+    ${XRDPROG} -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
 fi
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
