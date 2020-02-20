@@ -2978,6 +2978,7 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
       log::ScopedParamContainer params(lc);
       params.add("diskSystem", dr.first)
             .add("bytes", dr.second)
+            .add("previousStatus",toString(previousStatus))
             .add("newStatus", toString(driveState.driveStatus));
       lc.log(log::WARNING, "In OStoreDB::updateDriveStatus(): will clear non-empty disk space reservation on status change.");
     }
@@ -3901,7 +3902,6 @@ void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest
           .add("objectName", ds.getAddressIfSet());
     lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
   }
-  //TODO BUG HERE, see mountId=\"10\" in downloads/tpsrv0*
   ds.commit();
 }
 

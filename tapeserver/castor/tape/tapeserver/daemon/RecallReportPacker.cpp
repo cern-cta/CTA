@@ -131,6 +131,7 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
 //ReportEndofSession::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent){
+  parent.setDiskDone();
   if(!parent.errorHappened()){
     parent.m_lc.log(cta::log::INFO,"Nominal RecallReportPacker::EndofSession has been reported");
     if (parent.m_watchdog) {
@@ -167,7 +168,6 @@ bool RecallReportPacker::ReportEndofSession::goingToEnd() {
 void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
   parent.m_retrieveMount->setDriveStatus(m_status);
   if(m_status==cta::common::dataStructures::DriveStatus::Unmounting) {
-    parent.m_retrieveMount->diskComplete();
     parent.m_retrieveMount->tapeComplete();
   }
 }
@@ -183,6 +183,7 @@ bool RecallReportPacker::ReportDriveStatus::goingToEnd() {
 //ReportEndofSessionWithErrors::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent){
+  parent.setDiskDone();
   if(parent.m_errorHappened) {
     LogContext::ScopedParam(parent.m_lc,Param("errorCode",m_error_code));
     parent.m_lc.log(cta::log::ERR,m_message);
@@ -320,7 +321,13 @@ void RecallReportPacker::WorkerThread::run(){
   
   // Make sure the last batch of reports got cleaned up. 
   try {
-    m_parent.fullCheckAndFinishAsyncExecute(); 
+    m_parent.fullCheckAndFinishAsyncExecute();
+    if(m_parent.m_diskThreadComplete){
+      //The m_parent.m_diskThreadComplete is set to true when a ReportEndOfSession or a ReportAndOfSessionWithError
+      //has been put. It is only after the fullCheckandFinishAsyncExecute is finished that we can say to the mount that the disk thread is complete.
+      m_parent.m_lc.log(cta::log::DEBUG, "In RecallReportPacker::WorkerThread::run(): all disk threads are finished, telling the mount that Disk threads are complete");
+      m_parent.m_retrieveMount->diskComplete();
+    }
   } catch(const cta::exception::Exception& e){
       cta::log::ScopedParamContainer params(m_parent.m_lc);
       params.add("exceptionWhat", e.getMessageValue())
@@ -389,6 +396,7 @@ void RecallReportPacker::fullCheckAndFinishAsyncExecute() {
 //------------------------------------------------------------------------------
 void RecallReportPacker::setTapeDone() {
   m_tapeThreadComplete = true;
+  m_retrieveMount->tapeComplete();
 }
 
 //------------------------------------------------------------------------------

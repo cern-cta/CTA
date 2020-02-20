@@ -111,11 +111,10 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // And return the tape to the library
     // In case of manual mode, this will be filtered by the rmc daemon
     // (which will do nothing)
-    currentErrorToCount = "Error_tapeDismount";     
+    currentErrorToCount = "Error_tapeDismount";
     m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.librarySlot());
     m_this.m_drive.disableLogicalBlockProtection();
-    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up);
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(cta::log::INFO, cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.librarySlot().getLibraryType() ?
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
@@ -356,6 +355,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "success");
     m_stats.totalTime = totalTimer.secs();
+    m_rrp.setTapeDone();
     logWithStat(cta::log::INFO, "Tape thread complete",
             params);
     // Report one last time the stats, after unloading/unmounting.

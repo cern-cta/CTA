@@ -86,6 +86,10 @@ namespace unitTests{
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }
+    void setDiskDone() override {}
+    
+    void setTapeDone() override {}
+    
     MockRecallReportPacker(cta::RetrieveMount *rm,cta::log::LogContext lc):
      RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
       endSessions(0), endSessionsWithError(0) {}
