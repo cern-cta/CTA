@@ -168,7 +168,8 @@ bool RecallReportPacker::ReportEndofSession::goingToEnd() {
 void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
   parent.m_retrieveMount->setDriveStatus(m_status);
   if(m_status==cta::common::dataStructures::DriveStatus::Unmounting) {
-    parent.m_retrieveMount->tapeComplete();
+    parent.setTapeDone();
+    parent.setTapeComplete();
   }
 }
 
@@ -322,11 +323,11 @@ void RecallReportPacker::WorkerThread::run(){
   // Make sure the last batch of reports got cleaned up. 
   try {
     m_parent.fullCheckAndFinishAsyncExecute();
-    if(m_parent.m_diskThreadComplete){
+    if(m_parent.isDiskDone()){
       //The m_parent.m_diskThreadComplete is set to true when a ReportEndOfSession or a ReportAndOfSessionWithError
       //has been put. It is only after the fullCheckandFinishAsyncExecute is finished that we can say to the mount that the disk thread is complete.
       m_parent.m_lc.log(cta::log::DEBUG, "In RecallReportPacker::WorkerThread::run(): all disk threads are finished, telling the mount that Disk threads are complete");
-      m_parent.m_retrieveMount->diskComplete();
+      m_parent.setDiskComplete();
     }
   } catch(const cta::exception::Exception& e){
       cta::log::ScopedParamContainer params(m_parent.m_lc);
@@ -395,14 +396,30 @@ void RecallReportPacker::fullCheckAndFinishAsyncExecute() {
 //reportTapeDone()
 //------------------------------------------------------------------------------
 void RecallReportPacker::setTapeDone() {
+  cta::threading::MutexLocker mutexLocker(m_mutexTapeDone);
   m_tapeThreadComplete = true;
+}
+
+void RecallReportPacker::setTapeComplete(){
+  cta::threading::MutexLocker mutexLocker(m_mutexSetTapeComplete);
   m_retrieveMount->tapeComplete();
+}
+
+void RecallReportPacker::setDiskComplete(){
+  cta::threading::MutexLocker mutexLocker(m_mutexSetDiskComplete);
+  m_retrieveMount->diskComplete();
+}
+
+bool RecallReportPacker::isDiskDone(){
+  cta::threading::MutexLocker mutexLocker(m_mutexDiskDone);
+  return m_diskThreadComplete;
 }
 
 //------------------------------------------------------------------------------
 //reportDiskDone()
 //------------------------------------------------------------------------------
 void RecallReportPacker::setDiskDone() {
+  cta::threading::MutexLocker mutexLocker(m_mutexDiskDone);
   m_diskThreadComplete = true;
 }
 

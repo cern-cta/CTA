@@ -98,6 +98,12 @@ public:
    */
   virtual void setTapeDone();
   
+  void setTapeComplete();
+  
+  void setDiskComplete();
+  
+  bool isDiskDone();
+  
   /**
    * Query the status of disk and tape threads (are they both done?).
    * @return true if both tape and disk threads are done.
@@ -227,6 +233,14 @@ private:
    */
   bool m_diskThreadComplete;  
   
+  cta::threading::Mutex m_mutexSetTapeComplete;
+  
+  cta::threading::Mutex m_mutexSetDiskComplete;
+  
+  cta::threading::Mutex m_mutexDiskDone;
+  
+  cta::threading::Mutex m_mutexTapeDone;
+
   /*
    * Proceed finish procedure for async execute for all reports.
    *  

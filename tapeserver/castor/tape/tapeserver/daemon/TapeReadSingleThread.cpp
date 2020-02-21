@@ -356,6 +356,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     params.add("status", "success");
     m_stats.totalTime = totalTimer.secs();
     m_rrp.setTapeDone();
+    m_rrp.setTapeComplete();
     logWithStat(cta::log::INFO, "Tape thread complete",
             params);
     // Report one last time the stats, after unloading/unmounting.
