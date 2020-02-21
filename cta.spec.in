@@ -458,7 +458,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
-* Tue Feb 11 2020 julien.leduc (at) cern.ch - 1.1-0
+* Tue Feb 21 2020 julien.leduc (at) cern.ch - 1.2-0
 - Upgrade the catalogue schema from version 1.0 to 1.1 before updating CTA components.
 - Added cta-admin tapefile ls command
 - Scheduler does not schedule a mount if a tape is disabled (unless for a Repack with the --disabledtape flag set)
