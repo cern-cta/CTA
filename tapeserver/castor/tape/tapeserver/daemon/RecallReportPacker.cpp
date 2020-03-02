@@ -396,22 +396,22 @@ void RecallReportPacker::fullCheckAndFinishAsyncExecute() {
 //reportTapeDone()
 //------------------------------------------------------------------------------
 void RecallReportPacker::setTapeDone() {
-  cta::threading::MutexLocker mutexLocker(m_mutexTapeDone);
+  cta::threading::MutexLocker mutexLocker(m_mutex);
   m_tapeThreadComplete = true;
 }
 
 void RecallReportPacker::setTapeComplete(){
-  cta::threading::MutexLocker mutexLocker(m_mutexSetTapeComplete);
+  cta::threading::MutexLocker mutexLocker(m_mutex);
   m_retrieveMount->tapeComplete();
 }
 
 void RecallReportPacker::setDiskComplete(){
-  cta::threading::MutexLocker mutexLocker(m_mutexSetDiskComplete);
+  cta::threading::MutexLocker mutexLocker(m_mutex);
   m_retrieveMount->diskComplete();
 }
 
 bool RecallReportPacker::isDiskDone(){
-  cta::threading::MutexLocker mutexLocker(m_mutexDiskDone);
+  cta::threading::MutexLocker mutexLocker(m_mutex);
   return m_diskThreadComplete;
 }
 
@@ -419,7 +419,7 @@ bool RecallReportPacker::isDiskDone(){
 //reportDiskDone()
 //------------------------------------------------------------------------------
 void RecallReportPacker::setDiskDone() {
-  cta::threading::MutexLocker mutexLocker(m_mutexDiskDone);
+  cta::threading::MutexLocker mutexLocker(m_mutex);
   m_diskThreadComplete = true;
 }
 

@@ -233,13 +233,7 @@ private:
    */
   bool m_diskThreadComplete;  
   
-  cta::threading::Mutex m_mutexSetTapeComplete;
-  
-  cta::threading::Mutex m_mutexSetDiskComplete;
-  
-  cta::threading::Mutex m_mutexDiskDone;
-  
-  cta::threading::Mutex m_mutexTapeDone;
+  cta::threading::Mutex m_mutex;
 
   /*
    * Proceed finish procedure for async execute for all reports.
