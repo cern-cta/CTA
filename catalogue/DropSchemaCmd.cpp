@@ -149,6 +149,8 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "STORAGE_CLASS_ID",
       "TAPE_POOL",
       "TAPE_POOL_ID",
+      "VIRTUAL_ORGANIZATION",
+      "VIRTUAL_ORGANIZATION_ID",
       "LOGICAL_LIBRARY",
       "LOGICAL_LIBRARY_ID",
       "MOUNT_POLICY",
@@ -186,6 +188,8 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "STORAGE_CLASS_ID",
       "TAPE_POOL",
       "TAPE_POOL_ID",
+      "VIRTUAL_ORGANIZATION",
+      "VIRTUAL_ORGANIZATION_ID",
       "LOGICAL_LIBRARY",
       "LOGICAL_LIBRARY_ID",
       "MOUNT_POLICY",
@@ -262,6 +266,7 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "ADMIN_HOST",
       "STORAGE_CLASS",
       "TAPE_POOL",
+      "VIRTUAL_ORGANIZATION",
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
@@ -276,7 +281,8 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "ARCHIVE_FILE_ID_SEQ",
       "LOGICAL_LIBRARY_ID_SEQ",
       "STORAGE_CLASS_ID_SEQ",
-      "TAPE_POOL_ID_SEQ"
+      "TAPE_POOL_ID_SEQ",
+      "VIRTUAL_ORGANIZATION_ID_SEQ"
     };
     dropDatabaseSequences(conn, sequencesToDrop);
   } catch(exception::Exception &ex) {
@@ -305,6 +311,7 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "ADMIN_HOST",
       "STORAGE_CLASS",
       "TAPE_POOL",
+      "VIRTUAL_ORGANIZATION",
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY",
       "ACTIVITIES_WEIGHTS",
@@ -319,7 +326,9 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "ARCHIVE_FILE_ID_SEQ",
       "LOGICAL_LIBRARY_ID_SEQ",
       "STORAGE_CLASS_ID_SEQ",
-      "TAPE_POOL_ID_SEQ"};
+      "TAPE_POOL_ID_SEQ",
+      "VIRTUAL_ORGANIZATION_ID_SEQ"
+    };
     dropDatabaseSequences(conn, sequencesToDrop);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
