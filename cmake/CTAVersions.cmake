@@ -4,7 +4,7 @@ set(CTA_RELEASE 1)
 
 # Catalogue Schema Version
 set(CTA_CATALOGUE_SCHEMA_VERSION_MAJOR 1)
-set(CTA_CATALOGUE_SCHEMA_VERSION_MINOR 1)
+set(CTA_CATALOGUE_SCHEMA_VERSION_MINOR 2)
 
 # Shared object internal version (used in SONAME)
 set(CTA_SOVERSION 0)

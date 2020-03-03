@@ -97,6 +97,8 @@ target_link_libraries (ctacatalogue
   ctacommon
   ctardbms)
 
+include(${PROJECT_SOURCE_DIR}/cmake/CTAVersions.cmake)
+
 #Generate insert_cta_catalogue_version.sql
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_catalogue_version.sql.in insert_cta_catalogue_version.sql)
 
