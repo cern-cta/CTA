@@ -477,3 +477,7 @@ repackTapeRepair 4
 repackJustAddCopies 5
 repackCancellation 6
 # repackMoveAndAddCopies 7
+
+#Cleaning catalogue content
+
+echo 'yes' | kubectl -n ${NAMESPACE} exec ctafrontend -i /usr/bin/cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
