@@ -435,6 +435,58 @@ void RdbmsCatalogue::deleteVirtualOrganization(const std::string &voName){
 }
 
 //------------------------------------------------------------------------------
+// getVirtualOrganizations
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtualOrganizations() const {
+  try {
+    std::list<common::dataStructures::VirtualOrganization> virtualOrganizations;
+    const char *const sql =
+      "SELECT "
+        "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
+
+        "USER_COMMENT AS USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "VIRTUAL_ORGANIZATION "
+      "ORDER BY "
+        "VIRTUAL_ORGANIZATION_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    while (rset.next()) {
+      common::dataStructures::VirtualOrganization virtualOrganization;
+
+      virtualOrganization.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
+
+      virtualOrganization.comment = rset.columnString("USER_COMMENT");
+      virtualOrganization.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      virtualOrganization.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      virtualOrganization.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      virtualOrganization.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      virtualOrganization.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      virtualOrganization.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+      virtualOrganizations.push_back(virtualOrganization);
+    }
+
+    return virtualOrganizations;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createStorageClass(

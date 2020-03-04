@@ -123,6 +123,10 @@ public:
   void deleteVirtualOrganization(const std::string &voName) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteVirtualOrganization(voName);}, m_maxTriesToConnect);
   }
+  
+  std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getVirtualOrganizations();}, m_maxTriesToConnect);
+  }
     
   void createStorageClass(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::StorageClass &storageClass) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createStorageClass(admin, storageClass);}, m_maxTriesToConnect);

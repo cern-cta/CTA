@@ -19,6 +19,7 @@
 #pragma once
  
 #include <string>
+#include "EntryLog.hpp"
 
 namespace cta { 
 namespace common {
@@ -33,6 +34,15 @@ struct VirtualOrganization {
    * The comment.
    */
   std::string comment;
+  /**
+   * The creation log.
+   */
+  EntryLog creationLog;
+
+  /**
+   * The last modification log.
+   */
+  EntryLog lastModificationLog;
 };
 
 }}}

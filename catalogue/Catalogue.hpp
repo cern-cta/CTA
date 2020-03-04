@@ -240,6 +240,12 @@ public:
   virtual void deleteVirtualOrganization(const std::string &voName) = 0;
   
   /**
+   * Get all the Virtual Organizations from the Catalogue
+   * @return the list of all the Virtual Organizations
+   */
+  virtual std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const = 0;
+  
+  /**
    * Creates the specified storage class.
    *
    * @param admin The administrator.

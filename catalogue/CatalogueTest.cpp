@@ -180,6 +180,12 @@ void cta_catalogue_CatalogueTest::SetUp() {
         m_catalogue->deleteDiskSystem(ds.name);
       }
     }
+    {
+      const auto virtualOrganizations = m_catalogue->getVirtualOrganizations();
+      for(auto &vo: virtualOrganizations) {
+        m_catalogue->deleteVirtualOrganization(vo.name);
+      }
+    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -15347,6 +15353,32 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationNameDoesNotExist) {
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
   ASSERT_THROW(m_catalogue->deleteVirtualOrganization("DOES_NOT_EXIST"),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo;
+  vo.name = "vo";
+  vo.comment = "comment";
+  
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+  
+  std::list<common::dataStructures::VirtualOrganization> vos = m_catalogue->getVirtualOrganizations();
+  ASSERT_EQ(1,vos.size());
+  
+  auto &voRetrieved = vos.front();
+  ASSERT_EQ(vo.name,voRetrieved.name);
+  ASSERT_EQ(vo.comment,voRetrieved.comment);
+  ASSERT_EQ(m_admin.host,voRetrieved.creationLog.host);
+  ASSERT_EQ(m_admin.username,voRetrieved.creationLog.username);
+  ASSERT_EQ(m_admin.host,voRetrieved.lastModificationLog.host);
+  ASSERT_EQ(m_admin.username,voRetrieved.lastModificationLog.username);
+  
+  
+  ASSERT_NO_THROW(m_catalogue->deleteVirtualOrganization(vo.name));
+  vos = m_catalogue->getVirtualOrganizations();
+  ASSERT_EQ(0,vos.size());
 }
 
 } // namespace unitTests

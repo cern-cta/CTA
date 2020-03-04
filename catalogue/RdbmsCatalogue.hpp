@@ -224,6 +224,12 @@ public:
    * @param voName the name of the VirtualOrganization to delete
    */
   void deleteVirtualOrganization(const std::string &voName) override;
+  
+  /**
+   * Get all the Virtual Organizations from the Catalogue
+   * @return the list of all the Virtual Organizations
+   */
+  std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override;
 
   /**
    * Creates the specified storage class.
