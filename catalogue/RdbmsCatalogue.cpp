@@ -525,6 +525,40 @@ void RdbmsCatalogue::modifyVirtualOrganizationName(const common::dataStructures:
   }
 }
 
+void RdbmsCatalogue::modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity& admin, const std::string& voName, const std::string& comment) {
+try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE VIRTUAL_ORGANIZATION SET "
+        "USER_COMMENT = :USER_COMMENT,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    auto conn = m_connPool.getConn();
+   
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
+        " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
 //------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------

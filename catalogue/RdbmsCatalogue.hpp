@@ -238,7 +238,15 @@ public:
    * @param newVoName The new name of the Virtual Organization.
    */
   void modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName, const std::string &newVoName) override;
-
+  
+  /**
+   * Modifies the comment of the specified Virtual Organization
+   *
+   * @param voName The name of the Virtual Organization.
+   * @param comment The new comment of the Virtual Organization.
+   */
+  void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) override;
+  
   /**
    * Creates the specified storage class.
    *

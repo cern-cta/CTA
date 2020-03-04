@@ -15421,7 +15421,28 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationNameThatAlreadyExis
   vo.name = vo2Name;
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
-  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationName(m_admin,"vo","vo2"),cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationName(m_admin,voName,vo2Name),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationComment) {
+  using namespace cta;
+  
+  common::dataStructures::VirtualOrganization vo;
+  vo.name = "vo";
+  vo.comment = "comment";
+  
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+  
+  std::string newComment = "newComment";
+  
+  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationComment(m_admin,vo.name,newComment));
+  
+  auto vos = m_catalogue->getVirtualOrganizations();
+  auto &frontVo = vos.front();
+  
+  ASSERT_EQ(newComment,frontVo.comment);
+  
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationComment(m_admin,"DOES not exists","COMMENT_DOES_NOT_EXIST"),cta::exception::UserError);
 }
 
 } // namespace unitTests

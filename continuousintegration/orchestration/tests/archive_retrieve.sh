@@ -59,7 +59,4 @@ kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-# Cleaning catalogue content
-echo 'yes' | kubectl -n ${NAMESPACE} exec ctafrontend -i /usr/bin/cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
-
 exit 0
