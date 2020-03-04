@@ -246,6 +246,14 @@ public:
   virtual std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const = 0;
   
   /**
+   * Modifies the name of the specified Virtual Organization.
+   *
+   * @param currentVoName The current name of the Virtual Organization.
+   * @param newVoName The new name of the Virtual Organization.
+   */
+  virtual void modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName, const std::string &newVoName) = 0;
+  
+  /**
    * Creates the specified storage class.
    *
    * @param admin The administrator.

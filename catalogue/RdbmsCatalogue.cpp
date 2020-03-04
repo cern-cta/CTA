@@ -485,6 +485,45 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtua
   }
 }
 
+//------------------------------------------------------------------------------
+// modifyVirtualOrganizationName
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity& admin, const std::string& currentVoName, const std::string& newVoName) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE VIRTUAL_ORGANIZATION SET "
+        "VIRTUAL_ORGANIZATION_NAME = :NEW_VIRTUAL_ORGANIZATION_NAME,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :CURRENT_VIRTUAL_ORGANIZATION_NAME";
+    auto conn = m_connPool.getConn();
+    if(newVoName != currentVoName){
+      if(virtualOrganizationExists(conn,newVoName)){
+        throw exception::UserError(std::string("Cannot modify the virtual organization name ") + currentVoName +". The new name : " + newVoName+" already exists in the database.");
+      }
+    }
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":NEW_VIRTUAL_ORGANIZATION_NAME", newVoName);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":CURRENT_VIRTUAL_ORGANIZATION_NAME", currentVoName);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify virtual organization : ") + currentVoName +
+        " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
 //------------------------------------------------------------------------------
 // createStorageClass

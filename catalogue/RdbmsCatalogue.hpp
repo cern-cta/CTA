@@ -230,6 +230,14 @@ public:
    * @return the list of all the Virtual Organizations
    */
   std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override;
+  
+  /**
+   * Modifies the name of the specified Virtual Organization.
+   *
+   * @param currentVoName The current name of the Virtual Organization.
+   * @param newVoName The new name of the Virtual Organization.
+   */
+  void modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName, const std::string &newVoName) override;
 
   /**
    * Creates the specified storage class.
