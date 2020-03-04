@@ -396,6 +396,45 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
 }
 
 //------------------------------------------------------------------------------
+// deleteVirtualOrganization
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteVirtualOrganization(const std::string &voName){
+  try {
+    auto conn = m_connPool.getConn();
+
+    if(virtualOrganizationIsUsedByStorageClasses(conn, voName)) {
+      throw UserSpecifiedStorageClassUsedByArchiveRoutes(std::string("The ") + voName +
+        " Virtual Organization is being used by one or more storage classes");
+    }
+
+    if(virtualOrganizationIsUsedByTapepools(conn, voName)) {
+      throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The ") + voName +
+        " Virtual Organization is being used by one or more Tapepools");
+    }
+
+    const char *const sql =
+      "DELETE FROM "
+        "VIRTUAL_ORGANIZATION "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    auto stmt = conn.createStmt(sql);
+
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
+
+    stmt.executeNonQuery();
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot delete Virtual Organization : ") +
+        voName + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // createStorageClass
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createStorageClass(
@@ -590,6 +629,62 @@ bool RdbmsCatalogue::storageClassIsUsedByArchiveFiles(rdbms::Conn &conn, const s
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// virtualOrganizationIsUsedByStorageClasses
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::virtualOrganizationIsUsedByStorageClasses(rdbms::Conn &conn, const std::string &voName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME "
+      "FROM "
+        "VIRTUAL_ORGANIZATION "
+      "INNER JOIN "
+        "STORAGE_CLASS "
+      "ON "
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// virtualOrganizationIsUsedByTapepools
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::virtualOrganizationIsUsedByTapepools(rdbms::Conn &conn, const std::string &voName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME "
+      "FROM "
+        "VIRTUAL_ORGANIZATION "
+      "INNER JOIN "
+        "TAPE_POOL "
+      "ON "
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = TAPE_POOL.VIRTUAL_ORGANIZATION_ID "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
     auto rset = stmt.executeQuery();
     return rset.next();
   } catch(exception::UserError &) {

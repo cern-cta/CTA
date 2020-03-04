@@ -234,6 +234,12 @@ public:
   virtual void createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo) = 0;
   
   /**
+   * Deletes the specified Virtual Organization
+   * @param voName the name of the VirtualOrganization to delete
+   */
+  virtual void deleteVirtualOrganization(const std::string &voName) = 0;
+  
+  /**
    * Creates the specified storage class.
    *
    * @param admin The administrator.
@@ -247,7 +253,7 @@ public:
    * Deletes the specified storage class.
    *
    * @param storageClassName The name of the storage class which is only
-   * guaranteed to be unique within its disk isntance.
+   * guaranteed to be unique within its disk instance.
    */
   virtual void deleteStorageClass(const std::string &storageClassName) = 0;
 

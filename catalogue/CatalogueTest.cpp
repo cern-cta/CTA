@@ -15325,4 +15325,28 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyName) {
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganization) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo;
+  vo.name = "vo";
+  vo.comment = "comment";
+  
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+  
+  ASSERT_NO_THROW(m_catalogue->deleteVirtualOrganization(vo.name));
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationNameDoesNotExist) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo;
+  vo.name = "vo";
+  vo.comment = "comment";
+  
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+  
+  ASSERT_THROW(m_catalogue->deleteVirtualOrganization("DOES_NOT_EXIST"),cta::exception::UserError);
+}
+
 } // namespace unitTests

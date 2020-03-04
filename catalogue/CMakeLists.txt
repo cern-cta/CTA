@@ -83,7 +83,10 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedStorageClassUsedByArchiveFiles.cpp
   UserSpecifiedStorageClassUsedByArchiveRoutes.cpp
   UserSpecifiedAZeroCapacity.cpp
-  UserSpecifiedAZeroCopyNb.cpp)
+  UserSpecifiedAZeroCopyNb.cpp
+  UserSpecifiedVirtualOrganizationUsedByTapepools.cpp
+  UserSpecifiedVirtualOrganizationUsedByStorageClasses.cpp
+)
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})

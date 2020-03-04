@@ -218,6 +218,12 @@ public:
    * @param vo the Virtual Organization
    */
   void createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo) override;
+  
+  /**
+   * Deletes the specified Virtual Organization
+   * @param voName the name of the VirtualOrganization to delete
+   */
+  void deleteVirtualOrganization(const std::string &voName) override;
 
   /**
    * Creates the specified storage class.
@@ -1551,6 +1557,24 @@ protected:
    * @param storageClassName The name of the storage class.
    */
   bool storageClassIsUsedByArchiveFiles(rdbms::Conn &conn, const std::string &storageClassName) const;
+  
+  /**
+   * Returns true if the specified Virtual Organization is currently being used by one
+   * or more StorageClasses
+   *
+   * @param conn The database connection.
+   * @param voName The name of the Virtual Organization.
+   */
+  bool virtualOrganizationIsUsedByStorageClasses(rdbms::Conn &conn, const std::string &voName) const;
+  
+  /**
+   * Returns true if the specified Virtual Organization is currently being used by one
+   * or more Tapepools
+   *
+   * @param conn The database connection.
+   * @param voName The name of the Virtual Organization.
+   */
+  bool virtualOrganizationIsUsedByTapepools(rdbms::Conn &conn, const std::string &voName) const;
 
   /**
    * Returns the ID of the specified logical library or nullopt if the logical
