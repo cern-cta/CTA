@@ -15286,4 +15286,43 @@ TEST_P(cta_catalogue_CatalogueTest, getSchemaVersion) {
   ASSERT_EQ((uint64_t)CTA_CATALOGUE_SCHEMA_VERSION_MINOR,schemaDbVersion.getSchemaVersion<catalogue::SchemaVersion::MajorMinor>().second);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganization) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo;
+  vo.name = "VO";
+  vo.comment = "Comment";
+  
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationAlreadyExists) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo;
+  vo.name = "VO";
+  vo.comment = "Comment";
+  
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+  ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyComment) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo;
+  vo.name = "VO";
+  
+  ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyName) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo;
+  vo.comment = "comment";
+  
+  ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
+}
+
 } // namespace unitTests

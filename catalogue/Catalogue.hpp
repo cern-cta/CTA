@@ -53,6 +53,7 @@
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
+#include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "disk/DiskSystem.hpp"
@@ -225,6 +226,13 @@ public:
   virtual std::list<common::dataStructures::AdminUser> getAdminUsers() const = 0;
   virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) = 0;
 
+  /**
+   * Creates the specified Virtual Organization
+   * @param admin The administrator.
+   * @param vo the Virtual Organization
+   */
+  virtual void createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo) = 0;
+  
   /**
    * Creates the specified storage class.
    *

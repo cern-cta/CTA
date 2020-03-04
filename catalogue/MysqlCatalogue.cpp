@@ -138,6 +138,48 @@ uint64_t MysqlCatalogue::getNextLogicalLibraryId(rdbms::Conn &conn) {
 }
 
 //------------------------------------------------------------------------------
+// getNextVirtualOrganizationId
+//------------------------------------------------------------------------------
+uint64_t MysqlCatalogue::getNextVirtualOrganizationId(rdbms::Conn& conn) {
+  try {
+    rdbms::AutoRollback autoRollback(conn);
+
+    conn.executeNonQuery("START TRANSACTION");
+
+    {
+      const char *const sql =
+        "UPDATE VIRTUAL_ORGANIZATION_ID SET ID = LAST_INSERT_ID(ID + 1)";
+      auto stmt = conn.createStmt(sql);
+      stmt.executeNonQuery();
+    }
+
+    uint64_t virtualOrganizationId = 0;
+    {
+      const char *const sql =
+        "SELECT LAST_INSERT_ID() AS ID ";
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery();
+      if(!rset.next()) {
+        throw exception::Exception("VIRTUAL_ORGANIZATION_ID table is empty");
+      }
+      virtualOrganizationId = rset.columnUint64("ID");
+      if(rset.next()) {
+        throw exception::Exception("Found more than one ID counter in the VIRTUAL_ORGANIZATION_ID table");
+      }
+    }
+    conn.commit();
+
+    return virtualOrganizationId;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // getNextStorageClassId
 //------------------------------------------------------------------------------
 uint64_t MysqlCatalogue::getNextStorageClassId(rdbms::Conn &conn) {

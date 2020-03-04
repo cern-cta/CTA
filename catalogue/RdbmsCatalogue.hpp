@@ -211,6 +211,13 @@ public:
   void deleteAdminUser(const std::string &username) override;
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override;
   void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) override;
+  
+  /**
+   * Creates the specified Virtual Organization
+   * @param admin The administrator.
+   * @param vo the Virtual Organization
+   */
+  void createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo) override;
 
   /**
    * Creates the specified storage class.
@@ -803,6 +810,14 @@ protected:
   bool adminUserExists(rdbms::Conn &conn, const std::string adminUsername) const;
 
   /**
+   * Returns true if the specified vo exists.
+   *
+   * @param conn The database connection.
+   * @param voName The name of the vo
+   * @return True if the vo exists, false otherwise
+   */
+  bool virtualOrganizationExists(rdbms::Conn &conn, const std::string &voName) const;
+  /**
    * Returns true if the specified storage class exists.
    *
    * @param conn The database connection.
@@ -1388,6 +1403,20 @@ protected:
    */
   virtual uint64_t getNextLogicalLibraryId(rdbms::Conn &conn) = 0;
 
+  /**
+   * Returns a unique virtual organization ID that can be used by a new Virtual Organization
+   * within the catalogue.
+   * 
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   * 
+   * @param conn The database connection
+   * @return a unique virtual organization ID that can be used by a new Virtual Organization
+   * within the catalogue.
+   */
+  virtual uint64_t getNextVirtualOrganizationId(rdbms::Conn &conn) = 0;
+  
   /**
    * Returns a unique storage class ID that can be used by a new storage class
    * within the catalogue.

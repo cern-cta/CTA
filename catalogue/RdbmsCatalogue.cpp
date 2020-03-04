@@ -187,6 +187,30 @@ bool RdbmsCatalogue::adminUserExists(rdbms::Conn &conn, const std::string adminU
 }
 
 //------------------------------------------------------------------------------
+// virtualOrganizationExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::virtualOrganizationExists(rdbms::Conn &conn, const std::string &voName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME "
+      "FROM "
+        "VIRTUAL_ORGANIZATION "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // deleteAdminUser
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteAdminUser(const std::string &username) {
@@ -293,6 +317,76 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify admin user ") + username + " because they do not exist");
     }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createVirtualOrganization
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo){
+  try{
+    if(vo.name.empty()){
+      throw UserSpecifiedAnEmptyStringVo("Cannot create virtual organization because the name is an empty string");
+    }
+    if(vo.comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment("Cannot create virtual organization because the comment is an empty string");
+    }
+    auto conn = m_connPool.getConn();
+    if(virtualOrganizationExists(conn, vo.name)) {
+      throw exception::UserError(std::string("Cannot create vo : ") +
+        vo.name + " because it already exists");
+    }
+    const uint64_t virtualOrganizationId = getNextVirtualOrganizationId(conn);
+    const time_t now = time(nullptr);
+    const char *const sql = 
+    "INSERT INTO VIRTUAL_ORGANIZATION("
+        "VIRTUAL_ORGANIZATION_ID,"
+        "VIRTUAL_ORGANIZATION_NAME,"
+
+        "USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME)"
+      "VALUES("
+        ":VIRTUAL_ORGANIZATION_ID,"
+        ":VIRTUAL_ORGANIZATION_NAME,"
+
+        ":USER_COMMENT,"
+
+        ":CREATION_LOG_USER_NAME,"
+        ":CREATION_LOG_HOST_NAME,"
+        ":CREATION_LOG_TIME,"
+
+        ":LAST_UPDATE_USER_NAME,"
+        ":LAST_UPDATE_HOST_NAME,"
+        ":LAST_UPDATE_TIME)";
+    auto stmt = conn.createStmt(sql);
+    
+    stmt.bindUint64(":VIRTUAL_ORGANIZATION_ID", virtualOrganizationId);
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", vo.name);
+
+    stmt.bindString(":USER_COMMENT", vo.comment);
+
+    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
+    stmt.bindUint64(":CREATION_LOG_TIME", now);
+
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+
+    stmt.executeNonQuery();
+    
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

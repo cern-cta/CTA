@@ -203,6 +203,31 @@ uint64_t OracleCatalogue::getNextLogicalLibraryId(rdbms::Conn &conn) {
 }
 
 //------------------------------------------------------------------------------
+// getNextVirtualOrganizationId
+//------------------------------------------------------------------------------
+uint64_t OracleCatalogue::getNextVirtualOrganizationId(rdbms::Conn &conn) {
+  try {
+    const char *const sql =
+      "SELECT "
+        "VIRTUAL_ORGANIZATION_ID_SEQ.NEXTVAL AS VIRTUAL_ORGANIZATION_ID "
+      "FROM "
+        "DUAL";
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    if (!rset.next()) {
+      throw exception::Exception(std::string("Result set is unexpectedly empty"));
+    }
+
+    return rset.columnUint64("VIRTUAL_ORGANIZATION_ID");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getNextStorageClassId
 //------------------------------------------------------------------------------
 uint64_t OracleCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
