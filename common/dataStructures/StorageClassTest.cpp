@@ -100,12 +100,6 @@ TEST_F(cta_common_dataStructures_StorageClassTest, equality_different_objects_di
   ASSERT_EQ(m_storageClass1DiskInstance1, m_storageClass1DiskInstance1EffectiveCopy);
 }
 
-TEST_F(cta_common_dataStructures_StorageClassTest, inequality_different_disk_instance) {
-  using namespace cta::common::dataStructures;
-
-  ASSERT_NE(m_storageClass1DiskInstance1, m_storageClass1DiskInstance2);
-}
-
 TEST_F(cta_common_dataStructures_StorageClassTest, inequality_different_name) {
   using namespace cta::common::dataStructures;
 

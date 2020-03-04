@@ -34,7 +34,7 @@ StorageClass::StorageClass():
 // operator==
 //------------------------------------------------------------------------------
 bool StorageClass::operator==(const StorageClass &rhs) const {
-  return diskInstance==rhs.diskInstance && name==rhs.name;
+  return name==rhs.name;
 }
 
 //------------------------------------------------------------------------------

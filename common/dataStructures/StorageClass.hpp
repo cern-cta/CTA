@@ -47,9 +47,9 @@ struct StorageClass {
    * this one.
    *
    * Please note that two StorageClass objects are considered equal if and only
-   * if both their diskInstance and name member-variables match, i.e.
+   * if their name member-variables match, i.e.
    *
-   *    diskInstance==rhs.diskInstance && name==rhs.name;
+   *    name==rhs.name;
    *
    * All other member-variables are intentionally ignored by this equality
    * operator.
