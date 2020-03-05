@@ -17,6 +17,7 @@
  */
 
 #include "catalogue/TapePool.hpp"
+#include "common/dataStructures/VirtualOrganization.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -52,7 +53,7 @@ bool TapePool::operator!=(const TapePool &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
   os << "(name=" << obj.name
-     << " vo=" << obj.vo
+     << " vo=" << obj.vo.name
      << " nbPartialTapes=" << obj.nbPartialTapes
      << " encryption=" << obj.encryption
      << " nbTapes=" << obj.nbTapes

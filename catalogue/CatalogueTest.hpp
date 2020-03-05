@@ -95,6 +95,8 @@ protected:
    */
   std::map<std::string, cta::catalogue::TapePool> tapePoolListToMap(
     const std::list<cta::catalogue::TapePool> &listOfTapePools);
+  
+  void createVo(const std::string &voName);
 }; // cta_catalogue_CatalogueTest
 
 } // namespace unitTests

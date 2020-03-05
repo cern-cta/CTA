@@ -100,6 +100,10 @@ echo "Preparing CTA configuration for tests"
       --name ${TAPEDRIVES_IN_USE[${i}]}                                            \
       --comment "ctasystest library mapped to drive ${TAPEDRIVES_IN_USE[${i}]}"
   done
+
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add  \
+    --vo vo                                                                          \
+    --comment "vo"                                                                   
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add       \
     --name ctasystest                                                 \
     --vo vo                                                           \

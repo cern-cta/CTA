@@ -217,10 +217,13 @@ public:
 
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
-    const std::string vo = "vo";
+    cta::common::dataStructures::VirtualOrganization vo;
+    vo.name = "vo";
+    vo.comment = "comment";
+    m_catalogue->createVirtualOrganization(s_adminOnAdminHost,vo);
     const bool tapePoolEncryption = false;
     const cta::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
-    catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo, nbPartialTapes, tapePoolEncryption, tapePoolSupply,
+    catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes, tapePoolEncryption, tapePoolSupply,
       tapePoolComment);
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
@@ -3412,7 +3415,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   std::string tapepool2Name = "tapepool2";
   const cta::optional<std::string> supply;
   catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
-  
+
   std::string tapepool3Name = "tapepool3";
   catalogue.createTapePool(admin,tapepool3Name,"vo",1,false,supply,"comment"); 
   

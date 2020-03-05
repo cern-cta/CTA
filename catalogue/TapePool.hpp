@@ -24,6 +24,7 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/optional.hpp"
+#include "common/dataStructures/VirtualOrganization.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -62,7 +63,7 @@ struct TapePool {
   /**
    * The virtual organisation of the tape pool.
    */
-  std::string vo;
+  common::dataStructures::VirtualOrganization vo;
 
   /**
    * The desired number of tapes that should be empty or partially filled.

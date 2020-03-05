@@ -74,7 +74,7 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto  tp_item = record.mutable_tpls_item();
 
     tp_item->set_name(tp.name);
-    tp_item->set_vo(tp.vo);
+    tp_item->set_vo(tp.vo.name);
     tp_item->set_num_tapes(tp.nbTapes);
     tp_item->set_num_partial_tapes(tp.nbPartialTapes);
     tp_item->set_num_physical_files(tp.nbPhysicalFiles);

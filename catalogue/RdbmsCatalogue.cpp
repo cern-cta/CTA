@@ -403,13 +403,13 @@ void RdbmsCatalogue::deleteVirtualOrganization(const std::string &voName){
     auto conn = m_connPool.getConn();
 
     if(virtualOrganizationIsUsedByStorageClasses(conn, voName)) {
-      throw UserSpecifiedStorageClassUsedByArchiveRoutes(std::string("The ") + voName +
-        " Virtual Organization is being used by one or more storage classes");
+      throw UserSpecifiedStorageClassUsedByArchiveRoutes(std::string("The Virtual Organization ") + voName +
+        " is being used by one or more storage classes");
     }
 
     if(virtualOrganizationIsUsedByTapepools(conn, voName)) {
-      throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The ") + voName +
-        " Virtual Organization is being used by one or more Tapepools");
+      throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The Virtual Organization ") + voName +
+        " is being used by one or more Tapepools");
     }
 
     const char *const sql =
@@ -1017,13 +1017,17 @@ void RdbmsCatalogue::createTapePool(
       throw exception::UserError(std::string("Cannot create tape pool ") + name +
         " because a tape pool with the same name already exists");
     }
+    if(!virtualOrganizationExists(conn,vo)){
+      throw exception::UserError(std::string("Cannot create tape pool ") + name + \
+        " because vo : "+vo+" does not exist.");
+    }
     const uint64_t tapePoolId = getNextTapePoolId(conn);
     const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO TAPE_POOL("
         "TAPE_POOL_ID,"
         "TAPE_POOL_NAME,"
-        "VO,"
+        "VIRTUAL_ORGANIZATION_ID,"
         "NB_PARTIAL_TAPES,"
         "IS_ENCRYPTED,"
         "SUPPLY,"
@@ -1037,10 +1041,10 @@ void RdbmsCatalogue::createTapePool(
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
-      "VALUES("
+      "SELECT "
         ":TAPE_POOL_ID,"
         ":TAPE_POOL_NAME,"
-        ":VO,"
+        "VIRTUAL_ORGANIZATION_ID,"
         ":NB_PARTIAL_TAPES,"
         ":IS_ENCRYPTED,"
         ":SUPPLY,"
@@ -1053,7 +1057,11 @@ void RdbmsCatalogue::createTapePool(
 
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
-        ":LAST_UPDATE_TIME)";
+        ":LAST_UPDATE_TIME "
+      "FROM "
+        "VIRTUAL_ORGANIZATION "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :VO";
     auto stmt = conn.createStmt(sql);
 
     stmt.bindUint64(":TAPE_POOL_ID", tapePoolId);
@@ -1324,7 +1332,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
     const char *const sql =
       "SELECT "
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "COALESCE(TAPE_POOL.VO, 'NONE') AS VO," // TBD Remove COALESCE
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
         "TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
         "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
         "TAPE_POOL.SUPPLY AS SUPPLY,"
@@ -1345,11 +1353,13 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
         "TAPE_POOL "
+      "INNER JOIN VIRTUAL_ORGANIZATION ON "
+        "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
       "LEFT OUTER JOIN TAPE ON "
         "TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID "
       "GROUP BY "
         "TAPE_POOL.TAPE_POOL_NAME,"
-        "TAPE_POOL.VO,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,"
         "TAPE_POOL.NB_PARTIAL_TAPES,"
         "TAPE_POOL.IS_ENCRYPTED,"
         "TAPE_POOL.SUPPLY,"
@@ -1370,7 +1380,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       TapePool pool;
 
       pool.name = rset.columnString("TAPE_POOL_NAME");
-      pool.vo = rset.columnString("VO");
+      pool.vo.name = rset.columnString("VO");
       pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
       pool.encryption = rset.columnBool("IS_ENCRYPTED");
       pool.supply = rset.columnOptionalString("SUPPLY");
@@ -1416,13 +1426,18 @@ void RdbmsCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIden
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE_POOL SET "
-        "VO = :VO,"
+        "VIRTUAL_ORGANIZATION_ID = (SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME=:VO),"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
       "WHERE "
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
+    
+    if(!virtualOrganizationExists(conn,vo)){
+      throw exception::UserError(std::string("Cannot modify tape pool ") + name +" because the vo " + vo + " does not exist");
+    }
+    
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VO", vo);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -2644,7 +2659,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "TAPE_POOL.VO AS VO,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
         "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
@@ -2682,7 +2697,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
-        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID";
+        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "INNER JOIN VIRTUAL_ORGANIZATION ON "
+        "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID";
 
     if(searchCriteria.vid ||
        searchCriteria.mediaType ||
@@ -2726,7 +2743,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     }
     if(searchCriteria.vo) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " TAPE_POOL.VO = :VO";
+      sql += " VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VO";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.capacityInBytes) {
@@ -2860,7 +2877,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         "TAPE.VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "TAPE_POOL.VO AS VO,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
         "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
@@ -2896,7 +2913,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
-        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID";
+        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "INNER JOIN VIRTUAL_ORGANIZATION ON "
+        "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID";
 
     if(!vids.empty()) {
       sql += " WHERE ";
@@ -2988,7 +3007,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
         "TAPE.VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "TAPE_POOL.VO AS VO,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
         "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
@@ -3024,7 +3043,9 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
-        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID";
+        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "INNER JOIN VIRTUAL_ORGANIZATION ON "
+        "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID";
 
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
@@ -6692,7 +6713,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "TAPE.VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "TAPE_POOL.VO AS VO,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
         "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ "
@@ -6702,6 +6723,8 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
         "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "INNER JOIN VIRTUAL_ORGANIZATION ON "
+        "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
       "WHERE "
 //      "TAPE.LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
 //      "TAPE.LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled

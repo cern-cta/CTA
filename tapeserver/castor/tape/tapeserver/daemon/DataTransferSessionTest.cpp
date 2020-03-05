@@ -297,10 +297,14 @@ public:
 
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
-    const std::string vo = "vo";
+    cta::common::dataStructures::VirtualOrganization vo;
+    vo.name = "vo";
+    vo.comment = "comment";
+    catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
     const bool tapePoolEncryption = false;
     const cta::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
-    ASSERT_NO_THROW(catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo, nbPartialTapes, tapePoolEncryption,
+    
+    ASSERT_NO_THROW(catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes, tapePoolEncryption,
       tapePoolSupply, tapePoolComment));
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
