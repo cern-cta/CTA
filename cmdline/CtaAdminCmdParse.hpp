@@ -214,7 +214,9 @@ const cmdLookup_t cmdLookup = {
    { "tapepool",                AdminCmd::CMD_TAPEPOOL },
    { "tp",                      AdminCmd::CMD_TAPEPOOL },
    { "disksystem",              AdminCmd::CMD_DISKSYSTEM },
-   { "ds",                      AdminCmd::CMD_DISKSYSTEM }
+   { "ds",                      AdminCmd::CMD_DISKSYSTEM },
+   { "virtualorganization",     AdminCmd::CMD_VIRTUALORGANIZATION },
+   { "vo",                      AdminCmd::CMD_VIRTUALORGANIZATION }
 };
 
 
@@ -392,6 +394,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 			    "   If the targeted free space is reach, the queue will sleep during this amount of seconds."
 			    "\n\n"
 					 }},
+   { AdminCmd::CMD_VIRTUALORGANIZATION,  { "virtualorganization",   "vo",  { "add", "ch", "rm", "ls" } }},
 };
 
 
@@ -597,6 +600,14 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_targeted_free_space.optional(), opt_sleep_time.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_RM    }, { opt_disksystem }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_LS    }, { }},
+   {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
+      { opt_vo, opt_comment }},
+   {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },
+      { opt_vo, opt_comment }},
+   {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_RM   },
+      { opt_vo }},
+   {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },
+      { }},
 };
 
 

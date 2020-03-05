@@ -38,6 +38,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaStorageClassLs.hpp"
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdCtaDiskSystemLs.hpp"
+#include "XrdCtaVirtualOrganizationLs.hpp"
 
 namespace cta {
 namespace xrd {
@@ -246,8 +247,19 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                break;  
             case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH):
                processDiskSystem_Ch(response);
-               break;  
-               
+               break;
+           case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_ADD):
+               processVirtualOrganization_Add(response);
+               break;
+           case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_CH):
+               processVirtualOrganization_Ch(response);
+               break;
+           case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_RM):
+               processVirtualOrganization_Rm(response);
+               break;
+           case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION,AdminCmd::SUBCMD_LS):
+               processVirtualOrganization_Ls(response, stream);
+               break;
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -1660,6 +1672,53 @@ void RequestMessage::processDiskSystem_Rm(cta::xrd::Response &response)
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
+
+void RequestMessage::processVirtualOrganization_Add(cta::xrd::Response &response){
+  using namespace cta::admin;
+
+  const auto &name = getRequired(OptionString::VO);
+  const auto &comment = getRequired(OptionString::COMMENT);
+  
+  cta::common::dataStructures::VirtualOrganization vo;
+  vo.name = name;
+  vo.comment = comment;
+  
+  m_catalogue.createVirtualOrganization(m_cliIdentity,vo);
+  
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response){
+  using namespace cta::admin;
+
+  const auto &name = getRequired(OptionString::VO);
+  const auto &comment = getRequired(OptionString::COMMENT);
+  
+  m_catalogue.modifyVirtualOrganizationComment(m_cliIdentity,name,comment);
+  
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processVirtualOrganization_Rm(cta::xrd::Response& response) {
+  using namespace cta::admin;
+  
+  const auto &name = getRequired(OptionString::VO);
+  
+  m_catalogue.deleteVirtualOrganization(name);
+  
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processVirtualOrganization_Ls(cta::xrd::Response &response, XrdSsiStream * & stream){
+  using namespace cta::admin;
+
+  // Create a XrdSsi stream object to return the results
+  stream = new VirtualOrganizationLsStream(*this, m_catalogue, m_scheduler);
+
+  response.set_show_header(HeaderType::VIRTUALORGANIZATION_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
 
 std::string RequestMessage::setDriveState(const std::string &regex, DriveState drive_state)
 {

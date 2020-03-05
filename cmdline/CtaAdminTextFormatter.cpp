@@ -992,4 +992,31 @@ void TextFormatter::print(const DiskSystemLsItem &dsls_item)
   );
 }
 
+void TextFormatter::printVirtualOrganizationLsHeader(){
+  push_back("HEADER");
+  push_back(
+    "name",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const VirtualOrganizationLsItem& vols_item){
+  push_back(
+    vols_item.name(),
+    vols_item.creation_log().username(),
+    vols_item.creation_log().host(),
+    timeToStr(vols_item.creation_log().time()),
+    vols_item.last_modification_log().username(),
+    vols_item.last_modification_log().host(),
+    timeToStr(vols_item.last_modification_log().time()),
+    vols_item.comment()
+  );
+}
+
 }}
