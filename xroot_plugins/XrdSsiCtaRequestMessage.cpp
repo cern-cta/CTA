@@ -1326,6 +1326,7 @@ void RequestMessage::processStorageClass_Add(cta::xrd::Response &response)
    storageClass.name         = getRequired(OptionString::STORAGE_CLASS);
    storageClass.nbCopies     = getRequired(OptionUInt64::COPY_NUMBER);
    storageClass.comment      = getRequired(OptionString::COMMENT);
+   storageClass.vo.name      = getRequired(OptionString::VO);
 
    m_catalogue.createStorageClass(m_cliIdentity, storageClass);
 
@@ -1341,12 +1342,16 @@ void RequestMessage::processStorageClass_Ch(cta::xrd::Response &response)
    auto &scn     = getRequired(OptionString::STORAGE_CLASS);
    auto  comment = getOptional(OptionString::COMMENT);
    auto  cn      = getOptional(OptionUInt64::COPY_NUMBER);
+   auto vo       = getOptional(OptionString::VO);
 
    if(comment) {
       m_catalogue.modifyStorageClassComment(m_cliIdentity, scn, comment.value());
    }
    if(cn) {
       m_catalogue.modifyStorageClassNbCopies(m_cliIdentity, scn, cn.value());
+   }
+   if(vo){
+     m_catalogue.modifyStorageClassVo(m_cliIdentity,scn,vo.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

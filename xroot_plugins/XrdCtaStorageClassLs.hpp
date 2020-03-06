@@ -76,6 +76,7 @@ int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     sc_item->set_disk_instance(sc.diskInstance);
     sc_item->set_name(sc.name);
     sc_item->set_nb_copies(sc.nbCopies);
+    sc_item->set_vo(sc.vo.name);
     sc_item->mutable_creation_log()->set_username(sc.creationLog.username);
     sc_item->mutable_creation_log()->set_host(sc.creationLog.host);
     sc_item->mutable_creation_log()->set_time(sc.creationLog.time);

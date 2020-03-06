@@ -560,10 +560,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_SHOWQUEUES,           AdminCmd::SUBCMD_NONE  }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_ADD   },
-      { opt_instance, opt_storageclass_alias, opt_copynb, opt_comment }},
+      { opt_instance, opt_storageclass_alias, opt_copynb, opt_vo ,opt_comment }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_CH    },
-      { opt_instance, opt_storageclass_alias, opt_copynb.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_RM    }, { opt_instance, opt_storageclass_alias }},
+      { opt_storageclass_alias, opt_copynb.optional(), opt_vo.optional(), opt_comment.optional() }},
+   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_RM    }, { opt_storageclass_alias }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_ADD   },

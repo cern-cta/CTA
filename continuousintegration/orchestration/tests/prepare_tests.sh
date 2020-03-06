@@ -130,6 +130,7 @@ echo "Preparing CTA configuration for tests"
     --instance ${EOSINSTANCE}                                            \
     --name ctaStorageClass                                            \
     --copynb 1                                                        \
+    --vo vo                                                           \
     --comment "ctasystest"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add   \
     --instance ${EOSINSTANCE}                                         \

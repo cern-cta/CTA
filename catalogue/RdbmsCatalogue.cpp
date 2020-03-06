@@ -579,11 +579,21 @@ void RdbmsCatalogue::createStorageClass(
     if(storageClass.comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create storage class because the comment is an empty string");
     }
+    
+    std::string vo = storageClass.vo.name;
+    
+    if(vo.empty()) {
+      throw UserSpecifiedAnEmptyStringVo("Cannot create storage class because the vo is an empty string");
+    }
 
     auto conn = m_connPool.getConn();
     if(storageClassExists(conn, storageClass.name)) {
       throw exception::UserError(std::string("Cannot create storage class : ") +
         storageClass.name + " because it already exists");
+    }
+    if(!virtualOrganizationExists(conn,vo)){
+      throw exception::UserError(std::string("Cannot create storage class : ") +
+        storageClass.name + " because the vo : " + vo + " does not exist");
     }
     const uint64_t storageClassId = getNextStorageClassId(conn);
     const time_t now = time(nullptr);
@@ -593,6 +603,7 @@ void RdbmsCatalogue::createStorageClass(
         "DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME,"
         "NB_COPIES,"
+        "VIRTUAL_ORGANIZATION_ID,"
 
         "USER_COMMENT,"
 
@@ -608,6 +619,7 @@ void RdbmsCatalogue::createStorageClass(
         ":DISK_INSTANCE_NAME,"
         ":STORAGE_CLASS_NAME,"
         ":NB_COPIES,"
+        "(SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME = :VO),"
 
         ":USER_COMMENT,"
 
@@ -624,7 +636,8 @@ void RdbmsCatalogue::createStorageClass(
     stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstance);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.name);
     stmt.bindUint64(":NB_COPIES", storageClass.nbCopies);
-
+    stmt.bindString(":VO",vo);
+    
     stmt.bindString(":USER_COMMENT", storageClass.comment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
@@ -831,18 +844,21 @@ std::list<common::dataStructures::StorageClass> RdbmsCatalogue::getStorageClasse
         "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "NB_COPIES AS NB_COPIES,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "STORAGE_CLASS.USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "STORAGE_CLASS.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "STORAGE_CLASS.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "STORAGE_CLASS.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "STORAGE_CLASS.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "STORAGE_CLASS.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "STORAGE_CLASS.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
         "STORAGE_CLASS "
+      "INNER JOIN "
+        "VIRTUAL_ORGANIZATION ON STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
       "ORDER BY "
         "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
@@ -854,6 +870,7 @@ std::list<common::dataStructures::StorageClass> RdbmsCatalogue::getStorageClasse
       storageClass.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
       storageClass.name = rset.columnString("STORAGE_CLASS_NAME");
       storageClass.nbCopies = rset.columnUint64("NB_COPIES");
+      storageClass.vo.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
       storageClass.comment = rset.columnString("USER_COMMENT");
       storageClass.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       storageClass.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -928,6 +945,45 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":STORAGE_CLASS_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify storage class : ") + name +
+        " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo){
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE STORAGE_CLASS SET "
+        "VIRTUAL_ORGANIZATION_ID = (SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME = :VO),"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+    auto conn = m_connPool.getConn();
+    if(vo.empty()){
+      throw UserSpecifiedAnEmptyStringVo(std::string("Cannot modify the vo of the storage class : ") + name + " because the vo is an empty string");
+    }
+    if(!virtualOrganizationExists(conn,vo)){
+      throw exception::UserError(std::string("Cannot modify storage class : ") + name +
+        " because the vo " + vo + " does not exist");
+    }
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VO", vo);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

@@ -24,6 +24,7 @@
 #include <string>
 
 #include "common/dataStructures/EntryLog.hpp"
+#include "VirtualOrganization.hpp"
 
 namespace cta {
 namespace common {
@@ -72,9 +73,6 @@ struct StorageClass {
 
   /**
    * The name of the disk instance to which the storage class belongs.
-   *
-   * Please note that the name of a storage class is only gauranteed to be
-   * unique within its disk instance.
    */
   std::string diskInstance;
 
@@ -90,6 +88,11 @@ struct StorageClass {
    * The number of copies on tape.
    */
   uint64_t nbCopies;
+  
+  /**
+   * The virtual organization to which this storage class belongs
+   */
+  VirtualOrganization vo;
 
   /**
    * The creation log.

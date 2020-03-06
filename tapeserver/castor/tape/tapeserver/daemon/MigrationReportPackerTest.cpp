@@ -143,6 +143,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     storageClass.diskInstance = "disk_instance";
     storageClass.name = "storage_class";
     storageClass.nbCopies = 1;
+    storageClass.vo.name = vo.name;
     storageClass.comment = "Create storage class";
     m_catalogue->createStorageClass(admin, storageClass);
 
@@ -295,6 +296,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     storageClass.diskInstance = "disk_instance";
     storageClass.name = "storage_class";
     storageClass.nbCopies = 1;
+    storageClass.vo.name = vo.name;
     storageClass.comment = "Create storage class";
     m_catalogue->createStorageClass(admin, storageClass);
 

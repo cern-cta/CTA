@@ -268,7 +268,7 @@ public:
   std::list<common::dataStructures::StorageClass> getStorageClasses() const override;
   void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) override;
   void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
-
+  void modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) override;
   /**
    * Modifies the name of the specified storage class.
    *
@@ -1193,7 +1193,6 @@ protected:
 
     /**
      * The name of the storage class which is only guaranteed to be unique
-     * within its disk instance.
      */
     std::string storageClassName;
 

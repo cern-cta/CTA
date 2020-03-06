@@ -288,19 +288,21 @@ public:
     ASSERT_EQ(s_adminOnAdminHost.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
+    cta::common::dataStructures::VirtualOrganization vo;
+    vo.name = "vo";
+    vo.comment = "comment";
+    catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
+    
     common::dataStructures::StorageClass storageClass;
     storageClass.diskInstance = s_diskInstance;
     storageClass.name = s_storageClassName;
     storageClass.nbCopies = 1;
+    storageClass.vo.name = vo.name;
     storageClass.comment = "create storage class";
     m_catalogue->createStorageClass(s_adminOnAdminHost, storageClass);
 
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
-    cta::common::dataStructures::VirtualOrganization vo;
-    vo.name = "vo";
-    vo.comment = "comment";
-    catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
     const bool tapePoolEncryption = false;
     const cta::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
     

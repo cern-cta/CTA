@@ -549,6 +549,8 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::list<common::dataStructures::StorageClass> storageClasses =
@@ -560,7 +562,8 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
   ASSERT_EQ(storageClass.name, storageClasses.front().name);
   ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
   ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
-
+  ASSERT_EQ(storageClass.vo.name, storageClasses.front().vo.name);
+  
   const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
@@ -577,6 +580,8 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_twice) {
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   m_catalogue->createStorageClass(m_admin, storageClass);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass), exception::UserError);
 }
@@ -591,6 +596,8 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringDiskInstanceNa
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass),
     catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
 }
@@ -605,6 +612,8 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringStorageClassNa
   storageClass.name = "";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass),
     catalogue::UserSpecifiedAnEmptyStringStorageClassName);
 }
@@ -619,8 +628,40 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringComment) {
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass),
     catalogue::UserSpecifiedAnEmptyStringComment);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringVo) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "comment";
+  storageClass.vo.name = "";
+  ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass),
+    catalogue::UserSpecifiedAnEmptyStringVo);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createStorageClass_nonExistingVo) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "comment";
+  storageClass.vo.name = "NonExistingVO";
+  ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass),
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
@@ -633,6 +674,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::list<common::dataStructures::StorageClass> storageClasses =
@@ -674,6 +717,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   {
@@ -735,6 +780,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   {
@@ -796,6 +843,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   {
@@ -857,13 +906,15 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_newNameAlreadyExists)
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
-  
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
   m_catalogue->createStorageClass(m_admin,storageClass);
   
   common::dataStructures::StorageClass storageClass2;
   storageClass2.diskInstance = "disk_instance";
   storageClass2.name = "storage_class2";
   storageClass2.nbCopies = 2;
+  storageClass2.vo.name = storageClass.vo.name;
   storageClass2.comment = "Create storage class";
   
   m_catalogue->createStorageClass(m_admin,storageClass2);
@@ -871,6 +922,64 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_newNameAlreadyExists)
   //Try to rename the first storage class with the name of the second one
   ASSERT_THROW(m_catalogue->modifyStorageClassName(m_admin,storageClass.name,storageClass2.name),exception::UserError);
 }
+
+TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVo) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
+  m_catalogue->createStorageClass(m_admin,storageClass);
+  
+  std::string newVo = "newVo";
+  createVo(newVo);
+  
+  m_catalogue->modifyStorageClassVo(m_admin,storageClass.name,newVo);
+  
+  auto storageClasses = m_catalogue->getStorageClasses();
+  ASSERT_EQ(newVo,storageClasses.front().vo.name);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassEmptyStringVo) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
+  m_catalogue->createStorageClass(m_admin,storageClass);
+  
+  ASSERT_THROW(m_catalogue->modifyStorageClassVo(m_admin,storageClass.name,""),catalogue::UserSpecifiedAnEmptyStringVo);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVoDoesNotExist) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  storageClass.vo.name = "vo";
+  createVo(storageClass.vo.name);
+  m_catalogue->createStorageClass(m_admin,storageClass);
+  
+  ASSERT_THROW(m_catalogue->modifyStorageClassVo(m_admin,storageClass.name,"DOES_NOT_EXISTS"),exception::UserError);
+}
+
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   using namespace cta;
@@ -1793,19 +1902,21 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes(storageClass.name, tapePoolName).empty());
@@ -1978,19 +2089,21 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassNa
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string storageClassName = "";
@@ -2007,19 +2120,21 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 0;
@@ -2035,11 +2150,15 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringTapePoolName) 
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "";
@@ -2056,19 +2175,21 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -2108,11 +2229,15 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_tape_pool) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
@@ -2131,19 +2256,21 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -2160,19 +2287,21 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb1 = 1;
@@ -2192,19 +2321,21 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -2246,19 +2377,21 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -2297,19 +2430,21 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string anotherTapePoolName = "another_tape_pool";
@@ -2366,19 +2501,21 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentAr
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -2393,19 +2530,21 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -2460,19 +2599,21 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchive
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -3838,11 +3979,15 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance_name";
+  storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
-  storageClass.nbCopies = 1;
+  storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string vid1 = "vid1";
@@ -3852,7 +3997,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
@@ -3863,7 +4007,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   {
@@ -4091,11 +4234,15 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
 TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   using namespace cta;
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
@@ -4106,7 +4253,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName = "tape_pool_name";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
@@ -4117,7 +4263,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   const std::string comment = "Create tape";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
     readOnlyValue, comment);
@@ -7472,11 +7617,15 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_archive_rout
   // Do not create any archive routes
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName;
+  storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   common::dataStructures::RequesterIdentity requesterIdentity;
@@ -7496,19 +7645,21 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
 
   const std::string diskInstanceName = "disk_instance_name";
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName;
+  storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -7584,19 +7735,21 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -7676,19 +7829,21 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName;
+  storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -7787,19 +7942,21 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -7881,11 +8038,15 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_no_archive_route
   // Do not create any archive routes
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName;
+  storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   common::dataStructures::RequesterIdentity requesterIdentity;
@@ -7938,19 +8099,21 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -8022,19 +8185,21 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName;
+  storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -8125,19 +8290,21 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapePoolName = "tape_pool";
-  const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -8263,12 +8430,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
-
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
@@ -8522,6 +8690,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
@@ -8824,11 +8993,15 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existent_storage_class_witho
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
+  const std::string vo = "vo";
+  createVo(vo);
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
@@ -9051,12 +9224,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
-
+  
   common::dataStructures::StorageClass storageClass;
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const std::string tapeDrive = "tape_drive";
@@ -9996,6 +10170,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -10695,6 +10870,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -10827,6 +11003,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -10999,6 +11176,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -11225,6 +11403,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
@@ -11421,6 +11600,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize = 1;
@@ -11616,6 +11796,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -11799,6 +11980,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
   const uint64_t archiveFileSize1 = 1;
@@ -11985,6 +12167,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -12165,6 +12348,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -12348,6 +12532,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -12653,6 +12838,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -13997,6 +14183,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -14181,6 +14368,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -14304,6 +14492,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -14443,6 +14632,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -14814,6 +15004,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -15044,6 +15235,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -15211,6 +15403,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
+  storageClass.vo.name = vo;
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
 
@@ -15530,6 +15723,23 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationNameDoesNotExist) {
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
   ASSERT_THROW(m_catalogue->deleteVirtualOrganization("DOES_NOT_EXIST"),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByStorageClass) {
+  using namespace cta;
+
+  std::string vo = "vo";
+  
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
+  createVo(storageClass.vo.name);
+  m_catalogue->createStorageClass(m_admin, storageClass);
+  
+  ASSERT_THROW(m_catalogue->deleteVirtualOrganization(vo),exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {

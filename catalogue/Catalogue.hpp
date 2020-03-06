@@ -281,6 +281,7 @@ public:
   virtual std::list<common::dataStructures::StorageClass> getStorageClasses() const = 0;
   virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) = 0;
   virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
+  virtual void modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) = 0;
 
   /**
    * Modifies the name of the specified storage class.
