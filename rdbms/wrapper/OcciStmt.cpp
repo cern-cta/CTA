@@ -319,11 +319,13 @@ bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException &ex) {
 
   switch(ex.getErrorCode()) {
   case    28:
+  case   492:
   case  1003:
   case  1008:
   case  1012:
   case  1033:
   case  1089:
+  case  2051:
   case  2392:
   case  2396:
   case  2399:
