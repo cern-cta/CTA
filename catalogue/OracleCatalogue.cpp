@@ -612,7 +612,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
         "RECONCILIATION_TIME)"
       "SELECT "
         ":ARCHIVE_FILE_ID,"
-        "DISK_INSTANCE_NAME,"
+        ":DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
         ":DISK_FILE_PATH,"
         ":DISK_FILE_UID,"
@@ -626,7 +626,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       "FROM "
         "STORAGE_CLASS "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql);
     rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());

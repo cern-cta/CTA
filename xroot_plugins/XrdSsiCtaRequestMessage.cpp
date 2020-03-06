@@ -1322,7 +1322,6 @@ void RequestMessage::processStorageClass_Add(cta::xrd::Response &response)
 
    common::dataStructures::StorageClass storageClass;
 
-   storageClass.diskInstance = getRequired(OptionString::INSTANCE);
    storageClass.name         = getRequired(OptionString::STORAGE_CLASS);
    storageClass.nbCopies     = getRequired(OptionUInt64::COPY_NUMBER);
    storageClass.comment      = getRequired(OptionString::COMMENT);

@@ -545,7 +545,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -558,7 +558,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
 
   ASSERT_EQ(1, storageClasses.size());
 
-  ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+  
   ASSERT_EQ(storageClass.name, storageClasses.front().name);
   ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
   ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
@@ -576,7 +576,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_twice) {
   using namespace cta;
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -586,29 +586,13 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_twice) {
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringDiskInstanceName) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
-
-  common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "";
-  storageClass.name = "storage_class";
-  storageClass.nbCopies = 2;
-  storageClass.comment = "Create storage class";
-  storageClass.vo.name = "vo";
-  createVo(storageClass.vo.name);
-  ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass),
-    catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
-}
-
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringStorageClassName) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -624,7 +608,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringComment) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "";
@@ -640,7 +624,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringVo) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "comment";
@@ -655,7 +639,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_nonExistingVo) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "comment";
@@ -670,7 +654,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -683,7 +667,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
 
   ASSERT_EQ(1, storageClasses.size());
 
-  ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+  
   ASSERT_EQ(storageClass.name, storageClasses.front().name);
   ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
   ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
@@ -713,7 +697,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -726,7 +710,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    
     ASSERT_EQ(storageClass.name, storageClasses.front().name);
     ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
@@ -747,7 +731,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    
     ASSERT_EQ(storageClass.name, storageClasses.front().name);
     ASSERT_EQ(modifiedNbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
@@ -776,7 +760,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -789,7 +773,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    
     ASSERT_EQ(storageClass.name, storageClasses.front().name);
     ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
@@ -810,7 +794,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    
     ASSERT_EQ(storageClass.name, storageClasses.front().name);
     ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(modifiedComment, storageClasses.front().comment);
@@ -839,7 +823,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -852,7 +836,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    
     ASSERT_EQ(storageClass.name, storageClasses.front().name);
     ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
@@ -873,7 +857,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    ASSERT_EQ(storageClass.diskInstance, storageClasses.front().diskInstance);
+    
     ASSERT_EQ(newStorageClassName, storageClasses.front().name);
     ASSERT_EQ(storageClass.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(storageClass.comment, storageClasses.front().comment);
@@ -902,7 +886,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_newNameAlreadyExists)
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -911,7 +895,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_newNameAlreadyExists)
   m_catalogue->createStorageClass(m_admin,storageClass);
   
   common::dataStructures::StorageClass storageClass2;
-  storageClass2.diskInstance = "disk_instance";
   storageClass2.name = "storage_class2";
   storageClass2.nbCopies = 2;
   storageClass2.vo.name = storageClass.vo.name;
@@ -929,7 +912,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVo) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -952,7 +935,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassEmptyStringVo) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -969,7 +952,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVoDoesNotExist) {
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -1906,7 +1889,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2093,7 +2076,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassNa
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2124,7 +2107,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2154,7 +2137,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringTapePoolName) 
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2179,7 +2162,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2233,7 +2216,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_tape_pool) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2260,7 +2243,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2291,7 +2274,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2325,7 +2308,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2381,7 +2364,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2434,7 +2417,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2505,7 +2488,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentAr
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2534,7 +2517,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2603,7 +2586,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchive
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -3982,8 +3965,10 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   const std::string vo = "vo";
   createVo(vo);
   
+  std::string diskInstance = "disk_instance";
+  
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -4077,7 +4062,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
     file1WrittenSet.insert(file1WrittenUP.release());
     file1Written.archiveFileId        = 1234;
-    file1Written.diskInstance         = storageClass.diskInstance;
+    file1Written.diskInstance         = diskInstance;
     file1Written.diskFileId           = "5678";
     file1Written.diskFilePath         = "/public_dir/public_file";
     file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -4238,7 +4223,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -4261,6 +4246,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -4306,7 +4292,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
     file1WrittenSet.insert(file1WrittenUP.release());
     file1Written.archiveFileId        = 1234;
-    file1Written.diskInstance         = storageClass.diskInstance;
+    file1Written.diskInstance         = diskInstance;
     file1Written.diskFileId           = "5678";
     file1Written.diskFilePath         = "/public_dir/public_file";
     file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -7620,8 +7606,10 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_archive_rout
   const std::string vo = "vo";
   createVo(vo);
   
+  const std::string diskInstance = "disk_instance";
+  
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -7632,7 +7620,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_archive_rout
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity),
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstance, storageClass.name, requesterIdentity),
     exception::UserError);
 }
 
@@ -7643,13 +7631,13 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
-  const std::string diskInstanceName = "disk_instance_name";
+  const std::string diskInstance = "disk_instance";
 
   const std::string vo = "vo";
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -7689,7 +7677,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity),
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstance, storageClass.name, requesterIdentity),
     exception::UserError);
 }
 
@@ -7739,7 +7727,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -7781,7 +7768,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, storageClass.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -7833,7 +7820,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -7875,7 +7862,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, storageClass.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -7946,7 +7933,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.vo.name = vo;
@@ -7988,7 +7974,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(storageClass.diskInstance, storageClass.name, requesterIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, storageClass.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -8042,7 +8028,6 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_no_archive_route
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -8053,7 +8038,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_no_archive_route
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity),
+  ASSERT_THROW(m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, storageClass.name, requesterIdentity),
     exception::UserError);
 }
 
@@ -8103,7 +8088,6 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -8141,7 +8125,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
-  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity);
+  m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, storageClass.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_mount_rule) {
@@ -8189,7 +8173,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -8227,7 +8211,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
   common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = "username";
   requesterIdentity.group = requesterGroupName;
-  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity);
+  m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, storageClass.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_rule_overide) {
@@ -8294,7 +8278,6 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -8332,7 +8315,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
-  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, requesterIdentity);
+  m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, storageClass.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
@@ -8432,7 +8415,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -8446,7 +8428,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   auto & file1Written = *file1WrittenUP;
     std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;    file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -8686,7 +8668,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -8701,7 +8682,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -8997,7 +8978,6 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existent_storage_class_witho
   createVo(vo);
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -9011,7 +8991,6 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existent_storage_class_witho
   {
     const auto s = storageClasses.front();
 
-    ASSERT_EQ(storageClass.diskInstance, s.diskInstance);
     ASSERT_EQ(storageClass.name, s.name);
     ASSERT_EQ(storageClass.nbCopies, s.nbCopies);
     ASSERT_EQ(storageClass.comment, s.comment);
@@ -9086,6 +9065,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
@@ -9226,7 +9206,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   }
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -9250,7 +9230,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
     auto & fileWritten = *fileWrittenUP;
     fileWritten.archiveFileId = i;
-    fileWritten.diskInstance = storageClass.diskInstance;
+    fileWritten.diskInstance = diskInstance;
     fileWritten.diskFileId = diskFileId.str();
     fileWritten.diskFilePath = diskFilePath.str();
     fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -9311,7 +9291,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
     auto & fileWritten = *fileWrittenUP;
     fileWritten.archiveFileId = i;
-    fileWritten.diskInstance = storageClass.diskInstance;
+    fileWritten.diskInstance = diskInstance;
     fileWritten.diskFileId = diskFileId.str();
     fileWritten.diskFilePath = diskFilePath.str();
     fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -9364,7 +9344,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.archiveFileId = 1;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFileId = std::to_string(12345678);
     searchCriteria.diskFilePath = "/public_dir/public_file_1";
     searchCriteria.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -9405,7 +9385,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
       catalogue::TapeFileWritten fileWritten1;
       fileWritten1.archiveFileId = i;
-      fileWritten1.diskInstance = storageClass.diskInstance;
+      fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
       fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -9474,7 +9454,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
       catalogue::TapeFileWritten fileWritten1;
       fileWritten1.archiveFileId = i;
-      fileWritten1.diskInstance = storageClass.diskInstance;
+      fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
       fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -9545,7 +9525,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
       catalogue::TapeFileWritten fileWritten;
       fileWritten.archiveFileId = i;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -9603,7 +9583,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
       catalogue::TapeFileWritten fileWritten;
       fileWritten.archiveFileId = i;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -9661,7 +9641,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
       catalogue::TapeFileWritten fileWritten;
       fileWritten.archiveFileId = i;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -9719,7 +9699,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -9731,7 +9711,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFileId = "12345687";
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -9745,7 +9725,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFilePath = "/public_dir/public_file_10";
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -9759,7 +9739,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFileOwnerUid     = PUBLIC_DISK_USER;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -9772,7 +9752,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -9785,7 +9765,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.storageClass = storageClass.name;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -9926,9 +9906,10 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
         const checksum::ChecksumBlob &checksumBlob,
         const std::string &vid,
         const uint64_t &copyNb,
-        const std::string &tapeDrive) :
+        const std::string &tapeDrive,
+        const std::string &diskInstance) :
           m_cat(cat), m_barrier(barrier), m_nbArchiveFiles(nbArchiveFiles), m_batchSize(batchSize), m_storageClass(storageClass), m_archiveFileSize(archiveFileSize),
-          m_checksumBlob(checksumBlob), m_vid(vid), m_copyNb(copyNb), m_tapeDrive(tapeDrive) { }
+          m_checksumBlob(checksumBlob), m_vid(vid), m_copyNb(copyNb), m_tapeDrive(tapeDrive),m_diskInstance(diskInstance) { }
 
     void run() override {
       for(uint64_t batch=0;batch< 1 + (m_nbArchiveFiles-1)/m_batchSize;++batch) {
@@ -9950,7 +9931,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
           auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
           auto & fileWritten = *fileWrittenUP;
           fileWritten.archiveFileId = fn_afid;
-          fileWritten.diskInstance = m_storageClass.diskInstance;
+          fileWritten.diskInstance = m_diskInstance;
           fileWritten.diskFileId = diskFileId.str();
           fileWritten.diskFilePath = diskFilePath.str();
           fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -9990,6 +9971,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     const std::string m_vid;
     const uint64_t m_copyNb;
     const std::string m_tapeDrive;
+    const std::string m_diskInstance;
   };
 
   class filesWrittenRunner {
@@ -10029,6 +10011,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
@@ -10167,7 +10150,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   }
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.vo.name = vo;
@@ -10188,8 +10171,8 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   {
     Barrier barrier(2);
-    filesWrittenThread a(m_catalogue.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumBlob, vid1, 1, tapeDrive1);
-    filesWrittenThread b(catalogue2.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumBlob, vid2, 2, tapeDrive2);
+    filesWrittenThread a(m_catalogue.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumBlob, vid1, 1, tapeDrive1,diskInstance);
+    filesWrittenThread b(catalogue2.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumBlob, vid2, 2, tapeDrive2,diskInstance);
 
     filesWrittenRunner r1(a);
     filesWrittenRunner r2(b);
@@ -10268,7 +10251,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.archiveFileId = 1;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFileId = std::to_string(12345678);
     searchCriteria.diskFilePath = "/public_dir/public_file_1";
     searchCriteria.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -10323,7 +10306,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
       catalogue::TapeFileWritten fileWritten1;
       fileWritten1.archiveFileId = i;
-      fileWritten1.diskInstance = storageClass.diskInstance;
+      fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
       fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -10396,7 +10379,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
       catalogue::TapeFileWritten fileWritten1;
       fileWritten1.archiveFileId = i;
-      fileWritten1.diskInstance = storageClass.diskInstance;
+      fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
       fileWritten1.diskFilePath = diskFilePath.str();
       fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -10472,7 +10455,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
       catalogue::TapeFileWritten fileWritten;
       fileWritten.archiveFileId = i;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -10533,7 +10516,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
       catalogue::TapeFileWritten fileWritten;
       fileWritten.archiveFileId = i;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -10594,7 +10577,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
       catalogue::TapeFileWritten fileWritten;
       fileWritten.archiveFileId = i;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
@@ -10652,7 +10635,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -10664,7 +10647,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFileId = "12345687";
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -10678,7 +10661,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFilePath = "/public_dir/public_file_10";
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -10692,7 +10675,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFileOwnerUid     = PUBLIC_DISK_USER;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -10705,7 +10688,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -10718,7 +10701,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = storageClass.diskInstance;
+    searchCriteria.diskInstance = diskInstance;
     searchCriteria.storageClass = storageClass.name;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
@@ -10817,6 +10800,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -10867,7 +10851,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
   storageClass.vo.name = vo;
@@ -10882,7 +10866,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -10935,6 +10919,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_copy_deleteStorageClass) {
   using namespace cta;
 
+  const std::string diskInstance = "disk_instance";
   const std::string vid1 = "VID123";
   const std::string mediaType = "media_type";
   const std::string vendor = "vendor";
@@ -11000,7 +10985,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
   storageClass.vo.name = vo;
@@ -11015,7 +11000,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -11092,6 +11077,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -11173,7 +11159,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.vo.name = vo;
@@ -11188,7 +11174,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -11322,6 +11308,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_sintance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -11399,7 +11386,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -11414,7 +11401,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -11546,6 +11533,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -11596,7 +11584,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -11611,7 +11599,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -11743,6 +11731,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -11793,7 +11782,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.vo.name = vo;
@@ -11808,7 +11797,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -11897,6 +11886,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -11976,7 +11966,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -11991,7 +11981,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -12083,6 +12073,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -12164,7 +12155,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.vo.name = vo;
@@ -12179,7 +12170,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -12268,6 +12259,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -12345,7 +12337,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.vo.name = vo;
@@ -12360,7 +12352,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -12450,6 +12442,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -12529,7 +12522,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.vo.name = vo;
@@ -12544,7 +12537,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -12758,6 +12751,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   const bool fullValue = false;
   const bool readOnlyValue = true;
   const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -12835,7 +12829,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.vo.name = vo;
@@ -12850,7 +12844,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -14180,7 +14174,6 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
   storageClass.vo.name = vo;
@@ -14195,7 +14188,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -14365,7 +14358,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
   storageClass.vo.name = vo;
@@ -14380,7 +14372,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -14489,7 +14481,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
   storageClass.vo.name = vo;
@@ -14504,7 +14495,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -14629,7 +14620,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
   storageClass.vo.name = vo;
@@ -14644,7 +14634,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -14730,7 +14720,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenAgainSet;
   file1WrittenAgainSet.insert(file1WrittenUP.release());
   file1WrittenAgain.archiveFileId        = archiveFileId;
-  file1WrittenAgain.diskInstance         = storageClass.diskInstance;
+  file1WrittenAgain.diskInstance         = diskInstanceName1;
   file1WrittenAgain.diskFileId           = "5678";
   file1WrittenAgain.diskFilePath         = "/public_dir/public_file";
   file1WrittenAgain.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -15001,7 +14991,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
   storageClass.vo.name = vo;
@@ -15016,7 +15005,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -15232,7 +15221,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
   storageClass.vo.name = vo;
@@ -15247,7 +15235,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -15400,7 +15388,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = diskInstanceName1;
   storageClass.name = "storage_class";
   storageClass.nbCopies = 1;
   storageClass.vo.name = vo;
@@ -15415,7 +15402,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = storageClass.diskInstance;
+  file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
   file1Written.diskFilePath         = "/public_dir/public_file";
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -15501,7 +15488,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenAgainSet;
   file1WrittenAgainSet.insert(file1WrittenUP.release());
   file1WrittenAgain.archiveFileId        = archiveFileId;
-  file1WrittenAgain.diskInstance         = storageClass.diskInstance;
+  file1WrittenAgain.diskInstance         = diskInstanceName1;
   file1WrittenAgain.diskFileId           = "5678";
   file1WrittenAgain.diskFilePath         = "/public_dir/public_file";
   file1WrittenAgain.diskFileOwnerUid     = PUBLIC_DISK_USER;
@@ -15731,7 +15718,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByStorageClass)
   std::string vo = "vo";
   
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = "disk_instance";
+  
   storageClass.name = "storage_class";
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";

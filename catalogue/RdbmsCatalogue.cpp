@@ -566,10 +566,6 @@ void RdbmsCatalogue::createStorageClass(
   const common::dataStructures::SecurityIdentity &admin,
   const common::dataStructures::StorageClass &storageClass) {
   try {
-    if(storageClass.diskInstance.empty()) {
-      throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create storage class because the disk instance name is"
-        " an empty string");
-    }
 
     if(storageClass.name.empty()) {
       throw UserSpecifiedAnEmptyStringStorageClassName("Cannot create storage class because the storage class name is"
@@ -600,7 +596,6 @@ void RdbmsCatalogue::createStorageClass(
     const char *const sql =
       "INSERT INTO STORAGE_CLASS("
         "STORAGE_CLASS_ID,"
-        "DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME,"
         "NB_COPIES,"
         "VIRTUAL_ORGANIZATION_ID,"
@@ -616,7 +611,6 @@ void RdbmsCatalogue::createStorageClass(
         "LAST_UPDATE_TIME)"
       "VALUES("
         ":STORAGE_CLASS_ID,"
-        ":DISK_INSTANCE_NAME,"
         ":STORAGE_CLASS_NAME,"
         ":NB_COPIES,"
         "(SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME = :VO),"
@@ -633,7 +627,6 @@ void RdbmsCatalogue::createStorageClass(
     auto stmt = conn.createStmt(sql);
 
     stmt.bindUint64(":STORAGE_CLASS_ID", storageClassId);
-    stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstance);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.name);
     stmt.bindUint64(":NB_COPIES", storageClass.nbCopies);
     stmt.bindString(":VO",vo);
@@ -841,7 +834,6 @@ std::list<common::dataStructures::StorageClass> RdbmsCatalogue::getStorageClasse
     std::list<common::dataStructures::StorageClass> storageClasses;
     const char *const sql =
       "SELECT "
-        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "NB_COPIES AS NB_COPIES,"
         "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
@@ -860,14 +852,13 @@ std::list<common::dataStructures::StorageClass> RdbmsCatalogue::getStorageClasse
       "INNER JOIN "
         "VIRTUAL_ORGANIZATION ON STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
       "ORDER BY "
-        "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME";
+        "STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       common::dataStructures::StorageClass storageClass;
 
-      storageClass.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
       storageClass.name = rset.columnString("STORAGE_CLASS_NAME");
       storageClass.nbCopies = rset.columnUint64("NB_COPIES");
       storageClass.vo.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
@@ -1901,7 +1892,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
       "INNER JOIN TAPE_POOL ON "
         "ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "ORDER BY "
-        "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME, COPY_NB";
+        "STORAGE_CLASS_NAME, COPY_NB";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
@@ -1980,7 +1971,7 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
         "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND"      "\n"
         "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME"                      "\n"
       "ORDER BY"                                                          "\n"
-        "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME, COPY_NB";
+        "STORAGE_CLASS_NAME, COPY_NB";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
@@ -5831,7 +5822,7 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
         "RECONCILIATION_TIME)"
       "SELECT "
         ":ARCHIVE_FILE_ID,"
-        "DISK_INSTANCE_NAME,"
+        ":DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
         ":DISK_FILE_PATH,"
         ":DISK_FILE_UID,"
@@ -5845,7 +5836,6 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
       "FROM "
         "STORAGE_CLASS "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql);
 

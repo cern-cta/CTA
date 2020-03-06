@@ -294,7 +294,6 @@ public:
     catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
     
     common::dataStructures::StorageClass storageClass;
-    storageClass.diskInstance = s_diskInstance;
     storageClass.name = s_storageClassName;
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;

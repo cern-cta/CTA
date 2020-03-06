@@ -214,7 +214,6 @@ public:
     m_catalogue->createVirtualOrganization(s_adminOnAdminHost,vo);
     
     common::dataStructures::StorageClass storageClass;
-    storageClass.diskInstance = s_diskInstance;
     storageClass.name = s_storageClassName;
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;
@@ -1442,7 +1441,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -1466,7 +1464,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
         auto & fileWritten = *fileWrittenUP;
         fileWritten.archiveFileId = archiveFileId++;
-        fileWritten.diskInstance = storageClass.diskInstance;
+        fileWritten.diskInstance = s_diskInstance;
         fileWritten.diskFileId = diskFileId.str();
         fileWritten.diskFilePath = diskFilePath.str();
         fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -1644,7 +1642,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 
           //Testing the archive file associated to the retrieve request
           ASSERT_EQ(archiveFile.storageClass,storageClass.name);
-          ASSERT_EQ(archiveFile.diskInstance,storageClass.diskInstance);
+          ASSERT_EQ(archiveFile.diskInstance,s_diskInstance);
           ++j;
         }
       }
@@ -1761,7 +1759,6 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -1783,7 +1780,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -2000,7 +1997,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2022,7 +2018,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -2249,7 +2245,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2271,7 +2266,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -2543,7 +2538,6 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2565,7 +2559,7 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -2658,7 +2652,6 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2680,7 +2673,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -2787,7 +2780,6 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -2809,7 +2801,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -3181,7 +3173,6 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 3;
   storageClass.comment = "Create storage class";
@@ -3217,7 +3208,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -3423,7 +3414,6 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 3;
   storageClass.comment = "Create storage class";
@@ -3463,7 +3453,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -3685,7 +3675,6 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -3707,7 +3696,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
@@ -4022,7 +4011,6 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
-  storageClass.diskInstance = s_diskInstance;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
@@ -4044,7 +4032,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
-      fileWritten.diskInstance = storageClass.diskInstance;
+      fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
       fileWritten.diskFilePath = diskFilePath.str();
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;

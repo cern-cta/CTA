@@ -127,7 +127,6 @@ echo "Preparing CTA configuration for tests"
       --comment "ctasystest"
   done
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add   \
-    --instance ${EOSINSTANCE}                                            \
     --name ctaStorageClass                                            \
     --copynb 1                                                        \
     --vo vo                                                           \

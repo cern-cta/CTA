@@ -72,11 +72,6 @@ struct StorageClass {
   bool operator!=(const StorageClass &rhs) const;
 
   /**
-   * The name of the disk instance to which the storage class belongs.
-   */
-  std::string diskInstance;
-
-  /**
    * The name of the storage class.
    *
    * Please note that the name of a storage class is only gauranteed to be

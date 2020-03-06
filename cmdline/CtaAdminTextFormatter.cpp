@@ -747,7 +747,6 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
 void TextFormatter::printStorageClassLsHeader() {
   push_back("HEADER");
   push_back(
-    "instance",
     "storage class",
     "number of copies",
     "vo",
@@ -763,7 +762,6 @@ void TextFormatter::printStorageClassLsHeader() {
 
 void TextFormatter::print(const StorageClassLsItem &scls_item) {
   push_back(
-    scls_item.disk_instance(),
     scls_item.name(),
     scls_item.nb_copies(),
     scls_item.vo(),

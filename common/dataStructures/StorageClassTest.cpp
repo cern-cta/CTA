@@ -26,28 +26,23 @@ class cta_common_dataStructures_StorageClassTest : public ::testing::Test {
 protected:
 
   cta_common_dataStructures_StorageClassTest() {
-    m_storageClass1DiskInstance1.diskInstance = "disk_instance_1";
     m_storageClass1DiskInstance1.name = "storage_class_1";
     m_storageClass1DiskInstance1.nbCopies = 2;
     m_storageClass1DiskInstance1.comment = "create storage class";
 
-    m_storageClass1DiskInstance2.diskInstance = "disk_instance_2";
     m_storageClass1DiskInstance2.name = "storage_class_1";
     m_storageClass1DiskInstance2.nbCopies = 2;
     m_storageClass1DiskInstance2.comment = "create storage class";
 
-    m_storageClass2DiskInstance1.diskInstance = "disk_instance_1";
     m_storageClass2DiskInstance1.name = "storage_class_2";
     m_storageClass2DiskInstance1.nbCopies = 2;
     m_storageClass2DiskInstance1.comment = "create storage class";
 
-    m_storageClass1DiskInstance1ExactCopy.diskInstance = "disk_instance_1";
     m_storageClass1DiskInstance1ExactCopy.name = "storage_class_1";
     m_storageClass1DiskInstance1ExactCopy.nbCopies = 2;
     m_storageClass1DiskInstance1ExactCopy.comment = "create storage class";
 
     // Different ignored values
-    m_storageClass1DiskInstance1EffectiveCopy.diskInstance = "disk_instance_1";
     m_storageClass1DiskInstance1EffectiveCopy.name = "storage_class_1";
     m_storageClass1DiskInstance1EffectiveCopy.nbCopies = 2;
     m_storageClass1DiskInstance1EffectiveCopy.comment = "create storage class";

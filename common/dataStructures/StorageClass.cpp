@@ -48,8 +48,7 @@ bool StorageClass::operator!=(const StorageClass &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const StorageClass &obj) {
-  os << "(diskInstance=" << obj.diskInstance
-     << " name=" << obj.name
+  os << "(name=" << obj.name
      << " nbCopies=" << obj.nbCopies
      << " vo=" << obj.vo.name     
      << " creationLog=" << obj.creationLog

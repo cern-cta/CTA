@@ -73,7 +73,6 @@ int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto &sc      = m_storageClassList.front();
     auto  sc_item = record.mutable_scls_item();
 
-    sc_item->set_disk_instance(sc.diskInstance);
     sc_item->set_name(sc.name);
     sc_item->set_nb_copies(sc.nbCopies);
     sc_item->set_vo(sc.vo.name);

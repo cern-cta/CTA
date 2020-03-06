@@ -140,7 +140,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       disabledValue, fullValue, readOnlyValue, createTapeComment);
 
     cta::common::dataStructures::StorageClass storageClass;
-    storageClass.diskInstance = "disk_instance";
+    
     storageClass.name = "storage_class";
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;
@@ -293,7 +293,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       disabledValue, fullValue, readOnlyValue, createTapeComment);
 
     cta::common::dataStructures::StorageClass storageClass;
-    storageClass.diskInstance = "disk_instance";
+    
     storageClass.name = "storage_class";
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;
