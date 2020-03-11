@@ -134,11 +134,12 @@ FailedRequestLsStream::FailedRequestLsStream(const RequestMessage &requestMsg,
 template<> bool FailedRequestLsStream::
 pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructures::ArchiveJob &item)
 {
+  auto &tapepool = m_archiveQueueItorPtr->qid();
   Data record;
 
   record.mutable_frls_item()->set_object_id("PLACEHOLDER");
   record.mutable_frls_item()->set_request_type(admin::RequestType::ARCHIVE_REQUEST);
-  record.mutable_frls_item()->set_tapepool(m_archiveQueueItorPtr->qid());
+  record.mutable_frls_item()->set_tapepool(tapepool);
   record.mutable_frls_item()->set_copy_nb(item.copyNumber);
   record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
   record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
@@ -167,11 +168,26 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
 
   record.mutable_frls_item()->set_object_id("PLACEHOLDER");
   record.mutable_frls_item()->set_request_type(admin::RequestType::RETRIEVE_REQUEST);
-  record.mutable_frls_item()->mutable_tf()->set_vid(vid);
   record.mutable_frls_item()->set_copy_nb(item.tapeCopies.at(vid).first);
   record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
   record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
+  record.mutable_frls_item()->mutable_af()->set_archive_id(item.request.archiveFileID);
+  record.mutable_frls_item()->mutable_af()->set_size(item.fileSize);
   record.mutable_frls_item()->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
+  record.mutable_frls_item()->mutable_af()->set_creation_time(item.request.creationLog.time);
+  record.mutable_frls_item()->mutable_tf()->set_vid(vid);
+
+  // Find the correct tape copy
+  for(auto &tapecopy : item.tapeCopies) {
+    auto &tf = tapecopy.second.second;
+    if(tf.vid == vid) {
+      record.mutable_frls_item()->mutable_tf()->set_f_seq(tf.fSeq);
+      record.mutable_frls_item()->mutable_tf()->set_block_id(tf.blockId);
+      record.mutable_frls_item()->mutable_tf()->set_superseded_by_vid(tf.supersededByVid);
+      record.mutable_frls_item()->mutable_tf()->set_superseded_by_f_seq(tf.supersededByFSeq);
+      break;
+    }
+  }
 
   if(m_isLogEntries) {
     *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
