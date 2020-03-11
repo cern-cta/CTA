@@ -137,7 +137,7 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
   auto &tapepool = m_archiveQueueItorPtr->qid();
   Data record;
 
-  record.mutable_frls_item()->set_object_id("PLACEHOLDER");
+  record.mutable_frls_item()->set_object_id(item.objectId);
   record.mutable_frls_item()->set_request_type(admin::RequestType::ARCHIVE_REQUEST);
   record.mutable_frls_item()->set_tapepool(tapepool);
   record.mutable_frls_item()->set_copy_nb(item.copyNumber);
@@ -166,7 +166,7 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
 
   Data record;
 
-  record.mutable_frls_item()->set_object_id("PLACEHOLDER");
+  record.mutable_frls_item()->set_object_id(item.objectId);
   record.mutable_frls_item()->set_request_type(admin::RequestType::RETRIEVE_REQUEST);
   record.mutable_frls_item()->set_copy_nb(item.tapeCopies.at(vid).first);
   record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
