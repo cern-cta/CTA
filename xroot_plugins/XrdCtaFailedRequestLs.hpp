@@ -136,12 +136,17 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
 {
   Data record;
 
+  record.mutable_frls_item()->set_object_id("PLACEHOLDER");
   record.mutable_frls_item()->set_request_type(admin::RequestType::ARCHIVE_REQUEST);
   record.mutable_frls_item()->set_tapepool(m_archiveQueueItorPtr->qid());
   record.mutable_frls_item()->set_copy_nb(item.copyNumber);
   record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
   record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
+  record.mutable_frls_item()->mutable_af()->set_disk_id(item.request.diskFileID);
+  record.mutable_frls_item()->mutable_af()->set_size(item.request.fileSize);
+  record.mutable_frls_item()->mutable_af()->set_storage_class(item.request.storageClass);
   record.mutable_frls_item()->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
+  record.mutable_frls_item()->mutable_af()->set_creation_time(item.request.creationLog.time);
 
   if(m_isLogEntries) {
     *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
@@ -160,6 +165,7 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
 
   Data record;
 
+  record.mutable_frls_item()->set_object_id("PLACEHOLDER");
   record.mutable_frls_item()->set_request_type(admin::RequestType::RETRIEVE_REQUEST);
   record.mutable_frls_item()->mutable_tf()->set_vid(vid);
   record.mutable_frls_item()->set_copy_nb(item.tapeCopies.at(vid).first);
