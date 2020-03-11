@@ -496,10 +496,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_summary.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_ADD   },
-      { opt_instance, opt_storageclass, opt_copynb, opt_tapepool, opt_comment }},
+      { opt_storageclass, opt_copynb, opt_tapepool, opt_comment }},
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_CH    },
-      { opt_instance, opt_storageclass, opt_copynb, opt_tapepool.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_RM    }, { opt_instance, opt_storageclass, opt_copynb }},
+      { opt_storageclass, opt_copynb, opt_tapepool.optional(), opt_comment.optional() }},
+   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_RM    }, { opt_storageclass, opt_copynb }},
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_UP    }, { opt_drivename_cmd }},

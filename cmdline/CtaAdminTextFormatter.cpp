@@ -223,7 +223,6 @@ void TextFormatter::print(const ArchiveFileLsSummary &afls_summary)
 void TextFormatter::printArchiveRouteLsHeader() {
   push_back("HEADER");
   push_back(
-    "instance",
     "storage class",
     "copy number",
     "tapepool",
@@ -239,7 +238,6 @@ void TextFormatter::printArchiveRouteLsHeader() {
 
 void TextFormatter::print(const ArchiveRouteLsItem &arls_item) {
   push_back(
-    arls_item.instance(),
     arls_item.storage_class(),
     arls_item.copy_number(),
     arls_item.tapepool(),
