@@ -80,7 +80,6 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
          .add("diskInstance", archiveFile->diskInstance)
          .add("requestDiskInstance", diskInstanceName)
          .add("diskFileId", archiveFile->diskFileId)
-         .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
          .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
          .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
@@ -109,8 +108,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 
       exception::UserError ue;
       ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
-        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
-        archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
+        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
         archiveFile->diskInstance;
       throw ue;
     }
@@ -156,7 +154,6 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     spc.add("fileId", std::to_string(archiveFile->archiveFileID))
        .add("diskInstance", archiveFile->diskInstance)
        .add("diskFileId", archiveFile->diskFileId)
-       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
@@ -455,7 +452,6 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
       row.size = event.size;
       row.checksumBlob = event.checksumBlob;
       row.storageClassName = event.storageClassName;
-      row.diskFilePath = event.diskFilePath;
       row.diskFileOwnerUid = event.diskFileOwnerUid;
       row.diskFileGid = event.diskFileGid;
       insertArchiveFile(conn, row);
@@ -477,7 +473,7 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
 
     std::ostringstream fileContext;
     fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance <<
-      ", diskFileId=" << event.diskFileId << ", diskFilePath=" << event.diskFilePath;
+      ", diskFileId=" << event.diskFileId;
 
     if(archiveFile->fileSize != event.size) {
       catalogue::FileSizeMismatch ex;

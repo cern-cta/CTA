@@ -43,7 +43,6 @@ namespace {
     archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
     archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
     archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
-    archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
     archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
     archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
@@ -96,7 +95,6 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"

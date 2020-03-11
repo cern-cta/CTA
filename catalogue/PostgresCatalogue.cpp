@@ -75,7 +75,6 @@ namespace {
     rdbms::wrapper::PostgresColumn archiveFileId;
     rdbms::wrapper::PostgresColumn diskInstance;
     rdbms::wrapper::PostgresColumn diskFileId;
-    rdbms::wrapper::PostgresColumn diskFilePath;
     rdbms::wrapper::PostgresColumn diskFileUser;
     rdbms::wrapper::PostgresColumn diskFileGroup;
     rdbms::wrapper::PostgresColumn size;
@@ -95,7 +94,6 @@ namespace {
       archiveFileId("ARCHIVE_FILE_ID", nbRows),
       diskInstance("DISK_INSTANCE_NAME", nbRows),
       diskFileId("DISK_FILE_ID", nbRows),
-      diskFilePath("DISK_FILE_PATH", nbRows),
       diskFileUser("DISK_FILE_UID", nbRows),
       diskFileGroup("DISK_FILE_GID", nbRows),
       size("SIZE_IN_BYTES", nbRows),
@@ -375,7 +373,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
 
       std::ostringstream fileContext;
       fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance <<
-        ", diskFileId=" << event.diskFileId << ", diskFilePath=" << event.diskFilePath;
+        ", diskFileId=" << event.diskFileId;
 
       // This should never happen
       if(fileSizesAndChecksums.end() == fileSizeAndChecksumItor) {
@@ -484,7 +482,6 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
       archiveFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
       archiveFileBatch.diskInstance.setFieldValue(i, event.diskInstance);
       archiveFileBatch.diskFileId.setFieldValue(i, event.diskFileId);
-      archiveFileBatch.diskFilePath.setFieldValue(i, event.diskFilePath);
       archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileOwnerUid);
       archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
       archiveFileBatch.size.setFieldValue(i, event.size);
@@ -510,7 +507,6 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "ARCHIVE_FILE_ID,"
         "DISK_INSTANCE_NAME,"
         "DISK_FILE_ID,"
-        "DISK_FILE_PATH,"
         "DISK_FILE_UID,"
         "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
@@ -523,7 +519,6 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         ":ARCHIVE_FILE_ID,"
         ":DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
-        ":DISK_FILE_PATH,"
         ":DISK_FILE_UID,"
         ":DISK_FILE_GID,"
         ":SIZE_IN_BYTES,"
@@ -539,7 +534,6 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
     postgresStmt.setColumn(archiveFileBatch.archiveFileId);
     postgresStmt.setColumn(archiveFileBatch.diskInstance);
     postgresStmt.setColumn(archiveFileBatch.diskFileId);
-    postgresStmt.setColumn(archiveFileBatch.diskFilePath);
     postgresStmt.setColumn(archiveFileBatch.diskFileUser);
     postgresStmt.setColumn(archiveFileBatch.diskFileGroup);
     postgresStmt.setColumn(archiveFileBatch.size);
@@ -556,7 +550,6 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "ARCHIVE_FILE_ID,"
   	"DISK_INSTANCE_NAME,"
         "DISK_FILE_ID,"
-        "DISK_FILE_PATH,"
         "DISK_FILE_UID,"
         "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
@@ -569,7 +562,6 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "A.ARCHIVE_FILE_ID,"
         "A.DISK_INSTANCE_NAME,"
         "A.DISK_FILE_ID,"
-        "A.DISK_FILE_PATH,"
         "A.DISK_FILE_UID,"
         "A.DISK_FILE_GID,"
         "A.SIZE_IN_BYTES,"
@@ -694,7 +686,6 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
@@ -741,7 +732,6 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
@@ -785,7 +775,6 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
          .add("diskInstance", archiveFile->diskInstance)
          .add("requestDiskInstance", diskInstanceName)
          .add("diskFileId", archiveFile->diskFileId)
-         .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
          .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
          .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
@@ -816,8 +805,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
 
       exception::UserError ue;
       ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
-        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
-        archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
+        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
         archiveFile->diskInstance;
       throw ue;
     }
@@ -853,7 +841,6 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
     spc.add("fileId", std::to_string(archiveFile->archiveFileID))
        .add("diskInstance", archiveFile->diskInstance)
        .add("diskFileId", archiveFile->diskFileId)
-       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))

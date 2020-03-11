@@ -212,6 +212,7 @@ std::string Scheduler::queueRetrieve(
   // Get the queue criteria
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
   queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, request.activity, lc);
+  queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
   auto diskSystemList = m_catalogue.getAllDiskSystems();
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   // Determine disk system for this request, if any.
@@ -238,7 +239,6 @@ std::string Scheduler::queueRetrieve(
      .add("criteriaChecksumBlob", queueCriteria.archiveFile.checksumBlob)
      .add("criteriaCreationTime", queueCriteria.archiveFile.creationTime)
      .add("criteriaDiskFileId", queueCriteria.archiveFile.diskFileId)
-     .add("criteriaDiskFilePath", queueCriteria.archiveFile.diskFileInfo.path)
      .add("criteriaDiskFileOwnerUid", queueCriteria.archiveFile.diskFileInfo.owner_uid)
      .add("criteriaDiskInstance", queueCriteria.archiveFile.diskInstance)
      .add("criteriaFileSize", queueCriteria.archiveFile.fileSize)

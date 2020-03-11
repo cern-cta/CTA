@@ -55,11 +55,6 @@ struct TapeFileSearchCriteria {
   optional<std::string> diskFileId;
 
   /**
-   * The absolute path of a file within its disk instance.
-   */
-  optional<std::string> diskFilePath;
-
-  /**
    * The owner of a file within its disk instance.
    */
   optional<uint64_t> diskFileOwnerUid;

@@ -450,7 +450,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       tapeFileWritten.copyNb=1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
-      tapeFileWritten.diskFilePath = remoteFilePath.str();
+      
       tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
@@ -464,6 +464,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.diskFileInfo.path = "path/to/file";
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -631,7 +632,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.copyNb=1;
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq);
-        tapeFileWritten.diskFilePath = "/somefile";
         tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
         tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
         tapeFileWritten.storageClassName = s_storageClassName;
@@ -654,7 +654,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.copyNb=1;
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq + 1);
-        tapeFileWritten.diskFilePath = remoteFilePath.str();
+        
         tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
         tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
         tapeFileWritten.storageClassName = s_storageClassName;
@@ -829,7 +829,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       tapeFileWritten.copyNb=1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
-      tapeFileWritten.diskFilePath = remoteFilePath.str();
+      
       tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
@@ -1039,7 +1039,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       tapeFileWritten.copyNb=1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
-      tapeFileWritten.diskFilePath = remoteFilePath.str();
+      
       tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
@@ -1186,7 +1186,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       tapeFileWritten.copyNb=1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
-      tapeFileWritten.diskFilePath = remoteFilePath.str();
+      
       tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;

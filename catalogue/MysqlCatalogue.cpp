@@ -374,7 +374,6 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
       row.size = event.size;
       row.checksumBlob = event.checksumBlob;
       row.storageClassName = event.storageClassName;
-      row.diskFilePath = event.diskFilePath;
       row.diskFileOwnerUid = event.diskFileOwnerUid;
       row.diskFileGid = event.diskFileGid;
       insertArchiveFile(conn, row);
@@ -394,7 +393,7 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
 
     std::ostringstream fileContext;
     fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance <<
-      ", diskFileId=" << event.diskFileId << ", diskFilePath=" << event.diskFilePath;
+      ", diskFileId=" << event.diskFileId;
 
     if(archiveFile->fileSize != event.size) {
       catalogue::FileSizeMismatch ex;
@@ -433,7 +432,6 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
@@ -478,7 +476,6 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
         archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
@@ -522,7 +519,6 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
          .add("diskInstance", archiveFile->diskInstance)
          .add("requestDiskInstance", diskInstanceName)
          .add("diskFileId", archiveFile->diskFileId)
-         .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
          .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
          .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
@@ -552,9 +548,7 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
 
       exception::UserError ue;
       ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
-        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
-        archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
-        archiveFile->diskInstance;
+        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<     archiveFile->diskInstance;
       throw ue;
     }
 
@@ -590,7 +584,6 @@ void MysqlCatalogue::deleteArchiveFile(const std::string &diskInstanceName, cons
     spc.add("fileId", std::to_string(archiveFile->archiveFileID))
        .add("diskInstance", archiveFile->diskInstance)
        .add("diskFileId", archiveFile->diskFileId)
-       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))

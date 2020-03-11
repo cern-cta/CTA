@@ -1229,34 +1229,6 @@ bool RdbmsCatalogue::diskFileIdExists(rdbms::Conn &conn, const std::string &disk
 }
 
 //------------------------------------------------------------------------------
-// diskFilePathExists
-//------------------------------------------------------------------------------
-bool RdbmsCatalogue::diskFilePathExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  const std::string &diskFilePath) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
-        "DISK_FILE_PATH AS DISK_FILE_PATH "
-      "FROM "
-        "ARCHIVE_FILE "
-      "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "DISK_FILE_PATH = :DISK_FILE_PATH";
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    stmt.bindString(":DISK_FILE_PATH", diskFilePath);
-    auto rset = stmt.executeQuery();
-    return rset.next();
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
 // diskFileUserExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::diskFileUserExists(rdbms::Conn &conn, const std::string &diskInstanceName,
@@ -5811,7 +5783,6 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
         "ARCHIVE_FILE_ID,"
         "DISK_INSTANCE_NAME,"
         "DISK_FILE_ID,"
-        "DISK_FILE_PATH,"
         "DISK_FILE_UID,"
         "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
@@ -5824,7 +5795,6 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
         ":ARCHIVE_FILE_ID,"
         ":DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
-        ":DISK_FILE_PATH,"
         ":DISK_FILE_UID,"
         ":DISK_FILE_GID,"
         ":SIZE_IN_BYTES,"
@@ -5842,7 +5812,6 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
     stmt.bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
     stmt.bindString(":DISK_INSTANCE_NAME", row.diskInstance);
     stmt.bindString(":DISK_FILE_ID", row.diskFileId);
-    stmt.bindString(":DISK_FILE_PATH", row.diskFilePath);
     stmt.bindUint64(":DISK_FILE_UID", row.diskFileOwnerUid);
     stmt.bindUint64(":DISK_FILE_GID", row.diskFileGid);
     stmt.bindUint64(":SIZE_IN_BYTES", row.size);
@@ -5904,18 +5873,6 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
     if(!diskFileIdExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileId.value())) {
       throw exception::UserError(std::string("Disk file ID ") + searchCriteria.diskInstance.value() + "::" +
         searchCriteria.diskFileId.value() + " does not exist");
-    }
-  }
-
-  if(searchCriteria.diskFilePath && !searchCriteria.diskInstance) {
-    throw exception::UserError(std::string("Disk file path ") + searchCriteria.diskFilePath.value() + " is ambiguous "
-      "without disk instance name");
-  }
-
-  if(searchCriteria.diskInstance && searchCriteria.diskFilePath) {
-    if(!diskFilePathExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFilePath.value())) {
-      throw exception::UserError(std::string("Disk file path ") + searchCriteria.diskInstance.value() + "::" +
-        searchCriteria.diskFilePath.value() + " does not exist");
     }
   }
 
@@ -5987,7 +5944,6 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
@@ -6034,7 +5990,6 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
       archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
       archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
-      archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
       archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
       archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
       archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
@@ -6111,7 +6066,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       searchCriteria.archiveFileId  ||
       searchCriteria.diskInstance   ||
       searchCriteria.diskFileId     ||
-      searchCriteria.diskFilePath   ||
       searchCriteria.diskFileOwnerUid   ||
       searchCriteria.diskFileGid  ||
       searchCriteria.storageClass   ||
@@ -6135,11 +6089,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     if(searchCriteria.diskFileId) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
-      addedAWhereConstraint = true;
-    }
-    if(searchCriteria.diskFilePath) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileOwnerUid) {
@@ -6182,9 +6131,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     }
     if(searchCriteria.diskFileId) {
       stmt.bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
-    }
-    if(searchCriteria.diskFilePath) {
-      stmt.bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
     }
     if(searchCriteria.diskFileOwnerUid) {
       stmt.bindUint64(":DISK_FILE_UID", searchCriteria.diskFileOwnerUid.value());
@@ -6540,7 +6486,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       if(diskInstanceName != archiveFile->diskInstance) {
         exception::UserError ue;
         ue.getMessage() << "Cannot retrieve file because the disk instance of the request does not match that of the"
-          " archived file: archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path <<
+          " archived file: archiveFileId=" << archiveFileId <<
           " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" << archiveFile->diskInstance;
         throw ue;
       }
@@ -6565,7 +6511,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       } else {
         exception::UserError ue;
         ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
-          " archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requester=" <<
+          " archiveFileId=" << archiveFileId <<  " requester=" <<
           diskInstanceName << ":" << user.name << ":" << user.group;
         throw ue;
       }
@@ -6944,7 +6890,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
@@ -6982,7 +6927,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
@@ -7032,7 +6976,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
@@ -7073,7 +7016,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
@@ -7177,7 +7119,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
@@ -7217,7 +7158,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
@@ -7269,7 +7209,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
@@ -7312,7 +7251,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
@@ -7450,7 +7388,6 @@ void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &calling
   try {
     if(event.diskInstance.empty()) throw exception::Exception("diskInstance is an empty string");
     if(event.diskFileId.empty()) throw exception::Exception("diskFileId is an empty string");
-    if(event.diskFilePath.empty()) throw exception::Exception("diskFilePath is an empty string");
     if(0 == event.diskFileOwnerUid) throw exception::Exception("diskFileOwnerUid is 0");
     if(0 == event.diskFileGid) throw exception::Exception("diskFileGid is 0");
     if(0 == event.size) throw exception::Exception("size is 0");

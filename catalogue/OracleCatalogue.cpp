@@ -77,7 +77,6 @@ namespace {
     rdbms::wrapper::OcciColumn archiveFileId;
     rdbms::wrapper::OcciColumn diskInstance;
     rdbms::wrapper::OcciColumn diskFileId;
-    rdbms::wrapper::OcciColumn diskFilePath;
     rdbms::wrapper::OcciColumn diskFileUser;
     rdbms::wrapper::OcciColumn diskFileGroup;
     rdbms::wrapper::OcciColumn size;
@@ -97,7 +96,6 @@ namespace {
       archiveFileId("ARCHIVE_FILE_ID", nbRows),
       diskInstance("DISK_INSTANCE_NAME", nbRows),
       diskFileId("DISK_FILE_ID", nbRows),
-      diskFilePath("DISK_FILE_PATH", nbRows),
       diskFileUser("DISK_FILE_UID", nbRows),
       diskFileGroup("DISK_FILE_GID", nbRows),
       size("SIZE_IN_BYTES", nbRows),
@@ -473,7 +471,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
 
       std::ostringstream fileContext;
       fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance <<
-        ", diskFileId=" << event.diskFileId << ", diskFilePath=" << event.diskFilePath;
+        ", diskFileId=" << event.diskFileId;
 
       // This should never happen
       if(fileSizesAndChecksums.end() == fileSizeAndChecksumItor) {
@@ -566,7 +564,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.archiveFileId.setFieldLenToValueLen(i, event.archiveFileId);
       archiveFileBatch.diskInstance.setFieldLenToValueLen(i, event.diskInstance);
       archiveFileBatch.diskFileId.setFieldLenToValueLen(i, event.diskFileId);
-      archiveFileBatch.diskFilePath.setFieldLenToValueLen(i, event.diskFilePath);
       archiveFileBatch.diskFileUser.setFieldLenToValueLen(i, event.diskFileOwnerUid);
       archiveFileBatch.diskFileGroup.setFieldLenToValueLen(i, event.diskFileGid);
       archiveFileBatch.size.setFieldLenToValueLen(i, event.size);
@@ -584,7 +581,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
       archiveFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
       archiveFileBatch.diskInstance.setFieldValue(i, event.diskInstance);
       archiveFileBatch.diskFileId.setFieldValue(i, event.diskFileId);
-      archiveFileBatch.diskFilePath.setFieldValue(i, event.diskFilePath);
       archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileOwnerUid);
       archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
       archiveFileBatch.size.setFieldValue(i, event.size);
@@ -601,7 +597,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
         "ARCHIVE_FILE_ID,"
         "DISK_INSTANCE_NAME,"
         "DISK_FILE_ID,"
-        "DISK_FILE_PATH,"
         "DISK_FILE_UID,"
         "DISK_FILE_GID,"
         "SIZE_IN_BYTES,"
@@ -614,7 +609,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
         ":ARCHIVE_FILE_ID,"
         ":DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
-        ":DISK_FILE_PATH,"
         ":DISK_FILE_UID,"
         ":DISK_FILE_GID,"
         ":SIZE_IN_BYTES,"
@@ -634,7 +628,6 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
     occiStmt.setColumn(archiveFileBatch.archiveFileId);
     occiStmt.setColumn(archiveFileBatch.diskInstance);
     occiStmt.setColumn(archiveFileBatch.diskFileId);
-    occiStmt.setColumn(archiveFileBatch.diskFilePath);
     occiStmt.setColumn(archiveFileBatch.diskFileUser);
     occiStmt.setColumn(archiveFileBatch.diskFileGroup);
     occiStmt.setColumn(archiveFileBatch.size);
@@ -759,7 +752,6 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
@@ -808,7 +800,6 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
         archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
         archiveFile->diskFileInfo.owner_uid = selectRset.columnUint64("DISK_FILE_UID");
         archiveFile->diskFileInfo.gid = selectRset.columnUint64("DISK_FILE_GID");
         archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
@@ -852,7 +843,6 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
          .add("diskInstance", archiveFile->diskInstance)
          .add("requestDiskInstance", diskInstanceName)
          .add("diskFileId", archiveFile->diskFileId)
-         .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
          .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
          .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
@@ -882,8 +872,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 
       exception::UserError ue;
       ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
-        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
-        archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
+        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
         archiveFile->diskInstance;
       throw ue;
     }
@@ -918,7 +907,6 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     spc.add("fileId", std::to_string(archiveFile->archiveFileID))
        .add("diskInstance", archiveFile->diskInstance)
        .add("diskFileId", archiveFile->diskFileId)
-       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))

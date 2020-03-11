@@ -54,7 +54,6 @@ namespace cta {
       fileReport.diskFileId = archiveFile.diskFileId;
       fileReport.diskFileOwnerUid = archiveFile.diskFileInfo.owner_uid;
       fileReport.diskFileGid = archiveFile.diskFileInfo.gid;
-      fileReport.diskFilePath = archiveFile.diskFileInfo.path;
       fileReport.diskInstance = archiveFile.diskInstance;
       fileReport.fSeq = tapeFile.fSeq;
       fileReport.size = archiveFile.fileSize;

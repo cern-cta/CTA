@@ -43,7 +43,6 @@ namespace {
     archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
     archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
     archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
-    archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
     archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
     archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
@@ -92,7 +91,6 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
         "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
         "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
         "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
@@ -125,7 +123,6 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       searchCriteria.archiveFileId  ||
       searchCriteria.diskInstance   ||
       searchCriteria.diskFileId     ||
-      searchCriteria.diskFilePath   ||
       searchCriteria.diskFileOwnerUid   ||
       searchCriteria.diskFileGid  ||
       searchCriteria.storageClass   ||
@@ -151,11 +148,6 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     if(searchCriteria.diskFileId) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
-      addedAWhereConstraint = true;
-    }
-    if(searchCriteria.diskFilePath) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileOwnerUid) {
@@ -206,9 +198,6 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     }
     if(searchCriteria.diskFileId) {
       m_stmt.bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
-    }
-    if(searchCriteria.diskFilePath) {
-      m_stmt.bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
     }
     if(searchCriteria.diskFileOwnerUid) {
       m_stmt.bindUint64(":DISK_FILE_UID", searchCriteria.diskFileOwnerUid.value());

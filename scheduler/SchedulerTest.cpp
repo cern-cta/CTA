@@ -1466,7 +1466,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         fileWritten.archiveFileId = archiveFileId++;
         fileWritten.diskInstance = s_diskInstance;
         fileWritten.diskFileId = diskFileId.str();
-        fileWritten.diskFilePath = diskFilePath.str();
+        
         fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
         fileWritten.diskFileGid = PUBLIC_GID;
         fileWritten.size = archiveFileSize;
@@ -1626,14 +1626,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           std::stringstream ss;
           ss<<"file://"<<tempDirectory.path()<<"/"<<allVid.at(i-1)<<"/"<<std::setw(9)<<std::setfill('0')<<j;
           ASSERT_EQ(schedulerRetrieveRequest.dstURL,ss.str());
-          // TODO ASSERT_EQ(schedulerRetrieveRequest.isRepack,true);
-          // TODO ASSERT_EQ(schedulerRetrieveRequest.tapePool,s_tapePoolName);
-          std::ostringstream diskFilePath;
-          diskFilePath << "/public_dir/public_file_"<<i<<"_"<<j;
-          ASSERT_EQ(schedulerRetrieveRequest.diskFileInfo.path,diskFilePath.str());
           //Testing the retrieve request
           ASSERT_EQ(retrieveRequest.getRepackInfo().isRepack,true);
-          // TODO ASSERT_EQ(retrieveRequest.getTapePool(),s_tapePoolName);
           ASSERT_EQ(retrieveRequest.getQueueType(),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
           ASSERT_EQ(retrieveRequest.getRetrieveFileQueueCriteria().mountPolicy,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
           ASSERT_EQ(retrieveRequest.getActiveCopyNumber(),1);
@@ -1685,12 +1679,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ASSERT_GE(nbArchiveFilesPerTape, fileIndex);
         //Test the ArchiveRequest
         ASSERT_EQ(archiveFile.checksumBlob,checksumBlob);
-        std::ostringstream diskFilePath;
-        diskFilePath << "/public_dir/public_file_"<<tapeIndex<<"_"<<fileIndex;
         std::ostringstream diskFileId;
         diskFileId << (12345677 + archiveFile.archiveFileID);
         ASSERT_EQ(archiveFile.diskFileId,diskFileId.str());
-        ASSERT_EQ(archiveFile.diskFileInfo.path,diskFilePath.str());
         ASSERT_EQ(archiveFile.diskFileInfo.gid,PUBLIC_GID);
         ASSERT_EQ(archiveFile.diskFileInfo.owner_uid,PUBLIC_OWNER_UID);
         ASSERT_EQ(archiveFile.fileSize,archiveFileSize);
@@ -1782,7 +1773,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -2020,7 +2011,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -2268,7 +2259,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -2561,7 +2552,7 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -2675,7 +2666,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -2803,7 +2794,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -3210,7 +3201,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -3455,7 +3446,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -3698,7 +3689,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -4034,7 +4025,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      fileWritten.diskFilePath = diskFilePath.str();
+      
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;

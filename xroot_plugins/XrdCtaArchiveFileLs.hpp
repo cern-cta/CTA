@@ -79,7 +79,6 @@ ArchiveFileLsStream::ArchiveFileLsStream(const RequestMessage &requestMsg,
     m_searchCriteria.diskFileOwnerUid = requestMsg.getOptional(OptionUInt64::OWNER_UID,       &has_any);
     m_searchCriteria.diskFileGid      = requestMsg.getOptional(OptionUInt64::GID,             &has_any);
     m_searchCriteria.storageClass     = requestMsg.getOptional(OptionString::STORAGE_CLASS,   &has_any);
-    m_searchCriteria.diskFilePath     = requestMsg.getOptional(OptionString::PATH,            &has_any);
     m_searchCriteria.diskInstance     = requestMsg.getOptional(OptionString::INSTANCE,        &has_any);
 
     if(!has_any) {
