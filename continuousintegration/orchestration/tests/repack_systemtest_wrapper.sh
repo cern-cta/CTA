@@ -286,8 +286,8 @@ repackMoveAndAddCopies() {
   echo "OK"
 
   echo "Creating archive routes for adding two copies of the file"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --instance ctaeos --storageclass ctaStorageClass --copynb 2 --tapepool $tapepoolDestination1 --comment "ArchiveRoute2"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --instance ctaeos --storageclass ctaStorageClass --copynb 3 --tapepool $tapepoolDestination2 --comment "ArchiveRoute3"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 2 --tapepool $tapepoolDestination1 --comment "ArchiveRoute2"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 3 --tapepool $tapepoolDestination2 --comment "ArchiveRoute3"
   echo "OK"
 
   echo "Will change the tapepool of the tapes"
