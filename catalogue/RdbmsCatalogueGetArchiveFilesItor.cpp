@@ -21,6 +21,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -218,6 +219,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       m_stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     }
     m_rset = m_stmt.executeQuery();
+
+    {
+      log::LogContext lc(m_log);
+      lc.log(log::INFO, "RdbmsCatalogueGetArchiveFilesItor - immediately after m_stmt.executeQuery()");
+    }
 
     m_rsetIsEmpty = !m_rset.next();
   } catch(exception::UserError &) {
