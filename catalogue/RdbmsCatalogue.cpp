@@ -51,6 +51,7 @@
 #include "catalogue/UserSpecifiedStorageClassUsedByArchiveRoutes.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -63,7 +64,6 @@
 #include <ctype.h>
 #include <memory>
 #include <time.h>
-#include <common/exception/LostDatabaseConnection.hpp>
 
 namespace cta {
 namespace catalogue {
