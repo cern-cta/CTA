@@ -1,3 +1,17 @@
+# v2.0-1
+
+## Summary
+
+### Features 
+
+- New schema version 2.0
+  - *VIRTUAL_ORGANIZATION* has its own table
+  - *DISK_FILE_PATH* is now resolved on eos instance using grpc and not duplicated anymore in tape catalogue
+- Upstream eos 4.7.2-1 (CentOS 7 packages)
+- Upstream xrootd-4.11.2-1 for CTA
+
+**Upgrade from previous catalogue version is not provided**
+
 # v1.2-0
 
 ## Summary
