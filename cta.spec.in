@@ -458,7 +458,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
-* Sat 14 Mar 2020 julien.leduc (at) cern.ch - 2.0-1
+* Sat Mar 14 2020 julien.leduc (at) cern.ch - 2.0-1
 - Schema version 2.0: DISK_FILE_PATH is now resolved on eos instance using grpc and VIRTUAL_ORGANIZATION has its own table 
 - eos 4.6.7-1
 - xrootd 4.11.2-1
