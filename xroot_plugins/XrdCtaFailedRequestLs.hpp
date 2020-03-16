@@ -143,6 +143,7 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
   record.mutable_frls_item()->set_copy_nb(item.copyNumber);
   record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
   record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
+  record.mutable_frls_item()->mutable_af()->set_disk_instance(item.instanceName);
   record.mutable_frls_item()->mutable_af()->set_disk_id(item.request.diskFileID);
   record.mutable_frls_item()->mutable_af()->set_size(item.request.fileSize);
   record.mutable_frls_item()->mutable_af()->set_storage_class(item.request.storageClass);
