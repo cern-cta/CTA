@@ -63,49 +63,49 @@ class RealDisk:
   def isfile(self, path):
     return os.path.isfile(path)
 
-  def getfilesizeandctime(self, path):
+  def get_file_size_and_ctime(self, path):
     try:
       statinfo = os.stat(path)
 
-      filesizeandctime = FileSizeAndCtime()
-      filesizeandctime.sizebytes = statinfo.st_size
-      filesizeandctime.ctime = statinfo.st_ctime
+      file_size_and_ctime = FileSizeAndCtime()
+      file_size_and_ctime.sizebytes = statinfo.st_size
+      file_size_and_ctime.ctime = statinfo.st_ctime
 
-      return filesizeandctime
+      return file_size_and_ctime
     except Exception as err:
       # The file may have been deleted by the FST just before the stat
       if err.errno == errno.ENOENT:
         return None
       else:
-        raise Exception("Failed to stat file: path={}: {}".format(path, err))
+        raise Exception('Failed to stat file: path={}: {}'.format(path, err))
 
-  def getfreebytes(self, path):
+  def get_free_bytes(self, path):
     statvfs = None
     try:
       statvfs = os.statvfs(path)
       return statvfs.f_frsize * statvfs.f_bavail
     except Exception as err:
-      self.log.error("Failed to stat VFS for free space: path={}".format(path))
+      self.log.error('get_free_bytes: Failed to stat VFS for free space: path={}'.format(path))
 
 class RealEos:
   '''Class to faciliate unit-testing by wrapping the EOS storage system.'''
 
-  def __init__(self, log, mgmhost, xrdsecssskt):
+  def __init__(self, log, mgm_host, xrdsecssskt):
     self.log = log
-    self.mgmhost = mgmhost
+    self.mgm_host = mgm_host
     self.xrdsecssskt = xrdsecssskt
 
   def fsls(self):
-    mgmurl = "root://{}".format(self.mgmhost)
-    cmd = "eos -r 0 0 {} fs ls -m".format(mgmurl)
+    mgmurl = 'root://{}'.format(self.mgm_host)
+    cmd = 'eos -r 0 0 {} fs ls -m'.format(mgmurl)
     env = os.environ.copy()
-    env["XrdSecPROTOCOL"] = "sss"
-    env["XrdSecSSSKT"] = self.xrdsecssskt
+    env['XrdSecPROTOCOL'] = 'sss'
+    env['XrdSecSSSKT'] = self.xrdsecssskt
     process = None
     try:
       process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     except Exception as err:
-      raise Exception("Failed to execute '{}': {}".format(cmd, err))
+      raise Exception('Failed to execute \'{}\'": {}'.format(cmd, err))
     stdout,stderr = process.communicate()
 
     result = []
@@ -113,7 +113,7 @@ class RealEos:
     if 0 != process.returncode:
       returncodestr = os.strerror(process.returncode)
       stderrstr = stderr.replace('\n', ' ').replace('\r', '').strip()
-      self.log.error("Failed to execute {}: returncode={} returncodestr='{}' stderr='{}'"
+      self.log.error('fsls: Failed to execute {}: returncode={} returncodestr=\'{}\' stderr=\'{}\''
         .format(cmd, process.returncode, returncodestr, stderrstr))
     else:
       lines = stdout.splitlines();
@@ -130,65 +130,65 @@ class RealEos:
     return result
 
   def stagerrm(self, fxid):
-    mgmurl = "root://{}".format(self.mgmhost)
-    cmd = "eos {} stagerrm fxid:{}".format(mgmurl, fxid)
+    mgmurl = 'root://{}'.format(self.mgm_host)
+    cmd = 'eos {} stagerrm fxid:{}'.format(mgmurl, fxid)
     env = os.environ.copy()
-    env["XrdSecPROTOCOL"] = "sss"
-    env["XrdSecSSSKT"] = self.xrdsecssskt
+    env['XrdSecPROTOCOL'] = 'sss'
+    env['XrdSecSSSKT'] = self.xrdsecssskt
     process = None
     try:
       process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     except Exception as err:
-      raise Exception("Failed to execute '{}': {}".format(cmd, err))
+      raise Exception('Failed to execute \'{}\': {}'.format(cmd, err))
     stdout,stderr = process.communicate()
 
     if 0 != process.returncode:
-      raise StagerrmError("'{}' returned non zero: returncode={}".format(cmd, process.returncode))
+      raise StagerrmError('\'{}\' returned non zero: returncode={}'.format(cmd, process.returncode))
 
   def attrset(self, name, value, fxid):
-    mgmurl = "root://{}".format(self.mgmhost)
-    args = ["eos", "-r", "0", "0", mgmurl, "attr", "set", '{}={}'.format(name, value), "fxid:{}".format(fxid)]
+    mgmurl = 'root://{}'.format(self.mgm_host)
+    args = ['eos', '-r', '0', '0', mgmurl, 'attr', 'set', '{}={}'.format(name, value), 'fxid:{}'.format(fxid)]
     env = os.environ.copy()
-    env["XrdSecPROTOCOL"] = "sss"
-    env["XrdSecSSSKT"] = self.xrdsecssskt
+    env['XrdSecPROTOCOL'] = 'sss'
+    env['XrdSecSSSKT'] = self.xrdsecssskt
     process = None
     try:
       process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     except Exception as err:
-      raise Exception("Failed to execute '{}': {}".format(" ".join(args), err))
+      raise Exception('Failed to execute \'{}\': {}'.format(' '.join(args), err))
     stdout,stderr = process.communicate()
 
     if 0 != process.returncode:
-      raise AttrsetError("'{}' returned non zero: returncode={}".format(" ".join(args), process.returncode))
+      raise AttrsetError('\'{}\' returned non zero: returncode={}'.format(' '.join(args), process.returncode))
 
 class SpaceTracker:
   '''Calculates the amount of effective free space in the file system of a given
   file or directory by querying the OS and taking into account the pending
   stagerrm requests to the EOS MGM.'''
 
-  def __init__(self, disk, queryperiodsecs, path):
+  def __init__(self, disk, query_period_secs, path):
     self.disk = disk
-    self.queryperiodsecs = queryperiodsecs
+    self.query_period_secs = query_period_secs
     self.path = path
     self.freebytes = None
     self.lastquerytimestamp = None
 
-  def stagerrmqueued(self, filesizebytes):
-    self.freebytes = self.freebytes + filesizebytes
+  def stagerrm_queued(self, file_size_bytes):
+    self.freebytes = self.freebytes + file_size_bytes
 
-  def getfreebytes(self):
+  def get_free_bytes(self):
     now = time.time()
 
     if self.freebytes:
       elapsed = now - self.lastquerytimestamp
 
-      if elapsed > self.queryperiodsecs:
+      if elapsed > self.query_period_secs:
         self.lastquerytimestamp = now
-        self.freebytes = self.disk.getfreebytes(self.path)
+        self.freebytes = self.disk.get_free_bytes(self.path)
 
     else: # not self.freebytes:
       self.lastquerytimestamp = now
-      self.freebytes = self.disk.getfreebytes(self.path)
+      self.freebytes = self.disk.get_free_bytes(self.path)
 
     return self.freebytes
 
@@ -196,25 +196,25 @@ class SpaceTrackers:
   '''Container and factory of SpaceTracker objects.  There is one SpaceTracker
   per filesystem mount-point being tracked.'''
 
-  def __init__(self, log, disk, queryperiodsecs):
+  def __init__(self, log, disk, query_period_secs):
     self.log = log
     self.disk = disk
-    self.queryperiodsecs = queryperiodsecs
-    self.mntpointtotracker = {}
+    self.query_period_secs = query_period_secs
+    self.mnt_point_to_tracker = {}
 
-  def gettracker(self, path):
-    mntpoint = self.getmntpoint(path)
+  def get_tracker(self, path):
+    mntpoint = self.get_mnt_point(path)
 
-    if not mntpoint in self.mntpointtotracker:
-      self.mntpointtotracker[mntpoint] = SpaceTracker(self.disk, self.queryperiodsecs, mntpoint)
-      self.log.info("Tracking storage space of mount point: mntpoint={}".format(mntpoint))
+    if not mntpoint in self.mnt_point_to_tracker:
+      self.mnt_point_to_tracker[mntpoint] = SpaceTracker(self.disk, self.query_period_secs, mntpoint)
+      self.log.info('Tracking storage space of mount point: mntpoint={}'.format(mntpoint))
 
-    return self.mntpointtotracker[mntpoint]
+    return self.mnt_point_to_tracker[mntpoint]
 
-  def getnbtrackers(self):
-    return len(self.mntpointtotracker)
+  def get_nb_trackers(self):
+    return len(self.mnt_point_to_tracker)
 
-  def getmntpoint(self, path):
+  def get_mnt_point(self, path):
     realpath = os.path.realpath(path)
     while not os.path.ismount(realpath):
       realpath = os.path.dirname(realpath)
@@ -233,13 +233,35 @@ class GcConfig:
   '''The configuration of a cta-fst-gcd daemon.'''
 
   def __init__(self):
-    self.logfile = ''
-    self.mgmhost = ''
-    self.minfreebytes = 0
-    self.gcagesecs = 0
-    self.queryperiodsecs = 0
-    self.mainloopperiodsecs = 0
+    self.log_file = ''
+    self.mgm_host = ''
+    self.eos_spaces = []
+    self.eos_space_to_min_free_bytes = {}
+    self.gc_age_secs = 0
+    self.query_period_secs = 0
+    self.main_loop_period_secs = 0
     self.xrdsecssskt = ''
+
+class PathAndEosSpace:
+  def __init__(self):
+    self.path = ''
+    self.eos_space = ''
+
+  def __init__(self, path, eos_space):
+    self.path = path
+    self.eos_space = eos_space
+
+class MissingColonError(UserError):
+  pass
+
+class TooManyColonsError(UserError):
+  pass
+
+class MinFreeBytesNotSetError(UserError):
+  pass
+
+class MinFreeBytesError(UserError):
+  pass
 
 class Gc:
   '''Implements the cta-fst-gcd daemon that runs on an EOS FST and garbage
@@ -264,140 +286,214 @@ class Gc:
     self.eos = eos
     self.config = config
 
-    self.localfilesystempaths = []
-    self.spacetrackers = SpaceTrackers(self.log, disk, self.config.queryperiodsecs)
+    self.local_file_system_paths = []
+    self.space_trackers = SpaceTrackers(self.log, disk, self.config.query_period_secs)
 
-    self.log.info("Config: logfile={}".format(self.config.logfile))
-    self.log.info("Config: mgmhost={}".format(self.config.mgmhost))
-    self.log.info("Config: minfreebytes={}".format(self.config.minfreebytes))
-    self.log.info("Config: gcagesecs={}".format(self.config.gcagesecs))
-    self.log.info("Config: absolutemaxagesecs={}".format(self.config.absolutemaxagesecs))
-    self.log.info("Config: queryperiodsecs={}". format(self.config.queryperiodsecs))
-    self.log.info("Config: mainloopperiodsecs={}". format(self.config.mainloopperiodsecs))
-    self.log.info("Config: xrdsecssskt={}".format(self.config.xrdsecssskt))
+    self.log.info('Config: log_file={}'.format(self.config.log_file))
+    self.log.info('Config: mgm_host={}'.format(self.config.mgm_host))
+    self.log.info('Config: eos_spaces={}'.format(' '.join(self.config.eos_spaces)))
+    self.log.info('Config: eos_space_to_min_free_bytes={}'.format(config.eos_space_to_min_free_bytes_str))
+    self.log.info('Config: gc_age_secs={}'.format(self.config.gc_age_secs))
+    self.log.info('Config: absolute_max_age_secs={}'.format(self.config.absolute_max_age_secs))
+    self.log.info('Config: query_period_secs={}'. format(self.config.query_period_secs))
+    self.log.info('Config: main_loop_period_secs={}'. format(self.config.main_loop_period_secs))
+    self.log.info('Config: xrdsecssskt={}'.format(self.config.xrdsecssskt))
 
-  def processfile(self, subdir, fstfile):
-    fullpath = os.path.join(subdir,fstfile)
-    filesizeandctime = None
+  @staticmethod
+  def parse_conf(conf_fp):
     try:
-      filesizeandctime = self.disk.getfilesizeandctime(fullpath)
-    except Exception as err:
-      self.log.error(err)
+      parser = ConfigParser.ConfigParser()
+      parser.readfp(conf_fp)
+      config = GcConfig()
+      config.log_file = parser.get('main', 'log_file')
+      config.mgm_host = parser.get('main', 'mgm_host')
+      config.eos_spaces = parser.get('main', 'eos_spaces').split()
+      config.eos_space_to_min_free_bytes_str = parser.get('main', 'eos_space_to_min_free_bytes')
+      config.eos_space_to_min_free_bytes = Gc.parse_eos_space_to_min_free_bytes(config.eos_space_to_min_free_bytes_str)
+      config.gc_age_secs = parser.getint('main', 'gc_age_secs')
+      config.absolute_max_age_secs = parser.getint('main', 'absolute_max_age_secs')
+      config.query_period_secs = parser.getint('main', 'query_period_secs')
+      config.main_loop_period_secs = parser.getint('main', 'main_loop_period_secs')
+      config.xrdsecssskt = parser.get('main', 'xrdsecssskt')
 
-    if not filesizeandctime:
+      for eos_space in config.eos_spaces:
+        # config.eos_space_to_min_free_bytes is a dictionary mapping EOS space
+        # name to minimum number of free bytes
+        if eos_space not in config.eos_space_to_min_free_bytes:
+          raise MinFreeBytesNotSetError(
+           'Error in eos_space_to_min_free_bytes value: ' \
+           'Minimum number of free bytes has not been specified for EOS space {}: ' \
+           'value=\'{}\''.format(eos_space, config.eos_space_to_min_free_bytes_str))
+
+      return config
+    except ConfigParser.Error as err:
+      raise UserError(err)
+
+  @staticmethod
+  def parse_eos_space_to_min_free_bytes(str):
+    # Dictionary mapping EOS space name to minimum number of free bytes
+    eos_space_to_min_free_bytes = {}
+
+    for maplet_str in str.split():
+      maplet = maplet_str.split(':')
+      if 1 >= len(maplet):
+        raise MissingColonError('Syntax error in eos_space_to_min_free_bytes value' \
+         ': Invalid maplet: Missing colon: maplet=\'{}\'"'.format(maplet_str))
+      if 2 < len(maplet):
+        raise TooManyColonsError('Syntax error in eos_space_to_min_free_bytes value: Invalid maplet' \
+          ': Too many colons: maplet=\'{}\''.format(maplet_str))
+
+      eos_space = maplet[0]
+      min_free_bytes_str = maplet[1]
+
+      min_free_bytes_int = 0
+      try:
+        min_free_bytes_int = int(min_free_bytes_str)
+      except ValueError as err:
+        raise MinFreeBytesError('Minimum number of free bytes is not a valid integer: eos_space={} value={}: {}'.
+          format(eos_space, min_free_bytes_str, err))
+
+      if 0 > min_free_bytes_int:
+        raise MinFreeBytesError('Minimum number of free bytes is negative: eos_space={} value={}'.
+          format(eos_space, min_free_bytes_int))
+
+      eos_space_to_min_free_bytes[eos_space] = min_free_bytes_int
+
+    return eos_space_to_min_free_bytes
+
+  def process_all_fs(self):
+    # Get the paths of the EOS file systems local to this FST and log them if
+    # they have changed
+    file_systems = None
+    try:
+      file_systems = self.eos.fsls()
+    except Exception as err:
+      self.log.error('process_all_fs: Failed to determine the EOS file systems local to this FST: {}'.format(err))
+
+    if not file_systems:
       return
 
-    now = time.time()
-    agesecs = now - filesizeandctime.ctime
-    absolutemaxagereached = agesecs > self.config.absolutemaxagesecs
-    gcagereached = agesecs > self.config.gcagesecs
-    spacetracker = self.spacetrackers.gettracker(subdir)
-    totalfreebytes = spacetracker.getfreebytes()
-    shouldfreespace = totalfreebytes < self.config.minfreebytes
+    new_local_file_system_paths = [
+      PathAndEosSpace(fs['path'], self.get_space_from_schedgroup(fs['schedgroup']))
+      for fs in file_systems if
+        'path' in fs and
+        'host' in fs and self.fqdn == fs['host'] and
+        'schedgroup' in fs and self.schedgroup_matches_eos_spaces(fs['schedgroup'])
+    ]
+    if new_local_file_system_paths != self.local_file_system_paths:
+      self.local_file_system_paths = new_local_file_system_paths
+      self.log_file_system_paths();
 
-    if absolutemaxagereached or (shouldfreespace and gcagereached):
-      try:
-        bytesrequiredbefore = 0
-        if self.config.minfreebytes > totalfreebytes:
-          bytesrequiredbefore = self.config.minfreebytes - totalfreebytes
-        self.eos.stagerrm(fstfile)
-        spacetracker.stagerrmqueued(filesizeandctime.sizebytes)
-        self.log.info("stagerrm: subdir={}, fxid={}, bytesrequiredbefore={}, filesizebytes={}, absolutemaxagereached={}, shouldfreespace={}, gcagereached={}"
-          .format(subdir, fstfile, bytesrequiredbefore, filesizeandctime.sizebytes, absolutemaxagereached, shouldfreespace, gcagereached))
-        nowstr = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
-        attrname = "sys.retrieve.error"
-        attrvalue = "Garbage collected at {}".format(nowstr)
-        self.eos.attrset(attrname, attrvalue, fstfile)
-      except StagerrmError as err:
-        pass
-      except Exception as err:
-        self.log.error(err)
+    for path_and_eos_space in self.local_file_system_paths:
+      self.process_fs(path_and_eos_space.path, path_and_eos_space.eos_space)
 
-  def processfssubdir(self, subdir):
-    #spacetracker = self.spacetrackers.gettracker(subdir)
-    #totalfreebytes = spacetracker.getfreebytes()
-    #shouldfreespace = totalfreebytes < self.config.minfreebytes
+  def log_file_system_paths(self):
+    self.log.info('Number of local file systems is {}'.format(len(self.local_file_system_paths)))
+    i = 0
+    for path_and_eos_space in self.local_file_system_paths:
+      self.log.info('Local file system {}: path={} eos_space={}'.format(i, path_and_eos_space.path, path_and_eos_space.eos_space))
+      i = i + 1
 
-    #if shouldfreespace:
-    #  subdirfiles = []
-    #  try:
-    #    subdirfiles = self.disk.listdir(subdir)
-    #  except Exception as err:
-    #    self.log.error("Failed to list contents of sub directory: subdir={}: {}".format(subdir, err))
-
-    #  fstfiles = [f for f in subdirfiles if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isfile(os.path.join(subdir, f))]
-    #  for fstfile in fstfiles:
-    #    self.processfile(subdir, fstfile)
-
-    subdirfiles = []
-    try:
-      subdirfiles = self.disk.listdir(subdir)
-    except Exception as err:
-      self.log.error("Failed to list contents of sub directory: subdir={}: {}".format(subdir, err))
-
-    fstfiles = [f for f in subdirfiles if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isfile(os.path.join(subdir, f))]
-    for fstfile in fstfiles:
-      self.processfile(subdir, fstfile)
-
-  def processfs(self, path):
+  def process_fs(self, path, eos_space):
     fsfiles = []
     try:
       fsfiles = self.disk.listdir(path)
     except Exception as err:
-      self.log.error("Failed to list contents of filesystem: path={}: {}".format(path, err))
+      self.log.error('process_fs: Failed to list contents of filesystem: path={}: {}'.format(path, err))
       return
 
-    fssubdirs = []
+    sub_dirs = []
     try:
-      fssubdirs = [os.path.join(path, f) for f in fsfiles
+      sub_dirs = [os.path.join(path, f) for f in fsfiles
         if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isdir(os.path.join(path, f))]
     except Exception as err:
-      self.log.error("Failed to determine sub directories of filesystem: path={}: {}".format(path, err))
+      self.log.error('process_fs: Failed to determine sub directories of filesystem: path={}: {}'.format(path, err))
       return
 
-    for fssubdir in fssubdirs:
-      self.processfssubdir(fssubdir)
+    for sub_dir in sub_dirs:
+      self.process_fs_sub_dir(sub_dir, eos_space)
 
-  def logfilesystempaths(self):
-    self.log.info('Number of local file systems is {}'.format(len(self.localfilesystempaths)))
-    i = 0
-    for path in self.localfilesystempaths:
-      self.log.info('Local file system {}: path={}'.format(i, path))
-      i = i + 1
+  def schedgroup_matches_eos_spaces(self, schedgroup):
+    for eos_space in self.config.eos_spaces:
+      if re.match('^{}\.'.format(eos_space), schedgroup):
+        return True
+    return False
 
-  def processallfs(self):
-    # Get the paths of the EOS filesystems local to this FST and log them if
-    # they have changed
-    filesystems = None
+  def get_space_from_schedgroup(self, schedgroup):
+    return re.match('^([^.]+)', schedgroup).group(0)
+
+  def process_fs_sub_dir(self, sub_dir, eos_space):
+    sub_dir_files = []
     try:
-      filesystems = self.eos.fsls()
+      sub_dir_files = self.disk.listdir(sub_dir)
     except Exception as err:
-      self.log.error("Failed to determine the EOS filesystems local to this FST: {}".format(err))
+      self.log.error('process_fs_sub_dir: Failed to list contents of sub directory: sub_dir={}: {}'.format(sub_dir, err))
 
-    if not filesystems:
+    fst_files = [f for f in sub_dir_files if re.match('^[0-9A-Fa-f]{8}$', f) and self.disk.isfile(os.path.join(sub_dir, f))]
+    for fst_file in fst_files:
+      self.process_file(sub_dir, fst_file, eos_space)
+
+  def process_file(self, sub_dir, fst_file, eos_space):
+    fullpath = os.path.join(sub_dir, fst_file)
+    file_size_and_ctime = None
+    try:
+      file_size_and_ctime = self.disk.get_file_size_and_ctime(fullpath)
+    except Exception as err:
+      self.log.error('process_file: Error calling self.disk.get_file_size_and_ctime(): {}'.format(err))
+
+    if not file_size_and_ctime:
       return
 
-    newlocalfilesystempaths = [fs["path"] for fs in filesystems if "path" in fs and "host" in fs and self.fqdn == fs["host"]]
-    if newlocalfilesystempaths != self.localfilesystempaths:
-      self.localfilesystempaths = newlocalfilesystempaths
-      self.logfilesystempaths();
+    if eos_space not in self.config.eos_space_to_min_free_bytes:
+      return
 
-    for path in self.localfilesystempaths:
-      self.processfs(path)
+    now = time.time()
+    age_secs = now - file_size_and_ctime.ctime
+    absolute_max_age_reached = age_secs > self.config.absolute_max_age_secs
+    gc_age_reached = age_secs > self.config.gc_age_secs
+    space_tracker = self.space_trackers.get_tracker(sub_dir)
+    total_free_bytes = space_tracker.get_free_bytes()
+    should_free_space = total_free_bytes < self.config.eos_space_to_min_free_bytes[eos_space]
 
-  def run(self, runonlyonce = False):
-    continueMainLoop = True
-    while continueMainLoop:
+    if absolute_max_age_reached or (should_free_space and gc_age_reached):
+      try:
+        bytes_required_before = 0
+        if self.config.eos_space_to_min_free_bytes[eos_space] > total_free_bytes:
+          bytes_required_before = self.config.eos_space_to_min_free_bytes[eos_space] - total_free_bytes
+        self.eos.stagerrm(fst_file)
+        space_tracker.stagerrm_queued(file_size_and_ctime.sizebytes)
+        self.log.info('stagerrm: ' \
+          'sub_dir={}, ' \
+          'fxid={}, ' \
+          'bytes_required_before={}, ' \
+          'file_size_bytes={}, ' \
+          'absolute_max_age_reached={}, ' \
+          'should_free_space={}, ' \
+          'gc_age_reached={}'
+          .format(sub_dir, fst_file, bytes_required_before, file_size_and_ctime.sizebytes, absolute_max_age_reached,
+            should_free_space, gc_age_reached))
+        nowstr = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S.%f')
+        attrname = 'sys.retrieve.error'
+        attrvalue = 'Garbage collected at {}'.format(nowstr)
+        self.eos.attrset(attrname, attrvalue, fst_file)
+      except StagerrmError as err:
+        pass
+      except Exception as err:
+        self.log.error('process_file: {}'.format(err))
+
+  def run(self, run_only_once = False):
+    continue_main_loop = True
+    while continue_main_loop:
       before = time.time()
-      self.processallfs()
+      self.process_all_fs()
       after = time.time()
       period = after - before
-      if period < self.config.mainloopperiodsecs:
-        sleeptime = self.config.mainloopperiodsecs - period
+      if period < self.config.main_loop_period_secs:
+        sleeptime = self.config.main_loop_period_secs - period
         self.log.debug('Sleeping {} seconds'.format(sleeptime))
         time.sleep(sleeptime)
-      if runonlyonce:
-        continueMainLoop = False
+      if run_only_once:
+        continue_main_loop = False
 
 def main():
   programname = 'cta-fst-gcd'
@@ -407,68 +503,56 @@ def main():
     raise UserError('{} must be executed as user daemon and not user {}'.format(programname, username))
 
   parser = argparse.ArgumentParser()
-  parser.add_argument("-c", "--config", default="/etc/cta/{}.conf".format(programname), help="Configuration file path")
+  parser.add_argument('-c', '--config', default='/etc/cta/{}.conf'.format(programname), help='Configuration file path')
   args = parser.parse_args()
 
-  config = parseconf(args.config)
+  if not os.path.isfile(args.config):
+    raise UserError('The configuration file {} is not a directory or does not exist'.format(args.config))
+  if not os.access(args.config, os.R_OK):
+    raise UserError('Cannot access for reading the configuration file {}'.format(args.config))
+
+  conf_fp = open(args.config)
+
+  try:
+    config = Gc.parse_conf(conf_fp)
+  except UserError as err:
+    raise UserError('Error parsing configuration file {}: {}'.format(args.config, err))
+
   hostname = socket.gethostname()
   fqdn = socket.getfqdn()
 
-  log = getlogger(hostname, programname, config.logfile)
+  log = get_logger(hostname, programname, config.log_file)
   log.info('{} started'.format(programname))
   log.info('The fqdn of this machine is {}'.format(fqdn))
 
-  eos = RealEos(log, config.mgmhost, config.xrdsecssskt)
+  eos = RealEos(log, config.mgm_host, config.xrdsecssskt)
   disk = RealDisk(log)
   gc = Gc(log, fqdn, disk, eos, config)
   gc.run()
 
-def parseconf(conffile):
-  if not os.path.isfile(conffile):
-    raise UserError("The configuration file {} is not a directory or does not exist".format(conffile))
-  if not os.access(conffile, os.R_OK):
-    raise UserError("Cannot access for reading the configuration file {}".format(conffile))
-
-  conffp = open(conffile)
-
-  try:
-    parser = ConfigParser.ConfigParser()
-    parser.readfp(conffp)
-    config = GcConfig()
-    config.logfile = parser.get('main', 'logfile')
-    config.mgmhost = parser.get('main', 'mgmhost')
-    config.minfreebytes = parser.getint('main', 'minfreebytes')
-    config.gcagesecs = parser.getint('main', 'gcagesecs')
-    config.absolutemaxagesecs = parser.getint('main', 'absolutemaxagesecs')
-    config.queryperiodsecs = parser.getint('main', 'queryperiodsecs')
-    config.mainloopperiodsecs = parser.getint('main', 'mainloopperiodsecs')
-    config.xrdsecssskt = parser.get('main', 'xrdsecssskt')
-    return config
-  except ConfigParser.Error as err:
-    raise UserError("Error in configuration file {}: {}".format(conffile, err))
-
-def getlogger(hostname, programname, logpath):
+def get_logger(hostname, programname, logpath):
   config = {}
 
-  logfmt = '%(asctime)s.%(msecs)03d000 ' + hostname + ' %(levelname)s ' + programname + ':LVL="%(levelname)s" PID="%(process)d" TID="%(process)d" MSG="%(message)s"'
-  logdatefmt = '%Y/%m/%d %H:%M:%S'
-  logformatter = logging.Formatter(fmt = logfmt, datefmt = logdatefmt)
+  log_fmt = '%(asctime)s.%(msecs)03d000 ' + hostname + ' %(levelname)s ' + programname + \
+    ':LVL="%(levelname)s" PID="%(process)d" TID="%(process)d" MSG="%(message)s"'
+  log_date_fmt = '%Y/%m/%d %H:%M:%S'
+  log_formatter = logging.Formatter(fmt = log_fmt, datefmt = log_date_fmt)
 
-  loghandler = None
+  log_handler = None
 
-  loggingdir = os.path.dirname(logpath)
-  if not os.path.isdir(loggingdir):
-    raise UserError("The logging directory {} is not a directory or does not exist".format(loggingdir))
-  if not os.access(loggingdir, os.W_OK):
-    raise UserError("The logging directory {} cannot be written to".format(loggingdir))
+  logging_dir = os.path.dirname(logpath)
+  if not os.path.isdir(logging_dir):
+    raise UserError('The logging directory {} is not a directory or does not exist'.format(logging_dir))
+  if not os.access(logging_dir, os.W_OK):
+    raise UserError('The logging directory {} cannot be written to'.format(logging_dir))
 
-  loghandler = logging.handlers.TimedRotatingFileHandler(filename = logpath, when = 'midnight')
-  loghandler.setLevel(logging.INFO)
-  loghandler.setFormatter(logformatter)
+  log_handler = logging.handlers.TimedRotatingFileHandler(filename = logpath, when = 'midnight')
+  log_handler.setLevel(logging.INFO)
+  log_handler.setFormatter(log_formatter)
 
   logger = logging.getLogger('gc')
   logger.setLevel(logging.INFO)
-  logger.addHandler(loghandler)
+  logger.addHandler(log_handler)
 
   return logger
 
