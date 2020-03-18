@@ -47,7 +47,10 @@ set (STATISTICS_LIB_SRC_FILES
   StatisticsSchema.cpp
   MysqlStatisticsSchema.cpp
   StatisticsSchemaFactory.cpp
-  TapeStatisticsUpdater.cpp
+  StatisticsUpdater.cpp
+  StatisticsGetter.cpp
+  Statistics.cpp
+  FileStatistics.cpp
 )
 
 add_library (ctastatistics SHARED

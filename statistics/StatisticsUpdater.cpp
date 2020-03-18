@@ -16,18 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "TapeStatisticsUpdater.hpp"
+#include "StatisticsUpdater.hpp"
 #include "rdbms/Login.hpp"
 
 namespace cta { namespace statistics {
   
-TapeStatisticsUpdater::TapeStatisticsUpdater(cta::rdbms::Conn &conn):m_conn(conn) {
+StatisticsUpdater::StatisticsUpdater(cta::rdbms::Conn &conn):m_conn(conn) {
 }
 
-TapeStatisticsUpdater::~TapeStatisticsUpdater() {
+StatisticsUpdater::~StatisticsUpdater() {
 }
 
-void TapeStatisticsUpdater::updateTapeStatistics() {
+void StatisticsUpdater::updateTapeStatistics() {
   const char * const sql = 
   "UPDATE TAPE TAPE_TO_UPDATE SET"
   "("
@@ -92,13 +92,13 @@ void TapeStatisticsUpdater::updateTapeStatistics() {
   }
 }
 
-uint64_t TapeStatisticsUpdater::getNbUpdatedTapes() {
+uint64_t StatisticsUpdater::getNbUpdatedTapes() {
   return m_nbUpdatedTapes;
 }
 
-std::unique_ptr<TapeStatisticsUpdater> TapeStatisticsUpdaterFactory::create(cta::rdbms::Login::DbType dbType, cta::rdbms::Conn& conn){
+std::unique_ptr<StatisticsUpdater> TapeStatisticsUpdaterFactory::create(cta::rdbms::Login::DbType dbType, cta::rdbms::Conn& conn){
   typedef cta::rdbms::Login::DbType DbType;
-  std::unique_ptr<TapeStatisticsUpdater> ret;
+  std::unique_ptr<StatisticsUpdater> ret;
   switch(dbType){
     case DbType::DBTYPE_IN_MEMORY:
     case DbType::DBTYPE_SQLITE:
@@ -106,7 +106,7 @@ std::unique_ptr<TapeStatisticsUpdater> TapeStatisticsUpdaterFactory::create(cta:
       throw cta::exception::Exception("In TapeStatisticsUpdaterFactory::create(), the "+cta::rdbms::Login::dbTypeToString(dbType)+" database type is not supported.");
     case DbType::DBTYPE_ORACLE:
     case DbType::DBTYPE_POSTGRESQL:
-      ret.reset(new TapeStatisticsUpdater(conn));
+      ret.reset(new StatisticsUpdater(conn));
       return std::move(ret);
     default:
       throw cta::exception::Exception("In TapeStatisticsUpdaterFactory::create(), unknown database type.");

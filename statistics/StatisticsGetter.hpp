@@ -1,6 +1,6 @@
-/**
+/*
  * The CERN Tape Archive (CTA) project
- * Copyright © 2018 CERN
+ * Copyright (C) 2019  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,36 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
 
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
+#include "Statistics.hpp"
 
-namespace cta { namespace statistics {
+namespace cta {
+namespace statistics{
 
-class TapeStatisticsUpdater {
+  /**
+   * This class interogates the database and returns the statistics
+   * @param connection the connection to the database
+   */
+class StatisticsGetter {
 public:
-  TapeStatisticsUpdater(cta::rdbms::Conn &conn);
-  virtual void updateTapeStatistics();
-  virtual uint64_t getNbUpdatedTapes();
-  virtual ~TapeStatisticsUpdater();
-protected:
-  cta::rdbms::Conn &m_conn;
-  uint64_t m_nbUpdatedTapes = 0;
+    StatisticsGetter(cta::rdbms::Conn& connection);
+    virtual ~StatisticsGetter();
+    StatisticsGetter &operator=(const StatisticsGetter& ) = delete;
+    virtual std::unique_ptr<Statistics> getAllStatistics() const;
+private:
+    cta::rdbms::Conn & m_conn;
 };
 
-//TODO if necessary
-class MySQLStatisticsUpdater: public TapeStatisticsUpdater {
+class StatisticsGetterFactory {
 public:
-  MySQLStatisticsUpdater(cta::rdbms::Conn &conn);
-  virtual ~MySQLStatisticsUpdater();
-  void updateTapeStatistics() override;
-};
-
-class TapeStatisticsUpdaterFactory {
-public:
-  static std::unique_ptr<TapeStatisticsUpdater> create(cta::rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);
+  static std::unique_ptr<StatisticsGetter> create(cta::rdbms::Conn &conn, cta::rdbms::Login::DbType dbType);
 };
 
 }}
+

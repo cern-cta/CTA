@@ -22,7 +22,8 @@
 #include "catalogue/SchemaChecker.hpp"
 #include "statistics/StatisticsUpdateCmdLineArgs.hpp"
 #include "common/Timer.hpp"
-#include "TapeStatisticsUpdater.hpp"
+#include "StatisticsUpdater.hpp"
+#include <cstdlib>
 
 namespace cta {
 namespace statistics {
@@ -70,7 +71,7 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
     return EXIT_FAILURE;
   }
   
-  std::unique_ptr<TapeStatisticsUpdater> updater = TapeStatisticsUpdaterFactory::create(loginCatalogue.dbType,catalogueConn);
+  std::unique_ptr<StatisticsUpdater> updater = TapeStatisticsUpdaterFactory::create(loginCatalogue.dbType,catalogueConn);
   std::cout<<"Updating tape statistics in the catalogue..."<<std::endl;
   cta::utils::Timer t;
   updater->updateTapeStatistics();

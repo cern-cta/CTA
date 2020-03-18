@@ -101,7 +101,7 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   // Check the number of arguments
   if(nbArgs < 2 ) {
     exception::CommandLineNotParsed ex;
-    ex.getMessage() << "At least 2 arguments should be provided." << nbArgs;
+    ex.getMessage() << "At least 2 arguments should be provided. Only " << nbArgs << " provided";
     throw ex;
   }
 }
@@ -122,7 +122,11 @@ void StatisticsSaveCmdLineArgs::printUsage(std::ostream &os) {
     "        statistics database" << std::endl <<
     "Options:" << std::endl <<
     "    -h,--help" << std::endl <<     
-    "        Prints this usage message" << std::endl;
+    "        Prints this usage message" << std::endl <<
+    "    -b, --build" << std::endl <<
+    "        Builds the statistics database" << std::endl <<
+    "    -d, --drop" << std::endl <<
+    "        Drops the statistics database" << std::endl;
 }
 
 } // namespace statistics

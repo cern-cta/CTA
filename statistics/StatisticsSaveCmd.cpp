@@ -21,6 +21,7 @@
 #include "StatisticsSaveCmd.hpp"
 #include "catalogue/SchemaChecker.hpp"
 #include "StatisticsSchemaFactory.hpp"
+#include "StatisticsGetter.hpp"
 #include <algorithm>
 
 namespace cta {
@@ -83,8 +84,7 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   auto catalogueConn = catalogueConnPool.getConn();
 
   SchemaChecker::Builder catalogueCheckerBuilder("catalogue",loginCatalogue.dbType,catalogueConn);
-  std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker;
-  catalogueChecker = catalogueCheckerBuilder.build();
+  std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker = catalogueCheckerBuilder.build();
   
   SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID","NB_MASTER_FILES","MASTER_DATA_IN_BYTES","DIRTY"});
   
@@ -101,7 +101,10 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   statisticsChecker->compareTablesLocatedInSchema();
   
   //Compute the statistics
-  
+  std::unique_ptr<StatisticsGetter> statisticsGetter = StatisticsGetterFactory::create(catalogueConn,loginCatalogue.dbType);
+  std::unique_ptr<Statistics> statistics = statisticsGetter->getAllStatistics();
+  std::cout << *statistics << std::endl;
+  //Insert them into the statistics database
   return EXIT_SUCCESS;
 }
 
