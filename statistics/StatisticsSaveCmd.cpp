@@ -86,7 +86,17 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   SchemaChecker::Builder catalogueCheckerBuilder("catalogue",loginCatalogue.dbType,catalogueConn);
   std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker = catalogueCheckerBuilder.build();
   
-  SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID","NB_MASTER_FILES","MASTER_DATA_IN_BYTES","DIRTY"});
+  SchemaChecker::Status tapeTableStatus = 
+    catalogueChecker->checkTableContainsColumns("TAPE",{"VID",
+                                                        "NB_MASTER_FILES",
+                                                        "MASTER_DATA_IN_BYTES",
+                                                        "NB_COPY_NB_1",
+                                                        "COPY_NB_1_IN_BYTES",
+                                                        "NB_COPY_NB_GT_1",
+                                                        "COPY_NB_GT_1_IN_BYTES",
+                                                        "DIRTY"
+                                                      }
+                                                );
   
   if(tapeTableStatus == SchemaChecker::Status::FAILURE){
     return EXIT_FAILURE;

@@ -59,7 +59,6 @@ uint64_t Statistics::getTotalBytes() const {
   return m_totalBytes;
 }
 
-
 Statistics::Builder::Builder(cta::rdbms::Rset & rset):m_rset(rset) {}
 
 std::unique_ptr<Statistics> Statistics::Builder::build(){
@@ -80,21 +79,21 @@ std::unique_ptr<Statistics> Statistics::Builder::build(){
 
 std::ostream & operator <<(std::ostream& stream, Statistics stats) {
   stream << "{";
-  stream << "[";
+  stream << "\"statisticsPerVo\": [";
   for(auto & stat: stats.getAllStatistics()){
     stream << "{";
-    stream << "vo: " << stat.first << ",";
-    stream << "nbMasterFiles: " << stat.second.nbMasterFiles << ",";
-    stream << "masterDataInBytes: " << stat.second.masterDataInBytes << ",";
-    stream << "nbCopyNb1: " << stat.second.nbCopyNb1 << ",";
-    stream << "copyNb1InBytes: " << stat.second.copyNb1InBytes << ",";
-    stream << "nbCopyNbGt1: " << stat.second.nbCopyNbGt1 << ",";
-    stream << "copyNbGt1InBytes: " << stat.second.copyNbGt1InBytes;
-    stream << "}";
+    stream << "\"vo\": \"" << stat.first << "\",";
+    stream << "\"nbMasterFiles\": " << stat.second.nbMasterFiles << ",";
+    stream << "\"masterDataInBytes\": " << stat.second.masterDataInBytes << ",";
+    stream << "\"nbCopyNb1\": " << stat.second.nbCopyNb1 << ",";
+    stream << "\"copyNb1InBytes\": " << stat.second.copyNb1InBytes << ",";
+    stream << "\"nbCopyNbGt1\": " << stat.second.nbCopyNbGt1 << ",";
+    stream << "\"copyNbGt1InBytes\": " << stat.second.copyNbGt1InBytes;
+    stream << "},";
   }
   stream << "],";
-  stream << "totalFiles: " << stats.getTotalFiles() << ",";
-  stream << "totalBytes: " << stats.getTotalBytes();
+  stream << "\"totalFiles\": " << stats.getTotalFiles() << ",";
+  stream << "\"totalBytes\": " << stats.getTotalBytes();
   stream << "}";
   return stream;
 }
