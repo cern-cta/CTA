@@ -1,6 +1,6 @@
-/**
+/*
  * The CERN Tape Archive (CTA) project
- * Copyright © 2018 CERN
+ * Copyright (C) 2019  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,18 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "StatisticsUpdater.hpp"
-#include "rdbms/Login.hpp"
+#include "DatabaseStatisticsService.hpp"
+
 
 namespace cta { namespace statistics {
   
-StatisticsUpdater::StatisticsUpdater(cta::rdbms::Conn &conn):m_conn(conn) {
+DatabaseStatisticsService::DatabaseStatisticsService(cta::rdbms::Conn & databaseConnection):m_conn(databaseConnection) {
 }
 
-StatisticsUpdater::~StatisticsUpdater() {
+DatabaseStatisticsService::~DatabaseStatisticsService() {
 }
 
-void StatisticsUpdater::updateTapeStatistics() {
+void DatabaseStatisticsService::update(){
   const char * const sql = 
   "UPDATE TAPE TAPE_TO_UPDATE SET"
   "("
@@ -92,27 +92,39 @@ void StatisticsUpdater::updateTapeStatistics() {
   }
 }
 
-uint64_t StatisticsUpdater::getNbUpdatedTapes() {
-  return m_nbUpdatedTapes;
+void DatabaseStatisticsService::save(const cta::statistics::Statistics& statistics) {
+
 }
 
-std::unique_ptr<StatisticsUpdater> TapeStatisticsUpdaterFactory::create(cta::rdbms::Login::DbType dbType, cta::rdbms::Conn& conn){
-  typedef cta::rdbms::Login::DbType DbType;
-  std::unique_ptr<StatisticsUpdater> ret;
-  switch(dbType){
-    case DbType::DBTYPE_IN_MEMORY:
-    case DbType::DBTYPE_SQLITE:
-    case DbType::DBTYPE_MYSQL:
-      throw cta::exception::Exception("In TapeStatisticsUpdaterFactory::create(), the "+cta::rdbms::Login::dbTypeToString(dbType)+" database type is not supported.");
-    case DbType::DBTYPE_ORACLE:
-    case DbType::DBTYPE_POSTGRESQL:
-      ret.reset(new StatisticsUpdater(conn));
-      return std::move(ret);
-    default:
-      throw cta::exception::Exception("In TapeStatisticsUpdaterFactory::create(), unknown database type.");
+std::unique_ptr<cta::statistics::Statistics> DatabaseStatisticsService::get() {
+  const char * const sql = 
+  "SELECT "
+    "VIRTUAL_ORGANIZATION_NAME AS VO,"
+    "SUM(NB_MASTER_FILES) AS TOTAL_MASTER_FILES_VO,"
+    "SUM(MASTER_DATA_IN_BYTES) AS TOTAL_MASTER_DATA_BYTES_VO,"
+    "SUM(NB_COPY_NB_1) AS TOTAL_NB_COPY_1_VO,"
+    "SUM(COPY_NB_1_IN_BYTES) AS TOTAL_NB_COPY_1_BYTES_VO,"
+    "SUM(NB_COPY_NB_GT_1) AS TOTAL_NB_COPY_NB_GT_1_VO,"
+    "SUM(COPY_NB_GT_1_IN_BYTES) AS TOTAL_COPY_NB_GT_1_IN_BYTES_VO "
+  "FROM "
+    "TAPE "
+  "INNER JOIN "
+    "TAPE_POOL ON TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID "
+  "INNER JOIN "
+    "VIRTUAL_ORGANIZATION ON TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
+  "GROUP BY VIRTUAL_ORGANIZATION_NAME";
+  try {
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    //Build the Statitistics with the result set and return them
+    Statistics::Builder builder(rset);
+    return builder.build();
+  } catch(cta::exception::Exception &ex) {
+    ex.getMessage().str(std::string(__PRETTY_FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
   }
 }
 
 
-}}
 
+}}

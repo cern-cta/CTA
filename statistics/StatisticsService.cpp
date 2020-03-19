@@ -15,33 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
 
-#include "rdbms/Conn.hpp"
-#include "rdbms/Login.hpp"
-#include "Statistics.hpp"
+#include "StatisticsService.hpp"
 
-namespace cta {
-namespace statistics{
+namespace cta { namespace statistics {
+  
+StatisticsService::StatisticsService() {
+}
 
-  /**
-   * This class interogates the database and returns the statistics
-   * @param connection the connection to the database
-   */
-class StatisticsGetter {
-public:
-    StatisticsGetter(cta::rdbms::Conn& connection);
-    virtual ~StatisticsGetter();
-    StatisticsGetter &operator=(const StatisticsGetter& ) = delete;
-    virtual std::unique_ptr<Statistics> getAllStatistics() const;
-private:
-    cta::rdbms::Conn & m_conn;
-};
+StatisticsService::~StatisticsService() {
+}
 
-class StatisticsGetterFactory {
-public:
-  static std::unique_ptr<StatisticsGetter> create(cta::rdbms::Conn &conn, cta::rdbms::Login::DbType dbType);
-};
+uint64_t StatisticsService::getNbUpdatedTapes() {
+  return m_nbUpdatedTapes;
+}
 
 }}
-
