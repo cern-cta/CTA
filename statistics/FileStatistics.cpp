@@ -25,6 +25,15 @@ namespace statistics {
 FileStatistics::FileStatistics() {
 }
 
+FileStatistics::FileStatistics(const FileStatistics &other){
+  nbMasterFiles = other.nbMasterFiles;
+  masterDataInBytes = other.masterDataInBytes;
+  nbCopyNb1 = other.nbCopyNb1;
+  copyNb1InBytes = other.copyNb1InBytes;
+  nbCopyNbGt1 = other.nbCopyNbGt1;
+  copyNbGt1InBytes = other.copyNbGt1InBytes;
+}
+
 FileStatistics FileStatistics::operator +=(const FileStatistics& other) {
   nbMasterFiles += other.nbMasterFiles;
   masterDataInBytes += other.masterDataInBytes;
@@ -32,6 +41,16 @@ FileStatistics FileStatistics::operator +=(const FileStatistics& other) {
   copyNb1InBytes += other.copyNb1InBytes;
   nbCopyNbGt1 += other.nbCopyNbGt1;
   copyNbGt1InBytes += other.copyNbGt1InBytes;
+  return *this;
+}
+
+FileStatistics& FileStatistics::operator =(const FileStatistics& other){
+  nbMasterFiles = other.nbMasterFiles;
+  masterDataInBytes = other.masterDataInBytes;
+  nbCopyNb1 = other.nbCopyNb1;
+  copyNb1InBytes = other.copyNb1InBytes;
+  nbCopyNbGt1 = other.nbCopyNbGt1;
+  copyNbGt1InBytes = other.copyNbGt1InBytes;
   return *this;
 }
 

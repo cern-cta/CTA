@@ -23,6 +23,7 @@
 #include "StatisticsSchemaFactory.hpp"
 #include "StatisticsService.hpp"
 #include "StatisticsServiceFactory.hpp"
+#include "common/utils/utils.hpp"
 
 #include <algorithm>
 
@@ -110,13 +111,24 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   statisticsCheckerBuilder.useCppSchemaStatementsReader(*statisticsSchema)
                           .useSQLiteSchemaComparer()
                           .build();
-  statisticsChecker->compareTablesLocatedInSchema();
+  SchemaChecker::Status compareTablesStatus = statisticsChecker->compareTablesLocatedInSchema();
+  if(compareTablesStatus == SchemaChecker::Status::FAILURE){
+    return EXIT_FAILURE;
+  }
   
   //Compute the statistics
-  std::unique_ptr<StatisticsService> service = StatisticsServiceFactory::create(catalogueConn,loginCatalogue.dbType);
-  std::unique_ptr<Statistics> statistics = service->get();
-  std::cout << *statistics << std::endl;
+  std::unique_ptr<StatisticsService> catalogueStatisticsService = StatisticsServiceFactory::create(catalogueConn,loginCatalogue.dbType);
+  std::unique_ptr<Statistics> statistics = catalogueStatisticsService->getStatistics();
   //Insert them into the statistics database
+  //std::cout<<*statistics<<std::endl;
+  try {
+    std::unique_ptr<StatisticsService> statisticsStatisticsService = StatisticsServiceFactory::create(statisticsConn,loginStatistics.dbType);
+    statisticsStatisticsService->saveStatistics(*statistics);
+  } catch (cta::exception::Exception &ex) {
+    std::cerr << ex.getMessageValue() << std::endl;
+    std::cerr << "StatisticsJson:" << *statistics << std::endl;
+    return EXIT_FAILURE;
+  }
   return EXIT_SUCCESS;
 }
 
@@ -149,7 +161,24 @@ void StatisticsSaveCmd::verifyCmdLineArgs(const StatisticsSaveCmdLineArgs& cmdLi
 }
 
 void StatisticsSaveCmd::buildStatisticsDatabase(cta::rdbms::Conn& statisticsDatabaseConn, const StatisticsSchema& statisticsSchema) {
-  statisticsDatabaseConn.executeNonQuery(statisticsSchema.sql);
+  try {
+    std::string::size_type searchPos = 0;
+    std::string::size_type findResult = std::string::npos;
+    std::string sqlStmts = statisticsSchema.sql;
+
+    while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
+      // Calculate the length of the current statement without the trailing ';'
+      const std::string::size_type stmtLen = findResult - searchPos;
+      const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
+      searchPos = findResult + 1;
+
+      if(0 < sqlStmt.size()) { // Ignore empty statements
+        statisticsDatabaseConn.executeNonQuery(sqlStmt);
+      }
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 bool StatisticsSaveCmd::userConfirmDropStatisticsSchemaFromDb(const rdbms::Login &dbLogin) {

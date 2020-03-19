@@ -18,6 +18,8 @@
 
 #include "Statistics.hpp"
 #include "common/make_unique.hpp"
+#include <iostream>
+
 namespace cta { 
 namespace statistics {
   
@@ -29,6 +31,10 @@ Statistics::Statistics(const Statistics& other) {
     m_statisticsPerVo = other.m_statisticsPerVo;
     m_totalFiles = other.m_totalFiles;
     m_totalBytes = other.m_totalBytes;
+    m_totalFilesCopyNb1 = other.m_totalFilesCopyNb1;
+    m_totalBytesCopyNb1 = other.m_totalBytesCopyNb1;
+    m_totalFilesCopyNbGt1 = other.m_totalFilesCopyNbGt1;
+    m_totalBytesCopyNbGt1 = other.m_totalBytesCopyNbGt1;
   }
 }
 
@@ -37,6 +43,10 @@ Statistics& Statistics::operator=(const Statistics& other) {
     m_statisticsPerVo = other.m_statisticsPerVo;
     m_totalFiles = other.m_totalFiles;
     m_totalBytes = other.m_totalBytes;
+    m_totalFilesCopyNb1 = other.m_totalFilesCopyNb1;
+    m_totalBytesCopyNb1 = other.m_totalBytesCopyNb1;
+    m_totalFilesCopyNbGt1 = other.m_totalFilesCopyNbGt1;
+    m_totalBytesCopyNbGt1 = other.m_totalBytesCopyNbGt1;
   }
   return *this;
 }
@@ -45,6 +55,10 @@ void Statistics::insertStatistics(const std::string& vo, const FileStatistics& f
   m_statisticsPerVo[vo] = fileStatistics;
   m_totalFiles += fileStatistics.nbMasterFiles;
   m_totalBytes += fileStatistics.masterDataInBytes;
+  m_totalFilesCopyNb1 += fileStatistics.nbCopyNb1;
+  m_totalBytesCopyNb1 += fileStatistics.copyNb1InBytes;
+  m_totalFilesCopyNbGt1 += fileStatistics.nbCopyNbGt1;
+  m_totalBytesCopyNbGt1 += fileStatistics.copyNbGt1InBytes;
 }
 
 const Statistics::StatisticsPerVo& Statistics::getAllStatistics() const {
@@ -57,6 +71,22 @@ uint64_t Statistics::getTotalFiles() const {
 
 uint64_t Statistics::getTotalBytes() const {
   return m_totalBytes;
+}
+
+uint64_t Statistics::getTotalFilesCopyNb1() const {
+  return m_totalFilesCopyNb1;
+}
+
+uint64_t Statistics::getTotalBytesCopyNb1() const {
+  return m_totalBytesCopyNb1;
+}
+
+uint64_t Statistics::getTotalFilesCopyNbGt1() const {
+  return m_totalFilesCopyNbGt1;
+}
+
+uint64_t Statistics::getTotalBytesCopyNbGt1() const {
+  return m_totalBytesCopyNbGt1;
 }
 
 Statistics::Builder::Builder(cta::rdbms::Rset & rset):m_rset(rset) {}
@@ -91,10 +121,14 @@ std::ostream & operator <<(std::ostream& stream, Statistics stats) {
     stream << "\"copyNbGt1InBytes\": " << stat.second.copyNbGt1InBytes;
     stream << "},";
   }
-  stream << "],";
-  stream << "\"totalFiles\": " << stats.getTotalFiles() << ",";
-  stream << "\"totalBytes\": " << stats.getTotalBytes();
-  stream << "}";
+  stream << "],"
+         << "\"totalFiles\": " << stats.getTotalFiles() << ","
+         << "\"totalBytes\": " << stats.getTotalBytes() << ","
+         << "\"totalFilesCopyNb1\": " << stats.getTotalFilesCopyNb1() << ","
+         << "\"totalBytesCopyNb1\": " << stats.getTotalBytesCopyNb1() << ","
+         << "\"totalFilesCopyNbGt1\": " << stats.getTotalFilesCopyNbGt1() << ","
+         << "\"totalBytesCopyNbGt1\": " << stats.getTotalBytesCopyNbGt1() << ","
+         << "}";
   return stream;
 }
 

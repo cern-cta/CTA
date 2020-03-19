@@ -30,9 +30,9 @@ public:
   StatisticsService & operator=(const StatisticsService &) = delete;
   virtual ~StatisticsService();
   
-  virtual void update() = 0;
-  virtual void save(const cta::statistics::Statistics &statistics) = 0;
-  virtual std::unique_ptr<cta::statistics::Statistics> get() = 0;
+  virtual void updateStatistics() = 0;
+  virtual void saveStatistics(const cta::statistics::Statistics &statistics) = 0;
+  virtual std::unique_ptr<cta::statistics::Statistics> getStatistics() = 0;
   uint64_t getNbUpdatedTapes();
   
 protected:

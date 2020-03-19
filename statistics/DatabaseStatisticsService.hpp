@@ -32,11 +32,13 @@ public:
   DatabaseStatisticsService & operator=(const DatabaseStatisticsService &) = delete;
   virtual ~DatabaseStatisticsService();
   
-  virtual void update() override;
-  virtual void save(const cta::statistics::Statistics &statistics) override;
-  virtual std::unique_ptr<cta::statistics::Statistics> get() override;
+  virtual void updateStatistics() override;
+  virtual void saveStatistics(const cta::statistics::Statistics &statistics) override;
+  virtual std::unique_ptr<cta::statistics::Statistics> getStatistics() override;
 protected:
   cta::rdbms::Conn & m_conn;
+  virtual void saveFileStatistics(const cta::statistics::Statistics & statistics);
+  virtual void saveStatisticsPerVo(const cta::statistics::Statistics & statistics);
 };
 
 }}

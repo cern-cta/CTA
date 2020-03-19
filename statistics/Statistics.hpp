@@ -41,6 +41,10 @@ public:
   const StatisticsPerVo &getAllStatistics() const;
   uint64_t getTotalFiles() const;
   uint64_t getTotalBytes() const;
+  uint64_t getTotalFilesCopyNb1() const;
+  uint64_t getTotalBytesCopyNb1() const;
+  uint64_t getTotalFilesCopyNbGt1() const;
+  uint64_t getTotalBytesCopyNbGt1() const;
   
   /**
    * This builder class allows to build the statistics
@@ -61,6 +65,10 @@ private:
   StatisticsPerVo m_statisticsPerVo;
   uint64_t m_totalFiles = 0;
   uint64_t m_totalBytes = 0;
+  uint64_t m_totalFilesCopyNb1 = 0;
+  uint64_t m_totalBytesCopyNb1 = 0;
+  uint64_t m_totalFilesCopyNbGt1 = 0;
+  uint64_t m_totalBytesCopyNbGt1 = 0;
 };
 
 std::ostream &operator <<(std::ostream &stream, Statistics stats);

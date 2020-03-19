@@ -75,7 +75,7 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   std::unique_ptr<StatisticsService> service = StatisticsServiceFactory::create(catalogueConn,loginCatalogue.dbType);
   std::cout<<"Updating tape statistics in the catalogue..."<<std::endl;
   cta::utils::Timer t;
-  service->update();
+  service->updateStatistics();
   std::cout<<"Updated catalogue tape statistics in "<<t.secs()<<", "<<service->getNbUpdatedTapes()<<" tape(s) have been updated"<<std::endl; 
   
   return EXIT_SUCCESS;

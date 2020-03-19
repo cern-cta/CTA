@@ -27,7 +27,7 @@ DatabaseStatisticsService::DatabaseStatisticsService(cta::rdbms::Conn & database
 DatabaseStatisticsService::~DatabaseStatisticsService() {
 }
 
-void DatabaseStatisticsService::update(){
+void DatabaseStatisticsService::updateStatistics(){
   const char * const sql = 
   "UPDATE TAPE TAPE_TO_UPDATE SET"
   "("
@@ -92,11 +92,101 @@ void DatabaseStatisticsService::update(){
   }
 }
 
-void DatabaseStatisticsService::save(const cta::statistics::Statistics& statistics) {
-
+void DatabaseStatisticsService::saveStatistics(const cta::statistics::Statistics& statistics) {
+  //First we save the general FILE statistics, then we go for the per-vo statistics
+  saveFileStatistics(statistics);
+  saveStatisticsPerVo(statistics);
 }
 
-std::unique_ptr<cta::statistics::Statistics> DatabaseStatisticsService::get() {
+void DatabaseStatisticsService::saveFileStatistics(const cta::statistics::Statistics& statistics) {
+  try {
+    const time_t now = time(nullptr);
+    const char * const sql = 
+    "INSERT INTO "
+      "FILE_STATISTICS "
+      "("
+        "NB_MASTER_FILES,"
+        "MASTER_DATA_IN_BYTES,"
+        "NB_COPY_NB_1,"
+        "NB_COPY_NB_1_IN_BYTES,"
+        "NB_COPY_NB_GT_1,"
+        "NB_COPY_NB_GT_1_IN_BYTES,"
+        "UPDATE_TIME"
+    ") "
+    "VALUES "
+    "("
+      ":NB_MASTER_FILES,"
+      ":MASTER_DATA_IN_BYTES,"
+      ":NB_COPY_NB_1,"
+      ":NB_COPY_NB_1_IN_BYTES,"
+      ":NB_COPY_NB_GT_1,"
+      ":NB_COPY_NB_GT_1_IN_BYTES,"
+      ":UPDATE_TIME"
+    ")";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindUint64(":NB_MASTER_FILES",statistics.getTotalFiles());
+    stmt.bindUint64(":MASTER_DATA_IN_BYTES",statistics.getTotalBytes());
+    stmt.bindUint64(":NB_COPY_NB_1",statistics.getTotalFilesCopyNb1());
+    stmt.bindUint64(":NB_COPY_NB_1_IN_BYTES",statistics.getTotalBytesCopyNb1());
+    stmt.bindUint64(":NB_COPY_NB_GT_1",statistics.getTotalFilesCopyNbGt1());
+    stmt.bindUint64(":NB_COPY_NB_GT_1_IN_BYTES",statistics.getTotalBytesCopyNbGt1());
+    stmt.bindUint64(":UPDATE_TIME",now);
+    stmt.executeNonQuery();
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void DatabaseStatisticsService::saveStatisticsPerVo(const cta::statistics::Statistics& statistics) {
+  try {
+    const time_t now = time(nullptr);
+    const char * const sql = 
+    "INSERT INTO "
+      "VO_STATISTICS "
+      "("
+        "VO,"
+        "NB_MASTER_FILES,"
+        "MASTER_DATA_IN_BYTES,"
+        "NB_COPY_NB_1,"
+        "NB_COPY_NB_1_IN_BYTES,"
+        "NB_COPY_NB_GT_1,"
+        "NB_COPY_NB_GT_1_IN_BYTES,"
+        "UPDATE_TIME"
+      ") "
+      "VALUES "
+      "("
+        ":VO,"
+        ":NB_MASTER_FILES,"
+        ":MASTER_DATA_IN_BYTES,"
+        ":NB_COPY_NB_1,"
+        ":NB_COPY_NB_1_IN_BYTES,"
+        ":NB_COPY_NB_GT_1,"
+        ":NB_COPY_NB_GT_1_IN_BYTES,"
+        ":UPDATE_TIME"
+      ")";
+    for(const auto & stat: statistics.getAllStatistics()){
+      auto stmt = m_conn.createStmt(sql);
+      auto voFileStatistics = stat.second;
+      stmt.bindString(":VO",stat.first);
+      stmt.bindUint64(":NB_MASTER_FILES",voFileStatistics.nbMasterFiles);
+      stmt.bindUint64(":MASTER_DATA_IN_BYTES",voFileStatistics.nbMasterFiles);
+      stmt.bindUint64(":NB_COPY_NB_1",voFileStatistics.nbCopyNb1);
+      stmt.bindUint64(":NB_COPY_NB_1_IN_BYTES",voFileStatistics.copyNb1InBytes);
+      stmt.bindUint64(":NB_COPY_NB_GT_1",voFileStatistics.nbCopyNbGt1);
+      stmt.bindUint64(":NB_COPY_NB_GT_1_IN_BYTES",voFileStatistics.copyNbGt1InBytes);
+      stmt.bindUint64(":UPDATE_TIME",now);
+      stmt.executeNonQuery();
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+
+std::unique_ptr<cta::statistics::Statistics> DatabaseStatisticsService::getStatistics() {
   const char * const sql = 
   "SELECT "
     "VIRTUAL_ORGANIZATION_NAME AS VO,"

@@ -29,7 +29,7 @@ public:
   MySQLStatisticsService & operator=(const MySQLStatisticsService &) = delete;
   virtual ~MySQLStatisticsService();
   
-  void update() override;
+  void updateStatistics() override;
 private:
 
 };
