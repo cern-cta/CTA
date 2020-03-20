@@ -75,8 +75,8 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
                                                                                               "NB_COPY_NB_GT_1",
                                                                                               "COPY_NB_GT_1_IN_BYTES"
                                                                                       });
-  SchemaChecker::Status tapeFileTableStatus = catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"ARCHIVE_FILE_ID","COPY_NB"});
-  SchemaChecker::Status archiveFileTableStatus = catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE",{"SIZE_IN_BYTES"});
+  SchemaChecker::Status tapeFileTableStatus = catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"VID","ARCHIVE_FILE_ID","FSEQ","COPY_NB","SUPERSEDED_BY_VID","SUPERSEDED_BY_FSEQ"});
+  SchemaChecker::Status archiveFileTableStatus = catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE",{"ARCHIVE_FILE_ID","SIZE_IN_BYTES"});
   
   if(tapeTableStatus == SchemaChecker::Status::FAILURE || tapeFileTableStatus == SchemaChecker::Status::FAILURE || archiveFileTableStatus == SchemaChecker::Status::FAILURE){
     return EXIT_FAILURE;
@@ -88,7 +88,7 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   std::cout<<"Updating tape statistics in the catalogue..."<<std::endl;
   cta::utils::Timer t;
   service->updateStatisticsPerTape();
-  std::cout<<"Updated catalogue tape statistics in "<<t.secs()<<", "<<service->getNbUpdatedTapes()<<" tape(s) have been updated"<<std::endl; 
+  std::cout<<"Updated catalogue tape statistics in "<<t.secs()<<" seconds, "<<service->getNbUpdatedTapes()<<" tape(s) have been updated"<<std::endl; 
   
   return EXIT_SUCCESS;
 }

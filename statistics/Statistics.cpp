@@ -110,18 +110,24 @@ std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset & rset){
 }
 
 std::ostream & operator <<(std::ostream& stream, Statistics stats) {
-  stream << "{";
-  stream << "\"statisticsPerVo\": [";
-  for(auto & stat: stats.getAllVOStatistics()){
-    stream << "{";
-    stream << "\"vo\": \"" << stat.first << "\",";
-    stream << "\"nbMasterFiles\": " << stat.second.nbMasterFiles << ",";
-    stream << "\"masterDataInBytes\": " << stat.second.masterDataInBytes << ",";
-    stream << "\"nbCopyNb1\": " << stat.second.nbCopyNb1 << ",";
-    stream << "\"copyNb1InBytes\": " << stat.second.copyNb1InBytes << ",";
-    stream << "\"nbCopyNbGt1\": " << stat.second.nbCopyNbGt1 << ",";
-    stream << "\"copyNbGt1InBytes\": " << stat.second.copyNbGt1InBytes;
-    stream << "},";
+  stream << "{"
+         << "\"statisticsPerVo\": [";
+  auto allVoStatistics = stats.getAllVOStatistics();
+  long unsigned int nbElementsVoStatistics = allVoStatistics.size();
+  long unsigned int i = 0;
+  for(auto & stat: allVoStatistics){
+    stream << "{"
+           << "\"vo\": \"" << stat.first << "\","
+           << "\"nbMasterFiles\": " << stat.second.nbMasterFiles << ","
+           << "\"masterDataInBytes\": " << stat.second.masterDataInBytes << ","
+           << "\"nbCopyNb1\": " << stat.second.nbCopyNb1 << ","
+           << "\"copyNb1InBytes\": " << stat.second.copyNb1InBytes << ","
+           << "\"nbCopyNbGt1\": " << stat.second.nbCopyNbGt1 << ","
+           << "\"copyNbGt1InBytes\": " << stat.second.copyNbGt1InBytes
+           << "}";
+    if(++i < nbElementsVoStatistics){
+      stream << ",";
+    }
   }
   stream << "],"
          << "\"totalFiles\": " << stats.getTotalFiles() << ","
@@ -129,7 +135,7 @@ std::ostream & operator <<(std::ostream& stream, Statistics stats) {
          << "\"totalFilesCopyNb1\": " << stats.getTotalFilesCopyNb1() << ","
          << "\"totalBytesCopyNb1\": " << stats.getTotalBytesCopyNb1() << ","
          << "\"totalFilesCopyNbGt1\": " << stats.getTotalFilesCopyNbGt1() << ","
-         << "\"totalBytesCopyNbGt1\": " << stats.getTotalBytesCopyNbGt1() << ","
+         << "\"totalBytesCopyNbGt1\": " << stats.getTotalBytesCopyNbGt1() 
          << "}";
   return stream;
 }
