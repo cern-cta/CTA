@@ -26,15 +26,14 @@ namespace cta {
 namespace statistics {
 
 /**
- * Structure containing the SQL to create the schema of the in memory CTA
- * database.
+ * Structure containing the SQL to create the schema of the in Statistics Database
  *
  * The CMakeLists.txt file of this directory instructs cmake to generate
- * OracleCatalogueSchema.cpp from:
- *   - OracleCatalogueSchema.before_SQL.cpp
- *   - oracle_catalogue_schema.sql
+ * MySQLStatisticsSchema.cpp from:
+ *   - MySQLStatisticsSchema.before_SQL.cpp
+ *   - common_statistics_schema.sql
  *
- * The OracleSchema.before_SQL.cpp file is not compilable and is therefore
+ * The MySQLStatisticsSchema.before_SQL.cpp file is not compilable and is therefore
  * difficult for Integrated Developent Environments (IDEs) to handle.
  *
  * The purpose of this class is to help IDEs by isolating the "non-compilable"

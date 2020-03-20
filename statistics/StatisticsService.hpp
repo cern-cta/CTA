@@ -23,6 +23,9 @@
 
 namespace cta { namespace statistics {
   
+/**
+ * This service class allows to access CTA statistics and do operations with it
+ */
 class StatisticsService {
 public:
   StatisticsService();
@@ -30,9 +33,25 @@ public:
   StatisticsService & operator=(const StatisticsService &) = delete;
   virtual ~StatisticsService();
   
-  virtual void updateStatistics() = 0;
+  /**
+   * Update the TAPE statistics of CTA
+   */
+  virtual void updateStatisticsPerTape() = 0;
+  /**
+   * Save the statistics
+   * @param statistics the statistics to save
+   */
   virtual void saveStatistics(const cta::statistics::Statistics &statistics) = 0;
+  /**
+   * Get the statistics
+   * @return the statistics
+   */
   virtual std::unique_ptr<cta::statistics::Statistics> getStatistics() = 0;
+  
+  /**
+   * Returns the number of TAPE updated by the updateStatistics() method
+   * @return the number of TAPE updated by the updateStatistics() method
+   */
   uint64_t getNbUpdatedTapes();
   
 protected:

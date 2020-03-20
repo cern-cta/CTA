@@ -56,26 +56,38 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
 
   const uint64_t maxNbConns = 1;
     
+  //Connect to the database
   auto loginCatalogue = rdbms::Login::parseFile(cmdLineArgs.catalogueDbConfigPath);
   rdbms::ConnPool catalogueConnPool(loginCatalogue, maxNbConns);
   auto catalogueConn = catalogueConnPool.getConn();
 
+  //Checks catalogue database content to perform the update of the TAPE statistics
   SchemaChecker::Builder catalogueCheckerBuilder("catalogue",loginCatalogue.dbType,catalogueConn);
   std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker;
   catalogueChecker = catalogueCheckerBuilder.build();
   
-  SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID","NB_MASTER_FILES","MASTER_DATA_IN_BYTES"});
-  SchemaChecker::Status tapeFileTableStatus = catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"ARCHIVE_FILE_ID"});
+  SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID",
+                                                                                              "DIRTY",
+                                                                                              "NB_MASTER_FILES",
+                                                                                              "MASTER_DATA_IN_BYTES",
+                                                                                              "NB_COPY_NB_1",
+                                                                                              "COPY_NB_1_IN_BYTES",
+                                                                                              "NB_COPY_NB_GT_1",
+                                                                                              "COPY_NB_GT_1_IN_BYTES"
+                                                                                      });
+  SchemaChecker::Status tapeFileTableStatus = catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"ARCHIVE_FILE_ID","COPY_NB"});
   SchemaChecker::Status archiveFileTableStatus = catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE",{"SIZE_IN_BYTES"});
   
   if(tapeTableStatus == SchemaChecker::Status::FAILURE || tapeFileTableStatus == SchemaChecker::Status::FAILURE || archiveFileTableStatus == SchemaChecker::Status::FAILURE){
     return EXIT_FAILURE;
   }
   
+  //Create the Statistics service
   std::unique_ptr<StatisticsService> service = StatisticsServiceFactory::create(catalogueConn,loginCatalogue.dbType);
+  //Update TAPE statistics
   std::cout<<"Updating tape statistics in the catalogue..."<<std::endl;
   cta::utils::Timer t;
-  service->updateStatistics();
+  service->updateStatisticsPerTape();
   std::cout<<"Updated catalogue tape statistics in "<<t.secs()<<", "<<service->getNbUpdatedTapes()<<" tape(s) have been updated"<<std::endl; 
   
   return EXIT_SUCCESS;

@@ -25,8 +25,8 @@ MySQLStatisticsService::MySQLStatisticsService(cta::rdbms::Conn & databaseConnec
 MySQLStatisticsService::~MySQLStatisticsService() {
 }
 
-void MySQLStatisticsService::updateStatistics() {
-  throw cta::exception::Exception("In MySQLStatisticsService::update() cannot update tape statistics because it is not implemented for MySQL databases");
+void MySQLStatisticsService::updateStatisticsPerTape() {
+  throw cta::exception::Exception("In MySQLStatisticsService::updateStatisticsPerTape() cannot update tape statistics because it is not implemented for MySQL databases");
 }
 
 

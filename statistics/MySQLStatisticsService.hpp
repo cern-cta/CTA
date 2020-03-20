@@ -22,14 +22,26 @@
 
 namespace cta { namespace statistics { 
 
+  /**
+   * Contains MySQL-specific queries
+   * @param databaseConnection the MySQL database connection
+   */
 class MySQLStatisticsService: public DatabaseStatisticsService {
 public:
+  /**
+   * Constructor
+   * @param databaseConnection the MySQL database connection
+   */
   MySQLStatisticsService(cta::rdbms::Conn & databaseConnection);
   MySQLStatisticsService(const MySQLStatisticsService& orig) = delete;
   MySQLStatisticsService & operator=(const MySQLStatisticsService &) = delete;
   virtual ~MySQLStatisticsService();
   
-  void updateStatistics() override;
+  /**
+   * This method needs to be implemented for MySQL CTA catalogue
+   * as the UPDATE query only works for PostgreSQL and Oracle
+   */
+  void updateStatisticsPerTape() override;
 private:
 
 };

@@ -24,10 +24,22 @@
 #include "rdbms/Login.hpp"
 
 namespace cta {
-  namespace statistics{
-    class StatisticsSchemaFactory {
-      public:
-	static std::unique_ptr<StatisticsSchema> create(cta::rdbms::Login::DbType dbType);
+namespace statistics{
+  
+  /**
+   * Factory of Statistics Schema
+   * Note: Only MySQL is supported for Statistics database
+   */
+  class StatisticsSchemaFactory {
+    public:
+      /**
+       * Creates a StatisticsSchema
+       * @param dbType the dbType to deduce which StatisticsSchema to instanciate
+       * @return a unique_ptr containing the StatisticsSchema
+       * @throws and exception if the dbType != MYSQL, statistics database works for MySQL only
+       * Other database Schema can be implemented.
+       */
+      static std::unique_ptr<StatisticsSchema> create(cta::rdbms::Login::DbType dbType);
     };
   }
 }

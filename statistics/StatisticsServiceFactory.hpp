@@ -23,8 +23,17 @@
 #include "StatisticsService.hpp"
 
 namespace cta { namespace statistics {
+/**
+ * Factory to instanciate a StatisticsService
+ */
 class StatisticsServiceFactory {
 public:
+  /**
+   * Creates a StatisticsService to perform Statistics operations
+   * @param connection the database connection
+   * @param dbType the database type of the database connection
+   * @return a unique_ptr containing the StatisticsService
+   */
   static std::unique_ptr<StatisticsService> create(cta::rdbms::Conn &connection, cta::rdbms::Login::DbType dbType);
 
 };

@@ -24,11 +24,9 @@
 namespace cta { namespace statistics {
     
 /**
- * This class will be used by the StatistcsGetter to
- * fill the statistics into it.
- * It will be also used by the StatisticsSaver to save the statistics
- * into the Statistics database
- * It is composed of a map[VirtualOrganization][FileStatistics]
+ * This class represents the statistics that we will get and compute from
+ * the Catalogue database. It will also be used by the method that will insert the 
+ * statistics in the Statistics database
  */    
 class Statistics {
 public:
@@ -37,40 +35,121 @@ public:
   Statistics();
   Statistics(const Statistics &other);
   Statistics &operator=(const Statistics &other);
-  void insertStatistics(const std::string &vo, const FileStatistics &fileStatistics);
-  const StatisticsPerVo &getAllStatistics() const;
+  
+  /**
+   * Insert statistics per-VO
+   * This method will increase the total counters of files and bytes
+   * @param vo the VO to which correspond the statistics we insert
+   * @param fileStatistics the statistics of the files that belong to the VO
+   */
+  void insertPerVOStatistics(const std::string &vo, const FileStatistics &fileStatistics);
+  
+  /**
+   * Get the statistics of all VOs
+   * @return the StatisticsPerVo map 
+   */
+  const StatisticsPerVo &getAllVOStatistics() const;
+  
+  /**
+   * Get the total number of MASTER files stored on the tapes
+   * @return the total number of MASTER files stored on the tapes
+   */
   uint64_t getTotalFiles() const;
+  
+  /**
+   * Get the total amount of space (in bytes) used by the MASTER files stored on the tapes
+   * @return the total amount of space (in bytes) used by the MASTER files stored on the tapes 
+   */
   uint64_t getTotalBytes() const;
+  
+  /**
+   * Get the total number of MASTER files that are copyNb 1 stored on the tapes
+   * @return the total number of MASTER files that are copyNb 1 stored on the tapes
+   */
   uint64_t getTotalFilesCopyNb1() const;
+  
+  /**
+   * Get the total amount of space (in bytes) used by MASTER files that are copyNb 1 stored on the tapes
+   * @return the total amount of space (in bytes) used by MASTER files that are copyNb 1 stored on the tapes
+   */
   uint64_t getTotalBytesCopyNb1() const;
+  
+  /**
+   * Get the total number of MASTER files that are copyNb greater than 1 stored on the tapes
+   * @return the total number of MASTER files that are copyNb greater than 1 stored on the tapes
+   */
   uint64_t getTotalFilesCopyNbGt1() const;
+  
+  /**
+   * Get the total amount of space (in bytes) used by MASTER files that are copyNb greater than 1 stored on the tapes
+   * @return the total amount of space (in bytes) used by MASTER files that are copyNb greater than 1 stored on the tapes
+   */
   uint64_t getTotalBytesCopyNbGt1() const;
   
   /**
    * This builder class allows to build the statistics
-   * with the ResultSet returned from the statistics database query
-   * @param rset the results of the statistics query
    */
   class Builder {
   public:
-    Builder(cta::rdbms::Rset & rset);
-    std::unique_ptr<Statistics> build();
+    Builder();
+    /**
+     * Build the statistics with the Rset returned by the Catalogue database query
+     * @param rset the Rset returned by the Catalogue database query
+     * @return a unique_ptr that contains the built statistics
+     */
+    std::unique_ptr<Statistics> build(cta::rdbms::Rset & rset);
   private:
-    cta::rdbms::Rset &m_rset;
+    /**
+     * Holds the statististics that will be returned by the build() methods
+     */
     std::unique_ptr<Statistics> m_statistics;
   };
   
 private:
-  
+  /**
+   * Currently, it's a map[VO][FileStatistics]
+   * used to hold the statistics per-VO
+   */
   StatisticsPerVo m_statisticsPerVo;
+  
+  /**
+   * Total number of MASTER files in CTA
+   */
   uint64_t m_totalFiles = 0;
+  
+  /**
+   * Total of space used by the MASTER files in CTA
+   */
+  
   uint64_t m_totalBytes = 0;
+  /**
+   * Total number of MASTER files that are copyNb 1 in CTA
+   */
   uint64_t m_totalFilesCopyNb1 = 0;
+  
+  /**
+   * Total of space used by the MASTER files that are copyNb 1 in CTA
+   */
   uint64_t m_totalBytesCopyNb1 = 0;
+  
+  /**
+   * Total number of MASTER files that are copyNb greater than 1 in CTA
+   */
   uint64_t m_totalFilesCopyNbGt1 = 0;
+  
+  /**
+   * Total of space used by the MASTER files that are copyNb greater than 1 in CTA
+   */
   uint64_t m_totalBytesCopyNbGt1 = 0;
 };
 
+/**
+ * Overload of the stream << operator
+ * The stream will contain the Statistics object in the JSON format
+ * @param stream the stream that will contain the Statistics object in JSON
+ * @param stats the Statistics object that will be represented in JSON
+ * @return the stream containing the Statistics object in JSON
+ */
 std::ostream &operator <<(std::ostream &stream, Statistics stats);
 
 }}

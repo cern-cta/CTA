@@ -27,7 +27,7 @@ DatabaseStatisticsService::DatabaseStatisticsService(cta::rdbms::Conn & database
 DatabaseStatisticsService::~DatabaseStatisticsService() {
 }
 
-void DatabaseStatisticsService::updateStatistics(){
+void DatabaseStatisticsService::updateStatisticsPerTape(){
   const char * const sql = 
   "UPDATE TAPE TAPE_TO_UPDATE SET"
   "("
@@ -165,12 +165,12 @@ void DatabaseStatisticsService::saveStatisticsPerVo(const cta::statistics::Stati
         ":NB_COPY_NB_GT_1_IN_BYTES,"
         ":UPDATE_TIME"
       ")";
-    for(const auto & stat: statistics.getAllStatistics()){
+    for(const auto & stat: statistics.getAllVOStatistics()){
       auto stmt = m_conn.createStmt(sql);
       auto voFileStatistics = stat.second;
       stmt.bindString(":VO",stat.first);
       stmt.bindUint64(":NB_MASTER_FILES",voFileStatistics.nbMasterFiles);
-      stmt.bindUint64(":MASTER_DATA_IN_BYTES",voFileStatistics.nbMasterFiles);
+      stmt.bindUint64(":MASTER_DATA_IN_BYTES",voFileStatistics.masterDataInBytes);
       stmt.bindUint64(":NB_COPY_NB_1",voFileStatistics.nbCopyNb1);
       stmt.bindUint64(":NB_COPY_NB_1_IN_BYTES",voFileStatistics.copyNb1InBytes);
       stmt.bindUint64(":NB_COPY_NB_GT_1",voFileStatistics.nbCopyNbGt1);
@@ -207,8 +207,7 @@ std::unique_ptr<cta::statistics::Statistics> DatabaseStatisticsService::getStati
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     //Build the Statitistics with the result set and return them
-    Statistics::Builder builder(rset);
-    return builder.build();
+    return Statistics::Builder().build(rset);
   } catch(cta::exception::Exception &ex) {
     ex.getMessage().str(std::string(__PRETTY_FUNCTION__) + ": " + ex.getMessage().str());
     throw;

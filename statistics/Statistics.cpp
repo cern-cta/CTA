@@ -51,7 +51,7 @@ Statistics& Statistics::operator=(const Statistics& other) {
   return *this;
 }
 
-void Statistics::insertStatistics(const std::string& vo, const FileStatistics& fileStatistics){
+void Statistics::insertPerVOStatistics(const std::string& vo, const FileStatistics& fileStatistics){
   m_statisticsPerVo[vo] = fileStatistics;
   m_totalFiles += fileStatistics.nbMasterFiles;
   m_totalBytes += fileStatistics.masterDataInBytes;
@@ -61,7 +61,7 @@ void Statistics::insertStatistics(const std::string& vo, const FileStatistics& f
   m_totalBytesCopyNbGt1 += fileStatistics.copyNbGt1InBytes;
 }
 
-const Statistics::StatisticsPerVo& Statistics::getAllStatistics() const {
+const Statistics::StatisticsPerVo& Statistics::getAllVOStatistics() const {
   return m_statisticsPerVo;
 }
 
@@ -89,20 +89,22 @@ uint64_t Statistics::getTotalBytesCopyNbGt1() const {
   return m_totalBytesCopyNbGt1;
 }
 
-Statistics::Builder::Builder(cta::rdbms::Rset & rset):m_rset(rset) {}
+Statistics::Builder::Builder() {}
 
-std::unique_ptr<Statistics> Statistics::Builder::build(){
+std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset & rset){
   std::unique_ptr<Statistics> ret = cta::make_unique<Statistics>();
-  while(m_rset.next()){
-    std::string vo = m_rset.columnString("VO");
+  while(rset.next()){
+    //loop over each VO
+    std::string vo = rset.columnString("VO");
     FileStatistics fileStatistics;
-    fileStatistics.nbMasterFiles = m_rset.columnUint64("TOTAL_MASTER_FILES_VO");
-    fileStatistics.masterDataInBytes = m_rset.columnUint64("TOTAL_MASTER_DATA_BYTES_VO");
-    fileStatistics.nbCopyNb1 = m_rset.columnUint64("TOTAL_NB_COPY_1_VO");
-    fileStatistics.copyNb1InBytes = m_rset.columnUint64("TOTAL_NB_COPY_1_BYTES_VO");
-    fileStatistics.nbCopyNbGt1 = m_rset.columnUint64("TOTAL_NB_COPY_NB_GT_1_VO");
-    fileStatistics.copyNbGt1InBytes = m_rset.columnUint64("TOTAL_COPY_NB_GT_1_IN_BYTES_VO");
-    ret->insertStatistics(vo,fileStatistics);
+    fileStatistics.nbMasterFiles = rset.columnUint64("TOTAL_MASTER_FILES_VO");
+    fileStatistics.masterDataInBytes = rset.columnUint64("TOTAL_MASTER_DATA_BYTES_VO");
+    fileStatistics.nbCopyNb1 = rset.columnUint64("TOTAL_NB_COPY_1_VO");
+    fileStatistics.copyNb1InBytes = rset.columnUint64("TOTAL_NB_COPY_1_BYTES_VO");
+    fileStatistics.nbCopyNbGt1 = rset.columnUint64("TOTAL_NB_COPY_NB_GT_1_VO");
+    fileStatistics.copyNbGt1InBytes = rset.columnUint64("TOTAL_COPY_NB_GT_1_IN_BYTES_VO");
+    //insert the perVO file statistics
+    ret->insertPerVOStatistics(vo,fileStatistics);
   }
   return ret;
 }
@@ -110,7 +112,7 @@ std::unique_ptr<Statistics> Statistics::Builder::build(){
 std::ostream & operator <<(std::ostream& stream, Statistics stats) {
   stream << "{";
   stream << "\"statisticsPerVo\": [";
-  for(auto & stat: stats.getAllStatistics()){
+  for(auto & stat: stats.getAllVOStatistics()){
     stream << "{";
     stream << "\"vo\": \"" << stat.first << "\",";
     stream << "\"nbMasterFiles\": " << stat.second.nbMasterFiles << ",";
