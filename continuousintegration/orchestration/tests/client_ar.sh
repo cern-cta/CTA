@@ -599,15 +599,22 @@ if [ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l)
   echo "ERROR $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) files out of $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | wc -l) prepared files have no sys.retrieve.req_id extended attribute set"
 fi
 
-if [ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]; then
-  ((RC++))
-  echo "ERROR several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
-fi
 
 if [ ${RESTAGEDFILES} -ne "0" ]; then
   ((RC++))
   echo "ERROR some files were retrieved in spite of retrieve cancellation."
 fi
 
+# This one does not change the return code
+# WARNING if everything else was OK
+# ERROR otherwise as these xrootd failures could be the reason of the failure
+if [ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]; then
+  # ((RC++)) # do not change RC
+  if [ ${RC} -eq 0 ]; then
+    echo "WARNING several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
+  else
+    echo "ERROR several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
+  fi
+fi
 
 exit ${RC}
