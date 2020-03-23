@@ -37,6 +37,7 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
     {"statisticsconf",required_argument,NULL,'s'},
     {"build",no_argument, NULL, 'b'},
     {"drop", no_argument, NULL, 'd'},
+    {"json", no_argument, NULL, 'j'},
     {"help", no_argument, NULL, 'h'},
     {NULL  ,           0, NULL,   0}
   };
@@ -46,7 +47,7 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":hbdc:s:", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":hbdjc:s:", longopts, NULL)) != -1) {
     switch(opt) {
     case 'h':
       help = true;
@@ -62,6 +63,9 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
       break;
     case 'd':
       dropDatabase = true;
+      break;
+    case 'j':
+      jsonOutput = true;
       break;
     case ':': // Missing parameter
       {
@@ -112,21 +116,23 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
 void StatisticsSaveCmdLineArgs::printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    "    cta-statistics-save --catalogueconf catalogueDbConnectionFile --statisticsconf statisticsDbConnectionFile [options]" << std::endl <<
+    "    cta-statistics-save --catalogueconf catalogueDbConnectionFile [options]" << std::endl <<
     "Where:" << std::endl <<
     "    catalogueDbConnectionFile" << std::endl <<
     "        The path to the file containing the connection details of the CTA" << std::endl <<
     "        catalogue database" << std::endl <<
-    "    statisticsDbConnectionFile" << std::endl <<
+    "Options:" << std::endl <<
+    "    -s,--statisticsconf statisticsDbConnectionFile" << std::endl <<
     "        The path to the file containing the connection details of the CTA" << std::endl <<
     "        statistics database" << std::endl <<
-    "Options:" << std::endl <<
     "    -h,--help" << std::endl <<     
     "        Prints this usage message" << std::endl <<
     "    -b, --build" << std::endl <<
     "        Builds the statistics database" << std::endl <<
     "    -d, --drop" << std::endl <<
-    "        Drops the statistics database" << std::endl;
+    "        Drops the statistics database" << std::endl <<
+    "    -j, --json" << std::endl <<
+    "        Dumps the statistics in json format on stdout" << std::endl;
 }
 
 } // namespace statistics

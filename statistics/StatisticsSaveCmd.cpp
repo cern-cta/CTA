@@ -57,30 +57,54 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   
   verifyCmdLineArgs(cmdLineArgs);
 
+  bool isJsonOutput = cmdLineArgs.jsonOutput;
+  
   const uint64_t maxNbConns = 1;
+      
+  std::unique_ptr<StatisticsService> statisticsStatisticsService;
   
-  auto loginStatistics = rdbms::Login::parseFile(cmdLineArgs.statisticsDbConfigPath);
-  rdbms::ConnPool statisticsConnPool(loginStatistics, maxNbConns);
-  auto statisticsConn = statisticsConnPool.getConn();
+  std::unique_ptr<rdbms::ConnPool> statisticsConnPool;
+  std::unique_ptr<rdbms::Conn> statisticsConn;
+  if(!cmdLineArgs.statisticsDbConfigPath.empty()){
   
-  //Get the statistics schema so that we can create, drop and check the presence of the database
-  auto statisticsSchema = StatisticsSchemaFactory::create(loginStatistics.dbType);
-  
-  if(cmdLineArgs.buildDatabase){
-    //Build the database
-    buildStatisticsDatabase(statisticsConn,*statisticsSchema);
-    return EXIT_SUCCESS;
-  }
-  
-  if(cmdLineArgs.dropDatabase){
-    //drop the database
-    if(userConfirmDropStatisticsSchemaFromDb(loginStatistics)){
-      dropStatisticsDatabase(statisticsConn,*statisticsSchema);
+    auto loginStatistics = rdbms::Login::parseFile(cmdLineArgs.statisticsDbConfigPath);
+    statisticsConnPool = cta::make_unique<rdbms::ConnPool>(loginStatistics, maxNbConns);
+    statisticsConn = cta::make_unique<rdbms::Conn>(statisticsConnPool->getConn());
+
+    //Get the statistics schema so that we can create, drop and check the presence of the database
+    auto statisticsSchema = StatisticsSchemaFactory::create(loginStatistics.dbType);
+
+    if(cmdLineArgs.buildDatabase){
+      //Build the database
+      buildStatisticsDatabase(*statisticsConn,*statisticsSchema);
+      return EXIT_SUCCESS;
     }
-    return EXIT_SUCCESS;
-  }
+
+    if(cmdLineArgs.dropDatabase){
+      //drop the database
+      if(userConfirmDropStatisticsSchemaFromDb(loginStatistics)){
+        dropStatisticsDatabase(*statisticsConn,*statisticsSchema);
+      }
+      return EXIT_SUCCESS;
+    }
     
-  //Save the CTA statistics
+    //Check that the statistics schema tables are in the statistics database
+    SchemaChecker::Builder statisticsCheckerBuilder("statistics",loginStatistics.dbType,*statisticsConn);
+    std::unique_ptr<SchemaChecker> statisticsChecker = 
+    statisticsCheckerBuilder.useCppSchemaStatementsReader(*statisticsSchema)
+                            .useSQLiteSchemaComparer()
+                            .build();
+    SchemaChecker::Status compareTablesStatus = statisticsChecker->compareTablesLocatedInSchema();
+    if(compareTablesStatus == SchemaChecker::Status::FAILURE){
+      return EXIT_FAILURE;
+    }
+    
+    statisticsStatisticsService = StatisticsServiceFactory::create(*statisticsConn,loginStatistics.dbType);
+  } else if (isJsonOutput){
+    statisticsStatisticsService = StatisticsServiceFactory::create(std::cout);
+  } else {
+    throw cta::exception::Exception("No --json option provided and no statistics database configuration file provided.");
+  }
   
   //Connect to the catalogue database
   auto loginCatalogue = rdbms::Login::parseFile(cmdLineArgs.catalogueDbConfigPath);
@@ -108,24 +132,12 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   if(tapeTableStatus == SchemaChecker::Status::FAILURE || voTableStatus == SchemaChecker::Status::FAILURE ){
     return EXIT_FAILURE;
   }
- 
-  //Check that the statistics schema tables are in the statistics database
-  SchemaChecker::Builder statisticsCheckerBuilder("statistics",loginStatistics.dbType,statisticsConn);
-  std::unique_ptr<SchemaChecker> statisticsChecker = 
-  statisticsCheckerBuilder.useCppSchemaStatementsReader(*statisticsSchema)
-                          .useSQLiteSchemaComparer()
-                          .build();
-  SchemaChecker::Status compareTablesStatus = statisticsChecker->compareTablesLocatedInSchema();
-  if(compareTablesStatus == SchemaChecker::Status::FAILURE){
-    return EXIT_FAILURE;
-  }
   
   //Compute the statistics
   std::unique_ptr<StatisticsService> catalogueStatisticsService = StatisticsServiceFactory::create(catalogueConn,loginCatalogue.dbType);
   std::unique_ptr<Statistics> statistics = catalogueStatisticsService->getStatistics();
   //Insert them into the statistics database
   try {
-    std::unique_ptr<StatisticsService> statisticsStatisticsService = StatisticsServiceFactory::create(statisticsConn,loginStatistics.dbType);
     statisticsStatisticsService->saveStatistics(*statistics);
   } catch (cta::exception::Exception &ex) {
     std::cerr << ex.getMessageValue() << std::endl;
@@ -158,9 +170,15 @@ void StatisticsSaveCmd::verifyCmdLineArgs(const StatisticsSaveCmdLineArgs& cmdLi
   if(statisticsDbConfigPathEmpty && (cmdLineArgs.buildDatabase || cmdLineArgs.dropDatabase)){
     throw cta::exception::Exception("The statistics database configuration file should be provided.");
   }
-  if((!cmdLineArgs.buildDatabase && !cmdLineArgs.dropDatabase) && (catalogueDbConfigPathEmpty || statisticsDbConfigPathEmpty)){
+  if(cmdLineArgs.jsonOutput && !statisticsDbConfigPathEmpty){
+    throw cta::exception::Exception("The statistics database connection file should not be provided when --json flag is set.");
+  }
+  if((!cmdLineArgs.buildDatabase && !cmdLineArgs.dropDatabase && !cmdLineArgs.jsonOutput) && (catalogueDbConfigPathEmpty || statisticsDbConfigPathEmpty)){
     throw cta::exception::Exception("You should provide the catalogue database and the statistics database connection files.");
-  } 
+  }
+  if((!cmdLineArgs.buildDatabase && !cmdLineArgs.dropDatabase && cmdLineArgs.jsonOutput) && catalogueDbConfigPathEmpty){
+    throw cta::exception::Exception("The catalogue database connection file should be provided when --json flag is set.");
+  }
 }
 
 void StatisticsSaveCmd::buildStatisticsDatabase(cta::rdbms::Conn& statisticsDatabaseConn, const StatisticsSchema& statisticsSchema) {

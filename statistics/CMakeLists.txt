@@ -54,6 +54,7 @@ set (STATISTICS_LIB_SRC_FILES
   MySQLStatisticsService.cpp
   DatabaseStatisticsServiceFactory.cpp
   StatisticsServiceFactory.cpp
+  JsonStatisticsService.cpp
 )
 
 add_library (ctastatistics SHARED

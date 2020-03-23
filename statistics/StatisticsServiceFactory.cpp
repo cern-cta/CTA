@@ -19,11 +19,16 @@
 
 #include "StatisticsServiceFactory.hpp"
 #include "DatabaseStatisticsServiceFactory.hpp"
+#include "JsonStatisticsServiceFactory.hpp"
 
 namespace cta { namespace statistics {
   
 std::unique_ptr<StatisticsService> StatisticsServiceFactory::create(cta::rdbms::Conn& connection, cta::rdbms::Login::DbType dbType) {
   return DatabaseStatisticsServiceFactory::create(connection,dbType);
+}
+
+std::unique_ptr<StatisticsService> StatisticsServiceFactory::create(std::ostream& ostream) {
+  return JsonStatisticsServiceFactory::create(&ostream);
 }
 
 }}

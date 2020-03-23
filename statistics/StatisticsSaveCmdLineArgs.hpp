@@ -56,6 +56,11 @@ struct StatisticsSaveCmdLineArgs {
   bool dropDatabase = false;
   
   /**
+   * True if the --json flag has been provided
+   */
+  bool jsonOutput = false;
+  
+  /**
    * Constructor that parses the specified command-line arguments.
    *
    * @param argc The number of command-line arguments including the name of the

@@ -16,27 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #pragma once
-#include "rdbms/Conn.hpp"
-#include "rdbms/Login.hpp"
-#include "StatisticsService.hpp"
 
-namespace cta { namespace statistics {
-/**
- * Factory to instanciate a StatisticsService
- */
-class StatisticsServiceFactory {
+#include "common/make_unique.hpp"
+#include "JsonStatisticsService.hpp"
+
+namespace cta{
+namespace statistics {
+
+class JsonStatisticsServiceFactory {
 public:
-  /**
-   * Creates a StatisticsService to perform Statistics operations
-   * @param connection the database connection
-   * @param dbType the database type of the database connection
-   * @return a unique_ptr containing the StatisticsService
-   */
-  static std::unique_ptr<StatisticsService> create(cta::rdbms::Conn &connection, cta::rdbms::Login::DbType dbType);
-  
-  static std::unique_ptr<StatisticsService> create(std::ostream & ostream);
+  static std::unique_ptr<JsonStatisticsService> create(JsonStatisticsService::OutputStream *output, JsonStatisticsService::InputStream *input = nullptr){
+    return cta::make_unique<JsonStatisticsService>(output,input);
+  }
+private:
 
 };
 
