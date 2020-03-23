@@ -1,1 +1,0 @@
-int serrno = 0;

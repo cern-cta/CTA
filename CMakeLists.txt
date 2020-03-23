@@ -149,7 +149,6 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(rdbms)
   add_subdirectory(scheduler)
   add_subdirectory(tapeserver)
-  add_subdirectory(XRootdSSiRmcd)
   
   add_subdirectory(statistics)
 
