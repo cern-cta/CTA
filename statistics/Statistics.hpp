@@ -87,6 +87,12 @@ public:
   uint64_t getTotalBytesCopyNbGt1() const;
   
   /**
+   * Returns the time when the statistics were updated
+   * @return the time when the statistics were updated
+   */
+  time_t getUpdateTime() const;
+  
+  /**
    * This builder class allows to build the statistics
    */
   class Builder {
@@ -141,6 +147,11 @@ private:
    * Total of space used by the MASTER files that are copyNb greater than 1 in CTA
    */
   uint64_t m_totalBytesCopyNbGt1 = 0;
+  
+  /**
+   * The time when the statistics will be saved
+   */
+  time_t m_updateTime = 0;
 };
 
 /**

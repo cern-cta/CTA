@@ -93,14 +93,13 @@ void DatabaseStatisticsService::updateStatisticsPerTape(){
 }
 
 void DatabaseStatisticsService::saveStatistics(const cta::statistics::Statistics& statistics) {
-  //First we save the general FILE statistics, then we go for the per-vo statistics
+  //First we save the general FILE statistics, then we go for the per-vo statisticss
   saveFileStatistics(statistics);
   saveStatisticsPerVo(statistics);
 }
 
 void DatabaseStatisticsService::saveFileStatistics(const cta::statistics::Statistics& statistics) {
   try {
-    const time_t now = time(nullptr);
     const char * const sql = 
     "INSERT INTO "
       "FILE_STATISTICS "
@@ -130,7 +129,7 @@ void DatabaseStatisticsService::saveFileStatistics(const cta::statistics::Statis
     stmt.bindUint64(":NB_COPY_NB_1_IN_BYTES",statistics.getTotalBytesCopyNb1());
     stmt.bindUint64(":NB_COPY_NB_GT_1",statistics.getTotalFilesCopyNbGt1());
     stmt.bindUint64(":NB_COPY_NB_GT_1_IN_BYTES",statistics.getTotalBytesCopyNbGt1());
-    stmt.bindUint64(":UPDATE_TIME",now);
+    stmt.bindUint64(":UPDATE_TIME",statistics.getUpdateTime());
     stmt.executeNonQuery();
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
@@ -140,7 +139,6 @@ void DatabaseStatisticsService::saveFileStatistics(const cta::statistics::Statis
 
 void DatabaseStatisticsService::saveStatisticsPerVo(const cta::statistics::Statistics& statistics) {
   try {
-    const time_t now = time(nullptr);
     const char * const sql = 
     "INSERT INTO "
       "VO_STATISTICS "
@@ -175,7 +173,7 @@ void DatabaseStatisticsService::saveStatisticsPerVo(const cta::statistics::Stati
       stmt.bindUint64(":NB_COPY_NB_1_IN_BYTES",voFileStatistics.copyNb1InBytes);
       stmt.bindUint64(":NB_COPY_NB_GT_1",voFileStatistics.nbCopyNbGt1);
       stmt.bindUint64(":NB_COPY_NB_GT_1_IN_BYTES",voFileStatistics.copyNbGt1InBytes);
-      stmt.bindUint64(":UPDATE_TIME",now);
+      stmt.bindUint64(":UPDATE_TIME",statistics.getUpdateTime());
       stmt.executeNonQuery();
     }
   } catch(exception::Exception &ex) {

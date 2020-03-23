@@ -35,6 +35,7 @@ Statistics::Statistics(const Statistics& other) {
     m_totalBytesCopyNb1 = other.m_totalBytesCopyNb1;
     m_totalFilesCopyNbGt1 = other.m_totalFilesCopyNbGt1;
     m_totalBytesCopyNbGt1 = other.m_totalBytesCopyNbGt1;
+    m_updateTime = other.m_updateTime;
   }
 }
 
@@ -47,6 +48,7 @@ Statistics& Statistics::operator=(const Statistics& other) {
     m_totalBytesCopyNb1 = other.m_totalBytesCopyNb1;
     m_totalFilesCopyNbGt1 = other.m_totalFilesCopyNbGt1;
     m_totalBytesCopyNbGt1 = other.m_totalBytesCopyNbGt1;
+    m_updateTime = other.m_updateTime;
   }
   return *this;
 }
@@ -89,6 +91,10 @@ uint64_t Statistics::getTotalBytesCopyNbGt1() const {
   return m_totalBytesCopyNbGt1;
 }
 
+time_t Statistics::getUpdateTime() const {
+  return m_updateTime;
+}
+
 Statistics::Builder::Builder() {}
 
 std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset & rset){
@@ -106,6 +112,8 @@ std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset & rset){
     //insert the perVO file statistics
     ret->insertPerVOStatistics(vo,fileStatistics);
   }
+  //Set the statistics update time to now
+  ret->m_updateTime = time(nullptr);
   return ret;
 }
 
@@ -135,7 +143,8 @@ std::ostream & operator <<(std::ostream& stream, Statistics stats) {
          << "\"totalFilesCopyNb1\": " << stats.getTotalFilesCopyNb1() << ","
          << "\"totalBytesCopyNb1\": " << stats.getTotalBytesCopyNb1() << ","
          << "\"totalFilesCopyNbGt1\": " << stats.getTotalFilesCopyNbGt1() << ","
-         << "\"totalBytesCopyNbGt1\": " << stats.getTotalBytesCopyNbGt1() 
+         << "\"totalBytesCopyNbGt1\": " << stats.getTotalBytesCopyNbGt1() << ","
+         << "\"updateTime\": " << stats.getUpdateTime()
          << "}";
   return stream;
 }
