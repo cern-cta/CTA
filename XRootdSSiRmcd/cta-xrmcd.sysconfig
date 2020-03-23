@@ -1,5 +1,0 @@
-
-# Arguments for the xrmcd server daemon
-#   -smc_ldr       is the picker device as defined in /dev.
-#   -f             keep process in the foreground, do not fork.
-#CTA_XRMCD_OPTIONS="smc_ldr"
