@@ -65,83 +65,94 @@ int StatisticsSaveCmd::exceptionThrowingMain(const int argc, char *const *const 
   
   std::unique_ptr<rdbms::ConnPool> statisticsConnPool;
   std::unique_ptr<rdbms::Conn> statisticsConn;
-  if(!cmdLineArgs.statisticsDbConfigPath.empty()){
   
-    auto loginStatistics = rdbms::Login::parseFile(cmdLineArgs.statisticsDbConfigPath);
-    statisticsConnPool = cta::make_unique<rdbms::ConnPool>(loginStatistics, maxNbConns);
-    statisticsConn = cta::make_unique<rdbms::Conn>(statisticsConnPool->getConn());
+  std::unique_ptr<Statistics> statistics;
+  
+  if(!cmdLineArgs.buildDatabase && !cmdLineArgs.dropDatabase){
+    //Compute the statistics from the Catalogue
+    //Connect to the catalogue database
+    auto loginCatalogue = rdbms::Login::parseFile(cmdLineArgs.catalogueDbConfigPath);
+    rdbms::ConnPool catalogueConnPool(loginCatalogue, maxNbConns);
+    auto catalogueConn = catalogueConnPool.getConn();
 
-    //Get the statistics schema so that we can create, drop and check the presence of the database
-    auto statisticsSchema = StatisticsSchemaFactory::create(loginStatistics.dbType);
+    //Check that the catalogue contains the table TAPE with the columns we need
+    SchemaChecker::Builder catalogueCheckerBuilder("catalogue",loginCatalogue.dbType,catalogueConn);
+    std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker = catalogueCheckerBuilder.build();
 
-    if(cmdLineArgs.buildDatabase){
-      //Build the database
-      buildStatisticsDatabase(*statisticsConn,*statisticsSchema);
-      return EXIT_SUCCESS;
-    }
+    SchemaChecker::Status tapeTableStatus = 
+      catalogueChecker->checkTableContainsColumns("TAPE",{
+                                                          "NB_MASTER_FILES",
+                                                          "MASTER_DATA_IN_BYTES",
+                                                          "NB_COPY_NB_1",
+                                                          "COPY_NB_1_IN_BYTES",
+                                                          "NB_COPY_NB_GT_1",
+                                                          "COPY_NB_GT_1_IN_BYTES",
+                                                          "DIRTY"
+                                                        }
+                                                  );
+    SchemaChecker::Status voTableStatus = 
+      catalogueChecker->checkTableContainsColumns("TAPE_POOL",{"VIRTUAL_ORGANIZATION_ID"});
 
-    if(cmdLineArgs.dropDatabase){
-      //drop the database
-      if(userConfirmDropStatisticsSchemaFromDb(loginStatistics)){
-        dropStatisticsDatabase(*statisticsConn,*statisticsSchema);
-      }
-      return EXIT_SUCCESS;
-    }
-    
-    //Check that the statistics schema tables are in the statistics database
-    SchemaChecker::Builder statisticsCheckerBuilder("statistics",loginStatistics.dbType,*statisticsConn);
-    std::unique_ptr<SchemaChecker> statisticsChecker = 
-    statisticsCheckerBuilder.useCppSchemaStatementsReader(*statisticsSchema)
-                            .useSQLiteSchemaComparer()
-                            .build();
-    SchemaChecker::Status compareTablesStatus = statisticsChecker->compareTablesLocatedInSchema();
-    if(compareTablesStatus == SchemaChecker::Status::FAILURE){
+    if(tapeTableStatus == SchemaChecker::Status::FAILURE || voTableStatus == SchemaChecker::Status::FAILURE ){
       return EXIT_FAILURE;
     }
-    
-    statisticsStatisticsService = StatisticsServiceFactory::create(*statisticsConn,loginStatistics.dbType);
-  } else if (isJsonOutput){
-    statisticsStatisticsService = StatisticsServiceFactory::create(std::cout);
-  } else {
-    throw cta::exception::Exception("No --json option provided and no statistics database configuration file provided.");
-  }
-  
-  //Connect to the catalogue database
-  auto loginCatalogue = rdbms::Login::parseFile(cmdLineArgs.catalogueDbConfigPath);
-  rdbms::ConnPool catalogueConnPool(loginCatalogue, maxNbConns);
-  auto catalogueConn = catalogueConnPool.getConn();
 
-  //Check that the catalogue contains the table TAPE with the columns we need
-  SchemaChecker::Builder catalogueCheckerBuilder("catalogue",loginCatalogue.dbType,catalogueConn);
-  std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker = catalogueCheckerBuilder.build();
-  
-  SchemaChecker::Status tapeTableStatus = 
-    catalogueChecker->checkTableContainsColumns("TAPE",{
-                                                        "NB_MASTER_FILES",
-                                                        "MASTER_DATA_IN_BYTES",
-                                                        "NB_COPY_NB_1",
-                                                        "COPY_NB_1_IN_BYTES",
-                                                        "NB_COPY_NB_GT_1",
-                                                        "COPY_NB_GT_1_IN_BYTES",
-                                                        "DIRTY"
-                                                      }
-                                                );
-  SchemaChecker::Status voTableStatus = 
-    catalogueChecker->checkTableContainsColumns("TAPE_POOL",{"VIRTUAL_ORGANIZATION_ID"});
-    
-  if(tapeTableStatus == SchemaChecker::Status::FAILURE || voTableStatus == SchemaChecker::Status::FAILURE ){
-    return EXIT_FAILURE;
+    //Compute the statistics
+    std::unique_ptr<StatisticsService> catalogueStatisticsService = StatisticsServiceFactory::create(catalogueConn,loginCatalogue.dbType);
+    statistics = catalogueStatisticsService->getStatistics();
   }
-  
-  //Compute the statistics
-  std::unique_ptr<StatisticsService> catalogueStatisticsService = StatisticsServiceFactory::create(catalogueConn,loginCatalogue.dbType);
-  std::unique_ptr<Statistics> statistics = catalogueStatisticsService->getStatistics();
-  //Insert them into the statistics database
   try {
+    if(!cmdLineArgs.statisticsDbConfigPath.empty()){
+
+      auto loginStatistics = rdbms::Login::parseFile(cmdLineArgs.statisticsDbConfigPath);
+      statisticsConnPool = cta::make_unique<rdbms::ConnPool>(loginStatistics, maxNbConns);
+      statisticsConn = cta::make_unique<rdbms::Conn>(statisticsConnPool->getConn());
+
+      //Get the statistics schema so that we can create, drop and check the presence of the database
+      auto statisticsSchema = StatisticsSchemaFactory::create(loginStatistics.dbType);
+
+      if(cmdLineArgs.buildDatabase){
+        //Build the database
+        buildStatisticsDatabase(*statisticsConn,*statisticsSchema);
+        return EXIT_SUCCESS;
+      }
+
+      if(cmdLineArgs.dropDatabase){
+        //drop the database
+        if(userConfirmDropStatisticsSchemaFromDb(loginStatistics)){
+          dropStatisticsDatabase(*statisticsConn,*statisticsSchema);
+        }
+        return EXIT_SUCCESS;
+      }
+      
+      //Here, we want to store the statistics in the Statistics database
+      
+      //Check that the statistics schema tables are in the statistics database
+      SchemaChecker::Builder statisticsCheckerBuilder("statistics",loginStatistics.dbType,*statisticsConn);
+      std::unique_ptr<SchemaChecker> statisticsChecker = 
+      statisticsCheckerBuilder.useCppSchemaStatementsReader(*statisticsSchema)
+                              .useSQLiteSchemaComparer()
+                              .build();
+      SchemaChecker::Status compareTablesStatus = statisticsChecker->compareTablesLocatedInSchema();
+      if(compareTablesStatus == SchemaChecker::Status::FAILURE){
+        throw cta::exception::Exception("Schema checking failure.");
+      }
+      //Create the statistics service with the statistics database connection
+      statisticsStatisticsService = StatisticsServiceFactory::create(*statisticsConn,loginStatistics.dbType);
+    } else if (isJsonOutput){
+      //Create the statistics service with the JSON output connection
+      statisticsStatisticsService = StatisticsServiceFactory::create(std::cout);
+    } else {
+      //We should normally not be there
+      throw cta::exception::Exception("No --json option provided and no statistics database configuration file provided.");
+    }
+  
+    //Insert the statistics to the statistics database
     statisticsStatisticsService->saveStatistics(*statistics);
   } catch (cta::exception::Exception &ex) {
     std::cerr << ex.getMessageValue() << std::endl;
-    std::cerr << "StatisticsJson:" << *statistics << std::endl;
+    if(statistics != nullptr)
+      std::cerr << "StatisticsJson:" << *statistics << std::endl;
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
