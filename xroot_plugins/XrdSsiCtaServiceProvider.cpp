@@ -127,7 +127,7 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
       m_catalogue->ping();
      } catch(cta::exception::Exception& ex){
        log::LogContext lc(*m_log);
-       lc.log(cta::log::ERR,ex.getMessageValue());
+       lc.log(cta::log::CRIT,ex.getMessageValue());
        throw ex;
      }
    }
