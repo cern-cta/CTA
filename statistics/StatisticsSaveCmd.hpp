@@ -94,6 +94,20 @@ private:
    */
   void dropStatisticsDatabase(cta::rdbms::Conn &statisticsDatabaseConn, const StatisticsSchema & statisticsSchema);
   
+  /**
+   * Check the content of the Catalogue database regarding what is needed to compute the statistics
+   * @param catalogueDatabaseConn the connection to the Catalogue database
+   * @param dbType the dbType of the Catalogue database
+   */
+  void checkCatalogueSchema(cta::rdbms::Conn &catalogueDatabaseConn, cta::rdbms::Login::DbType dbType);
+  
+  /**
+   * Checks that the tables needed for statistics are present in the statistics database
+   * @param statisticsDatabaseConn the connection to the statistics database
+   * @param dbType the dbType of the statistics database
+   */
+  void checkStatisticsSchema(cta::rdbms::Conn &statisticsDatabaseConn,cta::rdbms::Login::DbType dbType);
+  
 }; // class VerifySchemaCmd
 
 } // namespace statistics

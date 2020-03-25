@@ -89,14 +89,14 @@ SchemaChecker::Status SchemaChecker::checkTableContainsColumns(const std::string
   std::map<std::string, std::string> mapColumnsTypes = m_databaseMetadataGetter->getColumns(tableName);
   SchemaChecker::Status status = SchemaChecker::Status::OK;
   if(mapColumnsTypes.empty()){
-    std::cout << "TABLE " << tableName << " does not exist." << std::endl;
+    std::cerr << "TABLE " << tableName << " does not exist." << std::endl;
     return SchemaChecker::Status::FAILURE;
   }
   for(auto &columnName: columnNames){
     try{
       mapColumnsTypes.at(columnName);
     } catch(std::out_of_range &){
-      std::cout << "TABLE " << tableName << " does not contain the column " << columnName << "."<< std::endl;
+      std::cerr << "TABLE " << tableName << " does not contain the column " << columnName << "."<< std::endl;
       status = SchemaChecker::Status::FAILURE;
     }
   }

@@ -62,7 +62,7 @@ SchemaComparerResult::Status SchemaComparerResult::getStatus() const {
 
 void SchemaComparerResult::printDiffs() const {
   for(auto &diff: m_diffs){
-    std::cout << "  ERROR: " << diff << std::endl;
+    std::cerr << "  ERROR: " << diff << std::endl;
   }
 }
 
