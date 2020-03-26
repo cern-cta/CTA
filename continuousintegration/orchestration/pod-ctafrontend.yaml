@@ -46,6 +46,8 @@ spec:
       name: mylibrary
     - mountPath: /mnt/logs
       name: logstorage
+    - mountPath: /etc/config/eoscta
+      name: eosctaconfig
     securityContext:
       # RW access needed to volumes
       privileged: true
@@ -69,6 +71,9 @@ spec:
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs
+  - name: eosctaconfig
+    configMap:
+      name: eoscta-config
 
   imagePullSecrets:
   - name: ctaregsecret
