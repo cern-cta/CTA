@@ -11,6 +11,8 @@ config_database="./database-sqlite.yaml"
 model="mhvtl"
 # defaults MGM namespace to inMemory
 config_eos="./eos-config-inmemory.yaml"
+# shared configmap for eoscta instance
+config_eoscta="./eoscta-config.yaml"
 
 # EOS short instance name
 EOSINSTANCE=ctaeos
@@ -212,6 +214,7 @@ echo "creating configmaps in instance"
 kubectl create -f ${config_objectstore} --namespace=${instance}
 kubectl create -f ${config_database} --namespace=${instance}
 kubectl create -f ${config_eos} --namespace=${instance}
+kubectl create -f ${config_eoscta} --namespace=${instance}
 
 echo -n "Requesting an unused ${model} library"
 kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
