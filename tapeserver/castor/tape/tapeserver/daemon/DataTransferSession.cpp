@@ -315,7 +315,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc,archiveMount));
-  if (!drive.get()) return MARK_DRIVE_AS_UP;
+  if (!drive.get()) return MARK_DRIVE_AS_DOWN;
   // Once we got hold of the drive, we can run the session
   {
     //dereferencing configLine is safe, because if configLine were not valid, 
