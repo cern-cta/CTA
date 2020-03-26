@@ -42,6 +42,18 @@ echo OK
 
 echo "Core files are available as $(cat /proc/sys/kernel/core_pattern) so that those are available as artifacts"
 
+# Configuring  grpc for cta-admin tapefile disk filename resolution
+echo -n "Configuring grpc to ctaeos: "
+if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
+  cp /etc/config/eoscta/eos.grpc.keytab /etc/cta/eos.grpc.keytab
+  echo 'cta.ns.config /etc/cta/eos.grpc.keytab' >> /etc/cta/cta-frontend-xrootd.conf
+  echo 'OK'
+else
+  echo 'KO'
+fi
+
+
+
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # systemd is not available
   runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta

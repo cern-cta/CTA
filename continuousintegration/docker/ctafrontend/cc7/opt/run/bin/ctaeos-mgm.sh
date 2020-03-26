@@ -344,6 +344,17 @@ fi
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
 
+
+# configure grpc for cta-admin tf dsk file resolution
+if [ -r /etc/config/eoscta/eos.grpc.keytab ]; then
+  MIGRATION_UID=2
+  MIGRATION_TOKEN=$(cat /etc/config/eoscta/eos.grpc.keytab | egrep ^$(hostname) | awk '{print $3}')
+
+  eos vid add gateway [:1] grpc
+  eos vid set membership ${MIGRATION_UID} +sudo
+  eos vid set map -grpc key:${MIGRATION_TOKEN} vuid:${MIGRATION_UID} vgid:${MIGRATION_UID}
+fi
+
 # configuration for migration tools
 cat <<EOF >/etc/cta/castor-migration.conf
 castor.db_login               oracle:castor/<password>@castor
