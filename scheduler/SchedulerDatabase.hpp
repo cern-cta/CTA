@@ -116,8 +116,9 @@ public:
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to queue the request.
    * @param logContext context allowing logging db operation
+   * @returns the objectstore ArchiveRequest address
    */
-  virtual void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
+  virtual std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria,
     log::LogContext &logContext) = 0;
   
@@ -326,6 +327,8 @@ public:
   virtual void deleteRetrieveRequest(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &remoteFile) = 0;
+  
+  virtual void deleteArchiveRequest(const common::dataStructures::SecurityIdentity & cliIdentity) = 0;
   
   /**
    * Returns all of the queued archive jobs.  The returned jobs are

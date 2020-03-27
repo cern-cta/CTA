@@ -609,7 +609,7 @@ OStoreDB::TapeMountDecisionInfoNoLock::~TapeMountDecisionInfoNoLock() {}
 //------------------------------------------------------------------------------
 // OStoreDB::queueArchive()
 //------------------------------------------------------------------------------
-void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
+std::string OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
         const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
   cta::utils::Timer timer;
@@ -656,6 +656,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   m_agentReference->addToOwnership(aReq->getAddressIfSet(), m_objectStore);
   double agentReferencingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   aReq->insert();
+  std::string archiveRequestAddr = aReq->getAddressIfSet();
   double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   // The request is now safe in the object store. We can now return to the caller and fire (and forget) a thread
   // complete the bottom half of it.
@@ -771,6 +772,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
         .add("taskQueueSize", taskQueueSize)
         .add("totalTime", agentReferencingTime + insertionTime + taskPostingTime);
   logContext.log(log::INFO, "In OStoreDB::queueArchive(): recorded request for queueing (enqueueing posted to thread pool).");  
+  return archiveRequestAddr;
 }
 
 void OStoreDB::queueArchiveForRepack(std::unique_ptr<cta::objectstore::ArchiveRequest> request, log::LogContext& logContext){
@@ -1437,6 +1439,10 @@ std::map<std::string, std::list<RetrieveRequestDump> > OStoreDB::getRetrieveRequ
 void OStoreDB::deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
   const std::string& remoteFile) {
   throw exception::Exception("Not Implemented");
+}
+
+void OStoreDB::deleteArchiveRequest(const common::dataStructures::SecurityIdentity& cliIdentity){
+
 }
 
 //------------------------------------------------------------------------------

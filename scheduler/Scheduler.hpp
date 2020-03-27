@@ -137,15 +137,8 @@ public:
    * @param lc a log context allowing logging from within the scheduler routine.
    * @return
    */
-  void queueArchiveWithGivenId(const uint64_t archiveFileId, const std::string &instanceName,
+  std::string queueArchiveWithGivenId(const uint64_t archiveFileId, const std::string &instanceName,
     const cta::common::dataStructures::ArchiveRequest &request, log::LogContext &lc);
-  
-  /**
-   * Queue the ArchiveRequests that have been transformed from Repack RetrieveRequests 
-   * @param archiveRequests the list of the ArchiveRequests to queue into the ArchiveQueueToTransferForRepack queue.
-   * @param lc a log context allowing logging from within the scheduler routine.
-   */
-  void queueArchiveRequestForRepackBatch(std::list<cta::objectstore::ArchiveRequest> &archiveRequests,log::LogContext &lc);
   
   /**
    * Queue a retrieve request. 

@@ -106,7 +106,7 @@ public:
     m_OStoreDB.ping();
   }
 
-  void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria, log::LogContext &logContext) override {
+  std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria, log::LogContext &logContext) override {
     return m_OStoreDB.queueArchive(instanceName, request, criteria, logContext);
   }
 
@@ -116,6 +116,10 @@ public:
   
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
+  }
+  
+  void deleteArchiveRequest(const common::dataStructures::SecurityIdentity& cliIdentity) override{
+  
   }
   
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& tapePoolName) const override {

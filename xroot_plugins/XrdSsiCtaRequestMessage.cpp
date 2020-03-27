@@ -449,16 +449,19 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    cta::utils::Timer t;
 
    // Queue the request
-   m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
+   std::string archiveRequestAddr = m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", archiveFileId);
    params.add("schedulerTime", t.secs());
    params.add("requesterInstance", notification.wf().requester_instance());
+   params.add("archiveRequestId",archiveRequestAddr);
    m_lc.log(cta::log::INFO, "In RequestMessage::processCLOSEW(): queued file for archive.");
 
-   // Set response type
+   // Set response type and add archive request reference as an extended attribute.
+   //TODO:  store archiveRequestAddr in EOS
+   //response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", archiveRequestAddr));
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -592,7 +595,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    cta::common::dataStructures::DeleteArchiveRequest request;
    request.requester.name    = notification.cli().user().username();
    request.requester.group   = notification.cli().user().groupname();
-
+   
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
 
@@ -610,7 +613,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
 
-   // Delete the file from the catalogue
+   // Delete the file from the catalogue or from the objectstore if archive request is created
    cta::utils::Timer t;
    m_scheduler.deleteArchive(m_cliIdentity.username, request, m_lc);
 

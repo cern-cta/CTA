@@ -81,7 +81,7 @@ echo "Preparing CTA configuration for tests"
     cta-admin tape rm -v {}
 
   kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json archiveroute ls |           \
-    jq '.[] |  "-i "  + .instance + " -s " + .storageClass + " -c " + (.copyNumber|tostring)' | \
+    jq '.[] |  " -s " + .storageClass + " -c " + (.copyNumber|tostring)' | \
     xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute rm {}"
 
   kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json tapepool ls  |              \
@@ -89,10 +89,12 @@ echo "Preparing CTA configuration for tests"
     xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool rm -n {} 
 
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json storageclass ls  |           \
-    jq -r '.[] | "-i " + .diskInstance + " -n  " + .name'  |                                    \
+    jq -r '.[] | " -n  " + .name'  |                                    \
     xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass rm {}"
 
-
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json vo ls  |           \
+    jq -r '.[] | " --vo  " + .name'  |                                    \
+    xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin vo rm {}"
 
 
   for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do

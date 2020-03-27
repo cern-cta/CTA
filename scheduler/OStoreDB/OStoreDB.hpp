@@ -284,7 +284,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyCompleteOrCanceled);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
   
-  void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
+  std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) override;
   
   void queueArchiveForRepack(std::unique_ptr<cta::objectstore::ArchiveRequest> request, log::LogContext& logContext) override;
@@ -328,6 +328,8 @@ public:
 
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
     const std::string& remoteFile) override;
+  
+  void deleteArchiveRequest(const common::dataStructures::SecurityIdentity & cliIdentity) override;
 
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string &vid) const override;
 

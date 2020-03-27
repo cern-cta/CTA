@@ -125,7 +125,7 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string &instanceName
 //------------------------------------------------------------------------------
 // queueArchiveWithGivenId
 //------------------------------------------------------------------------------
-void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std::string &instanceName,
+std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std::string &instanceName,
   const cta::common::dataStructures::ArchiveRequest &request, log::LogContext &lc) {
   cta::utils::Timer t;
   using utils::postEllipsis;
@@ -141,7 +141,7 @@ void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std:
   const common::dataStructures::ArchiveFileQueueCriteriaAndFileId catalogueInfo(archiveFileId,
     queueCriteria.copyToPoolMap, queueCriteria.mountPolicy);
 
-  m_db.queueArchive(instanceName, request, catalogueInfo, lc);
+  std::string archiveReqAddr = m_db.queueArchive(instanceName, request, catalogueInfo, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("instanceName", instanceName)
@@ -173,30 +173,7 @@ void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std:
      .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "Queued archive request");
-}
-
-void Scheduler::queueArchiveRequestForRepackBatch(std::list<cta::objectstore::ArchiveRequest> &archiveRequests,log::LogContext &lc)
-{
-  for(auto& archiveRequest : archiveRequests){
-    objectstore::ScopedExclusiveLock rReqL(archiveRequest);
-    archiveRequest.fetch();
-    cta::common::dataStructures::ArchiveFile archiveFile = archiveRequest.getArchiveFile();
-    rReqL.release();
-    std::unique_ptr<cta::objectstore::ArchiveRequest>  arUniqPtr = cta::make_unique<cta::objectstore::ArchiveRequest>(archiveRequest);
-    this->m_db.queueArchiveForRepack(std::move(arUniqPtr),lc);
-    cta::log::TimingList tl;
-    utils::Timer t;
-    tl.insOrIncAndReset("schedulerDbTime", t);
-    log::ScopedParamContainer spc(lc);
-    spc.add("instanceName", archiveFile.diskInstance)
-     .add("storageClass", archiveFile.storageClass)
-     .add("diskFileID", archiveFile.diskFileId)
-     .add("fileSize", archiveFile.fileSize)
-     .add("fileId", archiveFile.archiveFileID);
-    tl.insertOrIncrement("schedulerDbTime",t.secs());
-    tl.addToLog(spc);
-    lc.log(log::INFO,"Queued repack archive request");
-  }
+  return archiveReqAddr;
 }
 
 //------------------------------------------------------------------------------
@@ -268,7 +245,7 @@ std::string Scheduler::queueRetrieve(
 // deleteArchive
 //------------------------------------------------------------------------------
 void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request, 
-    log::LogContext & lc) {
+  log::LogContext & lc) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
