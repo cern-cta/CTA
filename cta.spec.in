@@ -40,7 +40,7 @@ BuildRequires: cmake >= 2.6 redhat-rpm-config
 
 # The CTA client is the only component of CTA that can be compiled on both SLC6
 # and C77, therefore only the packages it depends on are required for SLC6
-%define radosVersion 2:12.2.2
+%define radosVersion 2:14.2.8
 BuildRequires: xrootd-client-devel  >= 1:4.10.0
 BuildRequires: xrootd-devel         >= 1:4.10.0
 BuildRequires: xrootd-server-devel  >= 1:4.10.0
