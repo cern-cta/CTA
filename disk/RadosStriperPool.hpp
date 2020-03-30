@@ -20,9 +20,9 @@
 
 #include "common/threading/Mutex.hpp"
 
-#include <radosstriper/libradosstriper.hpp>
 #include <map>
 #include <memory>
+#include <radosstriper/libradosstriper.hpp>
 
 namespace cta {
 namespace disk {    
