@@ -91,7 +91,7 @@ namespace cta {
  */
 class SchedulerDatabase {
 public:
-
+  CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
   /**
    * Destructor.
    */
@@ -781,6 +781,9 @@ public:
     const std::string & tapepool = "") = 0;
   
   virtual void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) = 0;
+  
+  virtual void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) = 0;
+  
 }; // class SchedulerDatabase
 
 } // namespace cta

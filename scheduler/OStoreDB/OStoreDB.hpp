@@ -555,6 +555,8 @@ public:
   
   void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override;
   
+  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) override;
+  
   /* --- Private helper part implementing state transition logic -------------*/
   /*
    * The drive register should gracefully handle reports of status from the drive

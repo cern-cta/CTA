@@ -2910,6 +2910,31 @@ void OStoreDB::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfig
   ds.setConfig(tapedConfig);
   ds.setTpConfig(tpConfigLine);
   ds.commit();
+  }
+
+void OStoreDB::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) {
+  objectstore::RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(),m_objectStore);
+  ScopedExclusiveLock sel(dr);
+  dr.fetch();
+  try {
+    std::string driveAddress =  dr.getDriveAddress(driveInfo.driveName);
+    objectstore::DriveState ds(driveAddress,m_objectStore);
+    ds.fetchNoLock();
+    cta::common::dataStructures::DriveState driveState = ds.getState();
+    if(driveState.logicalLibrary != driveInfo.logicalLibrary || driveState.host != driveInfo.host) {
+      throw cta::SchedulerDatabase::DriveAlreadyExistsException(std::string("The drive name=") + driveInfo.driveName + 
+        " logicalLibrary=" + driveInfo.logicalLibrary +
+        " host=" + driveInfo.host +
+        " cannot be created because a drive with a same name with logicalLibrary=" + driveState.logicalLibrary + 
+        " host=" + driveState.host +
+        " already exists.");
+    }
+  } catch (cta::objectstore::DriveRegister::NoSuchDrive & ex) {
+    //Drive does not exist
+    //We can create it, do nothing then
+  }
 }
 
 //------------------------------------------------------------------------------

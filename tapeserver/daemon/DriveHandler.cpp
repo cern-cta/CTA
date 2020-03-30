@@ -42,6 +42,8 @@
 
 namespace cta { namespace tape { namespace  daemon {
 
+CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
+  
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -1086,6 +1088,21 @@ int DriveHandler::runChild() {
         driveInfo.driveName=m_configLine.unitName;
         driveInfo.logicalLibrary=m_configLine.logicalLibrary;
         driveInfo.host=hostname;
+        
+        //Checking the drive does not already exist in the objectstore
+        try{
+          osdb->checkDriveCanBeCreated(driveInfo);
+        } catch (SchedulerDatabase::DriveAlreadyExistsException &ex) {
+          log::ScopedParamContainer param(lc);
+          param.add("tapeDrive",driveInfo.driveName)
+               .add("logicalLibrary",driveInfo.logicalLibrary)
+               .add("host",driveInfo.host)
+               .add("exceptionMsg",ex.getMessageValue());
+          lc.log(log::CRIT,"In DriveHandler::runChild(): drive already exists. Reporting fatal error.");
+          driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+          return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+        }
+          
         scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/, lc);

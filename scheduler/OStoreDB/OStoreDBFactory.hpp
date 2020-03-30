@@ -279,6 +279,11 @@ public:
   void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override {
     m_OStoreDB.reportDriveConfig(tpConfigLine, tapedConfig,lc);
   }
+  
+  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) override {
+    m_OStoreDB.checkDriveCanBeCreated(driveInfo);
+  }
+
 
 private:
   std::unique_ptr <cta::log::Logger> m_logger;
