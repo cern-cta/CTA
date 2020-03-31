@@ -460,8 +460,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    m_lc.log(cta::log::INFO, "In RequestMessage::processCLOSEW(): queued file for archive.");
 
    // Set response type and add archive request reference as an extended attribute.
-   //TODO:  store archiveRequestAddr in EOS
-   //response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", archiveRequestAddr));
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", archiveRequestAddr));
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
