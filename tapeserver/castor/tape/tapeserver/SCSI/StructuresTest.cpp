@@ -16,8 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
- *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
@@ -905,4 +903,253 @@ namespace unitTests {
     buff[5] |= 0xCD;
     ASSERT_EQ(0xCDU, testUnitReadyCDB.control);
   }  
+
+  TEST(castor_tape_SCSI_Structures, requestSenseCDB_t) {
+    castor::tape::SCSI::Structures::requestSenseCDB_t requestSenseCDB;
+    unsigned char *buff = reinterpret_cast<unsigned char*>(&requestSenseCDB);
+
+    // Make sure this struct is a POD (plain old data without virtual table) and has the right size
+    ASSERT_EQ(6U, sizeof(requestSenseCDB));
+
+    // Check proper initialization and location of struct members match the bit/byte locations defined in LTO-8 reference
+    buff[1] = 0xFF; buff[2] = 0xFF; buff[3] = 0xFF;
+
+    ASSERT_EQ(castor::tape::SCSI::Commands::REQUEST_SENSE, requestSenseCDB.opCode);
+
+    buff[0] = 0xAB;
+    ASSERT_EQ(0xAB, requestSenseCDB.opCode);
+
+    ASSERT_EQ(0, requestSenseCDB.allocationLength);
+    buff[4] = 0x58;
+    ASSERT_EQ(0x58, requestSenseCDB.allocationLength);
+
+    ASSERT_EQ(0, requestSenseCDB.control);
+    buff[5] = 0xBC;
+    ASSERT_EQ(0xBC, requestSenseCDB.control);
+  }
+
+  TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
+    castor::tape::SCSI::Structures::requestSenseData_t requestSenseData;
+    unsigned char *buff = reinterpret_cast<unsigned char*>(&requestSenseData);
+
+    // Make sure this struct is a POD (plain old data without virtual table) and has the right size
+    ASSERT_EQ(96U, sizeof(requestSenseData));
+
+    // Check proper location of struct members match the bit/byte locations defined in LTO-8 reference
+    buff[1] = 0xFF;
+    buff[20] = 0xFF;
+
+    ASSERT_EQ(0, requestSenseData.RESPONSE_CODE);
+    buff[0] = 0x71;
+    ASSERT_EQ(0x71, requestSenseData.RESPONSE_CODE);
+    ASSERT_EQ(0, requestSenseData.VALID);
+    buff[0] |= 1 << 7;
+    ASSERT_EQ(0x1, requestSenseData.VALID);
+
+    ASSERT_EQ(0, requestSenseData.SENSE_KEY);
+    buff[2] = 0xA;
+    ASSERT_EQ(0xA, requestSenseData.SENSE_KEY);
+    ASSERT_EQ(0, requestSenseData.ILI);
+    buff[2] |= 1 << 5;
+    ASSERT_EQ(0x1, requestSenseData.ILI);
+    ASSERT_EQ(0, requestSenseData.EOM);
+    buff[2] |= 1 << 6;
+    ASSERT_EQ(0x1, requestSenseData.EOM);
+    ASSERT_EQ(0, requestSenseData.FILEMARK);
+    buff[2] |= 1 << 7;
+    ASSERT_EQ(0x1, requestSenseData.FILEMARK);
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.information));
+    buff[3] = 0x0A; buff[4] = 0xBC; buff[5] = 0xDE; buff[6] = 0xF0;
+    ASSERT_EQ(0x0ABCDEF0U, castor::tape::SCSI::Structures::toU32(requestSenseData.information));
+
+    ASSERT_EQ(0, requestSenseData.additionalSenseLength);
+    buff[7] = 0x58;
+    ASSERT_EQ(0x58, requestSenseData.additionalSenseLength);
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.commandSpecificInformation));
+    buff[8] = 0x12; buff[9] = 0x34; buff[10] = 0x56; buff[11] = 0x78;
+    ASSERT_EQ(0x12345678, castor::tape::SCSI::Structures::toU32(requestSenseData.commandSpecificInformation));
+
+    ASSERT_EQ(0, requestSenseData.additionalSenseCode);
+    buff[12] = 0x1A;
+    ASSERT_EQ(0x1A, requestSenseData.additionalSenseCode);
+
+    ASSERT_EQ(0, requestSenseData.additionalSenseCodeQualifier);
+    buff[13] = 0x2A;
+    ASSERT_EQ(0x2A, requestSenseData.additionalSenseCodeQualifier);
+
+    ASSERT_EQ(0, requestSenseData.fieldReplacableUnitCode);
+    buff[14] = 0x3A;
+    ASSERT_EQ(0x3A, requestSenseData.fieldReplacableUnitCode);
+
+    ASSERT_EQ(0, requestSenseData.BIT_POINTER);
+    buff[15] = 0x7;
+    ASSERT_EQ(0x7, requestSenseData.BIT_POINTER);
+    ASSERT_EQ(0, requestSenseData.BPV);
+    buff[15] |= 1 << 3;
+    ASSERT_EQ(0x1, requestSenseData.BPV);
+    ASSERT_EQ(0, requestSenseData.C_D);
+    buff[15] |= 1 << 6;
+    ASSERT_EQ(0x1, requestSenseData.C_D);
+    ASSERT_EQ(0, requestSenseData.SKSV_BIT);
+    buff[15] |= 1 << 7;
+    ASSERT_EQ(0x1, requestSenseData.SKSV_BIT);
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.SKSV));
+    buff[16] = 0x45; buff[17] = 0x67;
+    ASSERT_EQ(0x4567, castor::tape::SCSI::Structures::toU16(requestSenseData.SKSV));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.reportingErrorFlagData));
+    buff[18] = 0x89; buff[19] = 0x0A;
+    ASSERT_EQ(0x890A, castor::tape::SCSI::Structures::toU16(requestSenseData.reportingErrorFlagData));
+
+    ASSERT_EQ(0, requestSenseData.VOLVALID);
+    buff[21] = 0x1;
+    ASSERT_EQ(0x1, requestSenseData.VOLVALID);
+    ASSERT_EQ(0, requestSenseData.DUMP);
+    buff[21] |= 1 << 1;
+    ASSERT_EQ(0xA, requestSenseData.DUMP);
+    ASSERT_EQ(0, requestSenseData.CLN);
+    buff[21] |= 1 << 3;
+    ASSERT_EQ(0x1, requestSenseData.CLN);
+    ASSERT_EQ(0, requestSenseData.DRVSRVC);
+    buff[21] |= 1 << 4;
+    ASSERT_EQ(0x1, requestSenseData.DRVSRVC);
+
+    ASSERT_EQ("", castor::tape::SCSI::Structures::toString(requestSenseData.volumeLabel));
+    inqBuff[22] = 'V';
+    inqBuff[23] = 'O';
+    inqBuff[24] = 'L';
+    inqBuff[25] = 'U';
+    inqBuff[26] = 'M';
+    inqBuff[27] = 'E';
+    inqBuff[28] = '1';
+    ASSERT_EQ("VOLUME1", castor::tape::SCSI::Structures::toString(requestSenseData.volumeLabel));
+
+    ASSERT_EQ(0, requestSenseData.physicalWrap);
+    buff[29] = 0x4A;
+    ASSERT_EQ(0x4A, requestSenseData.physicalWrap);
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.relativeLPOSValue));
+    buff[30] = 0x5A; buff[31] = 0x6B; buff[32] = 0x7C; buff[33] = 0x8D;
+    ASSERT_EQ(0x5A6B7C8D, castor::tape::SCSI::Structures::toU32(requestSenseData.relativeLPOSValue));
+
+    ASSERT_EQ(0, requestSenseData.SCSIAddress);
+    buff[34] = 0x6A;
+    ASSERT_EQ(0x6A, requestSenseData.SCSIAddress);
+
+    ASSERT_EQ(0, requestSenseData.RS422Information);
+    buff[35] = 0x7A;
+    ASSERT_EQ(0x7A, requestSenseData.RS422Information);
+
+    ASSERT_EQ(0, requestSenseData.activePartition);
+    buff[36] = 0x7;
+    ASSERT_EQ(0x7, requestSenseData.activePartition);
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.portIdentifier));
+    buff[37] = 0xF3; buff[38] = 0x2A; buff[39] = 0x94;
+    ASSERT_EQ(0xF32A94, castor::tape::SCSI::Structures::toU32(requestSenseData.portIdentifier) >> 8);
+
+    ASSERT_EQ(0, requestSenseData.relativeTgtPort);
+    buff[40] = 0x7;
+    ASSERT_EQ(0x7, requestSenseData.relativeTgtPort);
+    ASSERT_EQ(0, requestSenseData.tapePartitionsExist);
+    buff[40] |= 1 << 6;
+    ASSERT_EQ(0x1, requestSenseData.tapePartitionsExist);
+    ASSERT_EQ(0, requestSenseData.tapeDirectoryValid);
+    buff[40] |= 1 << 7;
+    ASSERT_EQ(0x1, requestSenseData.tapeDirectoryValid);
+
+    ASSERT_EQ(0, requestSenseData.hostCommand);
+    buff[41] = 0x8A;
+    ASSERT_EQ(0x8A, requestSenseData.hostCommand);
+
+    ASSERT_EQ(0, requestSenseData.mediaType);
+    buff[42] = 0xF;
+    ASSERT_EQ(0xF, requestSenseData.mediaType);
+    ASSERT_EQ(0, requestSenseData.cartridgeGenType);
+    buff[42] |= 0xC << 4;
+    ASSERT_EQ(0xC, requestSenseData.cartridgeGenType);
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.volumeLabelCartridgeType));
+    buff[43] = 0x8A; buff[44] = 0x9B;
+    ASSERT_EQ(0x8A9B, castor::tape::SCSI::Structures::toU16(requestSenseData.volumeLabelCartridgeType));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.logicalBlockNumber));
+    buff[45] = 0x1B; buff[46] = 0x2C; buff[47] = 0x3D; buff[48] = 0x4E;
+    ASSERT_EQ(0x1B2C3D4E, castor::tape::SCSI::Structures::toU32(requestSenseData.logicalBlockNumber));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.datasetNumber));
+    buff[49] = 0x5F; buff[50] = 0x6A; buff[51] = 0x7B; buff[52] = 0x8C;
+    ASSERT_EQ(0x5F6A7B8C, castor::tape::SCSI::Structures::toU32(requestSenseData.datasetNumber));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFSC));
+    buff[53] = 0x9A; buff[54] = 0x9B;
+    ASSERT_EQ(0x9A9B, castor::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFSC));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFlagData));
+    buff[55] = 0x9C; buff[56] = 0x9D;
+    ASSERT_EQ(0x9C9D, castor::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFlagData));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFSC));
+    buff[57] = 0x9E; buff[58] = 0x9F;
+    ASSERT_EQ(0x9E9F, castor::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFSC));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFlagData));
+    buff[59] = 0x5A; buff[60] = 0x5B;
+    ASSERT_EQ(0x5A5B, castor::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFlagData));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFSC));
+    buff[61] = 0x5C; buff[62] = 0x5D;
+    ASSERT_EQ(0x5C5D, castor::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFSC));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFlagData));
+    buff[63] = 0x5E; buff[64] = 0x5F;
+    ASSERT_EQ(0x5E5F, castor::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFlagData));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFSC));
+    buff[65] = 0x6A; buff[66] = 0x6B;
+    ASSERT_EQ(0x6A6B, castor::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFSC));
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFlagData));
+    buff[67] = 0x6C; buff[68] = 0x6D;
+    ASSERT_EQ(0x6C6D, castor::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFlagData));
+
+    ASSERT_EQ(0, requestSenseData.LPOSRegion);
+    buff[69] = 0x6E;
+    ASSERT_EQ(0x6E, requestSenseData.LPOSRegion);
+
+    ASSERT_EQ("", castor::tape::SCSI::Structures::toString(requestSenseData.ERPSummaryInformation));
+    inqBuff[70] = 'E';
+    inqBuff[71] = 'R';
+    inqBuff[72] = 'P';
+    inqBuff[73] = 'S';
+    inqBuff[74] = 'U';
+    inqBuff[75] = 'M';
+    inqBuff[76] = 'M';
+    inqBuff[77] = 'A';
+    inqBuff[78] = 'R';
+    inqBuff[79] = 'Y';
+    inqBuff[80] = 'I';
+    inqBuff[81] = 'N';
+    inqBuff[82] = 'F';
+    inqBuff[83] = 'O';
+    inqBuff[84] = 'R';
+    inqBuff[85] = 'M';
+    ASSERT_EQ("ERPSUMMARYINFORM", castor::tape::SCSI::Structures::toString(requestSenseData.ERPSummaryInformation));
+
+    ASSERT_EQ("", castor::tape::SCSI::Structures::toString(requestSenseData.cartridgeSerialNumber));
+    inqBuff[86] = 'C';
+    inqBuff[87] = 'A';
+    inqBuff[88] = 'R';
+    inqBuff[89] = 'T';
+    inqBuff[90] = 'R';
+    inqBuff[91] = 'I';
+    inqBuff[92] = 'D';
+    inqBuff[93] = 'G';
+    inqBuff[94] = 'E';
+    inqBuff[95] = '1';
+    ASSERT_EQ("CARTRIDGE1", castor::tape::SCSI::Structures::toString(requestSenseData.cartridgeSerialNumber));
+  }
 }
