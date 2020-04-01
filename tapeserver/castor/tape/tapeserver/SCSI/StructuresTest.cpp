@@ -1018,13 +1018,13 @@ namespace unitTests {
     ASSERT_EQ(0x1, requestSenseData.DRVSRVC);
 
     ASSERT_EQ("", castor::tape::SCSI::Structures::toString(requestSenseData.volumeLabel));
-    inqBuff[22] = 'V';
-    inqBuff[23] = 'O';
-    inqBuff[24] = 'L';
-    inqBuff[25] = 'U';
-    inqBuff[26] = 'M';
-    inqBuff[27] = 'E';
-    inqBuff[28] = '1';
+    buff[22] = 'V';
+    buff[23] = 'O';
+    buff[24] = 'L';
+    buff[25] = 'U';
+    buff[26] = 'M';
+    buff[27] = 'E';
+    buff[28] = '1';
     ASSERT_EQ("VOLUME1", castor::tape::SCSI::Structures::toString(requestSenseData.volumeLabel));
 
     ASSERT_EQ(0, requestSenseData.physicalWrap);
@@ -1121,35 +1121,35 @@ namespace unitTests {
     ASSERT_EQ(0x6E, requestSenseData.LPOSRegion);
 
     ASSERT_EQ("", castor::tape::SCSI::Structures::toString(requestSenseData.ERPSummaryInformation));
-    inqBuff[70] = 'E';
-    inqBuff[71] = 'R';
-    inqBuff[72] = 'P';
-    inqBuff[73] = 'S';
-    inqBuff[74] = 'U';
-    inqBuff[75] = 'M';
-    inqBuff[76] = 'M';
-    inqBuff[77] = 'A';
-    inqBuff[78] = 'R';
-    inqBuff[79] = 'Y';
-    inqBuff[80] = 'I';
-    inqBuff[81] = 'N';
-    inqBuff[82] = 'F';
-    inqBuff[83] = 'O';
-    inqBuff[84] = 'R';
-    inqBuff[85] = 'M';
+    buff[70] = 'E';
+    buff[71] = 'R';
+    buff[72] = 'P';
+    buff[73] = 'S';
+    buff[74] = 'U';
+    buff[75] = 'M';
+    buff[76] = 'M';
+    buff[77] = 'A';
+    buff[78] = 'R';
+    buff[79] = 'Y';
+    buff[80] = 'I';
+    buff[81] = 'N';
+    buff[82] = 'F';
+    buff[83] = 'O';
+    buff[84] = 'R';
+    buff[85] = 'M';
     ASSERT_EQ("ERPSUMMARYINFORM", castor::tape::SCSI::Structures::toString(requestSenseData.ERPSummaryInformation));
 
     ASSERT_EQ("", castor::tape::SCSI::Structures::toString(requestSenseData.cartridgeSerialNumber));
-    inqBuff[86] = 'C';
-    inqBuff[87] = 'A';
-    inqBuff[88] = 'R';
-    inqBuff[89] = 'T';
-    inqBuff[90] = 'R';
-    inqBuff[91] = 'I';
-    inqBuff[92] = 'D';
-    inqBuff[93] = 'G';
-    inqBuff[94] = 'E';
-    inqBuff[95] = '1';
+    buff[86] = 'C';
+    buff[87] = 'A';
+    buff[88] = 'R';
+    buff[89] = 'T';
+    buff[90] = 'R';
+    buff[91] = 'I';
+    buff[92] = 'D';
+    buff[93] = 'G';
+    buff[94] = 'E';
+    buff[95] = '1';
     ASSERT_EQ("CARTRIDGE1", castor::tape::SCSI::Structures::toString(requestSenseData.cartridgeSerialNumber));
   }
 }
