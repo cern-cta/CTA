@@ -1049,7 +1049,7 @@ namespace unitTests {
 
     ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.portIdentifier));
     buff[37] = 0xF3; buff[38] = 0x2A; buff[39] = 0x94;
-    ASSERT_EQ(0xF32A94, castor::tape::SCSI::Structures::toU32(requestSenseData.portIdentifier) >> 8);
+    ASSERT_EQ(0xF32A94, castor::tape::SCSI::Structures::toU32(requestSenseData.portIdentifier));
 
     ASSERT_EQ(0, requestSenseData.relativeTgtPort);
     buff[40] = 0x7;
