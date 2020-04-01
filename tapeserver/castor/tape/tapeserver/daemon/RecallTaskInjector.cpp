@@ -315,7 +315,11 @@ void RecallTaskInjector::WorkerThread::run()
         m_parent.synchronousFetch();
       }
       m_parent.injectBulkRecalls();
-      m_parent.m_useRAO = false;
+      /**
+       * Commenting this line as we want the RAO to be executed on
+       * all the batchs and not only one.
+       */
+      //m_parent.m_useRAO = false;
     }
     catch (castor::tape::SCSI::Exception& e) {
       m_parent.m_lc.log(cta::log::WARNING, "The drive does not support RAO: disabled");

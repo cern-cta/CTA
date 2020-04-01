@@ -207,6 +207,21 @@ drive::deviceInfo drive::DriveMHVTL::getDeviceInfo()  {
   return devInfo;
 }
 
+SCSI::Structures::RAO::udsLimits drive::DriveMHVTL::getLimitUDS(){
+  SCSI::Structures::RAO::udsLimits lims;
+  //For MHVTL and for tests, assume that
+  //the max number of files for RAO supported by an MHVTL drive 
+  //is 1000;
+  lims.maxSize = 1000;
+  lims.maxSupported = 1000;
+  return lims;
+}
+
+void drive::DriveMHVTL::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported){
+  //The query RAO method of MHVTL drive returns nothing
+  //something could be implemented for testing...
+}
+
 /**
  * Generic SCSI path, used for passing to external scripts.
  * @return    Path to the generic SCSI device file.

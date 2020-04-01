@@ -564,6 +564,8 @@ namespace drive {
     virtual std::map<std::string,uint32_t> getDriveStats();
     virtual std::map<std::string,uint32_t> getVolumeStats();
     virtual drive::deviceInfo getDeviceInfo();
+    virtual SCSI::Structures::RAO::udsLimits getLimitUDS();
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
   };
 
   class DriveLTO : public DriveGeneric {
