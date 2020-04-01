@@ -22,6 +22,8 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/CleanerSession.hpp"
+#include "catalogue/Catalogue.hpp"
+#include <exception>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -35,7 +37,8 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   const std::string &vid,
   const bool waitMediaInDrive,
   const uint32_t waitMediaInDriveTimeout,
-  const std::string & externalEncryptionKeyScript):
+  const std::string & externalEncryptionKeyScript,
+  cta::catalogue::Catalogue & catalogue):
   m_capUtils(capUtils),
   m_mc(mc),
   m_log(log),
@@ -44,7 +47,9 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   m_vid(vid),
   m_waitMediaInDrive(waitMediaInDrive),
   m_waitMediaInDriveTimeout(waitMediaInDriveTimeout),
-  m_encryptionControl(externalEncryptionKeyScript) {}
+  m_encryptionControl(externalEncryptionKeyScript),
+  m_catalogue(catalogue)
+  {}
 
 //------------------------------------------------------------------------------
 // execute
@@ -87,6 +92,48 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     cleanDrive(drive);
   } catch(...) {
     logAndClearTapeAlerts(drive);
+    //As we failed to clean the drive (unmount the tape or rewinding impossible), 
+    //we set the tape as disabled so that it will not be mounted for future retrieves
+    //otherwise, we will go in an infinite loop of mounting with errors.
+    //Gitlab ticket reference : https://gitlab.cern.ch/cta/CTA/issues/224
+    if(!m_vid.empty()){
+      
+      //Get the message exception to log it into the comment section of the tape table
+      auto currException = std::current_exception();
+      std::string currentExceptionMsg = "";
+      try {
+        std::rethrow_exception(currException);
+      } catch(cta::exception::Exception &ex){
+        currentExceptionMsg = ex.getMessageValue();
+      } catch(std::exception & ex){
+        currentExceptionMsg = ex.what();
+      } catch (...) {
+        currentExceptionMsg = "Unknown exception";
+      }
+      
+      std::string hostname = cta::utils::getShortHostname();
+      std::string tapeDrive = m_driveConfig.unitName;
+      std::list<cta::log::Param> params = {
+        cta::log::Param("tapeVid", m_vid),
+        cta::log::Param("tapeDrive", tapeDrive),
+        cta::log::Param("logicalLibrary", m_driveConfig.logicalLibrary),
+        cta::log::Param("host",hostname),
+        cta::log::Param("exceptionMsg", currentExceptionMsg)};
+      m_log(cta::log::ERR,"In CleanerSession::exceptionThrowingExecute(), failed to clean the Drive with a tape mounted. Disabling the tape.",params);
+      cta::common::dataStructures::SecurityIdentity admin;
+      admin.username = c_defaultUserNameUpdate;
+      admin.host = tapeDrive + "@" + hostname;
+      
+      try{
+        m_catalogue.setTapeDisabled(admin, m_vid, true);
+        std::string comment = cta::utils::getCurrentLocalTime("%F %T") + ":" + currentExceptionMsg;  
+        m_catalogue.modifyTapeComment(admin,m_vid,comment);
+      } catch(cta::exception::Exception &ex) {
+        cta::log::Param param("exceptionMsg",ex.getMessageValue());
+        params.push_back(param);
+        m_log(cta::log::ERR,"In CleanerSession::exceptionThrowingExecute(), failed to disable the tape.",params);
+      }
+    }
     throw;
   }
   

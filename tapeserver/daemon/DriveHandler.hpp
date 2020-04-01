@@ -25,6 +25,7 @@
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
+#include "catalogue/Catalogue.hpp"
 #include <memory>
 
 namespace cta { namespace tape { namespace  daemon {
@@ -136,6 +137,10 @@ private:
   void processLogs(serializers::WatchdogMessage & message);
   /** Helper function accumulating bytes transferred */
   void processBytes(serializers::WatchdogMessage & message);
+  
+  std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string & methodCaller);
+  
+  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 };
 
 // TODO: remove/merge ChildProcess.

@@ -402,6 +402,14 @@ namespace utils {
   std::string getCurrentLocalTime();
   
   /**
+   * Returns the current time formatted according to the string passed in parameter
+   * @param format the format of the time the user wants to have as an output
+   * The format should be compliant with http://www.cplusplus.com/reference/ctime/strftime/
+   * @return the current time formatted according to the string passed in parameter
+   */
+  std::string getCurrentLocalTime(const std::string & format);
+  
+  /**
    * Remove the root:// part of the path passed in parameter
    * and return the corresponding string
    * @param path the xroot path to truncate

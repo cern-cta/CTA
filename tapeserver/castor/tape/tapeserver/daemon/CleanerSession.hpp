@@ -33,6 +33,7 @@
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
+#include "catalogue/Catalogue.hpp"
 
 #include <memory>
 
@@ -62,6 +63,7 @@ namespace daemon {
      * the media to be ready for operations inside the drive.
      * @param externalEncryptionKeyScript path to the operator provided script
      * for encryption control.
+     * @param catalogue the CTA catalogue
      */
     CleanerSession(
       cta::server::ProcessCap &capUtils,
@@ -72,7 +74,8 @@ namespace daemon {
       const std::string &vid,
       const bool waitMediaInDrive,
       const uint32_t waitMediaInDriveTimeout,
-      const std::string & externalEncryptionKeyScript);
+      const std::string & externalEncryptionKeyScript,
+      cta::catalogue::Catalogue & catalogue);
 
     /** 
      * Execute the session and return the type of action to be performed
@@ -132,6 +135,16 @@ namespace daemon {
      * Encryption helper object 
      */
     EncryptionControl m_encryptionControl;
+    
+    /**
+     * CTA catalogue
+     */
+    cta::catalogue::Catalogue & m_catalogue;
+    
+    /**
+     * Variable used to log UPDATE_USER_NAME in the DB
+     */
+    const std::string c_defaultUserNameUpdate = "cta-taped";
 
     /** 
      * Execute the session and return the type of action to be performed

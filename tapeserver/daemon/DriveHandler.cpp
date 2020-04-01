@@ -910,19 +910,10 @@ int DriveHandler::runChild() {
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
-  std::unique_ptr<cta::catalogue::Catalogue> catalogue;
   try {
-    log::ScopedParamContainer params(lc);
-    params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
-    lc.log(log::DEBUG, "In DriveHandler::runChild(): will get catalogue login information.");
-    const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
-    const uint64_t nbConns = 1;
-    const uint64_t nbArchiveFileListingConns = 0;
-    lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to catalogue.");
-    auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_sessionEndContext.logger(),
-      catalogueLogin, nbConns, nbArchiveFileListingConns);
-    catalogue=catalogueFactory->create();
-    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, lc.logger()));
+    if(!m_catalogue)
+      m_catalogue = createCatalogue("DriveHandler::runChild()");
+    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *m_catalogue, lc.logger()));
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
@@ -932,7 +923,7 @@ int DriveHandler::runChild() {
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler.");
-  cta::Scheduler scheduler(*catalogue, *osdb, m_tapedConfig.mountCriteria.value().maxFiles,
+  cta::Scheduler scheduler(*m_catalogue, *osdb, m_tapedConfig.mountCriteria.value().maxFiles,
       m_tapedConfig.mountCriteria.value().maxBytes);
   // Before launching the transfer session, we validate that the scheduler is reachable.
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
@@ -1032,7 +1023,7 @@ int DriveHandler::runChild() {
 //      sleep(1);
 //      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
 //    }
-    
+
     castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
       capUtils,
       mediaChangerFacade,
@@ -1042,7 +1033,8 @@ int DriveHandler::runChild() {
       m_previousVid,
       true,
       60,
-      "");
+      "",
+      *m_catalogue);
     return cleanerSession.execute();
   } else {
     // The next session will be a normal session (no crash with a mounted tape before).
@@ -1159,6 +1151,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       // Capabilities management.
       cta::server::ProcessCap capUtils;
       // Mounting management.
+      if(!m_catalogue)
+        m_catalogue = createCatalogue("DriveHandler::shutdown()");
+      
       cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
       castor::tape::System::realWrapper sWrapper;
       castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
@@ -1170,7 +1165,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
         m_sessionVid,
         true,
         60,
-        "");
+        "",
+        *m_catalogue);
       cleanerSession.execute();
     }
   }
@@ -1182,6 +1178,20 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   m_processingStatus.shutdownComplete = true;
   m_processingStatus.sigChild = false;
   return m_processingStatus;
+}
+
+std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string & methodCaller){
+  log::ScopedParamContainer params(m_processManager.logContext());
+  params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
+  params.add("caller",methodCaller);
+  m_processManager.logContext().log(log::DEBUG, "In DriveHandler::createCatalogue(): will get catalogue login information.");
+  const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
+  const uint64_t nbConns = 1;
+  const uint64_t nbArchiveFileListingConns = 0;
+  m_processManager.logContext().log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
+  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_sessionEndContext.logger(),
+  catalogueLogin, nbConns, nbArchiveFileListingConns);
+  return std::move(catalogueFactory->create());
 }
 
 //------------------------------------------------------------------------------

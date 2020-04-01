@@ -917,6 +917,21 @@ std::string getCurrentLocalTime() {
   return std::string(buff) + std::string(buff2);
 }
 
+//-----------------------------------------------------------------------------
+// getCurrentLocalTime
+//-----------------------------------------------------------------------------
+std::string getCurrentLocalTime(const std::string & format){
+  ::timeval tv;
+  ::gettimeofday(&tv, nullptr);
+  ::time_t now = (::time_t)tv.tv_sec;
+  struct ::tm * localNow;
+  ::time(&now);
+  localNow = ::localtime(&now);
+  char buff[80];
+  ::strftime(buff,sizeof(buff), format.c_str(), localNow);
+  return std::string(buff);
+}
+
 std::string extractPathFromXrootdPath(const std::string& path){
   XrdCl::URL urlInfo(path.c_str());
   return urlInfo.GetPath();
