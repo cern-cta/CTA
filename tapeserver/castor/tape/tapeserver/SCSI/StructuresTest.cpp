@@ -1009,7 +1009,7 @@ namespace unitTests {
     ASSERT_EQ(0x1, requestSenseData.VOLVALID);
     ASSERT_EQ(0, requestSenseData.DUMP);
     buff[21] |= 1 << 1;
-    ASSERT_EQ(0xA, requestSenseData.DUMP);
+    ASSERT_EQ(0x1, requestSenseData.DUMP);
     ASSERT_EQ(0, requestSenseData.CLN);
     buff[21] |= 1 << 3;
     ASSERT_EQ(0x1, requestSenseData.CLN);
