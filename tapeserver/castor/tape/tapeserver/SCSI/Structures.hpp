@@ -1189,6 +1189,170 @@ namespace SCSI {
         unsigned char keyData[SCSI::encryption::ENC_KEY_LENGTH];
       };
     }
+
+    /**
+     * REQUEST SENSE CDB as described in LTO-8 SCSI Reference, p.157
+     */
+    class requestSenseCDB_t {
+    public:
+      requestSenseCDB_t() {
+        zeroStruct(this);
+        opCode = SCSI::Commands::REQUEST_SENSE;
+      }
+      // byte 0
+      unsigned char opCode;              // OPERATION CODE (03h)
+
+      // bytes 1-3
+      unsigned char reserved[3]          // Reserved
+
+      // byte 4
+      unsigned char allocationLength;    // Maximum number of bytes to be transferred (up to 96), see 5.2.29
+
+      // byte 5
+      unsigned char control;             // Control byte
+    };
+
+    /**
+     * REQUEST SENSE data format, as described in LTO-8 SCSI Reference, p.158
+     */
+    class requestSenseData_t {
+    public:
+      requestSenseData_t() { zeroStruct(this); }
+      // byte 0
+      unsigned char RESPONSE_CODE :7;              // 70h current, 71h deferred
+      unsigned char VALID         :1;              // Information bytes 3-6 are valid
+
+      // byte 1
+      unsigned char               :8;              // Obsolete
+
+      // byte 2
+      unsigned char SENSE_KEY     :4;              // See Annex B
+      unsigned char               :1;              // Reserved
+      unsigned char ILI           :1;              // Incorrect Length Indicator
+      unsigned char EOM           :1;              // Device is at end of medium
+      unsigned char FILEMARK      :1;              // The current command has encountered a filemark
+
+      // bytes 3-6
+      unsigned char information[4];                // Valid if VALID bit is set. Generally only used for non-deferred errors.
+
+      // byte 7
+      unsigned char additionalSenseLength;         // 0Ah only 18 bytes of sense data returned, 58h full 96 bytes of sense data returned
+
+      // bytes 8-11
+      unsigned char commandSpecificInformation[4]; // Not supported by LTO-8 drives
+
+      // byte 12
+      unsigned char additionalSenseCode;           // See Annex B
+
+      // byte 13
+      unsigned char additionalSenseCodeQualifier;  // See Annex B
+
+      // byte 14
+      unsigned char fieldReplacableUnitCode;       // Used for extended fault isolation information
+
+      // byte 15
+      unsigned char BIT_POINTER   :3;              // Points to bit in error of the field specified by the FIELD_POINTER
+      unsigned char BPV           :1;              // Bit Pointer Valid, indicates whether BIT_POINTER contains information
+      unsigned char               :2;              // Reserved
+      unsigned char C_D           :1;              // Control/Data, indicates if error is in a data field or CDB field
+      unsigned char SKSV_BIT      :1;              // Sense Key Specific Valid
+
+      // bytes 16-17
+      unsigned char SKSV[2];                       // Field Pointer, points to the CDB byte or parameter byte in error
+
+      // bytes 18-19
+      unsigned char reportingErrorFlagData[2];     // Reporting Error Flag Data
+
+      // byte 20
+      unsigned char               :8;              // Reserved
+
+      // byte 21
+      unsigned char VOLVALID      :1;              // Indicates if Volume Label and Volume Label Cartridge Type contain valid information
+      unsigned char DUMP          :1;              // Indicates if a debug dump is present in the drive
+      unsigned char               :1;              // Reserved
+      unsigned char CLN           :1;              // Is the device requesting a clean?
+      unsigned char DRVSRVC       :1;              // Does the drive have a hardware fault causing it to be inoperative?
+      unsigned char               :3;              // Reserved
+
+      // bytes 22-28
+      unsigned char volumeLabel[7];                // Seven characters from left of Volume Label
+
+      // byte 29
+      unsigned char physicalWrap;                  // Physical wrap of the current location. LSB reflects current physical direction:
+                                                   //    0b - current direction is away from the physical beginning of tape
+                                                   //    1b - current direction is towards the physical beginning of tape
+                                                   //   FFh - logical wrap number exceeds 254, physical direction is not reflected
+      // bytes 30-33
+      unsigned char relativeLPOSValue[4];          // The current physical position on tape
+
+      // byte 34
+      unsigned char SCSIAddress;                   // Obsolete, use portIdentifier instead
+
+      // byte 35
+      unsigned char RS422Information;              // May contain a value passed across the RS-422 serial interface by a tape library
+
+      // byte 36
+      unsigned char activePartition :3;            // Partition number of the current logical position of the volume
+      unsigned char                 :5;            // Reserved
+
+      // bytes 37-39
+      unsigned char portIdentifier[3];             // Address of the port through which the sense is reported, fibre channel or SAS
+
+      // byte 40
+      unsigned char relativeTgtPort     :3;        // Relative target port through which sense data is reported
+      unsigned char                     :3;        // Reserved
+      unsigned char tapePartitionsExist :1;        // Does the mounted volume contain more than one partition?
+      unsigned char tapeDirectoryValid  :1;        // Is the tape directory valid?
+
+      // byte 41
+      unsigned char hostCommand;                   // SCSI Opcode of the command to which sense data is being returned
+
+      // byte 42
+      unsigned char mediaType           :4;        // Vendor reserved
+      unsigned char cartridgeGenType    :4;        // Cartridge generation type, 000b = Gen1, 111b = Gen 8
+
+      // bytes 43-44
+      unsigned char volumeLabelCartridgeType[2];   // Valid if VOLVALID bit is set to 1b. Can be 'L7', 'M8', 'L8', etc.
+
+      // bytes 45-48
+      unsigned char logicalBlockNumber[4];         // Current LBA that would be reported in Read Position command
+
+      // bytes 49-52
+      unsigned char datasetNumber[4];
+
+      // bytes 53-54
+      unsigned char firstErrorFSC[2];
+
+      // bytes 55-56
+      unsigned char firstErrorFlagData[2];
+
+      // bytes 57-58
+      unsigned char secondErrorFSC[2];
+
+      // bytes 59-60
+      unsigned char secondErrorFlagData[2];
+
+      // bytes 61-62
+      unsigned char nextToLastErrorFSC[2];
+
+      // bytes 63-64
+      unsigned char nextToLastErrorFlagData[2];
+
+      // bytes 65-66
+      unsigned char lastErrorFSC[2];
+
+      // bytes 67-68
+      unsigned char lastErrorFlagData[2];
+
+      // byte 69
+      unsigned char LPOSRegion;
+
+      // bytes 70-85
+      unsigned char ERPSummaryInformation[16];
+
+      // bytes 86-95
+      unsigned char cartridgeSerialNumber[10];    // This is the value from the CRM right-justified, not the Barcode
+    };
     
     namespace RAO {
         
