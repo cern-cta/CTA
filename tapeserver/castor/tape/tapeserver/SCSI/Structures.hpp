@@ -1275,7 +1275,7 @@ namespace SCSI {
       unsigned char               :3;              // Reserved
 
       // bytes 22-28
-      unsigned char volumeLabel[7];                // Seven characters from left of Volume Label
+      char volumeLabel[7];                         // Seven characters from left of Volume Label
 
       // byte 29
       unsigned char physicalWrap;                  // Physical wrap of the current location. LSB reflects current physical direction:
@@ -1348,10 +1348,10 @@ namespace SCSI {
       unsigned char LPOSRegion;
 
       // bytes 70-85
-      unsigned char ERPSummaryInformation[16];
+      char ERPSummaryInformation[16];
 
       // bytes 86-95
-      unsigned char cartridgeSerialNumber[10];    // This is the value from the CRM right-justified, not the Barcode
+      char cartridgeSerialNumber[10];    // This is the value from the CRM right-justified, not the Barcode
     };
     
     namespace RAO {
