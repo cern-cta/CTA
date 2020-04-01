@@ -1203,7 +1203,7 @@ namespace SCSI {
       unsigned char opCode;              // OPERATION CODE (03h)
 
       // bytes 1-3
-      unsigned char reserved[3]          // Reserved
+      unsigned char reserved[3];         // Reserved
 
       // byte 4
       unsigned char allocationLength;    // Maximum number of bytes to be transferred (up to 96), see 5.2.29
