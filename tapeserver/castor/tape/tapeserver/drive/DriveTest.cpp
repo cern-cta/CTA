@@ -113,7 +113,8 @@ TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
       std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
         castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
       castor::tape::tapeserver::drive::positionInfo posInfo;
-      
+      castor::tape::tapeserver::drive::physicalPositionInfo physicalPosInfo;
+
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
       posInfo = drive->getPositionInfo();
 
@@ -121,7 +122,13 @@ TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
       ASSERT_EQ(0x12EFCDABU,posInfo.oldestDirtyObject);
       ASSERT_EQ(0xABCDEFU,posInfo.dirtyObjectsCount);
       ASSERT_EQ(0x12EFCDABU,posInfo.dirtyBytesCount);
-      
+
+      EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
+      physicalPosInfo = drive->getPhysicalPositionInfo();
+      ASSERT_EQ(0x0, physicalPosInfo.wrap);
+      ASSERT_EQ(0x0, physicalPosInfo.lpos);
+      ASSERT_EQ(castor::tape::tapeserver::drive::physicalPositionInfo::FORWARD, physicalPosInfo.direction());
+
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
       drive->positionToLogicalObject(0xABCDEF0);
       

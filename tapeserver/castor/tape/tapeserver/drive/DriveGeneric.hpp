@@ -132,7 +132,14 @@ namespace drive {
      * on the dirty data still in the write buffer.
      */
     virtual positionInfo getPositionInfo() ;
-    
+
+    /**
+     * Return physical position of the drive.
+     *
+     * @return physicalPositionInfo class. This contains the wrap and linear position (LPOS).
+     */
+    virtual physicalPositionInfo getPhysicalPositionInfo();
+
     /**
      * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
      * They are described in SSC-4, section 4.2.20: TapeAlert application client interface

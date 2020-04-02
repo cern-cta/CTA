@@ -335,6 +335,39 @@ drive::positionInfo drive::DriveGeneric::getPositionInfo()
 }
 
 /**
+ * Return physical position of the drive.
+ *
+ * @return physicalPositionInfo class. This contains the wrap and linear position (LPOS).
+ */
+drive::physicalPositionInfo drive::DriveGeneric::getPhysicalPositionInfo()
+{
+  SCSI::Structures::requestSenseCDB_t cdb;
+  SCSI::Structures::requestSenseData_t requestSenseData;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::LinuxSGIO_t sgh;
+
+  // The full Request Sense data record is 96 bytes. However, we are only interested in
+  // the PHYSICAL WRAP and LPOS fields (bytes 29-33) so we can discard the rest.
+  cdb.allocationLength = 34;
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&requestSenseData);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  // Manage both system error and SCSI errors
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveGeneric::getPhysicalPositionInfo");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in getPhysicalPositionInfo:");
+
+  physicalPositionInfo posInfo;
+  posInfo.wrap = requestSenseData.physicalWrap;
+  posInfo.lpos = SCSI::Structures::toU32(requestSenseData.relativeLPOSValue);
+  return posInfo;
+}
+
+/**
  * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
  * They are described in SSC-4, section 4.2.20: TapeAlert application client interface.
  * Section is 4.2.17 in SSC-3. This version gives a list of numerical codes.

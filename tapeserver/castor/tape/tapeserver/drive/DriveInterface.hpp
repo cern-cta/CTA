@@ -111,12 +111,12 @@ namespace drive {
     uint32_t lpos;
     /**
      * FORWARD means the current direction is away from the
-     * physical beginning of tape. REVERSE means the current
+     * physical beginning of tape. BACKWARD means the current
      * direction is towards the physical beginning of tape.
      */
-    enum Direction_t { FORWARD, REVERSE };
+    enum Direction_t { FORWARD, BACKWARD };
     Direction_t direction() {
-      return wrap & 1 ? REVERSE : FORWARD;
+      return wrap & 1 ? BACKWARD : FORWARD;
     }
   };
 
@@ -212,6 +212,7 @@ namespace drive {
     virtual std::string getSerialNumber()  = 0;
     virtual void positionToLogicalObject(uint32_t blockId)  = 0;
     virtual positionInfo getPositionInfo()  = 0;
+    virtual physicalPositionInfo getPhysicalPositionInfo() = 0;
     virtual std::vector<uint16_t> getTapeAlertCodes() = 0;
     virtual std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) = 0;
     virtual std::vector<std::string> getTapeAlertsCompact (const std::vector<uint16_t>&) = 0;

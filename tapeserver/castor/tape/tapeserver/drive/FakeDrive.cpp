@@ -81,12 +81,20 @@ void castor::tape::tapeserver::drive::FakeDrive::positionToLogicalObject(uint32_
   }
   m_currentPosition = blockId;
 }
+
 castor::tape::tapeserver::drive::positionInfo castor::tape::tapeserver::drive::FakeDrive::getPositionInfo()  {
   positionInfo pos;
   pos.currentPosition = m_currentPosition;
   pos.dirtyBytesCount = 0;
   pos.dirtyObjectsCount = 0;
   pos.oldestDirtyObject = 0;
+  return pos;
+}
+
+castor::tape::tapeserver::drive::physicalPositionInfo castor::tape::tapeserver::drive::FakeDrive::getPhysicalPositionInfo() {
+  physicalPositionInfo pos;
+  pos.lpos = 0;
+  pos.wrap = m_currentPosition;
   return pos;
 }
 
