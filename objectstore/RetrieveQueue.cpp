@@ -699,10 +699,17 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
     }
     // We still need to update the tracking queue side.
     // Update stats and remove the jobs from the todo list.
+    bool needToRebuild = false;
+    time_t oldestJobCreationTime = m_payload.oldestjobcreationtime();
     for (auto & j: removalResult.removedJobs) {
       maxDriveAllowedMap.decCount(j.maxDrivesAllowed);
       priorityMap.decCount(j.priority);
       minRetrieveRequestAgeMap.decCount(j.minRetrieveRequestAge);
+      if(j.startTime <= oldestJobCreationTime){
+        //the job we remove was the oldest one, we should rebuild the queue
+        //to update the oldestjobcreationtime counter
+        needToRebuild = true;
+      }
       if (j.activityDescription) {
         // We have up a partial activity description, but this is enough to decCount.
         RetrieveActivityDescription activityDescription;
@@ -720,8 +727,9 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
       // Also update the shard pointers's stats. In case of mismatch, we will trigger a rebuild.
       shardPointer->set_shardbytescount(shardPointer->shardbytescount() - removalResult.bytesRemoved);
       shardPointer->set_shardjobscount(shardPointer->shardjobscount() - removalResult.jobsRemoved);
-      if (shardPointer->shardbytescount() != removalResult.bytesAfter 
-          || shardPointer->shardjobscount() != removalResult.jobsAfter) {
+      
+      if (!needToRebuild && (shardPointer->shardbytescount() != removalResult.bytesAfter 
+          || shardPointer->shardjobscount() != removalResult.jobsAfter)) {
         rebuild();
       }
       // We will commit when exiting anyway...
@@ -745,6 +753,9 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
       }
     ); // end of remove_if
     // And commit the queue (once per shard should not hurt performance).
+    if(needToRebuild){
+      rebuild();
+    }
     commit();
   }
 }
