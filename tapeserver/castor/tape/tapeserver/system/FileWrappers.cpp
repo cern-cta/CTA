@@ -214,6 +214,20 @@ int System::stDeviceFile::ioctlReadPosition(sg_io_hdr_t* sgio_h) {
   return 0;
 }
 
+int System::stDeviceFile::ioctlRequestSense(sg_io_hdr_t* sgio_h) {
+  if (SG_DXFER_FROM_DEV != sgio_h->dxfer_direction) {
+    errno = EINVAL;
+    return -1;
+  }
+  SCSI::Structures::requestSenseData_t &requestSenseData =
+    *reinterpret_cast<SCSI::Structures::requestSenseData_t*>(sgio_h->dxferp);
+  if(sizeof(requestSenseData) > sgio_h->dxfer_len) {
+    errno = EINVAL;
+    return -1;
+  }
+  return 0;
+}
+
 int System::stDeviceFile::ioctlLogSelect(sg_io_hdr_t * sgio_h) {
   if (SG_DXFER_NONE != sgio_h->dxfer_direction) {
     errno = EINVAL;
