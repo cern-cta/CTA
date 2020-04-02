@@ -95,6 +95,32 @@ namespace drive {
   };
 
   /**
+   * Physical position info.
+   *
+   * Returns the wrap (physical track) and LPOS (longitudinal
+   * position relative to the start of the wrap). If the wrap value is 0xFF,
+   * then the logical wrap number exceeds 254 and no further
+   * information is available. Otherwise, the physical direction
+   * can be detected from the lsb of the wrap.
+   *
+   * Returned by getPhysicalPositionInfo()
+   */
+  class physicalPositionInfo {
+  public:
+    uint8_t  wrap;
+    uint32_t lpos;
+    /**
+     * FORWARD means the current direction is away from the
+     * physical beginning of tape. REVERSE means the current
+     * direction is towards the physical beginning of tape.
+     */
+    enum Direction_t { FORWARD, REVERSE };
+    Direction_t direction() {
+      return wrap & 1 ? REVERSE : FORWARD;
+    }
+  };
+
+  /**
    * Logical block protection nformation, returned by getLBPInfo()
    */
   class LBPInfo {
