@@ -83,7 +83,7 @@ namespace System {
     unsigned char m_LBPInfo_R;
     unsigned char m_LBPInfo_W;
     /**
-     * This function handles READ_POSITION CDB and prepares the replay.
+     * This function handles READ_POSITION CDB and prepares the reply.
      * 
      * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
      *                ioctl call data
@@ -91,7 +91,17 @@ namespace System {
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int ioctlReadPosition(sg_io_hdr_t * sgio_h);
-    
+
+    /**
+     * This function handles REQUEST_SENSE CDB and prepares the reply.
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
+     *                ioctl call data
+     * @retval         0 success
+     * @retval        -1 if an error occurred (errno is set)
+     */
+    virtual int ioctlRequestSense(sg_io_hdr_t * sgio_h);
+
     /**
      * This function handles LOG_SELECT CDB and only checks the CDB for the 
      * correct values and sets internal trigger for 0 compression as true.

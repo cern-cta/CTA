@@ -145,6 +145,8 @@ int System::stDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
       switch (sgio_h->cmdp[0]) { // Operation Code for CDB
         case SCSI::Commands::READ_POSITION:
           return ioctlReadPosition(sgio_h);
+        case SCSI::Commands::REQUEST_SENSE:
+          return ioctlRequestSense(sgio_h);
         case SCSI::Commands::LOG_SELECT:
           return ioctlLogSelect(sgio_h);
         case SCSI::Commands::LOCATE_10:
