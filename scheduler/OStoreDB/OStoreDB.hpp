@@ -286,8 +286,6 @@ public:
   
   std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) override;
-  
-  void queueArchiveForRepack(std::unique_ptr<cta::objectstore::ArchiveRequest> request, log::LogContext& logContext) override;
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>> getArchiveJobs() const override;
   
@@ -329,7 +327,12 @@ public:
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
     const std::string& remoteFile) override;
   
-  void deleteArchiveRequest(const common::dataStructures::SecurityIdentity & cliIdentity) override;
+  /**
+   * Idempotently deletes the specified ArchiveRequest from the objectstore
+   * @param address, the address of the ArchiveRequest
+   * @param archiveFileID the archiveFileID of the file to delete.
+   */
+  virtual void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc) override;
 
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string &vid) const override;
 

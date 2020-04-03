@@ -259,7 +259,7 @@ bool RecallTaskInjector::synchronousFetch()
   scoped.add("byteSizeThreshold",reqSize)
         .add("requestedFiles", reqFiles);
   if(m_jobs.empty()) {
-    m_lc.log(cta::log::ERR, "No files to recall: empty mount");
+    m_lc.log(cta::log::WARNING, "No files to recall: empty mount");
     return false;
   }
   else {

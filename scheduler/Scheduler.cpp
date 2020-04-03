@@ -249,19 +249,12 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
-// TEMPORARILY commenting out SchedulerDatabase::deleteArchiveRequest() in order
-// to reduce latency.  PLEASE NOTE however that this means files "in-flight" to
-// tape will not be deleted and they will appear in the CTA catalogue when they
-// are finally written to tape.
-//try {
-//  m_db.deleteArchiveRequest(instanceName, request.archiveFileID);
-//} catch (exception::Exception &dbEx) {
-//  // The file was apparently not queued. If we fail to remove it from the
-//  // catalogue for any reason other than it does not exist in the catalogue,
-//  // then it is an error.
-//  m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
-//}
   utils::Timer t;
+
+  if(request.address) {
+    //Check if address is provided, we can remove the request from the objectstore
+    m_db.cancelArchive(request,lc);
+  }
   m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID, lc);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   log::ScopedParamContainer spc(lc);
@@ -1707,7 +1700,14 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
             .add("reportType", j->reportType())
             .add("exceptionMSG", ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to launch reporter.");
-      j->reportFailed(ex.getMessageValue(), lc);
+      try {
+        j->reportFailed(ex.getMessageValue(), lc);
+      } catch(const cta::objectstore::Backend::NoSuchObject &ex){ 
+        params.add("fileId",j->archiveFile.archiveFileID)
+              .add("reportType",j->reportType())
+              .add("exceptionMSG",ex.getMessageValue());
+        lc.log(log::WARNING,"In Scheduler::reportArchiveJobsBatch(): failed to reportFailed the job because it does not exist in the objectstore.");
+      }
     }
   }
   timingList.insertAndReset("asyncReportLaunchTime", t);
@@ -1722,7 +1722,14 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
             .add("reportType", current.archiveJob->reportType())
             .add("exceptionMSG", ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to report.");
-      current.archiveJob->reportFailed(ex.getMessageValue(), lc);
+      try {
+        current.archiveJob->reportFailed(ex.getMessageValue(), lc);
+      } catch(const cta::objectstore::Backend::NoSuchObject &ex){
+        params.add("fileId",current.archiveJob->archiveFile.archiveFileID)
+              .add("reportType",current.archiveJob->reportType())
+              .add("exceptionMSG",ex.getMessageValue());
+        lc.log(log::WARNING,"In Scheduler::reportArchiveJobsBatch(): failed to reportFailed the current job because it does not exist in the objectstore.");
+      }
     }
   }
   timingList.insertAndReset("reportCompletionTime", t);

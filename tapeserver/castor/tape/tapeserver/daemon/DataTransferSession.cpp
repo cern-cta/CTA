@@ -288,13 +288,25 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     } else {
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
-      lc.log(cta::log::ERR, "Aborting recall mount startup: empty mount");
-      cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("errorMessage", "Aborted: empty recall mount"));
+      lc.log(cta::log::WARNING, "Aborting recall mount startup: empty mount");
+      
+      std::string mountId = retrieveMount->getMountTransactionId();
+      std::string mountType = cta::common::dataStructures::toString(retrieveMount->getMountType());
+      
+      cta::log::Param errorMessageParam("errorMessage", "Aborted: empty recall mount");
+      cta::log::Param mountIdParam("mountId", mountId);
+      cta::log::Param mountTypeParam("mountType", mountType);
+      
+      cta::log::LogContext::ScopedParam sp1(lc, errorMessageParam);
       try {
         retrieveMount->abort();
-        cta::log::LogContext::ScopedParam sp08(lc, cta::log::Param("MountTransactionId", retrieveMount->getMountTransactionId()));
+        rwd.updateStats(TapeSessionStats());
+        rwd.reportStats();
+        std::list<cta::log::Param> paramList { errorMessageParam, mountIdParam, mountTypeParam };
+        m_intialProcess.addLogParams(m_driveConfig.unitName,paramList);
+        cta::log::LogContext::ScopedParam sp08(lc, cta::log::Param("MountTransactionId", mountId));
         cta::log::LogContext::ScopedParam sp11(lc, cta::log::Param("errorMessage", "Aborted: empty recall mount"));
-        lc.log(cta::log::ERR, "Notified client of end session with error");
+        lc.log(cta::log::WARNING, "Notified client of end session with error");
       } catch(cta::exception::Exception & ex) {
         cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("notificationError", ex.getMessageValue()));
         lc.log(cta::log::ERR, "Failed to notified client of end session with error");
@@ -403,12 +415,22 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     } else {
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
-      lc.log(cta::log::ERR, "Aborting migration mount startup: empty mount");
-      cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("errorMessage", "Aborted: empty migration mount"));
+      lc.log(cta::log::WARNING, "Aborting migration mount startup: empty mount");
+      
+      std::string mountId = archiveMount->getMountTransactionId();
+      std::string mountType = cta::common::dataStructures::toString(archiveMount->getMountType());
+      cta::log::Param errorMessageParam("errorMessage", "Aborted: empty migration mount");
+      cta::log::Param mountIdParam("mountId", mountId);
+      cta::log::Param mountTypeParam("mountType",mountType);
+      cta::log::LogContext::ScopedParam sp1(lc, errorMessageParam);
       try {
         archiveMount->complete();
-        cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("MountTransactionId", archiveMount->getMountTransactionId()));
-        lc.log(cta::log::ERR, "Notified client of end session with error");
+        mwd.updateStats(TapeSessionStats());
+        mwd.reportStats();
+        std::list<cta::log::Param> paramList { errorMessageParam, mountIdParam, mountTypeParam };
+        m_intialProcess.addLogParams(m_driveConfig.unitName,paramList);
+        cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("MountTransactionId", mountId));
+        lc.log(cta::log::WARNING, "Notified client of end session with error");
       } catch(cta::exception::Exception & ex) {
         cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("notificationError", ex.getMessageValue()));
         lc.log(cta::log::ERR, "Failed to notified client of end session with error");

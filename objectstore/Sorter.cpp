@@ -51,7 +51,9 @@ void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& qu
       try{
         std::rethrow_exception(failedAR.failure);
       } catch (const cta::objectstore::Backend::NoSuchObject &ex) {
-        lc.log(log::WARNING,"In Sorter::executeArchiveAlgorithm(), queueing impossible, jobs do not exist in the objectstore.");
+        log::ScopedParamContainer params(lc);
+        params.add("fileId",failedAR.element->archiveFile.archiveFileID);
+        lc.log(log::WARNING,"In Sorter::executeArchiveAlgorithm(), queueing impossible, job do not exist in the objectstore.");
       } catch(const cta::exception::Exception &e){
         uint32_t copyNb = failedAR.element->copyNb;
         std::get<1>(succeededJobs[copyNb]->jobToQueue).set_exception(std::current_exception());
@@ -168,10 +170,13 @@ void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueA
     algo.referenceAndSwitchOwnershipIfNecessary(vid,previousOwner,queueAddress,jobsToAdd,lc);
   } catch(typename Algo::OwnershipSwitchFailure &failure){
     for(auto& failedRR: failure.failedElements){
-      try{
+      try {
         std::rethrow_exception(failedRR.failure);
       } catch (const cta::objectstore::Backend::NoSuchObject &ex) {
-        lc.log(log::WARNING,"In Sorter::executeRetrieveAlgorithm(), queueing impossible, jobs do not exist in the objectstore.");
+        log::ScopedParamContainer params(lc);
+        params.add("copyNb",failedRR.element->copyNb)
+              .add("fSeq",failedRR.element->fSeq);
+        lc.log(log::WARNING,"In Sorter::executeRetrieveAlgorithm(), queueing impossible, job do not exist in the objectstore.");
       } catch (const cta::exception::Exception&){
         uint32_t copyNb = failedRR.element->copyNb;
         std::get<1>(succeededJobs[copyNb]->jobToQueue).set_exception(std::current_exception());

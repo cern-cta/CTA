@@ -35,7 +35,7 @@ DeleteArchiveRequest::DeleteArchiveRequest():
 //------------------------------------------------------------------------------
 bool DeleteArchiveRequest::operator==(const DeleteArchiveRequest &rhs) const {
   return requester==rhs.requester
-      && archiveFileID==rhs.archiveFileID;
+      && archiveFileID==rhs.archiveFileID && address==rhs.address;
 }
 
 //------------------------------------------------------------------------------
@@ -50,7 +50,8 @@ bool DeleteArchiveRequest::operator!=(const DeleteArchiveRequest &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj) {
   os << "(requester=" << obj.requester
-     << " archiveFileID=" << obj.archiveFileID << ")";
+     << " archiveFileID=" << obj.archiveFileID 
+     << " address=" << (obj.address ? obj.address.value() : "null") <<")";
   return os;
 }
 

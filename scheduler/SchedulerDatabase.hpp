@@ -34,6 +34,7 @@
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "disk/DiskSystem.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/exception/Exception.hpp"
@@ -121,8 +122,7 @@ public:
   virtual std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria,
     log::LogContext &logContext) = 0;
-  
-  virtual void queueArchiveForRepack(std::unique_ptr<cta::objectstore::ArchiveRequest> request,log::LogContext &logContext) = 0;
+ 
 
   /**
    * Returns all of the queued archive jobs.  The returned jobs are
@@ -328,7 +328,12 @@ public:
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &remoteFile) = 0;
   
-  virtual void deleteArchiveRequest(const common::dataStructures::SecurityIdentity & cliIdentity) = 0;
+  /**
+   * Idempotently deletes the specified ArchiveRequest from the objectstore
+   * @param request, the ArchiveRequest to delete
+   * @param lc the LogContext
+   */
+  virtual void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request,  log::LogContext & lc) = 0;
   
   /**
    * Returns all of the queued archive jobs.  The returned jobs are

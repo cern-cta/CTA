@@ -611,6 +611,12 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
+   
+   auto archiveRequestAddrItor = notification.file().xattr().find("sys.cta.archive.objectstore.id");
+   if(archiveRequestAddrItor != notification.file().xattr().end()){
+     //We have the ArchiveRequest's objectstore address.
+     request.address = archiveRequestAddrItor->second;
+   }
 
    // Delete the file from the catalogue or from the objectstore if archive request is created
    cta::utils::Timer t;
@@ -618,7 +624,9 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
+   params.add("fileId", request.archiveFileID)
+         .add("address", (request.address ? request.address.value() : "null"))
+         .add("schedulerTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processDELETE(): archive file deleted.");
 
    // Set response type

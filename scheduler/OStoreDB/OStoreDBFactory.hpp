@@ -110,16 +110,8 @@ public:
     return m_OStoreDB.queueArchive(instanceName, request, criteria, logContext);
   }
 
-  void queueArchiveForRepack(std::unique_ptr<cta::objectstore::ArchiveRequest> request, log::LogContext& lc) override {
-    return m_OStoreDB.queueArchiveForRepack(std::move(request),lc);
-  }
-  
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
-  }
-  
-  void deleteArchiveRequest(const common::dataStructures::SecurityIdentity& cliIdentity) override{
-  
   }
   
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& tapePoolName) const override {
@@ -226,6 +218,10 @@ public:
     const common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName,
     log::LogContext &logContext) override {
     return m_OStoreDB.queueRetrieve(rqst, criteria, diskSystemName, logContext);
+  }
+  
+  void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc) override {
+    m_OStoreDB.cancelArchive(request,lc);
   }
   
   void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,

@@ -32,6 +32,7 @@
 #include "common/Timer.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "DataTransferSession.hpp"
 
 #include <map>
 #include <unistd.h>
@@ -45,6 +46,7 @@ namespace daemon {
  * Virtual class for watching tape read or write operation (mostly complete)
  */
 class TaskWatchDog : private cta::threading::Thread{
+  friend class DataTransferSession;
 protected:
   /**
    * The mutex protecting updates and the worker thread from each other

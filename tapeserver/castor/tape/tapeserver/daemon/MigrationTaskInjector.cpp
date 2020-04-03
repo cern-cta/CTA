@@ -128,7 +128,7 @@ namespace daemon {
     scoped.add("byteSizeThreshold",m_maxBytes)
           .add("maxFiles", m_maxFiles);
     if(jobs.empty()) {
-      m_lc.log(cta::log::ERR, "No files to migrate: empty mount");
+      m_lc.log(cta::log::WARNING, "No files to migrate: empty mount");
       return false;
     } else {
       m_firstFseqToWrite = jobs.front()->tapeFile.fSeq;

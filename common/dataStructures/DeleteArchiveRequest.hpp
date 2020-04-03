@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <string>
 
+#include "common/optional.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
 
 namespace cta {
@@ -43,6 +44,7 @@ struct DeleteArchiveRequest {
 
   RequesterIdentity requester;
   uint64_t archiveFileID;
+  cta::optional<std::string> address;
 
 }; // struct DeleteArchiveRequest
 
