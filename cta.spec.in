@@ -458,6 +458,12 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Wed Apr 08 2020 julien.leduc (at) cern.ch - 2.0-2
+- eos 4.7.8-1
+- xrootd 4.11.3-1
+- ceph nautilus 14.2.8-0
+- fix for xrdfs query prepare on_tape logic
+- more tests on the tape drive (device path must exist, no name duplication in objectstore)
 * Sat Mar 14 2020 julien.leduc (at) cern.ch - 2.0-1
 - Schema version 2.0: DISK_FILE_PATH is now resolved on eos instance using grpc and VIRTUAL_ORGANIZATION has its own table 
 - eos 4.6.7-1

@@ -1,3 +1,17 @@
+# v2.0-2
+  
+## Summary
+
+### Features 
+
+- Upstream eos 4.7.8-1
+- Upstream xrootd 4.11.3-1
+- Upstream ceph nautilus 14.2.8-0
+- Fix for xrdfs query prepare `on_tape` logic
+- More tests on the tape drive
+  - Chech that device path exists
+  - No drive name duplication allowed anymore in objectstore
+
 # v2.0-1
 
 ## Summary
