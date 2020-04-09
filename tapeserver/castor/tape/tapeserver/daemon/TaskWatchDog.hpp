@@ -179,9 +179,9 @@ protected:
         deliveryTime > totalTime?deliveryTime-totalTime: 0.0;
       bool wasTapeMounted = true;
       if(m_stats.mountTime == 0.0){
-	//Tape was not mounted, we add a message to tell that no physical mount has been
-	//triggered
-	wasTapeMounted = false;
+        //Tape was not mounted, we add a message to tell that no physical mount has been
+        //triggered
+        wasTapeMounted = false;
       }
       paramList.push_back(Param("wasTapeMounted",wasTapeMounted));
       paramList.push_back(Param("mountTime", m_stats.mountTime));

@@ -268,8 +268,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     if (m_castorConf.useRAO) {
       rti.initRAO();
     }
-
-    if (rti.synchronousFetch()) {  //adapt the recall task injector (starting from synchronousFetch)
+    bool noFilesToRecall = false;
+    if (rti.synchronousFetch(noFilesToRecall)) {  //adapt the recall task injector (starting from synchronousFetch)
       // We got something to recall. Time to start the machinery
       trst.setWaitForInstructionsTime(timer.secs());
       rwd.startThread();
@@ -294,7 +294,15 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     } else {
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
-      lc.log(cta::log::WARNING, "Aborting recall mount startup: empty mount");
+      int priority = cta::log::ERR;
+      std::string status = "success";
+      if(noFilesToRecall){
+        //If this is an empty mount because no files have been popped from the queue, it is just a warning
+        priority = cta::log::WARNING;
+        status = "failure";
+      }
+      
+      lc.log(priority, "Aborting recall mount startup: empty mount");
       
       std::string mountId = retrieveMount->getMountTransactionId();
       std::string mountType = cta::common::dataStructures::toString(retrieveMount->getMountType());
@@ -302,17 +310,18 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       cta::log::Param errorMessageParam("errorMessage", "Aborted: empty recall mount");
       cta::log::Param mountIdParam("mountId", mountId);
       cta::log::Param mountTypeParam("mountType", mountType);
+      cta::log::Param statusParam("status",status);
       
       cta::log::LogContext::ScopedParam sp1(lc, errorMessageParam);
       try {
         retrieveMount->abort();
         rwd.updateStats(TapeSessionStats());
         rwd.reportStats();
-        std::list<cta::log::Param> paramList { errorMessageParam, mountIdParam, mountTypeParam };
+        std::list<cta::log::Param> paramList { errorMessageParam, mountIdParam, mountTypeParam, statusParam };
         m_intialProcess.addLogParams(m_driveConfig.unitName,paramList);
         cta::log::LogContext::ScopedParam sp08(lc, cta::log::Param("MountTransactionId", mountId));
         cta::log::LogContext::ScopedParam sp11(lc, cta::log::Param("errorMessage", "Aborted: empty recall mount"));
-        lc.log(cta::log::WARNING, "Notified client of end session with error");
+        lc.log(priority, "Notified client of end session with error");
       } catch(cta::exception::Exception & ex) {
         cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("notificationError", ex.getMessageValue()));
         lc.log(cta::log::ERR, "Failed to notified client of end session with error");
@@ -373,7 +382,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     mrp.setWatchdog(mwd);
     cta::utils::Timer timer;
 
-    if (mti.synchronousInjection()) {
+    bool noFilesToMigrate = false;
+    if (mti.synchronousInjection(noFilesToMigrate)) {
       const uint64_t firstFseqFromClient = mti.firstFseqToWrite();
       
       //the last fseq written on the tape is the first file's fseq minus one
@@ -421,22 +431,29 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     } else {
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
-      lc.log(cta::log::WARNING, "Aborting migration mount startup: empty mount");
+      int priority = cta::log::ERR;
+      std::string status = "failure";
+      if(noFilesToMigrate){
+        priority = cta::log::WARNING;
+        status = "success";
+      }
+      lc.log(priority, "Aborting migration mount startup: empty mount");
       
       std::string mountId = archiveMount->getMountTransactionId();
       std::string mountType = cta::common::dataStructures::toString(archiveMount->getMountType());
       cta::log::Param errorMessageParam("errorMessage", "Aborted: empty migration mount");
       cta::log::Param mountIdParam("mountId", mountId);
       cta::log::Param mountTypeParam("mountType",mountType);
+      cta::log::Param statusParam("status", status);
       cta::log::LogContext::ScopedParam sp1(lc, errorMessageParam);
       try {
         archiveMount->complete();
         mwd.updateStats(TapeSessionStats());
         mwd.reportStats();
-        std::list<cta::log::Param> paramList { errorMessageParam, mountIdParam, mountTypeParam };
+        std::list<cta::log::Param> paramList { errorMessageParam, mountIdParam, mountTypeParam, statusParam };
         m_intialProcess.addLogParams(m_driveConfig.unitName,paramList);
         cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("MountTransactionId", mountId));
-        lc.log(cta::log::WARNING, "Notified client of end session with error");
+        lc.log(priority, "Notified client of end session with error");
       } catch(cta::exception::Exception & ex) {
         cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("notificationError", ex.getMessageValue()));
         lc.log(cta::log::ERR, "Failed to notified client of end session with error");

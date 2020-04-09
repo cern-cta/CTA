@@ -109,8 +109,9 @@ namespace daemon {
 //------------------------------------------------------------------------------
 //synchronousInjection
 //------------------------------------------------------------------------------ 
-  bool MigrationTaskInjector::synchronousInjection() {
+  bool MigrationTaskInjector::synchronousInjection(bool & noFilesToMigrate) {
     std::list<std::unique_ptr<cta::ArchiveJob> > jobs;
+    noFilesToMigrate = false;
     try {
       //First popping of files, we multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
       //(it is applied to ArchiveForUser and ArchiveForRepack batches)
@@ -128,6 +129,7 @@ namespace daemon {
     scoped.add("byteSizeThreshold",m_maxBytes)
           .add("maxFiles", m_maxFiles);
     if(jobs.empty()) {
+      noFilesToMigrate = true;
       m_lc.log(cta::log::WARNING, "No files to migrate: empty mount");
       return false;
     } else {

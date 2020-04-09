@@ -169,7 +169,9 @@ namespace unitTests
     FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, lc);
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, lc);
 
-    ASSERT_EQ(true, rti.synchronousFetch());
+    bool noFilesToRecall;
+    ASSERT_EQ(true, rti.synchronousFetch(noFilesToRecall));
+    ASSERT_FALSE(noFilesToRecall);
     ASSERT_EQ(maxNbJobsInjectedAtOnce, diskWrite.m_tasks.size());
     ASSERT_EQ(maxNbJobsInjectedAtOnce, tapeRead.m_tasks.size());
 
@@ -231,9 +233,11 @@ namespace unitTests
 
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
 
-    ASSERT_FALSE(rti.synchronousFetch());
+    bool noFilesToRecall;
+    ASSERT_FALSE(rti.synchronousFetch(noFilesToRecall));
     ASSERT_EQ(0U, diskWrite.m_tasks.size());
     ASSERT_EQ(0U, tapeRead.m_tasks.size());
     ASSERT_EQ(1, trm.getJobs);
+    ASSERT_TRUE(noFilesToRecall);
   }
 }

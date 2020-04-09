@@ -196,8 +196,8 @@ repackCancellation() {
   echo "***********************************"
 
   echo "Putting all drives down"
-  echo 'kubectl -n ${NAMESPACE} exec ctacli -- cta-admin drive down VD.*'
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin drive down VD.*
+  echo 'kubectl -n ${NAMESPACE} exec ctacli -- cta-admin drive down VD.* --reason "Putting drive down for repack test"'
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin drive down VD.* --reason "Putting drive down for repack test"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
   if [ "$VID_TO_REPACK" != "null" ] 

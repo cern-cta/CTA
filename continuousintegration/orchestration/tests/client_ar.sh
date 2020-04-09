@@ -408,7 +408,7 @@ echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' 
 echo -n "Will put down those drives : "
 echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
 for d in `echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`; do
-  admin_cta dr down $d
+  admin_cta drive down $d --reason "putting drive down for test"
 done
 
 # Prepare-stage the files

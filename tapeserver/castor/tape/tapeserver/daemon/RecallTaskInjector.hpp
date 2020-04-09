@@ -98,11 +98,10 @@ public:
      * Contact the client to make sure there are really something to do
      * Something = recall at most  maxFiles or at least maxBytes
      * 
-     * @param maxFiles files count requested.
-     * @param byteSizeThreshold total bytes count  at least requested
+     * @param noFilesToRecall will be true if noFilesWere popped from the queue.
      * @return true if there are jobs to be done, false otherwise 
      */
-  bool synchronousFetch();
+  bool synchronousFetch(bool & noFilesToRecall);
 
   /**
    * Wait for the inner thread to finish

@@ -233,8 +233,9 @@ void RecallTaskInjector::injectBulkRecalls() {
 //------------------------------------------------------------------------------
 //synchronousInjection
 //------------------------------------------------------------------------------
-bool RecallTaskInjector::synchronousFetch()
+bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
 {
+  noFilesToRecall = false;
   uint64_t reqFiles = (m_useRAO && m_hasUDS) ? m_raoLimits.maxSupported - m_fetched : m_maxFiles;
   /* If RAO is enabled, we must ask for files up to 1PB.
    * We are limiting to 1PB because the size will be passed as
@@ -260,6 +261,7 @@ bool RecallTaskInjector::synchronousFetch()
         .add("requestedFiles", reqFiles);
   if(m_jobs.empty()) {
     m_lc.log(cta::log::WARNING, "No files to recall: empty mount");
+    noFilesToRecall = true;
     return false;
   }
   else {
@@ -312,7 +314,8 @@ void RecallTaskInjector::WorkerThread::run()
       m_parent.m_lc.log(cta::log::INFO,"Query getLimitUDS for RAO completed");
       if (m_parent.m_fetched < m_parent.m_raoLimits.maxSupported) {
         /* Fetching until we reach maxSupported for the tape drive RAO */
-        m_parent.synchronousFetch();
+        bool noFilesToRecall;
+        m_parent.synchronousFetch(noFilesToRecall);
       }
       m_parent.injectBulkRecalls();
       /**

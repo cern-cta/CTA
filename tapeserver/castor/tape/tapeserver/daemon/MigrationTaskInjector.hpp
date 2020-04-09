@@ -86,9 +86,10 @@ public:
    * Contact the client to make sure there are really something to do
    * Something = migration at most  maxFiles or at least maxBytes
    * 
+   * @param noFilesToMigrate[out] will be true if it triggered an empty mount because of no files to migrate
    * @return true if there are jobs to be done, false otherwise 
    */
-  bool synchronousInjection();
+  bool synchronousInjection(bool & noFilesToMigrate);
   
   /**
    * Send an end token in the request queue. There should be no subsequent
