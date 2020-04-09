@@ -160,6 +160,7 @@ private:
   void processArchiveRoute_Rm       (cta::xrd::Response &response);
   void processDrive_Up              (cta::xrd::Response &response);
   void processDrive_Down            (cta::xrd::Response &response);
+  void processDrive_Ch              (cta::xrd::Response &response);
   void processDrive_Rm              (cta::xrd::Response &response);
   void processGroupMountRule_Add    (cta::xrd::Response &response);
   void processGroupMountRule_Ch     (cta::xrd::Response &response);
@@ -240,11 +241,11 @@ private:
    * Changes state for the drives by a given regex.
    *
    * @param[in]     regex          The regex to match drive name(s) to change
-   * @param[in]     drive_state    The desired state for the drives (Up or Down)
-   *
+   * @param[in]     desiredDriveState The object holding desired drive state informations (up, forceDown, reason, comment)
+   * 
    * @returns       The result of the operation, to return to the client
    */
-  std::string setDriveState(const std::string &regex, DriveState drive_state);
+  std::string setDriveState(const std::string &regex, const cta::common::dataStructures::DesiredDriveState & desiredDriveState);
 
   /*!
    * Import Google Protobuf option fields into maps

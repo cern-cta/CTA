@@ -321,7 +321,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--vo",                    OptionString::VO },
    { "--disksystem",            OptionString::DISK_SYSTEM },
    { "--fileregexp",            OptionString::FILE_REGEXP },
-   { "--freespacequeryurl",     OptionString::FREE_SPACE_QUERY_URL }
+   { "--freespacequeryurl",     OptionString::FREE_SPACE_QUERY_URL },
+   { "--reason",                OptionString::REASON }
 };
 
 
@@ -343,7 +344,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_ADMIN,                { "admin",                "ad",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" } }},
    { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls", "rm" },
+   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls", "ch", "rm" },
                         "\n  This is a synchronous command that sets and reads back the state of one or\n"
                           "  more drives. The <drive_name> option accepts a regular expression. If the\n"
                           "  --force option is not set, the drives will complete any running mount and\n"
@@ -479,6 +480,7 @@ const Option opt_free_space_query_url { Option::OPT_STR,  "--freespacequeryurl",
 const Option opt_refresh_interval     { Option::OPT_UINT,  "--refreshinterval",      "-i", " <refresh_intreval>" };
 const Option opt_targeted_free_space  { Option::OPT_UINT,  "--targetedfreespace",    "-f", " <targeted_free_space>" };
 const Option opt_sleep_time           { Option::OPT_UINT,  "--sleeptime",            "-s", " <sleep time in s>" };
+const Option opt_reason               { Option::OPT_STR,   "--reason",               "-r", " <reason_status_change>" };
 
 /*!
  * Map valid options to commands
@@ -502,10 +504,11 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_RM    }, { opt_storageclass, opt_copynb }},
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_UP    }, { opt_drivename_cmd }},
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_DOWN  }, { opt_drivename_cmd, opt_force_flag.optional() }},
+   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_UP    }, { opt_drivename_cmd, opt_reason.optional() }},
+   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_DOWN  }, { opt_drivename_cmd, opt_reason, opt_force_flag.optional() }},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_LS    }, { opt_drivename.optional() }},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_RM    }, { opt_drivename_cmd, opt_force_flag.optional() }},
+   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_CH    }, { opt_drivename_cmd, opt_comment }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_LS    },
       { opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(),

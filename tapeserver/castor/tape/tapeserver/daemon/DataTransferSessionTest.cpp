@@ -479,7 +479,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -683,7 +686,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -888,7 +894,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -1065,7 +1074,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 8) Create the data transfer session
   DataTransferConfig castorConf;
@@ -1212,7 +1224,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 8) Create the data transfer session
   DataTransferConfig castorConf;
@@ -1342,7 +1357,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -1490,7 +1508,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -1647,7 +1668,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -1807,7 +1831,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
   
   // Create the data transfer session
   DataTransferConfig castorConf;

@@ -2777,8 +2777,14 @@ void OStoreDB::setDesiredDriveState(const std::string& drive, const common::data
   objectstore::DriveState ds(m_objectStore);
   ScopedExclusiveLock dsl;
   Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_agentReference, drive, lc);
+  common::dataStructures::DesiredDriveState newDesiredState = desiredState;
   auto driveState = ds.getState();
-  driveState.desiredDriveState = desiredState;
+  if(desiredState.comment){
+    //In case we modify the comment, we want to keep the same status and forceDown of the drive
+    newDesiredState.up = driveState.desiredDriveState.up;
+    newDesiredState.forceDown = driveState.desiredDriveState.forceDown;
+  }
+  driveState.desiredDriveState = newDesiredState;
   ds.setState(driveState);
   ds.commit();
 }

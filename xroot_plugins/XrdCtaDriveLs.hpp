@@ -124,6 +124,8 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_current_activity(dr.currentActivityAndWeight ? dr.currentActivityAndWeight.value().activity : "");
     dr_item->set_dev_file_name(dr.devFileName);
     dr_item->set_raw_library_slot(dr.rawLibrarySlot);
+    dr_item->set_comment(dr.desiredDriveState.comment ? dr.desiredDriveState.comment.value() : "");
+    dr_item->set_reason(dr.desiredDriveState.reason ? dr.desiredDriveState.reason.value() : "");
     
     auto driveConfig = dr_item->mutable_drive_config();
     for(auto & driveConfigItem: dr.driveConfigItems){

@@ -961,7 +961,10 @@ int DriveHandler::runChild() {
       driveInfo.host=hostname;
       scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
-      scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false, lc);
+      cta::common::dataStructures::DesiredDriveState driveState;
+      driveState.up = false;
+      driveState.forceDown = false;
+      scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName,driveState, lc);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer param(lc);
@@ -987,7 +990,10 @@ int DriveHandler::runChild() {
         driveInfo.host=hostname;
         scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
-        scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false, lc);
+        cta::common::dataStructures::DesiredDriveState driveState;
+        driveState.up = false;
+        driveState.forceDown = false;
+        scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, driveState, lc);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       } catch (cta::exception::Exception &ex) {
         log::ScopedParamContainer param(lc);
@@ -1097,7 +1103,10 @@ int DriveHandler::runChild() {
           
         scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
-        scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/, lc);
+        cta::common::dataStructures::DesiredDriveState driveState;
+        driveState.up = false;
+        driveState.forceDown = false;
+        scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, driveState, lc);
         scheduler.reportDriveConfig(m_configLine,m_tapedConfig,lc);
       } catch (cta::exception::Exception & ex) {
         params.add("Message", ex.getMessageValue())

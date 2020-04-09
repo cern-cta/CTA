@@ -225,11 +225,10 @@ public:
    * on hardware failures.
    * @param cliIdentity The identity of the user requesting the drive to put up of down.
    * @param driveName The drive name
-   * @param up indicates whether the drive should be put up or down.
-   * @param force indicates whether we want to force the drive to be up.
-   */ //TODO: replace the 2 bools with a structure.
-  void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &driveName, const bool up, const bool force, log::LogContext & lc);
+   * @param desiredState, the structure that contains the desired state informations
+   */
+  void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string & driveName,
+    const common::dataStructures::DesiredDriveState & desiredState, log::LogContext & lc);
   
   /**
    * Remove drive from the drive register.

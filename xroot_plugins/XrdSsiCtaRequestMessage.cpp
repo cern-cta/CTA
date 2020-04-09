@@ -113,6 +113,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN):
                processDrive_Down(response);
                break;
+           case cmd_pair(AdminCmd::CMD_DRIVE,AdminCmd::SUBCMD_CH):
+             processDrive_Ch(response);
+             break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS):
                processDrive_Ls(response, stream);
                break;
@@ -803,8 +806,18 @@ void RequestMessage::processArchiveRoute_Ls(cta::xrd::Response &response, XrdSsi
 void RequestMessage::processDrive_Up(cta::xrd::Response &response)
 {
    using namespace cta::admin;
-
-   std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', Up);
+   
+   cta::optional<std::string> reason = getOptional(OptionString::REASON);
+   cta::common::dataStructures::DesiredDriveState desiredDS;
+   desiredDS.up = true;
+   desiredDS.forceDown = false;
+   desiredDS.reason = reason;
+   if(!desiredDS.reason){
+     //If reason not provided while setting the drive up, we delete it, so we set it to an empty string
+     desiredDS.reason = "";
+   }
+   
+   std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', desiredDS);
 
    response.set_message_txt(cmdlineOutput);
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -816,13 +829,37 @@ void RequestMessage::processDrive_Down(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', Down);
+   std::string reason = getRequired(OptionString::REASON);
+   if(utils::trimString(reason).empty()) {
+     throw cta::exception::UserError("You must provide a reason in order to set the drive down");
+   }
+   cta::common::dataStructures::DesiredDriveState desiredDS;
+   desiredDS.up = false;
+   desiredDS.forceDown = has_flag(OptionBoolean::FORCE);
+   desiredDS.reason = reason;
+   
+   std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', desiredDS);
 
    response.set_message_txt(cmdlineOutput);
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
-
+void RequestMessage::processDrive_Ch(cta::xrd::Response & response) {
+  using namespace cta::admin;
+  
+  std::string comment = getRequired(OptionString::COMMENT);
+  if(utils::trimString(comment).empty()) {
+    throw cta::exception::UserError("You must provide a comment to change it.");
+  }
+  
+  cta::common::dataStructures::DesiredDriveState desiredDS;
+  desiredDS.comment = comment;
+  
+  std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', desiredDS);
+  
+  response.set_message_txt(cmdlineOutput);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);  
+}
 
 void RequestMessage::processDrive_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
@@ -1734,7 +1771,7 @@ void RequestMessage::processVirtualOrganization_Ls(cta::xrd::Response &response,
 }
 
 
-std::string RequestMessage::setDriveState(const std::string &regex, DriveState drive_state)
+std::string RequestMessage::setDriveState(const std::string &regex, const cta::common::dataStructures::DesiredDriveState & desiredDriveState)
 {
    using namespace cta::admin;
 
@@ -1750,15 +1787,19 @@ std::string RequestMessage::setDriveState(const std::string &regex, DriveState d
       const auto regexResult = driveNameRegex.exec(driveState.driveName);
       if(!regexResult.empty())
       {
-         is_found = true;
-
-         m_scheduler.setDesiredDriveState(m_cliIdentity, driveState.driveName, drive_state == Up,
-                                          has_flag(OptionBoolean::FORCE), m_lc);
-
-         cmdlineOutput << "Drive " << driveState.driveName << " set "
-                       << (drive_state == Up ? "Up" : "Down")
-                       << (has_flag(OptionBoolean::FORCE) ? " (forced)" : "")
-                       << "." << std::endl;
+        is_found = true;
+        m_scheduler.setDesiredDriveState(m_cliIdentity, driveState.driveName, desiredDriveState, m_lc);
+        
+        cmdlineOutput << "Drive " << driveState.driveName << ": set ";
+        if(!desiredDriveState.comment){
+          cmdlineOutput << (desiredDriveState.up ? "Up" : "Down")
+                      << (desiredDriveState.forceDown ? " (forced)" : "")
+                      << "." << std::endl;
+        } else {
+          //We modified the comment so we will output that the comment was changed
+          cmdlineOutput << "a new comment."
+                        << std::endl;
+        }
       }
    }
    if (!is_found) {

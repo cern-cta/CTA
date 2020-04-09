@@ -18,6 +18,32 @@
 
 #include "DesiredDriveState.hpp"
 
+namespace cta {
+namespace common {
+namespace dataStructures {
+
+DesiredDriveState::DesiredDriveState(const DesiredDriveState& ds) {
+  if(this != &ds){
+    up = ds.up;
+    forceDown = ds.forceDown;
+    reason = ds.reason;
+    comment = ds.comment;
+  }
+}
+
+DesiredDriveState& DesiredDriveState::operator=(const DesiredDriveState& ds) {
+  if(this != &ds){
+    up = ds.up;
+    forceDown = ds.forceDown;
+    reason = ds.reason;
+    comment = ds.comment;
+  }
+  return *this;
+}
+
+}}}
+
+
 std::ostream &cta::common::dataStructures::operator<<(std::ostream& os, const DesiredDriveState& obj) {
   std::string upStr(obj.up?"true":"false"),
           forceStr(obj.forceDown?"true":"false");

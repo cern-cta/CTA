@@ -109,6 +109,12 @@ cta::common::dataStructures::DriveState DriveState::getState() {
   ret.currentTapePool             = m_payload.currenttapepool();
   ret.currentPriority             = m_payload.current_priority();
   ret.ctaVersion                  = m_payload.cta_version();
+  if(m_payload.has_reason()){
+    ret.desiredDriveState.reason = m_payload.reason();
+  }
+  if(m_payload.has_comment()){
+    ret.desiredDriveState.comment = m_payload.comment();
+  }
   for(auto & driveConfigItem: m_payload.drive_config()){
     ret.driveConfigItems.push_back({driveConfigItem.category(),driveConfigItem.key(),driveConfigItem.value(),driveConfigItem.source()});
   }
@@ -158,11 +164,25 @@ void DriveState::setState(cta::common::dataStructures::DriveState& state) {
   m_payload.set_shutdowntime(state.shutdownTime);
   m_payload.set_mounttype((uint32_t)state.mountType);
   m_payload.set_drivestatus((uint32_t)state.driveStatus);
-  m_payload.set_desiredup(state.desiredDriveState.up);
-  m_payload.set_desiredforcedown(state.desiredDriveState.forceDown);
+  common::dataStructures::DesiredDriveState desiredDriveState = state.desiredDriveState;
+  m_payload.set_desiredup(desiredDriveState.up);
+  m_payload.set_desiredforcedown(desiredDriveState.forceDown);
   m_payload.set_currentvid(state.currentVid);
   m_payload.set_currenttapepool(state.currentTapePool);
   m_payload.set_current_priority(state.currentPriority);
+  cta::optional<std::string> reason = desiredDriveState.reason;
+  cta::optional<std::string> comment = desiredDriveState.comment;
+  if(reason) {
+    if(reason.value().empty()){
+      //The only way to erase a reason is to set the optional value to an empty string
+      m_payload.clear_reason();
+    } else {
+      m_payload.set_reason(reason.value());
+    }
+  }
+  if(comment) {
+    m_payload.set_comment(comment.value());
+  }
   if (state.currentActivityAndWeight) {
     m_payload.set_current_activity(state.currentActivityAndWeight.value().activity);
     m_payload.set_current_activity_weight(state.currentActivityAndWeight.value().weight);

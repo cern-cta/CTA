@@ -19,6 +19,7 @@
 #pragma once
 
 #include <ostream>
+#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
@@ -30,8 +31,12 @@ namespace dataStructures {
  * at startup).
  */
 struct DesiredDriveState {
+  DesiredDriveState(const DesiredDriveState & ds);
+  DesiredDriveState & operator=(const DesiredDriveState & ds);
   bool up;        ///< Should the drive be up?
   bool forceDown; ///< Should going down preempt an existig mount?
+  cta::optional<std::string> reason; ///< The reason why operators put the drive down or up
+  cta::optional<std::string> comment; ///< General informations about the drive given by the operators
   bool operator==(const DesiredDriveState &rhs) const {
     return up == rhs.up && forceDown == rhs.forceDown;
   }

@@ -264,6 +264,8 @@ message DriveState {
   optional string dev_file_name = 5036;
   optional string raw_library_slot = 5037;
   repeated DriveConfig drive_config = 5038;
+  optional string reason = 5039;
+  optional string comment = 5040;
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 
