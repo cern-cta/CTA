@@ -26,7 +26,7 @@ user_kinit() {
 }
 
 admin_cta() {
-  KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin $@ 2>/dev/null
+  KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin "$@" 2>/dev/null
 }
 
 admin_klist() {

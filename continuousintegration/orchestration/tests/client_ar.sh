@@ -406,9 +406,33 @@ INITIAL_DRIVES_STATE=`admin_cta --json dr ls`
 echo INITIAL_DRIVES_STATE:
 echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' | column -t
 echo -n "Will put down those drives : "
-echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
-for d in `echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`; do
-  admin_cta drive down $d --reason "putting drive down for test"
+drivesToSetDown=`echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`
+echo $drivesToSetDown
+for d in `echo $drivesToSetDown`; do
+  admin_cta drive down $d --reason "PUTTING DRIVE DOWN FOR TESTS"
+done
+
+echo "$(date +%s): Waiting for the drives to be down"
+SECONDS_PASSED=0
+WAIT_FOR_DRIVES_DOWN_TIMEOUT=$((10))
+while [[ $SECONDS_PASSED < WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; do
+  sleep 1
+  oneStatusUpRemaining=0
+  for d in `echo $drivesToSetDown`; do
+    status=`admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus"`
+    if [[ $status == "UP" ]]; then
+      oneStatusUpRemaining=1
+    fi;
+  done
+  if [[ $oneStatusUpRemaining -eq 0 ]]; then
+    echo "Drives : $drivesToSetDown are down"
+    break;
+  fi
+  echo -n "."
+  SECONDS_PASSED=$SECONDS_PASSED+1
+  if [[ $SECONDS_PASSED -gt $WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; then
+    die "ERROR: Timeout reach for trying to put all drives down" 
+  fi
 done
 
 # Prepare-stage the files
