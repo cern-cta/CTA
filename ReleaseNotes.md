@@ -1,8 +1,19 @@
-# v2.0-2
-  
+# v2.0-3
+
 ## Summary
 
-### Features 
+### Features
+
+- Upstream eos 4.7.9-1
+- Adding reason and comment to cta drive objects
+  - Allow to better track tape drive usage in production
+  - Allow to track reasons that conducted a drive to be set down
+
+# v2.0-2
+
+## Summary
+
+### Features
 
 - Upstream eos 4.7.8-1
 - Upstream xrootd 4.11.3-1

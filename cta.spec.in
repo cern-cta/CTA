@@ -458,6 +458,9 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Wed Apr 15 2020 julien.leduc (at) cern.ch - 2.0-3
+- eos 4.7.9-1
+- Adding reason and comment to cta drive (better track usage and issues)
 * Wed Apr 08 2020 julien.leduc (at) cern.ch - 2.0-2
 - eos 4.7.8-1
 - xrootd 4.11.3-1
