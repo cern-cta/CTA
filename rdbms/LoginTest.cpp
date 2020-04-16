@@ -552,4 +552,129 @@ TEST_F(cta_rdbms_LoginTest, parseString_MySql_invalid_empty_host) {
   ASSERT_THROW(Login::parseString(connectionString), exception::Exception);
 }
 
+TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_InMemory) {
+  using namespace cta;
+  using namespace cta::rdbms;
+  
+  std::string connectionDetails = "";
+  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::in_memory;
+  
+  Login login = Login::parseInMemory(connectionDetails);
+  
+  ASSERT_EQ(expectedConnectionString,login.connectionString);
+}
+
+TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Sqlite) {
+  using namespace cta;
+  using namespace cta::rdbms;
+  
+  std::string connectionDetails = "filename";
+  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::sqlite+":"+connectionDetails;
+  
+  Login login = Login::parseSqlite(connectionDetails);
+  
+  ASSERT_EQ(expectedConnectionString,login.connectionString);
+}
+
+TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_MySql) {
+  using namespace cta;
+  using namespace cta::rdbms;
+  
+  std::string username = "username";
+  std::string password = "password";
+  std::string host = "host";
+  std::string port = "666";
+  std::string db_name = "db_name";
+  
+  //mysql://<username>:<password>@<host>:<port>/<db_name>
+  // optional: 
+  //   - <username>:<password>@ 
+  //   - <password>
+  //   - <port>
+  
+  //Testing first case where all is provided
+  std::string connectionDetails = "//"+username+":"+password+"@"+host+":"+port+"/"+db_name;
+  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::mysql + "://"+username+":"+Login::s_hiddenPassword+"@"+host+":"+port+"/"+db_name;
+  {
+    Login login = Login::parseMySql(connectionDetails);
+    ASSERT_EQ(expectedConnectionString,login.connectionString);
+  }
+  
+  connectionDetails = "//"+username+"@"+host+":"+port+"/"+db_name;
+  //No password provided so should be the same
+  expectedConnectionString = Login::DbTypeAndConnectionDetails::mysql+":"+connectionDetails;
+  {
+    Login login = Login::parseMySql(connectionDetails);
+    ASSERT_EQ(expectedConnectionString,login.connectionString);
+  }
+  
+  connectionDetails = "//" + host + ":" + port + "/" + db_name;
+  //No password provided so should be the same
+  expectedConnectionString = Login::DbTypeAndConnectionDetails::mysql+":"+connectionDetails;
+  {
+    Login login = Login::parseMySql(connectionDetails);
+    ASSERT_EQ(expectedConnectionString,login.connectionString);
+  }
+  
+  connectionDetails = "//" + host + "/" + db_name;
+  //No password provided so should be the same
+  expectedConnectionString = Login::DbTypeAndConnectionDetails::mysql+":"+connectionDetails;
+  {
+    Login login = Login::parseMySql(connectionDetails);
+    ASSERT_EQ(expectedConnectionString,login.connectionString);
+  }
+}
+
+TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Oracle) {
+  using namespace cta;
+  using namespace cta::rdbms;
+  std::string username = "username";
+  std::string database = "database";
+  std::string connectionDetails = "username/password@database";
+  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::oracle+":"+username+"/"+Login::s_hiddenPassword+"@" + database;
+  
+  Login login = Login::parseOracle(connectionDetails);
+  ASSERT_EQ(expectedConnectionString,login.connectionString);
+}
+
+TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Postgresql) {
+  using namespace cta;
+  using namespace cta::rdbms;
+  
+  std::string username = "username";
+  std::string password = "password";
+  std::string host = "localhost";
+  std::string database = "cta";
+  std::string port = "666";
+  
+  std::string connectionString = Login::DbTypeAndConnectionDetails::postgresql+"://"+username+":"+password+"@"+host+"/"+database;
+  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql + ":postgresql://" + username + ":" + Login::s_hiddenPassword + "@" + host+ "/" + database;
+  {
+    Login login = Login::parsePostgresql(connectionString);
+
+    ASSERT_EQ(expectedConnectionString,login.connectionString);
+  }
+  
+  connectionString = Login::DbTypeAndConnectionDetails::postgresql+"://"+username+"@"+host+"/"+database;
+  expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql+":"+connectionString;
+  {
+    Login login = Login::parsePostgresql(connectionString);
+    ASSERT_EQ(expectedConnectionString,login.connectionString);
+  }
+  
+  connectionString = Login::DbTypeAndConnectionDetails::postgresql+"://"+host;
+  expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql+":"+connectionString;
+  {
+    Login login = Login::parsePostgresql(connectionString);
+    ASSERT_EQ(expectedConnectionString,login.connectionString);
+  }
+  
+  connectionString = Login::DbTypeAndConnectionDetails::postgresql + "://" + host + ":" + port;
+  expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql+":"+connectionString;
+  {
+    Login login = Login::parsePostgresql(connectionString);
+    ASSERT_EQ(expectedConnectionString,login.connectionString);
+  }
+}
+
 } // namespace unitTests

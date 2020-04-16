@@ -39,6 +39,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdCtaDiskSystemLs.hpp"
 #include "XrdCtaVirtualOrganizationLs.hpp"
+#include "XrdCtaVersion.hpp"
 
 namespace cta {
 namespace xrd {
@@ -65,17 +66,21 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
       using namespace cta::xrd;
 
       case Request::kAdmincmd: {
+        
          // Validate that the Kerberos user is an authorized CTA Admin user
          if(m_protocol != Protocol::KRB5) {
             throw cta::exception::UserError("[ERROR] Admin commands must be authenticated using the Kerberos 5 protocol.");
          }
          m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
-
+         
          cta::utils::Timer t;
 
          // Validate the Protocol Buffer and import options into maps
          importOptions(request.admincmd());
-
+         
+         m_client_versions.ctaVersion = request.client_cta_version();
+         m_client_versions.xrootdSsiProtoIntVersion = request.client_xrootd_ssi_protobuf_interface_version();
+         
          // Map the <Cmd, SubCmd> to a method
          switch(cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
             using namespace cta::admin;
@@ -263,6 +268,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
            case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION,AdminCmd::SUBCMD_LS):
                processVirtualOrganization_Ls(response, stream);
                break;
+           case cmd_pair(AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE):
+             processVersion(response, stream);
+             break;
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -1838,6 +1846,15 @@ void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
       }
       m_option_str_list.insert(std::make_pair(opt_it->key(), items));
    }
+}
+
+void RequestMessage::processVersion(cta::xrd::Response &response, XrdSsiStream * & stream){
+  using namespace cta::admin;
+  
+  stream = new VersionStream(*this,m_catalogue,m_scheduler,m_catalogue_conn_string);
+  
+  response.set_show_header(HeaderType::VERSION);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 }} // namespace cta::xrd

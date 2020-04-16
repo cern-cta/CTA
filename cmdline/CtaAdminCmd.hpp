@@ -20,6 +20,7 @@
 #pragma once
 
 #include "CtaAdminCmdParse.hpp"
+#include "version.h"
 
 namespace cta {
 namespace admin {
@@ -67,7 +68,11 @@ private:
 
    std::string       m_execname;                                      //!< Executable name of this program
    cta::xrd::Request m_request;                                       //!< Protocol Buffer for the command and parameters
-
+   
+   const std::string m_ctaVersion = CTA_VERSION;                      //!< The version of CTA
+   const std::string m_xrootdSsiProtobufInterfaceVersion =            //!< The xrootd-ssi-protobuf-interface version (=tag)
+      XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
+   
    static std::atomic<bool> is_json;                                  //!< Display results in JSON format
    static std::atomic<bool> is_first_record;                          //!< Delimiter for JSON records
 

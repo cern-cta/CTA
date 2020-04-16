@@ -1017,4 +1017,27 @@ void TextFormatter::print(const VirtualOrganizationLsItem& vols_item){
   );
 }
 
+void TextFormatter::printVersionHeader(){
+  push_back("HEADER");
+  push_back(
+    "Client CTA version",
+    "Client xrd-ssi-proto-int version",
+    "Server CTA version",
+    "Server xrd-ssi-proto-int version",
+    "Catalogue version",
+    "Catalogue connection string"
+  );
+}
+
+void TextFormatter::print(const VersionItem & version_item){
+  push_back(
+    version_item.client_version().cta_version(),
+    version_item.client_version().xrootd_ssi_protobuf_interface_version(),
+    version_item.server_version().cta_version(),
+    version_item.server_version().xrootd_ssi_protobuf_interface_version(),
+    version_item.catalogue_version(),
+    version_item.catalogue_connection_string()
+  );
+}
+
 }}

@@ -443,7 +443,7 @@ namespace utils {
    * @param value [input]
    */
   void appendParameterXRootFileURL(std::string &fileURL, const std::string &parameterName, const std::string &value);
-
+  
 } // namespace utils
 
 } // namespace cta

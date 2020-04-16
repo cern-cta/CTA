@@ -124,6 +124,8 @@ public:
     * Get the endpoints for namespace queries
     */
    cta::NamespaceMap_t getNamespaceMap() const { return m_namespaceMap; }
+   
+   const std::string getCatalogueConnectionString() const {return m_catalogue_conn_string; }
 
 private:
    /*!
@@ -160,9 +162,10 @@ private:
    std::unique_ptr<cta::catalogue::Catalogue>          m_catalogue;           //!< CTA catalogue of tapes and tape files
    std::unique_ptr<cta::Scheduler>                     m_scheduler;           //!< The scheduler
    std::unique_ptr<cta::log::Logger>                   m_log;                 //!< The logger
-   cta::optional<std::string>		               m_repackBufferURL;     //!< The repack buffer URL
+   cta::optional<std::string>                          m_repackBufferURL;     //!< The repack buffer URL
    cta::NamespaceMap_t                                 m_namespaceMap;        //!< Endpoints for namespace queries
    UniquePtrAgentHeartbeatThread                       m_agentHeartbeat;      //!< Agent heartbeat thread
+   std::string                                         m_catalogue_conn_string; //!< The catalogue connection string without the password
 
    static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";    //!< Identifier for log messages
 };

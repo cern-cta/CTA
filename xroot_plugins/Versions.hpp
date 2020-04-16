@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
 
-#define CTA_VERSION "@CTA_VERSION@-@CTA_RELEASE@"
-
-#define CTA_CATALOGUE_SCHEMA_VERSION_MAJOR @CTA_CATALOGUE_SCHEMA_VERSION_MAJOR@
-#define CTA_CATALOGUE_SCHEMA_VERSION_MINOR @CTA_CATALOGUE_SCHEMA_VERSION_MINOR@
-
-#define XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "@XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@"
+namespace cta { namespace xrd {
+  
+  /**
+   * Structure to hold CTA versions 
+   */
+  struct Versions {
+    /**
+     * CTA version major.minor
+     */
+    std::string ctaVersion;
+    
+    /**
+     * xrootd-ssi-protobuf-interface version (tag)
+     */
+    std::string xrootdSsiProtoIntVersion;
+  };
+  
+}}

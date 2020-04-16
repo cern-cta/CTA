@@ -112,7 +112,8 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    log::Logger &log = *m_log;
 
    // Initialise the Catalogue
-   const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
+   std::string catalogueConfigFile = "/etc/cta/cta-catalogue.conf";
+   const rdbms::Login catalogueLogin = rdbms::Login::parseFile(catalogueConfigFile);
    auto catalogue_numberofconnections = config.getOptionValueInt("cta.catalogue.numberofconnections");
    if(!catalogue_numberofconnections.first) {
       throw exception::UserError("cta.catalogue.numberofconnections is not set in configuration file " + cfgFn);
@@ -131,7 +132,9 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
        throw ex;
      }
    }
-
+   
+   this->m_catalogue_conn_string = catalogueLogin.connectionString;
+   
    // Initialise the Backend
    auto objectstore_backendpath = config.getOptionValueStr("cta.objectstore.backendpath");
    if(!objectstore_backendpath.first) {

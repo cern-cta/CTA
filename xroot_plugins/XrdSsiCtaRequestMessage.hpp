@@ -22,6 +22,7 @@
 
 #include "XrdSsiCtaServiceProvider.hpp"
 #include "cta_frontend.pb.h"
+#include "Versions.hpp"
 
 
 namespace cta { namespace xrd {
@@ -39,7 +40,9 @@ public:
     m_archiveFileMaxSize(service->getArchiveFileMaxSize()),
     m_repackBufferURL(service->getRepackBufferURL()),
     m_namespaceMap(service->getNamespaceMap()),
-    m_lc(service->getLogContext()) {
+    m_lc(service->getLogContext()),
+    m_catalogue_conn_string(service->getCatalogueConnectionString())
+    {
       m_cliIdentity.username = client.name;
       m_cliIdentity.host     = client.host;
 
@@ -71,6 +74,12 @@ public:
   }
   const bool &getRequired(cta::admin::OptionBoolean::Key key) const {
     return m_option_bool.at(key);
+  }
+  const Versions &getClientVersions() const {
+    return m_client_versions;
+  }
+  const std::string &getClientXrdSsiProtoIntVersion() const {
+    return m_client_xrd_ssi_proto_int_version;
   }
 
   /*!
@@ -223,6 +232,7 @@ private:
   admincmdstream_t processRepack_Ls;
   admincmdstream_t processDiskSystem_Ls;
   admincmdstream_t processVirtualOrganization_Ls;
+  admincmdstream_t processVersion;
 
   /*!
    * Log an admin command
@@ -286,6 +296,10 @@ private:
   std::map<cta::admin::OptionString::Key, std::string>  m_option_str;         //!< String options
   std::map<cta::admin::OptionStrList::Key,
     std::vector<std::string>>                           m_option_str_list;    //!< String List options
+  Versions                                              m_client_versions;    //!< Client CTA and xrootd-ssi-proto version(tag)
+  std::string m_client_cta_version;                                           //!< Client CTA Version
+  std::string m_client_xrd_ssi_proto_int_version;                             //!< Client xrootd-ssi-protobuf-interface version (tag)  
+  std::string m_catalogue_conn_string;                                        //!< Server catalogue connection string
 };
 
 }} // namespace cta::xrd

@@ -73,6 +73,9 @@ echo "Preparing CTA configuration for tests"
     fi
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
 
+echo 'kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq'
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
+
   echo "Cleaning up leftovers from potential previous runs."
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm /eos/ctaeos/cta/*
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos find -f /eos/ctaeos/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf {}

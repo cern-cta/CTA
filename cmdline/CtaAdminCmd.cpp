@@ -103,7 +103,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kTflsItem:      std::cout << Log::DumpProtobuf(&record.tfls_item());    break;
          case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
          case Data::kDslsItem:      std::cout << Log::DumpProtobuf(&record.dsls_item());    break;
-         case Data::kVolsItem:      std::cout << Log::DumpProtobuf(&record.vols_item());   break;
+         case Data::kVolsItem:      std::cout << Log::DumpProtobuf(&record.vols_item());    break;
+         case Data::kVersionItem:   std::cout << Log::DumpProtobuf(&record.version_item()); break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -133,6 +134,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kTplsItem:      formattedText.print(record.tpls_item());    break;
          case Data::kDslsItem:      formattedText.print(record.dsls_item());    break;
          case Data::kVolsItem:      formattedText.print(record.vols_item());    break;
+         case Data::kVersionItem:   formattedText.print(record.version_item()); break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -152,7 +154,10 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    m_execname(argv[0])
 {
    auto &admincmd = *(m_request.mutable_admincmd());
-
+   
+   m_request.set_client_cta_version(CTA_VERSION);
+   m_request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+   
    // Strip path from execname
 
    size_t p = m_execname.find_last_of('/');
@@ -222,7 +227,7 @@ void CtaAdminCmd::send() const
    } catch(std::runtime_error &ex) {
       throwUsage(ex.what());
    }
-
+   
    // Set configuration options
    const std::string config_file = "/etc/cta/cta-cli.conf";
    XrdSsiPb::Config config(config_file, "cta");
@@ -289,6 +294,7 @@ void CtaAdminCmd::send() const
             case HeaderType::TAPEPOOL_LS:                  formattedText.printTapePoolLsHeader(); break;
             case HeaderType::DISKSYSTEM_LS:                formattedText.printDiskSystemLsHeader(); break;
             case HeaderType::VIRTUALORGANIZATION_LS:       formattedText.printVirtualOrganizationLsHeader(); break;
+            case HeaderType::VERSION:                      formattedText.printVersionHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }

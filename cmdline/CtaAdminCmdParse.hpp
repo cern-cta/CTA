@@ -216,7 +216,9 @@ const cmdLookup_t cmdLookup = {
    { "disksystem",              AdminCmd::CMD_DISKSYSTEM },
    { "ds",                      AdminCmd::CMD_DISKSYSTEM },
    { "virtualorganization",     AdminCmd::CMD_VIRTUALORGANIZATION },
-   { "vo",                      AdminCmd::CMD_VIRTUALORGANIZATION }
+   { "vo",                      AdminCmd::CMD_VIRTUALORGANIZATION },
+   { "version",                 AdminCmd::CMD_VERSION},
+   { "v",                 AdminCmd::CMD_VERSION},
 };
 
 
@@ -396,6 +398,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 			    "\n\n"
 					 }},
    { AdminCmd::CMD_VIRTUALORGANIZATION,  { "virtualorganization",   "vo",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_VERSION,              { "version",           "v",  { } }},
 };
 
 
@@ -611,6 +614,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_vo }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },
       { }},
+   {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
 };
 
 

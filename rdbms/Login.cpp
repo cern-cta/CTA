@@ -23,6 +23,9 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <iostream>
+#include <stdexcept>
+#include <regex>
 
 namespace cta {
 namespace rdbms {
@@ -36,6 +39,14 @@ const char *Login::s_fileFormat = "one of "
   "sqlite:filename, "
   "mysql://<username>:<password>@<host>:<port>/<db_name> or "
   "postgresql:[connectinfo | URI]";
+
+std::string Login::s_hiddenPassword = "******";
+
+const std::string Login::DbTypeAndConnectionDetails::in_memory = "in_memory";
+const std::string Login::DbTypeAndConnectionDetails::oracle = "oracle";
+const std::string Login::DbTypeAndConnectionDetails::sqlite = "sqlite";
+const std::string Login::DbTypeAndConnectionDetails::mysql = "mysql";
+const std::string Login::DbTypeAndConnectionDetails::postgresql = "postgresql";
 
 //------------------------------------------------------------------------------
 // constructor
@@ -103,18 +114,19 @@ Login Login::parseString(const std::string &connectionString) {
   if (connectionString.empty()) {
     throw exception::Exception("Invalid connection string: Empty string");
   }
+  
+  typedef Login::DbTypeAndConnectionDetails DbTypeAndConnectionDetails;
+  const DbTypeAndConnectionDetails typeAndDetails = parseDbTypeAndConnectionDetails(connectionString);
 
-  const auto typeAndDetails = parseDbTypeAndConnectionDetails(connectionString);
-
-  if(typeAndDetails.dbTypeStr == "in_memory") {
+  if(typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::in_memory) {
     return parseInMemory(typeAndDetails.connectionDetails);
-  } else if(typeAndDetails.dbTypeStr == "oracle") {
+  } else if(typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::oracle) {
     return parseOracle(typeAndDetails.connectionDetails);
-  } else if(typeAndDetails.dbTypeStr == "sqlite") {
+  } else if(typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::sqlite) {
     return parseSqlite(typeAndDetails.connectionDetails);
-  } else if(typeAndDetails.dbTypeStr == "mysql") {
+  } else if(typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::mysql) {
     return parseMySql(typeAndDetails.connectionDetails);
-  } else if(typeAndDetails.dbTypeStr == "postgresql") {
+  } else if(typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::postgresql) {
     return parsePostgresql(typeAndDetails.connectionDetails);
   }
 
@@ -179,7 +191,13 @@ Login Login::parseInMemory(const std::string &connectionDetails) {
   if(!connectionDetails.empty()) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
-  return Login(DBTYPE_IN_MEMORY, "", "", "", "", 0);
+  Login login(DBTYPE_IN_MEMORY, "", "", "", "", 0);
+  login.setInMemoryConnectionString();
+  return login;
+}
+
+void Login::setInMemoryConnectionString(){
+  connectionString = Login::DbTypeAndConnectionDetails::in_memory;
 }
 
 //------------------------------------------------------------------------------
@@ -202,7 +220,13 @@ Login Login::parseOracle(const std::string &connectionDetails) {
   const std::string &user = userAndPassTokens[0];
   const std::string &pass = userAndPassTokens[1];
 
-  return Login(DBTYPE_ORACLE, user, pass, db, "", 0);
+  Login login(DBTYPE_ORACLE, user, pass, db, "", 0);
+  login.setOracleConnectionString(user,db);
+  return login;
+}
+
+void Login::setOracleConnectionString(const std::string & user, const std::string & db){
+  connectionString = Login::DbTypeAndConnectionDetails::oracle+":"+user+"/"+s_hiddenPassword+"@"+db;
 }
 
 //------------------------------------------------------------------------------
@@ -214,8 +238,14 @@ Login Login::parseSqlite(const std::string &connectionDetails) {
   if(filename.empty()) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
+  
+  Login login(DBTYPE_SQLITE, "", "", filename, "", 0);
+  login.setSqliteConnectionString(filename);
+  return login;
+}
 
-  return Login(DBTYPE_SQLITE, "", "", filename, "", 0);
+void Login::setSqliteConnectionString(const std::string & filename){
+  connectionString = Login::DbTypeAndConnectionDetails::sqlite+":"+filename;
 }
 
 //------------------------------------------------------------------------------
@@ -345,15 +375,61 @@ Login Login::parseMySql(const std::string &connectionDetails) {
 
   // second part db name
   database = db_str;  
+  
+  Login login(DBTYPE_MYSQL, username, password, database, host, port);
+  login.setMySqlConnectionString(username,password,host,port_str,database);
+  return login;
+}
 
-  return Login(DBTYPE_MYSQL, username, password, database, host, port);
+void Login::setMySqlConnectionString(const std::string & pUsername, const std::string & pPassword,const std::string & pHost, const std::string & pPort, const std::string & pDatabase) {
+  //mysql://<username>:<password>@<host>:<port>/<db_name>
+  // optional: 
+  //   - <username>:<password>@ 
+  //   - <password>
+  //   - <port>
+  connectionString = DbTypeAndConnectionDetails::mysql+"://";
+  
+  bool hasUsername = !pUsername.empty();
+  bool hasPassword = !pPassword.empty();
+  bool hasPort = !pPort.empty();
+
+  connectionString += (hasUsername ? pUsername : "") + (hasPassword ? ":" + s_hiddenPassword + "@" : (hasUsername ? "@" : "")) + pHost + (hasPort ? ":" + pPort : "") + "/" + pDatabase; 
 }
 
 //------------------------------------------------------------------------------
 // parsePostgresql
 //------------------------------------------------------------------------------
 Login Login::parsePostgresql(const std::string &connectionDetails) {
-  return Login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0);
+  Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0);
+  login.setPostgresqlConnectionString(connectionDetails);
+  return login;
+}
+
+void Login::setPostgresqlConnectionString(const std::string& connectionDetails){
+  connectionString = Login::DbTypeAndConnectionDetails::postgresql+":";
+  if(!postgresqlHasPassword(connectionDetails)){
+    //No password displayed so no need to hide it
+    connectionString += connectionDetails;
+  } else {
+    cta::utils::Regex regex2("(postgresql://.*:)(.*)(@.*)");
+    std::vector<std::string> result2 = regex2.exec(connectionDetails);
+    connectionString += result2[1] + s_hiddenPassword + result2[3];
+  }
+}
+
+bool Login::postgresqlHasPassword(const std::string& connectionDetails){
+  //https://www.postgresql.org/docs/10/libpq-connect.html
+  if(connectionDetails.find("@") == std::string::npos){
+    return false;
+  }
+  cta::utils::Regex regex("postgresql://(.*)@");
+  std::vector<std::string> result = regex.exec(connectionDetails);
+  std::string usernamePassword = result[1];
+  if(usernamePassword.find(":") == std::string::npos){
+    //No password provided, no need to hide it
+    return false;
+  }
+  return true;
 }
 
 } // namespace catalogue
