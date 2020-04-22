@@ -51,7 +51,6 @@ public:
 
 private:
   std::unique_ptr<eos::rpc::Eos::Stub> stub_;
-  bool m_SSL;
   std::string m_token;
   uint64_t m_tag;
 };
