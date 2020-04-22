@@ -46,6 +46,10 @@ struct RetrieveJob {
   std::map<std::string,std::pair<uint32_t,TapeFile>> tapeCopies;
   std::string objectId; //!< Objectstore address, provided when reporting a failed job
   std::list<std::string> failurelogs;
+  //Elements not needed for queueing
+  std::string diskInstance;
+  std::string storageClass;
+  std::string diskFileId;
 
 }; // struct RetrieveJob
 

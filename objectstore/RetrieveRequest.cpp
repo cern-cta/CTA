@@ -489,8 +489,9 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   ret.requester.name = m_payload.schedulerrequest().requester().name();
   ret.requester.group = m_payload.schedulerrequest().requester().group();
   ret.archiveFileID = m_payload.schedulerrequest().archivefileid();
-  objectstore::EntryLogSerDeser el(ret.creationLog);
+  objectstore::EntryLogSerDeser el;
   el.deserialize(m_payload.schedulerrequest().entrylog());
+  ret.creationLog = el;
   ret.dstURL = m_payload.schedulerrequest().dsturl();
   ret.errorReportURL = m_payload.schedulerrequest().retrieveerrorreporturl();
   objectstore::DiskFileInfoSerDeser dfisd;

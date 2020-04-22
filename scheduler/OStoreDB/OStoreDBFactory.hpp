@@ -283,7 +283,7 @@ public:
   void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) override {
     m_OStoreDB.checkDriveCanBeCreated(driveInfo);
   }
-
+  
 
 private:
   std::unique_ptr <cta::log::Logger> m_logger;

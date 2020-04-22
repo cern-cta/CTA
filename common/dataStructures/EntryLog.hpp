@@ -35,7 +35,11 @@ struct EntryLog {
 
   EntryLog();
   
+  EntryLog(const EntryLog & other);
+  
   EntryLog(const std::string & username, const std::string & host, const time_t time);
+  
+  EntryLog & operator=(const EntryLog & other);
 
   bool operator==(const EntryLog &rhs) const;
 
