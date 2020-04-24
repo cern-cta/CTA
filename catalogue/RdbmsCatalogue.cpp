@@ -7518,5 +7518,38 @@ optional<uint64_t> RdbmsCatalogue::getTapePoolId(rdbms::Conn &conn, const std::s
   }
 }
 
+//------------------------------------------------------------------------------
+// updateDiskFileId
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::updateDiskFileId(const uint64_t archiveFileId, const std::string &diskInstance,
+  const std::string &diskFileId) {
+  try {
+    const char *const sql =
+      "UPDATE ARCHIVE_FILE SET"                     "\n"
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME," "\n"
+        "DISK_FILE_ID = :DISK_FILE_ID"              "\n"
+      "WHERE"                                       "\n"
+        "ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstance);
+    stmt.bindString(":DISK_FILE_ID", diskFileId);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      std::ostringstream msg;
+      msg << "Cannot update the disk file ID of the archive file with archive file ID " << archiveFileId <<
+        " because the archive file does not exist";
+      throw exception::UserError(msg.str());
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 } // namespace catalogue
 } // namespace cta

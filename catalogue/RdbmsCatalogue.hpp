@@ -1606,6 +1606,19 @@ protected:
   optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
 
   /**
+   * Updates the disk file ID of the specified archive file.
+   *
+   * @param archiveFileId The unique identifier of the archive file.
+   * @param diskInstance The instance name of the source disk system.
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstance and diskFileId
+   * must be globally unique, in other words unique within the CTA catalogue.
+   */
+  void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance,
+    const std::string &diskFileId) override;
+
+  /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
    */

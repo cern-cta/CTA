@@ -148,6 +148,7 @@ public:
   void tapeMountedForArchive(const std::string& vid, const std::string& drive) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void tapeMountedForRetrieve(const std::string& vid, const std::string& drive) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   bool tapePoolExists(const std::string& tapePoolName) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance, const std::string &diskFileId) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 
   // Special functions for unit tests.
   void addEnabledTape(const std::string & vid) {

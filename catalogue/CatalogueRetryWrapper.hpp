@@ -510,7 +510,11 @@ public:
 
   bool diskSystemExists(const std::string &name) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->diskSystemExists(name);}, m_maxTriesToConnect);
-  }; 
+  } 
+
+  void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance, const std::string &diskFileId) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->updateDiskFileId(archiveFileId, diskInstance, diskFileId);}, m_maxTriesToConnect);
+  }
 
 protected:
 
