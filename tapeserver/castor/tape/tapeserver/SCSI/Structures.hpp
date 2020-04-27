@@ -1110,85 +1110,6 @@ namespace SCSI {
       /* TODO: add support for other bits. See section 4.5.6
        * of SPC-4 for sense key = NO SENSE. */
     };
-   
-    namespace encryption {
-
-      class spinCDB_t {
-      public:
-        spinCDB_t() {
-          zeroStruct(this);
-          opCode = SCSI::Commands::SECURITY_PROTOCOL_IN;
-        }
-
-        unsigned char opCode;
-        unsigned char securityProtocol;
-        unsigned char securityProtocolSpecific[2];
-        unsigned char reserved[2];
-        unsigned char allocationLength[4];
-        unsigned char reserved2;
-        unsigned char controlByte;
-      };
-
-      class spoutCDB_t {
-      public:
-        spoutCDB_t() {
-          zeroStruct(this);
-          opCode = SCSI::Commands::SECURITY_PROTOCOL_OUT;
-        }
-
-        unsigned char opCode;
-        unsigned char securityProtocol;
-        unsigned char securityProtocolSpecific[2];
-        unsigned char reserved[2];
-        unsigned char allocationLength[4];
-        unsigned char reserved2;
-        unsigned char controlByte;
-      };
-
-      template <int n>
-      class spinPageList_t {
-      public:
-        spinPageList_t() { zeroStruct(this); }
-        unsigned char reserved[6];
-        unsigned char supportedProtocolListLength[2];
-        unsigned char list[n];
-      };
-
-      /**
-       * Security Protocol OUT-Set Data Encryption Page as described in SSC-4.
-       */
-      class spoutSDEParam_t {
-      public:
-        spoutSDEParam_t() {
-          zeroStruct(this);
-          setU16(pageCode, SCSI::encryption::spoutSecurityProtocolSpecificPages::setDataEncryptionPage);
-          setU16(keyLength, SCSI::encryption::ENC_KEY_LENGTH);
-        }
-
-        unsigned char pageCode[2];
-        unsigned char length[2];
-
-        unsigned char lock        : 1;
-        unsigned char             : 4;
-        unsigned char nexusScope  : 3; // Specifies the scope of the data encryption parameters
-
-        unsigned char CKORL       : 1; // Clear key on reservation loss
-        unsigned char CKORP       : 1; // Clear key on reservation preempt
-        unsigned char CKOD        : 1; // Clear key on reservation demount
-        unsigned char SDK         : 1; // Supplemental decryption key
-        unsigned char RDMC        : 2; // Raw decryption mode control
-        unsigned char CEEM        : 2; // Check external encryption mode
-
-        unsigned char encryptionMode;
-        unsigned char decryptionMode;
-        unsigned char algorithmIndex;
-        unsigned char keyFormat;
-        unsigned char kadFormat;
-        unsigned char reserved[7];
-        unsigned char keyLength[2];
-        unsigned char keyData[SCSI::encryption::ENC_KEY_LENGTH];
-      };
-    }
 
     /**
      * REQUEST SENSE CDB as described in LTO-8 SCSI Reference, p.157
@@ -1354,6 +1275,85 @@ namespace SCSI {
       char cartridgeSerialNumber[10];    // This is the value from the CRM right-justified, not the Barcode
     };
     
+    namespace encryption {
+
+      class spinCDB_t {
+      public:
+        spinCDB_t() {
+          zeroStruct(this);
+          opCode = SCSI::Commands::SECURITY_PROTOCOL_IN;
+        }
+
+        unsigned char opCode;
+        unsigned char securityProtocol;
+        unsigned char securityProtocolSpecific[2];
+        unsigned char reserved[2];
+        unsigned char allocationLength[4];
+        unsigned char reserved2;
+        unsigned char controlByte;
+      };
+
+      class spoutCDB_t {
+      public:
+        spoutCDB_t() {
+          zeroStruct(this);
+          opCode = SCSI::Commands::SECURITY_PROTOCOL_OUT;
+        }
+
+        unsigned char opCode;
+        unsigned char securityProtocol;
+        unsigned char securityProtocolSpecific[2];
+        unsigned char reserved[2];
+        unsigned char allocationLength[4];
+        unsigned char reserved2;
+        unsigned char controlByte;
+      };
+
+      template <int n>
+      class spinPageList_t {
+      public:
+        spinPageList_t() { zeroStruct(this); }
+        unsigned char reserved[6];
+        unsigned char supportedProtocolListLength[2];
+        unsigned char list[n];
+      };
+
+      /**
+       * Security Protocol OUT-Set Data Encryption Page as described in SSC-4.
+       */
+      class spoutSDEParam_t {
+      public:
+        spoutSDEParam_t() {
+          zeroStruct(this);
+          setU16(pageCode, SCSI::encryption::spoutSecurityProtocolSpecificPages::setDataEncryptionPage);
+          setU16(keyLength, SCSI::encryption::ENC_KEY_LENGTH);
+        }
+
+        unsigned char pageCode[2];
+        unsigned char length[2];
+
+        unsigned char lock        : 1;
+        unsigned char             : 4;
+        unsigned char nexusScope  : 3; // Specifies the scope of the data encryption parameters
+
+        unsigned char CKORL       : 1; // Clear key on reservation loss
+        unsigned char CKORP       : 1; // Clear key on reservation preempt
+        unsigned char CKOD        : 1; // Clear key on reservation demount
+        unsigned char SDK         : 1; // Supplemental decryption key
+        unsigned char RDMC        : 2; // Raw decryption mode control
+        unsigned char CEEM        : 2; // Check external encryption mode
+
+        unsigned char encryptionMode;
+        unsigned char decryptionMode;
+        unsigned char algorithmIndex;
+        unsigned char keyFormat;
+        unsigned char kadFormat;
+        unsigned char reserved[7];
+        unsigned char keyLength[2];
+        unsigned char keyData[SCSI::encryption::ENC_KEY_LENGTH];
+      };
+    }
+
     namespace RAO {
         
        /**
@@ -1544,4 +1544,3 @@ namespace SCSI {
 } // namespace SCSI
 } // namespace tape
 } // namespace castor
-
