@@ -40,6 +40,18 @@ namespace castor {
 namespace tape {
 namespace SCSI {
   const unsigned int defaultTimeout=900000; //millisecs
+
+  /**
+   * Maximum number of tape wraps.
+   *
+   * This is used to determine the maximum size of the response from the REOWP command,
+   * which returns 12 bytes per wrap, plus a 4-byte header.
+   *
+   * LTO-8 has 208 physical wraps. LTO-9 has 280 wraps. This number should be adjusted
+   * upwards when the LTO-10 specification is announced.
+   */
+  const unsigned int maxLTOTapeWraps = 280;
+
   /**
    * Structures as defined in the SCSI specifications, and helper functions for them.
    * SPC-4 (SCSI primary commands) can be found at:
@@ -1118,7 +1130,8 @@ namespace SCSI {
     public:
       readEndOfWrapPositionCDB_t() {
         zeroStruct(this);
-        opCode = SCSI::Commands::REOWP;
+        // REOWP is a service action of the MAINTENANCE_IN command: A3 1F 45
+        opCode = SCSI::Commands::MAINTENANCE_IN;
         SERVICE_ACTION = 0x1F;
         serviceActionQualifier = 0x45;
       }
@@ -1146,8 +1159,8 @@ namespace SCSI {
       unsigned char wrapNumber;                // Wrap for which the end of wrap position is requested.
                                                // If set, WNV must be 1 and RA must be 0.
       // bytes 6-9
-      unsigned char allocationLength;          // Maximum number of bytes to be transferred
-                                               // In the case of Report All, each wrap descriptor is 11
+      unsigned char allocationLength[4];       // Maximum number of bytes to be transferred
+                                               // In the case of Report All, each wrap descriptor is 12
                                                // bytes. LTO-9 tapes have 280 wraps, so reply can be up
                                                // to 3084 bytes. And longer in case of LTO-10 (details
                                                // not available at time of writing).
@@ -1158,6 +1171,44 @@ namespace SCSI {
       unsigned char control;                   // Control byte
     };
 
+    /**
+     * REOWP Short form parameter data, as described in LTO-8 SCSI Reference, p.120
+     */
+    class readEndOfWrapPositionShortForm_t() {
+    public:
+      readEndOfWrapPositionShortForm_t() { zeroStruct(this); }
+      // bytes 0-1
+      unsigned char responseDataLength[2];           // 08h, the number of bytes to follow
+
+      // bytes 2-3
+      unsigned char reserved[2];                     // Reserved
+
+      // bytes 4-9
+      unsigned char logicalObjectIdentifier[6];      // The logical object identifier of the object at the
+                                                     // end of the wrap requested by the WNV bit and the
+                                                     // WRAP_NUMBER field
+    };
+
+    /**
+     * REOWP Long form parameter data, as described in LTO-8 SCSI Reference, p.120-121
+     */
+    class readEndOfWrapPositionLongForm_t() {
+    public:
+      readEndOfWrapPositionLongForm_t() { zeroStruct(this); }
+      // bytes 0-1
+      unsigned char responseDataLength[2];           // n-1, the number of bytes to follow
+
+      // bytes 2-3
+      unsigned char reserved[2];                     // Reserved
+
+      // bytes 4-n
+      struct {
+        unsigned char wrapNumber[2];                 // Wrap number
+        unsigned char partition[2];                  // The partition number of the above wrap
+        unsigned char reserved[2];                   // Reserved
+        unsigned char logicalObjectIdentifier[6];    // The logical object identifier of the object at the end of the above wrap
+      } wrapDescriptor[maxLTOTapeWraps];             // Array of wrap descriptiors
+    };
 
     /**
      * REQUEST SENSE CDB as described in LTO-8 SCSI Reference, p.157
