@@ -1112,6 +1112,54 @@ namespace SCSI {
     };
 
     /**
+     * READ END OF WRAP POSITION CDB as described in LTO-8 SCSI Reference, p.119
+     */
+    class readEndOfWrapPositionCDB_t {
+    public:
+      readEndOfWrapPositionCDB_t() {
+        zeroStruct(this);
+        opCode = SCSI::Commands::REOWP;
+        SERVICE_ACTION = 0x1F;
+        serviceActionQualifier = 0x45;
+      }
+      // byte 0
+      unsigned char opCode;                    // OPERATION CODE (A3h)
+
+      // byte 1
+      unsigned char SERVICE_ACTION :5;         // 1Fh
+      unsigned char                :3;
+
+      // byte 2
+      unsigned char serviceActionQualifier;    // 45h
+
+      // byte 3
+      unsigned char WNV            :1;         // Wrap Number Valid: 0 = request data for first wrap on the tape
+                                               //                    1 = return data for wrap in wrapNumber field
+      unsigned char RA             :1;         // Report All: 0 = short form reply (return data for a single wrap)
+                                               //             1 = long form reply  (return data for all wraps)
+      unsigned char                :6;
+
+      // byte 4
+      unsigned char reserved1;                 // Reserved
+
+      // byte 5
+      unsigned char wrapNumber;                // Wrap for which the end of wrap position is requested.
+                                               // If set, WNV must be 1 and RA must be 0.
+      // bytes 6-9
+      unsigned char allocationLength;          // Maximum number of bytes to be transferred
+                                               // In the case of Report All, each wrap descriptor is 11
+                                               // bytes. LTO-9 tapes have 280 wraps, so reply can be up
+                                               // to 3084 bytes. And longer in case of LTO-10 (details
+                                               // not available at time of writing).
+      // byte 10
+      unsigned char reserved2;                 // Reserved
+
+      // byte 11
+      unsigned char control;                   // Control byte
+    };
+
+
+    /**
      * REQUEST SENSE CDB as described in LTO-8 SCSI Reference, p.157
      */
     class requestSenseCDB_t {
@@ -1274,7 +1322,7 @@ namespace SCSI {
       // bytes 86-95
       char cartridgeSerialNumber[10];    // This is the value from the CRM right-justified, not the Barcode
     };
-    
+
     namespace encryption {
 
       class spinCDB_t {
