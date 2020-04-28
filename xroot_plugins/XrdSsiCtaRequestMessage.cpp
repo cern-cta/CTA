@@ -1853,7 +1853,7 @@ void RequestMessage::processVersion(cta::xrd::Response &response, XrdSsiStream *
   
   stream = new VersionStream(*this,m_catalogue,m_scheduler,m_catalogue_conn_string);
   
-  response.set_show_header(HeaderType::VERSION);
+  response.set_show_header(HeaderType::VERSION_CMD);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
