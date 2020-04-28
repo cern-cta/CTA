@@ -1190,9 +1190,9 @@ namespace SCSI {
     /**
      * REOWP Short form parameter data, as described in LTO-8 SCSI Reference, p.120
      */
-    class readEndOfWrapPositionShortForm_t() {
+    class readEndOfWrapPositionDataShortForm_t {
     public:
-      readEndOfWrapPositionShortForm_t() { zeroStruct(this); }
+      readEndOfWrapPositionDataShortForm_t() { zeroStruct(this); }
       // bytes 0-1
       unsigned char responseDataLength[2];           // 08h, the number of bytes to follow
 
@@ -1208,9 +1208,9 @@ namespace SCSI {
     /**
      * REOWP Long form parameter data, as described in LTO-8 SCSI Reference, p.120-121
      */
-    class readEndOfWrapPositionLongForm_t() {
+    class readEndOfWrapPositionDataLongForm_t {
     public:
-      readEndOfWrapPositionLongForm_t() { zeroStruct(this); }
+      readEndOfWrapPositionDataLongForm_t() { zeroStruct(this); }
       // bytes 0-1
       unsigned char responseDataLength[2];           // n-1, the number of bytes to follow
 
