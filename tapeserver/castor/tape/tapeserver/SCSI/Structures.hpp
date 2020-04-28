@@ -122,7 +122,7 @@ namespace SCSI {
     }  
 
     /**
-     * Helper function to deal with endianness.
+     * Helper function to deal with endianness: 6-byte version
      *
      * The REOWP SCSI command assigns 48 bits to store the LOGICAL OBJECT IDENTIFIER (although other
      * commands use 64 bits or sometimes 32 bits). This function converts the 48-bit byte array
@@ -131,7 +131,7 @@ namespace SCSI {
      * @param t byte array in SCSI order representing a 48-bit number
      * @return 64-bit unsigned integer
      */
-    inline uint64_t toU48(const unsigned char(& t)[6])
+    inline uint64_t toU64(const unsigned char(& t)[6])
     {
       /* Like network, SCSI is BigEndian */
       return (uint64_t) ntohl ( (*(uint64_t *) t << 32) >> 16)  << 32 | ntohl(*(uint64_t *) t >>16);

@@ -656,6 +656,11 @@ namespace unitTests {
     ASSERT_EQ( -433494437, castor::tape::SCSI::Structures::toS32(num));
   }
   
+  TEST(castor_tape_SCSI_Structures, toU64_6byte) {
+    unsigned char num[6] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE };
+    ASSERT_EQ ( 0xDEADBEEFCAFEULL, castor::tape::SCSI::Structures::toU64(num));
+  }
+
   TEST(castor_tape_SCSI_Structures, toU64) {
     unsigned char num[8] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xFA, 0xDE };
     ASSERT_EQ ( 0xDEADBEEFCAFEFADEULL, castor::tape::SCSI::Structures::toU64(num));
@@ -952,9 +957,9 @@ namespace unitTests {
     buff[2] = 0xFF; buff[3] = 0xFF;
 
     // In this record, the logical object identifier is 6 bytes (48 bits).
-    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU48(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU64(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
     buff[4] = 0xAB; buff[5] = 0xCD; buff[6] = 0xEF; buff[7] = 0x12; buff[8] = 0x34; buff[9] = 0x56;
-    ASSERT_EQ(0xABCDEF123456, castor::tape::SCSI::Structures::toU48(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
+    ASSERT_EQ(0xABCDEF123456, castor::tape::SCSI::Structures::toU64(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
   }
 
   TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionDataLongForm_t) {
@@ -986,10 +991,10 @@ namespace unitTests {
         buff[offset + 4] = 0xFF; buff[offset + 5] = 0xFF;
 
         // In this record, the logical object identifier is 6 bytes (48 bits).
-        ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU48(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].logicalObjectIdentifier));
+        ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU64(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].logicalObjectIdentifier));
         buff[offset + 6] = 0xAB; buff[offset + 7] = 0xCD; buff[offset + 8] = 0xEF;
         buff[offset + 9] = 0x12; buff[offset + 10] = 0x34; buff[offset + 11] = 0x56;
-        ASSERT_EQ(0xABCDEF123456, castor::tape::SCSI::Structures::toU48(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].logicalObjectIdentifier));
+        ASSERT_EQ(0xABCDEF123456, castor::tape::SCSI::Structures::toU64(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].logicalObjectIdentifier));
     }
   }
 
