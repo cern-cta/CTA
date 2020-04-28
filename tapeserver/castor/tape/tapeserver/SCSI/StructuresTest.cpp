@@ -904,6 +904,95 @@ namespace unitTests {
     ASSERT_EQ(0xCDU, testUnitReadyCDB.control);
   }  
 
+  TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionCDB_t) {
+    castor::tape::SCSI::Structures::readEndOfWrapPositionCDB_t readEndOfWrapPositionCDB;
+    unsigned char *buff = reinterpret_cast<unsigned char*>(&readEndOfWrapPositionCDB);
+
+    // Make sure this struct is a POD (plain old data without virtual table) and has the right size
+    ASSERT_EQ(12U, sizeof(readEndOfWrapPositionCDB));
+
+    // Check proper initialization and location of struct members match the bit/byte locations defined in LTO-8 reference
+    ASSERT_EQ(buff[0], 0xA3);
+    ASSERT_EQ(buff[1], 0x1F);
+    ASSERT_EQ(buff[2], 0x45);
+
+    ASSERT_EQ(0U, readEndOfWrapPositionCDB.WNV);
+    buff[3] = 0x01;
+    ASSERT_EQ(1U, readEndOfWrapPositionCDB.WNV);
+    ASSERT_EQ(0U, readEndOfWrapPositionCDB.RA);
+    buff[3] = 0x02;
+    ASSERT_EQ(1U, readEndOfWrapPositionCDB.RA);
+
+    ASSERT_EQ(0U, readEndOfWrapPositionCDB.wrapNumber);
+    buff[5] = 0xAB;
+    ASSERT_EQ(0xAB, readEndOfWrapPositionCDB.wrapNumber);
+
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(readEndOfWrapPositionCDB.allocationLength));
+    buff[6] = 0x0A; buff[7] = 0xBC; buff[8] = 0xDE; buff[9] = 0xF0;
+    ASSERT_EQ(0xABCDEF0, castor::tape::SCSI::Structures::toU32(readEndOfWrapPositionCDB.allocationLength));
+
+    ASSERT_EQ(0U, readEndOfWrapPositionCDB.control);
+    buff[11] = 0xBC;
+    ASSERT_EQ(0xBC, readEndOfWrapPositionCDB.control);
+  }
+
+  TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionDataShortForm_t) {
+    castor::tape::SCSI::Structures::readEndOfWrapPositionDataShortForm_t readEndOfWrapPositionDataShortForm;
+    unsigned char *buff = reinterpret_cast<unsigned char*>(&readEndOfWrapPositionDataShortForm);
+
+    // Make sure this struct is a POD (plain old data without virtual table) and has the right size
+    ASSERT_EQ(10U, sizeof(readEndOfWrapPositionDataShortForm));
+
+    // Check proper initialization and location of struct members match the bit/byte locations defined in LTO-8 reference
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataShortForm.responseDataLength));
+    buff[0] = 0x0A; buff[1] = 0xB0;
+    ASSERT_EQ(0xAB0, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataShortForm.responseDataLength));
+
+    // Reserved
+    buff[2] = 0xFF; buf[3] = 0xFF;
+
+    // In this record, the logical object identifier is 6 bytes (48 bits).
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU48(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
+    buff[4] = 0xAB; buff[5] = 0xCD; buff[6] = 0xEF; buff[7] = 0x12; buff[8] = 0x34; buff[9] = 0x56;
+    ASSERT_EQ(0xABCDEF123456, castor::tape::SCSI::Structures::toU48(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
+  }
+
+  TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionDataLongForm_t) {
+    castor::tape::SCSI::Structures::readEndOfWrapPositionDataLongForm_t readEndOfWrapPositionDataLongForm;
+    unsigned char *buff = reinterpret_cast<unsigned char*>(&readEndOfWrapPositionDataLongForm);
+
+    // Make sure this struct is a POD (plain old data without virtual table) and has the right size
+    ASSERT_EQ(4+(12*maxLTOTapeWraps), sizeof(readEndOfWrapPositionDataLongForm));
+
+    // Check proper initialization and location of struct members match the bit/byte locations defined in LTO-8 reference
+    ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.responseDataLength));
+    buff[0] = 0x0A; buff[1] = 0xB0;
+    ASSERT_EQ(0xAB0, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.responseDataLength));
+
+    for(int wrap = 0; wrap < maxLTOTapeWraps; ++wrap) {
+        int offset = 4 + (wrap * 12);
+
+        ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptior[wrap].wrapNumber));
+        buff[offset + 0] = 0xAB;
+        buff[offset + 1] = 0xCD;
+        ASSERT_EQ(0xABCD, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptior[wrap].wrapNumber));
+
+        ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptior[wrap].partition));
+        buff[offset + 2] = 0xEF;
+        buff[offset + 3] = 0x01;
+        ASSERT_EQ(0xEF01, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptior[wrap].partition));
+
+        // Reserved
+        buff[offset + 4] = 0xFF; buff[offset + 5] = 0xFF;
+
+        // In this record, the logical object identifier is 6 bytes (48 bits).
+        ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU48(readEndOfWrapPositionDataLongForm.wrapDescriptior[wrap].logicalObjectIdentifier));
+        buff[offset + 6] = 0xAB; buff[offset + 7] = 0xCD; buff[offset + 8] = 0xEF;
+        buff[offset + 9] = 0x12; buff[offset + 10] = 0x34; buff[offset + 11] = 0x56;
+        ASSERT_EQ(0xABCDEF123456, castor::tape::SCSI::Structures::toU48(readEndOfWrapPositionDataLongForm.wrapDescriptior[wrap].logicalObjectIdentifier));
+    }
+  }
+
   TEST(castor_tape_SCSI_Structures, requestSenseCDB_t) {
     castor::tape::SCSI::Structures::requestSenseCDB_t requestSenseCDB;
     unsigned char *buff = reinterpret_cast<unsigned char*>(&requestSenseCDB);
