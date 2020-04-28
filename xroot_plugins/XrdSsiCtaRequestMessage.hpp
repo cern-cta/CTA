@@ -155,6 +155,7 @@ private:
   void processPREPARE      (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Retrieve file event
   void processABORT_PREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Abort retrieve file event
   void processDELETE       (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Delete file event
+  void processUPDATE_FID   (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Disk file ID update event
 
   /*!
    * Process AdminCmd events

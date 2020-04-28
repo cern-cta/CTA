@@ -312,6 +312,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case Workflow::DELETE:
                processDELETE (request.notification(), response);
                break;
+            case Workflow::UPDATE_FID:
+               processUPDATE_FID (request.notification(), response);
+               break;
 
             default:
                throw PbException("Workflow event " +
@@ -639,6 +642,51 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
          .add("address", (request.address ? request.address.value() : "null"))
          .add("schedulerTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processDELETE(): archive file deleted.");
+
+   // Set response type
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processUPDATE_FID(const cta::eos::Notification &notification, cta::xrd::Response &response)
+{
+   // Validate received protobuf
+   checkIsNotEmptyString(notification.file().lpath(),  "notification.file.lpath");
+
+   // Unpack message
+   const std::string &diskInstance = m_cliIdentity.username;
+   const std::string &diskFilePath = notification.file().lpath();
+   const std::string diskFileId = std::to_string(notification.file().fid());
+
+   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
+   // converted to a valid uint64_t
+   auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
+   if(notification.file().xattr().end() == archiveFileIdItor) {
+     // Fall back to the old xattr format
+     archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
+     if(notification.file().xattr().end() == archiveFileIdItor) {
+       throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+     }
+   }
+   const std::string archiveFileIdStr = archiveFileIdItor->second;
+   const uint64_t archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10);
+   if(0 == archiveFileId) {
+      throw PbException("Invalid archiveFileID " + archiveFileIdStr);
+   }
+   
+   // Update the disk file ID
+   cta::utils::Timer t;
+   m_catalogue.updateDiskFileId(archiveFileId, diskInstance, diskFileId);
+
+   // Create a log entry
+   cta::log::ScopedParamContainer params(m_lc);
+   params.add("fileId", archiveFileId)
+         .add("schedulerTime", t.secs())
+         .add("diskInstance", diskInstance)
+         .add("diskFilePath", diskFilePath)
+         .add("diskFileId", diskFileId);
+   m_lc.log(cta::log::INFO, "In RequestMessage::processUPDATE_FID(): updated disk file ID.");
 
    // Set response type
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
