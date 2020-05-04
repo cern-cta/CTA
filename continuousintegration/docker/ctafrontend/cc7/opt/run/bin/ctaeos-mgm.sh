@@ -220,6 +220,10 @@ fi
   eos vid enable krb5
   eos vid enable sss
   eos vid enable unix
+
+  # define space default before adding first fs
+  eos space define default
+
   EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
 
   # Add user daemon to sudoers this is to allow recalls for the moment using this command
@@ -235,6 +239,7 @@ fi
   eos attr -r set default=replica /eos
   eos attr -r set sys.forced.nstripes=1 /eos
 
+  eos space define tape
   eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
   eos mkdir ${CTA_PROC_DIR}
   eos mkdir ${CTA_WF_DIR}
