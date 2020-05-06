@@ -27,7 +27,7 @@ FROM buildtree-runner-stage1
 ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
     LOCALORCHESTRATIONDIR="/opt/ci" \
     BASEDIR="continuousintegration/docker/ctafrontend/cc7" \
-    CTAREPODIR="/tmp/repo"
+    CTAREPODIR="/tmp/repo" 
 
 # Add pod specific configuration
 ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
@@ -44,6 +44,12 @@ ADD ${BASEDIR}/rc.local /etc/rc.d
 
 # Make sure it can be executed by root
 RUN chmod 744 /etc/rc.local
+
+# Update versionlock if needed
+ADD ${BASEDIR}/etc/yum/pluginconf.d /etc/yum/pluginconf.d
+
+#Install the libs necessary for EOS to run
+RUN yum install -y eos-protobuf3 libisa-l libisa-l_crypto-devel xxhash-devel grpc
 
 # disable selinux so that systemd works if the container is booted
 # with an image that already contains selinux
