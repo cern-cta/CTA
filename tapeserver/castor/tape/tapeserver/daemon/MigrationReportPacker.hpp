@@ -97,7 +97,7 @@ public:
    * @param state the new drive state.
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status, cta::log::LogContext & lc);
+  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason, cta::log::LogContext & lc);
   
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -171,8 +171,9 @@ private:
   
   class ReportDriveStatus : public Report {
     cta::common::dataStructures::DriveStatus m_status;
+    cta::optional<std::string> m_reason;
   public:
-    ReportDriveStatus(cta::common::dataStructures::DriveStatus status): m_status(status) {}
+    ReportDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason): m_status(status),m_reason(reason) {}
     void execute(MigrationReportPacker& reportPacker) override;
   };
   

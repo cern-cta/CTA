@@ -17,6 +17,7 @@
  */
 
 #include "DesiredDriveState.hpp"
+#include "common/log/PriorityMaps.hpp"
 
 namespace cta {
 namespace common {
@@ -39,6 +40,18 @@ DesiredDriveState& DesiredDriveState::operator=(const DesiredDriveState& ds) {
     comment = ds.comment;
   }
   return *this;
+}
+
+std::string DesiredDriveState::c_tpsrvPrefixComment = "[cta-taped]";
+
+void DesiredDriveState::setReasonFromLogMsg(const int logLevel, const std::string & msg){
+  reason = DesiredDriveState::generateReasonFromLogMsg(logLevel,msg);
+}
+
+std::string DesiredDriveState::generateReasonFromLogMsg(const int logLevel, const std::string & msg){
+  std::string localReason = c_tpsrvPrefixComment;
+  localReason += " " + cta::log::PriorityMaps::getPriorityText(logLevel) + " "+msg;
+  return localReason;
 }
 
 }}}

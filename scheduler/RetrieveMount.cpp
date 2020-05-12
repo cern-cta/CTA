@@ -293,8 +293,8 @@ void cta::RetrieveMount::abort() {
 //------------------------------------------------------------------------------
 // setDriveStatus()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status) {
-  m_dbMount->setDriveStatus(status, time(NULL));
+void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason) {
+  m_dbMount->setDriveStatus(status, time(NULL), reason);
 }
 
 //------------------------------------------------------------------------------

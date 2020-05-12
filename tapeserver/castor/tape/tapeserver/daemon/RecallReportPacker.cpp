@@ -89,9 +89,9 @@ void RecallReportPacker::reportEndOfSession(){
 //------------------------------------------------------------------------------
 //reportDriveStatus
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status) {
+void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason) {
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportDriveStatus(status));
+  m_fifo.push(new ReportDriveStatus(status,reason));
 }
 
   
@@ -166,7 +166,7 @@ bool RecallReportPacker::ReportEndofSession::goingToEnd() {
 //ReportDriveStatus::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
-  parent.m_retrieveMount->setDriveStatus(m_status);
+  parent.m_retrieveMount->setDriveStatus(m_status,m_reason);
   if(m_status==cta::common::dataStructures::DriveStatus::Unmounting) {
     parent.setTapeDone();
     parent.setTapeComplete();

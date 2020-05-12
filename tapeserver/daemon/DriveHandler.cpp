@@ -952,7 +952,9 @@ int DriveHandler::runChild() {
   if (m_previousSession == PreviousSession::Crashed && m_previousType == SessionType::Cleanup) {
     log::ScopedParamContainer params(lc);
     params.add("tapeDrive", m_configLine.unitName);
-    lc.log(log::ERR, "In DriveHandler::runChild(): the cleaner session crashed. Putting the drive down.");
+    int logLevel = log::ERR;
+    std::string errorMsg = "In DriveHandler::runChild(): the cleaner session crashed. Putting the drive down.";
+    lc.log(log::ERR, errorMsg);
     // Get hold of the scheduler.
     try {
       cta::common::dataStructures::DriveInfo driveInfo;
@@ -964,6 +966,7 @@ int DriveHandler::runChild() {
       cta::common::dataStructures::DesiredDriveState driveState;
       driveState.up = false;
       driveState.forceDown = false;
+      driveState.setReasonFromLogMsg(logLevel,errorMsg);
       scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName,driveState, lc);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception &ex) {
@@ -982,7 +985,9 @@ int DriveHandler::runChild() {
     SessionState::Running, SessionState::Unmounting };
   if (m_previousSession == PreviousSession::Crashed && statesRequiringCleaner.count(m_previousState)) {
     if (!m_previousVid.size()) {
-      lc.log(log::ERR, "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.");
+      int logLevel = log::ERR;
+      std::string errorMsg = "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.";
+      lc.log(log::ERR, errorMsg);
       try {
         cta::common::dataStructures::DriveInfo driveInfo;
         driveInfo.driveName=m_configLine.unitName;
@@ -993,6 +998,7 @@ int DriveHandler::runChild() {
         cta::common::dataStructures::DesiredDriveState driveState;
         driveState.up = false;
         driveState.forceDown = false;
+        driveState.setReasonFromLogMsg(logLevel,errorMsg);
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, driveState, lc);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       } catch (cta::exception::Exception &ex) {
@@ -1078,7 +1084,9 @@ int DriveHandler::runChild() {
       // Log that we put the drive's desired state to down and do it.
       log::ScopedParamContainer params(lc);
       params.add("tapeDrive", m_configLine.unitName);
-      lc.log(log::INFO, "Setting the drive down at daemon startup");
+      int logLevel = log::INFO;
+      std::string msg = "Setting the drive down at daemon startup";
+      lc.log(logLevel, msg);
       try {
         // Before setting the desired state as down, we have to make sure the drive exists in the registry.
         // this is done by reporting the drive as down first.
@@ -1105,7 +1113,13 @@ int DriveHandler::runChild() {
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         cta::common::dataStructures::DesiredDriveState driveState;
         driveState.up = false;
-        driveState.forceDown = false;
+        driveState.forceDown = false;      
+        // Get the drive state to see if there is a reason or not, we don't want to change the reason
+        // why a drive is down at the startup of the tapeserver
+        cta::common::dataStructures::DesiredDriveState  currentDesiredDriveState = scheduler.getDesiredDriveState(m_configLine.unitName,lc);
+        if(!currentDesiredDriveState.reason){
+          driveState.setReasonFromLogMsg(logLevel,msg);
+        }
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, driveState, lc);
         scheduler.reportDriveConfig(m_configLine,m_tapedConfig,lc);
       } catch (cta::exception::Exception & ex) {

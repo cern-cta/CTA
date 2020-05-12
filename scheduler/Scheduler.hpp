@@ -266,7 +266,7 @@ public:
    */
   std::list<cta::common::dataStructures::DriveState> getDriveStates(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const;
-
+  
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
   const size_t c_defaultMaxNbFilesForRepack = 500;

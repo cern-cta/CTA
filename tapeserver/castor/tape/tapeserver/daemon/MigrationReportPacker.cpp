@@ -220,13 +220,13 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
 //------------------------------------------------------------------------------
 //reportDriveStatus
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, cta::log::LogContext & lc) {
+void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status,const cta::optional<std::string> & reason, cta::log::LogContext & lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportDriveStatus")
         .add("Status", cta::common::dataStructures::toString(status));
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportDriveStatus(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportDriveStatus(status));
+  m_fifo.push(new ReportDriveStatus(status,reason));
 }
 
 //------------------------------------------------------------------------------
@@ -236,7 +236,7 @@ void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& pa
   cta::log::ScopedParamContainer params(parent.m_lc);
   params.add("status", cta::common::dataStructures::toString(m_status));
   parent.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportDriveStatus::execute(): reporting drive status.");
-  parent.m_archiveMount->setDriveStatus(m_status);
+  parent.m_archiveMount->setDriveStatus(m_status,m_reason);
 }
 
 //------------------------------------------------------------------------------

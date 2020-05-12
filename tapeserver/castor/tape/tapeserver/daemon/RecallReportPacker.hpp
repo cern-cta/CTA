@@ -86,7 +86,7 @@ public:
    * function is to be used by the tape thread when running.
    * @param state the new drive state.
    */
-  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status);
+  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason = cta::nullopt);
   
   /**
    * Flag disk thread as done.
@@ -166,9 +166,10 @@ private:
   
   class ReportDriveStatus : public Report {
     cta::common::dataStructures::DriveStatus m_status;
+    cta::optional<std::string> m_reason;
     
   public:
-    ReportDriveStatus(cta::common::dataStructures::DriveStatus status): m_status(status) {}
+    ReportDriveStatus(cta::common::dataStructures::DriveStatus status,const cta::optional<std::string> & reason): m_status(status), m_reason(reason) {}
     void execute(RecallReportPacker& reportPacker) override;
     bool goingToEnd() override;
   };

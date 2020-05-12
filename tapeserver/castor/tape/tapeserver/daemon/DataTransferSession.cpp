@@ -146,8 +146,11 @@ schedule:
       cta::common::dataStructures::DesiredDriveState driveState;
       driveState.up = false;
       driveState.forceDown = false;
+      std::string errorMsg = "A tape was detected in the drive. Putting the drive back down.";
+      int logLevel = cta::log::ERR;
+      driveState.setReasonFromLogMsg(logLevel,errorMsg);
       m_scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
-      lc.log(cta::log::ERR, "A tape was detected in the drive. Putting the drive back down.");
+      lc.log(logLevel, errorMsg);
       goto schedule;
     } else {
       lc.log(cta::log::INFO, "No tape detected in the drive. Proceeding with scheduling.");
@@ -162,14 +165,17 @@ schedule:
       tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc).release());
   } catch (cta::exception::Exception & e) {
     cta::log::ScopedParamContainer localParams(lc);
-    localParams.add("errorMessage", e.getMessageValue());
-    lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
-    lc.logBacktrace(cta::log::ERR, e.backtrace());
+    std::string exceptionMsg = e.getMessageValue();
+    int logLevel = cta::log::ERR;
+    localParams.add("errorMessage", exceptionMsg);
+    lc.log(logLevel, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
+    lc.logBacktrace(logLevel, e.backtrace());
     m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     cta::common::dataStructures::SecurityIdentity cliId;
     cta::common::dataStructures::DesiredDriveState driveState;
     driveState.up = false;
     driveState.forceDown = false;
+    driveState.setReasonFromLogMsg(cta::log::ERR,exceptionMsg);
     m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, driveState, lc);
     return MARK_DRIVE_AS_DOWN;
   }

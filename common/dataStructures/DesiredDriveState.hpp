@@ -40,7 +40,10 @@ struct DesiredDriveState {
   bool operator==(const DesiredDriveState &rhs) const {
     return up == rhs.up && forceDown == rhs.forceDown;
   }
-  DesiredDriveState(): up(false), forceDown(false) {}
+  DesiredDriveState(){}
+  static std::string c_tpsrvPrefixComment;
+  void setReasonFromLogMsg(const int logLevel, const std::string & msg);
+  static std::string generateReasonFromLogMsg(const int logLevel, const std::string & msg);
 };
 
 std::ostream &operator<<(std::ostream& os, const DesiredDriveState& obj);

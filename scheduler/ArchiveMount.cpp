@@ -313,8 +313,8 @@ cta::ArchiveMount::~ArchiveMount() throw() {
 //------------------------------------------------------------------------------
 // setDriveStatus()
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status) {
-  m_dbMount->setDriveStatus(status, time(NULL));
+void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason) {
+  m_dbMount->setDriveStatus(status, time(NULL), reason);
 }
 
 //------------------------------------------------------------------------------

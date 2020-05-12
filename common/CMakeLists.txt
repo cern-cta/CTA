@@ -110,6 +110,7 @@ set (COMMON_LIB_SRC_FILES
   log/LogLevel.cpp
   log/Message.cpp
   log/Param.cpp
+  log/PriorityMaps.cpp
   log/StringLogger.cpp
   log/SyslogLogger.cpp
   log/StdoutLogger.cpp

@@ -167,7 +167,7 @@ public:
     std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> getNextJobBatch(uint64_t filesRequested, 
       uint64_t bytesRequested, log::LogContext &logContext) override;
     void complete(time_t completionTime) override;
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const cta::optional<std::string> & reason = cta::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   public:
     void setJobBatchTransferred(
@@ -234,7 +234,7 @@ public:
     /// Public but non overriding function used by retrieve jobs (on failure to transfer):
     void releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
     void complete(time_t completionTime) override;
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const cta::optional<std::string> & reason = cta::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   public:
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
@@ -582,6 +582,7 @@ private:
     std::string vid;
     std::string tapepool;
     optional<common::dataStructures::DriveState::ActivityAndWeight> activityAndWeigh;
+    optional<std::string> reason;
   };
   /** Collection of smaller scale parts of reportDriveStats */
   struct ReportDriveStatsInputs {

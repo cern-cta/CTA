@@ -90,7 +90,7 @@ namespace cta {
     /**
      * Report a drive status change
      */
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status) override;
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason = cta::nullopt) override;
     
     /**
      * Report a tape session statistics

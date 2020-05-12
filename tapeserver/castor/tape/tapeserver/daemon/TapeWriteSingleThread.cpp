@@ -65,7 +65,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     m_this.m_logContext.log(cta::log::ERR, "Failed to turn off encryption before unmounting");
   }
   m_this.m_stats.encryptionControlTime += m_timer.secs(cta::utils::Timer::resetCounter);
-  m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp, m_this.m_logContext);
+  m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp, cta::nullopt, m_this.m_logContext);
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
@@ -92,7 +92,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     }
     // in the special case of a "manual" mode tape, we should skip the unload too.
     if (cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.librarySlot().getLibraryType()) {
-      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading, m_this.m_logContext);
+      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading,cta::nullopt, m_this.m_logContext);
       m_this.m_drive.unloadTape();
       m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
     } else {
@@ -103,10 +103,10 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     // In case of manual mode, this will be filtered by the rmc daemon
     // (which will do nothing)
     currentErrorToCount = "Error_tapeDismount";
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, m_this.m_logContext);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, m_this.m_logContext);
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.librarySlot());
     m_this.m_drive.disableLogicalBlockProtection();
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, m_this.m_logContext);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, cta::nullopt, m_this.m_logContext);
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(cta::log::INFO, cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.librarySlot().getLibraryType() ?
       "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
@@ -117,10 +117,13 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
   catch(const cta::exception::Exception& ex){
     // Notify something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, m_this.m_logContext);
+    const int logLevel = cta::log::ERR;
+    const std::string errorMsg = "Exception in TapeWriteSingleThread-TapeCleaning. Putting the drive down.";
+    cta::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel,errorMsg);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,reason, m_this.m_logContext);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exceptionMessage", ex.getMessageValue());
-    m_this.m_logContext.log(cta::log::ERR, "Exception in TapeWriteSingleThread-TapeCleaning. Putting the drive down.");
+    m_this.m_logContext.log(logLevel, errorMsg);
     // As we do not throw exceptions from here, the watchdog signalling has
     // to occur from here.
     try {
@@ -130,9 +133,12 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     } catch (...) {}
   } catch (...) {
      // Notify something failed during the cleaning 
+    const int logLevel = cta::log::ERR;
+    const std::string errorMsg = "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
+    cta::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel,errorMsg);
      m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, m_this.m_logContext);
-     m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.");
+     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,reason,m_this.m_logContext);
+     m_this.m_logContext.log(logLevel,errorMsg);
      try {
        if (currentErrorToCount.size()) {
          m_this.m_watchdog.addToErrorCount(currentErrorToCount);
@@ -306,7 +312,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // will also take care of the TapeServerReporter
       // 
       TapeCleaning cleaner(*this, timer);
-      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, m_logContext);
+      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting,cta::nullopt, m_logContext);
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
       cta::log::ScopedParamContainer params(m_logContext);
@@ -404,7 +410,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
       std::unique_ptr<TapeWriteTask> task;   
-      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring, m_logContext); 
+      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,cta::nullopt, m_logContext); 
       while(1) {
         //get a task
         task.reset(m_tasks.pop());

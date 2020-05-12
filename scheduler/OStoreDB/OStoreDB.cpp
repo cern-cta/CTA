@@ -3064,6 +3064,7 @@ void OStoreDB::setDriveDown(common::dataStructures::DriveState & driveState,
   driveState.currentVid="";
   driveState.currentTapePool="";
   driveState.currentActivityAndWeight = nullopt;
+  driveState.desiredDriveState.reason = inputs.reason;
 }
 
 //------------------------------------------------------------------------------
@@ -3076,6 +3077,7 @@ void OStoreDB::setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveS
   DriveStatus  targetStatus=DriveStatus::Up;
   if (!driveState.desiredDriveState.up) {
     driveState.driveStatus = common::dataStructures::DriveStatus::Down;
+    driveState.desiredDriveState.reason = inputs.reason;
   }
   // If we were already up (or down), then we only update the last update time.
   if (driveState.driveStatus == targetStatus) {
@@ -3959,7 +3961,7 @@ void OStoreDB::RetrieveMount::complete(time_t completionTime) {
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::setDriveStatus()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) {
+void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const cta::optional<std::string> & reason) {
   // We just report the drive status as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
@@ -3973,6 +3975,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   inputs.status = status;
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
+  inputs.reason = reason;
   // TODO: statistics!
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
@@ -4160,7 +4163,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::setDriveStatus()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) {
+void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const cta::optional<std::string> & reason) {
   // We just report the drive status as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
@@ -4174,6 +4177,7 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   inputs.status = status;
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
+  inputs.reason = reason;
   // TODO: statistics!
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;

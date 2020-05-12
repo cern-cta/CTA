@@ -20,8 +20,8 @@
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "PriorityMaps.hpp"
 #include <sys/time.h>
-#include <sys/syslog.h>
 #include <sys/syscall.h>
 
 namespace cta {
@@ -117,25 +117,7 @@ std::string Logger::cleanString(const std::string &s,
 //------------------------------------------------------------------------------
 std::map<int, std::string>
   Logger::generatePriorityToTextMap() {
-  std::map<int, std::string> m;
-
-  try {
-    m[LOG_EMERG]   = "EMERG";
-    m[ALERT]       = "ALERT";
-    m[LOG_CRIT]    = "CRIT";
-    m[ERR]         = "ERROR";
-    m[WARNING]     = "WARN";
-    m[LOG_NOTICE]  = "NOTICE";
-    m[INFO]        = "INFO";
-    m[DEBUG]       = "DEBUG";
-  } catch(std::exception &se) {
-    exception::Exception ex;
-    ex.getMessage() << "Failed to generate priority to text mapping: " <<
-      se.what();
-    throw ex;
-  }
-
-  return m;
+  return PriorityMaps::c_priorityToTextMap;
 }
 
 //------------------------------------------------------------------------------
@@ -143,26 +125,7 @@ std::map<int, std::string>
 //------------------------------------------------------------------------------
 std::map<std::string, int>
   Logger::generateConfigTextToPriorityMap() {
-  std::map<std::string, int> m;
-
-  try {
-    m["LOG_EMERG"]   = LOG_EMERG;
-    m["ALERT"]       = ALERT;
-    m["LOG_CRIT"]    = LOG_CRIT;
-    m["ERR"]         = ERR;
-    m["WARNING"]     = WARNING;
-    m["LOG_NOTICE"]  = LOG_NOTICE;
-    m["INFO"]        = INFO;
-    m["DEBUG"]       = DEBUG;
-  } catch(std::exception &se) {
-    exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to generate configuration text to priority mapping: " <<
-      se.what();
-    throw ex;
-  }
-
-  return m;
+  return PriorityMaps::c_configTextToPriorityMap;
 }
 
 //------------------------------------------------------------------------------

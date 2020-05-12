@@ -123,10 +123,13 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   } catch(const cta::exception::Exception& ex){
     // Something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
+    const int logLevel = cta::log::ERR;
+    const std::string errorMsg = "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
+    cta::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel,errorMsg);
+    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,reason);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exceptionMessage", ex.getMessageValue());
-    m_this.m_logContext.log(cta::log::ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.");
+    m_this.m_logContext.log(logLevel, errorMsg);
     try {
       if (currentErrorToCount.size()) {
         m_this.m_watchdog.addToErrorCount(currentErrorToCount);
@@ -135,8 +138,11 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   } catch (...) {
     // Notify something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
-    m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.");
+    const int logLevel = cta::log::ERR;
+    const std::string errorMsg = "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
+    cta::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel,errorMsg);
+    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,reason);
+    m_this.m_logContext.log(logLevel, errorMsg);
     try {
       if (currentErrorToCount.size()) {
         m_this.m_watchdog.addToErrorCount(currentErrorToCount);
