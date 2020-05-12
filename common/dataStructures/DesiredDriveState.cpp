@@ -23,6 +23,8 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
+DesiredDriveState::DesiredDriveState():up(false),forceDown(false){}  
+  
 DesiredDriveState::DesiredDriveState(const DesiredDriveState& ds) {
   if(this != &ds){
     up = ds.up;

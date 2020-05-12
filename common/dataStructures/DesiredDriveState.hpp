@@ -30,7 +30,9 @@ namespace dataStructures {
  * The values are reset to all false when the drive goes down (including
  * at startup).
  */
-struct DesiredDriveState {
+class DesiredDriveState {
+public:
+  DesiredDriveState();
   DesiredDriveState(const DesiredDriveState & ds);
   DesiredDriveState & operator=(const DesiredDriveState & ds);
   bool up;        ///< Should the drive be up?
@@ -40,7 +42,6 @@ struct DesiredDriveState {
   bool operator==(const DesiredDriveState &rhs) const {
     return up == rhs.up && forceDown == rhs.forceDown;
   }
-  DesiredDriveState(){}
   static std::string c_tpsrvPrefixComment;
   void setReasonFromLogMsg(const int logLevel, const std::string & msg);
   static std::string generateReasonFromLogMsg(const int logLevel, const std::string & msg);
