@@ -45,6 +45,13 @@ public:
     oss << value;
     m_value = oss.str();
   }
+    
+  Param(const std::string & name, const uint8_t & value) throw():
+  m_name(name) {
+    std::ostringstream oss;
+    oss << static_cast<int>(value);
+    m_value = oss.str();
+  }
   
   /**
    * Constructor.

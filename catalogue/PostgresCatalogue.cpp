@@ -863,7 +863,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
         << " creationTime: " << it->creationTime
         << " fileSize: " << it->fileSize
         << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
-        << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
+        << " copyNb: " << static_cast<int>(it->copyNb) //this shouldn't be here: repeated field
         << " supersededByVid: " << it->supersededByVid
         << " supersededByFSeq: " << it->supersededByFSeq;
       spc.add("TAPE FILE", tapeCopyLogStream.str());

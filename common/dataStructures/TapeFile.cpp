@@ -68,7 +68,7 @@ std::ostream &operator<<(std::ostream &os, const TapeFile &obj) {
      << " fSeq=" << obj.fSeq
      << " blockId=" << obj.blockId
      << " fileSize=" << obj.fileSize
-     << " copyNb=" << obj.copyNb
+     << " copyNb=" << static_cast<int>(obj.copyNb)
      << " creationTime=" << obj.creationTime;
    if (obj.supersededByVid.size()) {
      os << " supersededByVid=" << obj.supersededByVid

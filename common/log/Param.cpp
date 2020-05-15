@@ -37,5 +37,12 @@ const std::string &Param::getValue() const throw() {
   return m_value;
 }
 
+template<>
+void Param::setValue<uint8_t>(const uint8_t& value) throw(){
+  std::stringstream oss;
+    oss << static_cast<int>(value);
+    m_value = oss.str();
+}
+
 } // namespace log
 } // namespace cta
