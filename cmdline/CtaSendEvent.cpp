@@ -1,0 +1,253 @@
+/*!
+ * @project       The CERN Tape Archive (CTA)
+ * @brief         Command-line tool to inject events into the CTA Frontend
+ * @copyright     Copyright 2020 CERN
+ * @license       This program is free software: you can redistribute it and/or modify
+ *                it under the terms of the GNU General Public License as published by
+ *                the Free Software Foundation, either version 3 of the License, or
+ *                (at your option) any later version.
+ *
+ *                This program is distributed in the hope that it will be useful,
+ *                but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                GNU General Public License for more details.
+ *
+ *                You should have received a copy of the GNU General Public License
+ *                along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <stdexcept>
+#include <iostream>
+#include <algorithm>
+#include <map>
+
+#include <XrdSsiPbLog.hpp>
+
+#include <common/checksum/ChecksumBlobSerDeser.hpp>
+#include "CtaFrontendApi.hpp"
+
+
+// Define XRootD SSI Alert message callback
+namespace XrdSsiPb {
+/*
+ * Alert callback.
+ *
+ * Defines how Alert messages should be logged by EOS (or directed to the User)
+ */
+template<>
+void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
+{
+  std::cout << "AlertCallback():" << std::endl;
+  XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &alert);
+}
+} // namespace XrdSsiPb
+
+// Attribute map type
+typedef std::map<std::string, std::string> AttrMap;
+
+// Usage exception
+const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE|ABORT_PREPARE");
+
+// remove leading spaces and quotes
+void ltrim(std::string &s) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+    return !(std::isspace(ch) || ch == '"');
+  }));
+}
+
+// remove trailing spaces, quotes and commas
+void rtrim(std::string &s) {
+  s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+    return !(std::isspace(ch) || ch == '"' || ch == ',');
+  }).base(), s.end());
+}
+
+// parse JSON and fill attribute maps
+void parseFileInfo(std::istream &in, AttrMap &attr, AttrMap &xattr)
+{
+  const int MaxLineLength = 4096;
+  char buffer[MaxLineLength];
+  bool isXattr(false);
+
+  while(true) {
+    in.getline(buffer, MaxLineLength);
+    if(in.eof()) break;
+    if(in.fail()) {
+       throw std::runtime_error("Parse error. Line too long?");
+    }
+
+    std::string line(buffer);
+    auto sep = line.find_first_of(':');
+    std::string key(line.substr(0,sep));
+    std::string value(line.substr(sep < line.length() ? sep+1 : line.length()));
+    ltrim(key);
+    rtrim(key);
+    ltrim(value);
+    rtrim(value);
+    if(key == "xattr") { isXattr = true; continue; }
+    if(key == "}") isXattr = false;
+    if(value.empty()) continue;
+
+    if(isXattr) {
+      xattr[key] = value;
+    } else {
+      attr[key] = value;
+    }
+  }
+}
+
+
+/*
+ * Fill a Notification message from the command-line parameters and stdin
+ *
+ * @param[out]   notification    The protobuf to fill
+ * @param[in]    argc            The number of command-line arguments
+ * @param[in]    argv            The command-line arguments
+ */
+void fillNotification(cta::eos::Notification &notification, int argc, const char *const *const argv)
+{
+  // First argument must be a valid command specifying which workflow action to execute
+
+  if(argc != 2) throw Usage;
+
+  const std::string wf_command(argv[1]);
+
+  if(wf_command == "CLOSEW")
+  {
+    notification.mutable_wf()->set_event(cta::eos::Workflow::CLOSEW);
+  }
+  else if(wf_command == "PREPARE")
+  {
+    notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
+  }
+  else if(wf_command == "ABORT_PREPARE")
+  {
+    notification.mutable_wf()->set_event(cta::eos::Workflow::ABORT_PREPARE);
+  }
+#if 0
+  else if(wf_command == "DELETE")
+  {
+    notification.mutable_wf()->set_event(cta::eos::Workflow::DELETE);
+  }
+#endif
+  else throw Usage;
+
+  // Parse the JSON input on stdin
+  AttrMap attr;
+  AttrMap xattrs;
+  parseFileInfo(std::cin, attr, xattrs);
+
+  // WF
+  notification.mutable_wf()->mutable_instance()->set_name(attr["geotag"]);
+  notification.mutable_wf()->mutable_instance()->set_url("root://ctadevmichael.cern.ch:1094//eos/test/motd.1?eos.lfn=fxid:100000010");
+  notification.mutable_wf()->set_requester_instance("myhost:fst");
+
+  // CLI
+  notification.mutable_cli()->mutable_user()->set_username("mdavis");
+  notification.mutable_cli()->mutable_user()->set_groupname("si");
+
+  // Transport
+  if(wf_command == "CLOSEW") {
+    notification.mutable_transport()->set_report_url("eosQuery://ctadevmichael.cern.ch:1094//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=100000010&mgm.logid=cta&mgm.event=sync::archived&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=4294967296");
+  } else if(wf_command == "PREPARE") {
+    notification.mutable_transport()->set_dst_url("not set"); // for retrieve WF
+  }
+  notification.mutable_transport()->set_error_report_url("eosQuery://ctadevmichael.cern.ch:1094//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=100000010&mgm.logid=cta&mgm.event=sync::archive_failed&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=4294967296&mgm.errmsg=");
+
+  // File
+  notification.mutable_file()->set_fid(std::strtoul(attr["id"].c_str(), nullptr, 0));
+  notification.mutable_file()->mutable_owner()->set_uid(std::stoi(attr["uid"]));
+  notification.mutable_file()->mutable_owner()->set_gid(std::stoi(attr["gid"]));
+  notification.mutable_file()->set_size(std::strtoul(attr["size"].c_str(), nullptr, 0));
+
+  // In principle it's possible to set the full checksum blob with multiple checksums of different types.
+  // For now we support only one checksum which is always of type ADLER32.
+  auto cs = notification.mutable_file()->mutable_csb()->add_cs();
+  if(attr["checksumtype"] == "ADLER32") {
+    cs->set_type(cta::common::ChecksumBlob::Checksum::ADLER32);
+  }
+  cs->set_value(cta::checksum::ChecksumBlob::HexToByteArray(attr["checksumvalue"]));
+  notification.mutable_file()->set_lpath(attr["path"]);
+
+  // eXtended attributes
+  for(auto &xattr : xattrs) {
+    google::protobuf::MapPair<std::string,std::string> mp(xattr.first, xattr.second);
+    notification.mutable_file()->mutable_xattr()->insert(mp);
+  }
+}
+
+
+/*
+ * Sends a Notification to the CTA XRootD SSI server
+ */
+int exceptionThrowingMain(int argc, const char *const *const argv)
+{
+  // Verify that the Google Protocol Buffer header and linked library versions are compatible
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  cta::xrd::Request request;
+  cta::eos::Notification &notification = *(request.mutable_notification());
+
+  // Parse the command line arguments: fill the Notification fields
+  fillNotification(notification, argc, argv);
+
+  // Set configuration options
+  XrdSsiPb::Config config("/etc/cta/cta-cli.conf", "cta");
+  config.set("resource", "/ctafrontend");
+
+  // Allow environment variables to override config file
+  config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");
+
+  // If XRDDEBUG=1, switch on all logging
+  if(getenv("XRDDEBUG")) {
+    config.set("log", "all");
+  }
+  // If fine-grained control over log level is required, use XrdSsiPbLogLevel
+  config.getEnv("log", "XrdSsiPbLogLevel");
+
+  // Obtain a Service Provider
+  XrdSsiPbServiceType cta_service(config);
+
+  // Send the Request to the Service and get a Response
+  cta::xrd::Response response;
+  cta_service.Send(request, response);
+
+  // Handle responses
+  switch(response.type())
+  {
+    using namespace cta::xrd;
+
+    case Response::RSP_SUCCESS:         std::cout << response.message_txt() << std::endl; break;
+    case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
+    case Response::RSP_ERR_USER:        throw std::runtime_error(response.message_txt());
+    // ... define other response types in the protocol buffer (e.g. user error)
+    default:                            throw XrdSsiPb::PbException("Invalid response type.");
+  }
+
+  // Delete all global objects allocated by libprotobuf
+  google::protobuf::ShutdownProtobufLibrary();
+
+  return 0;
+}
+
+
+/*
+ * Start here
+ */
+int main(int argc, const char **argv)
+{
+  try {    
+    return exceptionThrowingMain(argc, argv);
+  } catch (XrdSsiPb::PbException &ex) {
+    std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
+  } catch (XrdSsiPb::XrdSsiException &ex) {
+    std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
+  } catch (std::exception &ex) {
+    std::cerr << "Caught exception: " << ex.what() << std::endl;
+  } catch (...) {
+    std::cerr << "Caught an unknown exception" << std::endl;
+  }
+
+  return 0;
+}

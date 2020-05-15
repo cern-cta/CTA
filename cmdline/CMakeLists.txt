@@ -36,6 +36,14 @@ target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsiLib XrdUtils ctacommon)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 #
+# cta-send-event CLOSEW|PREPARE|ABORT_PREPARE
+# injects a workflow event into the CTA Frontend
+#
+add_executable(cta-send-event CtaSendEvent.cpp)
+target_link_libraries(cta-send-event ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
+set_property (TARGET cta-send-event APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+
+#
 # cta-wfe-test archive|retrieve|delete <options> allows testing of the SSI WorkFlow Engine hooks
 # without invoking EOS.
 #
