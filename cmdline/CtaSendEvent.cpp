@@ -46,7 +46,7 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 typedef std::map<std::string, std::string> AttrMap;
 
 // Usage exception
-const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE|ABORT_PREPARE");
+const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event [eos_hostname:port] CLOSEW|PREPARE|ABORT_PREPARE");
 
 // remove leading spaces and quotes
 void ltrim(std::string &s) {
@@ -106,12 +106,16 @@ void parseFileInfo(std::istream &in, AttrMap &attr, AttrMap &xattr)
  */
 void fillNotification(cta::eos::Notification &notification, int argc, const char *const *const argv)
 {
-  // First argument must be a valid command specifying which workflow action to execute
+  std::string eos_endpoint = "localhost:1095";
 
-  if(argc != 2) throw Usage;
+  if(argc == 3) {
+    eos_endpoint = argv[1];
+  } else if(argc != 2) {
+    throw Usage;
+  }
 
-  const std::string wf_command(argv[1]);
-
+  // Set the event type
+  const std::string wf_command(argv[argc-1]);
   if(wf_command == "CLOSEW")
   {
     notification.mutable_wf()->set_event(cta::eos::Workflow::CLOSEW);
@@ -124,23 +128,28 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
   {
     notification.mutable_wf()->set_event(cta::eos::Workflow::ABORT_PREPARE);
   }
-#if 0
-  else if(wf_command == "DELETE")
-  {
-    notification.mutable_wf()->set_event(cta::eos::Workflow::DELETE);
+  else {
+    throw Usage;
   }
-#endif
-  else throw Usage;
 
   // Parse the JSON input on stdin
   AttrMap attr;
   AttrMap xattrs;
   parseFileInfo(std::cin, attr, xattrs);
 
+  std::string accessUrl = "root://" + eos_endpoint + "/" + attr["path"] + "?eos.lfn=fxid:" + attr["fxid"];
+  std::string reportUrl = "eosQuery://" + eos_endpoint + "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] +
+     "&mgm.logid=cta&mgm.event=sync::archived&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=" +
+     xattrs["sys.archive.file_id"];
+  std::string errorReportUrl = "eosQuery://" + eos_endpoint + "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] +
+     "&mgm.logid=cta&mgm.event=sync::archive_failed&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=" +
+     xattrs["sys.archive.file_id"] + "&mgm.errmsg=";
+  std::string destUrl = "TO DO"; // TO DO: required only for retrieve workflow
+
   // WF
   notification.mutable_wf()->mutable_instance()->set_name(attr["geotag"]);
-  notification.mutable_wf()->mutable_instance()->set_url("root://ctadevmichael.cern.ch:1094//eos/test/motd.1?eos.lfn=fxid:100000010");
-  notification.mutable_wf()->set_requester_instance("myhost:fst");
+  notification.mutable_wf()->mutable_instance()->set_url(accessUrl);
+  notification.mutable_wf()->set_requester_instance("cta-send-event");
 
   // CLI
   notification.mutable_cli()->mutable_user()->set_username("mdavis");
@@ -148,11 +157,11 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
 
   // Transport
   if(wf_command == "CLOSEW") {
-    notification.mutable_transport()->set_report_url("eosQuery://ctadevmichael.cern.ch:1094//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=100000010&mgm.logid=cta&mgm.event=sync::archived&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=4294967296");
+    notification.mutable_transport()->set_report_url(reportUrl);
   } else if(wf_command == "PREPARE") {
-    notification.mutable_transport()->set_dst_url("not set"); // for retrieve WF
+    notification.mutable_transport()->set_dst_url(destUrl);
   }
-  notification.mutable_transport()->set_error_report_url("eosQuery://ctadevmichael.cern.ch:1094//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=100000010&mgm.logid=cta&mgm.event=sync::archive_failed&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=4294967296&mgm.errmsg=");
+  notification.mutable_transport()->set_error_report_url(errorReportUrl);
 
   // File
   notification.mutable_file()->set_fid(std::strtoul(attr["id"].c_str(), nullptr, 0));
@@ -163,7 +172,7 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
   // In principle it's possible to set the full checksum blob with multiple checksums of different types.
   // For now we support only one checksum which is always of type ADLER32.
   auto cs = notification.mutable_file()->mutable_csb()->add_cs();
-  if(attr["checksumtype"] == "ADLER32") {
+  if(attr["checksumtype"] == "adler") {
     cs->set_type(cta::common::ChecksumBlob::Checksum::ADLER32);
   }
   cs->set_value(cta::checksum::ChecksumBlob::HexToByteArray(attr["checksumvalue"]));
