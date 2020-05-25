@@ -46,7 +46,7 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 typedef std::map<std::string, std::string> AttrMap;
 
 // Usage exception
-const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event [eos_hostname:port] CLOSEW|PREPARE|ABORT_PREPARE");
+const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event [eos_hostname:port] CLOSEW|PREPARE");
 
 // remove leading spaces and quotes
 void ltrim(std::string &s) {
@@ -124,10 +124,6 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
   {
     notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
   }
-  else if(wf_command == "ABORT_PREPARE")
-  {
-    notification.mutable_wf()->set_event(cta::eos::Workflow::ABORT_PREPARE);
-  }
   else {
     throw Usage;
   }
@@ -144,10 +140,11 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
   std::string errorReportUrl = "eosQuery://" + eos_endpoint + "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] +
      "&mgm.logid=cta&mgm.event=sync::archive_failed&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=" +
      xattrs["sys.archive.file_id"] + "&mgm.errmsg=";
-  std::string destUrl = "TO DO"; // TO DO: required only for retrieve workflow
+  std::string destUrl = "root://" + eos_endpoint + "/" + attr["path"] + "?eos.lfn=fxid:" + attr["fxid"] +
+     "&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
 
   // WF
-  notification.mutable_wf()->mutable_instance()->set_name(attr["geotag"]);
+  notification.mutable_wf()->mutable_instance()->set_name(attr["instance"]);
   notification.mutable_wf()->mutable_instance()->set_url(accessUrl);
   notification.mutable_wf()->set_requester_instance("cta-send-event");
 
