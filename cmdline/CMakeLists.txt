@@ -56,6 +56,7 @@ set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPAT
 
 install(TARGETS cta-admin DESTINATION usr/bin)
 install(FILES cta-admin.1cta DESTINATION usr/share/man/man1)
-install(TARGETS cta-wfe-test DESTINATION usr/bin)
+install(TARGETS cta-send-event DESTINATION usr/bin)
+install(FILES cta-send-event.sh DESTINATION usr/bin)
 install(FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
