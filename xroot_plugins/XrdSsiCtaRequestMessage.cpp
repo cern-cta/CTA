@@ -284,10 +284,21 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
          break;
 
       case Request::kNotification:
-         // Validate that instance name in SSS key and instance name in Protocol buffer match
+         // Validate that instance name in key used to authenticate matches instance name in Protocol buffer
          if(m_cliIdentity.username != request.notification().wf().instance().name()) {
-            throw PbException("Instance name \"" + request.notification().wf().instance().name() +
-                              "\" does not match key identifier \"" + m_cliIdentity.username + "\"");
+            // Special case: allow KRB5 authentication for CLOSEW and PREPARE events, to allow operators
+            // to use a command line tool to resubmit failed archive or prepare requests. This is NOT
+            // permitted for DELETE events as we don't want files removed from the catalogue to be left
+            // in the EOS namespace.
+            if(m_protocol == Protocol::KRB5 &&
+               (request.notification().wf().event() == cta::eos::Workflow::CLOSEW ||
+                request.notification().wf().event() == cta::eos::Workflow::PREPARE)) {
+               m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
+               m_cliIdentity.username = request.notification().wf().instance().name();
+            } else {
+               throw PbException("Instance name \"" + request.notification().wf().instance().name() +
+                                 "\" does not match key identifier \"" + m_cliIdentity.username + "\"");
+            }
          }
 
          // Map the Workflow Event to a method
