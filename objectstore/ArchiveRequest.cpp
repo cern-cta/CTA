@@ -966,6 +966,20 @@ std::list<std::string> ArchiveRequest::getFailures() {
 }
 
 //------------------------------------------------------------------------------
+// ArchiveRequest::getReportFailures()
+//------------------------------------------------------------------------------
+std::list<std::string> ArchiveRequest::getReportFailures() {
+  checkPayloadReadable();
+  std::list<std::string> ret;
+  for (auto &j: m_payload.jobs()) {
+    for (auto &f: j.reportfailurelogs()) {
+      ret.push_back(f);
+    }
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // ArchiveRequest::setJobStatus()
 //------------------------------------------------------------------------------
 void ArchiveRequest::setJobStatus(uint32_t copyNumber, const serializers::ArchiveJobStatus& status) {

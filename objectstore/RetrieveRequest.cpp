@@ -1316,6 +1316,20 @@ std::list<std::string> RetrieveRequest::getFailures() {
 }
 
 //------------------------------------------------------------------------------
+// RetrieveRequest::getReportFailures()
+//------------------------------------------------------------------------------
+std::list<std::string> RetrieveRequest::getReportFailures() {
+  checkPayloadReadable();
+  std::list<std::string> ret;
+  for (auto &j: m_payload.jobs()) {
+    for (auto &f: j.reportfailurelogs()) {
+      ret.push_back(f);
+    }
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // RetrieveRequest::setFailureReason()
 //------------------------------------------------------------------------------
 void RetrieveRequest::setFailureReason(const std::string& reason) {

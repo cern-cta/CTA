@@ -220,6 +220,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
   JobQueueType getQueueType(uint32_t copyNumber);
   std::list<std::string> getFailures();
+  std::list<std::string> getReportFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
   serializers::RetrieveJobStatus getJobStatus(uint32_t copyNumber);
   void setJobStatus(uint32_t copyNumber, const serializers::RetrieveJobStatus &status);

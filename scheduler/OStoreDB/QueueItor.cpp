@@ -120,6 +120,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
         job.request.storageClass     = osar.first.getArchiveFile().storageClass;
         job.objectId                 = osar.first.getAddressIfSet();
         job.failurelogs              = osar.first.getFailures();
+        job.reportfailurelogs        = osar.first.getReportFailures();
 
         m_jobCache.push_back(job);
       }
@@ -213,6 +214,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
         job.tapeCopies[tf.vid] = std::make_pair(tf.copyNb, tf);
         job.objectId           = osrr.first.getAddressIfSet();
         job.failurelogs        = osrr.first.getFailures();
+        job.reportfailurelogs  = osrr.first.getReportFailures();
         job.diskInstance       = archiveFile.diskInstance;
         job.storageClass       = archiveFile.storageClass;
         job.diskFileId         = archiveFile.diskFileId;

@@ -152,6 +152,7 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
 
   if(m_isLogEntries) {
     *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
+    *record.mutable_frls_item()->mutable_reportfailurelogs() = { item.reportfailurelogs.begin(), item.reportfailurelogs.end() };
   }
   return streambuf->Push(record);
 }
@@ -192,6 +193,7 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
 
   if(m_isLogEntries) {
     *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
+    *record.mutable_frls_item()->mutable_reportfailurelogs() = { item.reportfailurelogs.begin(), item.reportfailurelogs.end() };
   }
   return streambuf->Push(record);
 }

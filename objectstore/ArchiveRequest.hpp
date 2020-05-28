@@ -61,6 +61,7 @@ public:
   };
   RetryStatus getRetryStatus(uint32_t copyNumber);
   std::list<std::string> getFailures();
+  std::list<std::string> getReportFailures();
   serializers::ArchiveJobStatus getJobStatus(uint32_t copyNumber);
   void setJobStatus(uint32_t copyNumber, const serializers::ArchiveJobStatus & status);
   std::string getTapePoolForJob(uint32_t copyNumber);

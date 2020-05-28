@@ -47,6 +47,7 @@ struct ArchiveJob {
   uint64_t archiveFileID;
   std::string objectId; //!< Objectstore address, provided when reporting a failed job
   std::list<std::string> failurelogs;
+  std::list<std::string> reportfailurelogs;
 
 }; // struct ArchiveJob
 
