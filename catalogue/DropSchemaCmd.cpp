@@ -199,25 +199,6 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "DISK_SYSTEM"
     };
     dropDatabaseTables(conn, tablesToDrop);
-
-    std::list<std::string> triggersToDrop = {
-      "CHECK_ARCHIVE_FILE_BEFORE_INSERT",
-      "CHECK_ARCHIVE_FILE_BEFORE_UPDATE",
-      "TAPE_POOL_IS_ENCRYPTED_BOOL_CK_BEFORE_INSERT",
-      "TAPE_POOL_IS_ENCRYPTED_BOOL_CK_BEFORE_UPDATE",
-      "ARCHIVE_ROUTE_COPY_NB_GT_ZERO_BEFORE_INSERT",
-      "ARCHIVE_ROUTE_COPY_NB_GT_ZERO_BEFORE_UPDATE",
-      "CHECK_TAPE_BEFORE_INSERT",
-      "CHECK_TAPE_BEFORE_UPDATE",
-      "TAPE_FILE_COPY_NB_GT_ZERO_BEFORE_INSERT",
-      "TAPE_FILE_COPY_NB_GT_ZERO_BEFORE_UPDATE",
-      "CHECK_LOGICAL_LIBRARY_BEFORE_INSERT",
-      "CHECK_LOGICAL_LIBRARY_BEFORE_UPDATE"
-    };
-    for (auto triggerToDrop: triggersToDrop) {
-      conn.executeNonQuery(std::string("DROP TRIGGER IF EXISTS ") + triggerToDrop);
-      m_out << "Dropped Trigger " << triggerToDrop << std::endl;
-    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
