@@ -164,6 +164,54 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassVo(admin, name, vo);}, m_maxTriesToConnect);
   }
 
+  void createMediaType(const common::dataStructures::SecurityIdentity &admin, const MediaType &mediaType) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createMediaType(admin, mediaType);}, m_maxTriesToConnect);
+  }
+
+  void deleteMediaType(const std::string &name) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteMediaType(name);}, m_maxTriesToConnect);
+  }
+
+  std::list<MediaTypeWithLogs> getMediaTypes() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getMediaTypes();}, m_maxTriesToConnect);
+  }
+
+  void modifyMediaTypeName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeName(admin, currentName, newName);}, m_maxTriesToConnect);
+  }
+
+  void modifyMediaTypeCartridge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &cartridge) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeCartridge(admin, name, cartridge);}, m_maxTriesToConnect);
+  }
+
+  void modifyMediaTypeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t capacityInBytes) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeCapacityInBytes(admin, name, capacityInBytes);}, m_maxTriesToConnect);
+  }
+
+  void modifyMediaTypePrimaryDensityCode(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint8_t primaryDensityCode) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypePrimaryDensityCode(admin, name, primaryDensityCode);}, m_maxTriesToConnect);
+  }
+
+  void modifyMediaTypeSecondaryDensityCode(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint8_t secondaryDensityCode) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeSecondaryDensityCode(admin, name, secondaryDensityCode);}, m_maxTriesToConnect);
+  }
+
+  void modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint32_t> &nbWraps) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeNbWraps(admin, name, nbWraps);}, m_maxTriesToConnect);
+  }
+
+  void modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &minLPos) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeMinLPos(admin, name, minLPos);}, m_maxTriesToConnect);
+  }
+
+  void modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &maxLPos) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeMaxLPos(admin, name, maxLPos);}, m_maxTriesToConnect);
+  }
+
+  void modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeComment(admin, name, comment);}, m_maxTriesToConnect);
+  }
+
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, supply, comment);}, m_maxTriesToConnect);
   }

@@ -179,6 +179,44 @@ uint64_t MysqlCatalogue::getNextVirtualOrganizationId(rdbms::Conn& conn) {
   }
 }
 
+//------------------------------------------------------------------------------
+// getNextMediaTypeId
+//------------------------------------------------------------------------------
+uint64_t MysqlCatalogue::getNextMediaTypeId(rdbms::Conn &conn) {
+  try {
+    rdbms::AutoRollback autoRollback(conn);
+
+    conn.executeNonQuery("START TRANSACTION");
+
+    {
+      const char *const sql = "UPDATE MEDIA_TYPE_ID SET ID = LAST_INSERT_ID(ID + 1)";
+      auto stmt = conn.createStmt(sql);
+      stmt.executeNonQuery();
+    }
+
+    uint64_t id = 0;
+    {
+      const char *const sql = "SELECT LAST_INSERT_ID() AS ID ";
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery();
+      if(!rset.next()) {
+        throw exception::Exception("MEDIA_TYPE_ID table is empty");
+      }
+      id = rset.columnUint64("ID");
+      if(rset.next()) {
+        throw exception::Exception("Found more than one ID counter in the MEDIA_TYPE_ID table");
+      }
+    }
+    conn.commit();
+
+    return id;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
 //------------------------------------------------------------------------------
 // getNextStorageClassId

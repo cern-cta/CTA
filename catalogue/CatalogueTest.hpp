@@ -87,6 +87,16 @@ protected:
     const std::list<cta::common::dataStructures::AdminUser> &listOfAdminUsers);
 
   /**
+   * Creates a map from tape meida type name to tape media type from the
+   * specified list of tape media types.
+   *
+   * @param listOfMediaTypes The list of tape media types.
+   * @return Map from tape media type name to tape media type.
+   */
+  std::map<std::string, cta::catalogue::MediaTypeWithLogs> mediaTypeWithLogsListToMap(
+    const std::list<cta::catalogue::MediaTypeWithLogs> &listOfMediaTypes);
+
+  /**
    * Creates a map from tape pool name to tape pool from the specified list of
    * tape pools.
    *

@@ -23,6 +23,7 @@
 #include "catalogue/UserSpecifiedANonExistentLogicalLibrary.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentDiskSystem.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringCartridge.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringDiskSystemName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringFileRegexp.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringFreeSpaceQueryURL.hpp"
@@ -32,6 +33,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringDiskInstanceName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringMediaType.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringMediaTypeName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringStorageClassName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
@@ -162,6 +164,12 @@ void cta_catalogue_CatalogueTest::SetUp() {
       const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
       for(auto &tape: tapes) {
         m_catalogue->deleteTape(tape.vid);
+      }
+    }
+    {
+      const auto mediaTypes = m_catalogue->getMediaTypes();
+      for(auto &mediaType: mediaTypes) {
+        m_catalogue->deleteMediaType(mediaType.name);
       }
     }
     {
@@ -299,6 +307,30 @@ std::map<std::string, cta::common::dataStructures::AdminUser> cta_catalogue_Cata
         throw ex;
       }
       m[adminUser.name] = adminUser;
+    }
+    return m;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// mediaTypeWithLogsListToMap
+//------------------------------------------------------------------------------
+std::map<std::string, cta::catalogue::MediaTypeWithLogs> cta_catalogue_CatalogueTest::mediaTypeWithLogsListToMap(
+  const std::list<cta::catalogue::MediaTypeWithLogs> &listOfMediaTypes) {
+  using namespace cta;
+
+  try {
+    std::map<std::string, cta::catalogue::MediaTypeWithLogs> m;
+
+    for(auto &mediaType: listOfMediaTypes) {
+      if(m.end() != m.find(mediaType.name)) {
+        exception::Exception ex;
+        ex.getMessage() << "Media type " << mediaType.name << " is a duplicate";
+        throw ex;
+      }
+      m[mediaType.name] = mediaType;
     }
     return m;
   } catch(exception::Exception &ex) {
@@ -974,6 +1006,939 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVoDoesNotExist) {
   ASSERT_THROW(m_catalogue->modifyStorageClassVo(m_admin,storageClass.name,"DOES_NOT_EXISTS"),exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, createMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  const auto mediaTypes = m_catalogue->getMediaTypes();
+
+  ASSERT_EQ(1, mediaTypes.size());
+
+  ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+  ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+  ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+  ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+  ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+  ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+  ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+  ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+  ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+  
+  const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createMediaType_same_twice) {
+  using namespace cta;
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  m_catalogue->createMediaType(m_admin, mediaType);
+  ASSERT_THROW(m_catalogue->createMediaType(m_admin, mediaType), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createMediaType_emptyStringMediaTypeName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  ASSERT_THROW(m_catalogue->createMediaType(m_admin, mediaType),
+    catalogue::UserSpecifiedAnEmptyStringMediaTypeName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createMediaType_emptyStringComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "";
+
+  ASSERT_THROW(m_catalogue->createMediaType(m_admin, mediaType),
+    catalogue::UserSpecifiedAnEmptyStringComment);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createMediaType_emptyStringCartridge) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+
+  ASSERT_THROW(m_catalogue->createMediaType(m_admin, mediaType),
+    catalogue::UserSpecifiedAnEmptyStringCartridge);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  const auto mediaTypes = m_catalogue->getMediaTypes();
+
+  ASSERT_EQ(1, mediaTypes.size());
+
+  ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+  ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+  ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+  ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+  ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+  ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+  ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+  ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+  ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+  
+  const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->deleteMediaType(mediaType.name);
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteMediaType_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  ASSERT_THROW(m_catalogue->deleteMediaType("media_type"), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createTape_deleteStorageClass) {
+  // TO BE DONE
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+  
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string newMediaTypeName = "new_media_type";
+  m_catalogue->modifyMediaTypeName(m_admin, mediaType.name, newMediaTypeName);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(newMediaTypeName, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+  
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeName_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  const std::string currentName = "media_type";
+  const std::string newName = "new_media_type";
+  ASSERT_THROW(m_catalogue->modifyMediaTypeName(m_admin, currentName, newName), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeName_newNameAlreadyExists) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType1;
+  mediaType1.name = "media_type_1";
+  mediaType1.cartridge = "cartridge_1";
+  mediaType1.capacityInBytes = 1;
+  mediaType1.primaryDensityCode = 2;
+  mediaType1.secondaryDensityCode = 3;
+  mediaType1.nbWraps = 4;
+  mediaType1.minLPos = 5;
+  mediaType1.maxLPos = 6;
+  mediaType1.comment = "Create media type 1";
+
+  m_catalogue->createMediaType(m_admin, mediaType1);
+
+  catalogue::MediaType mediaType2;
+  mediaType2.name = "media_type_2";
+  mediaType2.cartridge = "cartridge_2";
+  mediaType2.capacityInBytes = 7;
+  mediaType2.primaryDensityCode = 8;
+  mediaType2.secondaryDensityCode = 9;
+  mediaType2.nbWraps = 10;
+  mediaType2.minLPos = 11;
+  mediaType2.maxLPos = 12;
+  mediaType2.comment = "Create media type 2";
+
+  m_catalogue->createMediaType(m_admin, mediaType2);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(2, mediaTypes.size());
+
+    const auto mediaTypeMap = mediaTypeWithLogsListToMap(mediaTypes);
+
+    ASSERT_EQ(2, mediaTypeMap.size());
+
+    auto mediaType1Itor = mediaTypeMap.find(mediaType1.name);
+    ASSERT_TRUE(mediaType1Itor != mediaTypeMap.end());
+
+    ASSERT_EQ(mediaType1.name, mediaType1Itor->second.name);
+    ASSERT_EQ(mediaType1.cartridge, mediaType1Itor->second.cartridge);
+    ASSERT_EQ(mediaType1.capacityInBytes, mediaType1Itor->second.capacityInBytes);
+    ASSERT_EQ(mediaType1.primaryDensityCode, mediaType1Itor->second.primaryDensityCode);
+    ASSERT_EQ(mediaType1.secondaryDensityCode, mediaType1Itor->second.secondaryDensityCode);
+    ASSERT_EQ(mediaType1.nbWraps, mediaType1Itor->second.nbWraps);
+    ASSERT_EQ(mediaType1.minLPos, mediaType1Itor->second.minLPos);
+    ASSERT_EQ(mediaType1.maxLPos, mediaType1Itor->second.maxLPos);
+    ASSERT_EQ(mediaType1.comment, mediaType1Itor->second.comment);
+  
+    const common::dataStructures::EntryLog creationLog1 = mediaType1Itor->second.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog1.username);
+    ASSERT_EQ(m_admin.host, creationLog1.host);
+
+    const common::dataStructures::EntryLog lastModificationLog1 = mediaType1Itor->second.lastModificationLog;
+    ASSERT_EQ(creationLog1, lastModificationLog1);
+
+    auto mediaType2Itor = mediaTypeMap.find(mediaType2.name);
+    ASSERT_TRUE(mediaType2Itor != mediaTypeMap.end());
+
+    ASSERT_EQ(mediaType2.name, mediaType2Itor->second.name);
+    ASSERT_EQ(mediaType2.cartridge, mediaType2Itor->second.cartridge);
+    ASSERT_EQ(mediaType2.capacityInBytes, mediaType2Itor->second.capacityInBytes);
+    ASSERT_EQ(mediaType2.primaryDensityCode, mediaType2Itor->second.primaryDensityCode);
+    ASSERT_EQ(mediaType2.secondaryDensityCode, mediaType2Itor->second.secondaryDensityCode);
+    ASSERT_EQ(mediaType2.nbWraps, mediaType2Itor->second.nbWraps);
+    ASSERT_EQ(mediaType2.minLPos, mediaType2Itor->second.minLPos);
+    ASSERT_EQ(mediaType2.maxLPos, mediaType2Itor->second.maxLPos);
+    ASSERT_EQ(mediaType2.comment, mediaType2Itor->second.comment);
+  
+    const common::dataStructures::EntryLog creationLog2 = mediaType2Itor->second.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog2.username);
+    ASSERT_EQ(m_admin.host, creationLog2.host);
+
+    const common::dataStructures::EntryLog lastModificationLog2 = mediaType2Itor->second.lastModificationLog;
+    ASSERT_EQ(creationLog2, lastModificationLog2);
+  }
+
+  // Try to rename the first media type with the name of the second one
+  ASSERT_THROW(m_catalogue->modifyMediaTypeName(m_admin, mediaType1.name, mediaType2.name),exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeCartridge) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedCartridge = "new_cartridge";
+  m_catalogue->modifyMediaTypeCartridge(m_admin, mediaType.name, modifiedCartridge);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(modifiedCartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeCartridge_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  const std::string name = "media_type";
+  const std::string cartridge = "cartride";
+  ASSERT_THROW(m_catalogue->modifyMediaTypeCartridge(m_admin, name, cartridge), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeCapacityInBytes) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedCapacityInBytes = 7;
+  m_catalogue->modifyMediaTypeCapacityInBytes(m_admin, mediaType.name, modifiedCapacityInBytes);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(modifiedCapacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeCapacityInBytes_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  const std::string name = "media_type";
+  const uint64_t capacityInBytes = 1;
+  ASSERT_THROW(m_catalogue->modifyMediaTypeCapacityInBytes(m_admin, name, capacityInBytes), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypePrimaryDensityCode) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint8_t modifiedPrimaryDensityCode = 7;
+  m_catalogue->modifyMediaTypePrimaryDensityCode(m_admin, mediaType.name, modifiedPrimaryDensityCode);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(modifiedPrimaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypePrimaryDensityCode_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  const std::string name = "media_type";
+  const uint8_t primaryDensityCode = 1;
+  ASSERT_THROW(m_catalogue->modifyMediaTypePrimaryDensityCode(m_admin, name, primaryDensityCode), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeSecondaryDensityCode) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint8_t modifiedSecondaryDensityCode = 7;
+  m_catalogue->modifyMediaTypeSecondaryDensityCode(m_admin, mediaType.name, modifiedSecondaryDensityCode);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(modifiedSecondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeSecondaryDensityCode_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  const std::string name = "media_type";
+  const uint8_t secondaryDensityCode = 1;
+  ASSERT_THROW(m_catalogue->modifyMediaTypeSecondaryDensityCode(m_admin, name, secondaryDensityCode), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeNbWraps) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint32_t modifiedNbWraps = 7;
+  m_catalogue->modifyMediaTypeNbWraps(m_admin, mediaType.name, modifiedNbWraps);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(modifiedNbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeNbWraps_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  const std::string name = "media_type";
+  const uint32_t nbWraps = 1;
+  ASSERT_THROW(m_catalogue->modifyMediaTypeNbWraps(m_admin, name, nbWraps), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeMinLPos) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedMinLPos = 7;
+  m_catalogue->modifyMediaTypeMinLPos(m_admin, mediaType.name, modifiedMinLPos);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(modifiedMinLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeMinLPos_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  const std::string name = "media_type";
+  const uint64_t minLPos = 1;
+  ASSERT_THROW(m_catalogue->modifyMediaTypeMinLPos(m_admin, name, minLPos), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeMaxLPos) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t modifiedMaxLPos = 7;
+  m_catalogue->modifyMediaTypeMaxLPos(m_admin, mediaType.name, modifiedMaxLPos);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(modifiedMaxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeMaxLPos_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  const std::string name = "media_type";
+  const uint64_t maxLPos = 1;
+  ASSERT_THROW(m_catalogue->modifyMediaTypeMaxLPos(m_admin, name, maxLPos), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 1;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+  
+  m_catalogue->createMediaType(m_admin, mediaType);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(mediaType.comment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = mediaTypes.front().lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedComment = "Modified comment";
+  m_catalogue->modifyMediaTypeComment(m_admin, mediaType.name, modifiedComment);
+
+  {
+    const auto mediaTypes = m_catalogue->getMediaTypes();
+
+    ASSERT_EQ(1, mediaTypes.size());
+
+    ASSERT_EQ(mediaType.name, mediaTypes.front().name);
+    ASSERT_EQ(mediaType.cartridge, mediaTypes.front().cartridge);
+    ASSERT_EQ(mediaType.capacityInBytes, mediaTypes.front().capacityInBytes);
+    ASSERT_EQ(mediaType.primaryDensityCode, mediaTypes.front().primaryDensityCode);
+    ASSERT_EQ(mediaType.secondaryDensityCode, mediaTypes.front().secondaryDensityCode);
+    ASSERT_EQ(mediaType.nbWraps, mediaTypes.front().nbWraps);
+    ASSERT_EQ(mediaType.minLPos, mediaTypes.front().minLPos);
+    ASSERT_EQ(mediaType.maxLPos, mediaTypes.front().maxLPos);
+    ASSERT_EQ(modifiedComment, mediaTypes.front().comment);
+
+    const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeComment_nonExistentMediaType) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  const std::string name = "media_type";
+  const std::string comment = "Comment";
+  ASSERT_THROW(m_catalogue->modifyMediaTypeComment(m_admin, name, comment), exception::UserError);
+}
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   using namespace cta;

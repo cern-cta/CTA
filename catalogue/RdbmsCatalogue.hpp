@@ -277,6 +277,107 @@ public:
    */
   void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override;
 
+  /**
+   * Creates a tape media type.
+   *
+   * @param mediaType The tape media type.
+   */
+  void createMediaType(const common::dataStructures::SecurityIdentity &admin, const MediaType &mediaType) override;
+
+  /**
+   * Deletes the specified tape media type.
+   *
+   * @param name The name of the tape media type.
+   */
+  void deleteMediaType(const std::string &name) override;
+
+  /**
+   * Returns all tape media types.
+   *
+   * @return All tape media types.
+   */
+  std::list<MediaTypeWithLogs> getMediaTypes() const override;
+
+  /**
+   * Modifies the name of the specified tape media type.
+   *
+   * @param currentName The current name of the tape media type.
+   * @param newName The new name of the tape media type.
+   */
+  void modifyMediaTypeName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override;
+
+  /**
+   * Modifies the cartidge of the specified tape media type.
+   *
+   * @param admin The administrator.
+   * @param name The name of the tape media type.
+   * @param cartridge The new cartidge.
+   */
+  void modifyMediaTypeCartridge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &cartridge) override;
+
+  /**
+   * Modify the capacity in bytes of a tape media type.
+   *
+   * @param admin The administrator.
+   * @param name The name of the tape media type.
+   * @param capacityInBytes The new capacity in bytes.
+   */
+  void modifyMediaTypeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t capacityInBytes) override;
+
+  /**
+   * Modify the SCSI primary density code a tape media type.
+   *
+   * @param admin The administrator.
+   * @param name The name of the tape media type.
+   * @param primaryDensityCode The new SCSI primary density code.
+   */
+  void modifyMediaTypePrimaryDensityCode(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint8_t primaryDensityCode) override;
+
+  /**
+   * Modify the SCSI secondary density code a tape media type.
+   *
+   * @param admin The administrator.
+   * @param name The name of the tape media type.
+   * @param secondaryDensityCode The new SCSI secondary density code.
+   */
+  void modifyMediaTypeSecondaryDensityCode(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint8_t secondaryDensityCode) override;
+
+  /**
+   * Modify the number of tape wraps of a tape media type.
+   *
+   * @param admin The administrator.
+   * @param name The name of the tape media type.
+   * @param nbWraps The new number of tape wraps.
+   */
+  void modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint32_t> &nbWraps) override;
+  
+  /**
+   * Modify the minimum longitudinal tape position of a tape media type.
+   *
+   * @param admin The administrator.
+   * @param name The name of the tape media type.
+   * @param minLPos The new minimum longitudinal tape position.
+   */
+  void modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &minLPos) override;
+  
+  /**
+   * Modify the maximum longitudinal tape position of a tape media type.
+   *
+   * @param admin The administrator.
+   * @param name The name of the tape media type.
+   * @param maxLPos The new maximum longitudinal tape position.
+   */
+  void modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &maxLPos) override;
+
+  /**
+   * Modify the comment of a tape media type.
+   *
+   * @param admin The administrator.
+   * @param name The name of the tape media type.
+   * @param comment The new comment.
+   */
+  void modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
+
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override;
   void deleteTapePool(const std::string &name) override;
   std::list<TapePool> getTapePools() const override;
@@ -855,6 +956,16 @@ protected:
    * @return True if the vo exists, false otherwise
    */
   bool virtualOrganizationExists(rdbms::Conn &conn, const std::string &voName) const;
+
+  /**
+   * Returns true if the specified media type exists.
+   *
+   * @param conn The database connection.
+   * @param name The name of the media type.
+   * @return True if the media type exists.
+   */
+  bool mediaTypeExists(rdbms::Conn &conn, const std::string &name) const;
+
   /**
    * Returns true if the specified storage class exists.
    *
@@ -1443,6 +1554,20 @@ protected:
   virtual uint64_t getNextVirtualOrganizationId(rdbms::Conn &conn) = 0;
   
   /**
+   * Returns a unique media type ID that can be used by a new media type within
+   * the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique media type ID that can be used by a new media type
+   * within the catalogue.
+   */
+  virtual uint64_t getNextMediaTypeId(rdbms::Conn &conn) = 0;
+  
+  /**
    * Returns a unique storage class ID that can be used by a new storage class
    * within the catalogue.
    *
@@ -1566,6 +1691,15 @@ protected:
    * @return True if the specified optional string list is both set and empty.
    */
   bool isSetAndEmpty(const optional<std::vector<std::string>> &optionalStrList) const;
+
+  /**
+   * Returns true if the specified media type is currently being used by one or
+   * more archive tapes.
+   *
+   * @param conn The database connection.
+   * @param name The name of the media type
+   */
+  bool mediaTypeIsUsedByTapes(rdbms::Conn &conn, const std::string &name) const;
 
   /**
    * Returns true if the specified storage class is currently being used by one

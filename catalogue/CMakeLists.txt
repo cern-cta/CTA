@@ -72,9 +72,11 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringFileRegexp.cpp
   UserSpecifiedAnEmptyStringFreeSpaceQueryURL.cpp
   UserSpecifiedAZeroRefreshInterval.cpp
+  UserSpecifiedAnEmptyStringCartridge.cpp
   UserSpecifiedAZeroTargetedFreeSpace.cpp
   UserSpecifiedAnEmptyStringLogicalLibraryName.cpp
   UserSpecifiedAnEmptyStringMediaType.cpp
+  UserSpecifiedAnEmptyStringMediaTypeName.cpp
   UserSpecifiedAnEmptyStringStorageClassName.cpp
   UserSpecifiedAnEmptyStringSupply.cpp
   UserSpecifiedAnEmptyStringTapePoolName.cpp
@@ -83,6 +85,7 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringVid.cpp
   UserSpecifiedAnEmptyStringVo.cpp
   UserSpecifiedAnEmptyTapePool.cpp
+  UserSpecifiedMediaTypeUsedByTapes.cpp
   UserSpecifiedStorageClassUsedByArchiveFiles.cpp
   UserSpecifiedStorageClassUsedByArchiveRoutes.cpp
   UserSpecifiedAZeroCapacity.cpp

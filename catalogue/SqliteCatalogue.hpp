@@ -129,6 +129,20 @@ protected:
   uint64_t getNextVirtualOrganizationId(rdbms::Conn &conn) override;
 
   /**
+   * Returns a unique media type ID that can be used by a new media type within
+   * the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique media type ID that can be used by a new media type
+   * within the catalogue.
+   */
+  uint64_t getNextMediaTypeId(rdbms::Conn &conn) override;
+
+  /**
    * Returns a unique storage class ID that can be used by a new storage class
    * within the catalogue.
    *
