@@ -25,6 +25,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Stmt.hpp"
 #include "rdbms/Rset.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -112,7 +113,7 @@ private:
    * Builds ArchiveFile objects from a stream of tape files ordered by archive
    * ID and then copy number.
    */
-  ArchiveFileBuilder m_archiveFileBuilder;
+  ArchiveFileBuilder<cta::common::dataStructures::ArchiveFile> m_archiveFileBuilder;
 
 }; // class RdbmsCatalogueGetArchiveFilesForRepackItor
 

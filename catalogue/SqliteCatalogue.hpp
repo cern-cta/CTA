@@ -162,7 +162,23 @@ protected:
    * @param events The tape file written events.
    */
   void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &events) override;
-
+  
+  /**
+   * Copy the archiveFile and the associated tape files from the ARCHIVE_FILE and TAPE_FILE tables to the recycle-bin tables
+   * and deletes the ARCHIVE_FILE and TAPE_FILE entries.
+   * @param conn the database connection
+   * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
+   * @param lc the log context
+   */
+  void copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) override;
+  
+  /**
+   * Delete the TapeFiles and the ArchiveFile from the recycle-bin in one transaction
+   * @param conn the database connection
+   * @param archiveFileId the archiveFileId of the file to delete from the recycle-bin
+   */
+  void deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn& conn, const uint64_t archiveFileId, log::LogContext& lc) override;
+  
 private:
 
   /**

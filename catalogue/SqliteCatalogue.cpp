@@ -28,6 +28,7 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
+#include "common/log/TimingList.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -126,6 +127,8 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       stmt.executeNonQuery();
     }
     
+    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
+    
     std::set<std::string> vidsToSetDirty;
     //We will insert the vids to set dirty in a set so that
     //we limit the calls to setTapeDirty to the number of tapes that contained the deleted tape files 
@@ -137,7 +140,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        setTapeDirty(conn,vidToSetDirty);
     }
     
-    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
+    const auto setTapeDirtyTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
@@ -165,6 +168,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("getArchiveFileTime", getArchiveFileTime)
        .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
        .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
+       .add("setTapeDirtyTime",setTapeDirtyTime)
        .add("commitTime", commitTime);
     for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
       std::stringstream tapeCopyLogStream;
@@ -500,6 +504,65 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
     throw;
   }
 }
+
+//------------------------------------------------------------------------------
+// copyArchiveFileToRecycleBinAndDelete
+//------------------------------------------------------------------------------
+void SqliteCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    //We currently do an INSERT INTO and a DELETE FROM
+    //in a single transaction
+    conn.executeNonQuery("BEGIN TRANSACTION");
+    copyArchiveFileToRecycleBin(conn,request);
+    tl.insertAndReset("insertToRecycleBinTime",t);
+    deleteArchiveFileAndTapeFiles(conn,request);
+    tl.insertAndReset("deleteArchiveFileAndTapeFilesTime",t);
+    conn.commit();
+    tl.insertAndReset("commitTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("archiveFileId",request.archiveFileID);
+    spc.add("diskFileId",request.diskFileId);
+    spc.add("diskFilePath",request.diskFilePath);
+    spc.add("diskInstance",request.diskInstance);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In MysqlCatalogue::moveArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteTapeFilesAndArchiveFileFromRecycleBin
+//------------------------------------------------------------------------------
+void SqliteCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn& conn, const uint64_t archiveFileId, log::LogContext& lc) {
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    //We currently do two delete in one transaction
+    conn.executeNonQuery("BEGIN TRANSACTION");
+    deleteTapeFilesFromRecycleBin(conn,archiveFileId);
+    tl.insertAndReset("deleteTapeFilesTime",t);
+    deleteArchiveFileFromRecycleBin(conn,archiveFileId);
+    tl.insertAndReset("deleteArchiveFileTime",t);
+    conn.commit();
+    tl.insertAndReset("commitTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("archiveFileId",archiveFileId);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In SqliteCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin: tape files and archiveFiles deleted from the recycle-bin.");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 
 } // namespace catalogue
 } // namespace cta

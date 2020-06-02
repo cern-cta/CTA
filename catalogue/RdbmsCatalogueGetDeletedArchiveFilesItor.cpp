@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,17 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/ArchiveFileItor.hpp"
-#include "catalogue/RdbmsCatalogueGetArchiveFilesItor.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/exception/LostDatabaseConnection.hpp"
-#include "common/exception/UserError.hpp"
+#include "RdbmsCatalogueGetDeletedArchiveFilesItor.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/exception/UserError.hpp"
 
 namespace cta {
 namespace catalogue {
-
-namespace {
+  
+  namespace {
   /**
    * Populates an ArchiveFile object with the current column values of the
    * specified result set.
@@ -34,24 +31,26 @@ namespace {
    * @param rset The result set to be used to populate the ArchiveFile object.
    * @return The populated ArchiveFile object.
    */
-  static common::dataStructures::ArchiveFile populateArchiveFile(const rdbms::Rset &rset) {
+  static common::dataStructures::DeletedArchiveFile populateDeletedArchiveFile(const rdbms::Rset &rset) {
       rset.columnUint64("ARCHIVE_FILE_ID");
     if(!rset.columnIsNull("VID")) {
         rset.columnUint64("COPY_NB");
     }
-    common::dataStructures::ArchiveFile archiveFile;
+    common::dataStructures::DeletedArchiveFile deletedArchiveFile;
 
-    archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
-    archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
-    archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
-    archiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
-    archiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
-    archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
-    archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
-    archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
-    archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
-
+    deletedArchiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+    deletedArchiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+    deletedArchiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
+    deletedArchiveFile.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+    deletedArchiveFile.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
+    deletedArchiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+    deletedArchiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
+    deletedArchiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
+    deletedArchiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+    deletedArchiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
+    deletedArchiveFile.diskFileIdWhenDeleted = rset.columnString("DISK_FILE_ID_WHEN_DELETED");
+    deletedArchiveFile.diskFilePath = rset.columnString("DISK_FILE_PATH");
+    deletedArchiveFile.deletionTime = rset.columnUint64("DELETION_TIME");
     // If there is a tape file
     if (!rset.columnIsNull("VID")) {
       common::dataStructures::TapeFile tapeFile;
@@ -61,22 +60,19 @@ namespace {
       tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
+      tapeFile.checksumBlob = deletedArchiveFile.checksumBlob; // Duplicated for convenience
       if(!rset.columnIsNull("SUPERSEDED_BY_VID") && !rset.columnIsNull("SUPERSEDED_BY_FSEQ")){
         tapeFile.supersededByVid = rset.columnString("SUPERSEDED_BY_VID");
         tapeFile.supersededByFSeq = rset.columnUint64("SUPERSEDED_BY_FSEQ");
       }
-      archiveFile.tapeFiles.push_back(tapeFile);
+      deletedArchiveFile.tapeFiles.push_back(tapeFile);
     }
 
-    return archiveFile;
+    return deletedArchiveFile;
   }
 } // anonymous namespace
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
+RdbmsCatalogueGetDeletedArchiveFilesItor::RdbmsCatalogueGetDeletedArchiveFilesItor(
   log::Logger &log,
   rdbms::ConnPool &connPool,
   const TapeFileSearchCriteria &searchCriteria):
@@ -89,34 +85,37 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   try {
     std::string sql =
       "SELECT "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
-        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
-        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
+        "ARCHIVE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+        "ARCHIVE_FILE_RECYCLE_BIN.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "ARCHIVE_FILE_RECYCLE_BIN.DISK_FILE_ID AS DISK_FILE_ID,"
+        "ARCHIVE_FILE_RECYCLE_BIN.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE_RECYCLE_BIN.DISK_FILE_GID AS DISK_FILE_GID,"
+        "ARCHIVE_FILE_RECYCLE_BIN.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+        "ARCHIVE_FILE_RECYCLE_BIN.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE_RECYCLE_BIN.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
         "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID, "
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SUPERSEDED_BY_FSEQ, "
+        "ARCHIVE_FILE_RECYCLE_BIN.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+        "ARCHIVE_FILE_RECYCLE_BIN.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+        "ARCHIVE_FILE_RECYCLE_BIN.DISK_FILE_ID_WHEN_DELETED AS DISK_FILE_ID_WHEN_DELETED,"
+        "ARCHIVE_FILE_RECYCLE_BIN.DISK_FILE_PATH AS DISK_FILE_PATH,"
+        "ARCHIVE_FILE_RECYCLE_BIN.DELETION_TIME AS DELETION_TIME,"
+        "TAPE_FILE_RECYCLE_BIN.VID AS VID,"
+        "TAPE_FILE_RECYCLE_BIN.FSEQ AS FSEQ,"
+        "TAPE_FILE_RECYCLE_BIN.BLOCK_ID AS BLOCK_ID,"
+        "TAPE_FILE_RECYCLE_BIN.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
+        "TAPE_FILE_RECYCLE_BIN.COPY_NB AS COPY_NB,"
+        "TAPE_FILE_RECYCLE_BIN.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
+        "TAPE_FILE_RECYCLE_BIN.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID, "
+        "TAPE_FILE_RECYCLE_BIN.SUPERSEDED_BY_FSEQ AS SUPERSEDED_BY_FSEQ, "
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
-        "ARCHIVE_FILE "
+        "ARCHIVE_FILE_RECYCLE_BIN "
       "INNER JOIN STORAGE_CLASS ON "
-        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-      "LEFT OUTER JOIN TAPE_FILE ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+        "ARCHIVE_FILE_RECYCLE_BIN.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
+      "LEFT OUTER JOIN TAPE_FILE_RECYCLE_BIN ON "
+        "ARCHIVE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID = TAPE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID "
       "LEFT OUTER JOIN TAPE ON "
-        "TAPE_FILE.VID = TAPE.VID "
+        "TAPE_FILE_RECYCLE_BIN.VID = TAPE.VID "
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
 
@@ -138,27 +137,27 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     bool addedAWhereConstraint = false;
 
     if(searchCriteria.archiveFileId) {
-      sql += " ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+      sql += " ARCHIVE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskInstance) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+      sql += "ARCHIVE_FILE_RECYCLE_BIN.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileId) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
+      sql += "ARCHIVE_FILE_RECYCLE_BIN.DISK_FILE_ID = :DISK_FILE_ID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileOwnerUid) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_UID = :DISK_FILE_UID";
+      sql += "ARCHIVE_FILE_RECYCLE_BIN.DISK_FILE_UID = :DISK_FILE_UID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileGid) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_GID = :DISK_FILE_GID";
+      sql += "ARCHIVE_FILE_RECYCLE_BIN.DISK_FILE_GID = :DISK_FILE_GID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.storageClass) {
@@ -168,12 +167,12 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     }
     if(searchCriteria.vid) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE_FILE.VID = :VID";
+      sql += "TAPE_FILE_RECYCLE_BIN.VID = :VID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.tapeFileCopyNb) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE_FILE.COPY_NB = :TAPE_FILE_COPY_NB";
+      sql += "TAPE_FILE_RECYCLE_BIN.COPY_NB = :TAPE_FILE_COPY_NB";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.tapePool) {
@@ -222,7 +221,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
 
     {
       log::LogContext lc(m_log);
-      lc.log(log::INFO, "RdbmsCatalogueGetArchiveFilesItor - immediately after m_stmt.executeQuery()");
+      lc.log(log::INFO, "RdbmsCatalogueGetDeletedArchiveFilesItor - immediately after m_stmt.executeQuery()");
     }
 
     m_rsetIsEmpty = !m_rset.next();
@@ -234,16 +233,10 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   }
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-RdbmsCatalogueGetArchiveFilesItor::~RdbmsCatalogueGetArchiveFilesItor() {
+RdbmsCatalogueGetDeletedArchiveFilesItor::~RdbmsCatalogueGetDeletedArchiveFilesItor() {
 }
 
-//------------------------------------------------------------------------------
-// hasMore
-//------------------------------------------------------------------------------
-bool RdbmsCatalogueGetArchiveFilesItor::hasMore() {
+bool RdbmsCatalogueGetDeletedArchiveFilesItor::hasMore() {
   m_hasMoreHasBeenCalled = true;
 
   if(m_rsetIsEmpty) {
@@ -258,10 +251,8 @@ bool RdbmsCatalogueGetArchiveFilesItor::hasMore() {
   }
 }
 
-//------------------------------------------------------------------------------
-// next
-//------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
+
+common::dataStructures::DeletedArchiveFile RdbmsCatalogueGetDeletedArchiveFilesItor::next() {
   try {
     if(!m_hasMoreHasBeenCalled) {
       throw exception::Exception("hasMore() must be called before next()");
@@ -278,13 +269,13 @@ common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
 
       // Return the ArchiveFile object that must now be complete and clear the
       // ArchiveFile builder
-      auto tmp = *m_archiveFileBuilder.getArchiveFile();
+      common::dataStructures::DeletedArchiveFile tmp = *m_archiveFileBuilder.getArchiveFile();
       m_archiveFileBuilder.clear();
       return tmp;
     }
 
     while(true) {
-      auto archiveFile = populateArchiveFile(m_rset);
+      auto archiveFile = populateDeletedArchiveFile(m_rset);
 
       auto completeArchiveFile = m_archiveFileBuilder.append(archiveFile);
 
@@ -292,9 +283,7 @@ common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
 
       // If the ArchiveFile object under construction is complete
       if (nullptr != completeArchiveFile.get()) {
-
-        return *completeArchiveFile;
-
+       return *completeArchiveFile;
       // The ArchiveFile object under construction is not complete
       } else {
         if(m_rsetIsEmpty) {
@@ -306,9 +295,9 @@ common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
 
           // Return the ArchiveFile object that must now be complete and clear the
           // ArchiveFile builder
-          auto tmp = *m_archiveFileBuilder.getArchiveFile();
+          common::dataStructures::DeletedArchiveFile * tmp = m_archiveFileBuilder.getArchiveFile();
           m_archiveFileBuilder.clear();
-          return tmp;
+          return *tmp;
         }
       }
     }
@@ -320,5 +309,4 @@ common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+}}

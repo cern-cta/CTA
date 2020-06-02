@@ -268,8 +268,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getAllTapes();}, m_maxTriesToConnect);
   }
 
-  void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->reclaimTape(admin, vid);}, m_maxTriesToConnect);
+  void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, cta::log::LogContext & lc) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->reclaimTape(admin, vid,lc);}, m_maxTriesToConnect);
   }
 
   void checkTapeForLabel(const std::string &vid) override {
@@ -463,6 +463,14 @@ public:
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
   }
+  
+  DeletedArchiveFileItor getDeletedArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getDeletedArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
+  }
+  
+  void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc){
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteFileFromRecycleBin(archiveFileId,lc);},m_maxTriesToConnect);
+  }
 
   std::list<common::dataStructures::ArchiveFile> getFilesForRepack(const std::string &vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getFilesForRepack(vid, startFSeq, maxNbFiles);}, m_maxTriesToConnect);
@@ -514,6 +522,11 @@ public:
 
   void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance, const std::string &diskFileId) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->updateDiskFileId(archiveFileId, diskInstance, diskFileId);}, m_maxTriesToConnect);
+  }
+  
+  void moveArchiveFileToRecycleBin(const common::dataStructures::DeleteArchiveRequest &request, 
+  log::LogContext & lc) override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->moveArchiveFileToRecycleBin(request,lc);},m_maxTriesToConnect);
   }
 
 protected:

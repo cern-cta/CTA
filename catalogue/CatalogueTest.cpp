@@ -53,6 +53,7 @@
 #include "common/threading/Thread.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "DeletedArchiveFileItor.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -142,6 +143,19 @@ void cta_catalogue_CatalogueTest::SetUp() {
       for(const auto &archiveFile: archiveFiles) {
         log::LogContext dummyLc(m_dummyLog);
         m_catalogue->deleteArchiveFile(archiveFile.diskInstance, archiveFile.archiveFileID, dummyLc);
+      }
+    }
+    {
+      //Delete all the entries from the recycle bin
+      auto itor = m_catalogue->getDeletedArchiveFilesItor();
+      std::list<common::dataStructures::DeletedArchiveFile> deletedArchiveFiles;
+      while(itor.hasMore()){
+        deletedArchiveFiles.push_back(itor.next());
+      }
+      
+      for(const auto &deletedArchiveFile: deletedArchiveFiles){
+        log::LogContext dummyLc(m_dummyLog);
+        m_catalogue->deleteFileFromRecycleBin(deletedArchiveFile.archiveFileID,dummyLc);
       }
     }
     {
@@ -14490,7 +14504,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   m_catalogue->deleteArchiveFile(diskInstanceName1, archiveFileId, dummyLc);
   
   m_catalogue->setTapeFull(m_admin, vid1, true);
-  m_catalogue->reclaimTape(m_admin, vid1);
+  m_catalogue->reclaimTape(m_admin, vid1,dummyLc);
   
   ASSERT_NO_THROW(m_catalogue->checkTapeForLabel(vid1));
 }
@@ -14720,6 +14734,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_empty_vid) {
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   using namespace cta;
 
+  log::LogContext dummyLc(m_dummyLog);
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string mediaType = "media_type";
@@ -14776,7 +14791,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   }
 
   m_catalogue->setTapeFull(m_admin, vid, true);
-  m_catalogue->reclaimTape(m_admin, vid);
+  m_catalogue->reclaimTape(m_admin, vid, dummyLc);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -14811,6 +14826,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_files) {
   using namespace cta;
 
+  log::LogContext dummyLc(m_dummyLog);
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string mediaType = "media_type";
@@ -14866,15 +14882,15 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
     const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
-
-  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, vid), exception::UserError);
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, vid, dummyLc), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   using namespace cta;
 
+  log::LogContext dummyLc(m_dummyLog);
+  
   const std::string diskInstanceName1 = "disk_instance_1";
-
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string vid1 = "VID123";
@@ -15028,7 +15044,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   }
 
   {
-    log::LogContext dummyLc(m_dummyLog);
     m_catalogue->deleteArchiveFile(diskInstanceName1, file1Written.archiveFileId, dummyLc);
   }
 
@@ -15067,7 +15082,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   }
 
   m_catalogue->setTapeFull(m_admin, vid1, true);
-  m_catalogue->reclaimTape(m_admin, vid1);
+  m_catalogue->reclaimTape(m_admin, vid1, dummyLc);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15102,6 +15117,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   using namespace cta;
+  log::LogContext dummyLc(m_dummyLog);
 
   const std::string diskInstanceName1 = "disk_instance_1";
 
@@ -15259,12 +15275,13 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   }
 
   m_catalogue->setTapeFull(m_admin, vid1, true);
-  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, vid1), exception::UserError);
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, vid1, dummyLc), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_superseded) {
   using namespace cta;
 
+  log::LogContext dummyLc(m_dummyLog);
   const std::string diskInstanceName1 = "disk_instance_1";
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
@@ -15460,7 +15477,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
       ASSERT_EQ("", tf.supersededByVid);
   }
   
-  ASSERT_NO_THROW(m_catalogue->reclaimTape(m_admin, vid1));
+  ASSERT_NO_THROW(m_catalogue->reclaimTape(m_admin, vid1, dummyLc));
  
   {
     //Test that the tape with vid1 is reclaimed
@@ -15925,6 +15942,264 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
+  using namespace cta;
+
+  const std::string vid1 = "VID123";
+  const std::string vid2 = "VID456";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const std::string tapePoolName2 = "tape_pool_name_2";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 1;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  createVo(vo);
+  m_catalogue->createTapePool(m_admin, tapePoolName1, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  
+  common::dataStructures::StorageClass storageClass;
+  
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapeDrive = "tape_drive";
+  m_catalogue->createTapePool(m_admin, tapePoolName2, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+    
+  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName1, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+  
+  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName2, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 for this test
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    std::ostringstream diskFileId;
+    diskFileId << (12345677 + i);
+    
+    std::ostringstream diskFilePath;
+    diskFilePath << "/test/file"<<i;
+
+    // Tape copy 1 written to tape
+    auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = i;
+    fileWritten.diskInstance = diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFilePath = diskFilePath.str();
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
+    fileWritten.storageClassName = storageClass.name;
+    fileWritten.vid = vid1;
+    fileWritten.fSeq = i;
+    fileWritten.blockId = i * 100;
+    fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+  }
+  m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
+  {
+    ASSERT_TRUE(m_catalogue->getArchiveFilesItor().hasMore());
+  }
+  log::LogContext dummyLc(m_dummyLog);  
+  for(auto & tapeItemWritten: tapeFilesWrittenCopy1){
+    cta::catalogue::TapeFileWritten * tapeItem = static_cast<cta::catalogue::TapeFileWritten *>(tapeItemWritten.get());
+    cta::common::dataStructures::DeleteArchiveRequest req;
+    req.archiveFileID = tapeItem->archiveFileId;
+    req.diskFileId = tapeItem->diskFileId;
+    req.diskFilePath = tapeItem->diskFilePath;
+    req.diskInstance = tapeItem->diskInstance;
+    ASSERT_NO_THROW(m_catalogue->moveArchiveFileToRecycleBin(req,dummyLc));
+  }
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  
+  std::vector<common::dataStructures::DeletedArchiveFile> deletedArchiveFiles;
+  {
+    cta::catalogue::DeletedArchiveFileItor itor = m_catalogue->getDeletedArchiveFilesItor();
+    while(itor.hasMore()){
+      deletedArchiveFiles.push_back(itor.next());
+    }
+  }
+  //And test that these files are there.
+  //Run the unit test for all the databases
+  ASSERT_EQ(nbArchiveFiles,deletedArchiveFiles.size());
+  
+  for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    
+    auto deletedArchiveFile = deletedArchiveFiles[i-1];
+    
+    std::ostringstream diskFileId;
+    diskFileId << (12345677 + i);
+    
+    std::ostringstream diskFilePath;
+    diskFilePath << "/test/file"<<i;
+    
+    ASSERT_EQ(i,deletedArchiveFile.archiveFileID);
+    ASSERT_EQ(diskInstance,deletedArchiveFile.diskInstance);
+    ASSERT_EQ(diskFileId.str(),deletedArchiveFile.diskFileId);
+    ASSERT_EQ(diskFilePath.str(),deletedArchiveFile.diskFilePath);
+    ASSERT_EQ(PUBLIC_DISK_USER,deletedArchiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(PUBLIC_DISK_GROUP,deletedArchiveFile.diskFileInfo.gid);
+    ASSERT_EQ(archiveFileSize,deletedArchiveFile.fileSize);
+    ASSERT_EQ(cta::checksum::ChecksumBlob(checksum::ADLER32, "1357"),deletedArchiveFile.checksumBlob);
+    ASSERT_EQ(storageClass.name,deletedArchiveFile.storageClass);
+    ASSERT_EQ(diskFileId.str(),deletedArchiveFile.diskFileIdWhenDeleted);
+    
+    auto tapeFile = deletedArchiveFile.tapeFiles.at(1);
+    ASSERT_EQ(vid1,tapeFile.vid);
+    ASSERT_EQ(i,tapeFile.fSeq);
+    ASSERT_EQ(i * 100,tapeFile.blockId);
+    ASSERT_EQ(1, tapeFile.copyNb);
+    ASSERT_EQ(archiveFileSize,tapeFile.fileSize);
+    ASSERT_TRUE(tapeFile.supersededByVid.empty());
+    ASSERT_EQ(0,tapeFile.supersededByFSeq);
+  }
+  
+  //Let's try the deletion of the files from the recycle-bin.
+  for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    m_catalogue->deleteFileFromRecycleBin(i,dummyLc);
+  }
+  
+  {
+    auto itor = m_catalogue->getDeletedArchiveFilesItor();
+    ASSERT_FALSE(itor.hasMore());
+  }
+  //Delete an archive file from the recycle-bin should be idempotent
+  ASSERT_NO_THROW(m_catalogue->deleteFileFromRecycleBin(12532,dummyLc));
+  
+}
+
+TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
+  using namespace cta;
+
+  const std::string vid1 = "VID123";
+  const std::string vid2 = "VID456";
+  const std::string mediaType = "media_type";
+  const std::string vendor = "vendor";
+  const std::string logicalLibraryName = "logical_library_name";
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const std::string tapePoolName2 = "tape_pool_name_2";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 1;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const bool readOnlyValue = true;
+  const std::string comment = "Create tape";
+  const std::string diskInstance = "disk_instance";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  createVo(vo);
+  m_catalogue->createTapePool(m_admin, tapePoolName1, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  
+  common::dataStructures::StorageClass storageClass;
+  
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapeDrive = "tape_drive";
+  m_catalogue->createTapePool(m_admin, tapePoolName2, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+    
+  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName1, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+  
+  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName2, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 for this test
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    std::ostringstream diskFileId;
+    diskFileId << (12345677 + i);
+    
+    std::ostringstream diskFilePath;
+    diskFilePath << "/test/file"<<i;
+
+    // Tape copy 1 written to tape
+    auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = i;
+    fileWritten.diskInstance = diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFilePath = diskFilePath.str();
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
+    fileWritten.storageClassName = storageClass.name;
+    fileWritten.vid = vid1;
+    fileWritten.fSeq = i;
+    fileWritten.blockId = i * 100;
+    fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+  }
+  m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
+  {
+    ASSERT_TRUE(m_catalogue->getArchiveFilesItor().hasMore());
+  }
+  log::LogContext dummyLc(m_dummyLog);  
+  for(auto & tapeItemWritten: tapeFilesWrittenCopy1){
+    cta::catalogue::TapeFileWritten * tapeItem = static_cast<cta::catalogue::TapeFileWritten *>(tapeItemWritten.get());
+    cta::common::dataStructures::DeleteArchiveRequest req;
+    req.archiveFileID = tapeItem->archiveFileId;
+    req.diskFileId = tapeItem->diskFileId;
+    req.diskFilePath = tapeItem->diskFilePath;
+    req.diskInstance = tapeItem->diskInstance;
+    ASSERT_NO_THROW(m_catalogue->moveArchiveFileToRecycleBin(req,dummyLc));
+  }
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  
+  std::vector<common::dataStructures::DeletedArchiveFile> deletedArchiveFiles;
+  {
+    cta::catalogue::DeletedArchiveFileItor itor = m_catalogue->getDeletedArchiveFilesItor();
+    while(itor.hasMore()){
+      deletedArchiveFiles.push_back(itor.next());
+    }
+  }
+  //And test that these files are there.
+  //Run the unit test for all the databases
+  ASSERT_EQ(nbArchiveFiles,deletedArchiveFiles.size());
+  
+  //Reclaim the tape
+  m_catalogue->setTapeFull(m_admin,vid1,true);
+  m_catalogue->reclaimTape(m_admin,vid1, dummyLc);
+  {
+    auto itor = m_catalogue->getDeletedArchiveFilesItor();
+    ASSERT_FALSE(itor.hasMore());
   }
 }
 

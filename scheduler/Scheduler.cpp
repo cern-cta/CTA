@@ -250,15 +250,17 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
   utils::Timer t;
-
+  log::TimingList tl;
   if(request.address) {
     //Check if address is provided, we can remove the request from the objectstore
     m_db.cancelArchive(request,lc);
   }
-  m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID, lc);
-  auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
+  tl.insertAndReset("schedulerDbTime",t);
+  //m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID, lc);
+  m_catalogue.moveArchiveFileToRecycleBin(request,lc);
+  tl.insertAndReset("catalogueTime",t);
   log::ScopedParamContainer spc(lc);
-  spc.add("catalogueTime", catalogueTime);
+  tl.addToLog(spc);
   lc.log(log::INFO, "In Scheduler::deleteArchive(): success.");
 }
 

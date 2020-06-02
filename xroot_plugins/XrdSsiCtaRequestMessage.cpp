@@ -614,15 +614,20 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    // Validate received protobuf
    checkIsNotEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
    checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
+   checkIsNotEmptyString(notification.file().lpath(),             "notification.file.lpath");
 
    // Unpack message
    cta::common::dataStructures::DeleteArchiveRequest request;
    request.requester.name    = notification.cli().user().username();
    request.requester.group   = notification.cli().user().groupname();
    
+   std::string lpath         = notification.file().lpath();
+   uint64_t diskFileId       = notification.file().fid();
+   request.diskFilePath          = lpath;
+   request.diskFileId = std::to_string(diskFileId);
+   request.diskInstance = m_cliIdentity.username;
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
-
    auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
      // Fall back to the old xattr format
@@ -640,7 +645,10 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    auto archiveRequestAddrItor = notification.file().xattr().find("sys.cta.archive.objectstore.id");
    if(archiveRequestAddrItor != notification.file().xattr().end()){
      //We have the ArchiveRequest's objectstore address.
-     request.address = archiveRequestAddrItor->second;
+     std::string objectstoreAddress = archiveRequestAddrItor->second;
+     if(!objectstoreAddress.empty()){
+      request.address = archiveRequestAddrItor->second;
+     }
    }
 
    // Delete the file from the catalogue or from the objectstore if archive request is created
@@ -651,6 +659,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", request.archiveFileID)
          .add("address", (request.address ? request.address.value() : "null"))
+         .add("filePath",request.diskFilePath)
          .add("schedulerTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processDELETE(): archive file deleted.");
 
@@ -1591,7 +1600,7 @@ void RequestMessage::processTape_Reclaim(cta::xrd::Response &response)
 
    auto &vid = getRequired(OptionString::VID);
 
-   m_catalogue.reclaimTape(m_cliIdentity, vid);
+   m_catalogue.reclaimTape(m_cliIdentity, vid,m_lc);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

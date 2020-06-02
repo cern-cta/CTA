@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,22 +18,20 @@
 
 #pragma once
 
-#include "catalogue/ArchiveFileBuilder.hpp"
-#include "catalogue/ArchiveFileItorImpl.hpp"
-#include "catalogue/TapeFileSearchCriteria.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
+#include "DeletedArchiveFileItorImpl.hpp"
 #include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Stmt.hpp"
 #include "rdbms/Rset.hpp"
+#include "TapeFileSearchCriteria.hpp"
+#include "ArchiveFileBuilder.hpp"
+#include "common/dataStructures/DeletedArchiveFile.hpp"
+
 
 namespace cta {
 namespace catalogue {
 
-/**
- * RdbmsCatalogue::getArchiveFiles() implementation of ArchiveFileItorImpl.
- */
-class RdbmsCatalogueGetArchiveFilesItor: public ArchiveFileItorImpl {
+class RdbmsCatalogueGetDeletedArchiveFilesItor: public DeletedArchiveFileItorImpl {
 public:
 
   /**
@@ -44,7 +42,7 @@ public:
    * @param searchCriteria The search criteria to be used when listing archive
    * files.
    */
-  RdbmsCatalogueGetArchiveFilesItor(
+  RdbmsCatalogueGetDeletedArchiveFilesItor(
     log::Logger &log,
     rdbms::ConnPool &connPool,
     const TapeFileSearchCriteria &searchCriteria);
@@ -52,7 +50,7 @@ public:
   /**
    * Destructor.
    */
-  ~RdbmsCatalogueGetArchiveFilesItor() override;
+  ~RdbmsCatalogueGetDeletedArchiveFilesItor() override;
 
   /**
    * Returns true if a call to next would return another archive file.
@@ -62,8 +60,8 @@ public:
   /**
    * Returns the next archive or throws an exception if there isn't one.
    */
-  common::dataStructures::ArchiveFile next() override;
-
+  common::dataStructures::DeletedArchiveFile next() override;
+  
 private:
 
   /**
@@ -114,9 +112,7 @@ private:
    * Builds ArchiveFile objects from a stream of tape files ordered by archive
    * ID and then copy number.
    */
-  ArchiveFileBuilder<cta::common::dataStructures::ArchiveFile> m_archiveFileBuilder;
+  ArchiveFileBuilder<cta::common::dataStructures::DeletedArchiveFile> m_archiveFileBuilder;
+};
 
-}; // class RdbmsCatalogueGetArchiveFilesItor
-
-} // namespace catalogue
-} // namespace cta
+}}

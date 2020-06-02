@@ -83,7 +83,7 @@ struct TapeFileSearchCriteria {
    * The name of a tape pool.
    */
   optional<std::string> tapePool;
-
+  
 }; // struct TapeFileSearchCriteria
 
 } // namespace catalogue

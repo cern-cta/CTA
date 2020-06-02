@@ -45,6 +45,10 @@ struct DeleteArchiveRequest {
   RequesterIdentity requester;
   uint64_t archiveFileID;
   cta::optional<std::string> address;
+  std::string diskFilePath;
+  std::string diskFileId;
+  std::string diskInstance;
+  time_t recycleTime;
 
 }; // struct DeleteArchiveRequest
 

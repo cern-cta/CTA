@@ -31,6 +31,7 @@
 #include "rdbms/rdbms.hpp"
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
+#include "common/log/TimingList.hpp"
 #include <algorithm>
 
 namespace cta {
@@ -885,12 +886,14 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       stmt.executeNonQuery();
     }
     
+    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
+    
     //Set the tapes where the files have been deleted to dirty
     for(auto &vidToSetDirty: vidsToSetDirty){
       setTapeDirty(conn,vidToSetDirty);
     }
     
-    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
+    const auto setTapeDirtyTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
@@ -918,6 +921,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("createStmtTime", createStmtTime)
        .add("selectFromArchiveFileTime", selectFromArchiveFileTime)
        .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
+       .add("setTapeDirtyTime",setTapeDirtyTime)
        .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
        .add("commitTime", commitTime);
     for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
@@ -945,6 +949,64 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     throw;
   }
 }
+
+//------------------------------------------------------------------------------
+// copyArchiveFileToRecycleBinAndDelete
+//------------------------------------------------------------------------------
+void OracleCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc){
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    //We currently do an INSERT INTO and a DELETE FROM
+    //in a single transaction
+    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    copyArchiveFileToRecycleBin(conn,request);
+    tl.insertAndReset("insertToRecycleBinTime",t);
+    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    deleteArchiveFileAndTapeFiles(conn,request);
+    tl.insertAndReset("deleteArchiveFileAndTapeFilesTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("archiveFileId",request.archiveFileID);
+    spc.add("diskFileId",request.diskFileId);
+    spc.add("diskFilePath",request.diskFilePath);
+    spc.add("diskInstance",request.diskInstance);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In OracleCatalogue::moveArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteTapeFilesAndArchiveFileFromRecycleBin
+//------------------------------------------------------------------------------
+void OracleCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn& conn, const uint64_t archiveFileId, log::LogContext& lc) {
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    //We currently do two delete in one transaction
+    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    deleteTapeFilesFromRecycleBin(conn,archiveFileId);
+    tl.insertAndReset("deleteTapeFilesTime",t);
+    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    deleteArchiveFileFromRecycleBin(conn,archiveFileId);
+    tl.insertAndReset("deleteArchiveFileTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("archiveFileId",archiveFileId);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In OracleCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin: tape files and archiveFiles deleted from the recycle-bin.");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
 
 } // namespace catalogue
 } // namespace cta

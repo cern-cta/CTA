@@ -29,6 +29,7 @@
 #include "rdbms/rdbms.hpp"
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
+#include "common/log/TimingList.hpp"
 #include <algorithm>
 
 namespace cta {
@@ -818,12 +819,14 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
       stmt.executeNonQuery();
     }
     
+    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
+    
     for(auto &vidToSetDirty: vidsToSetDirty){
       //We deleted the TAPE_FILE so the tapes containing them should be set as dirty
       setTapeDirty(conn,vidToSetDirty);
     }
     
-    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
+    const auto setTapeDirtyTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
@@ -853,6 +856,7 @@ void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, c
        .add("selectFromArchiveFileTime", selectFromArchiveFileTime)
        .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
        .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
+       .add("setTapeDirtyTime",setTapeDirtyTime)
        .add("commitTime", commitTime);
     for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
       std::stringstream tapeCopyLogStream;
@@ -893,6 +897,63 @@ void PostgresCatalogue::beginCreateTemporarySetDeferred(rdbms::Conn &conn) const
   conn.executeNonQuery("SET CONSTRAINTS ARCHIVE_FILE_DIN_DFI_UN DEFERRED");
 }
 
+//------------------------------------------------------------------------------
+// copyArchiveFileToRecycleBinAndDelete
+//------------------------------------------------------------------------------
+void PostgresCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    //We currently do an INSERT INTO and a DELETE FROM
+    //in a single transaction
+    conn.executeNonQuery("BEGIN");
+    copyArchiveFileToRecycleBin(conn,request);
+    tl.insertAndReset("insertToRecycleBinTime",t);
+    deleteArchiveFileAndTapeFiles(conn,request);
+    tl.insertAndReset("deleteArchiveFileAndTapeFilesTime",t);
+    conn.commit();
+    tl.insertAndReset("commitTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("archiveFileId",request.archiveFileID);
+    spc.add("diskFileId",request.diskFileId);
+    spc.add("diskFilePath",request.diskFilePath);
+    spc.add("diskInstance",request.diskInstance);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In MysqlCatalogue::moveArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteTapeFilesAndArchiveFileFromRecycleBin
+//------------------------------------------------------------------------------
+void PostgresCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn& conn, const uint64_t archiveFileId, log::LogContext& lc) {
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    //We currently do two delete in one transaction
+    conn.executeNonQuery("BEGIN");
+    deleteTapeFilesFromRecycleBin(conn,archiveFileId);
+    tl.insertAndReset("deleteTapeFilesTime",t);
+    deleteArchiveFileFromRecycleBin(conn,archiveFileId);
+    tl.insertAndReset("deleteArchiveFileTime",t);
+    conn.commit();
+    tl.insertAndReset("commitTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("archiveFileId",archiveFileId);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In PostgresCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin: tape files and archiveFiles deleted from the recycle-bin.");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
 } // namespace catalogue
 } // namespace cta

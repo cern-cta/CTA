@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,15 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/ArchiveFileBuilder.hpp"
-#include "common/exception/Exception.hpp"
-
-#include <fstream>
+#include "DeletedArchiveFileItorImpl.hpp"
 
 namespace cta {
 namespace catalogue {
+ 
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+DeletedArchiveFileItorImpl::~DeletedArchiveFileItorImpl() {
+}
 
-
-
-} // namespace catalogue
-} // namespace cta
+}}

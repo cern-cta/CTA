@@ -1,6 +1,6 @@
 /*
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright (C) 2019  CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,15 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/ArchiveFileBuilder.hpp"
-#include "common/exception/Exception.hpp"
+#pragma once
 
-#include <fstream>
+#include "common/dataStructures/DeletedArchiveFile.hpp"
 
 namespace cta {
 namespace catalogue {
+  
+/**
+ * Abstract class defining the interface to an iterator over a list of archive
+ * files.
+ */
+class DeletedArchiveFileItorImpl {
+public:
+
+  /**
+   * Destructor.
+   */
+  virtual ~DeletedArchiveFileItorImpl() = 0;
+
+  /**
+   * Returns true if a call to next would return another archive file.
+   */
+  virtual bool hasMore() = 0;
+
+  /**
+   * Returns the next archive or throws an exception if there isn't one.
+   */
+  virtual common::dataStructures::DeletedArchiveFile next() = 0;
+
+}; // class DeletedArchiveFileItorImpl
 
 
-
-} // namespace catalogue
-} // namespace cta
+}}

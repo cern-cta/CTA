@@ -33,6 +33,7 @@
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
+#include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -64,6 +65,7 @@
 #include "common/log/Logger.hpp"
 #include "common/optional.hpp"
 #include "SchemaVersion.hpp"
+#include "DeletedArchiveFileItor.hpp"
 
 #include <list>
 #include <map>
@@ -420,8 +422,9 @@ public:
    *
    * @param admin The administrator.
    * @param vid The volume identifier of the tape to be reclaimed.
+   * @param lc the logContext
    */
-  virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) = 0;
+  virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, cta::log::LogContext & lc) = 0;
   
   /**
    * Checks the specified tape for the tape label command.
@@ -685,6 +688,16 @@ public:
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
+   * Returns the specified deleted archive files.  Please note that the list of files
+   * is ordered by archive file ID.
+   *
+   * @param searchCriteria The search criteria.
+   * @return The deleted archive files.
+   */
+  virtual DeletedArchiveFileItor getDeletedArchiveFilesItor(
+    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
+  
+  /**
    * Returns the specified files in tape file sequence order.
    *
    * @param vid The volume identifier of the tape.
@@ -822,6 +835,28 @@ public:
    */
   virtual void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance,
     const std::string &diskFileId) = 0;
+  
+  /**
+   * Insert the tape files and ArchiveFiles entries in the recycle-bin and delete
+   * them from the TAPE_FILE and ARCHIVE_FILE  tables
+   * @param request the DeleteRequest object that holds information about the file to delete.
+   * @param lc the logContext
+   */
+  virtual void moveArchiveFileToRecycleBin(const common::dataStructures::DeleteArchiveRequest &request, 
+  log::LogContext & lc) = 0;
+  
+   /**
+   *
+   * Deletes the specified archive file and its associated tape copies from the
+   * recycle-bin
+   *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * @param archiveFileId The unique identifier of the archive file.
+   * @param lc The log context.
+   */
+  virtual void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) = 0;
 
 }; // class Catalogue
 

@@ -36,6 +36,8 @@ set (CATALOGUE_LIB_SRC_FILES
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
+  DeletedArchiveFileItor.cpp
+  DeletedArchiveFileItorImpl.cpp
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
   MysqlCatalogue.cpp
@@ -52,6 +54,7 @@ set (CATALOGUE_LIB_SRC_FILES
   RdbmsCatalogue.cpp
   RdbmsCatalogueGetArchiveFilesForRepackItor.cpp
   RdbmsCatalogueGetArchiveFilesItor.cpp
+  RdbmsCatalogueGetDeletedArchiveFilesItor.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
   SqliteCatalogueFactory.cpp
@@ -172,6 +175,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
     ${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_catalogue_version.sql.in
+    create_catalogue_schema_directory
 )
 
 add_custom_command(OUTPUT sqlite_catalogue_schema.cpp

@@ -35,7 +35,8 @@ DeleteArchiveRequest::DeleteArchiveRequest():
 //------------------------------------------------------------------------------
 bool DeleteArchiveRequest::operator==(const DeleteArchiveRequest &rhs) const {
   return requester==rhs.requester
-      && archiveFileID==rhs.archiveFileID && address==rhs.address;
+      && archiveFileID==rhs.archiveFileID && address==rhs.address && diskFileId == rhs.diskFileId
+      && diskFilePath == rhs.diskFilePath && recycleTime == rhs.recycleTime && diskInstance == rhs.diskInstance;
 }
 
 //------------------------------------------------------------------------------
@@ -51,6 +52,10 @@ bool DeleteArchiveRequest::operator!=(const DeleteArchiveRequest &rhs) const {
 std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj) {
   os << "(requester=" << obj.requester
      << " archiveFileID=" << obj.archiveFileID 
+     << " diskFileId=" << obj.diskFileId
+     << " diskFilePath=" << obj.diskFilePath
+     << " recycleTime=" << obj.recycleTime
+     << " instanceName=" << obj.diskInstance
      << " address=" << (obj.address ? obj.address.value() : "null") <<")";
   return os;
 }

@@ -36,7 +36,7 @@ namespace dataStructures {
 struct ArchiveFile {
 
   ArchiveFile();
-
+  
   /**
    * Equality operator that does NOT compare the creationTime and
    * reconciliationTime member-variables.

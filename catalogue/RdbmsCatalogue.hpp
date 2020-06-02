@@ -405,8 +405,9 @@ public:
    *
    * @param admin The administrator.
    * @param vid The volume identifier of the tape to be reclaimed.
+   * @param lc the logContext
    */
-  void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override;
+  void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, cta::log::LogContext & lc) override;
   
   /**
    * Checks the specified tape for the tape label command.
@@ -712,6 +713,15 @@ public:
    */
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override;
 
+  /**
+   * Returns the specified deleted archive files.  Please note that the list of files
+   * is ordered by archive file ID.
+   *
+   * @param searchCriteria The search criteria.
+   * @return The deleted archive files.
+   */
+  DeletedArchiveFileItor getDeletedArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria) const override;
+  
   /**
    * Returns the specified files in tape file sequence order.
    *
@@ -1503,6 +1513,14 @@ protected:
    * @param event The evnt to be checked.
    */
   void checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc, const TapeFileWritten &event) const;
+  
+  /**
+   * Throws an exception if the delete request passed in parameter is not consistent
+   * to allow a deletion of the ArchiveFile from the Catalogue.
+   * @param deleteRequest, the deleteRequest to check the consistency.
+   * @param archiveFile the ArchiveFile to delete to check the deleteRequest consistency against.
+   */
+  void checkDeleteRequestConsistency(const cta::common::dataStructures::DeleteArchiveRequest deleteRequest, const cta::common::dataStructures::ArchiveFile & archiveFile) const;
 
   /**
    * Returns a cached version of the result of calling isAdmin().
@@ -1618,6 +1636,74 @@ protected:
   void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance,
     const std::string &diskFileId) override;
 
+   /**
+   * Insert the tape files and ArchiveFiles entries in the recycle-bin and delete
+   * them from the TAPE_FILE and ARCHIVE_FILE  tables
+   * @param request the DeleteRequest object that holds information about the file to delete.
+   * @param lc the logContext
+   */
+  void moveArchiveFileToRecycleBin(const common::dataStructures::DeleteArchiveRequest &request, 
+  log::LogContext & lc) override;
+  
+  /**
+   * Copy the archiveFile and the associated tape files from the ARCHIVE_FILE and TAPE_FILE tables to the recycle-bin tables
+   * and deletes the ARCHIVE_FILE and TAPE_FILE entries.
+   * @param conn the database connection
+   * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
+   * @param lc the log context
+   */
+  virtual void copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn,const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) = 0;
+  
+  /**
+   * Copies the ARCHIVE_FILE and TAPE_FILE entries to the recycle-bin tables 
+   * @param conn the database connection
+   * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
+   */
+  void copyArchiveFileToRecycleBin(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
+  
+  
+  /**
+   * Delete the TAPE_FILE and ARCHIVE_FILE entries from the Catalogue
+   * @param conn the database connection
+   * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
+   */
+  void deleteArchiveFileAndTapeFiles(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
+  
+  /**
+   * Delete the archiveFile and the associated tape files from the recycle-bin
+   * @param archiveFileId the archiveFileId of the archive file to delete
+   * @param lc the logContext
+   */
+  void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc);
+  
+  /**
+   * Delete the archiveFile and the associated tape files that are on the specified tape from the recycle-bin
+   * @param vid the vid of the tape where the files to be deleted are located
+   * @param lc the logContext
+   */
+  void deleteFilesFromRecycleBin(rdbms::Conn & conn,const std::string & vid, log::LogContext & lc);
+  
+  /**
+   * Delete the TapeFiles and the ArchiveFile from the recycle-bin in one transaction
+   * @param conn the database connection
+   * @param archiveFileId the archiveFileId of the file to delete from the recycle-bin
+   */
+  virtual void deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId, log::LogContext & lc) = 0;
+  
+  /**
+   * Delete the tape files from the TAPE_FILE recycle-bin
+   * @param conn the database connection
+   * @param archiveFileId the archiveFileId of the tape files to delete
+   */
+  void deleteTapeFilesFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId);
+  
+  /**
+   * Delete the archive file from the ARCHIVE_FILE recycle-bin
+   * @param conn the database connection
+   * @param archiveFileId the archiveFileId of the archive file to delete
+   */
+  void deleteArchiveFileFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId);
+  
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
