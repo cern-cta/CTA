@@ -44,6 +44,7 @@
 #include <algorithm>
 #include <random>
 #include <chrono>
+#include <cstdlib>
 
 namespace cta {
 
@@ -69,10 +70,13 @@ void Scheduler::ping(log::LogContext & lc) {
   m_catalogue.ping();
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   m_db.ping();
-  auto schedulerDbTime = t.secs();
+  auto schedulerDbTime = t.secs(cta::utils::Timer::resetCounter);
+  checkNeededEnvironmentVariables();
+  auto checkEnvironmentVariablesTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("catalogueTime", catalogueTime)
-     .add("schedulerDbTime", schedulerDbTime);
+     .add("schedulerDbTime", schedulerDbTime)
+     .add("checkEnvironmentVariablesTime",checkEnvironmentVariablesTime);
   lc.log(log::INFO, "In Scheduler::ping(): success.");
 }
 
@@ -1118,6 +1122,33 @@ uint64_t Scheduler::getNbFilesAlreadyArchived(const common::dataStructures::Arch
 }
 
 
+//------------------------------------------------------------------------------
+// checkNeededEnvironmentVariables
+//------------------------------------------------------------------------------
+void Scheduler::checkNeededEnvironmentVariables(){
+  std::set<std::string> environmentVariablesNotSet;
+  for(auto & environmentVariable: c_mandatoryEnvironmentVariables){
+    const char * envVarC = std::getenv(environmentVariable.c_str());
+    if(envVarC == NULL){
+      environmentVariablesNotSet.insert(environmentVariable);
+    }
+  }
+  if(!environmentVariablesNotSet.empty()){
+    std::string listVariablesNotSet = "";
+    bool isFirst = true;
+    for(auto & environmentVariableNotSet: environmentVariablesNotSet){
+      if(isFirst){
+        listVariablesNotSet += "[" + environmentVariableNotSet;
+        isFirst = false;
+      } else {
+        listVariablesNotSet += ", " + environmentVariableNotSet;
+      }
+    };
+    listVariablesNotSet += "]";
+    std::string errMsg = "In Scheduler::checkNeededEnvironmentVariables(), the following environment variables: "+listVariablesNotSet+" are not set.";
+    throw cta::exception::Exception(errMsg);
+  }
+}
 
 //------------------------------------------------------------------------------
 // getNextMountDryRun

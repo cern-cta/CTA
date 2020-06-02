@@ -99,7 +99,7 @@ public:
    * Lets the exception through in case of failure.
    */
   void ping(log::LogContext & lc);
-  
+    
   /**
    * Waits for all scheduler db threads to complete (mostly for unit tests).
    */
@@ -287,6 +287,8 @@ private:
   };
   typedef std::map<TapePoolMountPair, MountCounts> ExistingMountSummary;
   
+  const std::set<std::string> c_mandatoryEnvironmentVariables = {"XrdSecPROTOCOL", "XrdSecSSSKT"};
+  
   /**
    * Common part to getNextMountDryRun() and getNextMount() to populate mount decision info.
    * The structure should be pre-loaded by the calling function.
@@ -309,6 +311,12 @@ private:
   void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer);
   
   uint64_t getNbFilesAlreadyArchived(const common::dataStructures::ArchiveFile& archiveFile);
+  
+  /**
+   * Checks that the environment variables needed by the tapeserver to work
+   * are set correctly.
+   */
+  void checkNeededEnvironmentVariables(); 
   
 public:
   /**
