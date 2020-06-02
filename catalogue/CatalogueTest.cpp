@@ -761,7 +761,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies_nonExistentStorag
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
-  const std::string diskInstance = "disk_instance";
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 5;
   ASSERT_THROW(m_catalogue->modifyStorageClassNbCopies(m_admin, storageClassName, nbCopies),
@@ -824,7 +823,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment_nonExistentStorage
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
-  const std::string diskInstance = "disk_instance";
   const std::string storageClassName = "storage_class";
   const std::string comment = "Comment";
   ASSERT_THROW(m_catalogue->modifyStorageClassComment(m_admin, storageClassName, comment),
@@ -887,7 +885,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_nonExistentStorageCla
 
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 
-  const std::string diskInstance = "disk_instance";
   const std::string currentStorageClassName = "storage_class";
   const std::string newStorageClassName = "new_storage_class";
   ASSERT_THROW(m_catalogue->modifyStorageClassName(m_admin, currentStorageClassName, newStorageClassName),
@@ -2202,7 +2199,6 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_clas
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
-  const std::string diskInstanceName = "disk_instance";
   const std::string storageClassName = "storage_class";
 
   const std::string tapePoolName = "tape_pool";
