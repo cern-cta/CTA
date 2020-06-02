@@ -321,7 +321,7 @@ public:
   /**
    * Deletes the specified archive route.
    *
-   * @param storageClassName The name of the storage class which is unique
+   * @param storageClassName The name of the storage class.
    * @param copyNb The copy number of the tape file.
    */
   virtual void deleteArchiveRoute(
@@ -338,7 +338,7 @@ public:
    * For a given storage class there should be no more than one route to any
    * given tape pool.
    *
-   * @param storageClassName The name of the storage class which is unique
+   * @param storageClassName The name of the storage class.
    * @param tapePoolName The name of the tape pool.
    */
   virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(
