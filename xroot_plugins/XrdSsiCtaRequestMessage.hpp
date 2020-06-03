@@ -178,6 +178,9 @@ private:
   void processLogicalLibrary_Add    (cta::xrd::Response &response);
   void processLogicalLibrary_Ch     (cta::xrd::Response &response);
   void processLogicalLibrary_Rm     (cta::xrd::Response &response);
+  void processMediaType_Add         (cta::xrd::Response &response);
+  void processMediaType_Ch          (cta::xrd::Response &response);
+  void processMediaType_Rm          (cta::xrd::Response &response);
   void processMountPolicy_Add       (cta::xrd::Response &response);
   void processMountPolicy_Ch        (cta::xrd::Response &response);
   void processMountPolicy_Rm        (cta::xrd::Response &response);
@@ -223,6 +226,7 @@ private:
   admincmdstream_t processListPendingArchives;
   admincmdstream_t processListPendingRetrieves;
   admincmdstream_t processLogicalLibrary_Ls;
+  admincmdstream_t processMediaType_Ls;
   admincmdstream_t processMountPolicy_Ls;
   admincmdstream_t processRequesterMountRule_Ls;
   admincmdstream_t processShowQueues;

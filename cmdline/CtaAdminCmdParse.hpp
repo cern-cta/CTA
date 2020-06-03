@@ -197,6 +197,8 @@ const cmdLookup_t cmdLookup = {
    { "lpr",                     AdminCmd::CMD_LISTPENDINGRETRIEVES },
    { "logicallibrary",          AdminCmd::CMD_LOGICALLIBRARY },
    { "ll",                      AdminCmd::CMD_LOGICALLIBRARY },
+   { "mediatype",               AdminCmd::CMD_MEDIATYPE },
+   { "mt",                      AdminCmd::CMD_MEDIATYPE },
    { "mountpolicy",             AdminCmd::CMD_MOUNTPOLICY },
    { "mp",                      AdminCmd::CMD_MOUNTPOLICY },
    { "repack",                  AdminCmd::CMD_REPACK },
@@ -281,12 +283,17 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--id",                    OptionUInt64::ARCHIVE_FILE_ID },
    { "--lastfseq",              OptionUInt64::LAST_FSEQ },
    { "--maxdrivesallowed",      OptionUInt64::MAX_DRIVES_ALLOWED },
+   { "--maxlpos",               OptionUInt64::MAX_LPOS },
    { "--minarchiverequestage",  OptionUInt64::MIN_ARCHIVE_REQUEST_AGE },
+   { "--minlpos",               OptionUInt64::MIN_LPOS },
    { "--minretrieverequestage", OptionUInt64::MIN_RETRIEVE_REQUEST_AGE },
    { "--nbfiles",               OptionUInt64::NUMBER_OF_FILES },
+   { "--nbwraps",               OptionUInt64::NUMBER_OF_WRAPS },
    { "--partial",               OptionUInt64::PARTIAL }, 
    { "--partialtapesnumber",    OptionUInt64::PARTIAL_TAPES_NUMBER },
+   { "--primarydensitycode",    OptionUInt64::PRIMARY_DENSITY_CODE },
    { "--retrievepriority",      OptionUInt64::RETRIEVE_PRIORITY },
+   { "--secondarydensitycode",  OptionUInt64::SECONDARY_DENSITY_CODE },
    { "--size",                  OptionUInt64::FILE_SIZE },
    { "--refreshinterval",       OptionUInt64::REFRESH_INTERVAL },
    { "--targetedfreespace",     OptionUInt64::TARGETED_FREE_SPACE },
@@ -301,6 +308,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
  */
 const std::map<std::string, OptionString::Key> strOptions = {
    { "--bufferurl",             OptionString::BUFFERURL }, 
+   { "--cartridge",             OptionString::CARTRIDGE },
    { "--comment",               OptionString::COMMENT },
    { "--diskid",                OptionString::DISKID },
    { "--drive",                 OptionString::DRIVE },
@@ -357,6 +365,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_LISTPENDINGARCHIVES,  { "listpendingarchives",  "lpa", { } }},
    { AdminCmd::CMD_LISTPENDINGRETRIEVES, { "listpendingretrieves", "lpr", { } }},
    { AdminCmd::CMD_LOGICALLIBRARY,       { "logicallibrary",       "ll",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_MEDIATYPE,            { "mediatype",            "mt",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_MOUNTPOLICY,          { "mountpolicy",          "mp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_REPACK,               { "repack",               "re",  { "add", "rm", "ls", "err" },
 			 "\n  This command allows to manage repack requests.\n\n"
@@ -411,6 +420,7 @@ const Option opt_archivefileid        { Option::OPT_UINT, "--id",               
 const Option opt_archivepriority      { Option::OPT_UINT, "--archivepriority",       "--ap", " <priority_value>" };
 const Option opt_bufferurl            { Option::OPT_STR,  "--bufferurl",             "-b",   " <buffer URL>" };
 const Option opt_capacity             { Option::OPT_UINT, "--capacity",              "-c",   " <capacity_in_bytes>" };
+const Option opt_cartridge            { Option::OPT_STR,  "--cartridge",             "-t",   " <cartridge>" };
 const Option opt_checkchecksum        { Option::OPT_FLAG, "--checkchecksum",         "-c",   "" };
 const Option opt_comment              { Option::OPT_STR,  "--comment",               "-m",   " <\"comment\">" };
 const Option opt_copynb               { Option::OPT_UINT, "--copynb",                "-c",   " <copy_number>" };
@@ -442,8 +452,12 @@ const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",             
                                         "--logicallibrary" };
 const Option opt_lookupns             { Option::OPT_FLAG, "--lookupnamespace",       "-l",   "" };
 const Option opt_maxdrivesallowed     { Option::OPT_UINT, "--maxdrivesallowed",      "-d",   " <max_drives_allowed>" };
-const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type>" };
+const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "-m",   " <maximum_longitudinal_position>" };
+const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type_name>" };
+const Option opt_mediatype_alias      { Option::OPT_STR,  "--name",                  "-n",   " <media_type_name>",
+                                        "--mediatype" };
 const Option opt_minarchiverequestage { Option::OPT_UINT, "--minarchiverequestage",  "--aa", " <min_request_age>" };
+const Option opt_minlpos              { Option::OPT_UINT, "--minlpos",               "-m",   " <minimum_longitudinal_position>" };
 const Option opt_minretrieverequestage{ Option::OPT_UINT, "--minretrieverequestage", "--ra", " <min_request_age>" };
 const Option opt_mountpolicy          { Option::OPT_STR,  "--mountpolicy",           "-u",   " <mount_policy_name>" };
 const Option opt_mountpolicy_alias    { Option::OPT_STR,  "--name",                  "-n",   " <mount_policy_name>",
@@ -451,12 +465,15 @@ const Option opt_mountpolicy_alias    { Option::OPT_STR,  "--name",             
 const Option opt_number_of_files      { Option::OPT_UINT, "--nbfiles",               "-n",   " <number_of_files_per_tape>" };
 const Option opt_number_of_files_alias{ Option::OPT_UINT, "--number",                "-n",   " <number_of_files>",
                                         "--nbfiles" };
+const Option opt_number_of_wraps      { Option::OPT_UINT, "--nbwraps",               "-w",   " <number_of_wraps>" };
 const Option opt_output               { Option::OPT_STR,  "--output",                "-o",   " <\"null\" or output_dir>" };
 const Option opt_owner_uid            { Option::OPT_UINT, "--uid",                   "-u",   " <owner_uid>" };
 const Option opt_partialfiles         { Option::OPT_UINT, "--partial",               "-p",   " <number_of_files_per_tape>" };
 const Option opt_partialtapes         { Option::OPT_UINT, "--partialtapesnumber",    "-p",   " <number_of_partial_tapes>" };
 const Option opt_path                 { Option::OPT_STR,  "--path",                  "-p",   " <full_path>" };
+const Option opt_primarydensitycode   { Option::OPT_UINT,  "--primarydensitycode",    "-p",   " <primary_density_code>" };
 const Option opt_retrievepriority     { Option::OPT_UINT, "--retrievepriority",      "--rp", " <priority_value>" };
+const Option opt_secondarydensitycode { Option::OPT_UINT, "--secondarydensitycode",  "-s",   " <secondary_density_code>" };
 const Option opt_size                 { Option::OPT_UINT, "--size",                  "-s",   " <file_size>" };
 const Option opt_storageclass         { Option::OPT_STR,  "--storageclass",          "-s",   " <storage_class_name>" };
 const Option opt_storageclass_alias   { Option::OPT_STR,  "--name",                  "-n",   " <storage_class_name>",
@@ -539,6 +556,13 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_RM    }, { opt_logicallibrary_alias }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_LS    }, { }},
+   /*----------------------------------------------------------------------------------------------------*/
+   {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_ADD   },
+      { opt_mediatype_alias, opt_cartridge, opt_capacity, opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(), opt_comment }},
+   {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_CH    },
+      { opt_mediatype_alias, opt_cartridge.optional(), opt_capacity.optional(), opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),opt_comment.optional() }},
+   {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_RM    }, { opt_mediatype_alias }},
+   {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_ADD   },
       { opt_mountpolicy_alias, opt_archivepriority, opt_minarchiverequestage, opt_retrievepriority,

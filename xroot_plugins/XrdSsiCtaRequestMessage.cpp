@@ -30,6 +30,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaListPendingQueue.hpp"
 #include "XrdCtaLogicalLibraryLs.hpp"
 #include "XrdCtaMountPolicyLs.hpp"
+#include "XrdCtaMediaTypeLs.hpp"
 #include "XrdCtaRepackLs.hpp"
 #include "XrdCtaRequesterMountRuleLs.hpp"
 #include "XrdCtaShowQueues.hpp"
@@ -40,6 +41,9 @@ using XrdSsiPb::PbException;
 #include "XrdCtaDiskSystemLs.hpp"
 #include "XrdCtaVirtualOrganizationLs.hpp"
 #include "XrdCtaVersion.hpp"
+
+#include <limits>
+#include <sstream>
 
 namespace cta {
 namespace xrd {
@@ -159,6 +163,18 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                break;
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS):
                processLogicalLibrary_Ls(response, stream);
+               break;
+            case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_ADD):
+               processMediaType_Add(response);
+               break;
+            case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_CH):
+               processMediaType_Ch(response);
+               break;
+            case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_RM):
+               processMediaType_Rm(response);
+               break;
+            case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_LS):
+               processMediaType_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD):
                processMountPolicy_Add(response);
@@ -1166,6 +1182,101 @@ void RequestMessage::processLogicalLibrary_Ls(cta::xrd::Response &response, XrdS
   stream = new LogicalLibraryLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(HeaderType::LOGICALLIBRARY_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processMediaType_Add(cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   // Bounds check unsigned integer options less than 64-bits in width
+   const uint64_t nbWraps = getRequired(OptionUInt64::NUMBER_OF_WRAPS);
+   const uint64_t primaryDensityCode = getRequired(OptionUInt64::PRIMARY_DENSITY_CODE);
+   const uint64_t secondaryDensityCode = getRequired(OptionUInt64::SECONDARY_DENSITY_CODE);
+   if(nbWraps > std::numeric_limits<uint32_t>::max()) {
+     exception::UserError ex;
+     ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max() << ": value="
+       << nbWraps;
+     throw ex;
+   }
+   if(primaryDensityCode > std::numeric_limits<uint8_t>::max()) {
+     exception::UserError ex;
+     ex.getMessage() << "Primary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
+       << ": value=" << primaryDensityCode;
+     throw ex;
+   }
+   if(secondaryDensityCode > std::numeric_limits<uint8_t>::max()) {
+     exception::UserError ex;
+     ex.getMessage() << "Secondary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
+       << ": value=" << secondaryDensityCode;
+     throw ex;
+   }
+
+   catalogue::MediaType mediaType;
+   mediaType.name                 = getRequired(OptionString::STORAGE_CLASS);
+   mediaType.cartridge            = getRequired(OptionString::CARTRIDGE);
+   mediaType.capacityInBytes      = getRequired(OptionUInt64::CAPACITY);
+   mediaType.primaryDensityCode   = getRequired(OptionUInt64::PRIMARY_DENSITY_CODE);
+   mediaType.secondaryDensityCode = getRequired(OptionUInt64::SECONDARY_DENSITY_CODE);
+   mediaType.nbWraps              = getRequired(OptionUInt64::NUMBER_OF_WRAPS);
+   mediaType.minLPos              = getRequired(OptionUInt64::MIN_LPOS);
+   mediaType.maxLPos              = getRequired(OptionUInt64::MAX_LPOS);
+   mediaType.comment              = getRequired(OptionString::COMMENT);
+   m_catalogue.createMediaType(m_cliIdentity, mediaType);
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processMediaType_Ch(cta::xrd::Response &response)
+{
+   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+   using namespace cta::admin;
+
+   auto &scn     = getRequired(OptionString::STORAGE_CLASS);
+   auto  comment = getOptional(OptionString::COMMENT);
+   auto  cn      = getOptional(OptionUInt64::COPY_NUMBER);
+   auto vo       = getOptional(OptionString::VO);
+
+   if(comment) {
+      m_catalogue.modifyStorageClassComment(m_cliIdentity, scn, comment.value());
+   }
+   if(cn) {
+      m_catalogue.modifyStorageClassNbCopies(m_cliIdentity, scn, cn.value());
+   }
+   if(vo){
+     m_catalogue.modifyStorageClassVo(m_cliIdentity,scn,vo.value());
+   }
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processMediaType_Rm(cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   const auto &mtn = getRequired(OptionString::MEDIA_TYPE);
+
+   m_catalogue.deleteMediaType(mtn);
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processMediaType_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
+{
+  using namespace cta::admin;
+
+  // Create a XrdSsi stream object to return the results
+  stream = new MediaTypeLsStream(*this, m_catalogue, m_scheduler);
+
+  response.set_show_header(HeaderType::MEDIATYPE_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
