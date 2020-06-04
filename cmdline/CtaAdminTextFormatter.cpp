@@ -24,6 +24,8 @@
 #include <common/dataStructures/DriveStatusSerDeser.hpp>
 #include <common/dataStructures/MountTypeSerDeser.hpp>
 
+#include "common/utils/utils.hpp"
+
 namespace cta {
 namespace admin {
 
@@ -270,7 +272,8 @@ void TextFormatter::printDriveLsHeader() {
     "session",
     "priority",
     "activity",
-    "age"
+    "age",
+    "reason"
   );
 }
 
@@ -308,6 +311,9 @@ void TextFormatter::print(const DriveLsItem &drls_item)
   timeSinceLastUpdate = std::to_string(drls_item.time_since_last_update()) +
     (drls_item.time_since_last_update() > DRIVE_TIMEOUT ? " [STALE]" : "");
 
+  //If there is a reason, we only want to display the beginning
+  std::string reason = cta::utils::postEllipsis(drls_item.reason(),NB_CHAR_REASON_DRIVE);
+
   push_back(
     drls_item.logical_library(),
     drls_item.drive_name(),
@@ -324,7 +330,8 @@ void TextFormatter::print(const DriveLsItem &drls_item)
     sessionId,
     drls_item.current_priority(),
     drls_item.current_activity(),
-    timeSinceLastUpdate
+    timeSinceLastUpdate,
+    reason
   );
 }
 
