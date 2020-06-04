@@ -51,6 +51,8 @@ struct RetrieveJob {
   std::string diskInstance;
   std::string storageClass;
   std::string diskFileId;
+  uint64_t totalRetries;
+  uint64_t totalReportRetries;
 
 }; // struct RetrieveJob
 

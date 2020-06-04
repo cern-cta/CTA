@@ -391,7 +391,7 @@ switchElementsOwnership(typename InsertedElement::list& elemMemCont, const Conta
   for (auto & e: elemMemCont) {
     ArchiveRequest & ar = *e.archiveRequest;
     auto copyNb = e.copyNb;
-    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, cta::nullopt));
+    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, e.newStatus));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
@@ -443,6 +443,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
           break;
         case serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure:
           e->reportType = SchedulerDatabase::ArchiveJob::ReportType::FailureReport;
+          e->latestError = u->get()->getLastestError();
           break;
         default:
           e->reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;

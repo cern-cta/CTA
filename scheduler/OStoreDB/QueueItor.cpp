@@ -121,7 +121,9 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
         job.objectId                 = osar.first.getAddressIfSet();
         job.failurelogs              = osar.first.getFailures();
         job.reportfailurelogs        = osar.first.getReportFailures();
-
+        auto retryStatus             = osar.first.getRetryStatus(j.copyNb);
+        job.totalRetries             = retryStatus.totalRetries;
+        job.totalReportRetries       = retryStatus.reportRetries;
         m_jobCache.push_back(job);
       }
     }
@@ -218,6 +220,9 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
         job.diskInstance       = archiveFile.diskInstance;
         job.storageClass       = archiveFile.storageClass;
         job.diskFileId         = archiveFile.diskFileId;
+        auto retryStatus             = osrr.first.getRetryStatus(tf.copyNb);
+        job.totalRetries             = retryStatus.totalRetries;
+        job.totalReportRetries       = retryStatus.totalReportRetries;
         m_jobCache.push_back(job);
       }
     }

@@ -837,9 +837,14 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArch
   AQTRAlgo::PopCriteria criteria;
   criteria.files = filesRequested;
   AQTRAlgo::PoppedElementsBatch jobs;
+  std::string tapePool;
   for (auto & q: queueList) {
       jobs = aqtrAlgo.popNextBatch(q.tapePool, criteria, logContext);
-    if (!jobs.elements.empty()) break;
+      if (!jobs.elements.empty()){
+        //The tapepool of all jobs are the same within the queue
+        tapePool = q.tapePool;
+        break;
+      }
   }
   for (auto & j: jobs.elements) {
     std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), *this));
@@ -853,6 +858,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArch
     // We leave the tape file not set. It does not exist in all cases (not in case of failure).
     aj->m_jobOwned = true;
     aj->m_mountId = 0;
+    aj->m_tapePool = tapePool;
     ret.emplace_back(std::move(aj));
   }
   return ret;
@@ -905,9 +911,12 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
     case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
       completeJobsToDelete.push_back(castFromSchedDBJob(j));
       break;
-    case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
-      failedQueues[j->tapeFile.vid].push_back(FailedJobToQueue());
-      failedQueues[j->tapeFile.vid].back().job = castFromSchedDBJob(j);
+    case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:{
+      ArchiveJob * osdbJob = castFromSchedDBJob(j);
+      std::string tapePool = osdbJob->m_tapePool;
+      failedQueues[tapePool].push_back(FailedJobToQueue());
+      failedQueues[tapePool].back().job = osdbJob;
+    }
       break;
     default:
       {
@@ -4379,6 +4388,8 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
 void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
   if (!m_jobOwned)
     throw JobNotOwned("In OStoreDB::ArchiveJob::failTransfer: cannot fail a job not owned");
+  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
+    " " + failureReason;
   // Lock the archive request. Fail the job.
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
@@ -4386,7 +4397,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
   typedef objectstore::ArchiveRequest::EnqueueingNextStep EnqueueingNextStep;
   typedef EnqueueingNextStep::NextStep NextStep;
   EnqueueingNextStep enQueueingNextStep = 
-      m_archiveRequest.addTransferFailure(tapeFile.copyNb, m_mountId, failureReason, lc);
+      m_archiveRequest.addTransferFailure(tapeFile.copyNb, m_mountId, failureLog, lc);
   // First set the job status
   m_archiveRequest.setJobStatus(tapeFile.copyNb, enQueueingNextStep.nextStatus);
   // Now apply the decision.
@@ -4474,12 +4485,13 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       m_archiveRequest.commit();
       auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+      auto mountPolicy = m_archiveRequest.getMountPolicy();
       // Algorithms suppose the objects are not locked.
       arl.release();
       typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
+      insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, mountPolicy , cta::nullopt });
       caAqtr.referenceAndSwitchOwnership(tapepool, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
@@ -4552,6 +4564,8 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
 void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::LogContext& lc) {
   if (!m_jobOwned)
     throw JobNotOwned("In OStoreDB::ArchiveJob::failReport: cannot fail a job not owned");
+  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
+    " " + failureReason;
   // Lock the archive request. Fail the job.
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
@@ -4559,7 +4573,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
   typedef objectstore::ArchiveRequest::EnqueueingNextStep EnqueueingNextStep;
   typedef EnqueueingNextStep::NextStep NextStep;
   EnqueueingNextStep enQueueingNextStep = 
-      m_archiveRequest.addReportFailure(tapeFile.copyNb, m_mountId, failureReason, lc);
+      m_archiveRequest.addReportFailure(tapeFile.copyNb, m_mountId, failureLog, lc);
   // First set the job status
   m_archiveRequest.setJobStatus(tapeFile.copyNb, enQueueingNextStep.nextStatus);
   // Now apply the decision.

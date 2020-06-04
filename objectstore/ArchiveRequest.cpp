@@ -213,6 +213,7 @@ ArchiveRequest::RetryStatus ArchiveRequest::getRetryStatus(const uint32_t copyNu
       ret.maxRetriesWithinMount = j.maxretrieswithinmount();
       ret.totalRetries = j.totalretries();
       ret.maxTotalRetries = j.maxtotalretries();
+      ret.reportRetries = j.totalreportretries();
       return ret;
     }
   }
@@ -661,6 +662,13 @@ std::map<uint32_t, serializers::ArchiveJobStatus> ArchiveRequest::AsyncJobOwnerU
 //------------------------------------------------------------------------------
 ArchiveRequest::RepackInfo ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo(){
   return m_repackInfo;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::AsyncJobOwnerUpdater::getLastestError()
+//------------------------------------------------------------------------------
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getLastestError() {
+  return m_latestError;
 }
 
 //------------------------------------------------------------------------------

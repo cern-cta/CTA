@@ -48,6 +48,8 @@ struct ArchiveJob {
   std::string objectId; //!< Objectstore address, provided when reporting a failed job
   std::list<std::string> failurelogs;
   std::list<std::string> reportfailurelogs;
+  uint64_t totalRetries;
+  uint64_t totalReportRetries;
 
 }; // struct ArchiveJob
 
