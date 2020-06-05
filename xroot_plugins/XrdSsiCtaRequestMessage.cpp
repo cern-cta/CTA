@@ -1233,25 +1233,64 @@ void RequestMessage::processMediaType_Add(cta::xrd::Response &response)
 
 void RequestMessage::processMediaType_Ch(cta::xrd::Response &response)
 {
-   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   auto &scn     = getRequired(OptionString::STORAGE_CLASS);
-   auto  comment = getOptional(OptionString::COMMENT);
-   auto  cn      = getOptional(OptionUInt64::COPY_NUMBER);
-   auto vo       = getOptional(OptionString::VO);
+  auto &mediaTypeName = getRequired(OptionString::MEDIA_TYPE);
+  auto cartridge = getOptional(OptionString::CARTRIDGE);
+  auto capacityInBytes = getOptional(OptionUInt64::CAPACITY);
+  auto primaryDensityCode = getOptional(OptionUInt64::PRIMARY_DENSITY_CODE);
+  auto secondaryDensityCode = getOptional(OptionUInt64::SECONDARY_DENSITY_CODE);
+  auto nbWraps = getOptional(OptionUInt64::NUMBER_OF_WRAPS);
+  auto minlpos = getOptional(OptionUInt64::MIN_LPOS);
+  auto maxlpos = getOptional(OptionUInt64::MAX_LPOS);
+  auto comment = getOptional(OptionString::COMMENT);
 
-   if(comment) {
-      m_catalogue.modifyStorageClassComment(m_cliIdentity, scn, comment.value());
-   }
-   if(cn) {
-      m_catalogue.modifyStorageClassNbCopies(m_cliIdentity, scn, cn.value());
-   }
-   if(vo){
-     m_catalogue.modifyStorageClassVo(m_cliIdentity,scn,vo.value());
-   }
-
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  // Bounds check unsigned integer options less than 64-bits in width
+  if(nbWraps && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
+    exception::UserError ex;
+    ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max() << ": value="
+      << nbWraps.value();
+    throw ex;
+  }
+  if(primaryDensityCode && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+    exception::UserError ex;
+    ex.getMessage() << "Primary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
+      << ": value=" << primaryDensityCode.value();
+    throw ex;
+  }
+  if(secondaryDensityCode && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+    exception::UserError ex;
+    ex.getMessage() << "Secondary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
+      << ": value=" << secondaryDensityCode.value();
+    throw ex;
+  }
+   
+  if(cartridge){
+    m_catalogue.modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
+  }
+  if(capacityInBytes){
+    m_catalogue.modifyMediaTypeCapacityInBytes(m_cliIdentity,mediaTypeName,capacityInBytes.value());
+  }
+  if(primaryDensityCode){
+    m_catalogue.modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,primaryDensityCode.value());
+  }
+  if(secondaryDensityCode){
+    m_catalogue.modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,secondaryDensityCode.value());
+  }
+  if(nbWraps){
+    cta::optional<uint32_t> newNbWraps = nbWraps.value();
+    m_catalogue.modifyMediaTypeNbWraps(m_cliIdentity,mediaTypeName,newNbWraps);
+  }
+  if(minlpos){
+    m_catalogue.modifyMediaTypeMinLPos(m_cliIdentity, mediaTypeName, minlpos);
+  }
+  if(maxlpos){
+    m_catalogue.modifyMediaTypeMaxLPos(m_cliIdentity,mediaTypeName,maxlpos);
+  }
+  if(comment){
+    m_catalogue.modifyMediaTypeComment(m_cliIdentity,mediaTypeName,comment.value());
+  }
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
