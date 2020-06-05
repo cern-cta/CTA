@@ -136,6 +136,8 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
+      "MEDIA_TYPE",
+      "MEDIA_TYPE_ID",
       "TEMP_TAPE_FILE",
       "DATABASECHANGELOGLOCK", /* Liquibase specific table */
       "DATABASECHANGELOG", /* Liquibase specific table */
@@ -177,6 +179,8 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
+      "MEDIA_TYPE",
+      "MEDIA_TYPE_ID",
       "TEMP_TAPE_FILE",
       "DATABASECHANGELOGLOCK", /* Liquibase specific table */
       "DATABASECHANGELOG", /* Liquibase specific table */
@@ -239,6 +243,7 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
       "FILE_RECYCLE_BIN",
+      "MEDIA_TYPE",
       "ARCHIVE_FILE",
       "TAPE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE_RECYCLE_BIN",
@@ -269,6 +274,7 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
     std::list<std::string> sequencesToDrop = {
       "ARCHIVE_FILE_ID_SEQ",
       "LOGICAL_LIBRARY_ID_SEQ",
+      "MEDIA_TYPE_ID_SEQ",
       "STORAGE_CLASS_ID_SEQ",
       "TAPE_POOL_ID_SEQ",
       "VIRTUAL_ORGANIZATION_ID_SEQ"
@@ -289,6 +295,7 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
+      "MEDIA_TYPE",
       "TEMP_TAPE_FILE",
       "DATABASECHANGELOGLOCK", /* Liquibase specific table */
       "DATABASECHANGELOG", /* Liquibase specific table */
@@ -317,6 +324,7 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
     std::list<std::string> sequencesToDrop = {
       "ARCHIVE_FILE_ID_SEQ",
       "LOGICAL_LIBRARY_ID_SEQ",
+      "MEDIA_TYPE_ID_SEQ",
       "STORAGE_CLASS_ID_SEQ",
       "TAPE_POOL_ID_SEQ",
       "VIRTUAL_ORGANIZATION_ID_SEQ"
