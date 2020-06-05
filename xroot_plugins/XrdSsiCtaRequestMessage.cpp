@@ -1215,7 +1215,7 @@ void RequestMessage::processMediaType_Add(cta::xrd::Response &response)
    }
 
    catalogue::MediaType mediaType;
-   mediaType.name                 = getRequired(OptionString::STORAGE_CLASS);
+   mediaType.name                 = getRequired(OptionString::MEDIA_TYPE);
    mediaType.cartridge            = getRequired(OptionString::CARTRIDGE);
    mediaType.capacityInBytes      = getRequired(OptionUInt64::CAPACITY);
    mediaType.primaryDensityCode   = getRequired(OptionUInt64::PRIMARY_DENSITY_CODE);
