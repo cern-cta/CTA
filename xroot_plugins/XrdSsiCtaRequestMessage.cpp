@@ -1192,13 +1192,13 @@ void RequestMessage::processMediaType_Add(cta::xrd::Response &response)
    using namespace cta::admin;
 
    // Bounds check unsigned integer options less than 64-bits in width
-   const uint64_t nbWraps = getRequired(OptionUInt64::NUMBER_OF_WRAPS);
+   const auto nbWraps = getOptional(OptionUInt64::NUMBER_OF_WRAPS);
    const uint64_t primaryDensityCode = getRequired(OptionUInt64::PRIMARY_DENSITY_CODE);
    const uint64_t secondaryDensityCode = getRequired(OptionUInt64::SECONDARY_DENSITY_CODE);
-   if(nbWraps > std::numeric_limits<uint32_t>::max()) {
+   if(nbWraps && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
      exception::UserError ex;
      ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max() << ": value="
-       << nbWraps;
+       << nbWraps.value();
      throw ex;
    }
    if(primaryDensityCode > std::numeric_limits<uint8_t>::max()) {
@@ -1218,11 +1218,11 @@ void RequestMessage::processMediaType_Add(cta::xrd::Response &response)
    mediaType.name                 = getRequired(OptionString::MEDIA_TYPE);
    mediaType.cartridge            = getRequired(OptionString::CARTRIDGE);
    mediaType.capacityInBytes      = getRequired(OptionUInt64::CAPACITY);
-   mediaType.primaryDensityCode   = getRequired(OptionUInt64::PRIMARY_DENSITY_CODE);
-   mediaType.secondaryDensityCode = getRequired(OptionUInt64::SECONDARY_DENSITY_CODE);
-   mediaType.nbWraps              = getRequired(OptionUInt64::NUMBER_OF_WRAPS);
-   mediaType.minLPos              = getRequired(OptionUInt64::MIN_LPOS);
-   mediaType.maxLPos              = getRequired(OptionUInt64::MAX_LPOS);
+   mediaType.primaryDensityCode   = primaryDensityCode;
+   mediaType.secondaryDensityCode = secondaryDensityCode;
+   if (nbWraps) mediaType.nbWraps = nbWraps.value();
+   mediaType.minLPos              = getOptional(OptionUInt64::MIN_LPOS);
+   mediaType.maxLPos              = getOptional(OptionUInt64::MAX_LPOS);
    mediaType.comment              = getRequired(OptionString::COMMENT);
    m_catalogue.createMediaType(m_cliIdentity, mediaType);
 
