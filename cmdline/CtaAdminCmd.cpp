@@ -297,6 +297,7 @@ void CtaAdminCmd::send() const
             case HeaderType::DISKSYSTEM_LS:                formattedText.printDiskSystemLsHeader(); break;
             case HeaderType::VIRTUALORGANIZATION_LS:       formattedText.printVirtualOrganizationLsHeader(); break;
             case HeaderType::VERSION_CMD:                  formattedText.printVersionHeader(); break;
+            case HeaderType::MEDIATYPE_LS:                 formattedText.printMediaTypeLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }
