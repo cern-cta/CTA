@@ -28,7 +28,7 @@
 
 namespace cta {
 namespace admin {
-
+  
 /**
  ** Generic utility methods
  **/
@@ -95,10 +95,14 @@ void TextFormatter::flush() {
   for(auto &l : m_outputBuffer) {
     if(is_header) { std::cout << TEXT_RED; }
     for(size_t c = 0; c < l.size(); ++c) {
-      // flush right, except for paths, which are flush left
-      auto flush = ((is_header && l.at(c) == "path") ||
+      //We inserted a prefix to spot drive reasons output
+      bool isReason = l.at(c).find(REASON_PREFIX) != std::string::npos;
+      // flush right, except for paths and drive reasons, which are flush left
+      auto flush = ((is_header && l.at(c) == "path") || (is_header && l.at(c) == "reason") || isReason ||
                      l.at(c).substr(0,1)  == "/") ? std::left : std::right;
 
+      if(isReason)
+        l.at(c).erase(0,strlen(REASON_PREFIX));
       std::cout << std::setfill(' ')
                 << std::setw(m_colSize.at(c))
                 << flush
@@ -312,8 +316,8 @@ void TextFormatter::print(const DriveLsItem &drls_item)
     (drls_item.time_since_last_update() > DRIVE_TIMEOUT ? " [STALE]" : "");
 
   //If there is a reason, we only want to display the beginning
-  std::string reason = cta::utils::postEllipsis(drls_item.reason(),NB_CHAR_REASON_DRIVE);
-
+  std::string reason = REASON_PREFIX + cta::utils::postEllipsis(drls_item.reason(),NB_CHAR_REASON_DRIVE);
+  
   push_back(
     drls_item.logical_library(),
     drls_item.drive_name(),
