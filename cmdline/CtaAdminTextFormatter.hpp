@@ -68,6 +68,7 @@ public:
   void printDiskSystemLsHeader();
   void printVirtualOrganizationLsHeader();
   void printVersionHeader();
+  void printMediaTypeLsHeader();
    
   // Output records
   void print(const AdminLsItem &adls_item);
@@ -94,6 +95,7 @@ public:
   void print(const DiskSystemLsItem &dsls_item);
   void print(const VirtualOrganizationLsItem &vols_item);
   void print(const VersionItem & version_item);
+  void print(const MediaTypeLsItem &mtls_item);
   
 
 private:

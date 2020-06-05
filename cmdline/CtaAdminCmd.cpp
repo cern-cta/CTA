@@ -105,6 +105,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kDslsItem:      std::cout << Log::DumpProtobuf(&record.dsls_item());    break;
          case Data::kVolsItem:      std::cout << Log::DumpProtobuf(&record.vols_item());    break;
          case Data::kVersionItem:   std::cout << Log::DumpProtobuf(&record.version_item()); break;
+         case Data::kMtlsItem:      std::cout << Log::DumpProtobuf(&record.mtls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -135,6 +136,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kDslsItem:      formattedText.print(record.dsls_item());    break;
          case Data::kVolsItem:      formattedText.print(record.vols_item());    break;
          case Data::kVersionItem:   formattedText.print(record.version_item()); break;
+         case Data::kMtlsItem:      formattedText.print(record.mtls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }

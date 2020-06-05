@@ -576,6 +576,47 @@ void TextFormatter::print(const LogicalLibraryLsItem &llls_item) {
   );
 }
 
+void TextFormatter::printMediaTypeLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "media type",
+    "cartridge",
+    "capacity",
+    "primary density code",
+    "secondary density code",
+    "number of wraps",
+    "min LPos",
+    "max LPos",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const MediaTypeLsItem &mtls_item) {
+  push_back(
+    mtls_item.name(),
+    mtls_item.cartridge(),
+    mtls_item.capacity(),
+    mtls_item.primary_density_code(),
+    mtls_item.secondary_density_code(),
+    mtls_item.number_of_wraps(),
+    mtls_item.min_lpos(),
+    mtls_item.max_lpos(),
+    mtls_item.creation_log().username(),
+    mtls_item.creation_log().host(),
+    timeToStr(mtls_item.creation_log().time()),
+    mtls_item.last_modification_log().username(),
+    mtls_item.last_modification_log().host(),
+    timeToStr(mtls_item.last_modification_log().time()),
+    mtls_item.comment()
+  );
+}
+
 void TextFormatter::printMountPolicyLsHeader() {
   push_back("HEADER");
   push_back(
