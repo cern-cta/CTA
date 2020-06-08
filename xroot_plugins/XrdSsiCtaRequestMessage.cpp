@@ -1193,24 +1193,24 @@ void RequestMessage::processMediaType_Add(cta::xrd::Response &response)
 
    // Bounds check unsigned integer options less than 64-bits in width
    const auto nbWraps = getOptional(OptionUInt64::NUMBER_OF_WRAPS);
-   const uint64_t primaryDensityCode = getRequired(OptionUInt64::PRIMARY_DENSITY_CODE);
-   const uint64_t secondaryDensityCode = getRequired(OptionUInt64::SECONDARY_DENSITY_CODE);
+   const auto primaryDensityCode = getOptional(OptionUInt64::PRIMARY_DENSITY_CODE);
+   const auto secondaryDensityCode = getOptional(OptionUInt64::SECONDARY_DENSITY_CODE);
    if(nbWraps && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
      exception::UserError ex;
      ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max() << ": value="
        << nbWraps.value();
      throw ex;
    }
-   if(primaryDensityCode > std::numeric_limits<uint8_t>::max()) {
+   if(primaryDensityCode && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
      exception::UserError ex;
      ex.getMessage() << "Primary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
-       << ": value=" << primaryDensityCode;
+       << ": value=" << primaryDensityCode.value();
      throw ex;
    }
-   if(secondaryDensityCode > std::numeric_limits<uint8_t>::max()) {
+   if(secondaryDensityCode && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
      exception::UserError ex;
      ex.getMessage() << "Secondary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
-       << ": value=" << secondaryDensityCode;
+       << ": value=" << secondaryDensityCode.value();
      throw ex;
    }
 
@@ -1218,8 +1218,8 @@ void RequestMessage::processMediaType_Add(cta::xrd::Response &response)
    mediaType.name                 = getRequired(OptionString::MEDIA_TYPE);
    mediaType.cartridge            = getRequired(OptionString::CARTRIDGE);
    mediaType.capacityInBytes      = getRequired(OptionUInt64::CAPACITY);
-   mediaType.primaryDensityCode   = primaryDensityCode;
-   mediaType.secondaryDensityCode = secondaryDensityCode;
+   if(primaryDensityCode)  mediaType.primaryDensityCode = primaryDensityCode.value();
+   if(secondaryDensityCode) mediaType.secondaryDensityCode = secondaryDensityCode.value();
    if (nbWraps) mediaType.nbWraps = nbWraps.value();
    mediaType.minLPos              = getOptional(OptionUInt64::MIN_LPOS);
    mediaType.maxLPos              = getOptional(OptionUInt64::MAX_LPOS);
