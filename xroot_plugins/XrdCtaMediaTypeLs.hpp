@@ -76,8 +76,8 @@ int MediaTypeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     mt_item->set_name(mt.name);
     mt_item->set_cartridge(mt.cartridge);
     mt_item->set_capacity(mt.capacityInBytes);
-    mt_item->set_primary_density_code(mt.primaryDensityCode);
-    mt_item->set_secondary_density_code(mt.secondaryDensityCode);
+    if (mt.primaryDensityCode) mt_item->set_primary_density_code(mt.primaryDensityCode.value());
+    if (mt.secondaryDensityCode) mt_item->set_secondary_density_code(mt.secondaryDensityCode.value());
     if (mt.nbWraps) mt_item->set_number_of_wraps(mt.nbWraps.value());
     if (mt.minLPos) mt_item->set_min_lpos(mt.minLPos.value());
     if (mt.maxLPos) mt_item->set_max_lpos(mt.maxLPos.value());

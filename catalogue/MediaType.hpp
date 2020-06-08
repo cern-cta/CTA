@@ -61,12 +61,12 @@ struct MediaType {
   /**
    * The primary SCSI density code.
    */
-  std::uint8_t primaryDensityCode;
+  cta::optional<std::uint8_t> primaryDensityCode;
 
   /**
    * The secondary SCSI density code.
    */
-  std::uint8_t secondaryDensityCode;
+  cta::optional<std::uint8_t> secondaryDensityCode;
 
   /**
    * The number of tape wraps.
