@@ -1269,11 +1269,11 @@ std::list<MediaTypeWithLogs> RdbmsCatalogue::getMediaTypes() const {
       mediaType.name = rset.columnString("MEDIA_TYPE_NAME");
       mediaType.cartridge = rset.columnString("CARTRIDGE");
       mediaType.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
-      mediaType.primaryDensityCode = rset.columnUint8("PRIMARY_DENSITY_CODE");
-      mediaType.secondaryDensityCode = rset.columnUint8("SECONDARY_DENSITY_CODE");
-      mediaType.nbWraps = rset.columnUint32("NB_WRAPS");
-      mediaType.minLPos = rset.columnUint32("MIN_LPOS");
-      mediaType.maxLPos = rset.columnUint32("MAX_LPOS");
+      mediaType.primaryDensityCode = rset.columnOptionalUint8("PRIMARY_DENSITY_CODE");
+      mediaType.secondaryDensityCode = rset.columnOptionalUint8("SECONDARY_DENSITY_CODE");
+      mediaType.nbWraps = rset.columnOptionalUint32("NB_WRAPS");
+      mediaType.minLPos = rset.columnOptionalUint64("MIN_LPOS");
+      mediaType.maxLPos = rset.columnOptionalUint64("MAX_LPOS");
       mediaType.comment = rset.columnString("USER_COMMENT");
       mediaType.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       mediaType.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
