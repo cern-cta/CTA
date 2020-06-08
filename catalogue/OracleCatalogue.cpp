@@ -982,21 +982,25 @@ void OracleCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, c
   try {
     utils::Timer t;
     log::TimingList tl;
-    //We currently do an INSERT INTO and a DELETE FROM
+    //We currently do an INSERT INTO, update and two DELETE FROM
     //in a single transaction
     conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     copyArchiveFileToRecycleBin(conn,request);
     tl.insertAndReset("insertToRecycleBinTime",t);
+    setTapeDirty(conn,request.archiveFileID);
+    tl.insertAndReset("setTapeDirtyTime",t);
+    deleteTapeFiles(conn,request);
+    tl.insertAndReset("deleteTapeFilesTime",t);
     conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
-    deleteArchiveFileAndTapeFiles(conn,request);
-    tl.insertAndReset("deleteArchiveFileAndTapeFilesTime",t);
+    RdbmsCatalogue::deleteArchiveFile(conn,request);
+    tl.insertAndReset("deleteArchiveFileTime",t);
     log::ScopedParamContainer spc(lc);
     spc.add("archiveFileId",request.archiveFileID);
     spc.add("diskFileId",request.diskFileId);
     spc.add("diskFilePath",request.diskFilePath);
     spc.add("diskInstance",request.diskInstance);
     tl.addToLog(spc);
-    lc.log(log::INFO,"In OracleCatalogue::moveArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+    lc.log(log::INFO,"In OracleCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

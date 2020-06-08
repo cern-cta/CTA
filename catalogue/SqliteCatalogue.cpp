@@ -548,8 +548,12 @@ void SqliteCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, c
     conn.executeNonQuery("BEGIN TRANSACTION");
     copyArchiveFileToRecycleBin(conn,request);
     tl.insertAndReset("insertToRecycleBinTime",t);
-    deleteArchiveFileAndTapeFiles(conn,request);
-    tl.insertAndReset("deleteArchiveFileAndTapeFilesTime",t);
+    setTapeDirty(conn,request.archiveFileID);
+    tl.insertAndReset("setTapeDirtyTime",t);
+    deleteTapeFiles(conn,request);
+    tl.insertAndReset("deleteTapeFilesTime",t);
+    RdbmsCatalogue::deleteArchiveFile(conn,request);
+    tl.insertAndReset("deleteArchiveFileTime",t);
     conn.commit();
     tl.insertAndReset("commitTime",t);
     log::ScopedParamContainer spc(lc);
@@ -558,7 +562,7 @@ void SqliteCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, c
     spc.add("diskFilePath",request.diskFilePath);
     spc.add("diskInstance",request.diskInstance);
     tl.addToLog(spc);
-    lc.log(log::INFO,"In MysqlCatalogue::moveArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+    lc.log(log::INFO,"In MysqlCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

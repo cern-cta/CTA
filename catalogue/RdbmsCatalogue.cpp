@@ -3754,6 +3754,9 @@ uint64_t RdbmsCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::string& 
   }
 }
 
+//------------------------------------------------------------------------------
+//deleteTapeFiles
+//------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) const {
   try {
     const char * const sql = 
@@ -3770,6 +3773,9 @@ void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) 
   }
 }
 
+//------------------------------------------------------------------------------
+//setTapeDirty
+//------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeDirty(rdbms::Conn& conn, const std::string& vid) const {
   try {
     const char * const sql = 
@@ -3783,7 +3789,27 @@ void RdbmsCatalogue::setTapeDirty(rdbms::Conn& conn, const std::string& vid) con
   }
 }
 
+//------------------------------------------------------------------------------
+//setTapeDirty
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setTapeDirty(rdbms::Conn& conn, const uint64_t & archiveFileId) const {
+  try {
+    const char * const sql = 
+    "UPDATE TAPE SET DIRTY='1' "
+    "WHERE VID IN "
+    "  (SELECT DISTINCT TAPE_FILE.VID AS VID FROM TAPE_FILE WHERE TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID)";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    stmt.executeNonQuery();
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
+//------------------------------------------------------------------------------
+//resetTapeCounters
+//------------------------------------------------------------------------------
 void RdbmsCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStructures::SecurityIdentity& admin, const std::string& vid) const {
   try {
     const time_t now = time(nullptr);
@@ -8388,11 +8414,9 @@ void RdbmsCatalogue::copyArchiveFileToRecycleBin(rdbms::Conn & conn, const commo
   }
 }
 
-//------------------------------------------------------------------------------
-// deleteArchiveFileAndTapeFiles
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteArchiveFileAndTapeFiles(rdbms::Conn& conn, const common::dataStructures::DeleteArchiveRequest& request) {
-  try {
+void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest& request){
+  try {    
+    //Delete the tape files after.
     const char *const deleteTapeFilesSql = 
     "DELETE FROM "
       "TAPE_FILE "
@@ -8401,7 +8425,16 @@ void RdbmsCatalogue::deleteArchiveFileAndTapeFiles(rdbms::Conn& conn, const comm
     auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
     deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID",request.archiveFileID);
     deleteTapeFilesStmt.executeNonQuery();
-    
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::deleteArchiveFile(rdbms::Conn& conn, const common::dataStructures::DeleteArchiveRequest& request){
+  try{
     const char *const deleteArchiveFileSql = 
     "DELETE FROM "
       "ARCHIVE_FILE "

@@ -17004,6 +17004,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
       deletedArchiveFiles.push_back(itor.next());
     }
   }
+  
   //And test that these files are there.
   //Run the unit test for all the databases
   ASSERT_EQ(nbArchiveFiles,deletedArchiveFiles.size());
@@ -17151,6 +17152,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
       deletedArchiveFiles.push_back(itor.next());
     }
   }
+  
   //And test that these files are there.
   //Run the unit test for all the databases
   ASSERT_EQ(nbArchiveFiles,deletedArchiveFiles.size());

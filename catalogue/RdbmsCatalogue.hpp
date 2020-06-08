@@ -1795,13 +1795,27 @@ protected:
    */
   void copyArchiveFileToRecycleBin(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
   
+  /**
+   * Deletes the ArchiveFile from the ARCHIVE_FILE table
+   * @param conn the database connection
+   * @param request the DeleteArchiveRequest that contains the archiveFileId to delete
+   */
+  void deleteArchiveFile(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
   
   /**
-   * Delete the TAPE_FILE and ARCHIVE_FILE entries from the Catalogue
+   * Delete the TapeFile from the TAPE_FILE table
    * @param conn the database connection
-   * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
+   * @param request the DeleteArchiveRequest that contains the archiveFileId to delete the corresponding tape files
    */
-  void deleteArchiveFileAndTapeFiles(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
+  void deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
+  
+   /**
+   * Set the DIRTY flag to true
+   * @param conn the database connection
+   * @param archiveFileId	the ArchiveFile that is going to be deleted and hence dirty the tape because
+   * the tape files will be removed from this tape
+   */
+  void setTapeDirty(rdbms::Conn & conn, const uint64_t & archiveFileId) const;
   
   /**
    * Delete the archiveFile and the associated tape files from the recycle-bin
