@@ -182,7 +182,6 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "TEMP_TAPE_FILE",
       "DATABASECHANGELOGLOCK", /* Liquibase specific table */
       "DATABASECHANGELOG", /* Liquibase specific table */
-      "FILE_RECYCLE_BIN",
       "TAPE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE",
@@ -242,7 +241,6 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
-      "FILE_RECYCLE_BIN",
       "ARCHIVE_FILE",
       "TAPE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE_RECYCLE_BIN",
@@ -298,7 +296,6 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "TEMP_TAPE_FILE",
       "DATABASECHANGELOGLOCK", /* Liquibase specific table */
       "DATABASECHANGELOG", /* Liquibase specific table */
-      "FILE_RECYCLE_BIN",
       "ARCHIVE_FILE",
       "TAPE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE_RECYCLE_BIN",
