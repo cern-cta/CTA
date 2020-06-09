@@ -230,6 +230,13 @@ public:
     const std::string archiveRouteComment = "Archive-route comment";
     catalogue.createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
       archiveRouteComment);
+    
+    cta::catalogue::MediaType mediaType;
+    mediaType.name = s_mediaType;
+    mediaType.capacityInBytes = 10;
+    mediaType.cartridge = "cartridge";
+    mediaType.comment = "comment";
+    catalogue.createMediaType(s_adminOnAdminHost,mediaType);
   }
 
 private:
@@ -914,7 +921,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, "mediatype", "vendor", s_libraryName, s_tapePoolName,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName,
     capacityInBytes, notDisabled, notFull, notReadOnly, tapeComment);
 
   const std::string driveName = "tape_drive";
@@ -1288,7 +1295,7 @@ TEST_P(SchedulerTest, repack) {
   std::string tape1 = "Tape";
   
   const bool notReadOnly = false; 
-  catalogue.createTape(cliId,tape1,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,false, notReadOnly, "Comment");
+  catalogue.createTape(cliId,tape1,s_mediaType,s_vendor,s_libraryName,s_tapePoolName,500,false,false, notReadOnly, "Comment");
   
   //The queueing of a repack request should fail if the tape to repack is not full
   ASSERT_THROW(scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,lc),cta::exception::UserError);
@@ -1309,7 +1316,7 @@ TEST_P(SchedulerTest, repack) {
   ASSERT_EQ(0, scheduler.getRepacks().size());
   // Recreate a repack and get it moved to ToExpand
   std::string tape2 = "Tape2";
-  catalogue.createTape(cliId,tape2,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
+  catalogue.createTape(cliId,tape2,s_mediaType,s_vendor,s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
   scheduler.queueRepack(cliId, tape2, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc);
   {
     auto repacks = scheduler.getRepacks();
@@ -1348,13 +1355,13 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   cliId.username = s_userName;
   std::string tape1 = "Tape";
   const bool notReadOnly = false;
-  catalogue.createTape(cliId,tape1,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
+  catalogue.createTape(cliId,tape1,s_mediaType,s_vendor,s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
   
   //Queue the first repack request
   scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc);
   
   std::string tape2 = "Tape2";
-  catalogue.createTape(cliId,tape2,"mediaType","vendor",s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
+  catalogue.createTape(cliId,tape2,s_mediaType,s_vendor,s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
   
   //Queue the second repack request
   scheduler.queueRepack(cliId,tape2,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);

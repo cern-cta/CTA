@@ -311,6 +311,13 @@ public:
     const std::string archiveRouteComment = "Archive-route comment";
     catalogue.createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
       archiveRouteComment);
+    
+    cta::catalogue::MediaType mediaType;
+    mediaType.name = s_mediaType;
+    mediaType.capacityInBytes = 10;
+    mediaType.cartridge = "cartridge";
+    mediaType.comment = "comment";
+    catalogue.createMediaType(s_adminOnAdminHost,mediaType);
   }
 
 private:

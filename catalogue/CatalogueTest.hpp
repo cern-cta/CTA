@@ -106,7 +106,17 @@ protected:
   std::map<std::string, cta::catalogue::TapePool> tapePoolListToMap(
     const std::list<cta::catalogue::TapePool> &listOfTapePools);
   
+  /**
+   * Creates a VO in the catalogue
+   * @param voName the vo to create
+   */
   void createVo(const std::string &voName);
+  
+  /**
+   * Creates a media type in the catalogue
+   * @param mediaTypeName
+   */
+  void createMediaType(const std::string & mediaTypeName);
 }; // cta_catalogue_CatalogueTest
 
 } // namespace unitTests

@@ -60,6 +60,16 @@ const uint32_t TEST_GROUP_2 = 9754;
         nbArchiveFileListingConns);
       m_catalogue = catalogueFactory->create();
     }
+    
+    void createMediaType(const std::string & name){
+      cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
+      cta::catalogue::MediaType mediaType;
+      mediaType.name = name;
+      mediaType.capacityInBytes = 10;
+      mediaType.cartridge = "cartridge";
+      mediaType.comment = "comment";
+      m_catalogue->createMediaType(admin,mediaType);
+    }
 
     void TearDown() {
       m_catalogue.reset();
@@ -135,6 +145,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo.name, 2, true, supply, "Create tape pool");
+    createMediaType(mediaType);
     m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
       disabledValue, fullValue, readOnlyValue, createTapeComment);
 
@@ -288,6 +299,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+    createMediaType(mediaType);
     m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
       disabledValue, fullValue, readOnlyValue, createTapeComment);
 

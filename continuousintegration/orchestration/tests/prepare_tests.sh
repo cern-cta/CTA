@@ -114,12 +114,19 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --vo vo                                                           \
     --partialtapesnumber 5                                            \
     --encrypted false                                                 \
-    --comment "ctasystest"                                            
+    --comment "ctasystest"
+  # add the media type of the tapes
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
+    --name "T10K-500G" \
+    --capacity 500000000000 \
+    --primarydensitycode 74 \
+    --cartridge "T10000" \
+    --comment "T10000A"
   # add all tapes
   for ((i=0; i<${#TAPES[@]}; i++)); do
     VID=${TAPES[${i}]}
     kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add     \
-      --mediatype mediatype                                                \
+      --mediatype "T10K-500G"                                              \
       --vendor vendor                                                      \
       --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}  \
       --tapepool ctasystest                                                \

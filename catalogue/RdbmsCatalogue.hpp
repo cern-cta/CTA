@@ -1756,6 +1756,16 @@ protected:
    * @return the ID of the specified tape pool.
    */
   optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
+  
+  /**
+   * Returns the ID of the specified media type or nullopt if it the media type
+   * does not exist.
+   *
+   * @param conn The database connection.
+   * @param name The name of the media type.
+   * @return the ID of the specified tape pool.
+   */
+  optional<uint64_t> getMediaTypeId(rdbms::Conn &conn, const std::string &name) const;
 
   /**
    * Updates the disk file ID of the specified archive file.

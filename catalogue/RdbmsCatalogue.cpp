@@ -724,9 +724,6 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &storageClassName) {
 // MediaTypeIsUsedByTapes
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::mediaTypeIsUsedByTapes(rdbms::Conn &conn, const std::string &name) const {
-  return false;
-  // TO BE DONE
-  /*
   try {
     const char *const sql =
       "SELECT"                                          "\n"
@@ -749,7 +746,6 @@ bool RdbmsCatalogue::mediaTypeIsUsedByTapes(rdbms::Conn &conn, const std::string
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
-  */
 }
 
 //------------------------------------------------------------------------------
@@ -2952,7 +2948,7 @@ void RdbmsCatalogue::setLogicalLibraryDisabled(const common::dataStructures::Sec
 void RdbmsCatalogue::createTape(
   const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid,
-  const std::string &mediaType,
+  const std::string &mediaTypeName,
   const std::string &vendor,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
@@ -2968,7 +2964,7 @@ void RdbmsCatalogue::createTape(
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
     }
 
-    if(mediaType.empty()) {
+    if(mediaTypeName.empty()) {
       throw UserSpecifiedAnEmptyStringMediaType("Cannot create tape because the media type is an empty string");
     }
 
@@ -3008,11 +3004,17 @@ void RdbmsCatalogue::createTape(
       throw exception::UserError(std::string("Cannot create tape ") + vid + " because tape pool " +
         tapePoolName + " does not exist");
     }
+    
+    const auto mediaTypeId = getMediaTypeId(conn, mediaTypeName);
+    if(!mediaTypeId) {
+      throw exception::UserError(std::string("Cannot create tape ") + vid + " because media type " +
+        mediaTypeName + " does not exist");
+    }
     const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO TAPE("          "\n"
         "VID,"                     "\n"
-        "MEDIA_TYPE,"              "\n"
+        "MEDIA_TYPE_ID,"           "\n"
         "VENDOR,"                  "\n"
         "LOGICAL_LIBRARY_ID,"      "\n"
         "TAPE_POOL_ID,"            "\n"
@@ -3035,7 +3037,7 @@ void RdbmsCatalogue::createTape(
         "LAST_UPDATE_TIME)"        "\n"
       "VALUES("                    "\n"
         ":VID,"                    "\n"
-        ":MEDIA_TYPE,"             "\n"
+        ":MEDIA_TYPE_ID,"          "\n"
         ":VENDOR,"                 "\n"
         ":LOGICAL_LIBRARY_ID,"     "\n"
         ":TAPE_POOL_ID,"           "\n"
@@ -3060,7 +3062,7 @@ void RdbmsCatalogue::createTape(
     auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":VID", vid);
-    stmt.bindString(":MEDIA_TYPE", mediaType);
+    stmt.bindUint64(":MEDIA_TYPE_ID", mediaTypeId.value());
     stmt.bindString(":VENDOR", vendor);
     stmt.bindUint64(":LOGICAL_LIBRARY_ID", logicalLibraryId.value());
     stmt.bindUint64(":TAPE_POOL_ID", tapePoolId.value());
@@ -3087,7 +3089,7 @@ void RdbmsCatalogue::createTape(
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
     spc.add("vid", vid)
-       .add("mediaType", mediaType)
+       .add("mediaType", mediaTypeName)
        .add("vendor", vendor)
        .add("logicalLibraryName", logicalLibraryName)
        .add("tapePoolName", tapePoolName)
@@ -3255,7 +3257,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     std::string sql =
       "SELECT "
         "TAPE.VID AS VID,"
-        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
         "TAPE.VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
@@ -3298,6 +3300,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
         "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "INNER JOIN MEDIA_TYPE ON "
+        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
       "INNER JOIN VIRTUAL_ORGANIZATION ON "
         "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID";
 
@@ -3323,7 +3327,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     }
     if(searchCriteria.mediaType) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " TAPE.MEDIA_TYPE = :MEDIA_TYPE";
+      sql += " MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.vendor) {
@@ -3473,7 +3477,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
     std::string sql =
       "SELECT "
         "TAPE.VID AS VID,"
-        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
         "TAPE.VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
@@ -3514,6 +3518,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
         "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "INNER JOIN MEDIA_TYPE ON "
+        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
       "INNER JOIN VIRTUAL_ORGANIZATION ON "
         "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID";
 
@@ -3603,7 +3609,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
     std::string sql =
       "SELECT "
         "TAPE.VID AS VID,"
-        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
         "TAPE.VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
@@ -3644,6 +3650,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
         "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "INNER JOIN MEDIA_TYPE ON "
+        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
       "INNER JOIN VIRTUAL_ORGANIZATION ON "
         "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID";
 
@@ -3966,16 +3974,20 @@ optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(con
 void RdbmsCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &mediaType) {
   try {
+    auto conn = m_connPool.getConn();
+    if(!mediaTypeExists(conn, mediaType)){
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the media type " + mediaType + " does not exist");
+    }
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
-        "MEDIA_TYPE = :MEDIA_TYPE,"
+        "MEDIA_TYPE_ID = (SELECT MEDIA_TYPE_ID FROM MEDIA_TYPE WHERE MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE),"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
       "WHERE "
         "VID = :VID";
-    auto conn = m_connPool.getConn();
+    
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":MEDIA_TYPE", mediaType);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -4065,6 +4077,9 @@ void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
+    if(!logicalLibraryExists(conn,logicalLibraryName)){
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the logical library " + logicalLibraryName + " does not exist");
+    }
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -4110,6 +4125,9 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
       "WHERE "
         "VID = :VID";
     auto conn = m_connPool.getConn();
+    if(!tapePoolExists(conn,tapePoolName)){
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the tape pool " + tapePoolName + " does not exist");
+    }
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -7344,7 +7362,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     const char *const sql =
       "SELECT "
         "TAPE.VID AS VID,"
-        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
         "TAPE.VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
@@ -7358,6 +7376,8 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
         "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "INNER JOIN MEDIA_TYPE ON "
+        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
       "INNER JOIN VIRTUAL_ORGANIZATION ON "
         "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
       "WHERE "
@@ -8167,6 +8187,33 @@ optional<uint64_t> RdbmsCatalogue::getTapePoolId(rdbms::Conn &conn, const std::s
       return nullopt;
     }
     return rset.columnUint64("TAPE_POOL_ID");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getMediaTypeId
+//------------------------------------------------------------------------------
+optional<uint64_t> RdbmsCatalogue::getMediaTypeId(rdbms::Conn &conn, const std::string &name) const {
+  try {
+    const char *const sql =
+      "SELECT"                                       "\n"
+        "MEDIA_TYPE.MEDIA_TYPE_ID AS MEDIA_TYPE_ID"  "\n"
+      "FROM"                                         "\n"
+        "MEDIA_TYPE"                                 "\n"
+      "WHERE"                                        "\n"
+        "MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":MEDIA_TYPE_NAME", name);
+    auto rset = stmt.executeQuery();
+    if(!rset.next()) {
+      return nullopt;
+    }
+    return rset.columnUint64("MEDIA_TYPE_ID");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
