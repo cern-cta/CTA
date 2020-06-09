@@ -473,22 +473,29 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
 
    cta::utils::Timer t;
 
-   // Queue the request
-   std::string archiveRequestAddr = m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
+   cta::log::ScopedParamContainer params(m_lc);
+   std::string logMessage = "In RequestMessage::processCLOSEW(): ";
+   if(request.fileSize > 0) {
+     // Queue the request
+     std::string archiveRequestAddr = m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
+     logMessage += "queued file for archive.";
+     params.add("schedulerTime", t.secs());
+     params.add("archiveRequestId", archiveRequestAddr);
+
+     // Add archive request reference to response as an extended attribute
+     response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", archiveRequestAddr));
+   } else {
+     logMessage += "ignoring zero-length file.";
+   }
 
    // Create a log entry
-   cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", archiveFileId);
-   params.add("schedulerTime", t.secs());
    params.add("requesterInstance", notification.wf().requester_instance());
-   params.add("archiveRequestId",archiveRequestAddr);
-   m_lc.log(cta::log::INFO, "In RequestMessage::processCLOSEW(): queued file for archive.");
+   m_lc.log(cta::log::INFO, logMessage);
 
-   // Set response type and add archive request reference as an extended attribute.
-   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", archiveRequestAddr));
+   // Set response type
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
-
 
 
 void RequestMessage::processPREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response)
