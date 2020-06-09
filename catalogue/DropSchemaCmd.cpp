@@ -136,8 +136,6 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
-      "MEDIA_TYPE",
-      "MEDIA_TYPE_ID",
       "TEMP_TAPE_FILE",
       "DATABASECHANGELOGLOCK", /* Liquibase specific table */
       "DATABASECHANGELOG", /* Liquibase specific table */
@@ -146,6 +144,8 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "ARCHIVE_FILE",
       "ARCHIVE_FILE_ID",
       "TAPE",
+      "MEDIA_TYPE",
+      "MEDIA_TYPE_ID",
       "REQUESTER_MOUNT_RULE",
       "REQUESTER_GROUP_MOUNT_RULE",
       "ADMIN_USER",
@@ -179,8 +179,6 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
-      "MEDIA_TYPE",
-      "MEDIA_TYPE_ID",
       "TEMP_TAPE_FILE",
       "DATABASECHANGELOGLOCK", /* Liquibase specific table */
       "DATABASECHANGELOG", /* Liquibase specific table */
@@ -190,6 +188,8 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "ARCHIVE_FILE",
       "ARCHIVE_FILE_ID",
       "TAPE",
+      "MEDIA_TYPE",
+      "MEDIA_TYPE_ID",
       "REQUESTER_MOUNT_RULE",
       "REQUESTER_GROUP_MOUNT_RULE",
       "ADMIN_USER",
@@ -243,11 +243,11 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
       "FILE_RECYCLE_BIN",
-      "MEDIA_TYPE",
       "ARCHIVE_FILE",
       "TAPE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE_RECYCLE_BIN",
       "TAPE",
+      "MEDIA_TYPE",
       "TEMP_TAPE_FILE_BATCH",
       "TEMP_TAPE_FILE_INSERTION_BATCH",
       "TEMP_TAPE_FILE",
@@ -295,7 +295,6 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "CTA_CATALOGUE",
       "ARCHIVE_ROUTE",
       "TAPE_FILE",
-      "MEDIA_TYPE",
       "TEMP_TAPE_FILE",
       "DATABASECHANGELOGLOCK", /* Liquibase specific table */
       "DATABASECHANGELOG", /* Liquibase specific table */
@@ -304,6 +303,7 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "TAPE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE_RECYCLE_BIN",
       "TAPE",
+      "MEDIA_TYPE",
       "REQUESTER_MOUNT_RULE",
       "REQUESTER_GROUP_MOUNT_RULE",
       "ADMIN_USER",
