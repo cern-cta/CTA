@@ -1714,9 +1714,6 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    if(tapepool) {
       m_catalogue.modifyTapeTapePoolName(m_cliIdentity, vid, tapepool.value());
    }
-   if(capacity) {
-      m_catalogue.modifyTapeCapacityInBytes(m_cliIdentity, vid, capacity.value());
-   }
    if(comment) {
       m_catalogue.modifyTapeComment(m_cliIdentity, vid, comment.value());
    }

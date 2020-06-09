@@ -314,7 +314,7 @@ public:
     
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
-    mediaType.capacityInBytes = 10;
+    mediaType.capacityInBytes = 12345678;
     mediaType.cartridge = "cartridge";
     mediaType.comment = "comment";
     catalogue.createMediaType(s_adminOnAdminHost,mediaType);

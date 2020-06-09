@@ -1934,7 +1934,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "TAPE_POOL.SUPPLY AS SUPPLY,"
 
         "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
-        "COALESCE(SUM(TAPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
+        "COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
         "COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
         "COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,"
 
@@ -1953,6 +1953,8 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
       "LEFT OUTER JOIN TAPE ON "
         "TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID "
+      "LEFT OUTER JOIN MEDIA_TYPE ON "
+        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
       "GROUP BY "
         "TAPE_POOL.TAPE_POOL_NAME,"
         "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,"
@@ -3018,7 +3020,6 @@ void RdbmsCatalogue::createTape(
         "VENDOR,"                  "\n"
         "LOGICAL_LIBRARY_ID,"      "\n"
         "TAPE_POOL_ID,"            "\n"
-        "CAPACITY_IN_BYTES,"       "\n"
         "DATA_IN_BYTES,"           "\n"
         "LAST_FSEQ,"               "\n"
         "IS_DISABLED,"             "\n"
@@ -3041,7 +3042,6 @@ void RdbmsCatalogue::createTape(
         ":VENDOR,"                 "\n"
         ":LOGICAL_LIBRARY_ID,"     "\n"
         ":TAPE_POOL_ID,"           "\n"
-        ":CAPACITY_IN_BYTES,"      "\n"
         ":DATA_IN_BYTES,"          "\n"
         ":LAST_FSEQ,"              "\n"
         ":IS_DISABLED,"            "\n"
@@ -3066,7 +3066,6 @@ void RdbmsCatalogue::createTape(
     stmt.bindString(":VENDOR", vendor);
     stmt.bindUint64(":LOGICAL_LIBRARY_ID", logicalLibraryId.value());
     stmt.bindUint64(":TAPE_POOL_ID", tapePoolId.value());
-    stmt.bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
     stmt.bindUint64(":DATA_IN_BYTES", 0);
     stmt.bindUint64(":LAST_FSEQ", 0);
     stmt.bindBool(":IS_DISABLED", disabled);
@@ -3093,7 +3092,6 @@ void RdbmsCatalogue::createTape(
        .add("vendor", vendor)
        .add("logicalLibraryName", logicalLibraryName)
        .add("tapePoolName", tapePoolName)
-       .add("capacityInBytes", capacityInBytes)
        .add("isDisabled", disabled ? 1 : 0)
        .add("isFull", full ? 1 : 0)
        .add("isReadOnly", readOnly ? 1 : 0)
@@ -3263,7 +3261,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
-        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.NB_MASTER_FILES AS NB_MASTER_FILES,"
         "TAPE.MASTER_DATA_IN_BYTES AS MASTER_DATA_IN_BYTES,"
@@ -3352,7 +3350,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     }
     if(searchCriteria.capacityInBytes) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " TAPE.CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
+      sql += " MEDIA_TYPE.CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.disabled) {
@@ -3483,7 +3481,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
-        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
@@ -3615,7 +3613,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
         "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
-        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_DISABLED AS IS_DISABLED,"
@@ -4149,50 +4147,6 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
        .add("lastUpdateHostName", admin.host)
        .add("lastUpdateTime", now);
     lc.log(log::INFO, "Catalogue - user modified tape - tapePoolName");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// modifyTapeCapacityInBytes
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const uint64_t capacityInBytes) {
-  try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE TAPE SET "
-        "CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "VID = :VID";
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":VID", vid);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
-    }
-
-    log::LogContext lc(m_log);
-    log::ScopedParamContainer spc(lc);
-    spc.add("vid", vid)
-       .add("capacityInBytes", capacityInBytes)
-       .add("lastUpdateUserName", admin.username)
-       .add("lastUpdateHostName", admin.host)
-       .add("lastUpdateTime", now);
-    lc.log(log::INFO, "Catalogue - user modified tape - capacityInBytes");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7367,7 +7321,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
-        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ "
       "FROM "

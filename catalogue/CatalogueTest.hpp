@@ -116,7 +116,7 @@ protected:
    * Creates a media type in the catalogue
    * @param mediaTypeName
    */
-  void createMediaType(const std::string & mediaTypeName);
+  void createMediaType(const std::string & mediaTypeName, const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000);
 }; // cta_catalogue_CatalogueTest
 
 } // namespace unitTests
