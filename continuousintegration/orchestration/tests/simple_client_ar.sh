@@ -98,8 +98,10 @@ else
   zeroLengthTests=0
 fi
 # Clean up
-echo "eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}.touch /eos/ctaeos/cta/${TEST_FILE_NAME}.zero"
-eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}.touch /eos/ctaeos/cta/${TEST_FILE_NAME}.zero
+echo "eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}.touch"
+eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}.touch
+echo "eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}.zero"
+eos root://${EOSINSTANCE} rm /eos/ctaeos/cta/${TEST_FILE_NAME}.zero
 rm -f /tmp/${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.zero
 
 # Report results
