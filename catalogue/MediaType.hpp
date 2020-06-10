@@ -38,9 +38,7 @@ struct MediaType {
    * member-variables are left as null.
    */
   MediaType():
-    capacityInBytes(0),
-    primaryDensityCode(0),
-    secondaryDensityCode(0) {
+    capacityInBytes(0) {
   }
 
   /**

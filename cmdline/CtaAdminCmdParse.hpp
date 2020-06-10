@@ -452,12 +452,12 @@ const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",             
                                         "--logicallibrary" };
 const Option opt_lookupns             { Option::OPT_FLAG, "--lookupnamespace",       "-l",   "" };
 const Option opt_maxdrivesallowed     { Option::OPT_UINT, "--maxdrivesallowed",      "-d",   " <max_drives_allowed>" };
-const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "-m",   " <maximum_longitudinal_position>" };
+const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "-maxl",   " <maximum_longitudinal_position>" };
 const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type_name>" };
 const Option opt_mediatype_alias      { Option::OPT_STR,  "--name",                  "-n",   " <media_type_name>",
                                         "--mediatype" };
 const Option opt_minarchiverequestage { Option::OPT_UINT, "--minarchiverequestage",  "--aa", " <min_request_age>" };
-const Option opt_minlpos              { Option::OPT_UINT, "--minlpos",               "-m",   " <minimum_longitudinal_position>" };
+const Option opt_minlpos              { Option::OPT_UINT, "--minlpos",               "-minl",   " <minimum_longitudinal_position>" };
 const Option opt_minretrieverequestage{ Option::OPT_UINT, "--minretrieverequestage", "--ra", " <min_request_age>" };
 const Option opt_mountpolicy          { Option::OPT_STR,  "--mountpolicy",           "-u",   " <mount_policy_name>" };
 const Option opt_mountpolicy_alias    { Option::OPT_STR,  "--name",                  "-n",   " <mount_policy_name>",
@@ -597,11 +597,11 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_ADD   },
-      { opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_capacity, opt_disabled, opt_full, opt_readonly,
+      { opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_disabled, opt_full, opt_readonly,
         opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_CH    },
       { opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
-        opt_tapepool.optional(), opt_capacity.optional(), opt_encryptionkeyname.optional(), opt_disabled.optional(),
+        opt_tapepool.optional(), opt_encryptionkeyname.optional(), opt_disabled.optional(),
         opt_full.optional(), opt_readonly.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RECLAIM }, { opt_vid }},

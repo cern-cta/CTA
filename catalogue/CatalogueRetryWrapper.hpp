@@ -299,6 +299,10 @@ public:
   void createTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType, const std::string &vendor, const std::string &logicalLibraryName, const std::string &tapePoolName, const uint64_t capacityInBytes, const bool disabled, const bool full, const bool readOnly, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createTape(admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes, disabled, full, readOnly, comment);}, m_maxTriesToConnect);
   }
+  
+  void createTape(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::Tape & tape) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createTape(admin, tape);}, m_maxTriesToConnect);
+  }
 
   void deleteTape(const std::string &vid) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteTape(vid);}, m_maxTriesToConnect);

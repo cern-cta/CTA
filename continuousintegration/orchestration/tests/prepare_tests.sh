@@ -130,7 +130,6 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
       --vendor vendor                                                      \
       --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}  \
       --tapepool ctasystest                                                \
-      --capacity 1000000000                                                \
       --comment "ctasystest"                                               \
       --vid ${VID}                                                         \
       --disabled false                                                     \

@@ -472,6 +472,7 @@ public:
   /**
    * Creates a tape which is assumed to have logical block protection (LBP)
    * enabled and isFromCastor disabled.
+   * TODO THIS METHOD IS DEPRECATED AND SHOULD BE REMOVED. IT IS USED ONLY IN THE UNIT TESTS ! USE THE ONE THAT USES THE TAPE DATASTRUCTURE INSTEAD
    */
   virtual void createTape(
     const common::dataStructures::SecurityIdentity &admin,
@@ -485,6 +486,14 @@ public:
     const bool full,
     const bool readOnly,
     const std::string &comment) = 0;
+  
+  /**
+   * Creates a tape which is assumed to have logical block protection (LBP)
+   * enabled and isFromCastor disabled.
+   */
+  virtual void createTape(
+    const common::dataStructures::SecurityIdentity &admin,
+    const common::dataStructures::Tape & tape) = 0;
 
   virtual void deleteTape(const std::string &vid) = 0;
 

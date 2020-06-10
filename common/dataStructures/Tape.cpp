@@ -88,7 +88,22 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
      << " lastWriteLog=" << obj.lastWriteLog
      << " lastReadLog=" << obj.lastReadLog << ")";
   return os;
+      }
+
+common::dataStructures::Tape Tape::TapeFactory::createTape(const std::string& vid, const std::string& mediaType, const std::string& vendor, const std::string& logicalLibraryName, const std::string& tapePoolName, bool disabledValue, bool fullValue, bool readOnlyValue, const std::string& comment) {
+  cta::common::dataStructures::Tape tape;
+  tape.vid = vid;
+  tape.mediaType = mediaType;
+  tape.vendor = vendor;
+  tape.logicalLibraryName = logicalLibraryName;
+  tape.tapePoolName = tapePoolName;
+  tape.disabled = disabledValue;
+  tape.full = fullValue;
+  tape.readOnly = readOnlyValue;
+  tape.comment = comment;
+  return tape;
 }
+
 
 } // namespace dataStructures
 } // namespace common

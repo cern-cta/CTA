@@ -1140,6 +1140,26 @@ TEST_P(cta_catalogue_CatalogueTest, createMediaType_emptyStringCartridge) {
     catalogue::UserSpecifiedAnEmptyStringCartridge);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, createMediaType_zeroCapacity) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMediaTypes().empty());
+
+  catalogue::MediaType mediaType;
+  mediaType.name = "media_type";
+  mediaType.cartridge = "cartridge";
+  mediaType.capacityInBytes = 0;
+  mediaType.primaryDensityCode = 2;
+  mediaType.secondaryDensityCode = 3;
+  mediaType.nbWraps = 4;
+  mediaType.minLPos = 5;
+  mediaType.maxLPos = 6;
+  mediaType.comment = "Create media type";
+
+  ASSERT_THROW(m_catalogue->createMediaType(m_admin, mediaType),
+    catalogue::UserSpecifiedAZeroCapacity);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, deleteMediaType) {
   using namespace cta;
 
@@ -4384,52 +4404,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
     capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
-}
-
-TEST_P(cta_catalogue_CatalogueTest, createTape_zeroCapacity) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getTapes().empty());
-
-  const std::string vid = "vid";
-
-  ASSERT_FALSE(m_catalogue->tapeExists(vid));
-
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
-  const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
-  const std::string vo = "vo";
-  const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = 0;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
-
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-
-  createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  {
-    const auto pools = m_catalogue->getTapePools();
-    ASSERT_EQ(1, pools.size());
-
-    const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
-    ASSERT_EQ(vo, pool.vo.name);
-    ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityBytes);
-    ASSERT_EQ(0, pool.dataBytes);
-    ASSERT_EQ(0, pool.nbPhysicalFiles);
-  }
-
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAZeroCapacity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringComment) {

@@ -1089,7 +1089,9 @@ void RdbmsCatalogue::createMediaType(
       throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create media type ") + mediaType.name +
         " because the comment is an empty string");
     }
-
+    if(mediaType.capacityInBytes == 0){
+      throw UserSpecifiedAZeroCapacity(std::string("Cannot create media type ") + mediaType.name + " because the capacity is zero");
+    }
     auto conn = m_connPool.getConn();
     if(mediaTypeExists(conn, mediaType.name)) {
       throw exception::UserError(std::string("Cannot create media type ") + mediaType.name +
@@ -2944,24 +2946,30 @@ void RdbmsCatalogue::setLogicalLibraryDisabled(const common::dataStructures::Sec
   }
 }
 
+void RdbmsCatalogue::createTape(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& mediaType, const std::string& vendor, const std::string& logicalLibraryName, const std::string& tapePoolName, const uint64_t capacityInBytes, const bool disabled, const bool full, const bool readOnly, const std::string& comment){
+  auto tape = cta::common::dataStructures::Tape::TapeFactory::createTape(vid,mediaType,vendor,logicalLibraryName,tapePoolName, disabled,full,readOnly,comment);
+  createTape(admin,tape);
+}
+
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createTape(
   const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid,
-  const std::string &mediaTypeName,
-  const std::string &vendor,
-  const std::string &logicalLibraryName,
-  const std::string &tapePoolName,
-  const uint64_t capacityInBytes,
-  const bool disabled,
-  const bool full,
-  const bool readOnly,      
-  const std::string &comment) {
+  const common::dataStructures::Tape & tape) {
   // CTA hard code this field to FALSE
   const bool isFromCastor = false;
   try {
+    std::string vid = tape.vid;
+    std::string mediaTypeName = tape.mediaType;
+    std::string vendor = tape.vendor;
+    std::string logicalLibraryName = tape.logicalLibraryName;
+    std::string tapePoolName = tape.tapePoolName;
+    std::string comment = tape.comment;
+    bool disabled = tape.disabled;
+    bool full = tape.full;
+    bool readOnly = tape.readOnly;
+    
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
     }
@@ -2986,11 +2994,7 @@ void RdbmsCatalogue::createTape(
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create tape because the comment is an empty string");
     }
-
-    if(0 == capacityInBytes) {
-      throw UserSpecifiedAZeroCapacity("Cannot create tape because the capacity is zero");
-    }
-
+    
     auto conn = m_connPool.getConn();
     if(tapeExists(conn, vid)) {
       throw exception::UserError(std::string("Cannot create tape ") + vid +
@@ -3004,7 +3008,7 @@ void RdbmsCatalogue::createTape(
     const auto tapePoolId = getTapePoolId(conn, tapePoolName);
     if(!tapePoolId) {
       throw exception::UserError(std::string("Cannot create tape ") + vid + " because tape pool " +
-        tapePoolName + " does not exist");
+       tapePoolName + " does not exist");
     }
     
     const auto mediaTypeId = getMediaTypeId(conn, mediaTypeName);
@@ -3453,8 +3457,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     }
     if(searchCriteria.diskFileIds) {
       // When searching by diskFileId, results are not guaranteed to be in sorted order
-      using namespace common::dataStructures;
-      tapes.sort([](const Tape &a, const Tape &b) { return a.vid < b.vid; });
+      tapes.sort([](const common::dataStructures::Tape &a, const common::dataStructures::Tape &b) { return a.vid < b.vid; });
     }
 
     return tapes;
