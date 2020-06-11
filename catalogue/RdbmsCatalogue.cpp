@@ -7971,16 +7971,16 @@ SchemaVersion RdbmsCatalogue::getSchemaVersion() const {
     
     if(rset.next()) {
       SchemaVersion::Builder schemaVersionBuilder;
-        schemaVersionBuilder.schemaVersionMajor(rset.columnUint64("SCHEMA_VERSION_MAJOR"))
-                            .schemaVersionMinor(rset.columnUint64("SCHEMA_VERSION_MINOR"))
-                            .status(rset.columnString("STATUS"));
-        auto schemaVersionMajorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR");
-        auto schemaVersionMinorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
-        if(schemaVersionMajorNext && schemaVersionMinorNext){
-          schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
-                              .nextSchemaVersionMinor(schemaVersionMinorNext.value());
-        }
-        return schemaVersionBuilder.build();
+      schemaVersionBuilder.schemaVersionMajor(rset.columnUint64("SCHEMA_VERSION_MAJOR"))
+                          .schemaVersionMinor(rset.columnUint64("SCHEMA_VERSION_MINOR"))
+                          .status(rset.columnString("STATUS"));
+      auto schemaVersionMajorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR");
+      auto schemaVersionMinorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
+      if(schemaVersionMajorNext && schemaVersionMinorNext){
+        schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
+                            .nextSchemaVersionMinor(schemaVersionMinorNext.value());
+      }
+      return schemaVersionBuilder.build();
     } else {
       throw exception::Exception("CTA_CATALOGUE does not contain any row");
     } 

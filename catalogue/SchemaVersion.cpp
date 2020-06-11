@@ -24,10 +24,6 @@ namespace cta { namespace catalogue {
 
 SchemaVersion::SchemaVersion(){}  
   
-SchemaVersion::SchemaVersion(const uint64_t schemaVersionMajor, const uint64_t schemaVersionMinor, const cta::optional<uint64_t> schemaVersionMajorNext, const cta::optional<uint64_t> schemaVersionMinorNext, const Status status):m_schemaVersionMajor(schemaVersionMajor), m_schemaVersionMinor(schemaVersionMinor), m_nextSchemaVersionMajor(schemaVersionMajorNext), m_nextSchemaVersionMinor(schemaVersionMinorNext), m_status(status) {
-  
-}
-
 SchemaVersion::SchemaVersion(const SchemaVersion& orig) {
   if(this != &orig){
     m_schemaVersionMajor = orig.m_schemaVersionMajor;

@@ -27,9 +27,10 @@ namespace catalogue {
    * This class holds the results of the Schema comparison against the catalogue database schema
    * It is simply composed of:
    * - a list of differences between the catalogue schema and the schema we are comparing it against
+   * - a list of warnings
    * - a Status (SUCCESS or FAILED)
    */
-class SchemaComparerResult {
+class SchemaCheckerResult {
 public:
   /**
    * The comparison is either SUCCESS or FAILED
@@ -40,9 +41,9 @@ public:
   };
   static std::string statusToString(const Status& status);
   
-  SchemaComparerResult();
-  SchemaComparerResult(const SchemaComparerResult& orig);
-  SchemaComparerResult operator=(const SchemaComparerResult &other);
+  SchemaCheckerResult();
+  SchemaCheckerResult(const SchemaCheckerResult& orig);
+  SchemaCheckerResult operator=(const SchemaCheckerResult &other);
   /**
    * We can combine the SchemaComparerResult in order to add other Results to it
    * @param other the SchemaComparerResult object to add
@@ -51,24 +52,39 @@ public:
    * Note: The status will never change if it is failed (this or other)
    * It will simply append the list of differences of other to this SchemaComparerResult
    */
-  SchemaComparerResult operator+=(const SchemaComparerResult &other);
+  SchemaCheckerResult operator+=(const SchemaCheckerResult &other);
+  
   /**
-   * Prints the differences in this result
+   * Prints the errors the ostream
+   * @param os the ostream to print the errors
    */
-  void printDiffs() const;
+  void displayErrors(std::ostream & os) const;
+  
+  /**
+   * Prints the warnings the ostream
+   * @param os the ostream to print the warnings
+   */
+  void displayWarnings(std::ostream & os) const;
   /**
    * Returns the status of the SchemaComparerResult
    * @return the status of the SchemaComparerResult
    */
   Status getStatus() const;
   /**
-   * Add a difference to this Result
-   * @param diff the difference to add
+   * Add an error to this result
+   * @param error the error to add
    */
-  void addDiff(const std::string &diff);
-  virtual ~SchemaComparerResult();
+  void addError(const std::string &error);
+  /**
+   * Add a warning to this result
+   * @param warning the warning to add
+   */
+  void addWarning(const std::string & warning);
+  
+  virtual ~SchemaCheckerResult();
 private:
-  std::list<std::string> m_diffs;
+  std::list<std::string> m_errors;
+  std::list<std::string> m_warnings;
   Status m_status;
 };
 

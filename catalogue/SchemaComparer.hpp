@@ -25,7 +25,7 @@
 #pragma once
 
 #include "rdbms/ConnPool.hpp"
-#include "SchemaComparerResult.hpp"
+#include "SchemaCheckerResult.hpp"
 #include "DatabaseMetadataGetter.hpp"
 #include "SchemaSqlStatementsReader.hpp"
 
@@ -51,24 +51,24 @@ public:
    * Compare the schema to compare against the database 
    * @return a SchemaComparerResult object that will contain the differences if there are some
    */
-  virtual SchemaComparerResult compareAll() = 0;
+  virtual SchemaCheckerResult compareAll() = 0;
   /**
    * Compare the tables of the schema against the catalogue database
    * @return a SchemaComparerResult that will contain the differences if there are some
    */
-  virtual SchemaComparerResult compareTables() = 0;
+  virtual SchemaCheckerResult compareTables() = 0;
   /**
    * Compare the indexes of the schema against the catalogue database
    * @return a SchemaComparerResult that will contain the differences if there are some
    */
-  virtual SchemaComparerResult compareIndexes() = 0;
+  virtual SchemaCheckerResult compareIndexes() = 0;
   
   /**
    * Compare only the tables that are located in the schema
    * This is useful when want to compare ONLY tables that are defined in a schema
    * @return a SchemaComparerResult that will contain the differences if there are some
    */
-  virtual SchemaComparerResult compareTablesLocatedInSchema() = 0;
+  virtual SchemaCheckerResult compareTablesLocatedInSchema() = 0;
   /**
    * Sets the way the schema sql statements will be read to do the schemas comparison
    * @param schemaSqlStatementsReader the reader used to get the schema sql statements in order to do schema comparison

@@ -54,7 +54,6 @@ private:
   cta::optional<uint64_t> m_nextSchemaVersionMinor;
   SchemaVersion::Status m_status;
   SchemaVersion();
-  SchemaVersion(const uint64_t schemaVersionMajor, const uint64_t schemaVersionMinor, const cta::optional<uint64_t> nextSchemaVersionMajor, const cta::optional<uint64_t> nextSchemaVersionMinor, const Status status);
 };
 
 class SchemaVersion::Builder{

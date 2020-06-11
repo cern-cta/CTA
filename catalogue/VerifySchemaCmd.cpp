@@ -80,10 +80,11 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
                         .useSQLiteSchemaComparer()
                         .build());
   
-  SchemaChecker::Status comparisonStatus = schemaChecker->compareSchema();
-  schemaChecker->checkNoParallelTables();
-  schemaChecker->checkSchemaNotUpgrading();
-  if(comparisonStatus == SchemaChecker::Status::FAILURE){
+  SchemaCheckerResult result = schemaChecker->displayingCompareSchema(std::cout,std::cerr);
+  result += schemaChecker->checkNoParallelTables();
+  result += schemaChecker->checkSchemaNotUpgrading();
+  result.displayWarnings(std::cout);
+  if(result.getStatus() == SchemaCheckerResult::Status::FAILED){
     return 1;
   }
   return 0;

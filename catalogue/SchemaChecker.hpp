@@ -21,6 +21,7 @@
 #include "rdbms/Conn.hpp"
 #include "SchemaComparer.hpp"
 #include "CatalogueSchema.hpp"
+#include "SchemaCheckerResult.hpp"
 
 namespace cta{
 namespace catalogue{
@@ -39,43 +40,38 @@ namespace catalogue{
  */  
 class SchemaChecker {
 public:
-  /**
-   * The status of the checking of the database
-   */
-  enum Status {
-    OK,
-    FAILURE
-  };
   
   /**
    * Destructor
    */
   virtual ~SchemaChecker();
   /**
-   * Compare the schema by using a SchemaComparer
+   * Compare the schema by using a SchemaComparer and output what it is doing and errors
    * @throws Exception if no SchemaComparer has been set.
-   * @return a Status : OK or FAILURE
+   * @return a SchemaCheckerResult
    */
-  Status compareSchema();
+  SchemaCheckerResult displayingCompareSchema(std::ostream & stdout, std::ostream & stderr);
+  
   /**
    * Checks if the catalogue database contains PARALLEL tables
    * It will display a warning with the table name if this is the case
+   * @return a SchemaCheckerResult
    */
-  void checkNoParallelTables();
+  SchemaCheckerResult checkNoParallelTables();
   
   /**
    * Checks if the catalogue database schema is upgrading or not
    */
-  void checkSchemaNotUpgrading();
+  SchemaCheckerResult checkSchemaNotUpgrading();
   
   /**
    * Compare the schema tables whose names are located in the tableList parameter
    * @param tableList the table names we would like to compare
    * @return a Status OK or FAILURE
    */
-  Status compareTablesLocatedInSchema();
+  SchemaCheckerResult compareTablesLocatedInSchema();
   
-  Status checkTableContainsColumns(const std::string &tableName, const std::list<std::string> columnNames);
+  SchemaCheckerResult checkTableContainsColumns(const std::string &tableName, const std::list<std::string> columnNames);
   
   class Builder {
   public:

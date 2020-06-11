@@ -43,23 +43,23 @@ SQLiteSchemaComparer::~SQLiteSchemaComparer() {
   m_sqliteConnPool.reset();
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareAll(){
+SchemaCheckerResult SQLiteSchemaComparer::compareAll(){
   insertSchemaInSQLite();
-  SchemaComparerResult res;
+  SchemaCheckerResult res;
   res += compareTables();
   res += compareIndexes();
   return res;
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareTables(){
+SchemaCheckerResult SQLiteSchemaComparer::compareTables(){
   insertSchemaInSQLite();
   std::list<std::string> catalogueTables = m_databaseMetadataGetter.getTableNames();
   std::list<std::string> schemaTables = m_schemaMetadataGetter->getTableNames();
-  SchemaComparerResult res = compareTables(catalogueTables,schemaTables);
+  SchemaCheckerResult res = compareTables(catalogueTables,schemaTables);
   return res;
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareTablesLocatedInSchema(){
+SchemaCheckerResult SQLiteSchemaComparer::compareTablesLocatedInSchema(){
   insertSchemaInSQLite();
   std::list<std::string> databaseTables = m_databaseMetadataGetter.getTableNames();
   std::list<std::string> schemaTables = m_schemaMetadataGetter->getTableNames();
@@ -68,7 +68,7 @@ SchemaComparerResult SQLiteSchemaComparer::compareTablesLocatedInSchema(){
       return schemaTable == catalogueTable;
     }) == schemaTables.end();
   });
-  SchemaComparerResult res = compareTables(databaseTables,schemaTables);
+  SchemaCheckerResult res = compareTables(databaseTables,schemaTables);
   return res;
 }
 
@@ -84,30 +84,30 @@ void SQLiteSchemaComparer::insertSchemaInSQLite() {
   m_isSchemaInserted = true;
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareIndexes(){
+SchemaCheckerResult SQLiteSchemaComparer::compareIndexes(){
   insertSchemaInSQLite();
   std::list<std::string> catalogueIndexes = m_databaseMetadataGetter.getIndexNames();
   std::list<std::string> schemaIndexes = m_schemaMetadataGetter->getIndexNames();
   return compareItems("INDEX", catalogueIndexes, schemaIndexes);
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareItems(const std::string &itemType, const std::list<std::string>& itemsFromDatabase, const std::list<std::string>& itemsFromSQLite){
-  SchemaComparerResult result;
+SchemaCheckerResult SQLiteSchemaComparer::compareItems(const std::string &itemType, const std::list<std::string>& itemsFromDatabase, const std::list<std::string>& itemsFromSQLite){
+  SchemaCheckerResult result;
   for(auto &databaseItem: itemsFromDatabase){
     if(std::find(itemsFromSQLite.begin(),itemsFromSQLite.end(),databaseItem) == itemsFromSQLite.end()){
-      result.addDiff(itemType+" "+databaseItem+" is missing in the schema but defined in the "+m_databaseToCheckName+" database.");
+      result.addError(itemType+" "+databaseItem+" is missing in the schema but defined in the "+m_databaseToCheckName+" database.");
     }
   }
   for(auto &sqliteItem: itemsFromSQLite){
     if(std::find(itemsFromDatabase.begin(),itemsFromDatabase.end(),sqliteItem) == itemsFromDatabase.end()){
-      result.addDiff(itemType+" "+sqliteItem+" is missing in the "+m_databaseToCheckName+" database but is defined in the schema.");
+      result.addError(itemType+" "+sqliteItem+" is missing in the "+m_databaseToCheckName+" database but is defined in the schema.");
     }
   }
   return result;
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareTables(const std::list<std::string>& databaseTables, const std::list<std::string>& schemaTables){
-  SchemaComparerResult result;
+SchemaCheckerResult SQLiteSchemaComparer::compareTables(const std::list<std::string>& databaseTables, const std::list<std::string>& schemaTables){
+  SchemaCheckerResult result;
   std::map<std::string, std::map<std::string, std::string>> databaseTableColumns;
   std::map<std::string, std::map<std::string, std::string>> schemaTableColumns;
   std::map<std::string,std::list<std::string>> databaseTableConstraints;
@@ -132,8 +132,8 @@ SchemaComparerResult SQLiteSchemaComparer::compareTables(const std::list<std::st
   return result;
 }
 
-SchemaComparerResult SQLiteSchemaComparer::compareTableColumns(const TableColumns & schema1TableColumns, const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type){
-  SchemaComparerResult result;
+SchemaCheckerResult SQLiteSchemaComparer::compareTableColumns(const TableColumns & schema1TableColumns, const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type){
+  SchemaCheckerResult result;
   for(auto &kvFirstSchemaTableColumns: schema1TableColumns){
     //For each firstSchema table, get the corresponding secondSchema table
     //If it does not exist, add a difference and go ahead
@@ -149,14 +149,14 @@ SchemaComparerResult SQLiteSchemaComparer::compareTableColumns(const TableColumn
         try {
           std::string schemaColumnType = mapSchema2ColumnType.at(schema1ColumnName);
           if( schema1ColumnType != schemaColumnType){
-            result.addDiff("TABLE "+schema1TableName+" from "+schema1Type+" has a column named "+schema1ColumnName+" that has a type "+schema1ColumnType+" that does not match the column type from the "+schema2Type+" ("+schemaColumnType+")");
+            result.addError("TABLE "+schema1TableName+" from "+schema1Type+" has a column named "+schema1ColumnName+" that has a type "+schema1ColumnType+" that does not match the column type from the "+schema2Type+" ("+schemaColumnType+")");
           }
         } catch (const std::out_of_range &) {
-          result.addDiff("TABLE "+schema1TableName+" from "+schema1Type+" has a column named " + schema1ColumnName + " that is missing in the "+schema2Type+".");
+          result.addError("TABLE "+schema1TableName+" from "+schema1Type+" has a column named " + schema1ColumnName + " that is missing in the "+schema2Type+".");
         }
       }
     } catch (const std::out_of_range &) {
-      result.addDiff("TABLE "+schema1TableName+" is missing in the "+schema2Type+" but is defined in the "+schema1Type+".");
+      result.addError("TABLE "+schema1TableName+" is missing in the "+schema2Type+" but is defined in the "+schema1Type+".");
     }
   }
   return result;

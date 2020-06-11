@@ -104,7 +104,8 @@ install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
   ctacommon
-  ctardbms)
+  ctardbms
+)
 
 include(${PROJECT_SOURCE_DIR}/cmake/CTAVersions.cmake)
 
@@ -258,6 +259,27 @@ add_executable(cta-catalogue-schema-create
   PostgresCatalogueSchema.cpp
   MysqlCatalogueSchema.cpp)
 
+set (SCHEMA_CHECKER_LIB_SRC_FILES
+  SQLiteSchemaInserter.cpp
+  SchemaSqlStatementsReader.cpp
+  SchemaComparer.cpp
+  SQLiteSchemaComparer.cpp
+  DbToSQLiteStatementTransformer.cpp
+  SchemaCheckerResult.cpp
+  SchemaChecker.cpp
+  DatabaseMetadataGetter.cpp
+  CatalogueSchema.cpp
+  OracleCatalogueSchema.cpp
+  SqliteCatalogueSchema.cpp
+  PostgresCatalogueSchema.cpp
+  MysqlCatalogueSchema.cpp
+)
+
+add_library (ctaschemachecker SHARED
+   ${SCHEMA_CHECKER_LIB_SRC_FILES})
+
+install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
 target_link_libraries (cta-catalogue-schema-create ctacatalogue)
 set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
@@ -270,7 +292,7 @@ add_executable(cta-catalogue-schema-drop
   DropSchemaCmdLineArgs.cpp
   DropSchemaCmdMain.cpp)
 
-target_link_libraries (cta-catalogue-schema-drop ctacatalogue)
+target_link_libraries (cta-catalogue-schema-drop ctacatalogue ctaschemachecker)
 set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
@@ -300,27 +322,6 @@ set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPAT
 
 install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
-
-set (SCHEMA_CHECKER_LIB_SRC_FILES
-  SQLiteSchemaInserter.cpp
-  SchemaSqlStatementsReader.cpp
-  SchemaComparer.cpp
-  SQLiteSchemaComparer.cpp
-  DbToSQLiteStatementTransformer.cpp
-  SchemaComparerResult.cpp
-  SchemaChecker.cpp
-  DatabaseMetadataGetter.cpp
-  CatalogueSchema.cpp
-  OracleCatalogueSchema.cpp
-  SqliteCatalogueSchema.cpp
-  PostgresCatalogueSchema.cpp
-  MysqlCatalogueSchema.cpp
-)
-
-add_library (ctaschemachecker SHARED
-   ${SCHEMA_CHECKER_LIB_SRC_FILES})
-
-install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_executable(cta-catalogue-schema-verify
   VerifySchemaCmd.cpp

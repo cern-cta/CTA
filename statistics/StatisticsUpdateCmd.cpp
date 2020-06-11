@@ -66,7 +66,7 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker;
   catalogueChecker = catalogueCheckerBuilder.build();
   
-  SchemaChecker::Status tapeTableStatus = catalogueChecker->checkTableContainsColumns("TAPE",{"VID",
+  SchemaCheckerResult result = catalogueChecker->checkTableContainsColumns("TAPE",{"VID",
                                                                                               "DIRTY",
                                                                                               "NB_MASTER_FILES",
                                                                                               "MASTER_DATA_IN_BYTES",
@@ -75,10 +75,11 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
                                                                                               "NB_COPY_NB_GT_1",
                                                                                               "COPY_NB_GT_1_IN_BYTES"
                                                                                       });
-  SchemaChecker::Status tapeFileTableStatus = catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"VID","ARCHIVE_FILE_ID","FSEQ","COPY_NB","SUPERSEDED_BY_VID","SUPERSEDED_BY_FSEQ"});
-  SchemaChecker::Status archiveFileTableStatus = catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE",{"ARCHIVE_FILE_ID","SIZE_IN_BYTES"});
+  result += catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"VID","ARCHIVE_FILE_ID","FSEQ","COPY_NB","SUPERSEDED_BY_VID","SUPERSEDED_BY_FSEQ"});
+  result += catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE",{"ARCHIVE_FILE_ID","SIZE_IN_BYTES"});
   
-  if(tapeTableStatus == SchemaChecker::Status::FAILURE || tapeFileTableStatus == SchemaChecker::Status::FAILURE || archiveFileTableStatus == SchemaChecker::Status::FAILURE){
+  if(result.getStatus() == SchemaCheckerResult::FAILED){
+    result.displayErrors(std::cerr);
     return EXIT_FAILURE;
   }
   

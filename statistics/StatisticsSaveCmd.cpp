@@ -229,7 +229,7 @@ void StatisticsSaveCmd::checkCatalogueSchema(cta::rdbms::Conn& catalogueConn, ct
   SchemaChecker::Builder catalogueCheckerBuilder("catalogue",dbType,catalogueConn);
   std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker = catalogueCheckerBuilder.build();
 
-  SchemaChecker::Status tapeTableStatus = 
+  SchemaCheckerResult result = 
     catalogueChecker->checkTableContainsColumns("TAPE",{
                                                         "NB_MASTER_FILES",
                                                         "MASTER_DATA_IN_BYTES",
@@ -240,10 +240,10 @@ void StatisticsSaveCmd::checkCatalogueSchema(cta::rdbms::Conn& catalogueConn, ct
                                                         "DIRTY"
                                                       }
                                                 );
-  SchemaChecker::Status voTableStatus = 
-    catalogueChecker->checkTableContainsColumns("TAPE_POOL",{"VIRTUAL_ORGANIZATION_ID"});
+  result += catalogueChecker->checkTableContainsColumns("TAPE_POOL",{"VIRTUAL_ORGANIZATION_ID"});
 
-  if(tapeTableStatus == SchemaChecker::Status::FAILURE || voTableStatus == SchemaChecker::Status::FAILURE ){
+  if(result.getStatus() == SchemaCheckerResult::FAILED){
+    result.displayErrors(std::cerr);
     throw cta::exception::Exception("Catalogue schema checking failed.");
   }
 }
@@ -258,8 +258,9 @@ void StatisticsSaveCmd::checkStatisticsSchema(cta::rdbms::Conn& statisticsDataba
   statisticsCheckerBuilder.useCppSchemaStatementsReader(*statisticsSchema)
                           .useSQLiteSchemaComparer()
                           .build();
-  SchemaChecker::Status compareTablesStatus = statisticsChecker->compareTablesLocatedInSchema();
-  if(compareTablesStatus == SchemaChecker::Status::FAILURE){
+  SchemaCheckerResult compareTablesStatus = statisticsChecker->compareTablesLocatedInSchema();
+  if(compareTablesStatus.getStatus() == SchemaCheckerResult::FAILED){
+    compareTablesStatus.displayErrors(std::cerr);
     throw cta::exception::Exception("Statistics schema checking failed.");
   }
 }

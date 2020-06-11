@@ -36,71 +36,70 @@ void SchemaChecker::checkSchemaComparerNotNull(const std::string& methodName){
   }
 }
 
-SchemaChecker::Status SchemaChecker::compareSchema(){
-    checkSchemaComparerNotNull(__PRETTY_FUNCTION__);
-  SchemaComparerResult totalResult;
-  std::cout << "Schema version : " << m_databaseMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>() << std::endl;
-  std::cout << "Checking indexes..." << std::endl;
-  cta::catalogue::SchemaComparerResult resIndex = m_schemaComparer->compareIndexes();
+SchemaCheckerResult SchemaChecker::displayingCompareSchema(std::ostream & stdOut, std::ostream & stdErr){
+  checkSchemaComparerNotNull(__PRETTY_FUNCTION__);
+  SchemaCheckerResult totalResult;
+  stdOut << "Schema version : " << m_databaseMetadataGetter->getCatalogueVersion().getSchemaVersion<std::string>() << std::endl;
+  stdOut << "Checking indexes..." << std::endl;
+  cta::catalogue::SchemaCheckerResult resIndex = m_schemaComparer->compareIndexes();
   totalResult += resIndex;
-  resIndex.printDiffs();
-  std::cout <<"  "<<resIndex.statusToString(resIndex.getStatus())<<std::endl;
+  resIndex.displayErrors(stdErr);
+  stdOut <<"  "<<resIndex.statusToString(resIndex.getStatus())<<std::endl;
   if(m_dbType == rdbms::Login::DbType::DBTYPE_MYSQL){
-    std::cout << "Checking tables and columns..." << std::endl;
+    stdOut << "Checking tables and columns..." << std::endl;
   } else {
-    std::cout << "Checking tables, columns and constraints..." << std::endl;
+    stdOut << "Checking tables, columns and constraints..." << std::endl;
   }
-  cta::catalogue::SchemaComparerResult resTables = m_schemaComparer->compareTables();
+  cta::catalogue::SchemaCheckerResult resTables = m_schemaComparer->compareTables();
   totalResult += resTables;
-  resTables.printDiffs();
-  std::cout <<"  "<<resTables.statusToString(resTables.getStatus())<<std::endl;
-  std::cout << "Status of the checking : " << cta::catalogue::SchemaComparerResult::statusToString(totalResult.getStatus()) << std::endl;
-  if(totalResult.getStatus() == SchemaComparerResult::Status::FAILED){
-    return SchemaChecker::FAILURE;
-  }
-  return SchemaChecker::OK;
+  resTables.displayErrors(stdErr);
+  stdOut <<"  "<<resTables.statusToString(resTables.getStatus())<<std::endl;
+  stdOut << "Status of the checking : " << cta::catalogue::SchemaCheckerResult::statusToString(totalResult.getStatus()) << std::endl;
+  return totalResult;
 }
 
-void SchemaChecker::checkNoParallelTables(){
+SchemaCheckerResult SchemaChecker::checkNoParallelTables(){
+  SchemaCheckerResult res;
   std::list<std::string> parallelTables = m_databaseMetadataGetter->getParallelTableNames();
   for(auto& table:parallelTables) {
-    std::cout << "WARNING : TABLE " << table << " is set as PARALLEL" << std::endl;
+    std::string warning = "TABLE " + table + " is set as PARALLEL";
+    res.addWarning(warning);
   }
+  return res;
 }
 
-void SchemaChecker::checkSchemaNotUpgrading(){
+SchemaCheckerResult SchemaChecker::checkSchemaNotUpgrading(){
+  SchemaCheckerResult res;
   SchemaVersion catalogueVersion = m_databaseMetadataGetter->getCatalogueVersion();
   if(catalogueVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){
-    std::cout << "WARNING : The status of the schema is " << catalogueVersion.getStatus<std::string>() << ", the future version is " << catalogueVersion.getSchemaVersionNext<std::string>() << std::endl;
+    std::string warning = "The status of the schema is " + catalogueVersion.getStatus<std::string>() + ", the future version is " + catalogueVersion.getSchemaVersionNext<std::string>();
+    res.addWarning(warning);
   }
+  return res;
 }
 
-SchemaChecker::Status SchemaChecker::compareTablesLocatedInSchema(){
+SchemaCheckerResult SchemaChecker::compareTablesLocatedInSchema(){
   checkSchemaComparerNotNull(__PRETTY_FUNCTION__);
-  SchemaComparerResult res = m_schemaComparer->compareTablesLocatedInSchema();
-  if(res.getStatus() == SchemaComparerResult::Status::FAILED){
-    res.printDiffs();
-    return SchemaChecker::Status::FAILURE;
-  }
-  return SchemaChecker::Status::OK;
+  return m_schemaComparer->compareTablesLocatedInSchema();
 }
 
-SchemaChecker::Status SchemaChecker::checkTableContainsColumns(const std::string& tableName, const std::list<std::string> columnNames){
+SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& tableName, const std::list<std::string> columnNames){
   std::map<std::string, std::string> mapColumnsTypes = m_databaseMetadataGetter->getColumns(tableName);
-  SchemaChecker::Status status = SchemaChecker::Status::OK;
+  SchemaCheckerResult res;
   if(mapColumnsTypes.empty()){
-    std::cerr << "TABLE " << tableName << " does not exist." << std::endl;
-    return SchemaChecker::Status::FAILURE;
+    std::string error = "TABLE " + tableName +" does not exist.";
+    res.addError(error);
+    return res;
   }
   for(auto &columnName: columnNames){
     try{
       mapColumnsTypes.at(columnName);
     } catch(std::out_of_range &){
-      std::cerr << "TABLE " << tableName << " does not contain the column " << columnName << "."<< std::endl;
-      status = SchemaChecker::Status::FAILURE;
+      std::string error = "TABLE " + tableName + " does not contain the column " + columnName + ".";
+      res.addError(error);
     }
   }
-  return status;
+  return res;
 }
 
 /////////////////////////////////////////
@@ -138,7 +137,5 @@ std::unique_ptr<SchemaChecker> SchemaChecker::Builder::build() {
   }
   return std::move(schemaChecker);
 }
-
-
 
 }}

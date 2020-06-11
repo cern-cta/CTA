@@ -20,6 +20,7 @@
 #include "catalogue/DropSchemaCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
+#include "catalogue/SchemaChecker.hpp"
 
 #include <algorithm>
 
@@ -65,6 +66,12 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
     return 0;
   }
 
+  if(isProductionProtectionCheckable(conn,dbLogin.dbType)){
+    if(isProductionSet(conn)){
+      throw cta::exception::Exception("Cannot drop a production database. If you still wish to proceed then please modify the database manually to remove its production status before trying again.");
+    }
+  }
+  
   if(userConfirmsDropOfSchema(dbLogin)) {
     m_out << "DROPPING the schema of the CTA calalogue database" << std::endl;
     dropCatalogueSchema(dbLogin.dbType, conn);
@@ -349,6 +356,28 @@ void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn, const std::list<std
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+}
+
+bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
+  const char * const sql = "SELECT CTA_CATALOGUE.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_CATALOGUE";
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  if(rset.next()){
+    return rset.columnBool("IS_PRODUCTION");
+  }
+  //We should never arrive here
+  throw cta::exception::Exception("Cannot check the IS_PRODUCTION bit because the CTA_CATALOGUE table is empty or does not exist.");
+}
+
+
+bool DropSchemaCmd::isProductionProtectionCheckable(rdbms::Conn& conn, const cta::rdbms::Login::DbType dbType) {
+  cta::catalogue::SchemaChecker::Builder builder("catalogue",dbType,conn);
+  auto checker = builder.build();
+  SchemaCheckerResult res = checker->checkTableContainsColumns("CTA_CATALOGUE",{"IS_PRODUCTION"});
+  if(res.getStatus() == SchemaCheckerResult::Status::FAILED){
+    return false;
+  }
+  return true;
 }
 
 //------------------------------------------------------------------------------
