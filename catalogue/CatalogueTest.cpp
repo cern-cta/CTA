@@ -4406,52 +4406,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
     capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringComment) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getTapes().empty());
-
-  const std::string vid = "vid";
-
-  ASSERT_FALSE(m_catalogue->tapeExists(vid));
-
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
-  const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
-  const std::string vo = "vo";
-  const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "";
-
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-
-  createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  {
-    const auto pools = m_catalogue->getTapePools();
-    ASSERT_EQ(1, pools.size());
-
-    const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
-    ASSERT_EQ(vo, pool.vo.name);
-    ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityBytes);
-    ASSERT_EQ(0, pool.dataBytes);
-    ASSERT_EQ(0, pool.nbPhysicalFiles);
-  }
-
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringComment);
-}
-
 TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
   using namespace cta;
 

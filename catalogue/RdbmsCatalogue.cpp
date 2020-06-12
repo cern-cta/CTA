@@ -2990,10 +2990,6 @@ void RdbmsCatalogue::createTape(
     if(tapePoolName.empty()) {
       throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape because the tape pool name is an empty string");
     }
-
-    if(comment.empty()) {
-      throw UserSpecifiedAnEmptyStringComment("Cannot create tape because the comment is an empty string");
-    }
     
     auto conn = m_connPool.getConn();
     if(tapeExists(conn, vid)) {
@@ -3077,7 +3073,9 @@ void RdbmsCatalogue::createTape(
     stmt.bindBool(":IS_READ_ONLY", readOnly);
     stmt.bindBool(":IS_FROM_CASTOR", isFromCastor);
 
-    stmt.bindString(":USER_COMMENT", comment);
+    cta::optional<std::string> optionalComment;
+    if(!comment.empty()) optionalComment = comment;
+    stmt.bindString(":USER_COMMENT", optionalComment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -3444,7 +3442,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
         tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
-        tape.comment = rset.columnString("USER_COMMENT");
+        auto optionalComment = rset.columnOptionalString("USER_COMMENT");
+        tape.comment = optionalComment ? optionalComment.value() : "";
         tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
         tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
         tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
@@ -3577,7 +3576,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
       tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
-      tape.comment = rset.columnString("USER_COMMENT");
+      auto optionalComment = rset.columnOptionalString("USER_COMMENT");
+      tape.comment = optionalComment ? optionalComment.value() : "";
       tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
       tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
@@ -3685,7 +3685,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
       tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
-      tape.comment = rset.columnString("USER_COMMENT");
+      auto optionalComment = rset.columnOptionalString("USER_COMMENT");
+      tape.comment = optionalComment ? optionalComment.value() : "";
       tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
       tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");

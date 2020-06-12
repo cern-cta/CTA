@@ -1673,7 +1673,7 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    auto  comment        = getOptional(OptionString::COMMENT);
    
    auto tape = common::dataStructures::Tape::TapeFactory::createTape(vid,mediaType,vendor,logicallibrary,tapepool,
-     disabled,full,readOnly,comment ? comment.value() : "-");
+     disabled,full,readOnly,comment ? comment.value() : "");
    
    m_catalogue.createTape(m_cliIdentity, tape);
 
