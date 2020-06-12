@@ -61,9 +61,9 @@ int SetProductionCmd::exceptionThrowingMain(const int argc, char *const *const a
     throw cta::exception::Exception("Unable to set the catalogue as production because the column IS_PRODUCTION is missing");
   }
   
-  m_out << "Setting the PRODUCTION flag..." << std::endl;
+  m_out << "Setting the IS_PRODUCTION flag..." << std::endl;
   setProductionFlag(conn);
-  m_out << "PRODUCTION flag set." << std::endl;
+  m_out << "IS_PRODUCTION flag set." << std::endl;
   
   return 0;
 }
