@@ -360,10 +360,14 @@ void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn, const std::list<std
 
 bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
   const char * const sql = "SELECT CTA_CATALOGUE.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_CATALOGUE";
-  auto stmt = conn.createStmt(sql);
-  auto rset = stmt.executeQuery();
-  if(rset.next()){
-    return rset.columnBool("IS_PRODUCTION");
+  try {
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    if(rset.next()){
+      return rset.columnBool("IS_PRODUCTION");
+    }
+  } catch(const exception::Exception & ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
   //We should never arrive here
   throw cta::exception::Exception("Cannot check the IS_PRODUCTION bit because the CTA_CATALOGUE table is empty or does not exist.");

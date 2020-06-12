@@ -299,6 +299,19 @@ set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${OR
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
 
+add_executable(cta-catalogue-set-production
+  SetProductionCmd.cpp
+  SetProductionCmdMain.cpp
+  SetProductionCmdLineArgs.cpp
+)
+
+target_link_libraries (cta-catalogue-set-production ctacatalogue ctaschemachecker)
+set_property(TARGET cta-catalogue-set-production APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-catalogue-set-production APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+
+install (TARGETS cta-catalogue-set-production DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-set-production.1cta DESTINATION /usr/share/man/man1)
+
 add_executable(cta-database-poll
   PollDatabaseCmd.cpp
   PollDatabaseCmdLineArgs.cpp
