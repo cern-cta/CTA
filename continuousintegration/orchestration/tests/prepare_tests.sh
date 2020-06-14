@@ -115,7 +115,44 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --partialtapesnumber 5                                            \
     --encrypted false                                                 \
     --comment "ctasystest"
-  # add the media type of the tapes
+  # add the media types of the tapes in production
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
+    --name T10K500G  \
+    --capacity 500000000000 \
+    --primarydensitycode 74 \
+    --cartridge "T10000" \
+    --comment "Oracle T10000 cartridge formated at 500 GB (for developers only)"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
+    --name 3592JC7T
+    --capacity 7000000000000 \
+    --primarydensitycode 84 \
+    --cartridge "3592JC" \
+    --comment "IBM 3592JC cartridge formated at 7 TB"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
+    --name 3592JD15T \
+    --capacity 15000000000000 \
+    --primarydensitycode 85 \
+    --cartridge "3592JD" \
+    --comment "IBM 3592JD cartridge formated at 15 TB"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
+    --name 3592JE20T \
+    --capacity 20000000000000 \
+    --primarydensitycode 87 \
+    --cartridge "3592JE" \
+    --comment "IBM 3592JE cartridge formated at 20 TB"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
+    --name LTO7M \
+    --capacity 9000000000000 \
+    --primarydensitycode 93 \
+    --cartridge "LTO-7" \
+    --comment "LTO-7 M8 cartridge formated at 9 TB"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
+    --name LTO8 \
+    --capacity 12000000000000 \
+    --primarydensitycode 94 \
+    --cartridge "LTO-8" \
+    --comment "LTO-8 cartridge formated at 12 TB"
+  # add the media type of the tapes in the CI
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
     --name "T10K500G" \
     --capacity 500000000000 \
