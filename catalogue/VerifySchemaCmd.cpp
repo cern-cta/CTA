@@ -81,8 +81,9 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
                         .build());
   
   SchemaCheckerResult result = schemaChecker->displayingCompareSchema(std::cout,std::cerr);
-  result += schemaChecker->checkNoParallelTables();
-  result += schemaChecker->checkSchemaNotUpgrading();
+  result += schemaChecker->warnParallelTables();
+  result += schemaChecker->warnSchemaUpgrading();
+  result += schemaChecker->warnProcedures();
   result.displayWarnings(std::cout);
   if(result.getStatus() == SchemaCheckerResult::Status::FAILED){
     return 1;

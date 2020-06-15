@@ -62,6 +62,7 @@ class DatabaseMetadataGetter: public MetadataGetter {
     virtual std::list<std::string> getConstraintNames(const std::string& tableName);
     virtual std::list<std::string> getParallelTableNames();
     virtual cta::rdbms::Login::DbType getDbType() = 0;
+    virtual std::list<std::string> getStoredProcedures();
 };
 
 /**

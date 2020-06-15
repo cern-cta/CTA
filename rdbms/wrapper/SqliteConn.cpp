@@ -431,7 +431,16 @@ std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableNa
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+      }
+
+
+//------------------------------------------------------------------------------
+// getStoredProcedureNames
+//------------------------------------------------------------------------------
+std::list<std::string> SqliteConn::getStoredProcedureNames() {
+  return std::list<std::string>();
 }
+
 
 } // namespace wrapper
 } // namespace rdbms

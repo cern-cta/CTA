@@ -133,6 +133,10 @@ std::list<std::string> DatabaseMetadataGetter::getParallelTableNames(){
   return m_conn.getParallelTableNames();
 }
 
+std::list<std::string> DatabaseMetadataGetter::getStoredProcedures() {
+  return m_conn.getStoredProcedureNames();
+}
+
 DatabaseMetadataGetter::~DatabaseMetadataGetter() {}
 
 SQLiteDatabaseMetadataGetter::SQLiteDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}

@@ -222,6 +222,16 @@ public:
   std::list<std::string> getConstraintNames(const std::string &tableName);
 
   /**
+   * Returns the stored procedure names of the database
+   * 
+   * If the underlying database technologies does not support stored procedures informations
+   * this method simply returns an empty list.
+   * 
+   * @return the list of the names of the stored procedures in the database
+   */
+  std::list<std::string> getStoredProcedureNames();
+  
+  /**
    * Get a pointer to the connection wrapper implementation
    *
    * Required for Postgres PQescapeByteaConn()

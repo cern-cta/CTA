@@ -339,6 +339,30 @@ std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName
 }
 
 //------------------------------------------------------------------------------
+// getStoredProcedureNames
+//------------------------------------------------------------------------------
+std::list<std::string> OcciConn::getStoredProcedureNames() {
+   try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "OBJECT_NAME "
+      "FROM "
+        "USER_PROCEDURES";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("OBJECT_NAME");
+      names.push_back(name.value());
+    }
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // isOpen
 //------------------------------------------------------------------------------
 bool OcciConn::isOpen() const {

@@ -58,7 +58,7 @@ SchemaCheckerResult SchemaChecker::displayingCompareSchema(std::ostream & stdOut
   return totalResult;
 }
 
-SchemaCheckerResult SchemaChecker::checkNoParallelTables(){
+SchemaCheckerResult SchemaChecker::warnParallelTables(){
   SchemaCheckerResult res;
   std::list<std::string> parallelTables = m_databaseMetadataGetter->getParallelTableNames();
   for(auto& table:parallelTables) {
@@ -68,7 +68,7 @@ SchemaCheckerResult SchemaChecker::checkNoParallelTables(){
   return res;
 }
 
-SchemaCheckerResult SchemaChecker::checkSchemaNotUpgrading(){
+SchemaCheckerResult SchemaChecker::warnSchemaUpgrading(){
   SchemaCheckerResult res;
   SchemaVersion catalogueVersion = m_databaseMetadataGetter->getCatalogueVersion();
   if(catalogueVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){
@@ -101,6 +101,17 @@ SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& 
   }
   return res;
 }
+
+SchemaCheckerResult SchemaChecker::warnProcedures() {
+  SchemaCheckerResult res;
+  std::list<std::string> procedureNames = m_databaseMetadataGetter->getStoredProcedures();
+  for(auto procedure: procedureNames){
+    std::string warning = "PROCEDURE " + procedure + " exists in the " + m_databaseToCheckName + " database";
+    res.addWarning(warning);
+  }
+  return res;
+}
+
 
 /////////////////////////////////////////
 // SchemaChecker::Builder

@@ -252,5 +252,16 @@ std::list<std::string> Conn::getConstraintNames(const std::string &tableName) {
   }
 }
 
+//------------------------------------------------------------------------------
+// getStoredProcedureNames
+//------------------------------------------------------------------------------
+std::list<std::string> Conn::getStoredProcedureNames(){
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getStoredProcedureNames();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
 } // namespace rdbms
 } // namespace cta

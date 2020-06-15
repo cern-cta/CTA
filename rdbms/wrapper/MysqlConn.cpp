@@ -352,6 +352,13 @@ std::list<std::string> MysqlConn::getConstraintNames(const std::string& tableNam
   return std::list<std::string>();
 }
 
+//------------------------------------------------------------------------------
+// getStoredProcedureNames
+//------------------------------------------------------------------------------
+std::list<std::string> MysqlConn::getStoredProcedureNames() {
+  return std::list<std::string>();
+}
+
 } // namespace wrapper
 } // namespace rdbms
 } // namespace cta

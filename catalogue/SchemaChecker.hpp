@@ -55,23 +55,36 @@ public:
   /**
    * Checks if the catalogue database contains PARALLEL tables
    * It will display a warning with the table name if this is the case
-   * @return a SchemaCheckerResult
+   * @return a SchemaCheckerResult containing the warnings
    */
-  SchemaCheckerResult checkNoParallelTables();
+  SchemaCheckerResult warnParallelTables();
   
   /**
    * Checks if the catalogue database schema is upgrading or not
+   * @return a SchemaCheckerResult containing the warnings
    */
-  SchemaCheckerResult checkSchemaNotUpgrading();
+  SchemaCheckerResult warnSchemaUpgrading();
   
   /**
    * Compare the schema tables whose names are located in the tableList parameter
    * @param tableList the table names we would like to compare
-   * @return a Status OK or FAILURE
+   * @return a SchemaCheckerResult containing the errors
    */
   SchemaCheckerResult compareTablesLocatedInSchema();
   
+  /**
+   * Checks if the table tableName contains the columns whose names are in the columnNames list
+   * @param tableName the tableName to check
+   * @param columnNames the columnName the tableName is supposed to have
+   * @return a SchemaCheckerResult containing the errors
+   */
   SchemaCheckerResult checkTableContainsColumns(const std::string &tableName, const std::list<std::string> columnNames);
+  
+  /**
+   * Checks if there are stored procedures in the schema.
+   * @return a SchemaCheckerResult containing warnings if there are stored procedures.
+   */
+  SchemaCheckerResult warnProcedures();
   
   class Builder {
   public:

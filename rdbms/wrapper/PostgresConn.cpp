@@ -363,6 +363,14 @@ std::list<std::string> PostgresConn::getConstraintNames(const std::string& table
 }
 
 //------------------------------------------------------------------------------
+// getStoredProcedureNames
+//------------------------------------------------------------------------------
+std::list<std::string> PostgresConn::getStoredProcedureNames() {
+  return std::list<std::string>();
+}
+
+
+//------------------------------------------------------------------------------
 // isOpen
 //------------------------------------------------------------------------------
 bool PostgresConn::isOpen() const {

@@ -176,6 +176,18 @@ public:
    * @return the list of the names of the constraints that the given table has.
    */
   std::list<std::string> getConstraintNames(const std::string &tableName) override;
+  
+  /**
+   * 
+   * Returns the stored procedure names of the database
+   * 
+   * If the underlying database technologies does not support stored procedures informations
+   * this method simply returns an empty list.
+   * 
+   * @return the list of the names of the stored procedures in the database
+   */
+  std::list<std::string> getStoredProcedureNames() override;
+
 private:
 
   friend OcciStmt;

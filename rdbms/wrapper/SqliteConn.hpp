@@ -180,6 +180,18 @@ public:
   std::list<std::string> getConstraintNames(const std::string &tableName) override;
   
   /**
+   * 
+   * Returns the stored procedure names of the database
+   * 
+   * If the underlying database technologies does not support stored procedures informations
+   * this method simply returns an empty list.
+   * 
+   * @return the list of the names of the stored procedures in the database
+   */
+  std::list<std::string> getStoredProcedureNames() override;
+
+  
+  /**
    * This is an SqliteConn specific method that prints the database schema to
    * the specified output stream.
    *
