@@ -14,8 +14,9 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL> [-e <eosinstance>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m] [-d]
+Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosinstance>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m] [-d]
 (bufferURL example : /eos/ctaeos/repack)
+mountPolicyName: the name of the mountPolicy to be applied to the repack request (example: ctasystest)
 eosinstance : the name of the ctaeos instance to be used (default : $EOSINSTANCE)
 timeout : the timeout in seconds to wait for the repack to be done
 reportDirectory : the directory to generate the report of the repack test (default : $REPORT_DIRECTORY)
@@ -40,13 +41,13 @@ testRepackBufferURL(){
   echo "Test repack buffer URL OK"
 }
 
-if [ $# -lt 2 ]
+if [ $# -lt 3 ]
 then
   usage
 fi;
 
 DISABLED_TAPE_FLAG=""
-while getopts "v:e:b:t:r:amdp" o; do
+while getopts "v:e:b:t:r:n:amdp" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -75,6 +76,9 @@ while getopts "v:e:b:t:r:amdp" o; do
     p)
       BACKPRESSURE_TEST=1
       ;;
+    n)
+      MOUNT_POLICY_NAME=${OPTARG}
+      ;;
     *)
       usage
       ;;
@@ -90,6 +94,11 @@ fi
 if [ "x${VID_TO_REPACK}" = "x" ]; then
   usage
   die "No vid to repack provided."
+fi
+
+if [ "x${MOUNT_POLICY_NAME}" = "x" ]; then
+  usage
+  die "No mount policy name provided."
 fi
 
 REPACK_OPTION=""
@@ -130,7 +139,7 @@ fi
 
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
 
-admin_cta repack add --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG}
+admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG}
 
 if [ ! -z $BACKPRESSURE_TEST ]; then
   echo "Backpressure test: waiting to see a report of sleeping retrieve queue."

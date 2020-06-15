@@ -44,7 +44,7 @@ echo
   echo "Marking the tape ${VID_TO_REPACK} as full"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${VID_TO_REPACK} -f true
   echo "Launching the repack test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL}
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -n ctasystest 
 else
   echo "No vid found to repack"
   exit 1
@@ -60,7 +60,7 @@ echo
   echo "Marking the tape ${VID_TO_REPACK} as full"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${VID_TO_REPACK} -f true
   echo "Launching the repack test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL}
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -n ctasystest 
 else
   echo "No vid found to repack"
   exit 1

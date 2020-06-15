@@ -123,7 +123,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --cartridge "T10000" \
     --comment "Oracle T10000 cartridge formated at 500 GB (for developers only)"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-    --name 3592JC7T
+    --name 3592JC7T \
     --capacity 7000000000000 \
     --primarydensitycode 84 \
     --cartridge "3592JC" \
@@ -152,13 +152,6 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --primarydensitycode 94 \
     --cartridge "LTO-8" \
     --comment "LTO-8 cartridge formated at 12 TB"
-  # add the media type of the tapes in the CI
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-    --name "T10K500G" \
-    --capacity 500000000000 \
-    --primarydensitycode 74 \
-    --cartridge "T10000" \
-    --comment "T10000A"
   # add all tapes
   for ((i=0; i<${#TAPES[@]}; i++)); do
     VID=${TAPES[${i}]}

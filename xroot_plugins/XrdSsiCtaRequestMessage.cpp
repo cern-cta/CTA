@@ -1405,79 +1405,73 @@ void RequestMessage::processMountPolicy_Ls(cta::xrd::Response &response, XrdSsiS
 
 void RequestMessage::processRepack_Add(cta::xrd::Response &response)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   // VIDs can be provided as a single option or as a list
-   std::vector<std::string> vid_list;
-   std::string bufferURL;
+  // VIDs can be provided as a single option or as a list
+  std::vector<std::string> vid_list;
+  std::string bufferURL;
 
-   auto vidl = getOptional(OptionStrList::VID);
-   if(vidl) vid_list = vidl.value();
-   auto vid = getOptional(OptionString::VID);
-   if(vid) vid_list.push_back(vid.value());
+  auto vidl = getOptional(OptionStrList::VID);
+  if(vidl) vid_list = vidl.value();
+  auto vid = getOptional(OptionString::VID);
+  if(vid) vid_list.push_back(vid.value());
+  
+  if(vid_list.empty()) {
+    throw cta::exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
+  }
 
-   if(vid_list.empty()) {
-      throw cta::exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
-   }
-   
-   auto buff = getOptional(OptionString::BUFFERURL);
-   if (buff){
-     //The buffer is provided by the user
-     bufferURL = buff.value();
-   }
-   else {
-     //Buffer is not provided by the user, try to get the one from the configuration file
-     if(m_repackBufferURL){
-       bufferURL = m_repackBufferURL.value();
-     } else {
-       //Buffer is neither provided by the user, neither provided by the frontend configuration file, exception
-       throw cta::exception::UserError("Must specify the buffer URL using --bufferurl option or using the frontend configuration file.");
-     }
-   }
-   
-   typedef common::dataStructures::MountPolicy MountPolicy;
-   MountPolicy mountPolicy = MountPolicy::s_defaultMountPolicyForRepack;
-   
-   auto mountPolicyProvidedByUserOpt = getOptional(OptionString::MOUNT_POLICY);
-   if(mountPolicyProvidedByUserOpt){
-     //The user specified a mount policy name for this repack request
-     std::string mountPolicyProvidedByUser = mountPolicyProvidedByUserOpt.value();
-     //Get the mountpolicy from the catalogue
-     typedef std::list<common::dataStructures::MountPolicy> MountPolicyList;
-     MountPolicyList mountPolicies = m_catalogue.getMountPolicies();
-     MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(),[mountPolicyProvidedByUser](const common::dataStructures::MountPolicy & mp){
-       return mp.name == mountPolicyProvidedByUser;
-     });
-     if(repackMountPolicyItor != mountPolicies.end()){
-       //The mount policy exists
-       mountPolicy = *repackMountPolicyItor;
-     } else {
-       //The mount policy does not exist, throw a user error
-       throw cta::exception::UserError("The mount policy name provided does not match any existing mount policy.");
-     }
-   }
+  auto mountPolicyProvidedByUser = getRequired(OptionString::MOUNT_POLICY);
 
-   // Expand, repack, or both ?
-   cta::common::dataStructures::RepackInfo::Type type;
+  //Get the mountpolicy from the catalogue
+  common::dataStructures::MountPolicy mountPolicy;
+  typedef std::list<common::dataStructures::MountPolicy> MountPolicyList;
+  MountPolicyList mountPolicies = m_catalogue.getMountPolicies();
+  MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(),[mountPolicyProvidedByUser](const common::dataStructures::MountPolicy & mp){
+    return mp.name == mountPolicyProvidedByUser;
+  });
+  if(repackMountPolicyItor != mountPolicies.end()){
+    //The mount policy exists
+    mountPolicy = *repackMountPolicyItor;
+  } else {
+    //The mount policy does not exist, throw a user error
+    throw cta::exception::UserError("The mount policy name provided does not match any existing mount policy.");
+  }
 
-   if(has_flag(OptionBoolean::JUSTADDCOPIES) && has_flag(OptionBoolean::JUSTMOVE)) {
-      throw cta::exception::UserError("--justaddcopies and --justmove are mutually exclusive");
-   } else if(has_flag(OptionBoolean::JUSTADDCOPIES)) {
-      type = cta::common::dataStructures::RepackInfo::Type::AddCopiesOnly;
-   } else if(has_flag(OptionBoolean::JUSTMOVE)) {
-      type = cta::common::dataStructures::RepackInfo::Type::MoveOnly;
-   } else {
-      type = cta::common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
-   }
-   
-   bool forceDisabledTape = has_flag(OptionBoolean::DISABLED);
+  auto buff = getOptional(OptionString::BUFFERURL);
+  if (buff){
+    //The buffer is provided by the user
+    bufferURL = buff.value();
+  } else {
+    //Buffer is not provided by the user, try to get the one from the configuration file
+    if(m_repackBufferURL){
+      bufferURL = m_repackBufferURL.value();
+    } else {
+      //Buffer is neither provided by the user, neither provided by the frontend configuration file, exception
+      throw cta::exception::UserError("Must specify the buffer URL using --bufferurl option or using the frontend configuration file.");
+    }
+  }
 
-   // Process each item in the list
-   for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL, type, mountPolicy, forceDisabledTape, m_lc);
-   }
+  // Expand, repack, or both ?
+  cta::common::dataStructures::RepackInfo::Type type;
 
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  if(has_flag(OptionBoolean::JUSTADDCOPIES) && has_flag(OptionBoolean::JUSTMOVE)) {
+     throw cta::exception::UserError("--justaddcopies and --justmove are mutually exclusive");
+  } else if(has_flag(OptionBoolean::JUSTADDCOPIES)) {
+     type = cta::common::dataStructures::RepackInfo::Type::AddCopiesOnly;
+  } else if(has_flag(OptionBoolean::JUSTMOVE)) {
+     type = cta::common::dataStructures::RepackInfo::Type::MoveOnly;
+  } else {
+     type = cta::common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
+  }
+
+  bool forceDisabledTape = has_flag(OptionBoolean::DISABLED);
+
+  // Process each item in the list
+  for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
+     m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL, type, mountPolicy, forceDisabledTape, m_lc);
+  }
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 

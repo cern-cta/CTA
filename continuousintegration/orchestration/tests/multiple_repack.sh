@@ -127,7 +127,7 @@ allPid=()
 for vid in ${tapesToRepack[@]}
 do
   echo "Launching repack requests on vid $vid"
-  bash /root/repack_systemtest.sh -v $vid -b ${REPACK_BUFFER_URL} -t 500 &
+  bash /root/repack_systemtest.sh -v $vid -b ${REPACK_BUFFER_URL} -t 500 -n ctasystest &
   allPid+=($!)
 done
 
