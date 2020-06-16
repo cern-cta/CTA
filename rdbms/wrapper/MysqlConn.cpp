@@ -359,6 +359,22 @@ std::list<std::string> MysqlConn::getStoredProcedureNames() {
   return std::list<std::string>();
 }
 
+//------------------------------------------------------------------------------
+// getSynonymNames
+//------------------------------------------------------------------------------
+std::list<std::string> MysqlConn::getSynonymNames() {
+  return std::list<std::string>();
+}
+
+//------------------------------------------------------------------------------
+// getTypeNames
+//------------------------------------------------------------------------------
+std::list<std::string> MysqlConn::getTypeNames() {
+  return std::list<std::string>();
+}
+
+
+
 } // namespace wrapper
 } // namespace rdbms
 } // namespace cta

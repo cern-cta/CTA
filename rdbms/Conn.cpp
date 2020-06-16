@@ -263,5 +263,27 @@ std::list<std::string> Conn::getStoredProcedureNames(){
   }
 }
 
+//------------------------------------------------------------------------------
+// getSynonymNames
+//------------------------------------------------------------------------------
+std::list<std::string> Conn::getSynonymNames(){
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getSynonymNames();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// getTypeNames
+//------------------------------------------------------------------------------
+std::list<std::string> Conn::getTypeNames() {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->getTypeNames();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
 } // namespace rdbms
 } // namespace cta

@@ -105,8 +105,28 @@ SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& 
 SchemaCheckerResult SchemaChecker::warnProcedures() {
   SchemaCheckerResult res;
   std::list<std::string> procedureNames = m_databaseMetadataGetter->getStoredProcedures();
-  for(auto procedure: procedureNames){
+  for(auto & procedure: procedureNames){
     std::string warning = "PROCEDURE " + procedure + " exists in the " + m_databaseToCheckName + " database";
+    res.addWarning(warning);
+  }
+  return res;
+}
+
+SchemaCheckerResult SchemaChecker::warnSynonyms() {
+  SchemaCheckerResult res;
+  std::list<std::string> synonymsNames = m_databaseMetadataGetter->getSynonyms();
+  for(auto & synonym: synonymsNames){
+    std::string warning = "SYNONYM " + synonym + " exists in the " + m_databaseToCheckName + " database";
+    res.addWarning(warning);
+  }
+  return res;
+}
+
+SchemaCheckerResult SchemaChecker::warnTypes() {
+  SchemaCheckerResult res;
+  std::list<std::string> typeNames = m_databaseMetadataGetter->getTypes();
+  for(auto & type: typeNames) {
+    std::string warning = "TYPE " + type + " exists in the " + m_databaseToCheckName + " database";
     res.addWarning(warning);
   }
   return res;

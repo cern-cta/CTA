@@ -81,10 +81,22 @@ public:
   SchemaCheckerResult checkTableContainsColumns(const std::string &tableName, const std::list<std::string> columnNames);
   
   /**
-   * Checks if there are stored procedures in the schema.
+   * Checks if there are stored procedures in the database.
    * @return a SchemaCheckerResult containing warnings if there are stored procedures.
    */
   SchemaCheckerResult warnProcedures();
+  
+  /**
+   * Checks if there are synonyms in the database.
+   * @return a SchemaCheckerResult containing warnings if there are synonyms
+   */
+  SchemaCheckerResult warnSynonyms();
+  
+  /**
+   * Checks if there are types in the database
+   * @return a SchemaCheckerResult containing warnings if there are types in the database
+   */
+  SchemaCheckerResult warnTypes();
   
   class Builder {
   public:

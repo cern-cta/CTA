@@ -187,6 +187,26 @@ public:
    * @return the list of the names of the stored procedures in the database
    */
   std::list<std::string> getStoredProcedureNames() override;
+  
+  /**
+   * Returns the synonym names of the database
+   * 
+   * If the underlying database technologies does not support synonym informations
+   * this method simply returns an empty list.
+   * 
+   * @return the list of the names of the synonyms in the database
+   */
+  std::list<std::string> getSynonymNames() override;
+  
+  /**
+   * Returns the type names of the database
+   * 
+   * If the underlying database technologies does not support type informations
+   * this method simply returns an empty list.
+   * 
+   * @return the list of the names of the types in the database
+   */
+  std::list<std::string> getTypeNames() override;
 
 private:
 

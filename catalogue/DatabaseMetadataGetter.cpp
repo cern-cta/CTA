@@ -137,6 +137,14 @@ std::list<std::string> DatabaseMetadataGetter::getStoredProcedures() {
   return m_conn.getStoredProcedureNames();
 }
 
+std::list<std::string> DatabaseMetadataGetter::getSynonyms(){
+  return m_conn.getSynonymNames();
+}
+
+std::list<std::string> DatabaseMetadataGetter::getTypes() {
+  return m_conn.getTypeNames();
+}
+
 DatabaseMetadataGetter::~DatabaseMetadataGetter() {}
 
 SQLiteDatabaseMetadataGetter::SQLiteDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}

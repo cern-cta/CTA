@@ -342,7 +342,7 @@ std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName
 // getStoredProcedureNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getStoredProcedureNames() {
-   try {
+  try {
     std::list<std::string> names;
     const char *const sql =
       "SELECT "
@@ -361,6 +361,51 @@ std::list<std::string> OcciConn::getStoredProcedureNames() {
   }
 }
 
+//------------------------------------------------------------------------------
+// getSynonymNames
+//------------------------------------------------------------------------------
+std::list<std::string> OcciConn::getSynonymNames() {
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "SYNONYM_NAME "
+      "FROM "
+        "USER_SYNONYMS";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("SYNONYM_NAME");
+      names.push_back(name.value());
+    }
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getTypeNames
+//------------------------------------------------------------------------------
+std::list<std::string> OcciConn::getTypeNames() {
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "TYPE_NAME "
+      "FROM "
+        "USER_TYPES";
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      auto name = rset->columnOptionalString("TYPE_NAME");
+      names.push_back(name.value());
+    }
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
 
 //------------------------------------------------------------------------------
 // isOpen

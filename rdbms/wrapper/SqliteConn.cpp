@@ -441,6 +441,20 @@ std::list<std::string> SqliteConn::getStoredProcedureNames() {
   return std::list<std::string>();
 }
 
+//------------------------------------------------------------------------------
+// getSynonymNames
+//------------------------------------------------------------------------------
+std::list<std::string> SqliteConn::getSynonymNames() {
+  return std::list<std::string>();
+}
+
+//------------------------------------------------------------------------------
+// getTypeNames
+//------------------------------------------------------------------------------
+std::list<std::string> SqliteConn::getTypeNames() {
+  return std::list<std::string>();
+}
+
 
 } // namespace wrapper
 } // namespace rdbms
