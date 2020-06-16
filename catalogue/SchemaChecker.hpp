@@ -98,6 +98,12 @@ public:
    */
   SchemaCheckerResult warnTypes();
   
+  /**
+   * Checks if there are error logging tables in the database
+   * @return a SchemaCheckerResult containing warnings if there are error logging tables in the database
+   */
+  SchemaCheckerResult warnErrorLoggingTables();
+  
   class Builder {
   public:
     Builder(const std::string databaseToCheckName, const cta::rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);

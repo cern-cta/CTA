@@ -132,6 +132,15 @@ SchemaCheckerResult SchemaChecker::warnTypes() {
   return res;
 }
 
+SchemaCheckerResult SchemaChecker::warnErrorLoggingTables() {
+  SchemaCheckerResult res;
+  std::list<std::string> errorTables = m_databaseMetadataGetter->getErrorLoggingTables();
+  for(auto & errorTable: errorTables) {
+    std::string warning = "Error logging table " + errorTable + " exists in the " + m_databaseToCheckName + " database";
+    res.addWarning(warning);
+  }
+  return res;
+}
 
 /////////////////////////////////////////
 // SchemaChecker::Builder

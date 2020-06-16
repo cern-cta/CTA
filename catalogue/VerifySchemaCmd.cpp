@@ -86,6 +86,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   result += schemaChecker->warnProcedures();
   result += schemaChecker->warnSynonyms();
   result += schemaChecker->warnTypes();
+  result += schemaChecker->warnErrorLoggingTables();
   result.displayWarnings(std::cout);
   if(result.getStatus() == SchemaCheckerResult::Status::FAILED){
     return 1;

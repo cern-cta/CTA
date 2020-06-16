@@ -65,6 +65,12 @@ class DatabaseMetadataGetter: public MetadataGetter {
     virtual std::list<std::string> getStoredProcedures();
     virtual std::list<std::string> getSynonyms();
     virtual std::list<std::string> getTypes();
+    /**
+     * Returns ERROR logging tables.
+     * (Oracle only : ERR$_TABLE_NAME)
+     * @return the ERROR logging tables (Oracle only)
+     */
+    virtual std::list<std::string> getErrorLoggingTables();
 };
 
 /**

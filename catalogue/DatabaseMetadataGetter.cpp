@@ -145,6 +145,13 @@ std::list<std::string> DatabaseMetadataGetter::getTypes() {
   return m_conn.getTypeNames();
 }
 
+std::list<std::string> DatabaseMetadataGetter::getErrorLoggingTables() {
+  std::list<std::string> tableNames = DatabaseMetadataGetter::getTableNames();
+  cta::utils::Regex regex("(^ERR\\$_)");
+  removeObjectNameNotMatches(tableNames,regex);
+  return tableNames;
+}
+
 DatabaseMetadataGetter::~DatabaseMetadataGetter() {}
 
 SQLiteDatabaseMetadataGetter::SQLiteDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
@@ -177,8 +184,8 @@ cta::rdbms::Login::DbType OracleDatabaseMetadataGetter::getDbType(){
 
 std::list<std::string> OracleDatabaseMetadataGetter::getTableNames(){
   std::list<std::string> tableNames = DatabaseMetadataGetter::getTableNames();
-  //Ignore migration-related tables
-  removeObjectNameContaining(tableNames,{"ERR$_TAPE_FILE","TEMP_REMOVE_CASTOR_METADATA"});
+  //Ignore error logging tables
+  removeObjectNameMatches(tableNames,cta::utils::Regex("(^ERR\\$_)"));
   return tableNames;
 }
 
