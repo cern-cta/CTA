@@ -700,7 +700,7 @@ void PostgresCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn &conn,
 //------------------------------------------------------------------------------
 // deleteArchiveFile
 //------------------------------------------------------------------------------
-void PostgresCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
+void PostgresCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &diskInstanceName, const uint64_t archiveFileId,
   log::LogContext &lc) {
   try {
     const char *selectSql =

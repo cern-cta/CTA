@@ -144,7 +144,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
 
       for(const auto &archiveFile: archiveFiles) {
         log::LogContext dummyLc(m_dummyLog);
-        m_catalogue->deleteArchiveFile(archiveFile.diskInstance, archiveFile.archiveFileID, dummyLc);
+        m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(archiveFile.diskInstance, archiveFile.archiveFileID, dummyLc);
       }
     }
     {
@@ -13590,7 +13590,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   }
 
   log::LogContext dummyLc(m_dummyLog);
-  m_catalogue->deleteArchiveFile("disk_instance", archiveFileId, dummyLc);
+  m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE("disk_instance", archiveFileId, dummyLc);
   
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 }
@@ -13898,7 +13898,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   }
 
   log::LogContext dummyLc(m_dummyLog);
-  ASSERT_THROW(m_catalogue->deleteArchiveFile("another_disk_instance", archiveFileId, dummyLc), exception::UserError);
+  ASSERT_THROW(m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE("another_disk_instance", archiveFileId, dummyLc), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_non_existent) {
@@ -13906,7 +13906,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_non_exi
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   log::LogContext dummyLc(m_dummyLog);
-  m_catalogue->deleteArchiveFile("disk_instance", 12345678, dummyLc);
+  m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE("disk_instance", 12345678, dummyLc);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existent_tape) {
@@ -15408,7 +15408,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   ASSERT_THROW(m_catalogue->checkTapeForLabel(vid1), exception::UserError);
   
   log::LogContext dummyLc(m_dummyLog);
-  m_catalogue->deleteArchiveFile(diskInstanceName1, archiveFileId, dummyLc);
+  m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName1, archiveFileId, dummyLc);
   
   m_catalogue->setTapeFull(m_admin, vid1, true);
   m_catalogue->reclaimTape(m_admin, vid1,dummyLc);
@@ -15955,7 +15955,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   }
 
   {
-    m_catalogue->deleteArchiveFile(diskInstanceName1, file1Written.archiveFileId, dummyLc);
+    m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName1, file1Written.archiveFileId, dummyLc);
   }
 
   {

@@ -536,8 +536,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFileById(id);}, m_maxTriesToConnect);
   }
 
-  void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId, log::LogContext &lc) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteArchiveFile(instanceName, archiveFileId, lc);}, m_maxTriesToConnect);
+  void DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &instanceName, const uint64_t archiveFileId, log::LogContext &lc) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(instanceName, archiveFileId, lc);}, m_maxTriesToConnect);
   }
 
   bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const override {

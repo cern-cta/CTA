@@ -57,6 +57,7 @@ public:
   ~SqliteCatalogue() override;
 
   /**
+   * !!!!!!!!!!!!!!!!!!! THIS METHOD SHOULD NOT BE USED !!!!!!!!!!!!!!!!!!!!!!!
    * SqliteCatalogue implements its own version of deleteArchiveFile() because
    * SQLite does not supprt 'SELECT FOR UPDATE'.
    *
@@ -77,7 +78,7 @@ public:
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  void deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId, log::LogContext &lc)
+  void DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &diskInstanceName, const uint64_t archiveFileId, log::LogContext &lc)
     override;
 
 protected:

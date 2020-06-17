@@ -149,6 +149,7 @@ public:
   void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &events) override;
 
   /**
+   * !!!!!!!!!!!!!!!!!!! THIS METHOD SHOULD NOT BE USED !!!!!!!!!!!!!!!!!!!!!!!
    * Deletes the specified archive file and its associated tape copies from the
    * catalogue.
    *
@@ -166,7 +167,7 @@ public:
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId,
+  void DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &instanceName, const uint64_t archiveFileId,
     log::LogContext &lc) override;
 
 private:
