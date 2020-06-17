@@ -19,6 +19,7 @@
 #include <XrdSsiPbException.hpp>
 using XrdSsiPb::PbException;
 
+#include "common/utils/Regex.hpp"
 #include <cmdline/CtaAdminCmdParse.hpp>
 #include "XrdSsiCtaRequestMessage.hpp"
 #include "XrdCtaAdminLs.hpp"
@@ -315,6 +316,15 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                throw PbException("Instance name \"" + request.notification().wf().instance().name() +
                                  "\" does not match key identifier \"" + m_cliIdentity.username + "\"");
             }
+         }
+
+         // Refuse any workflow events for files in /eos/INSTANCE_NAME/proc/
+         {
+           static const utils::Regex re("^/eos/[^/]+/proc/.*");
+           if(re.exec(request.notification().file().lpath()).size()) {
+             throw PbException(std::string("Cannot process a workflow event for a file in /eos/INSTANCE/proc/"
+               ": lpath=") + request.notification().file().lpath());
+           }
          }
 
          // Map the Workflow Event to a method
