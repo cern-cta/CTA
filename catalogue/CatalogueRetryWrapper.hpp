@@ -376,7 +376,7 @@ public:
     return retryOnLostConnection(m_log,[&]{ return m_catalogue->setTapeDirty(vid);}, m_maxTriesToConnect);
   }
 
-  void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) override {
+  void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const cta::optional<std::string> &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeComment(admin, vid, comment);}, m_maxTriesToConnect);
   }
 

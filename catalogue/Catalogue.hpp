@@ -607,7 +607,14 @@ public:
   
   virtual void setTapeDirty(const std::string & vid) = 0;
   
-  virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) = 0;
+  /**
+   * Modifies the tape comment
+   * If the comment == cta::nullopt, it will delete the comment from the tape table
+   * @param admin the admin who removes the comment
+   * @param vid the vid of the tape to remove the comment
+   * @param comment the new comment. If comment == cta::nullopt, the comment will be deleted.
+   */
+  virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const cta::optional<std::string> &comment) = 0;
 
   virtual void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) = 0;
   virtual void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &comment) = 0;

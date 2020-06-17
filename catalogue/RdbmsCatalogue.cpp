@@ -4531,7 +4531,7 @@ void RdbmsCatalogue::setTapeDirty(const std::string& vid) {
 // modifyTapeComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string &comment) {
+  const std::string &vid, const cta::optional<std::string> &comment) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -4559,7 +4559,7 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
     spc.add("vid", vid)
-       .add("userComment", comment)
+       .add("userComment", comment ? comment.value() : "")
        .add("lastUpdateUserName", admin.username)
        .add("lastUpdateHostName", admin.host)
        .add("lastUpdateTime", now);

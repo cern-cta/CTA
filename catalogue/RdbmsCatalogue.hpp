@@ -622,7 +622,7 @@ public:
   
   void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) override;
   void setTapeDirty(const std::string & vid) override;
-  void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &comment) override;
+  void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,  const cta::optional<std::string> &comment) override;
 
   void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) override;
   void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &comment) override;

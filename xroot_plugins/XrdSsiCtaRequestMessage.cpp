@@ -1691,7 +1691,6 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    auto  vendor            = getOptional(OptionString::VENDOR);
    auto  logicallibrary    = getOptional(OptionString::LOGICAL_LIBRARY);
    auto  tapepool          = getOptional(OptionString::TAPE_POOL);
-   auto  capacity          = getOptional(OptionUInt64::CAPACITY);
    auto  comment           = getOptional(OptionString::COMMENT);
    auto  encryptionkeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
    auto  disabled          = getOptional(OptionBoolean::DISABLED);
@@ -1711,7 +1710,11 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
       m_catalogue.modifyTapeTapePoolName(m_cliIdentity, vid, tapepool.value());
    }
    if(comment) {
-      m_catalogue.modifyTapeComment(m_cliIdentity, vid, comment.value());
+      if(comment.value().empty()){
+        //If the comment is an empty string, the user meant to delete it
+        comment = cta::nullopt;
+      }
+      m_catalogue.modifyTapeComment(m_cliIdentity, vid, comment);
    }
    if(encryptionkeyName) {
       m_catalogue.modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
