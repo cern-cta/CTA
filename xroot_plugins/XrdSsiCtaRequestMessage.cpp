@@ -322,8 +322,12 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
          {
            static const utils::Regex re("^/eos/[^/]+/proc/.*");
            if(re.exec(request.notification().file().lpath()).size()) {
-             throw PbException(std::string("Cannot process a workflow event for a file in /eos/INSTANCE/proc/"
-               ": lpath=") + request.notification().file().lpath());
+             std::ostringstream msg;
+             msg << "Cannot process a workflow event for a file in /eos/INSTANCE/proc/: instance=" <<
+               request.notification().wf().instance().name() << " event=" <<
+               Workflow_EventType_Name(request.notification().wf().event()) << " lpath=" <<
+               request.notification().file().lpath();
+             throw PbException(msg.str());
            }
          }
 
