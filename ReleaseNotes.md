@@ -1,3 +1,30 @@
+# v3.0-1
+
+## Summary
+
+### Features
+
+- Catalogue schema updated to version 3.0
+- Catalogue production is protected against dropping
+- Management of media types
+- File recycle-bin for file deletion
+- cta-admin drive ls display reason in tabular output
+- cta-send-event allowing to manually retry to Archive or Retrieve a file
+- KRB5 authentication for CLOSEW and PREPARE events
+- prevent eos /eos/INSTANCE/proc/conversion worfklows from deleting files from CTA
+
+### Modifications
+
+- Tape comments are optional and can be removed
+- Workflow triggered by a file that is in /proc will not trigger anything on CTA side
+- CASTOR-TO-CTA migration adapted to new schema
+- Repack submission will fail if no mount policy is given
+
+### Bug fixes
+
+- Fixed archive failure requeueing with no mount policies
+
+
 # v2.0-3
 
 ## Summary

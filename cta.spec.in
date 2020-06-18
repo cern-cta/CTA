@@ -461,6 +461,17 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Thu Jun 18 2020 julien.leduc (at) cern.ch - 3.0-1
+- eos x.x.x-x
+- xrootd x.x.x-x
+- Catalogue 3.0
+- Tape media-type management
+- File recycle-bin for file deletion
+- cta-admin modifications
+- cta-send-event allowing to manually retry to Archive or Retrieve a file
+- prevent eos /proc/conversion worfklows from deleting files from CTA
+- Repack submission will fail if no mount policy is given
+- bug fixes
 * Wed Apr 15 2020 julien.leduc (at) cern.ch - 2.0-3
 - eos 4.7.9-1
 - Adding reason and comment to cta drive (better track usage and issues)
