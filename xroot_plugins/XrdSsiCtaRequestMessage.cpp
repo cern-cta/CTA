@@ -326,7 +326,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
              longInstanceNameStartsWithEos ? longInstanceName.substr(3) : longInstanceName;
            if(shortInstanceName.empty()) {
              std::ostringstream msg;
-             msg << "Short instance name is an empty string eos: instance=" << longInstanceName;
+             msg << "Short instance name is an empty string: instance=" << longInstanceName;
              throw PbException(msg.str());
            }
            const std::string procFullPath = std::string("/eos/") + shortInstanceName + "/proc/";
