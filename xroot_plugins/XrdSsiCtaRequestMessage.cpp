@@ -318,12 +318,24 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             }
          }
 
+         // Enforce that the long EOS instance name starts with the string "eos"
+         if (request.notification().wf().instance().name().find("eos") != 0) {
+           std::ostringstream msg;
+           msg << "Instance name does not start with eos: instance=" <<
+             request.notification().wf().instance().name();
+           throw PbException(msg.str());
+         }
+
          // Refuse any workflow events for files in /eos/INSTANCE_NAME/proc/
          {
-           static const utils::Regex re("^/eos/[^/]+/proc/.*");
-           if(re.exec(request.notification().file().lpath()).size()) {
+           const std::string shortInstanceName = request.notification().wf().instance().name().substr(3);
+           if(shortInstanceName.empty()) {
+             throw PbException("Instance name only contains the string eos");
+           }
+           const std::string procFullPath = std::string("/eos/") + shortInstanceName + "/proc/";
+           if(request.notification().file().lpath().find(procFullPath) == 0) {
              std::ostringstream msg;
-             msg << "Cannot process a workflow event for a file in /eos/INSTANCE/proc/: instance=" <<
+             msg << "Cannot process a workflow event for a file in " << procFullPath << " instance=" <<
                request.notification().wf().instance().name() << " event=" <<
                Workflow_EventType_Name(request.notification().wf().event()) << " lpath=" <<
                request.notification().file().lpath();
