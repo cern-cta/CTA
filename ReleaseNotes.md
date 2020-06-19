@@ -27,6 +27,17 @@
 - Fixed archive failure requeueing with no mount policies
 
 
+# v2.0-5
+
+## Summary
+
+### Features
+
+- Upstream eos 4.7.12-1
+- Added support for FileID change in EOS that occurs during conversion
+  - fileID updated in the catalogue when frontend receives Workflow::EventType::UPDATE_FID event
+
+
 # v2.0-3
 
 ## Summary
@@ -37,6 +48,7 @@
 - Adding reason and comment to cta drive objects
   - Allow to better track tape drive usage in production
   - Allow to track reasons that conducted a drive to be set down
+
 
 # v2.0-2
 

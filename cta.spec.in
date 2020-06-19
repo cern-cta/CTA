@@ -472,6 +472,9 @@ Currently contains a helper for the client-ar script, which should be installed 
 - prevent eos /proc/conversion worfklows from deleting files from CTA
 - Repack submission will fail if no mount policy is given
 - bug fixes
+* Mon May 4 2020 julien.leduc (at) cern.ch - 2.0-5
+- Upstream eos 4.7.12-1
+- Added support for FileID change in EOS that occurs during conversion
 * Wed Apr 15 2020 julien.leduc (at) cern.ch - 2.0-3
 - eos 4.7.9-1
 - Adding reason and comment to cta drive (better track usage and issues)
