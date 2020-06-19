@@ -64,7 +64,6 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedANonEmptyTape.cpp
   UserSpecifiedANonExistentLogicalLibrary.cpp
   UserSpecifiedANonExistentTape.cpp
-  UserSpecifiedANonExistentDiskSystem.cpp
   UserSpecifiedANonEmptyDiskSystemAfterDelete.cpp
   UserSpecifiedAnEmptyStringComment.cpp
   UserSpecifiedAnEmptyStringDiskInstanceName.cpp
@@ -78,7 +77,6 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringMediaType.cpp
   UserSpecifiedAnEmptyStringMediaTypeName.cpp
   UserSpecifiedAnEmptyStringStorageClassName.cpp
-  UserSpecifiedAnEmptyStringSupply.cpp
   UserSpecifiedAnEmptyStringTapePoolName.cpp
   UserSpecifiedAnEmptyStringUsername.cpp
   UserSpecifiedAnEmptyStringVendor.cpp
