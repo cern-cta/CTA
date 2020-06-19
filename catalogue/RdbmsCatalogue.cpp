@@ -20,7 +20,6 @@
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "catalogue/RdbmsCatalogueGetArchiveFilesItor.hpp"
 #include "catalogue/RdbmsCatalogueGetArchiveFilesForRepackItor.hpp"
-#include "catalogue/retryOnLostConnection.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
