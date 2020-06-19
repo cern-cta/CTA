@@ -4,6 +4,8 @@
 
 ### Features
 
+- Upstream eos 4.8.2-1
+- Upstream xrootd 4.12.1-1
 - Catalogue schema updated to version 3.0
 - Catalogue production is protected against dropping
 - Management of media types

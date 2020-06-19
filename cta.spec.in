@@ -462,8 +462,8 @@ Currently contains a helper for the client-ar script, which should be installed 
 
 %changelog
 * Thu Jun 18 2020 julien.leduc (at) cern.ch - 3.0-1
-- eos x.x.x-x
-- xrootd x.x.x-x
+- eos 4.8.2-1
+- xrootd 4.12.1-1
 - Catalogue 3.0
 - Tape media-type management
 - File recycle-bin for file deletion
