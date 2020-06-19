@@ -60,36 +60,6 @@ set (CATALOGUE_LIB_SRC_FILES
   SqliteCatalogueFactory.cpp
   SchemaVersion.cpp
   TapeForWriting.cpp
-  UserSpecifiedANonEmptyLogicalLibrary.cpp
-  UserSpecifiedANonEmptyTape.cpp
-  UserSpecifiedANonExistentLogicalLibrary.cpp
-  UserSpecifiedANonExistentTape.cpp
-  UserSpecifiedANonEmptyDiskSystemAfterDelete.cpp
-  UserSpecifiedAnEmptyStringComment.cpp
-  UserSpecifiedAnEmptyStringDiskInstanceName.cpp
-  UserSpecifiedAnEmptyStringDiskSystemName.cpp
-  UserSpecifiedAnEmptyStringFileRegexp.cpp
-  UserSpecifiedAnEmptyStringFreeSpaceQueryURL.cpp
-  UserSpecifiedAZeroRefreshInterval.cpp
-  UserSpecifiedAnEmptyStringCartridge.cpp
-  UserSpecifiedAZeroTargetedFreeSpace.cpp
-  UserSpecifiedAnEmptyStringLogicalLibraryName.cpp
-  UserSpecifiedAnEmptyStringMediaType.cpp
-  UserSpecifiedAnEmptyStringMediaTypeName.cpp
-  UserSpecifiedAnEmptyStringStorageClassName.cpp
-  UserSpecifiedAnEmptyStringTapePoolName.cpp
-  UserSpecifiedAnEmptyStringUsername.cpp
-  UserSpecifiedAnEmptyStringVendor.cpp
-  UserSpecifiedAnEmptyStringVid.cpp
-  UserSpecifiedAnEmptyStringVo.cpp
-  UserSpecifiedAnEmptyTapePool.cpp
-  UserSpecifiedMediaTypeUsedByTapes.cpp
-  UserSpecifiedStorageClassUsedByArchiveFiles.cpp
-  UserSpecifiedStorageClassUsedByArchiveRoutes.cpp
-  UserSpecifiedAZeroCapacity.cpp
-  UserSpecifiedAZeroCopyNb.cpp
-  UserSpecifiedVirtualOrganizationUsedByTapepools.cpp
-  UserSpecifiedVirtualOrganizationUsedByStorageClasses.cpp
 )
 
 add_library (ctacatalogue SHARED
