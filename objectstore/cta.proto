@@ -463,6 +463,11 @@ message ValueCountPair {
   required uint64 count = 9302;
 }
 
+message StringCountPair {
+  required string value = 9303;
+  required uint64 count = 9304;
+}
+
 message ArchiveJobPointer {
   required uint64 fileid = 3000;
   required uint64 size = 3001;
@@ -472,6 +477,7 @@ message ArchiveJobPointer {
   required uint64 minarchiverequestage = 3005;
   required uint64 maxdrivesallowed = 3006;
   required uint64 starttime = 3007;
+  required string mountpolicyname = 3008;
 }
 
 message ArchiveQueueShardPointer {
@@ -491,6 +497,7 @@ message ArchiveQueue {
   repeated ValueCountPair prioritymap = 10031;
   repeated ValueCountPair minarchiverequestagemap = 10032;
   repeated ValueCountPair maxdrivesallowedmap = 10033;
+  repeated StringCountPair mountpolicynamemap = 10034;
   required uint64 archivejobstotalsize = 10040;
   required uint64 archivejobscount = 10045;
   required uint64 oldestjobcreationtime = 10050;
@@ -507,6 +514,7 @@ message RetrieveJobPointer {
   required uint64 minretrieverequestage = 3105;
   required uint64 maxdrivesallowed = 3106;
   required uint64 starttime = 3108;
+  required string mountpolicyname = 3112;
   // For activity (if present), we need disk instance and activity name (priority is always provided)
   optional string disk_instance_name = 3109;
   optional string activity = 3110;
@@ -537,6 +545,7 @@ message RetrieveQueue {
   repeated ValueCountPair prioritymap = 10131;
   repeated ValueCountPair minretrieverequestagemap = 10132;
   repeated ValueCountPair maxdrivesallowedmap = 10133;
+  repeated StringCountPair mountpolicynamemap = 10134;
   repeated RetrieveActivityCountPair activity_map = 10136;
   required uint64 retrievejobstotalsize = 10140;
   required uint64 retrievejobscount = 10145;

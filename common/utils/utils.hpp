@@ -444,6 +444,24 @@ namespace utils {
    */
   void appendParameterXRootFileURL(std::string &fileURL, const std::string &parameterName, const std::string &value);
   
+  /**
+   * Applies a reduce function to a list : transform a list of element to one element according
+   * to the ReduceOp passed as a parameter
+   * @param begin the beginning of the range to reduce
+   * @param end the end of the range to reduce
+   * @param init the first element that will be used by reduce
+   * @param op the operator to use (lambda or functor)
+   * @return the element after the reducing of the list is done.
+   */
+  template<typename InputIt, typename T, typename ReduceOp>
+  T reduce(InputIt begin, InputIt end, const T & init, ReduceOp op){
+    T ret = init;
+    for(InputIt elt = begin; elt != end; elt++){
+      ret = op(ret,*elt);
+    }
+    return ret;
+  }
+  
 } // namespace utils
 
 } // namespace cta

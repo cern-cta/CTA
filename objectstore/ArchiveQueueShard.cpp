@@ -102,6 +102,7 @@ auto ArchiveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) -
           ret.removedJobs.back().priority = j.priority();
           ret.removedJobs.back().size = j.size();
           ret.removedJobs.back().startTime = j.starttime();
+          ret.removedJobs.back().mountPolicyName = j.mountpolicyname();
           ret.bytesRemoved += j.size();
           totalSize -= j.size();
           ret.jobsRemoved++;
@@ -136,7 +137,7 @@ auto ArchiveQueueShard::dumpJobs() -> std::list<JobInfo> {
   std::list<JobInfo> ret;
   for (auto &j: m_payload.archivejobs()) {
     ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
-        j.minarchiverequestage(), j.maxdrivesallowed(), (time_t)j.starttime()});
+        j.minarchiverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(),j.mountpolicyname()});
   }
   return ret;
 }
@@ -160,6 +161,7 @@ uint64_t ArchiveQueueShard::addJob(ArchiveQueue::JobToAdd& jobToAdd) {
   j->set_priority(jobToAdd.policy.archivePriority);
   j->set_minarchiverequestage(jobToAdd.policy.archiveMinRequestAge);
   j->set_starttime(jobToAdd.startTime);
+  j->set_mountpolicyname(jobToAdd.policy.name);
   m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize()+jobToAdd.fileSize);
   return m_payload.archivejobs_size();
 }

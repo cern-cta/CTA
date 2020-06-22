@@ -4101,6 +4101,195 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   }
 }
 
+
+TEST_P(SchedulerTest, archiveMountPolicyInFlightChangeScheduleMount){
+  using namespace cta;
+
+  setupDefaultCatalogue();
+  Scheduler &scheduler = getScheduler();
+  auto & catalogue = getCatalogue();
+  cta::common::dataStructures::EntryLog creationLog;
+  creationLog.host="host2";
+  creationLog.time=0;
+  creationLog.username="admin1";
+  cta::common::dataStructures::DiskFileInfo diskFileInfo;
+  diskFileInfo.gid=GROUP_2;
+  diskFileInfo.owner_uid=CMS_USER;
+  diskFileInfo.path="path/to/file";
+  cta::common::dataStructures::ArchiveRequest request;
+  request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
+  request.creationLog=creationLog;
+  request.diskFileInfo=diskFileInfo;
+  request.diskFileID="diskFileID";
+  request.fileSize=100*1000*1000;
+  cta::common::dataStructures::RequesterIdentity requester;
+  requester.name = s_userName;
+  requester.group = "userGroup";
+  request.requester = requester;
+  request.srcURL="srcURL";
+  request.storageClass=s_storageClassName;
+  
+  // Create the environment for the migration to happen (library + tape) 
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, libraryComment);
+  {
+    auto libraries = catalogue.getLogicalLibraries();
+    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
+  }
+  const uint64_t capacityInBytes = 12345678;
+  const std::string tapeComment = "Tape comment";
+  bool notDisabled = false;
+  bool notFull = false;
+  bool notReadOnly = false;
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+    notDisabled, notFull, notReadOnly, tapeComment);
+
+  const std::string driveName = "tape_drive";
+
+  catalogue.tapeLabelled(s_vid, "tape_drive");
+
+  
+  log::DummyLogger dl("", "");
+  log::LogContext lc(dl);
+  const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
+      request.requester, lc);
+  scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  
+  catalogue.modifyMountPolicyMaxDrivesAllowed(s_adminOnAdminHost,s_mountPolicyName,0);
+  
+  {
+    // Emulate a tape server
+    std::unique_ptr<cta::TapeMount> mount;
+    // This first initialization is normally done by the dataSession function.
+    cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
+    bool nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
+    //nextMount should be false as the maxDrivesAllowed is 0
+    ASSERT_FALSE(nextMount);
+    catalogue.modifyMountPolicyMaxDrivesAllowed(s_adminOnAdminHost,s_mountPolicyName,50);
+    //Reset the maxDrivesAllowed to a positive number should give a new mount
+    nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
+    ASSERT_TRUE(nextMount);
+  }
+}
+
+
+TEST_P(SchedulerTest, retrieveMountPolicyInFlightChangeScheduleMount)
+{
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = false;
+  const bool fullValue = true;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+  
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  
+  std::ostringstream ossVid;
+  ossVid << s_vid << "_" << 1;
+  std::string vid = ossVid.str();
+  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+    disabledValue, fullValue, readOnlyValue, comment);
+  
+  //Create a storage class in the catalogue
+  common::dataStructures::StorageClass storageClass;
+  storageClass.name = s_storageClassName;
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesPerTape = 10;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+  
+  //Simulate the writing of 10 files in 1 tape in the catalogue
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  {
+    uint64_t archiveFileId = 1;
+    std::string currentVid = vid;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + archiveFileId);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
+      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = archiveFileId++;
+      fileWritten.diskInstance = s_diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+      
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = currentVid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.size = archiveFileSize;
+      fileWritten.copyNb = 1;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    tapeFilesWrittenCopy1.clear();
+  }
+  //Test the queueing of the Retrieve Request and try to mount after having disabled the tape
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  {
+    std::string diskInstance="disk_instance";
+    cta::common::dataStructures::RetrieveRequest rReq;
+    rReq.archiveFileID=1;
+    rReq.requester.name = s_userName;
+    rReq.requester.group = "someGroup";
+    rReq.dstURL = "dst_url";
+    scheduler.queueRetrieve(diskInstance, rReq, lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+  
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+  
+  catalogue.modifyMountPolicyMaxDrivesAllowed(s_adminOnAdminHost,s_mountPolicyName,0);
+  
+  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+  
+  catalogue.modifyMountPolicyMaxDrivesAllowed(s_adminOnAdminHost,s_mountPolicyName,50);
+  
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+}
   
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB

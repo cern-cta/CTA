@@ -52,6 +52,7 @@ public:
     uint64_t minArchiveRequestAge;
     uint64_t maxDrivesAllowed;
     time_t startTime;
+    std::string mountPolicyName;
   };
   std::list<JobInfo> dumpJobs();
   

@@ -47,6 +47,7 @@
 #include <set>
 #include <iostream>
 #include <bits/unique_ptr.h>
+#include "common/utils/utils.hpp"
 
 namespace cta {  
 using namespace objectstore;
@@ -187,6 +188,7 @@ void OStoreDB::ping() {
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re, 
     log::LogContext & logContext) {
   utils::Timer t, t2;
+  std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.getMountPolicies();
   // Walk the archive queues for USER for statistics
   for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
@@ -208,17 +210,31 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
     // If there are files queued, we create an entry for this tape pool in the
     // mount candidates list.
-    if (aqueue.getJobsSummary().jobs) {
+    cta::objectstore::ArchiveQueue::JobsSummary aqueueJobsSummary = aqueue.getJobsSummary();
+    if (aqueueJobsSummary.jobs) {
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
       m.tapePool = aqp.tapePool;
       m.type = cta::common::dataStructures::MountType::ArchiveForUser;
-      m.bytesQueued = aqueue.getJobsSummary().bytes;
-      m.filesQueued = aqueue.getJobsSummary().jobs;      
-      m.oldestJobStartTime = aqueue.getJobsSummary().oldestJobStartTime;
-      m.priority = aqueue.getJobsSummary().priority;
-      m.maxDrivesAllowed = aqueue.getJobsSummary().maxDrivesAllowed;
-      m.minRequestAge = aqueue.getJobsSummary().minArchiveRequestAge;
+      m.bytesQueued = aqueueJobsSummary.bytes;
+      m.filesQueued = aqueueJobsSummary.jobs;      
+      m.oldestJobStartTime = aqueueJobsSummary.oldestJobStartTime;
+      //By default, we get the mountPolicies from the objectstore's queue counters
+      m.priority = aqueueJobsSummary.priority;
+      m.maxDrivesAllowed = aqueueJobsSummary.maxDrivesAllowed;
+      m.minRequestAge = aqueueJobsSummary.minArchiveRequestAge;
+      //If there are mount policies in the Catalogue
+      if(mountPolicies.size()) {
+        //We get all the mount policies that are on the queue from the catalogue list
+        auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies,aqueueJobsSummary.mountPolicyCountMap);
+        //If an operator removed the queue mountPolicies from the catalogue, we will have no results...
+        if(mountPoliciesInQueueList.size()){
+          auto mountPolicyToUse = createBestArchiveMountPolicy(mountPoliciesInQueueList);
+          m.priority = mountPolicyToUse.archivePriority;
+          m.maxDrivesAllowed = mountPolicyToUse.maxDrivesAllowed;
+          m.minRequestAge = mountPolicyToUse.archiveMinRequestAge;
+        }
+      }
       m.logicalLibrary = "";
     } else {
       tmdi.queueTrimRequired = true;
@@ -254,17 +270,30 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
     // If there are files queued, we create an entry for this tape pool in the
     // mount candidates list.
-    if (aqueue.getJobsSummary().jobs) {
+    cta::objectstore::ArchiveQueue::JobsSummary aqueueRepackJobsSummary = aqueue.getJobsSummary();
+    if (aqueueRepackJobsSummary.jobs) {
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
       m.tapePool = aqp.tapePool;
       m.type = cta::common::dataStructures::MountType::ArchiveForRepack;
-      m.bytesQueued = aqueue.getJobsSummary().bytes;
-      m.filesQueued = aqueue.getJobsSummary().jobs;      
-      m.oldestJobStartTime = aqueue.getJobsSummary().oldestJobStartTime;
-      m.priority = aqueue.getJobsSummary().priority;
-      m.maxDrivesAllowed = aqueue.getJobsSummary().maxDrivesAllowed;
-      m.minRequestAge = aqueue.getJobsSummary().minArchiveRequestAge;
+      m.bytesQueued = aqueueRepackJobsSummary.bytes;
+      m.filesQueued = aqueueRepackJobsSummary.jobs;      
+      m.oldestJobStartTime = aqueueRepackJobsSummary.oldestJobStartTime;
+      m.priority = aqueueRepackJobsSummary.priority;
+      m.maxDrivesAllowed = aqueueRepackJobsSummary.maxDrivesAllowed;
+      m.minRequestAge = aqueueRepackJobsSummary.minArchiveRequestAge;
+      //If there are mount policies in the Catalogue
+      if(mountPolicies.size()) {
+        //We get all the mount policies that are on the queue from the catalogue list
+        auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies,aqueueRepackJobsSummary.mountPolicyCountMap);
+        //If an operator removed the queue mountPolicies from the catalogue, we will have no results...
+        if(mountPoliciesInQueueList.size()){
+          auto mountPolicyToUse = createBestArchiveMountPolicy(mountPoliciesInQueueList);
+          m.priority = mountPolicyToUse.archivePriority;
+          m.maxDrivesAllowed = mountPolicyToUse.maxDrivesAllowed;
+          m.minRequestAge = mountPolicyToUse.archiveMinRequestAge;
+        }
+      }
       m.logicalLibrary = "";
     } else {
       tmdi.queueTrimRequired = true;
@@ -320,6 +349,22 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       isPotentialMount = true;
     }
     if (rqSummary.jobs && isPotentialMount) {
+      //Getting the default mountPolicies parameters from the queue summary
+      uint64_t maxDrivesAllowed = rqSummary.maxDrivesAllowed;
+      uint64_t minRetrieveRequestAge = rqSummary.minRetrieveRequestAge;
+      uint64_t priority = rqSummary.priority;
+      //Try to get the last values of the mountPolicies from the ones in the Catalogue
+      if(mountPolicies.size()){
+        auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies,rqSummary.mountPolicyCountMap);
+        if(mountPoliciesInQueueList.size()){
+          //We need to get the most advantageous mountPolicy
+          //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+          common::dataStructures::MountPolicy mountPolicyToUse = createBestRetrieveMountPolicy(mountPoliciesInQueueList);
+          priority = mountPolicyToUse.retrievePriority;
+          maxDrivesAllowed = mountPolicyToUse.maxDrivesAllowed;
+          minRetrieveRequestAge = mountPolicyToUse.retrieveMinRequestAge;
+        }
+      }
       // Check if we have activities and if all the jobs are covered by one or not (possible mixed case).
       bool jobsWithoutActivity = true;
       if (rqSummary.activityCounts.size()) {
@@ -334,9 +379,9 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.bytesQueued = rqSummary.bytes;
           m.filesQueued = rqSummary.jobs;
           m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
-          m.priority = rqSummary.priority;
-          m.maxDrivesAllowed = rqSummary.maxDrivesAllowed;
-          m.minRequestAge = rqSummary.minRetrieveRequestAge;
+          m.priority = priority;
+          m.maxDrivesAllowed = maxDrivesAllowed;
+          m.minRequestAge = minRetrieveRequestAge;
           m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
           m.tapePool = "";       // The tape pool is not know and will be determined by the caller.
           m.vendor = "";         // The vendor is not known here, and will be determined by the caller.
@@ -367,9 +412,9 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         m.bytesQueued = rqSummary.bytes;
         m.filesQueued = rqSummary.jobs;      
         m.oldestJobStartTime = rqSummary.oldestJobStartTime;
-        m.priority = rqSummary.priority;
-        m.maxDrivesAllowed = rqSummary.maxDrivesAllowed;
-        m.minRequestAge = rqSummary.minRetrieveRequestAge;
+        m.priority = priority;
+        m.maxDrivesAllowed = maxDrivesAllowed;
+        m.minRequestAge = minRetrieveRequestAge;
         m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
         m.tapePool = "";       // The tape pool is not know and will be determined by the caller.
         m.vendor = "";         // The vendor is not known here, and will be determined by the caller.
@@ -454,6 +499,69 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   if ((registerFetchTime > 1) || (registerProcessingTime > 1))
     logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched the drive register.");
 }
+
+//------------------------------------------------------------------------------
+// OStoreDB::getMountPoliciesInQueue()
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::MountPolicy> OStoreDB::getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy> & mountPoliciesInCatalogue, const std::map<std::string, uint64_t>& queueMountPolicyMap) {
+  std::list<cta::common::dataStructures::MountPolicy> mountPolicyRet;
+  std::copy_if(mountPoliciesInCatalogue.begin(),mountPoliciesInCatalogue.end(),std::back_inserter(mountPolicyRet),[&queueMountPolicyMap](const cta::common::dataStructures::MountPolicy & mp){
+    return queueMountPolicyMap.find(mp.name) != queueMountPolicyMap.end();
+  });
+  return mountPolicyRet;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::createBestArchiveMountPolicy()
+//------------------------------------------------------------------------------
+common::dataStructures::MountPolicy OStoreDB::createBestArchiveMountPolicy(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  if(mountPolicies.empty()){
+    throw cta::exception::Exception("In OStoreDB::createBestArchiveMountPolicy(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(++mountPolicies.begin(), mountPolicies.end(),mountPolicies.front(),[](const common::dataStructures::MountPolicy & mp1, const common::dataStructures::MountPolicy & mp2){
+    common::dataStructures::MountPolicy mp = mp1;
+    if(mp1.archivePriority > mp2.archivePriority){
+      mp.archivePriority = mp1.archivePriority;
+    }
+    if(mp1.archiveMinRequestAge < mp2.archiveMinRequestAge){
+      mp.archiveMinRequestAge = mp1.archiveMinRequestAge;
+    }
+    if(mp1.maxDrivesAllowed > mp2.maxDrivesAllowed){
+      mp.maxDrivesAllowed = mp1.maxDrivesAllowed;
+    }
+    return mp;
+  });
+  return bestMountPolicy;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::createBestRetrieveMountPolicy()
+//------------------------------------------------------------------------------
+common::dataStructures::MountPolicy OStoreDB::createBestRetrieveMountPolicy(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  if(mountPolicies.empty()){
+    throw cta::exception::Exception("In OStoreDB::createBestRetrieveMountPolicy(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(++mountPolicies.begin(), mountPolicies.end(),mountPolicies.front(),[](const common::dataStructures::MountPolicy & mp1, const common::dataStructures::MountPolicy & mp2){
+    common::dataStructures::MountPolicy mp = mp1;
+    if(mp1.retrievePriority > mp2.retrievePriority){
+      mp.retrievePriority = mp1.retrievePriority;
+    }
+    if(mp1.retrieveMinRequestAge < mp2.retrieveMinRequestAge){
+      mp.retrieveMinRequestAge = mp1.retrieveMinRequestAge;
+    }
+    if(mp1.maxDrivesAllowed > mp2.maxDrivesAllowed){
+      mp.maxDrivesAllowed = mp1.maxDrivesAllowed;
+    }
+    return mp;
+  });
+  return bestMountPolicy;
+}
+
+
 
 //------------------------------------------------------------------------------
 // OStoreDB::getMountInfo()

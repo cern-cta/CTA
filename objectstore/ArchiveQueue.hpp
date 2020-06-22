@@ -99,6 +99,7 @@ public:
     uint64_t priority;
     uint64_t minArchiveRequestAge;
     uint64_t maxDrivesAllowed;
+    std::map<std::string, uint64_t> mountPolicyCountMap;
   };
   JobsSummary getJobsSummary();
   

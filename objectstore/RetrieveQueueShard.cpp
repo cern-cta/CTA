@@ -110,6 +110,7 @@ auto RetrieveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) 
           ret.removedJobs.back().maxDrivesAllowed = j.maxdrivesallowed();
           ret.removedJobs.back().minRetrieveRequestAge = j.minretrieverequestage();
           ret.removedJobs.back().priority = j.priority();
+          ret.removedJobs.back().mountPolicyName = j.mountpolicyname();
           ret.removedJobs.back().size = j.size();
           ret.removedJobs.back().startTime = j.starttime();
           if (j.has_activity())
@@ -150,7 +151,7 @@ auto RetrieveQueueShard::dumpJobs() -> std::list<JobInfo> {
   std::list<JobInfo> ret;
   for (auto &j: m_payload.retrievejobs()) {
     ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
-        j.minretrieverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(), j.fseq(), nullopt, nullopt});
+        j.minretrieverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(), j.fseq(), j.mountpolicyname(), nullopt, nullopt});
     if (j.has_activity()) {
       ret.back().activityDescription = RetrieveQueue::JobDump::ActivityDescription{ j.disk_instance_name(), j.activity() };
     }
@@ -172,6 +173,7 @@ std::list<RetrieveQueue::JobToAdd> RetrieveQueueShard::dumpJobsToAdd() {
     ret.back().policy.retrieveMinRequestAge = j.minretrieverequestage();
     ret.back().policy.maxDrivesAllowed = j.maxdrivesallowed();
     ret.back().policy.retrievePriority = j.priority();
+    ret.back().policy.name = j.mountpolicyname();
     ret.back().startTime = j.starttime();
     ret.back().retrieveRequestAddress = j.address();
     if (j.has_activity()) {
@@ -280,6 +282,7 @@ void RetrieveQueueShard::addJob(const RetrieveQueue::JobToAdd& jobToAdd) {
   j->set_maxdrivesallowed(jobToAdd.policy.maxDrivesAllowed);
   j->set_priority(jobToAdd.policy.retrievePriority);
   j->set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
+  j->set_mountpolicyname(jobToAdd.policy.name);
   if (jobToAdd.activityDescription) {
     j->set_disk_instance_name(jobToAdd.activityDescription.value().diskInstanceName);
     j->set_activity(jobToAdd.activityDescription.value().activity);
@@ -317,6 +320,7 @@ void RetrieveQueueShard::addJobsThroughCopy(JobsToAddSet& jobsToAdd) {
     rjp.set_maxdrivesallowed(jobToAdd.policy.maxDrivesAllowed);
     rjp.set_priority(jobToAdd.policy.retrievePriority);
     rjp.set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
+    rjp.set_mountpolicyname(jobToAdd.policy.name);
     if (jobToAdd.activityDescription) {
       rjp.set_disk_instance_name(jobToAdd.activityDescription.value().diskInstanceName);
       rjp.set_activity(jobToAdd.activityDescription.value().activity);
