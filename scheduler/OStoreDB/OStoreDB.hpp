@@ -146,7 +146,7 @@ private:
    * @param tmdi The TapeMountDecisionInfo where to store the data.
    * @param re A RootEntry object that should be locked and fetched.
    */
-  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re, 
+  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re, SchedulerDatabase::PurposeGetMountInfo purpose,
     log::LogContext & logContext);
   
   /**
@@ -177,7 +177,8 @@ private:
   
 public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(log::LogContext& logContext) override;
+  
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) override;
   void trimEmptyQueues(log::LogContext& lc) override;
 
   /* === Archive Mount handling ============================================= */

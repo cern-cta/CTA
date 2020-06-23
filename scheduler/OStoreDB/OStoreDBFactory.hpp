@@ -205,8 +205,8 @@ public:
     m_OStoreDB.trimEmptyQueues(lc);
   }
   
-  std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(log::LogContext& logContext) override {
-    return m_OStoreDB.getMountInfoNoLock(logContext);
+  std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) override {
+    return m_OStoreDB.getMountInfoNoLock(purpose,logContext);
   }
 
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,

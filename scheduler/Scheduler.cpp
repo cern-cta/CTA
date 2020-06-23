@@ -1183,7 +1183,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
   }
   
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
-  mountInfo = m_db.getMountInfoNoLock(lc);
+  mountInfo = m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   ExistingMountSummary existingMountsSummary;
   std::set<std::string> tapesInUse;
@@ -1530,7 +1530,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
 
   // Extract relevant information from the object store.
   utils::Timer t;
-  auto mountDecisionInfo=m_db.getMountInfoNoLock(lc);
+  auto mountDecisionInfo=m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES,lc);
   auto schedulerDbTime = t.secs(utils::Timer::resetCounter);
   auto & mdi __attribute__((unused)) = *mountDecisionInfo;
 

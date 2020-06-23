@@ -484,7 +484,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   rm->complete(time(nullptr));
   rm.reset(nullptr);
   moutInfo.reset(nullptr);
-  auto mi = db.getMountInfoNoLock(lc);
+  auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
   ASSERT_EQ(bFiles, mi->potentialMounts.begin()->filesQueued);
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);

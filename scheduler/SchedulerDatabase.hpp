@@ -716,6 +716,14 @@ public:
     virtual ~TapeMountDecisionInfo() {};
   };
   
+  //Enum to change the behaviour of the getMountInfoNoLock method
+  //if SHOW_QUEUES, getMountInfoNoLock will return the queues of the 
+  //tape that are disabled
+  enum PurposeGetMountInfo {
+    GET_NEXT_MOUNT,
+    SHOW_QUEUES
+  };
+  
   /**
    * A function dumping the relevant mount information for deciding which
    * tape to mount next. This also starts the mount decision process (and takes
@@ -733,7 +741,7 @@ public:
    * A function dumping the relevant mount information for reporting the system
    * status. It is identical to getMountInfo, yet does not take the global lock.
    */
-  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(log::LogContext& logContext) = 0;
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) = 0;
   
   /* === Drive state handling  ============================================== */
   /**

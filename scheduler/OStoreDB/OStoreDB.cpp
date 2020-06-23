@@ -185,7 +185,7 @@ void OStoreDB::ping() {
 //------------------------------------------------------------------------------
 // OStoreDB::fetchMountInfo()
 //------------------------------------------------------------------------------
-void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re, 
+void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re, SchedulerDatabase::PurposeGetMountInfo purpose,
     log::LogContext & logContext) {
   utils::Timer t, t2;
   std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.getCachedMountPolicies();
@@ -348,7 +348,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     } else {
       isPotentialMount = true;
     }
-    if (rqSummary.jobs && isPotentialMount) {
+    if (rqSummary.jobs && (isPotentialMount || purpose == SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES)) {
       //Getting the default mountPolicies parameters from the queue summary
       uint64_t maxDrivesAllowed = rqSummary.maxDrivesAllowed;
       uint64_t minRetrieveRequestAge = rqSummary.minRetrieveRequestAge;
@@ -585,7 +585,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   tmdi.m_lockTaken = true;
   tmdi.m_schedulerGlobalLock->fetch();
   auto fetchSchedGlobalTime = t.secs(utils::Timer::resetCounter);;
-  fetchMountInfo(tmdi, re, logContext);
+  fetchMountInfo(tmdi, re, SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, logContext);
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   {
@@ -603,7 +603,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 //------------------------------------------------------------------------------
 // OStoreDB::getMountInfoNoLock()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfoNoLock(log::LogContext & logContext) {
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext & logContext) {
   utils::Timer t;
   //Allocate the getMountInfostructure to return.
   assertAgentAddressSet();
@@ -613,7 +613,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfo
   re.fetchNoLock();
   auto rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
   TapeMountDecisionInfoNoLock & tmdi=*privateRet;
-  fetchMountInfo(tmdi, re, logContext);
+  fetchMountInfo(tmdi, re, purpose, logContext);
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   {
