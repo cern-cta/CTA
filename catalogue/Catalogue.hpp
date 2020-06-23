@@ -667,6 +667,13 @@ public:
    * @return the list of all existing mount policies.
    */
   virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const = 0;
+  
+  /**
+   * Returns the cached list of all existing mount policies.
+   *
+   * @return the list of all existing mount policies.
+   */
+  virtual std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const = 0;
 
   /**
    * Deletes the specified mount policy.

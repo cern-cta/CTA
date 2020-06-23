@@ -403,6 +403,10 @@ public:
   std::list<common::dataStructures::MountPolicy> getMountPolicies() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getMountPolicies();}, m_maxTriesToConnect);
   }
+  
+  std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getCachedMountPolicies();}, m_maxTriesToConnect);
+  }
 
   void deleteMountPolicy(const std::string &name) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteMountPolicy(name);}, m_maxTriesToConnect);

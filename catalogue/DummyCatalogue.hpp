@@ -101,7 +101,6 @@ public:
   bool isAdmin(const common::dataStructures::SecurityIdentity& admin) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyAdminUserComment(const common::dataStructures::SecurityIdentity& admin, const std::string& username, const std::string& comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  
   void createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteVirtualOrganization(const std::string &voName) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -189,6 +188,28 @@ public:
     return ret;
   }
   std::list<common::dataStructures::MountPolicy> getMountPolicies() const {
+    std::list<common::dataStructures::MountPolicy> mountPolicies;
+    common::dataStructures::MountPolicy mp1;
+    mp1.name = "mountPolicy";
+    mp1.archivePriority = 1;
+    mp1.archiveMinRequestAge = 0;
+    mp1.retrievePriority = 1;
+    mp1.retrieveMinRequestAge = 0;
+    mp1.maxDrivesAllowed = 10;
+    mountPolicies.push_back(mp1);
+    
+    common::dataStructures::MountPolicy mp2;
+    mp2.name = "moreAdvantageous";
+    mp2.archivePriority = 2;
+    mp2.archiveMinRequestAge = 0;
+    mp2.retrievePriority = 2;
+    mp2.retrieveMinRequestAge = 0;
+    mp2.maxDrivesAllowed = 10;
+    mountPolicies.push_back(mp1);
+    return mountPolicies;
+  }
+  
+  std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override { 
     std::list<common::dataStructures::MountPolicy> mountPolicies;
     common::dataStructures::MountPolicy mp1;
     mp1.name = "mountPolicy";

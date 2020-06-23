@@ -188,7 +188,7 @@ void OStoreDB::ping() {
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re, 
     log::LogContext & logContext) {
   utils::Timer t, t2;
-  std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.getMountPolicies();
+  std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.getCachedMountPolicies();
   // Walk the archive queues for USER for statistics
   for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);

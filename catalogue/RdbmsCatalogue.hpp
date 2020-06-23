@@ -645,6 +645,21 @@ public:
    * @return the list of all existing mount policies.
    */
   std::list<common::dataStructures::MountPolicy> getMountPolicies() const override;
+  
+  /**
+   * Returns the list of all existing mount policies.
+   * 
+   * @param conn the database connection
+   * @return the list of all existing mount policies.
+   */
+  std::list<common::dataStructures::MountPolicy> getMountPolicies(rdbms::Conn & conn) const;
+  
+  /**
+   * Returns the cached list of all existing mount policies.
+   *
+   * @return the list of all existing mount policies.
+   */
+  std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override;
 
   /**
    * Deletes the specified mount policy.
@@ -1886,6 +1901,11 @@ protected:
    * Cached versions of mount policies for specific users.
    */
   mutable TimeBasedCache<User, optional<common::dataStructures::MountPolicy> > m_userMountPolicyCache;
+  
+  /**
+   * Cached versions of all mount policies
+   */
+  mutable TimeBasedCache<std::string, std::list<common::dataStructures::MountPolicy>> m_allMountPoliciesCache;
 
   /**
    * Cached versions of the expected number of archive routes for specific

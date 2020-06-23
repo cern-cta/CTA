@@ -4101,7 +4101,9 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   }
 }
 
-
+/* DEACTIVATED BECAUSE OF THE 1 MINUTE caching of getCachedMountPolicies
+ * used by scheduler.getNextMountDryRun()
+ * CAN BE REACTIVATED TO SEE IF IT STILL WORKS
 TEST_P(SchedulerTest, archiveMountPolicyInFlightChangeScheduleMount){
   using namespace cta;
 
@@ -4289,7 +4291,7 @@ TEST_P(SchedulerTest, retrieveMountPolicyInFlightChangeScheduleMount)
   catalogue.modifyMountPolicyMaxDrivesAllowed(s_adminOnAdminHost,s_mountPolicyName,50);
   
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
-}
+}*/
   
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB

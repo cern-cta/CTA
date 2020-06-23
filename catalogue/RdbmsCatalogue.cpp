@@ -58,6 +58,7 @@ RdbmsCatalogue::RdbmsCatalogue(
   m_tapeCopyToPoolCache(10),
   m_groupMountPolicyCache(10),
   m_userMountPolicyCache(10),
+  m_allMountPoliciesCache(60),
   m_expectedNbArchiveRoutesCache(10),
   m_isAdminCache(10),
   m_activitiesFairShareWeights(10) {}
@@ -5402,7 +5403,22 @@ void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
 // getMountPolicies
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies() const {
-  try {
+  try {   
+    auto conn = m_connPool.getConn();
+    return getMountPolicies(conn);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getMountPolicies
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(rdbms::Conn & conn) const {
+try {
     std::list<common::dataStructures::MountPolicy> policies;
     const char *const sql =
       "SELECT "
@@ -5429,7 +5445,6 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
         "MOUNT_POLICY "
       "ORDER BY "
         "MOUNT_POLICY_NAME";
-    auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
@@ -5457,7 +5472,6 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
 
       policies.push_back(policy);
     }
-
     return policies;
   } catch(exception::UserError &) {
     throw;
@@ -5466,6 +5480,25 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
     throw;
   }
 }
+
+//------------------------------------------------------------------------------
+// getCachedMountPolicies
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedMountPolicies() const {
+  try {
+    auto getNonCachedValue = [&] {
+      auto conn = m_connPool.getConn();
+      return getMountPolicies(conn);
+    };
+    return m_allMountPoliciesCache.getCachedValue("all",getNonCachedValue);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyArchivePriority
