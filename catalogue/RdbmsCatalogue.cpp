@@ -2916,11 +2916,6 @@ void RdbmsCatalogue::setLogicalLibraryDisabled(const common::dataStructures::Sec
   }
 }
 
-void RdbmsCatalogue::createTape(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& mediaType, const std::string& vendor, const std::string& logicalLibraryName, const std::string& tapePoolName, const uint64_t capacityInBytes, const bool disabled, const bool full, const bool readOnly, const std::string& comment){
-  auto tape = cta::common::dataStructures::Tape::TapeFactory::createTape(vid,mediaType,vendor,logicalLibraryName,tapePoolName, disabled,full,readOnly,comment);
-  createTape(admin,tape);
-}
-
 //------------------------------------------------------------------------------
 // createTape
 //------------------------------------------------------------------------------

@@ -1211,8 +1211,18 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMediaType_usedByTapes) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  common::dataStructures::Tape tape;
+  tape.vid = vid;
+  tape.mediaType = mediaType;
+  tape.vendor = vendor;
+  tape.logicalLibraryName = logicalLibraryName;
+  tape.tapePoolName = tapePoolName;
+  tape.capacityInBytes = capacityInBytes;
+  tape.full = fullValue;
+  tape.disabled = disabledValue;
+  tape.readOnly = readOnlyValue;
+  tape.comment = comment;
+  m_catalogue->createTape(m_admin, tape);
    
   //Media type is used by at least one tape, deleting it should throw an exception
   ASSERT_THROW(m_catalogue->deleteMediaType(mediaType), exception::UserError);
@@ -2184,8 +2194,20 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   ASSERT_TRUE(m_catalogue->tapeExists(vid));
 
@@ -3886,9 +3908,21 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, 
-    comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   const std::list<common::dataStructures::Tape> tapes =
     m_catalogue->getTapes();
@@ -4127,8 +4161,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   ASSERT_TRUE(m_catalogue->tapeExists(vid));
 
@@ -4215,8 +4261,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringVid);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    ASSERT_THROW(m_catalogue->createTape(m_admin, tape), catalogue::UserSpecifiedAnEmptyStringVid);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringMediaType) {
@@ -4257,8 +4315,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringMediaType) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringMediaType);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    ASSERT_THROW(m_catalogue->createTape(m_admin, tape), catalogue::UserSpecifiedAnEmptyStringMediaType);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVendor) {
@@ -4302,8 +4372,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVendor) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringVendor);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    ASSERT_THROW(m_catalogue->createTape(m_admin, tape), catalogue::UserSpecifiedAnEmptyStringVendor);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
@@ -4346,8 +4428,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringLogicalLibraryName);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    ASSERT_THROW(m_catalogue->createTape(m_admin, tape), catalogue::UserSpecifiedAnEmptyStringLogicalLibraryName);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
@@ -4375,8 +4469,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
   
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    ASSERT_THROW(m_catalogue->createTape(m_admin, tape), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
@@ -4402,8 +4508,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
   createMediaType(mediaType);
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), exception::UserError);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    ASSERT_THROW(m_catalogue->createTape(m_admin, tape), exception::UserError);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_tape_pool) {
@@ -4425,8 +4543,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_tape_pool) {
 
   createMediaType(mediaType);
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment), exception::UserError);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    ASSERT_THROW(m_catalogue->createTape(m_admin, tape), exception::UserError);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
@@ -4469,8 +4599,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   const auto tapes = m_catalogue->getTapes();
 
@@ -4553,8 +4695,21 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -4569,9 +4724,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName,
-    tapePoolName, capacityInBytes, disabledValue, fullValue, readOnlyValue,
-    comment), exception::UserError);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    ASSERT_THROW(m_catalogue->createTape(m_admin, tape), exception::UserError);
+  }
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -4632,8 +4798,20 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     std::ostringstream vid;
     vid << "vid" << i;
 
-    m_catalogue->createTape(m_admin, vid.str(), mediaType, vendor, logicalLibrary, tapePoolName, capacityInBytes,
-      disabled, full, readOnly, comment);
+    {
+      common::dataStructures::Tape tape;
+      tape.vid = vid.str();
+      tape.mediaType = mediaType;
+      tape.vendor = vendor;
+      tape.logicalLibraryName = logicalLibrary;
+      tape.tapePoolName = tapePoolName;
+      tape.capacityInBytes = capacityInBytes;
+      tape.full = full;
+      tape.disabled = disabled;
+      tape.readOnly = readOnly;
+      tape.comment = comment;
+      m_catalogue->createTape(m_admin, tape);
+    }
 
     {
       const auto pools = m_catalogue->getTapePools();
@@ -4954,8 +5132,22 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   }
 
   {
-    m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName,
-      capacityInBytes, disabledValue, fullValue, readOnlyValue, comment);
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+
+  {
     const auto tapes = cta_catalogue_CatalogueTest::tapeListToMap(m_catalogue->getTapes());
     ASSERT_EQ(1, tapes.size());
 
@@ -5051,8 +5243,21 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   }
 
   {
-    m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName,
-      capacityInBytes, disabledValue, fullValue, readOnlyValue, comment);
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
     const auto tapes = cta_catalogue_CatalogueTest::tapeListToMap(m_catalogue->getTapes());
     ASSERT_EQ(2, tapes.size());
 
@@ -5124,9 +5329,21 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName,
-    capacityInBytes, disabledValue, fullValue, readOnlyValue, 
-    comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   const std::list<common::dataStructures::Tape> tapes =
     m_catalogue->getTapes();
@@ -5197,8 +5414,21 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   createMediaType(mediaType);
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
-    readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5324,8 +5554,21 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5415,8 +5658,21 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
 
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5507,8 +5763,21 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
 
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5613,8 +5882,20 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, anotherTapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create another tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5724,8 +6005,20 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5816,8 +6109,20 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5919,8 +6224,20 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6022,8 +6339,20 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6163,8 +6492,20 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6304,8 +6645,20 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6404,8 +6757,20 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6504,8 +6869,20 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6633,8 +7010,20 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6733,8 +7122,20 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6823,8 +7224,20 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6961,8 +7374,22 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-   disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
   m_catalogue->tapeLabelled(vid, "tape_drive");
 
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
@@ -7005,8 +7432,22 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_disabled_tape) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-   disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
   m_catalogue->tapeLabelled(vid, "tape_drive");
 
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
@@ -7040,8 +7481,22 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_full_tape) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-   disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
   m_catalogue->tapeLabelled(vid, "tape_drive");
 
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
@@ -7074,8 +7529,22 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_read_only_tape) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-   disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
   m_catalogue->tapeLabelled(vid, "tape_drive");
 
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
@@ -7108,8 +7577,22 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_is_from_castor_tape) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-   disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
   m_catalogue->tapeLabelled(vid, "tape_drive");
   {
     const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
@@ -7147,8 +7630,21 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-   disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
 
@@ -9218,10 +9714,36 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
   const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
@@ -9469,10 +9991,36 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
   const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
@@ -9952,8 +10500,21 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName1, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName1;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -9970,8 +10531,21 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName2, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName2;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -10879,8 +11453,21 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName1, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName1;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -10897,8 +11484,21 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName2, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName2;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -11632,8 +12232,21 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -11767,8 +12380,21 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -11911,10 +12537,36 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12143,10 +12795,36 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12369,8 +13047,21 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12568,8 +13259,21 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12724,10 +13428,36 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12912,10 +13642,36 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13099,10 +13855,36 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13283,10 +14065,36 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13593,10 +14401,36 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13934,8 +14768,19 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
     std::ostringstream vid;
     vid << "V" << std::setfill('0') << std::setw(5) << i;
     const std::string tapeComment = "Create tape " + vid.str();
-    m_catalogue->createTape(m_admin, vid.str(), mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-      disabledValue, fullValue, readOnlyValue, tapeComment);
+
+    common::dataStructures::Tape tape;
+    tape.vid = vid.str();
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = tapeComment;
+    m_catalogue->createTape(m_admin, tape);
   }
 
   const auto vidToTapeMap = m_catalogue->getAllTapes();
@@ -14910,8 +15755,21 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -14974,8 +15832,21 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15096,8 +15967,21 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15160,8 +16044,21 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15284,8 +16181,21 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15417,10 +16327,36 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15638,8 +16574,21 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15731,8 +16680,21 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15796,8 +16758,21 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -16027,8 +17002,21 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -16192,10 +17180,36 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = createTapeComment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -16693,8 +17707,22 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -16870,12 +17898,36 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
 
   const std::string tapeDrive = "tape_drive";
   m_catalogue->createTapePool(m_admin, tapePoolName2, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-    
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName1, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName2, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName1;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName2;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 for this test
@@ -17019,13 +18071,37 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
 
   const std::string tapeDrive = "tape_drive";
   m_catalogue->createTapePool(m_admin, tapePoolName2, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-    
-  m_catalogue->createTape(m_admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName1, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  
-  m_catalogue->createTape(m_admin, vid2, mediaType, vendor, logicalLibraryName, tapePoolName2, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
 
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid1;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName1;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid2;
+    tape.mediaType = mediaType;
+    tape.vendor = vendor;
+    tape.logicalLibraryName = logicalLibraryName;
+    tape.tapePoolName = tapePoolName2;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    m_catalogue->createTape(m_admin, tape);
+  }
+    
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 for this test
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;

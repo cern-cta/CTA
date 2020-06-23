@@ -465,8 +465,21 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
 
   const std::string driveName = "tape_drive";
 
@@ -670,8 +683,21 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
 
   const std::string driveName = "tape_drive";
 
@@ -921,8 +947,21 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName,
-    capacityInBytes, notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
 
   const std::string driveName = "tape_drive";
 
@@ -1166,8 +1205,21 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
 
   catalogue.tapeLabelled(s_vid, "tape_drive");
 
@@ -1295,7 +1347,21 @@ TEST_P(SchedulerTest, repack) {
   std::string tape1 = "Tape";
   
   const bool notReadOnly = false; 
-  catalogue.createTape(cliId,tape1,s_mediaType,s_vendor,s_libraryName,s_tapePoolName,500,false,false, notReadOnly, "Comment");
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = tape1;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = 500;
+    tape.full = false;
+    tape.disabled = false;
+    tape.readOnly = false;
+    tape.comment = "Comment";
+    catalogue.createTape(cliId, tape);
+  }
   
   //The queueing of a repack request should fail if the tape to repack is not full
   ASSERT_THROW(scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,lc),cta::exception::UserError);
@@ -1316,7 +1382,20 @@ TEST_P(SchedulerTest, repack) {
   ASSERT_EQ(0, scheduler.getRepacks().size());
   // Recreate a repack and get it moved to ToExpand
   std::string tape2 = "Tape2";
-  catalogue.createTape(cliId,tape2,s_mediaType,s_vendor,s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = tape2;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = 500;
+    tape.full = true;
+    tape.disabled = false;
+    tape.readOnly = notReadOnly;
+    tape.comment = "Comment";
+    catalogue.createTape(cliId, tape);
+  }
   scheduler.queueRepack(cliId, tape2, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc);
   {
     auto repacks = scheduler.getRepacks();
@@ -1355,14 +1434,42 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   cliId.username = s_userName;
   std::string tape1 = "Tape";
   const bool notReadOnly = false;
-  catalogue.createTape(cliId,tape1,s_mediaType,s_vendor,s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
-  
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = tape1;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = 500;
+    tape.full = true;
+    tape.disabled = false;
+    tape.readOnly = notReadOnly;
+    tape.comment = "Comment";
+    catalogue.createTape(cliId, tape);
+  }
+
   //Queue the first repack request
   scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc);
   
   std::string tape2 = "Tape2";
-  catalogue.createTape(cliId,tape2,s_mediaType,s_vendor,s_libraryName,s_tapePoolName,500,false,true, notReadOnly, "Comment");
-  
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = tape2;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = 500;
+    tape.full = true;
+    tape.disabled = false;
+    tape.readOnly = notReadOnly;
+    tape.comment = "Comment";
+    catalogue.createTape(cliId, tape);
+  }
+
   //Queue the second repack request
   scheduler.queueRepack(cliId,tape2,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);
   
@@ -1442,8 +1549,19 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     ossVid << s_vid << "_" << i;
     std::string vid = ossVid.str();
     allVid.push_back(vid);
-    catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-      disabledValue, fullValue, readOnlyValue, comment);
+
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
   //Create a storage class in the catalogue
@@ -1752,8 +1870,21 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
-  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -1986,13 +2117,40 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
-  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
   //Create a repack destination tape
   std::string vidDestination = "vidDestination";
-  catalogue.createTape(s_adminOnAdminHost,vidDestination, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, false, readOnlyValue, comment);
-  
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vidDestination;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = false;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -2233,13 +2391,38 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
-  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
 
   //Create a repack destination tape
   std::string vidDestinationRepack = "vidDestinationRepack";
-  catalogue.createTape(s_adminOnAdminHost,vidDestinationRepack, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-   disabledValue, false, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vidDestinationRepack;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = false;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -2531,8 +2714,20 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
-  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -2645,9 +2840,22 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
-  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
-  
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -2773,8 +2981,21 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
-  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -2959,8 +3180,18 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
   bool notReadOnly = false;
   const std::string driveName = "tape_drive";
   for (auto i:fileRange) {
-    catalogue.createTape(s_adminOnAdminHost, s_vid + std::to_string(i), s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-      notDisabled, notFull, notReadOnly, tapeComment);
+    common::dataStructures::Tape tape;
+    tape.vid = s_vid + std::to_string(i);
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
     catalogue.tapeLabelled(s_vid + std::to_string(i), "tape_drive");    
   }
 
@@ -3158,8 +3389,20 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   
   //Create the source tape
   std::string vid = "vidSource";
-  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
@@ -3182,12 +3425,36 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   
   //Create two other destinationTape
   std::string vidDestination1 = "vidDestination1";
-  catalogue.createTape(s_adminOnAdminHost,vidDestination1, s_mediaType, s_vendor, s_libraryName, tapepool2Name, capacityInBytes,
-    disabledValue, false, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vidDestination1;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = tapepool2Name;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = false;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   std::string vidDestination2 = "vidDestination2";
-  catalogue.createTape(s_adminOnAdminHost,vidDestination2, s_mediaType, s_vendor, s_libraryName, tapepool3Name, capacityInBytes,
-    disabledValue, false, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vidDestination2;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = tapepool3Name;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = false;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
 
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
@@ -3399,8 +3666,20 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   
   //Create the source tape
   std::string vid = "vidSource";
-  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
@@ -3423,16 +3702,52 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   
   //Create two other destinationTape and one for the move workflow
   std::string vidDestination1 = "vidDestination1";
-  catalogue.createTape(s_adminOnAdminHost,vidDestination1, s_mediaType, s_vendor, s_libraryName, tapepool2Name, capacityInBytes,
-    disabledValue, false, readOnlyValue, comment);
-  
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vidDestination1;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = tapepool2Name;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = false;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
   std::string vidDestination2 = "vidDestination2";
-  catalogue.createTape(s_adminOnAdminHost,vidDestination2, s_mediaType, s_vendor, s_libraryName, tapepool3Name, capacityInBytes,
-    disabledValue, false, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vidDestination2;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = tapepool3Name;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = false;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   std::string vidMove = "vidMove";
-  catalogue.createTape(s_adminOnAdminHost,vidMove, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, false, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vidMove;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = false;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue; 
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
@@ -3664,13 +3979,37 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
-  catalogue.createTape(s_adminOnAdminHost,vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, fullValue, readOnlyValue, comment);
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   //Create a repack destination tape
   std::string vidDestination = "vidDestination";
-  catalogue.createTape(s_adminOnAdminHost,vidDestination, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    disabledValue, false, readOnlyValue, comment);
-  
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = vidDestination;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = false;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -3885,10 +4224,22 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
-  
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, 12345678,
-    false, false, false, "Comment");
-  
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = 12345678;
+    tape.full = false;
+    tape.disabled = false;
+    tape.readOnly = false;
+    tape.comment = "Comment";
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,10000);
   
   Sorter sorter(agentReference,backend,catalogue);
@@ -4003,9 +4354,21 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
-  
-  catalogue.createTape(s_adminOnAdminHost,s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-      disabledValue, fullValue, readOnlyValue, comment);
+
+  {
+    common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;

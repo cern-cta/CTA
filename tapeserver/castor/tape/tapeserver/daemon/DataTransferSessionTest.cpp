@@ -404,8 +404,21 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   // 6) Prepare files for reading by writing them to the mock system
   {
@@ -588,8 +601,21 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   // 6) Prepare files for reading by writing them to the mock system
   {
@@ -782,8 +808,21 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
 
   int MAX_RECALLS = 50;
   int MAX_BULK_RECALLS = 31;
@@ -1000,8 +1039,21 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   // 6) Prepare files for reading by writing them to the mock system
   {
@@ -1150,8 +1202,21 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   // 6) Prepare files for reading by writing them to the mock system
   {
@@ -1310,9 +1375,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
-  
+
+  {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
   // Create the mount criteria
   catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
   catalogue.createRequesterMountRule(requester, "immediateMount", s_diskInstance, requester.username, "Rule comment");
@@ -1458,9 +1536,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
-  
+
+  {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
   // Create the mount criteria
   catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
   catalogue.createRequesterMountRule(requester, "immediateMount", s_diskInstance, requester.username, "Rule comment");
@@ -1620,8 +1711,21 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
+
+  {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
   
   // Create the mount criteria
   catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
@@ -1782,9 +1886,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
-    notDisabled, notFull, notReadOnly, tapeComment);
-  
+
+  {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.capacityInBytes = capacityInBytes;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
   // Create the mount criteria
   catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
   catalogue.createRequesterMountRule(requester, "immediateMount", s_diskInstance, requester.username, "Rule comment");

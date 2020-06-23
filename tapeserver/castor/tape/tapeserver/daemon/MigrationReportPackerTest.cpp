@@ -146,8 +146,21 @@ const uint32_t TEST_GROUP_2 = 9754;
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo.name, 2, true, supply, "Create tape pool");
     createMediaType(mediaType);
-    m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-      disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+    {
+      cta::common::dataStructures::Tape tape;
+      tape.vid = vid1;
+      tape.mediaType = mediaType;
+      tape.vendor = vendor;
+      tape.logicalLibraryName = logicalLibraryName;
+      tape.tapePoolName = tapePoolName;
+      tape.capacityInBytes = capacityInBytes;
+      tape.full = fullValue;
+      tape.disabled = disabledValue;
+      tape.readOnly = readOnlyValue;
+      tape.comment = createTapeComment;
+      m_catalogue->createTape(admin, tape);
+    }
 
     cta::common::dataStructures::StorageClass storageClass;
     
@@ -300,8 +313,21 @@ const uint32_t TEST_GROUP_2 = 9754;
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
     createMediaType(mediaType);
-    m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
-      disabledValue, fullValue, readOnlyValue, createTapeComment);
+
+    {
+      cta::common::dataStructures::Tape tape;
+      tape.vid = vid1;
+      tape.mediaType = mediaType;
+      tape.vendor = vendor;
+      tape.logicalLibraryName = logicalLibraryName;
+      tape.tapePoolName = tapePoolName;
+      tape.capacityInBytes = capacityInBytes;
+      tape.full = fullValue;
+      tape.disabled = disabledValue;
+      tape.readOnly = readOnlyValue;
+      tape.comment = createTapeComment;
+      m_catalogue->createTape(admin, tape);
+    }
 
     cta::common::dataStructures::StorageClass storageClass;
     

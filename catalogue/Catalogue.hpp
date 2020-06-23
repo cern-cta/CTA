@@ -502,24 +502,6 @@ public:
   /**
    * Creates a tape which is assumed to have logical block protection (LBP)
    * enabled and isFromCastor disabled.
-   * TODO THIS METHOD IS DEPRECATED AND SHOULD BE REMOVED. IT IS USED ONLY IN THE UNIT TESTS ! USE THE ONE THAT USES THE TAPE DATASTRUCTURE INSTEAD
-   */
-  virtual void createTape(
-    const common::dataStructures::SecurityIdentity &admin,
-    const std::string &vid,
-    const std::string &mediaType,
-    const std::string &vendor,
-    const std::string &logicalLibraryName,
-    const std::string &tapePoolName,
-    const uint64_t capacityInBytes,
-    const bool disabled,
-    const bool full,
-    const bool readOnly,
-    const std::string &comment) = 0;
-  
-  /**
-   * Creates a tape which is assumed to have logical block protection (LBP)
-   * enabled and isFromCastor disabled.
    */
   virtual void createTape(
     const common::dataStructures::SecurityIdentity &admin,
