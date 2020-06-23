@@ -60,6 +60,7 @@ void DriveState::initialize(const std::string & driveName) {
   cta::common::dataStructures::DriveState driveState;
   driveState.driveName = driveName;
   driveState.downOrUpStartTime = ::time(nullptr);
+  driveState.desiredDriveState.setReasonFromLogMsg(cta::log::INFO,"Drive created.");
   setState(driveState);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;

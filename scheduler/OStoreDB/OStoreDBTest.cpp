@@ -240,15 +240,19 @@ TEST_P(OStoreDBTest, setDesiredState){
   OStoreDBWrapperInterface & osdbi = getDb();
   AgentReference & agentRef = osdbi.getAgentReference();
   //Create the drive first
+  std::string expectedReason = cta::common::dataStructures::DesiredDriveState::c_tpsrvPrefixComment + " INFO Drive created.";
   std::string driveName = "DRIVE";
   {
     DriveState ds(osdbi.getBackend());
     ScopedExclusiveLock dsl;
     Helpers::getLockedAndFetchedDriveState(ds, dsl, agentRef, driveName, lc);
+    //Check the reason is set
+    ASSERT_EQ(expectedReason,ds.getState().desiredDriveState.reason.value());
   }
   cta::common::dataStructures::DesiredDriveState desiredState;
-  desiredState.up = false;
+  desiredState.up = true;
   desiredState.forceDown = false;
+  desiredState.reason = "";
   cta::common::dataStructures::DriveState driveState;
   {
     //Test the reason and comment fields are empty
