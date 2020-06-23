@@ -42,6 +42,9 @@ protected:
   cta::common::dataStructures::SecurityIdentity m_localAdmin;
   cta::common::dataStructures::SecurityIdentity m_admin;
 
+  cta::common::dataStructures::Tape m_tape1;
+  cta::common::dataStructures::Tape m_tape2;
+
   virtual void SetUp();
 
   virtual void TearDown();
