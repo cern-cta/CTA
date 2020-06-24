@@ -1,3 +1,15 @@
+# v3.0-2
+
+## Summary
+
+### Features
+
+- Upstream eos 4.8.3-1
+- Upstream xrootd 4.12.3-1
+- Mount policies are now dynamically updated on queued Archive and Retrieve requests
+- ShowQueues now display queued retrieves on disabled tapes
+
+
 # v3.0-1
 
 ## Summary

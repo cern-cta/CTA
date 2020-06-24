@@ -461,6 +461,11 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Wed Jun 24 2020 julien.leduc (at) cern.ch - 3.0-2
+- Upstream eos 4.8.3-1
+- Upstream xrootd 4.12.3-1
+- Mount policies are now dynamically updated on queued Archive and Retrieve requests
+- cta-admin sq now display queued retrieves on disabled tapes
 * Thu Jun 18 2020 julien.leduc (at) cern.ch - 3.0-1
 - eos 4.8.2-1
 - xrootd 4.12.1-1
