@@ -28,7 +28,11 @@ DatabaseStatisticsService::~DatabaseStatisticsService() {
 }
 
 void DatabaseStatisticsService::updateStatisticsPerTape(){
-  const char * const sql = 
+  //to update the statistics, we will first select the DIRTY tapes ordered by VID and we will run an update for each row.
+  
+  const char * const selectVids = "SELECT TAPE.VID AS VID FROM TAPE WHERE TAPE.DIRTY='1' ORDER BY TAPE.VID";
+  
+  const char * const updateSql = 
   "UPDATE TAPE TAPE_TO_UPDATE SET"
   "("
     "DIRTY,"
@@ -81,11 +85,18 @@ void DatabaseStatisticsService::updateStatisticsPerTape(){
     "WHERE T.VID = TAPE_TO_UPDATE.VID "
     "GROUP BY T.VID"
   ") "
-  "WHERE TAPE_TO_UPDATE.DIRTY='1'";
+  "WHERE TAPE_TO_UPDATE.VID = :VID";
+  
   try {
-    auto stmt = m_conn.createStmt(sql);
-    stmt.executeNonQuery();
-    m_nbUpdatedTapes = stmt.getNbAffectedRows();
+    auto selectStmt = m_conn.createStmt(selectVids);
+    auto rset = selectStmt.executeQuery();
+    while(rset.next()){
+      //For all DIRTY tapes, update its statistics
+      auto updateStmt = m_conn.createStmt(updateSql);
+      updateStmt.bindString(":VID",rset.columnString("VID"));
+      updateStmt.executeNonQuery();
+      m_nbUpdatedTapes += updateStmt.getNbAffectedRows();
+    }
   } catch(cta::exception::Exception &ex) {
     ex.getMessage().str(std::string(__PRETTY_FUNCTION__) + ": " + ex.getMessage().str());
     throw;
