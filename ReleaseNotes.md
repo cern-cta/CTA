@@ -1,3 +1,11 @@
+# v3.0-3
+
+## Summary
+
+### Modification
+
+- The cta-statistics-update tool updates the tape statistics one by one
+
 # v3.0-2
 
 ## Summary
