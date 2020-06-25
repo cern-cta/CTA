@@ -47,38 +47,45 @@ const uint32_t DISK_FILE_GID = 9754;
 const uint32_t NON_EXISTENT_DISK_FILE_OWNER_UID = 9755;
 const uint32_t NON_EXISTENT_DISK_FILE_GID = 9756;
 
+namespace {
+  cta::common::dataStructures::Tape getTape1() {
+    cta::common::dataStructures::Tape tape;
+    tape.vid = "VIDONE";
+    tape.mediaType = "media_type";
+    tape.vendor = "vendor";
+    tape.logicalLibraryName = "logical_library";
+    tape.tapePoolName = "tape_pool";
+    tape.capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+    tape.full = false;
+    tape.disabled = false;
+    tape.readOnly = false;
+    tape.comment = "Creation of tape one";
+
+    return tape;
+  }
+
+  cta::common::dataStructures::Tape getTape2() {
+    // Tape 2 is an exact copy of tape 1 except for its VID and comment
+    cta::common::dataStructures::Tape tape = getTape1();
+    tape.vid = "VIDTWO";
+    tape.comment = "Creation of tape two";
+
+    return tape;
+  }
+}
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
-  m_dummyLog("dummy", "dummy") {
+  m_dummyLog("dummy", "dummy"),
+  m_tape1(getTape1()),
+  m_tape2(getTape2()) {
   m_localAdmin.username = "local_admin_user";
   m_localAdmin.host = "local_admin_host";
 
   m_admin.username = "admin_user_name";
   m_admin.host = "admin_host";
-
-  m_tape1.vid = "vid1";
-  m_tape1.mediaType = "media_type";
-  m_tape1.vendor = "vendor";
-  m_tape1.logicalLibraryName = "logical_library";
-  m_tape1.tapePoolName = "tape_pool";
-  m_tape1.capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  m_tape1.full = false;
-  m_tape1.disabled = false;
-  m_tape1.readOnly = false;
-  m_tape1.comment = "Tape created comment";
-
-  m_tape2.vid = "vid1";
-  m_tape2.mediaType = "media_type";
-  m_tape2.vendor = "vendor";
-  m_tape2.logicalLibraryName = "logical_library";
-  m_tape2.tapePoolName = "tape_pool";
-  m_tape2.capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  m_tape2.full = false;
-  m_tape2.disabled = false;
-  m_tape2.readOnly = false;
-  m_tape2.comment = "Tape created comment";
 }
 
 //------------------------------------------------------------------------------
@@ -2008,7 +2015,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   ASSERT_TRUE(m_catalogue->tapePoolExists(tapePoolName));
       
@@ -2054,7 +2061,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_null_supply) {
   const cta::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   ASSERT_TRUE(m_catalogue->tapePoolExists(tapePoolName));
       
@@ -2093,8 +2100,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_same_twice) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
-  ASSERT_THROW(m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment),
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  ASSERT_THROW(m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment),
     exception::UserError);
 }
 
@@ -2107,7 +2114,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_vo_does_not_exist) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
-  ASSERT_THROW(m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment),
+  ASSERT_THROW(m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment),
     exception::UserError);
 }
 
@@ -2123,7 +2130,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   const auto pools = m_catalogue->getTapePools();
 
@@ -2199,9 +2206,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
     ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(m_tape1.disabled == tape.disabled);
-    ASSERT_TRUE(m_tape1.full == tape.full);
-    ASSERT_TRUE(m_tape1.readOnly == tape.readOnly);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
@@ -2263,7 +2270,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringVO) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
-  ASSERT_THROW(m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment),
+  ASSERT_THROW(m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment),
     catalogue::UserSpecifiedAnEmptyStringVo);
 }
 
@@ -2282,7 +2289,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringComment) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "";
   createVo(vo);
-  ASSERT_THROW(m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment),
+  ASSERT_THROW(m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment),
     catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
@@ -2305,7 +2312,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2380,7 +2387,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_emptyStringVo) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2423,7 +2430,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_VoDoesNotExist) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2466,7 +2473,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2551,7 +2558,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2625,7 +2632,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringComment) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2678,7 +2685,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2751,7 +2758,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2830,7 +2837,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringSupply) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2917,7 +2924,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes(storageClass.name, tapePoolName).empty());
 
@@ -2977,7 +2984,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolName) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -3051,7 +3058,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolName_emptyStringNewTapePoolNam
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -3104,7 +3111,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassNa
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string storageClassName = "";
   const uint32_t copyNb = 1;
@@ -3135,7 +3142,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 0;
   const std::string comment = "Create archive route";
@@ -3190,7 +3197,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string comment = "";
@@ -3213,7 +3220,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_clas
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
@@ -3270,7 +3277,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
@@ -3301,7 +3308,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb1 = 1;
   const std::string comment1 = "Create archive route for copy 1";
@@ -3335,7 +3342,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
@@ -3391,7 +3398,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
@@ -3444,7 +3451,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string anotherTapePoolName = "another_tape_pool";
   m_catalogue->createTapePool(m_admin, anotherTapePoolName, vo, nbPartialTapes, isEncrypted, supply,
@@ -3515,7 +3522,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentAr
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   ASSERT_THROW(m_catalogue->modifyArchiveRouteTapePoolName(m_admin, storageClass.name,
@@ -3544,7 +3551,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
@@ -3613,7 +3620,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchive
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string comment = "Comment";
@@ -3629,7 +3636,7 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     m_catalogue->getLogicalLibraries();
@@ -3658,7 +3665,7 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_disabled_true) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled(true);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     m_catalogue->getLogicalLibraries();
@@ -3687,7 +3694,7 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_disabled_false) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled(false);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     m_catalogue->getLogicalLibraries();
@@ -3714,8 +3721,8 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_same_twice) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
-  ASSERT_THROW(m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment), exception::UserError);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
+  ASSERT_THROW(m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_true) {
@@ -3726,7 +3733,7 @@ TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_true) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
       
   {
     const std::list<common::dataStructures::LogicalLibrary> libs =
@@ -3776,7 +3783,7 @@ TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_false) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
       
   {
     const std::list<common::dataStructures::LogicalLibrary> libs =
@@ -3826,7 +3833,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
       
   const std::list<common::dataStructures::LogicalLibrary> libs =
     m_catalogue->getLogicalLibraries();
@@ -3867,7 +3874,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   
   createMediaType(m_tape1.mediaType);
 
@@ -3888,10 +3894,10 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
   ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
   ASSERT_EQ(vo, tape.vo);
-  ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-  ASSERT_TRUE(m_tape1.disabled == tape.disabled);
-  ASSERT_TRUE(m_tape1.full == tape.full);
-  ASSERT_TRUE(m_tape1.readOnly == tape.readOnly);
+  ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(m_tape1.disabled, tape.disabled);
+  ASSERT_EQ(m_tape1.full, tape.full);
+  ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
   ASSERT_FALSE(tape.isFromCastor);
   ASSERT_EQ(m_tape1.comment, tape.comment);
   ASSERT_FALSE(tape.labelLog);
@@ -4012,7 +4018,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, comment);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
 
   {
     const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
@@ -4083,7 +4089,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
 
   createMediaType(m_tape1.mediaType);
   
@@ -4120,9 +4125,9 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
     ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(m_tape1.disabled == tape.disabled);
-    ASSERT_TRUE(m_tape1.full == tape.full);
-    ASSERT_TRUE(m_tape1.readOnly == tape.readOnly);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
@@ -4145,7 +4150,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -4380,9 +4385,9 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
     ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(m_tape1.disabled == tape.disabled);
-    ASSERT_TRUE(m_tape1.full == tape.full);
-    ASSERT_TRUE(m_tape1.readOnly == tape.readOnly);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
@@ -4414,33 +4419,23 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
 TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   using namespace cta;
 
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string vid = "vid";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
@@ -4448,59 +4443,32 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    ASSERT_THROW(m_catalogue->createTape(m_admin, tape), exception::UserError);
-  }
+  ASSERT_THROW(m_catalogue->createTape(m_admin, m_tape1), exception::UserError);
 
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -4509,34 +4477,25 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
 TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   using namespace cta;
 
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibrary = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t) 10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabled = true;
-  const bool full = false;
-  const bool readOnly = false;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
+  createMediaType(m_tape1.mediaType);
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibrary, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
@@ -4547,34 +4506,24 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   ASSERT_TRUE(m_catalogue->getTapes().empty());
   const uint64_t nbTapes = 10;
 
+  // Effectively clone the tapes from m_tape1 but give each one its own VID
   for(uint64_t i = 1; i <= nbTapes; i++) {
     std::ostringstream vid;
     vid << "vid" << i;
 
-    {
-      common::dataStructures::Tape tape;
-      tape.vid = vid.str();
-      tape.mediaType = mediaType;
-      tape.vendor = vendor;
-      tape.logicalLibraryName = logicalLibrary;
-      tape.tapePoolName = tapePoolName;
-      tape.capacityInBytes = capacityInBytes;
-      tape.full = full;
-      tape.disabled = disabled;
-      tape.readOnly = readOnly;
-      tape.comment = comment;
-      m_catalogue->createTape(m_admin, tape);
-    }
+    auto tape = m_tape1;
+    tape.vid = vid.str();
+    m_catalogue->createTape(m_admin, tape);
 
     {
       const auto pools = m_catalogue->getTapePools();
       ASSERT_EQ(1, pools.size());
 
       const auto &pool = pools.front();
-      ASSERT_EQ(tapePoolName, pool.name);
+      ASSERT_EQ(m_tape1.tapePoolName, pool.name);
       ASSERT_EQ(vo, pool.vo.name);
       ASSERT_EQ(i, pool.nbTapes);
-      ASSERT_EQ(i * capacityInBytes, pool.capacityBytes);
+      ASSERT_EQ(i * m_tape1.capacityInBytes, pool.capacityBytes);
       ASSERT_EQ(0, pool.dataBytes);
       ASSERT_EQ(0, pool.nbPhysicalFiles);
     }
@@ -4595,17 +4544,17 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
       const common::dataStructures::Tape tape = vidAndTapeItor->second;
       ASSERT_EQ(vid.str(), tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibrary, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabled == tape.disabled);
-      ASSERT_TRUE(full == tape.full);
-      ASSERT_TRUE(readOnly == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -4674,42 +4623,42 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.mediaType = mediaType;
+    searchCriteria.mediaType = m_tape1.mediaType;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
-    ASSERT_EQ(mediaType, vidToTape.begin()->second.mediaType);
+    ASSERT_EQ(m_tape1.mediaType, vidToTape.begin()->second.mediaType);
   }
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.vendor = vendor;
+    searchCriteria.vendor = m_tape1.vendor;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
-    ASSERT_EQ(vendor, vidToTape.begin()->second.vendor);
+    ASSERT_EQ(m_tape1.vendor, vidToTape.begin()->second.vendor);
   }
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.logicalLibrary = logicalLibrary;
+    searchCriteria.logicalLibrary = m_tape1.logicalLibraryName;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
-    ASSERT_EQ(logicalLibrary, vidToTape.begin()->second.logicalLibraryName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, vidToTape.begin()->second.logicalLibraryName);
   }
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.tapePool = tapePoolName;
+    searchCriteria.tapePool = m_tape1.tapePoolName;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
-    ASSERT_EQ(tapePoolName, vidToTape.begin()->second.tapePoolName);
+    ASSERT_EQ(m_tape1.tapePoolName, vidToTape.begin()->second.tapePoolName);
   }
 
   {
@@ -4724,32 +4673,32 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.capacityInBytes = capacityInBytes;
+    searchCriteria.capacityInBytes = m_tape1.capacityInBytes;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
-    ASSERT_EQ(capacityInBytes, vidToTape.begin()->second.capacityInBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
   }
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.disabled = true;
+    searchCriteria.disabled = m_tape1.disabled;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
-    ASSERT_TRUE(vidToTape.begin()->second.disabled);
+    ASSERT_EQ(m_tape1.disabled, vidToTape.begin()->second.disabled);
   }
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.full = false;
+    searchCriteria.full = m_tape1.full;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
-    ASSERT_FALSE(vidToTape.begin()->second.full);
+    ASSERT_EQ(m_tape1.full, vidToTape.begin()->second.full);
   }
 
   {
@@ -4771,21 +4720,21 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   {
     catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = "vid1";
-    searchCriteria.logicalLibrary = logicalLibrary;
-    searchCriteria.tapePool = tapePoolName;
-    searchCriteria.capacityInBytes = capacityInBytes;
-    searchCriteria.disabled = true;
-    searchCriteria.full = false;
+    searchCriteria.logicalLibrary = m_tape1.logicalLibraryName;
+    searchCriteria.tapePool = m_tape1.tapePoolName;
+    searchCriteria.capacityInBytes = m_tape1.capacityInBytes;
+    searchCriteria.disabled = m_tape1.disabled;
+    searchCriteria.full = m_tape1.full;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
     ASSERT_EQ("vid1", vidToTape.begin()->first);
     ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
-    ASSERT_EQ(logicalLibrary, vidToTape.begin()->second.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, vidToTape.begin()->second.tapePoolName);
-    ASSERT_EQ(capacityInBytes, vidToTape.begin()->second.capacityInBytes);
-    ASSERT_TRUE(vidToTape.begin()->second.disabled);
-    ASSERT_FALSE(vidToTape.begin()->second.full);
+    ASSERT_EQ(m_tape1.logicalLibraryName, vidToTape.begin()->second.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, vidToTape.begin()->second.tapePoolName);
+    ASSERT_EQ(m_tape1.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, vidToTape.begin()->second.disabled);
+    ASSERT_EQ(m_tape1.full, vidToTape.begin()->second.full);
   }
 
   {
@@ -4808,17 +4757,17 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
       const common::dataStructures::Tape tape = vidAndTapeItor->second;
       ASSERT_EQ(vid.str(), tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibrary, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabled == tape.disabled);
-      ASSERT_TRUE(full == tape.full);
-      ASSERT_TRUE(readOnly == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -4851,32 +4800,21 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   storageClass.vo.name = vo;
   m_catalogue->createStorageClass(m_admin, storageClass);
 
-  const std::string vid1 = "vid1";
-  const std::string vid2 = "vid2";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
@@ -4884,42 +4822,28 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const auto tapes = cta_catalogue_CatalogueTest::tapeListToMap(m_catalogue->getTapes());
     ASSERT_EQ(1, tapes.size());
 
-    const auto tapeItor = tapes.find(vid1);
+    const auto tapeItor = tapes.find(m_tape1.vid);
     ASSERT_NE(tapes.end(), tapeItor);
 
     const common::dataStructures::Tape tape = tapeItor->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -4928,8 +4852,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -4938,10 +4861,10 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -4960,7 +4883,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.size                 = fileSize;
     file1Written.checksumBlob.insert(checksum::ADLER32, 0x1000); // tests checksum with embedded zeros
     file1Written.storageClassName     = storageClass.name;
-    file1Written.vid                  = vid1;
+    file1Written.vid                  = m_tape1.vid;
     file1Written.fSeq                 = 1;
     file1Written.blockId              = 4321;
     file1Written.copyNb               = 1;
@@ -4978,8 +4901,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(1, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
-    ASSERT_EQ("vid1", vidToTape.begin()->first);
-    ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
+    ASSERT_EQ(m_tape1.vid, vidToTape.begin()->first);
+    ASSERT_EQ(m_tape1.vid, vidToTape.begin()->second.vid);
   }
 
   {
@@ -4987,49 +4910,36 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(fileSize, pool.dataBytes);
     ASSERT_EQ(1, pool.nbPhysicalFiles);
   }
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const auto tapes = cta_catalogue_CatalogueTest::tapeListToMap(m_catalogue->getTapes());
     ASSERT_EQ(2, tapes.size());
 
-    const auto tapeItor = tapes.find(vid2);
+    const auto tapeItor = tapes.find(m_tape2.vid);
     ASSERT_NE(tapes.end(), tapeItor);
 
     const common::dataStructures::Tape tape = tapeItor->second;
-    ASSERT_EQ(vid2, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape2.vid, tape.vid);
+    ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape2.vendor, tape.vendor);
+    ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+    ASSERT_TRUE(m_tape2.disabled == tape.disabled);
+    ASSERT_TRUE(m_tape2.full == tape.full);
+    ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape2.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5038,8 +4948,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -5048,10 +4957,10 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(2, pool.nbTapes);
-    ASSERT_EQ(2*capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(2*m_tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(fileSize, pool.dataBytes);
     ASSERT_EQ(1, pool.nbPhysicalFiles);
   }
@@ -5062,60 +4971,36 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
-  const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes();
+  const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
 
   ASSERT_EQ(1, tapes.size());
 
   const common::dataStructures::Tape tape = tapes.front();
-  ASSERT_EQ(vid, tape.vid);
-  ASSERT_EQ(mediaType, tape.mediaType);
-  ASSERT_EQ(vendor, tape.vendor);
-  ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-  ASSERT_EQ(tapePoolName, tape.tapePoolName);
+  ASSERT_EQ(m_tape1.vid, tape.vid);
+  ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+  ASSERT_EQ(m_tape1.vendor, tape.vendor);
+  ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+  ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
   ASSERT_EQ(vo, tape.vo);
-  ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-  ASSERT_TRUE(disabledValue == tape.disabled);
-  ASSERT_TRUE(fullValue == tape.full);
-  ASSERT_TRUE(readOnlyValue == tape.readOnly);
+  ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(m_tape1.disabled, tape.disabled);
+  ASSERT_EQ(m_tape1.full, tape.full);
+  ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
   ASSERT_FALSE(tape.isFromCastor);
-  ASSERT_EQ(comment, tape.comment);
+  ASSERT_EQ(m_tape1.comment, tape.comment);
   ASSERT_FALSE(tape.labelLog);
   ASSERT_FALSE(tape.lastReadLog);
   ASSERT_FALSE(tape.lastWriteLog);
@@ -5124,8 +5009,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
 
-  const common::dataStructures::EntryLog lastModificationLog =
-    tape.lastModificationLog;
+  const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
   m_catalogue->deleteTape(tape.vid);
@@ -5148,40 +5032,17 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5189,19 +5050,19 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5229,7 +5090,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     file1Written.size                 = fileSize;
     file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
     file1Written.storageClassName     = storageClass.name;
-    file1Written.vid                  = vid;
+    file1Written.vid                  = m_tape1.vid;
     file1Written.fSeq                 = 1;
     file1Written.blockId              = 4321;
     file1Written.copyNb               = 1;
@@ -5243,19 +5104,19 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(fileSize, tape.dataOnTapeInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -5264,12 +5125,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  ASSERT_THROW(m_catalogue->deleteTape(vid), catalogue::UserSpecifiedANonEmptyTape);
+  ASSERT_THROW(m_catalogue->deleteTape(m_tape1.vid), catalogue::UserSpecifiedANonEmptyTape);
   ASSERT_FALSE(m_catalogue->getTapes().empty());
 }
 
@@ -5285,43 +5145,20 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "mediaType";
   const std::string anotherMediaType = "another_media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
+  createMediaType(m_tape1.mediaType);
   createMediaType(anotherMediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5329,18 +5166,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5353,7 +5190,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->modifyTapeMediaType(m_admin, vid, anotherMediaType);
+  m_catalogue->modifyTapeMediaType(m_admin, m_tape1.vid, anotherMediaType);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5361,17 +5198,17 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(anotherMediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5381,7 +5218,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
   
-  ASSERT_THROW(m_catalogue->modifyTapeMediaType(m_admin,vid,"DOES NOT EXIST"),cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyTapeMediaType(m_admin, m_tape1.vid, "DOES NOT EXIST"),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
@@ -5389,43 +5226,20 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "mediaType";
-  const std::string vendor = "vendor";
   const std::string anotherVendor = "another_vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5433,18 +5247,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5457,7 +5271,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->modifyTapeVendor(m_admin, vid, anotherVendor);
+  m_catalogue->modifyTapeVendor(m_admin, m_tape1.vid, anotherVendor);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5465,18 +5279,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(anotherVendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5492,45 +5306,22 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "mediaType";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
   const std::string anotherLogicalLibraryName = "another_logical_library_name";
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createLogicalLibrary(m_admin, anotherLogicalLibraryName, logicalLibraryIsDisabled,
     "Create another logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5538,18 +5329,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5562,7 +5353,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->modifyTapeLogicalLibraryName(m_admin, vid, anotherLogicalLibraryName);
+  m_catalogue->modifyTapeLogicalLibraryName(m_admin, m_tape1.vid, anotherLogicalLibraryName);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5570,18 +5361,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(anotherLogicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5597,13 +5388,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName_nonExistentTape
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
-  ASSERT_THROW(m_catalogue->modifyTapeLogicalLibraryName(m_admin, vid, logicalLibraryName), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyTapeLogicalLibraryName(m_admin, m_tape1.vid, m_tape1.logicalLibraryName), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
@@ -5611,44 +5400,21 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "mediaType";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string anotherTapePoolName = "another_tape_pool_name";
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, anotherTapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create another tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5656,18 +5422,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5680,7 +5446,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->modifyTapeTapePoolName(m_admin, vid, anotherTapePoolName);
+  m_catalogue->modifyTapeTapePoolName(m_admin, m_tape1.vid, anotherTapePoolName);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5688,18 +5454,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(anotherTapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5715,20 +5481,17 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  ASSERT_THROW(m_catalogue->modifyTapeTapePoolName(m_admin, vid, tapePoolName), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyTapeTapePoolName(m_admin, m_tape1.vid, m_tape1.tapePoolName), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
@@ -5736,42 +5499,19 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5779,18 +5519,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5804,7 +5544,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
   }
 
   const std::string modifiedEncryptionKeyName = "modified_encryption_key_name";
-  m_catalogue->modifyTapeEncryptionKeyName(m_admin, vid, modifiedEncryptionKeyName);
+  m_catalogue->modifyTapeEncryptionKeyName(m_admin, m_tape1.vid, modifiedEncryptionKeyName);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5812,19 +5552,19 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
     ASSERT_EQ(modifiedEncryptionKeyName, tape.encryptionKeyName);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5840,42 +5580,19 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5883,18 +5600,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5908,7 +5625,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
   }
 
   const std::string modifiedEncryptionKeyName;
-  m_catalogue->modifyTapeEncryptionKeyName(m_admin, vid, modifiedEncryptionKeyName);
+  m_catalogue->modifyTapeEncryptionKeyName(m_admin, m_tape1.vid, modifiedEncryptionKeyName);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5916,19 +5633,19 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
     ASSERT_FALSE((bool)tape.encryptionKeyName);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -5944,10 +5661,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_nonExistentTape)
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
   const std::string encryptionKeyName = "encryption_key_name";
 
-  ASSERT_THROW(m_catalogue->modifyTapeEncryptionKeyName(m_admin, vid, encryptionKeyName), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyTapeEncryptionKeyName(m_admin, m_tape1.vid, encryptionKeyName), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
@@ -5955,42 +5671,19 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5998,18 +5691,18 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6023,7 +5716,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   }
 
   const std::string labelDrive = "labelling_drive";
-  m_catalogue->tapeLabelled(vid, labelDrive);
+  m_catalogue->tapeLabelled(m_tape1.vid, labelDrive);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6031,18 +5724,18 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_TRUE((bool)tape.labelLog);
     ASSERT_EQ(labelDrive, tape.labelLog.value().drive);
     ASSERT_FALSE(tape.lastReadLog);
@@ -6059,10 +5752,9 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
   const std::string labelDrive = "drive";
 
-  ASSERT_THROW(m_catalogue->tapeLabelled(vid, labelDrive), exception::UserError);
+  ASSERT_THROW(m_catalogue->tapeLabelled(m_tape1.vid, labelDrive), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
@@ -6070,42 +5762,19 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6113,20 +5782,20 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(0, tape.readMountCount);
     ASSERT_EQ(0, tape.writeMountCount);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6140,7 +5809,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   }
 
   const std::string modifiedDrive = "modified_drive";
-  m_catalogue->tapeMountedForArchive(vid, modifiedDrive);
+  m_catalogue->tapeMountedForArchive(m_tape1.vid, modifiedDrive);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6148,20 +5817,20 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(0, tape.readMountCount);
     ASSERT_EQ(1, tape.writeMountCount);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -6173,7 +5842,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   }
   
   for(int i=1; i<1024; i++) {
-    m_catalogue->tapeMountedForArchive(vid, modifiedDrive);
+    m_catalogue->tapeMountedForArchive(m_tape1.vid, modifiedDrive);
   }
 
   {
@@ -6182,20 +5851,20 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(0, tape.readMountCount);
     ASSERT_EQ(1024, tape.writeMountCount);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -6212,10 +5881,9 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
   const std::string drive = "drive";
 
-  ASSERT_THROW(m_catalogue->tapeMountedForArchive(vid, drive), exception::UserError);
+  ASSERT_THROW(m_catalogue->tapeMountedForArchive(m_tape1.vid, drive), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
@@ -6223,42 +5891,19 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6266,20 +5911,20 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(0, tape.readMountCount);
     ASSERT_EQ(0, tape.writeMountCount);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6293,7 +5938,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   }
 
   const std::string modifiedDrive = "modified_drive";
-  m_catalogue->tapeMountedForRetrieve(vid, modifiedDrive);
+  m_catalogue->tapeMountedForRetrieve(m_tape1.vid, modifiedDrive);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6301,20 +5946,20 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(1, tape.readMountCount);
     ASSERT_EQ(0, tape.writeMountCount);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_TRUE((bool)tape.lastReadLog);
     ASSERT_EQ(modifiedDrive, tape.lastReadLog.value().drive);
@@ -6326,7 +5971,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   }
   
   for(int i=1; i<1024; i++) {
-    m_catalogue->tapeMountedForRetrieve(vid, modifiedDrive);
+    m_catalogue->tapeMountedForRetrieve(m_tape1.vid, modifiedDrive);
   }
 
   {
@@ -6335,20 +5980,20 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(1024, tape.readMountCount);
     ASSERT_EQ(0, tape.writeMountCount);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_TRUE((bool)tape.lastReadLog);
     ASSERT_EQ(modifiedDrive, tape.lastReadLog.value().drive);
@@ -6365,10 +6010,9 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
   const std::string drive = "drive";
 
-  ASSERT_THROW(m_catalogue->tapeMountedForRetrieve(vid, drive), exception::UserError);
+  ASSERT_THROW(m_catalogue->tapeMountedForRetrieve(m_tape1.vid, drive), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
@@ -6376,42 +6020,19 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6419,18 +6040,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6443,7 +6064,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeFull(m_admin, vid, true);
+  m_catalogue->setTapeFull(m_admin, m_tape1.vid, true);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6451,18 +6072,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_TRUE(tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6478,9 +6099,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
 
-  ASSERT_THROW(m_catalogue->setTapeFull(m_admin, vid, true), exception::UserError);
+  ASSERT_THROW(m_catalogue->setTapeFull(m_admin, m_tape1.vid, true), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
@@ -6488,42 +6108,19 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6531,18 +6128,18 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6555,7 +6152,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->noSpaceLeftOnTape(vid);
+  m_catalogue->noSpaceLeftOnTape(m_tape1.vid);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6563,18 +6160,18 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_TRUE(tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6590,9 +6187,8 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
 
-  ASSERT_THROW(m_catalogue->noSpaceLeftOnTape(vid), exception::Exception);
+  ASSERT_THROW(m_catalogue->noSpaceLeftOnTape(m_tape1.vid), exception::Exception);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
@@ -6600,42 +6196,19 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6643,18 +6216,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6667,7 +6240,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeReadOnly(m_admin, vid, true);
+  m_catalogue->setTapeReadOnly(m_admin, m_tape1.vid, true);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6675,18 +6248,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_TRUE(tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6696,7 +6269,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
   
-   m_catalogue->setTapeReadOnly(m_admin, vid, false);
+   m_catalogue->setTapeReadOnly(m_admin, m_tape1.vid, false);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6704,18 +6277,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_FALSE(tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6731,9 +6304,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
 
-  ASSERT_THROW(m_catalogue->setTapeReadOnly(m_admin, vid, true), exception::UserError);
+  ASSERT_THROW(m_catalogue->setTapeReadOnly(m_admin, m_tape1.vid, true), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
@@ -6741,42 +6313,19 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6784,18 +6333,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6808,7 +6357,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeReadOnlyOnError(vid);
+  m_catalogue->setTapeReadOnlyOnError(m_tape1.vid);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6816,18 +6365,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_TRUE(tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6843,9 +6392,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
 
-  ASSERT_THROW(m_catalogue->setTapeReadOnlyOnError(vid), exception::Exception);
+  ASSERT_THROW(m_catalogue->setTapeReadOnlyOnError(m_tape1.vid), exception::Exception);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
@@ -6853,42 +6401,19 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = false;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6896,18 +6421,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6920,7 +6445,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, vid, true);
+  m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, true);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6928,18 +6453,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(tape.disabled);
     ASSERT_FALSE(tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -6955,42 +6480,19 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6998,18 +6500,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -7022,7 +6524,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeIsFromCastorInUnitTests(vid);
+  m_catalogue->setTapeIsFromCastorInUnitTests(m_tape1.vid);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -7030,18 +6532,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_TRUE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -7052,7 +6554,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
   }
   
   // do it twice
-  m_catalogue->setTapeIsFromCastorInUnitTests(vid);
+  m_catalogue->setTapeIsFromCastorInUnitTests(m_tape1.vid);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -7060,18 +6562,18 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_TRUE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -7087,9 +6589,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastor_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
 
-  ASSERT_THROW(m_catalogue->setTapeIsFromCastorInUnitTests(vid), exception::Exception);
+  ASSERT_THROW(m_catalogue->setTapeIsFromCastorInUnitTests(m_tape1.vid), exception::Exception);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled_nonExistentTape) {
@@ -7097,9 +6598,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled_nonExistentTape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
 
-  ASSERT_THROW(m_catalogue->setTapeDisabled(m_admin, vid, true), exception::UserError);
+  ASSERT_THROW(m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, true), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
@@ -7107,56 +6607,33 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = false;
-  const bool fullValue = false;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
-  m_catalogue->tapeLabelled(vid, "tape_drive");
+  m_catalogue->tapeLabelled(m_tape1.vid, "tape_drive");
 
-  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(m_tape1.logicalLibraryName);
 
   ASSERT_EQ(1, tapes.size());
 
   const catalogue::TapeForWriting tape = tapes.front();
-  ASSERT_EQ(vid, tape.vid);
-  ASSERT_EQ(mediaType, tape.mediaType);
-  ASSERT_EQ(vendor, tape.vendor);
-  ASSERT_EQ(tapePoolName, tape.tapePool);
+  ASSERT_EQ(m_tape1.vid, tape.vid);
+  ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+  ASSERT_EQ(m_tape1.vendor, tape.vendor);
+  ASSERT_EQ(m_tape1.tapePoolName, tape.tapePool);
   ASSERT_EQ(vo, tape.vo);
   ASSERT_EQ(0, tape.lastFSeq);
-  ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
 }
 
@@ -7165,45 +6642,25 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_disabled_tape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
-  const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
+  const bool logicalLibraryIsDisabled = false;
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  auto tape = m_tape1;
+  tape.disabled = true;
 
-  m_catalogue->tapeLabelled(vid, "tape_drive");
+  m_catalogue->createTape(m_admin, tape);
 
-  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+  m_catalogue->tapeLabelled(m_tape1.vid, "tape_drive");
+
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(m_tape1.logicalLibraryName);
 
   ASSERT_EQ(0, tapes.size());
 }
@@ -7213,46 +6670,26 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_full_tape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   
-  createMediaType(mediaType);
+  auto tape1 = m_tape1;
+  tape1.full = true;
 
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(tape1.mediaType);
+
+  m_catalogue->createLogicalLibrary(m_admin, tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, tape1);
 
-  m_catalogue->tapeLabelled(vid, "tape_drive");
+  m_catalogue->tapeLabelled(tape1.vid, "tape_drive");
 
-  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(tape1.logicalLibraryName);
 
   ASSERT_EQ(0, tapes.size());
 }
@@ -7262,45 +6699,25 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_read_only_tape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = false;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  auto tape1 = m_tape1;
+  tape1.readOnly = true;
+
+  createMediaType(tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, tape1);
 
-  m_catalogue->tapeLabelled(vid, "tape_drive");
+  m_catalogue->tapeLabelled(tape1.vid, "tape_drive");
 
-  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(tape1.logicalLibraryName);
 
   ASSERT_EQ(0, tapes.size());
 }
@@ -7310,50 +6727,30 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_is_from_castor_tape) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = false;
-  const bool fullValue = false;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  auto tape1 = m_tape1;
+  tape1.isFromCastor = true;
 
-  m_catalogue->tapeLabelled(vid, "tape_drive");
+  m_catalogue->createTape(m_admin, tape1);
+
+  m_catalogue->tapeLabelled(tape1.vid, "tape_drive");
   {
-    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(tape1.logicalLibraryName);
     ASSERT_EQ(1, tapes.size());
   }
   {
-    m_catalogue->setTapeIsFromCastorInUnitTests(vid);
-    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+    m_catalogue->setTapeIsFromCastorInUnitTests(tape1.vid);
+    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(tape1.logicalLibraryName);
     ASSERT_EQ(0, tapes.size());
   }
 }
@@ -7363,43 +6760,20 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid = "vid";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = false;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
-  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(m_tape1.logicalLibraryName);
 
   ASSERT_TRUE(tapes.empty());
 }
@@ -8768,7 +8142,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
@@ -8857,7 +8231,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
@@ -8951,7 +8325,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
@@ -9063,7 +8437,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
@@ -9218,7 +8592,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
@@ -9304,7 +8678,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
@@ -9408,7 +8782,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
@@ -9446,75 +8820,38 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = false;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string createTapeComment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
   const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
   {
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
+    ASSERT_TRUE(it != vidToTape.end());
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -9528,20 +8865,21 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
   {
-    auto it = vidToTape.find(vid2);
+    auto it = vidToTape.find(m_tape2.vid);
+    ASSERT_TRUE(it != vidToTape.end());
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid2, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape2.vid, tape.vid);
+    ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape2.vendor, tape.vendor);
+    ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape2.disabled, tape.disabled);
+    ASSERT_EQ(m_tape2.full, tape.full);
+    ASSERT_EQ(m_tape2.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape2.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -9550,8 +8888,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -9573,7 +8910,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
   auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file1Written = *file1WrittenUP;
-    std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;    file1WrittenSet.insert(file1WrittenUP.release());
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
@@ -9582,7 +8920,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -9625,7 +8963,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid2;
+  file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 2;
@@ -9723,75 +9061,38 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = false;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string createTapeComment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
   const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
   {
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
+    ASSERT_TRUE(it != vidToTape.end());
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -9805,20 +9106,21 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(creationLog, lastModificationLog);
   }
   {
-    auto it = vidToTape.find(vid2);
+    auto it = vidToTape.find(m_tape2.vid);
+    ASSERT_TRUE(it != vidToTape.end());
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid2, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape2.vid, tape.vid);
+    ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape2.vendor, tape.vendor);
+    ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape2.disabled, tape.disabled);
+    ASSERT_EQ(m_tape2.full, tape.full);
+    ASSERT_EQ(m_tape2.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape2.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -9860,7 +9162,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -9905,7 +9207,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid2;
+  file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 2;
@@ -10013,7 +9315,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, vid1, true);
+  m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, true);
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
@@ -10034,7 +9336,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, vid2, true);
+  m_catalogue->setTapeDisabled(m_admin, m_tape2.vid, true);
 
   ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
     exception::UserError);
@@ -10196,11 +9498,6 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_vid) {
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
@@ -10208,15 +9505,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -10253,20 +9545,9 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName1;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  auto tape1 = m_tape1;
+  tape1.tapePoolName = tapePoolName1;
+  m_catalogue->createTape(m_admin, tape1);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -10279,25 +9560,14 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName2;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  auto tape2 = m_tape2;
+  tape2.tapePoolName = tapePoolName2;
+  m_catalogue->createTape(m_admin, tape2);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -10310,7 +9580,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -10322,23 +9592,23 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     const auto vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(tape1.vid);
       ASSERT_NE(vidToTape.end(), it);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tape1.vid, tape.vid);
+      ASSERT_EQ(tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(tape1.vendor, tape.vendor);
+      ASSERT_EQ(tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName1, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(tape1.disabled == tape.disabled);
+      ASSERT_TRUE(tape1.full == tape.full);
+      ASSERT_TRUE(tape1.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -10347,26 +9617,25 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(tape2.vid);
       ASSERT_NE(vidToTape.end(), it);
       const auto &tape = it->second;
-      ASSERT_EQ(vid2, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName2, tape.tapePoolName);
+      ASSERT_EQ(tape2.vid, tape.vid);
+      ASSERT_EQ(tape2.mediaType, tape.mediaType);
+      ASSERT_EQ(tape2.vendor, tape.vendor);
+      ASSERT_EQ(tape2.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(tape2.disabled == tape.disabled);
+      ASSERT_TRUE(tape2.full == tape.full);
+      ASSERT_TRUE(tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -10411,7 +9680,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
-    fileWritten.vid = vid1;
+    fileWritten.vid = tape1.vid;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
     fileWritten.copyNb = 1;
@@ -10430,7 +9699,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
@@ -10440,15 +9709,15 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(2, tapes.size());
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(tape1.vid);
       ASSERT_NE(vidToTape.end(), it);
-      ASSERT_EQ(vid1, it->second.vid);
+      ASSERT_EQ(tape1.vid, it->second.vid);
       ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(tape2.vid);
       ASSERT_NE(vidToTape.end(), it);
-      ASSERT_EQ(vid2, it->second.vid);
+      ASSERT_EQ(tape2.vid, it->second.vid);
       ASSERT_EQ(0, it->second.lastFSeq);
     }
   }
@@ -10470,7 +9739,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
-    fileWritten.vid = vid2;
+    fileWritten.vid = tape2.vid;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
     fileWritten.copyNb = 2;
@@ -10489,7 +9758,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
@@ -10499,15 +9768,15 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(2, tapes.size());
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(tape1.vid);
       ASSERT_NE(vidToTape.end(), it);
-      ASSERT_EQ(vid1, it->second.vid);
+      ASSERT_EQ(tape1.vid, it->second.vid);
       ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(tape2.vid);
       ASSERT_NE(vidToTape.end(), it);
-      ASSERT_EQ(vid2, it->second.vid);
+      ASSERT_EQ(tape2.vid, it->second.vid);
       ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
     }
   }
@@ -10520,7 +9789,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     searchCriteria.diskFileOwnerUid = PUBLIC_DISK_USER;
     searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     searchCriteria.storageClass = storageClass.name;
-    searchCriteria.vid = vid1;
+    searchCriteria.vid = tape1.vid;
     searchCriteria.tapeFileCopyNb = 1;
     searchCriteria.tapePool = tapePoolName1;
 
@@ -10562,13 +9831,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten1.storageClassName = storageClass.name;
-      fileWritten1.vid = vid1;
+      fileWritten1.vid = tape1.vid;
       fileWritten1.fSeq = i;
       fileWritten1.blockId = i * 100;
       fileWritten1.copyNb = 1;
 
       catalogue::TapeFileWritten fileWritten2 = fileWritten1;
-      fileWritten2.vid = vid2;
+      fileWritten2.vid = tape2.vid;
       fileWritten2.copyNb = 2;
 
       const auto idAndFile = m.find(i);
@@ -10611,7 +9880,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   {
     const uint64_t startFseq = 1;
-    auto archiveFileItor = m_catalogue->getArchiveFilesForRepackItor(vid1, startFseq);
+    auto archiveFileItor = m_catalogue->getArchiveFilesForRepackItor(tape1.vid, startFseq);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
@@ -10631,13 +9900,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumBlob.insert(checksum::ADLER32, "1357");
       fileWritten1.storageClassName = storageClass.name;
-      fileWritten1.vid = vid1;
+      fileWritten1.vid = tape1.vid;
       fileWritten1.fSeq = i;
       fileWritten1.blockId = i * 100;
       fileWritten1.copyNb = 1;
 
       catalogue::TapeFileWritten fileWritten2 = fileWritten1;
-      fileWritten2.vid = vid2;
+      fileWritten2.vid = tape2.vid;
       fileWritten2.copyNb = 2;
 
       const auto idAndFile = m.find(i);
@@ -10679,7 +9948,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   }
 
   for(uint32_t copyNb = 1; copyNb <= 2; copyNb++) {
-    const std::string vid = copyNb == 1 ? vid1 : vid2;
+    const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles;
     const auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
@@ -10737,7 +10006,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   }
 
   for(uint32_t copyNb = 1; copyNb <= 2; copyNb++) {
-    const std::string vid = copyNb == 1 ? vid1 : vid2;
+    const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
     const auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
@@ -10795,7 +10064,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   }
 
   for(uint32_t copyNb = 1; copyNb <= 2; copyNb++) {
-    const std::string vid = copyNb == 1 ? vid1 : vid2;
+    const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = nbArchiveFiles / 2 + 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
     const auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
@@ -10944,7 +10213,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.vid = vid1;
+    searchCriteria.vid = tape1.vid;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -11151,9 +10420,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   const std::string vid1 = "VID123";
   const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
@@ -11161,15 +10427,10 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -11206,20 +10467,9 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName1;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  auto tape1 = m_tape1;
+  tape1.tapePoolName = tapePoolName1;
+  m_catalogue->createTape(m_admin, tape1);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -11232,25 +10482,14 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName2;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  auto tape2 = m_tape2;
+  tape2.tapePoolName = tapePoolName2;
+  m_catalogue->createTape(m_admin, tape2);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -11263,7 +10502,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(tape2.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -11278,18 +10517,18 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       auto it = vidToTape.find(vid1);
       ASSERT_NE(vidToTape.end(), it);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tape1.vid, tape.vid);
+      ASSERT_EQ(tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(tape1.vendor, tape.vendor);
+      ASSERT_EQ(tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName1, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(tape1.disabled == tape.disabled);
+      ASSERT_TRUE(tape1.full == tape.full);
+      ASSERT_TRUE(tape1.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -11306,18 +10545,18 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       auto it = vidToTape.find(vid2);
       ASSERT_NE(vidToTape.end(), it);
       const auto &tape = it->second;
-      ASSERT_EQ(vid2, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(tape2.vid, tape.vid);
+      ASSERT_EQ(tape2.mediaType, tape.mediaType);
+      ASSERT_EQ(tape2.vendor, tape.vendor);
+      ASSERT_EQ(tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName2, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(tape2.disabled == tape.disabled);
+      ASSERT_TRUE(tape2.full == tape.full);
+      ASSERT_TRUE(tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -11373,7 +10612,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
@@ -11383,15 +10622,15 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(2, tapes.size());
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(tape1.vid);
       ASSERT_NE(vidToTape.end(), it);
-      ASSERT_EQ(vid1, it->second.vid);
+      ASSERT_EQ(tape1.vid, it->second.vid);
       ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(tape2.vid);
       ASSERT_NE(vidToTape.end(), it);
-      ASSERT_EQ(vid2, it->second.vid);
+      ASSERT_EQ(tape2.vid, it->second.vid);
       ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
     }
   }
@@ -11407,7 +10646,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(tape2.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
@@ -11417,15 +10656,15 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(2, tapes.size());
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(tape1.vid);
       ASSERT_NE(vidToTape.end(), it);
-      ASSERT_EQ(vid1, it->second.vid);
+      ASSERT_EQ(tape1.vid, it->second.vid);
       ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(tape2.vid);
       ASSERT_NE(vidToTape.end(), it);
-      ASSERT_EQ(vid2, it->second.vid);
+      ASSERT_EQ(tape2.vid, it->second.vid);
       ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
     }
   }
@@ -11438,7 +10677,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     searchCriteria.diskFileOwnerUid = PUBLIC_DISK_USER;
     searchCriteria.diskFileGid = PUBLIC_DISK_GROUP;
     searchCriteria.storageClass = storageClass.name;
-    searchCriteria.vid = vid1;
+    searchCriteria.vid = tape1.vid;
     searchCriteria.tapeFileCopyNb = 1;
     searchCriteria.tapePool = tapePoolName1;
 
@@ -11494,13 +10733,13 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
-      fileWritten1.vid = vid1;
+      fileWritten1.vid = tape1.vid;
       fileWritten1.fSeq = seq1;
       fileWritten1.blockId = seq1 * 100;
       fileWritten1.copyNb = 1;
 
       catalogue::TapeFileWritten fileWritten2 = fileWritten1;
-      fileWritten2.vid = vid2;
+      fileWritten2.vid = tape2.vid;
       fileWritten2.fSeq = seq2;
       fileWritten2.blockId = seq2 * 100;
       fileWritten2.copyNb = 2;
@@ -11545,7 +10784,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   {
     const uint64_t startFseq = 1;
-    auto archiveFileItor = m_catalogue->getArchiveFilesForRepackItor(vid1, startFseq);
+    auto archiveFileItor = m_catalogue->getArchiveFilesForRepackItor(tape1.vid, startFseq);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
@@ -11567,13 +10806,13 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumBlob.insert(checksum::ADLER32, "2468");
       fileWritten1.storageClassName = storageClass.name;
-      fileWritten1.vid = vid1;
+      fileWritten1.vid = tape1.vid;
       fileWritten1.fSeq = seq1;
       fileWritten1.blockId = seq1 * 100;
       fileWritten1.copyNb = 1;
 
       catalogue::TapeFileWritten fileWritten2 = fileWritten1;
-      fileWritten2.vid = vid2;
+      fileWritten2.vid = tape2.vid;
       fileWritten2.fSeq = seq2;
       fileWritten2.blockId = seq2 * 100;
       fileWritten2.copyNb = 2;
@@ -11617,7 +10856,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   }
 
   for(uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
-    const std::string vid = copyNb == 1 ? vid1 : vid2;
+    const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles;
     const auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
@@ -11678,7 +10917,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   }
 
   for(uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
-    const std::string vid = copyNb == 1 ? vid1 : vid2;
+    const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
     const auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
@@ -11739,7 +10978,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   }
 
   for(uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
-    const std::string vid = copyNb == 1 ? vid1 : vid2;
+    const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = nbArchiveFiles / 2 + 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
     const auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
@@ -11904,7 +11143,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.vid = vid1;
+    searchCriteria.vid = tape1.vid;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
@@ -11964,42 +11203,19 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_copy) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12008,22 +11224,22 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -12067,7 +11283,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -12113,41 +11329,18 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   using namespace cta;
 
   const std::string diskInstance = "disk_instance";
-  const std::string vid1 = "VID123";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12156,22 +11349,22 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -12180,8 +11373,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -12215,7 +11407,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -12258,68 +11450,28 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 
-  ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.name),
-    catalogue::UserSpecifiedStorageClassUsedByArchiveFiles);
+  ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.name), catalogue::UserSpecifiedStorageClassUsedByArchiveFiles);
 
-  ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.name),
-    exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteStorageClass(storageClass.name), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12328,22 +11480,22 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -12357,22 +11509,22 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(m_tape2.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid2, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape2.vid, tape.vid);
+      ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape2.vendor, tape.vendor);
+      ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
+      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -12416,7 +11568,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -12470,7 +11622,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid2;
+  file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 2;
@@ -12526,58 +11678,20 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies_same_copy_number) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_sintance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12586,20 +11700,20 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -12613,20 +11727,20 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(m_tape2.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid2, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape2.vid, tape.vid);
+      ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape2.vendor, tape.vendor);
+      ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
+      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -12670,7 +11784,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -12724,7 +11838,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid2;
+  file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 1;
@@ -12779,42 +11893,19 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies_same_copy_number_same_tape) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -12823,22 +11914,22 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -12882,7 +11973,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -12936,7 +12027,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid1;
+  file2Written.vid                  = m_tape1.vid;
   file2Written.fSeq                 = 2;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 1;
@@ -12991,42 +12082,19 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies_same_fseq_same_tape) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13035,22 +12103,22 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -13094,7 +12162,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -13148,7 +12216,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid1;
+  file2Written.vid                  = m_tape1.vid;
   file2Written.fSeq                 = file1Written.fSeq;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 2;
@@ -13159,58 +12227,20 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies_different_sizes) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13219,22 +12249,22 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -13243,25 +12273,24 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(m_tape2.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid2, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape2.vid, tape.vid);
+      ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape2.vendor, tape.vendor);
+      ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
+      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -13270,8 +12299,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -13305,7 +12333,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.size                 = archiveFileSize1;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -13361,7 +12389,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.size                 = archiveFileSize2;
   file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid2;
+  file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 2;
@@ -13373,58 +12401,20 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies_different_checksum_types) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13433,22 +12423,22 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -13457,27 +12447,26 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(m_tape2.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid2, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape2.vid, tape.vid);
+      ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape2.vendor, tape.vendor);
+      ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
+      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);      
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -13486,8 +12475,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -13521,7 +12509,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -13575,7 +12563,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob.insert(checksum::CRC32, "1234");
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid2;
+  file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 2;
@@ -13586,58 +12574,20 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies_different_checksum_values) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "mediaType";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13646,20 +12596,20 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -13673,20 +12623,20 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(m_tape2.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid2, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape2.vid, tape.vid);
+      ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape2.vendor, tape.vendor);
+      ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
+      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -13730,7 +12680,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -13785,7 +12735,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob.insert(checksum::ADLER32, "5678");
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid2;
+  file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 2;
@@ -13796,58 +12746,20 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13856,22 +12768,22 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -13885,20 +12797,20 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(m_tape2.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid2, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape2.vid, tape.vid);
+      ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape2.vendor, tape.vendor);
+      ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape2.disabled, tape.disabled);
+      ASSERT_EQ(m_tape2.full, tape.full);
+      ASSERT_EQ(m_tape2.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -13907,8 +12819,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -13942,7 +12853,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -14027,7 +12938,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid2;
+  file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 2;
@@ -14132,58 +13043,20 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_another_disk_instance) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -14192,20 +13065,20 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -14214,25 +13087,24 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
-      auto it = vidToTape.find(vid2);
+      auto it = vidToTape.find(m_tape2.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid2, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape2.vid, tape.vid);
+      ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape2.vendor, tape.vendor);
+      ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape2.disabled, tape.disabled);
+      ASSERT_EQ(m_tape2.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -14241,8 +13113,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -14276,7 +13147,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -14361,7 +13232,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file2Written.storageClassName     = storageClass.name;
-  file2Written.vid                  = vid2;
+  file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
   file2Written.copyNb               = 2;
@@ -14496,24 +13367,16 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t nbTapes = 10;
 
@@ -14522,17 +13385,8 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
     vid << "V" << std::setfill('0') << std::setw(5) << i;
     const std::string tapeComment = "Create tape " + vid.str();
 
-    common::dataStructures::Tape tape;
+    auto tape = m_tape1;
     tape.vid = vid.str();
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = tapeComment;
     m_catalogue->createTape(m_admin, tape);
   }
 
@@ -14548,19 +13402,19 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
     ASSERT_NE(vidToTapeMap.end(), tapeItor);
 
     ASSERT_EQ(vid.str(), tapeItor->second.vid);
-    ASSERT_EQ(mediaType, tapeItor->second.mediaType);
-    ASSERT_EQ(vendor, tapeItor->second.vendor);
-    ASSERT_EQ(logicalLibraryName, tapeItor->second.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tapeItor->second.tapePoolName);
+    ASSERT_EQ(m_tape1.mediaType, tapeItor->second.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tapeItor->second.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tapeItor->second.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tapeItor->second.tapePoolName);
     ASSERT_EQ(vo, tapeItor->second.vo);
-    ASSERT_EQ(capacityInBytes, tapeItor->second.capacityInBytes);
-    ASSERT_EQ(disabledValue, tapeItor->second.disabled);
-    ASSERT_EQ(fullValue, tapeItor->second.full);
-    ASSERT_EQ(readOnlyValue, tapeItor->second.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tapeItor->second.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tapeItor->second.disabled);
+    ASSERT_EQ(m_tape1.full, tapeItor->second.full);
+    ASSERT_EQ(m_tape1.readOnly, tapeItor->second.readOnly);
     ASSERT_FALSE(tapeItor->second.isFromCastor);
     ASSERT_EQ(0, tapeItor->second.readMountCount);
     ASSERT_EQ(0, tapeItor->second.writeMountCount);
-    ASSERT_EQ(tapeComment, tapeItor->second.comment);
+    ASSERT_EQ(m_tape1.comment, tapeItor->second.comment);
   }
 }
 
@@ -15514,9 +14368,9 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
     ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(m_tape1.disabled == tape.disabled);
-    ASSERT_TRUE(m_tape1.full == tape.full);
-    ASSERT_TRUE(m_tape1.readOnly == tape.readOnly);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
@@ -15568,9 +14422,9 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
     ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(m_tape1.disabled == tape.disabled);
-    ASSERT_TRUE(m_tape1.full == tape.full);
-    ASSERT_TRUE(m_tape1.readOnly == tape.readOnly);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
@@ -15653,41 +14507,18 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string vid = "vid";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15695,19 +14526,19 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -15720,7 +14551,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
  
-  ASSERT_NO_THROW(m_catalogue->checkTapeForLabel(vid));
+  ASSERT_NO_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid));
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
@@ -15730,41 +14561,18 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid1 = "VID123";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string createTapeComment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15772,19 +14580,19 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -15825,7 +14633,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -15857,7 +14665,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  ASSERT_THROW(m_catalogue->checkTapeForLabel(vid1), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_tape) {
@@ -15867,41 +14675,18 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid1 = "VID123";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string createTapeComment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15909,19 +14694,19 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -15962,7 +14747,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -15994,15 +14779,15 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  ASSERT_THROW(m_catalogue->checkTapeForLabel(vid1), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid), exception::UserError);
   
   log::LogContext dummyLc(m_dummyLog);
   m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName1, archiveFileId, dummyLc);
   
-  m_catalogue->setTapeFull(m_admin, vid1, true);
-  m_catalogue->reclaimTape(m_admin, vid1,dummyLc);
+  m_catalogue->setTapeFull(m_admin, m_tape1.vid, true);
+  m_catalogue->reclaimTape(m_admin, m_tape1.vid,dummyLc);
   
-  ASSERT_NO_THROW(m_catalogue->checkTapeForLabel(vid1));
+  ASSERT_NO_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid));
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) {
@@ -16012,79 +14797,41 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID234";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string createTapeComment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(2, vidToTape.size());
 
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -16093,8 +14840,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -16128,7 +14874,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.size                 = 1;
@@ -16167,22 +14913,22 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(2, vidToTape.size());
 
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(file1Written.size, tape.dataOnTapeInBytes);
     ASSERT_EQ(1, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -16197,7 +14943,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeFull(m_admin, vid1, true);
+  m_catalogue->setTapeFull(m_admin, m_tape1.vid, true);
   
   // Record superseding tape file
 
@@ -16213,7 +14959,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   file1WrittenAgain.size                 = archiveFileSize;
   file1WrittenAgain.checksumBlob.insert(checksum::ADLER32, "1234");
   file1WrittenAgain.storageClassName     = storageClass.name;
-  file1WrittenAgain.vid                  = vid2;
+  file1WrittenAgain.vid                  = m_tape2.vid;
   file1WrittenAgain.fSeq                 = 1;
   file1WrittenAgain.blockId              = 4321;
   file1WrittenAgain.size                 = 1;
@@ -16224,14 +14970,13 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   common::dataStructures::ArchiveFile repackedFile = m_catalogue->getArchiveFileById(archiveFileId);
   ASSERT_EQ(2, repackedFile.tapeFiles.size());
   for (auto &tf: repackedFile.tapeFiles) {
-    if (tf.vid == vid1)
-      ASSERT_EQ(vid2, tf.supersededByVid);
+    if (tf.vid == m_tape1.vid)
+      ASSERT_EQ(m_tape2.vid, tf.supersededByVid);
     else
       ASSERT_EQ("", tf.supersededByVid);
   }
   
-  ASSERT_THROW(m_catalogue->checkTapeForLabel(vid1), exception::UserError);
- 
+  ASSERT_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_not_in_the_catalogue) {
@@ -16239,9 +14984,8 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_not_in_the_catalogue) {
     
   ASSERT_TRUE(m_catalogue->getTapes().empty());
   
-  const std::string vid = "vid";
   
-  ASSERT_THROW(m_catalogue->checkTapeForLabel(vid), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_empty_vid) {
@@ -16260,41 +15004,18 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   log::LogContext dummyLc(m_dummyLog);
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string vid = "vid";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -16302,19 +15023,19 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -16327,8 +15048,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeFull(m_admin, vid, true);
-  m_catalogue->reclaimTape(m_admin, vid, dummyLc);
+  m_catalogue->setTapeFull(m_admin, m_tape1.vid, true);
+  m_catalogue->reclaimTape(m_admin, m_tape1.vid, dummyLc);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -16336,20 +15057,20 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_FALSE(tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -16366,41 +15087,18 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
   log::LogContext dummyLc(m_dummyLog);
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string vid = "vid";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -16408,20 +15106,20 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(comment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -16433,7 +15131,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
     const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
-  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, vid, dummyLc), exception::UserError);
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, m_tape1.vid, dummyLc), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
@@ -16444,63 +15142,40 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   const std::string diskInstanceName1 = "disk_instance_1";
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid1 = "VID123";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string createTapeComment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -16509,8 +15184,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -16529,7 +15203,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto file1WrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
@@ -16542,7 +15216,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -16579,21 +15253,21 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(1, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -16603,8 +15277,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -16617,21 +15290,21 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(1, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -16641,13 +15314,12 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeFull(m_admin, vid1, true);
-  m_catalogue->reclaimTape(m_admin, vid1, dummyLc);
+  m_catalogue->setTapeFull(m_admin, m_tape1.vid, true);
+  m_catalogue->reclaimTape(m_admin, m_tape1.vid, dummyLc);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -16655,20 +15327,20 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(1, tapes.size());
 
     const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -16688,63 +15360,40 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid1 = "VID123";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string createTapeComment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -16753,8 +15402,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -16786,7 +15434,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -16823,22 +15471,22 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(file1Written.size, tape.dataOnTapeInBytes);
     ASSERT_EQ(1, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -16853,8 +15501,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeFull(m_admin, vid1, true);
-  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, vid1, dummyLc), exception::UserError);
+  m_catalogue->setTapeFull(m_admin, m_tape1.vid, true);
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, m_tape1.vid, dummyLc), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_superseded) {
@@ -16865,79 +15513,42 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID234";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string createTapeComment = "Create tape";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = createTapeComment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(2, vidToTape.size());
 
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
+    ASSERT_TRUE(it != vidToTape.end());
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_FALSE(tape.lastWriteLog);
@@ -16946,8 +15557,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -16981,7 +15591,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.size                 = 1;
@@ -17020,22 +15630,22 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(2, vidToTape.size());
 
-    auto it = vidToTape.find(vid1);
+    auto it = vidToTape.find(m_tape1.vid);
     const common::dataStructures::Tape &tape = it->second;
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(file1Written.size, tape.dataOnTapeInBytes);
     ASSERT_EQ(1, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(disabledValue == tape.disabled);
-    ASSERT_TRUE(fullValue == tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -17045,12 +15655,11 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      tape.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->setTapeFull(m_admin, vid1, true);
+  m_catalogue->setTapeFull(m_admin, m_tape1.vid, true);
   
   // Record superseding tape file
 
@@ -17066,7 +15675,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   file1WrittenAgain.size                 = archiveFileSize;
   file1WrittenAgain.checksumBlob.insert(checksum::ADLER32, "1234");
   file1WrittenAgain.storageClassName     = storageClass.name;
-  file1WrittenAgain.vid                  = vid2;
+  file1WrittenAgain.vid                  = m_tape2.vid;
   file1WrittenAgain.fSeq                 = 1;
   file1WrittenAgain.blockId              = 4321;
   file1WrittenAgain.size                 = 1;
@@ -17077,31 +15686,31 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   common::dataStructures::ArchiveFile repackedFile = m_catalogue->getArchiveFileById(archiveFileId);
   ASSERT_EQ(2, repackedFile.tapeFiles.size());
   for (auto &tf: repackedFile.tapeFiles) {
-    if (tf.vid == vid1)
-      ASSERT_EQ(vid2, tf.supersededByVid);
+    if (tf.vid == m_tape1.vid)
+      ASSERT_EQ(m_tape2.vid, tf.supersededByVid);
     else
       ASSERT_EQ("", tf.supersededByVid);
   }
   
-  ASSERT_NO_THROW(m_catalogue->reclaimTape(m_admin, vid1, dummyLc));
+  ASSERT_NO_THROW(m_catalogue->reclaimTape(m_admin, m_tape1.vid, dummyLc));
  
   {
     //Test that the tape with vid1 is reclaimed
     common::dataStructures::Tape tape = m_catalogue->getTapes().front();
-    ASSERT_EQ(vid1, tape.vid);
-    ASSERT_EQ(mediaType, tape.mediaType);
-    ASSERT_EQ(vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
-    ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(tape.disabled);
+    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_FALSE(tape.full);
-    ASSERT_TRUE(readOnlyValue == tape.readOnly);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(createTapeComment, tape.comment);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
     ASSERT_FALSE(tape.lastReadLog);
     ASSERT_TRUE((bool)tape.lastWriteLog);
@@ -17265,7 +15874,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByTapePool) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, comment);
   
   ASSERT_THROW(m_catalogue->deleteVirtualOrganization(vo),exception::UserError);
 }
@@ -17392,43 +16001,19 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationComment) {
 TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
-  const std::string tapePoolName = "tape_pool_name";
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
-  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-
+  m_catalogue->createTape(m_admin, m_tape1);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -17437,22 +16022,22 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
 
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     {
-      auto it = vidToTape.find(vid1);
+      auto it = vidToTape.find(m_tape1.vid);
       const common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(vid1, tape.vid);
-      ASSERT_EQ(mediaType, tape.mediaType);
-      ASSERT_EQ(vendor, tape.vendor);
-      ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(disabledValue == tape.disabled);
-      ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_TRUE(readOnlyValue == tape.readOnly);
+      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.full, tape.full);
+      ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(comment, tape.comment);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
       ASSERT_FALSE(tape.lastWriteLog);
@@ -17496,7 +16081,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
   file1Written.storageClassName     = storageClass.name;
-  file1Written.vid                  = vid1;
+  file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
   file1Written.copyNb               = 1;
@@ -17569,11 +16154,6 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
 TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
@@ -17581,15 +16161,10 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -17605,35 +16180,13 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
   const std::string tapeDrive = "tape_drive";
   m_catalogue->createTapePool(m_admin, tapePoolName2, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName1;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  auto tape1 = m_tape1;
+  tape1.tapePoolName = tapePoolName1;
+  auto tape2 = m_tape2;
+  tape2.tapePoolName = tapePoolName2;
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName2;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  m_catalogue->createTape(m_admin, tape1);
+  m_catalogue->createTape(m_admin, tape2);
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 for this test
@@ -17659,7 +16212,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
     fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
-    fileWritten.vid = vid1;
+    fileWritten.vid = tape1.vid;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
     fileWritten.copyNb = 1;
@@ -17716,7 +16269,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
     ASSERT_EQ(diskFileId.str(),deletedArchiveFile.diskFileIdWhenDeleted);
     
     auto tapeFile = deletedArchiveFile.tapeFiles.at(1);
-    ASSERT_EQ(vid1,tapeFile.vid);
+    ASSERT_EQ(tape1.vid, tapeFile.vid);
     ASSERT_EQ(i,tapeFile.fSeq);
     ASSERT_EQ(i * 100,tapeFile.blockId);
     ASSERT_EQ(1, tapeFile.copyNb);
@@ -17742,11 +16295,6 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
 TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
   using namespace cta;
 
-  const std::string vid1 = "VID123";
-  const std::string vid2 = "VID456";
-  const std::string mediaType = "media_type";
-  const std::string vendor = "vendor";
-  const std::string logicalLibraryName = "logical_library_name";
   const bool logicalLibraryIsDisabled= false;
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
@@ -17754,15 +16302,10 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const bool readOnlyValue = true;
-  const std::string comment = "Create tape";
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  createMediaType(m_tape1.mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -17778,36 +16321,14 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
   const std::string tapeDrive = "tape_drive";
   m_catalogue->createTapePool(m_admin, tapePoolName2, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid1;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName1;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
+  auto tape1 = m_tape1;
+  tape1.tapePoolName = tapePoolName1;
+  auto tape2 = m_tape2;
+  tape2.tapePoolName = tapePoolName2;
 
-  {
-    common::dataStructures::Tape tape;
-    tape.vid = vid2;
-    tape.mediaType = mediaType;
-    tape.vendor = vendor;
-    tape.logicalLibraryName = logicalLibraryName;
-    tape.tapePoolName = tapePoolName2;
-    tape.capacityInBytes = capacityInBytes;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
-    m_catalogue->createTape(m_admin, tape);
-  }
-    
+  m_catalogue->createTape(m_admin, tape1);
+  m_catalogue->createTape(m_admin, tape2);
+
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 for this test
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
@@ -17832,7 +16353,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
     fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
     fileWritten.storageClassName = storageClass.name;
-    fileWritten.vid = vid1;
+    fileWritten.vid = tape1.vid;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
     fileWritten.copyNb = 1;
@@ -17868,8 +16389,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
   ASSERT_EQ(nbArchiveFiles,deletedArchiveFiles.size());
   
   //Reclaim the tape
-  m_catalogue->setTapeFull(m_admin,vid1,true);
-  m_catalogue->reclaimTape(m_admin,vid1, dummyLc);
+  m_catalogue->setTapeFull(m_admin, tape1.vid, true);
+  m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc);
   {
     auto itor = m_catalogue->getDeletedArchiveFilesItor();
     ASSERT_FALSE(itor.hasMore());
