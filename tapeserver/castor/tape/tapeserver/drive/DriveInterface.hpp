@@ -121,6 +121,18 @@ namespace drive {
   };
 
   /**
+   * End of wraps position infos
+   * 
+   * It is used by the getEndOfWrapPositions() method
+   */
+  class endOfWrapPosition{
+  public:
+    uint16_t wrapNumber;
+    uint64_t blockId;
+    uint16_t partition;
+  };
+  
+  /**
    * Logical block protection nformation, returned by getLBPInfo()
    */
   class LBPInfo {
@@ -213,6 +225,7 @@ namespace drive {
     virtual void positionToLogicalObject(uint32_t blockId)  = 0;
     virtual positionInfo getPositionInfo()  = 0;
     virtual physicalPositionInfo getPhysicalPositionInfo() = 0;
+    virtual std::vector<endOfWrapPosition> getEndOfWrapPositions() = 0;
     virtual std::vector<uint16_t> getTapeAlertCodes() = 0;
     virtual std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) = 0;
     virtual std::vector<std::string> getTapeAlertsCompact (const std::vector<uint16_t>&) = 0;

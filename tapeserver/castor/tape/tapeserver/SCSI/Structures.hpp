@@ -1224,6 +1224,10 @@ namespace SCSI {
         unsigned char reserved[2];                   // Reserved
         unsigned char logicalObjectIdentifier[6];    // The logical object identifier of the object at the end of the above wrap
       } wrapDescriptor[maxLTOTapeWraps];             // Array of wrap descriptiors
+      
+      uint16_t getNbWrapsReturned(){
+        return (SCSI::Structures::toU16(responseDataLength) / sizeof(wrapDescriptor));
+      }
     };
 
     /**

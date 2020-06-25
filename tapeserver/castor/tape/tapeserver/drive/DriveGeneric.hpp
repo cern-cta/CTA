@@ -139,6 +139,14 @@ namespace drive {
      * @return physicalPositionInfo class. This contains the wrap and linear position (LPOS).
      */
     virtual physicalPositionInfo getPhysicalPositionInfo();
+    
+    /**
+     * Returns all the end of wrap positions of the mounted tape
+     * 
+     * @return a vector of endOfWrapsPositions. 
+     */
+    virtual std::vector<endOfWrapPosition> getEndOfWrapPositions();
+    
 
     /**
      * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
@@ -583,6 +591,7 @@ namespace drive {
 
     virtual compressionStats getCompression();
     virtual void clearCompressionStats();
+    virtual std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> getEndOfWrapPositions();
   };
 
   class DriveIBM3592 : public DriveGeneric {

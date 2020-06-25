@@ -98,6 +98,10 @@ castor::tape::tapeserver::drive::physicalPositionInfo castor::tape::tapeserver::
   return pos;
 }
 
+std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> castor::tape::tapeserver::drive::FakeDrive::getEndOfWrapPositions() {
+  return std::vector<castor::tape::tapeserver::drive::endOfWrapPosition>();
+}
+
 std::vector<uint16_t> castor::tape::tapeserver::drive::FakeDrive::getTapeAlertCodes() {
   std::vector<uint16_t> empty;
   return empty;

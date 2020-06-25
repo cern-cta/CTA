@@ -72,6 +72,7 @@ namespace drive {
     virtual void positionToLogicalObject(uint32_t blockId) ;
     virtual positionInfo getPositionInfo() ;
     virtual physicalPositionInfo getPhysicalPositionInfo();
+    virtual std::vector<endOfWrapPosition> getEndOfWrapPositions();
     virtual std::vector<uint16_t> getTapeAlertCodes();
     virtual std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) ;
     virtual std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>&) ;
