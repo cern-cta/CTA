@@ -99,7 +99,13 @@ castor::tape::tapeserver::drive::physicalPositionInfo castor::tape::tapeserver::
 }
 
 std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> castor::tape::tapeserver::drive::FakeDrive::getEndOfWrapPositions() {
-  return std::vector<castor::tape::tapeserver::drive::endOfWrapPosition>();
+  endOfWrapPosition eowp;
+  eowp.blockId = 1;
+  eowp.partition = 1;
+  eowp.wrapNumber = 1;
+  std::vector<endOfWrapPosition> ret;
+  ret.push_back(eowp);
+  return ret;
 }
 
 std::vector<uint16_t> castor::tape::tapeserver::drive::FakeDrive::getTapeAlertCodes() {

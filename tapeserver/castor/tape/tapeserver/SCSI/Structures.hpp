@@ -1218,7 +1218,7 @@ namespace SCSI {
       unsigned char reserved[2];                     // Reserved
 
       // bytes 4-n
-      struct {
+      struct WrapDescriptor {
         unsigned char wrapNumber[2];                 // Wrap number
         unsigned char partition[2];                  // The partition number of the above wrap
         unsigned char reserved[2];                   // Reserved
@@ -1226,7 +1226,7 @@ namespace SCSI {
       } wrapDescriptor[maxLTOTapeWraps];             // Array of wrap descriptiors
       
       uint16_t getNbWrapsReturned(){
-        return (SCSI::Structures::toU16(responseDataLength) / sizeof(wrapDescriptor));
+        return ((SCSI::Structures::toU16(responseDataLength) - sizeof(reserved)) / sizeof(WrapDescriptor));
       }
     };
 

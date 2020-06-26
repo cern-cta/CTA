@@ -971,8 +971,9 @@ namespace unitTests {
 
     // Check proper initialization and location of struct members match the bit/byte locations defined in LTO-8 reference
     ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.responseDataLength));
-    buff[0] = 0x0A; buff[1] = 0xB0;
-    ASSERT_EQ(0xAB0, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.responseDataLength));
+    //Assume we have maxLTOTapeWraps returned * 12 bytes = 3362 = 0x0D22
+    buff[0] = 0x0D; buff[1] = 0x22;
+    ASSERT_EQ(0x0D22, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.responseDataLength));
 
     for(unsigned int wrap = 0; wrap < castor::tape::SCSI::maxLTOTapeWraps; ++wrap) {
         int offset = 4 + (wrap * 12);
@@ -996,6 +997,8 @@ namespace unitTests {
         buff[offset + 9] = 0x12; buff[offset + 10] = 0x34; buff[offset + 11] = 0x56;
         ASSERT_EQ(0xABCDEF123456, castor::tape::SCSI::Structures::toU64(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].logicalObjectIdentifier));
     }
+    
+    ASSERT_EQ(castor::tape::SCSI::maxLTOTapeWraps,readEndOfWrapPositionDataLongForm.getNbWrapsReturned());
   }
 
   TEST(castor_tape_SCSI_Structures, requestSenseCDB_t) {
