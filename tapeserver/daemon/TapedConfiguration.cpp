@@ -107,7 +107,9 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.mountCriteria.setFromConfigurationFile(cf, generalConfigPath);
   // Disk file access parameters
   ret.nbDiskThreads.setFromConfigurationFile(cf, generalConfigPath);
+  //RAO
   ret.useRAO.setFromConfigurationFile(cf, generalConfigPath);
+  ret.raoAlgorithm.setFromConfigurationFile(cf,generalConfigPath);
   // Watchdog: parameters for timeouts in various situations.
   ret.wdIdleSessionTimer.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdMountMaxSecs.setFromConfigurationFile(cf, generalConfigPath);

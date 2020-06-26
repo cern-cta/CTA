@@ -93,8 +93,9 @@ void RecallTaskInjector::setDriveInterface(castor::tape::tapeserver::drive::Driv
 //------------------------------------------------------------------------------
 //initRAO
 //------------------------------------------------------------------------------
-void RecallTaskInjector::initRAO() {
+void RecallTaskInjector::initRAO(const std::string & raoAlgorithm) {
   m_useRAO = true;
+  m_raoAlgorithm = raoAlgorithm;
   m_raoFuture = m_raoPromise.get_future();
 }
 //------------------------------------------------------------------------------
@@ -169,7 +170,7 @@ void RecallTaskInjector::injectBulkRecalls() {
          *  2. the end of the jobs list has been reached and there are at least
          *     2 unordered files
          */
-        m_drive->queryRAO(files, m_raoLimits.maxSupported);
+        m_drive->queryRAO(files, m_raoLimits.maxSupported,m_raoAlgorithm);
 
         /* Add the RAO sorted files to the new list*/
         for (auto fit = files.begin(); fit != files.end(); fit++) {

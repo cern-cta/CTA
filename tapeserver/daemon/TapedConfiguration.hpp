@@ -96,6 +96,9 @@ struct TapedConfiguration {
   /// Usage of Recommended Access Order for file recall
   cta::SourcedParameter<std::string> useRAO{
     "taped", "UseRAO", "no", "Compile time default"};
+  /// RAO type of algorithm
+  cta::SourcedParameter<std::string> raoAlgorithm{
+    "taped", "RAOAlgorithm","linear","Compile time default"};
   //----------------------------------------------------------------------------
   // Watchdog: parameters for timeouts in various situations.
   //----------------------------------------------------------------------------

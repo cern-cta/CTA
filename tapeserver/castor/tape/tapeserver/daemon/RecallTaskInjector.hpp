@@ -122,7 +122,7 @@ public:
   /**
    * Initialize Recommended Access Order parameters
    */
-  void initRAO();
+  void initRAO(const std::string & raoAlgorithm);
 
   void waitForPromise();
 
@@ -234,6 +234,12 @@ private:
    * the Recommended Access Order (RAO)
    */
   bool m_useRAO;
+  
+  /**
+   * The RAO algorithm to use, it is given by the tapeserver parameter
+   * RAOAlgorithm
+   */
+  std::string m_raoAlgorithm;
 
   /** Drive-specific RAO parameters */
   SCSI::Structures::RAO::udsLimits m_raoLimits;

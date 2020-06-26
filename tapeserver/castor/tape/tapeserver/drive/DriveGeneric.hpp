@@ -478,8 +478,11 @@ namespace drive {
      * for a series of files
      * @param filename The name of the file containing the sequential order of
      * a list of files [line format: ID:BLOCK_START:BLOCK_END]
+     * @param maxSupported, the max number of files the drive is able to perform an RAO on
+     * @param raoAlgorithm, the name of the RAO algorithm to use, if the specified name
+     * does not match any raoAlgorithm, the linear algorithm will be used.
      */
-    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported, const std::string & raoAlgorithm);
 
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
@@ -580,7 +583,7 @@ namespace drive {
     virtual std::map<std::string,uint32_t> getVolumeStats();
     virtual drive::deviceInfo getDeviceInfo();
     virtual SCSI::Structures::RAO::udsLimits getLimitUDS();
-    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported, const std::string & raoAlgorithm);
   };
 
   class DriveLTO : public DriveGeneric {
@@ -592,6 +595,8 @@ namespace drive {
     virtual compressionStats getCompression();
     virtual void clearCompressionStats();
     virtual std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> getEndOfWrapPositions();
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported, const std::string& raoAlgorithm);
+
   };
 
   class DriveIBM3592 : public DriveGeneric {

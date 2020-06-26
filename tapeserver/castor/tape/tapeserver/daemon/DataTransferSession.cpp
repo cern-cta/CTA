@@ -272,7 +272,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     // The RecallTaskInjector and the TapeReadSingleThread share the promise
     if (m_castorConf.useRAO) {
-      rti.initRAO();
+      rti.initRAO(m_castorConf.raoAlgorithm);
     }
     bool noFilesToRecall = false;
     if (rti.synchronousFetch(noFilesToRecall)) {  //adapt the recall task injector (starting from synchronousFetch)

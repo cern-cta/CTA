@@ -273,7 +273,7 @@ namespace drive {
     virtual bool hasTapeInPlace() = 0;
     
     virtual SCSI::Structures::RAO::udsLimits getLimitUDS() = 0;
-    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported) = 0;
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported, const std::string & raoAlgorithm) = 0;
 
     /**
      * The configuration of the tape drive as parsed from the TPCONFIG file.

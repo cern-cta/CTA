@@ -325,7 +325,7 @@ castor::tape::SCSI::Structures::RAO::udsLimits
 }
 
 void castor::tape::tapeserver::drive::FakeDrive::queryRAO(
-            std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported)  {
+            std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported, const std::string & queryRAO)  {
   files.reverse();
 }
 

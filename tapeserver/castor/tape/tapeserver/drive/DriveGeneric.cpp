@@ -156,6 +156,13 @@ std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> drive::DriveLTO:
   return ret;
 }
 
+void drive::DriveLTO::queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported, const std::string & raoAlgorithm) {
+  //TODO : Create an interface RAOAlgorithm with a method called getRAO() taking the files list as input/output parameter
+  //Implement this method in three different classes : LinearRAOAlgorithm, RandomRAOAlgorithm, CERNRAOAlgorithm (or another name)
+  //Create a factory to return the correct implementation subclass regarding the raoAlgorithm string parameter.
+  //Call of that in this method
+}
+
 /**
  * Information about the drive. The vendor id is used in the user labels of the files.
  * @return    The deviceInfo structure with the information about the drive.
@@ -255,7 +262,7 @@ SCSI::Structures::RAO::udsLimits drive::DriveMHVTL::getLimitUDS(){
   return lims;
 }
 
-void drive::DriveMHVTL::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported){
+void drive::DriveMHVTL::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported, const std::string & raoAlgorithm){
   //The query RAO method of MHVTL drive returns nothing
   //something could be implemented for testing...
 }
@@ -965,7 +972,7 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
 }
 
 void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
-                                   int maxSupported) {
+                                   int maxSupported, const std::string & raoAlgorithm) {
     generateRAO(files, maxSupported);
     receiveRAO(files);
 }

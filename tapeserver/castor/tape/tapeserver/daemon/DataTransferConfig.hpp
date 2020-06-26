@@ -117,6 +117,11 @@ struct DataTransferConfig {
    * Access Order
    */
   bool useRAO;
+  
+  /**
+   * The name of the raoAlgorithm to use
+   */
+  std::string raoAlgorithm;
 
   /**
    * The path to the operator provided encyption control script (or empty string)
