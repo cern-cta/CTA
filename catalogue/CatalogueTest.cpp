@@ -48,14 +48,30 @@ const uint32_t NON_EXISTENT_DISK_FILE_OWNER_UID = 9755;
 const uint32_t NON_EXISTENT_DISK_FILE_GID = 9756;
 
 namespace {
-  cta::common::dataStructures::Tape getTape1() {
-    cta::common::dataStructures::Tape tape;
+  cta::catalogue::MediaType getMediaType() {
+    cta::catalogue::MediaType mediaType;
+    mediaType.name = "media_type";
+    mediaType.capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+    mediaType.cartridge = "cartridge";
+    mediaType.comment = "comment";
+    mediaType.maxLPos = 100;
+    mediaType.minLPos = 1;
+    mediaType.nbWraps = 500;
+    mediaType.primaryDensityCode = 50;
+    mediaType.secondaryDensityCode = 50;
+
+    return mediaType;
+  }
+
+  cta::catalogue::CreateTapeAttributes getTape1() {
+    const auto mediaType = getMediaType();
+
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = "VIDONE";
-    tape.mediaType = "media_type";
+    tape.mediaType = mediaType.name;
     tape.vendor = "vendor";
     tape.logicalLibraryName = "logical_library";
     tape.tapePoolName = "tape_pool";
-    tape.capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
     tape.full = false;
     tape.disabled = false;
     tape.readOnly = false;
@@ -64,9 +80,9 @@ namespace {
     return tape;
   }
 
-  cta::common::dataStructures::Tape getTape2() {
+  cta::catalogue::CreateTapeAttributes getTape2() {
     // Tape 2 is an exact copy of tape 1 except for its VID and comment
-    cta::common::dataStructures::Tape tape = getTape1();
+    auto tape = getTape1();
     tape.vid = "VIDTWO";
     tape.comment = "Creation of tape two";
 
@@ -79,6 +95,7 @@ namespace {
 //------------------------------------------------------------------------------
 cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
   m_dummyLog("dummy", "dummy"),
+  m_mediaType(getMediaType()),
   m_tape1(getTape1()),
   m_tape2(getTape2()) {
   m_localAdmin.username = "local_admin_user";
@@ -372,22 +389,6 @@ void cta_catalogue_CatalogueTest::createVo(const std::string &voName){
   vo.comment = "comment";
   m_catalogue->createVirtualOrganization(m_admin,vo);
 }
-
-void cta_catalogue_CatalogueTest::createMediaType(const std::string& mediaTypeName, const uint64_t capacityInBytes) {
-  using namespace cta;
-  catalogue::MediaType mt;
-  mt.name = mediaTypeName;
-  mt.capacityInBytes = capacityInBytes;
-  mt.cartridge = "cartridge";
-  mt.comment = "comment";
-  mt.maxLPos = 100;
-  mt.minLPos = 1;
-  mt.nbWraps = 500;
-  mt.primaryDensityCode = 50;
-  mt.secondaryDensityCode = 50;
-  m_catalogue->createMediaType(m_admin,mt);
-}
-
 
 TEST_P(cta_catalogue_CatalogueTest, createAdminUser) {
   using namespace cta;
@@ -1226,7 +1227,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMediaType_usedByTapes) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -2171,7 +2172,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -2205,7 +2206,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -2231,7 +2232,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -3875,7 +3876,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -3894,7 +3895,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
   ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
   ASSERT_EQ(vo, tape.vo);
-  ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(m_tape1.disabled, tape.disabled);
   ASSERT_EQ(m_tape1.full, tape.full);
   ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -4090,7 +4091,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -4124,7 +4125,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -4150,7 +4151,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -4169,7 +4170,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -4187,7 +4188,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
   }
 
   {
-    common::dataStructures::Tape tape = m_tape1;
+    auto tape = m_tape1;
     tape.vid = "";
     ASSERT_THROW(m_catalogue->createTape(m_admin, tape), catalogue::UserSpecifiedAnEmptyStringVid);
   }
@@ -4220,7 +4221,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringMediaType) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  common::dataStructures::Tape tape = m_tape1;
+  auto tape = m_tape1;
   tape.mediaType = "";
   ASSERT_THROW(m_catalogue->createTape(m_admin, tape), catalogue::UserSpecifiedAnEmptyStringMediaType);
 }
@@ -4237,7 +4238,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVendor) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
 
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -4271,7 +4272,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -4303,7 +4304,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
   const bool logicalLibraryIsDisabled= false;
   const std::string vo = "vo";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
@@ -4322,7 +4323,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   ASSERT_THROW(m_catalogue->createTape(m_admin, m_tape1), exception::UserError);
@@ -4335,7 +4336,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_tape_pool) {
 
   const bool logicalLibraryIsDisabled= false;
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   ASSERT_THROW(m_catalogue->createTape(m_admin, m_tape1), exception::UserError);
 }
@@ -4351,7 +4352,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType, m_tape1.capacityInBytes);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -4384,7 +4385,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -4410,7 +4411,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -4425,7 +4426,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -4453,7 +4454,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -4468,7 +4469,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -4483,7 +4484,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
@@ -4523,7 +4524,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(m_tape1.tapePoolName, pool.name);
       ASSERT_EQ(vo, pool.vo.name);
       ASSERT_EQ(i, pool.nbTapes);
-      ASSERT_EQ(i * m_tape1.capacityInBytes, pool.capacityBytes);
+      ASSERT_EQ(i * m_mediaType.capacityInBytes, pool.capacityBytes);
       ASSERT_EQ(0, pool.dataBytes);
       ASSERT_EQ(0, pool.nbPhysicalFiles);
     }
@@ -4549,7 +4550,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -4673,12 +4674,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.capacityInBytes = m_tape1.capacityInBytes;
+    searchCriteria.capacityInBytes = m_mediaType.capacityInBytes;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
-    ASSERT_EQ(m_tape1.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
   }
 
   {
@@ -4722,7 +4723,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     searchCriteria.vid = "vid1";
     searchCriteria.logicalLibrary = m_tape1.logicalLibraryName;
     searchCriteria.tapePool = m_tape1.tapePoolName;
-    searchCriteria.capacityInBytes = m_tape1.capacityInBytes;
+    searchCriteria.capacityInBytes = m_mediaType.capacityInBytes;
     searchCriteria.disabled = m_tape1.disabled;
     searchCriteria.full = m_tape1.full;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
@@ -4732,7 +4733,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
     ASSERT_EQ(m_tape1.logicalLibraryName, vidToTape.begin()->second.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, vidToTape.begin()->second.tapePoolName);
-    ASSERT_EQ(m_tape1.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, vidToTape.begin()->second.disabled);
     ASSERT_EQ(m_tape1.full, vidToTape.begin()->second.full);
   }
@@ -4762,7 +4763,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -4805,7 +4806,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4838,7 +4839,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -4864,7 +4865,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -4913,7 +4914,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(fileSize, pool.dataBytes);
     ASSERT_EQ(1, pool.nbPhysicalFiles);
   }
@@ -4934,7 +4935,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(m_tape2.disabled == tape.disabled);
     ASSERT_TRUE(m_tape2.full == tape.full);
     ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
@@ -4960,7 +4961,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(vo, pool.vo.name);
     ASSERT_EQ(2, pool.nbTapes);
-    ASSERT_EQ(2*m_tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(2*m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(fileSize, pool.dataBytes);
     ASSERT_EQ(1, pool.nbPhysicalFiles);
   }
@@ -4977,7 +4978,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -4995,7 +4996,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
   ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
   ASSERT_EQ(vo, tape.vo);
-  ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(m_tape1.disabled, tape.disabled);
   ASSERT_EQ(m_tape1.full, tape.full);
   ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5038,7 +5039,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -5056,7 +5057,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
@@ -5110,7 +5111,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(fileSize, tape.dataOnTapeInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
@@ -5145,15 +5146,19 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
-  const std::string anotherMediaType = "another_media_type";
   const bool logicalLibraryIsDisabled= false;
   const std::string vo = "vo";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
-  createMediaType(anotherMediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+
+  auto anotherMediaType = m_mediaType;
+  anotherMediaType.name = "another_media_type";
+
+  m_catalogue->createMediaType(m_admin, anotherMediaType);
+
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -5172,7 +5177,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5190,7 +5195,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->modifyTapeMediaType(m_admin, m_tape1.vid, anotherMediaType);
+  m_catalogue->modifyTapeMediaType(m_admin, m_tape1.vid, anotherMediaType.name);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5199,11 +5204,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
 
     const common::dataStructures::Tape tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
-    ASSERT_EQ(anotherMediaType, tape.mediaType);
+    ASSERT_EQ(anotherMediaType.name, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5233,7 +5238,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -5253,7 +5258,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5285,7 +5290,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5313,7 +5318,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createLogicalLibrary(m_admin, anotherLogicalLibraryName, logicalLibraryIsDisabled,
     "Create another logical library");
@@ -5335,7 +5340,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5367,7 +5372,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(anotherLogicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5407,7 +5412,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string anotherTapePoolName = "another_tape_pool_name";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -5428,7 +5433,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5460,7 +5465,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(anotherTapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5505,7 +5510,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -5525,7 +5530,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5559,7 +5564,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
     ASSERT_EQ(modifiedEncryptionKeyName, tape.encryptionKeyName);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5586,7 +5591,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -5606,7 +5611,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5640,7 +5645,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
     ASSERT_FALSE((bool)tape.encryptionKeyName);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5677,7 +5682,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -5697,7 +5702,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5730,7 +5735,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5768,7 +5773,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -5788,7 +5793,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5823,7 +5828,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5857,7 +5862,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5897,7 +5902,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -5917,7 +5922,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5952,7 +5957,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -5986,7 +5991,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6026,7 +6031,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -6046,7 +6051,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6078,7 +6083,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_TRUE(tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6114,7 +6119,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -6134,7 +6139,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6166,7 +6171,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_TRUE(tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6202,7 +6207,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -6222,7 +6227,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6254,7 +6259,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_TRUE(tape.readOnly);
@@ -6283,7 +6288,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_FALSE(tape.readOnly);
@@ -6319,7 +6324,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -6339,7 +6344,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6371,7 +6376,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_TRUE(tape.readOnly);
@@ -6407,7 +6412,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -6427,7 +6432,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6459,7 +6464,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(tape.disabled);
     ASSERT_FALSE(tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6486,7 +6491,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -6506,7 +6511,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6538,7 +6543,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6568,7 +6573,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -6613,7 +6618,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -6633,7 +6638,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   ASSERT_EQ(m_tape1.tapePoolName, tape.tapePool);
   ASSERT_EQ(vo, tape.vo);
   ASSERT_EQ(0, tape.lastFSeq);
-  ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
 }
 
@@ -6648,7 +6653,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_disabled_tape) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -6679,7 +6684,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_full_tape) {
   auto tape1 = m_tape1;
   tape1.full = true;
 
-  createMediaType(tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
@@ -6708,7 +6713,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_read_only_tape) {
   auto tape1 = m_tape1;
   tape1.readOnly = true;
 
-  createMediaType(tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -6722,39 +6727,6 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_read_only_tape) {
   ASSERT_EQ(0, tapes.size());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_is_from_castor_tape) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getTapes().empty());
-
-  const bool logicalLibraryIsDisabled= false;
-  const std::string vo = "vo";
-  const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
-
-  createMediaType(m_tape1.mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-  createVo(vo);
-  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-
-  auto tape1 = m_tape1;
-  tape1.isFromCastor = true;
-
-  m_catalogue->createTape(m_admin, tape1);
-
-  m_catalogue->tapeLabelled(tape1.vid, "tape_drive");
-  {
-    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(tape1.logicalLibraryName);
-    ASSERT_EQ(1, tapes.size());
-  }
-  {
-    m_catalogue->setTapeIsFromCastorInUnitTests(tape1.vid);
-    const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(tape1.logicalLibraryName);
-    ASSERT_EQ(0, tapes.size());
-  }
-}
-
 TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tapes) {
   using namespace cta;
 
@@ -6766,7 +6738,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -8826,7 +8798,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -8846,7 +8818,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -8874,7 +8846,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape2.disabled, tape.disabled);
     ASSERT_EQ(m_tape2.full, tape.full);
     ASSERT_EQ(m_tape2.readOnly, tape.readOnly);
@@ -9067,7 +9039,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -9087,7 +9059,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -9115,7 +9087,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape2.disabled, tape.disabled);
     ASSERT_EQ(m_tape2.full, tape.full);
     ASSERT_EQ(m_tape2.readOnly, tape.readOnly);
@@ -9507,7 +9479,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -9560,7 +9532,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(m_tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -9580,7 +9552,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -9601,7 +9573,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName1, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(tape1.disabled == tape.disabled);
       ASSERT_TRUE(tape1.full == tape.full);
       ASSERT_TRUE(tape1.readOnly == tape.readOnly);
@@ -9630,7 +9602,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(tape2.disabled == tape.disabled);
       ASSERT_TRUE(tape2.full == tape.full);
       ASSERT_TRUE(tape2.readOnly == tape.readOnly);
@@ -9699,7 +9671,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
@@ -9758,7 +9730,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
@@ -10429,7 +10401,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -10482,7 +10454,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -10502,7 +10474,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(tape2.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -10523,7 +10495,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName1, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(tape1.disabled == tape.disabled);
       ASSERT_TRUE(tape1.full == tape.full);
       ASSERT_TRUE(tape1.readOnly == tape.readOnly);
@@ -10537,8 +10509,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
@@ -10551,7 +10522,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName2, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(tape2.disabled == tape.disabled);
       ASSERT_TRUE(tape2.full == tape.full);
       ASSERT_TRUE(tape2.readOnly == tape.readOnly);
@@ -10612,7 +10583,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(tape1.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
@@ -10646,7 +10617,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(tape2.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
@@ -11210,7 +11181,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -11232,7 +11203,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -11335,7 +11306,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -11357,7 +11328,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -11465,7 +11436,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -11488,7 +11459,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -11517,7 +11488,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
@@ -11685,7 +11656,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_sintance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -11708,7 +11679,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -11735,7 +11706,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
@@ -11900,7 +11871,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -11922,7 +11893,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -12089,7 +12060,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -12111,7 +12082,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -12234,7 +12205,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -12257,7 +12228,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -12285,7 +12256,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
@@ -12408,7 +12379,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -12431,7 +12402,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -12459,7 +12430,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
@@ -12581,7 +12552,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -12604,7 +12575,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -12631,7 +12602,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
@@ -12753,7 +12724,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -12776,7 +12747,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -12805,7 +12776,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape2.disabled, tape.disabled);
       ASSERT_EQ(m_tape2.full, tape.full);
       ASSERT_EQ(m_tape2.readOnly, tape.readOnly);
@@ -13050,7 +13021,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -13073,7 +13044,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -13099,7 +13070,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape2.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape2.disabled, tape.disabled);
       ASSERT_EQ(m_tape2.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -13373,7 +13344,7 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -13407,7 +13378,7 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tapeItor->second.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tapeItor->second.tapePoolName);
     ASSERT_EQ(vo, tapeItor->second.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tapeItor->second.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tapeItor->second.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tapeItor->second.disabled);
     ASSERT_EQ(m_tape1.full, tapeItor->second.full);
     ASSERT_EQ(m_tape1.readOnly, tapeItor->second.readOnly);
@@ -14347,7 +14318,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -14367,7 +14338,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -14401,7 +14372,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -14421,7 +14392,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -14513,7 +14484,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -14533,7 +14504,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -14567,7 +14538,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -14587,7 +14558,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -14681,7 +14652,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -14701,7 +14672,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -14803,7 +14774,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -14826,7 +14797,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -14923,7 +14894,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15010,7 +14981,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -15030,7 +15001,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15065,7 +15036,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_FALSE(tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15093,7 +15064,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -15114,7 +15085,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15148,7 +15119,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -15170,7 +15141,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15262,7 +15233,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15299,7 +15270,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15335,7 +15306,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15366,7 +15337,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -15388,7 +15359,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15481,7 +15452,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15519,7 +15490,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -15543,7 +15514,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15640,7 +15611,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -15705,7 +15676,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(vo, tape.vo);
-    ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_FALSE(tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -16008,7 +15979,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   createVo(vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -16030,7 +16001,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
       ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(vo, tape.vo);
-      ASSERT_EQ(m_tape1.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
@@ -16163,7 +16134,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);
@@ -16304,7 +16275,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = "disk_instance";
 
-  createMediaType(m_tape1.mediaType);
+  m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
   createVo(vo);

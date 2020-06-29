@@ -296,7 +296,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setLogicalLibraryDisabled(admin, name, disabledValue);}, m_maxTriesToConnect);
   }
 
-  void createTape(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::Tape & tape) override {
+  void createTape( const common::dataStructures::SecurityIdentity &admin, const CreateTapeAttributes & tape) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createTape(admin, tape);}, m_maxTriesToConnect);
   }
 

@@ -76,13 +76,6 @@ struct Tape {
   optional<TapeLog> lastWriteLog;
   optional<TapeLog> lastReadLog;
   
-  struct TapeFactory {
-    static common::dataStructures::Tape createTape(const std::string & vid, const std::string & mediaType,
-                                               const std::string & vendor, const std::string & logicalLibraryName, 
-                                               const std::string & tapePoolName, bool disabledValue, bool fullValue,
-                                               bool readOnlyValue, const std::string & comment);
-  };
-
 }; // struct Tape
 
 std::ostream &operator<<(std::ostream &os, const Tape &obj);

@@ -460,20 +460,18 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -678,20 +676,18 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -942,20 +938,18 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -1200,20 +1194,18 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -1349,13 +1341,12 @@ TEST_P(SchedulerTest, repack) {
   const bool notReadOnly = false; 
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = tape1;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = 500;
     tape.full = false;
     tape.disabled = false;
     tape.readOnly = false;
@@ -1383,13 +1374,12 @@ TEST_P(SchedulerTest, repack) {
   // Recreate a repack and get it moved to ToExpand
   std::string tape2 = "Tape2";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = tape2;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = 500;
     tape.full = true;
     tape.disabled = false;
     tape.readOnly = notReadOnly;
@@ -1436,13 +1426,12 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   const bool notReadOnly = false;
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = tape1;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = 500;
     tape.full = true;
     tape.disabled = false;
     tape.readOnly = notReadOnly;
@@ -1456,13 +1445,12 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   std::string tape2 = "Tape2";
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = tape2;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = 500;
     tape.full = true;
     tape.disabled = false;
     tape.readOnly = notReadOnly;
@@ -1525,7 +1513,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
  
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -1550,13 +1537,12 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     std::string vid = ossVid.str();
     allVid.push_back(vid);
 
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -1854,7 +1840,6 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -1872,13 +1857,12 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   std::string vid = ossVid.str();
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -2101,7 +2085,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -2119,13 +2102,12 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   std::string vid = ossVid.str();
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -2137,13 +2119,12 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   std::string vidDestination = "vidDestination";
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vidDestination;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = false;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -2375,7 +2356,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -2393,13 +2373,12 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   std::string vid = ossVid.str();
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -2410,13 +2389,12 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   //Create a repack destination tape
   std::string vidDestinationRepack = "vidDestinationRepack";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vidDestinationRepack;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = false;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -2698,7 +2676,6 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -2715,13 +2692,12 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -2824,7 +2800,6 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -2842,13 +2817,12 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   std::string vid = ossVid.str();
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -2965,7 +2939,6 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -2983,13 +2956,12 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   std::string vid = ossVid.str();
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -3173,20 +3145,18 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
   const std::string driveName = "tape_drive";
   for (auto i:fileRange) {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid + std::to_string(i);
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -3374,7 +3344,6 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -3390,13 +3359,12 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   //Create the source tape
   std::string vid = "vidSource";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -3426,13 +3394,12 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   //Create two other destinationTape
   std::string vidDestination1 = "vidDestination1";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vidDestination1;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = tapepool2Name;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = false;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -3442,13 +3409,12 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   
   std::string vidDestination2 = "vidDestination2";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vidDestination2;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = tapepool3Name;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = false;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -3651,7 +3617,6 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   agent.setTimeout_us(100);
   agent.insertAndRegisterSelf(lc);
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -3667,13 +3632,12 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   //Create the source tape
   std::string vid = "vidSource";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -3703,13 +3667,12 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   //Create two other destinationTape and one for the move workflow
   std::string vidDestination1 = "vidDestination1";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vidDestination1;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = tapepool2Name;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = false;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -3719,13 +3682,12 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
 
   std::string vidDestination2 = "vidDestination2";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vidDestination2;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = tapepool3Name;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = false;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -3735,13 +3697,12 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   
   std::string vidMove = "vidMove";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vidMove;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = false;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue; 
@@ -3963,7 +3924,6 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -3980,13 +3940,12 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -3996,13 +3955,12 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   //Create a repack destination tape
   std::string vidDestination = "vidDestination";
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = vidDestination;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = false;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;
@@ -4226,13 +4184,12 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     libraryIsDisabled, libraryComment);
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = 12345678;
     tape.full = false;
     tape.disabled = false;
     tape.readOnly = false;
@@ -4342,7 +4299,6 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
  
   
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = true;
   const bool readOnlyValue = false;
@@ -4356,13 +4312,12 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   {
-    common::dataStructures::Tape tape;
+    catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = fullValue;
     tape.disabled = disabledValue;
     tape.readOnly = readOnlyValue;

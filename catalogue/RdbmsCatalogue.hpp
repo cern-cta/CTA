@@ -451,12 +451,14 @@ public:
   virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool disabledValue) override;
 
   /**
-   * Creates a tape which is assumed to have logical block protection (LBP)
-   * enabled and isFromCastor disabled.
+   * Creates a tape which is assumed to have isFromCastor disabled.
+   *
+   * @param admin The administrator.
+   * @param tape The attributes of the tape to be created.
    */
   void createTape(
     const common::dataStructures::SecurityIdentity &admin,
-    const common::dataStructures::Tape & tape) override;
+    const CreateTapeAttributes & tape) override;
   
   void deleteTape(const std::string &vid) override;
 

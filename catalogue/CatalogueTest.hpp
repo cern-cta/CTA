@@ -20,6 +20,7 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CreateTapeAttributes.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 
@@ -41,9 +42,9 @@ protected:
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   cta::common::dataStructures::SecurityIdentity m_localAdmin;
   cta::common::dataStructures::SecurityIdentity m_admin;
-
-  const cta::common::dataStructures::Tape m_tape1;
-  const cta::common::dataStructures::Tape m_tape2;
+  const cta::catalogue::MediaType m_mediaType;
+  const cta::catalogue::CreateTapeAttributes m_tape1;
+  const cta::catalogue::CreateTapeAttributes m_tape2;
 
   virtual void SetUp();
 
@@ -114,12 +115,6 @@ protected:
    * @param voName the vo to create
    */
   void createVo(const std::string &voName);
-  
-  /**
-   * Creates a media type in the catalogue
-   * @param mediaTypeName
-   */
-  void createMediaType(const std::string & mediaTypeName, const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000);
 }; // cta_catalogue_CatalogueTest
 
 } // namespace unitTests

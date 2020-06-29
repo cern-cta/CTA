@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/ArchiveFileItor.hpp"
+#include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/MediaTypeWithLogs.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
@@ -500,12 +501,14 @@ public:
   virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool disabledValue) = 0;
 
   /**
-   * Creates a tape which is assumed to have logical block protection (LBP)
-   * enabled and isFromCastor disabled.
+   * Creates a tape which is assumed to have isFromCastor disabled.
+   *
+   * @param admin The administrator.
+   * @param tape The attributes of the tape to be created.
    */
   virtual void createTape(
     const common::dataStructures::SecurityIdentity &admin,
-    const common::dataStructures::Tape & tape) = 0;
+    const CreateTapeAttributes &tape) = 0;
 
   virtual void deleteTape(const std::string &vid) = 0;
 

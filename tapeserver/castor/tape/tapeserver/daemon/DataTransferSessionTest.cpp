@@ -399,20 +399,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    cta::common::dataStructures::Tape tape;
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -596,20 +594,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    cta::common::dataStructures::Tape tape;
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -803,20 +799,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    cta::common::dataStructures::Tape tape;
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -1034,20 +1028,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    cta::common::dataStructures::Tape tape;
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -1197,20 +1189,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    cta::common::dataStructures::Tape tape;
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -1370,20 +1360,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    cta::common::dataStructures::Tape tape;
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -1531,20 +1519,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    cta::common::dataStructures::Tape tape;
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -1706,20 +1692,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    cta::common::dataStructures::Tape tape;
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;
@@ -1881,20 +1865,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const uint64_t capacityInBytes = 12345678;
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
   bool notReadOnly = false;
 
   {
-    cta::common::dataStructures::Tape tape;
+    cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
     tape.vendor = s_vendor;
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
-    tape.capacityInBytes = capacityInBytes;
     tape.full = notFull;
     tape.disabled = notDisabled;
     tape.readOnly = notReadOnly;

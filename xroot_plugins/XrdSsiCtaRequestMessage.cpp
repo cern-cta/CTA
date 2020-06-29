@@ -1693,10 +1693,17 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    auto &full           = getRequired(OptionBoolean::FULL);
    auto &readOnly       = getRequired(OptionBoolean::READ_ONLY);
    auto  comment        = getOptional(OptionString::COMMENT);
-   
-   auto tape = common::dataStructures::Tape::TapeFactory::createTape(vid,mediaType,vendor,logicallibrary,tapepool,
-     disabled,full,readOnly,comment ? comment.value() : "");
-   
+
+   cta::catalogue::CreateTapeAttributes tape;
+   tape.vid = vid;
+   tape.mediaType = mediaType;
+   tape.vendor = vendor;
+   tape.logicalLibraryName = logicallibrary;
+   tape.tapePoolName = tapepool;
+   tape.full = full;
+   tape.disabled = disabled;
+   tape.readOnly = readOnly;
+   tape.comment = comment ? comment.value() : "";
    m_catalogue.createTape(m_cliIdentity, tape);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

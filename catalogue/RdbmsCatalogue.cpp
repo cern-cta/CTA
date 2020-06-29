@@ -2921,7 +2921,7 @@ void RdbmsCatalogue::setLogicalLibraryDisabled(const common::dataStructures::Sec
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createTape(
   const common::dataStructures::SecurityIdentity &admin,
-  const common::dataStructures::Tape & tape) {
+  const CreateTapeAttributes &tape) {
   // CTA hard code this field to FALSE
   const bool isFromCastor = false;
   try {
@@ -2930,10 +2930,11 @@ void RdbmsCatalogue::createTape(
     std::string vendor = tape.vendor;
     std::string logicalLibraryName = tape.logicalLibraryName;
     std::string tapePoolName = tape.tapePoolName;
-    std::string comment = tape.comment;
     bool disabled = tape.disabled;
     bool full = tape.full;
     bool readOnly = tape.readOnly;
+    // Translate an empty comment string to a NULL database value
+    const optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? nullopt : tape.comment;
     
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
@@ -2955,7 +2956,7 @@ void RdbmsCatalogue::createTape(
     if(tapePoolName.empty()) {
       throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape because the tape pool name is an empty string");
     }
-    
+
     auto conn = m_connPool.getConn();
     if(tapeExists(conn, vid)) {
       throw exception::UserError(std::string("Cannot create tape ") + vid +
@@ -3038,9 +3039,7 @@ void RdbmsCatalogue::createTape(
     stmt.bindBool(":IS_READ_ONLY", readOnly);
     stmt.bindBool(":IS_FROM_CASTOR", isFromCastor);
 
-    cta::optional<std::string> optionalComment;
-    if(!comment.empty()) optionalComment = comment;
-    stmt.bindString(":USER_COMMENT", optionalComment);
+    stmt.bindString(":USER_COMMENT", tapeComment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -3063,7 +3062,7 @@ void RdbmsCatalogue::createTape(
        .add("isFull", full ? 1 : 0)
        .add("isReadOnly", readOnly ? 1 : 0)
        .add("isFromCastor", isFromCastor ? 1 : 0)
-       .add("userComment", comment)
+       .add("userComment", tape.comment ? tape.comment.value() : "")
        .add("creationLogUserName", admin.username)
        .add("creationLogHostName", admin.host)
        .add("creationLogTime", now);

@@ -131,7 +131,6 @@ const uint32_t TEST_GROUP_2 = 9754;
     const bool logicalLibraryIsDisabled = false;
     const std::string tapePoolName = "tape_pool_name";
     const cta::optional<std::string> supply("value for the supply pool mechanism");
-    const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
     const bool disabledValue = true;
     const bool fullValue = false;
     const bool readOnlyValue = false;
@@ -148,13 +147,12 @@ const uint32_t TEST_GROUP_2 = 9754;
     createMediaType(mediaType);
 
     {
-      cta::common::dataStructures::Tape tape;
+      cta::catalogue::CreateTapeAttributes tape;
       tape.vid = vid1;
       tape.mediaType = mediaType;
       tape.vendor = vendor;
       tape.logicalLibraryName = logicalLibraryName;
       tape.tapePoolName = tapePoolName;
-      tape.capacityInBytes = capacityInBytes;
       tape.full = fullValue;
       tape.disabled = disabledValue;
       tape.readOnly = readOnlyValue;
@@ -297,7 +295,6 @@ const uint32_t TEST_GROUP_2 = 9754;
     const uint64_t nbPartialTapes = 2;
     const bool isEncrypted = true;
     const cta::optional<std::string> supply("value for the supply pool mechanism");
-    const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
     const bool disabledValue = true;
     const bool fullValue = false;
     const bool readOnlyValue = false;
@@ -315,13 +312,12 @@ const uint32_t TEST_GROUP_2 = 9754;
     createMediaType(mediaType);
 
     {
-      cta::common::dataStructures::Tape tape;
+      cta::catalogue::CreateTapeAttributes tape;
       tape.vid = vid1;
       tape.mediaType = mediaType;
       tape.vendor = vendor;
       tape.logicalLibraryName = logicalLibraryName;
       tape.tapePoolName = tapePoolName;
-      tape.capacityInBytes = capacityInBytes;
       tape.full = fullValue;
       tape.disabled = disabledValue;
       tape.readOnly = readOnlyValue;
