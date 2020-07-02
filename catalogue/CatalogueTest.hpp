@@ -42,6 +42,9 @@ protected:
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   cta::common::dataStructures::SecurityIdentity m_localAdmin;
   cta::common::dataStructures::SecurityIdentity m_admin;
+  const cta::common::dataStructures::VirtualOrganization m_vo;
+  const cta::common::dataStructures::StorageClass m_storageClass;
+  const cta::common::dataStructures::StorageClass m_storageClassDualCopy;
   const cta::catalogue::MediaType m_mediaType;
   const cta::catalogue::CreateTapeAttributes m_tape1;
   const cta::catalogue::CreateTapeAttributes m_tape2;
@@ -109,12 +112,7 @@ protected:
    */
   std::map<std::string, cta::catalogue::TapePool> tapePoolListToMap(
     const std::list<cta::catalogue::TapePool> &listOfTapePools);
-  
-  /**
-   * Creates a VO in the catalogue
-   * @param voName the vo to create
-   */
-  void createVo(const std::string &voName);
+
 }; // cta_catalogue_CatalogueTest
 
 } // namespace unitTests
