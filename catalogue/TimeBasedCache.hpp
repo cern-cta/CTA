@@ -88,24 +88,9 @@ public:
       if (m_maxAgeSecs >= ageSecs) { // Cached value is fresh
         return cachedValue.value;
       } else { // Cached value is stale
-        // If another thread is already updating the value
-        if(cachedValue.valueBeingUpdated.test_and_set()) {
-          // Return the stale value
-          return cachedValue.value;
-        } else {
-          // Release locks so other threads can read
-          cachedValueLock.unlock();
-          cacheLock.unlock();
-
-          // Update and return the new value
-          AtomicFlagClearer clearer(cachedValue.valueBeingUpdated);
-          const auto newValue = getNonCachedValue();
-
-          threading::MutexLocker updateCachedValueLock(cachedValue.mutex);
-          cachedValue.value = newValue;
-          cachedValue.timestamp = ::time(nullptr);
-          return cachedValue.value;
-        }
+        cachedValue.value = getNonCachedValue();
+        cachedValue.timestamp = ::time(nullptr);
+        return cachedValue.value;
       }
     } else { // No cache hit
       const auto emplaceResult = m_cache.emplace(std::make_pair(key,
@@ -175,11 +160,6 @@ private:
      * The value.
      */
     Value value;
-
-    /**
-     * Flag used to ensure only one thread at a time is updating the value.
-     */
-    std::atomic_flag valueBeingUpdated = ATOMIC_FLAG_INIT;
   }; // struct TimestampedValue
 
   /**
