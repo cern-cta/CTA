@@ -8231,11 +8231,11 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  // Get an archive ID which should pouplate for teh first time the user mount
+  // Get an archive ID which should pouplate for the first time the user mount
   // rule cache
   m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, storageClass.name, requesterIdentity);
 
-  // Delete the request mount rule which should immediately invalidate the user
+  // Delete the user mount rule which should immediately invalidate the user
   // mount rule cache
   m_catalogue->deleteRequesterMountRule(diskInstanceName, requesterName);
 
@@ -8433,6 +8433,106 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
   }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_and_then_deleted_requester_group_mount_rule) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+
+  m_catalogue->createMountPolicy(
+    m_admin,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create mount policy");
+
+  const std::string comment = "Create mount rule for requester group";
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterGroupName = "requester_group";
+  m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
+
+  const std::list<common::dataStructures::RequesterGroupMountRule> rules = m_catalogue->getRequesterGroupMountRules();
+  ASSERT_EQ(1, rules.size());
+
+  const common::dataStructures::RequesterGroupMountRule rule = rules.front();
+
+  ASSERT_EQ(requesterGroupName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_admin.username, rule.creationLog.username);
+  ASSERT_EQ(m_admin.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  const std::string vo = "vo";
+  createVo(vo);
+  
+  common::dataStructures::StorageClass storageClass;
+  
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  storageClass.vo.name = vo;
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, vo, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  const uint32_t copyNb = 1;
+  const std::string archiveRouteComment = "Create archive route";
+  m_catalogue->createArchiveRoute(m_admin, storageClass.name, copyNb, tapePoolName,
+    archiveRouteComment);
+
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+
+  ASSERT_EQ(1, routes.size());
+
+  const common::dataStructures::ArchiveRoute route = routes.front();
+  ASSERT_EQ(storageClass.name, route.storageClassName);
+  ASSERT_EQ(copyNb, route.copyNb);
+  ASSERT_EQ(tapePoolName, route.tapePoolName);
+  ASSERT_EQ(archiveRouteComment, route.comment);
+
+  const common::dataStructures::EntryLog creationLog = route.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = "username";
+  requesterIdentity.group = requesterGroupName;
+
+  // Get an archive ID which should pouplate for the first time the group mount
+  // rule cache
+  m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, storageClass.name, requesterIdentity);
+
+  // Delete the group mount rule which should immediately invalidate the group
+  // mount rule cache
+  m_catalogue->deleteRequesterGroupMountRule(diskInstanceName, requesterGroupName);
+
+  ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
+
+  // Try to get an archive ID which should now fail because there is no group
+  // mount rule and the invalidated group mount rule cache should not hide this
+  // fact
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, storageClass.name, requesterIdentity), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount_rule_overide) {
