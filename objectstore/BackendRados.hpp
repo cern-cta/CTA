@@ -137,12 +137,19 @@ private:
       if (m_timer.secs() >= RADOS_SLOW_CALL_TIMEOUT) {
         cta::threading::MutexLocker ml(g_mutex);
         std::ofstream logFile(RADOS_SLOW_CALLS_LOGGING_FILE, std::ofstream::app);
-        std::time_t end_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::string date=std::ctime(&end_time);
-        // Chomp newline in the end
-        date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
-        logFile << date << " pid=" << ::getpid() << " tid=" << syscall(SYS_gettid) << " op=" 
-                << radosCall << " obj=" << objectName << " duration=" << m_timer.secs() <<  std::endl;
+
+        auto now = std::chrono::system_clock::now();
+        auto duration = now.time_since_epoch();
+        std::time_t end_time = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+        duration -= std::chrono::seconds(end_time);
+        auto us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+
+        char date[80];
+        int len = strftime(date, 80, "%b %e %T", localtime(&end_time));
+        snprintf(date+len, 79-len, ".%06ld ", us);
+
+        logFile << date << " PID=\"" << ::getpid() << "\" TID=\"" << syscall(SYS_gettid) << "\" op=\"" << radosCall
+                << "\" obj=\"" << objectName << "\" duration=\"" << m_timer.secs() << "\"" << std::endl;
       }
       #endif //RADOS_SLOW_CALLS_LOGGING
     }
