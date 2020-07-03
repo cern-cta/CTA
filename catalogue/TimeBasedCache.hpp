@@ -114,6 +114,21 @@ public:
     }
   }
 
+  /**
+   * Invalidates the cache.  This method should be called when it is known that
+   * the values being cached have probably been changed.  For example an
+   * operator has just modfied the mount policies and this is what is being
+   * cached.
+   */
+  void invalidate() {
+    threading::MutexLocker cacheLock(m_mutex);
+    for(auto &cacheMaplet: m_cache) {
+      auto &cachedValue = *(cacheMaplet.second);
+      threading::MutexLocker cachedValueLock(cachedValue.mutex);
+      cachedValue.timestamp = 0;
+    }
+  }
+
 private:
 
   /**

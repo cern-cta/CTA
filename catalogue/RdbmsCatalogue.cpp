@@ -4777,6 +4777,9 @@ void RdbmsCatalogue::createMountPolicy(
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -4855,6 +4858,8 @@ void RdbmsCatalogue::createRequesterMountRule(
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -4938,6 +4943,8 @@ void RdbmsCatalogue::deleteRequesterMountRule(const std::string &diskInstanceNam
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5018,6 +5025,8 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5195,6 +5204,8 @@ void RdbmsCatalogue::deleteRequesterGroupMountRule(const std::string &diskInstan
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5390,6 +5401,9 @@ void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5526,6 +5540,9 @@ void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructur
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5561,6 +5578,9 @@ void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStr
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5596,6 +5616,9 @@ void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructu
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5631,6 +5654,9 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5666,6 +5692,9 @@ void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructu
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5701,6 +5730,9 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+
+  m_groupMountPolicyCache.invalidate();
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
