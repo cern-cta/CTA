@@ -15,7 +15,6 @@ sec.protbind * only unix sss
 ###########################################################
 all.export / nolock
 all.trace none
-all.manager DUMMY_HOST_TO_REPLACE 2131
 #ofs.trace open
 ###########################################################
 xrd.port 1095
