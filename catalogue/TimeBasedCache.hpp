@@ -41,34 +41,6 @@ public:
   }
 
   /**
-   * When an instance of this class is destroyed, it will clear the
-   * the specified std::atomic_flag.
-   */
-  class AtomicFlagClearer {
-  public:
-    /**
-     * Constructor.
-     *
-     * @param flag The std::atomic_flag to be cleared.
-     */
-    AtomicFlagClearer(std::atomic_flag &flag): m_flag(flag) {
-    }
-
-    /**
-     * Destructor that clears the std::atomic_flag.
-     */
-    ~AtomicFlagClearer() {
-      m_flag.clear();
-    }
-
-  private:
-    /**
-     * The std::atomic_flag to be cleared.
-     */
-    std::atomic_flag &m_flag;
-  };
-
-  /**
    * Get the cached value corresponing to the specified key.
    *
    * This method updates the cache when necessary.
