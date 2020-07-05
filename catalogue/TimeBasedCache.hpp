@@ -54,7 +54,6 @@ public:
 
     if(cacheHit) {
       auto &cachedValue = *(cacheItor->second);
-      threading::MutexLocker cachedValueLock(cachedValue.mutex);
       const time_t ageSecs = now - cachedValue.timestamp;
 
       if (m_maxAgeSecs >= ageSecs) { // Cached value is fresh
@@ -81,7 +80,6 @@ public:
     threading::MutexLocker cacheLock(m_mutex);
     for(auto &cacheMaplet: m_cache) {
       auto &cachedValue = *(cacheMaplet.second);
-      threading::MutexLocker cachedValueLock(cachedValue.mutex);
       cachedValue.timestamp = 0;
     }
   }
@@ -117,11 +115,6 @@ private:
      */
     TimestampedValue(const time_t t, const Value &v): timestamp(t), value(v) {
     }
-
-    /**
-     * Mutex used to protect the timestamp and value.
-     */
-    threading::Mutex mutex;
 
     /**
      * The timestamp.
