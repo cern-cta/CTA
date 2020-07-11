@@ -58,6 +58,16 @@ namespace {
     return localAdmin;
   }
 
+  cta::common::dataStructures::SecurityIdentity getAdmin() {
+    using namespace cta;
+
+    common::dataStructures::SecurityIdentity admin;
+    admin.username = "admin_user_name";
+    admin.host = "admin_host";
+
+    return admin;
+  }
+
   cta::common::dataStructures::VirtualOrganization getVo() {
     using namespace cta;
 
@@ -139,14 +149,13 @@ namespace {
 cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
         m_dummyLog("dummy", "dummy"),
         m_localAdmin(getLocalAdmin()),
+        m_admin(getAdmin()),
         m_vo(getVo()),
         m_storageClassSingleCopy(getStorageClass()),
         m_storageClassDualCopy(getStorageClassDualCopy()),
         m_mediaType(getMediaType()),
         m_tape1(getTape1()),
         m_tape2(getTape2()) {
-  m_admin.username = "admin_user_name";
-  m_admin.host = "admin_host";
 }
 
 //------------------------------------------------------------------------------
