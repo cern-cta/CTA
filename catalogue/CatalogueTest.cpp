@@ -48,6 +48,16 @@ const uint32_t NON_EXISTENT_DISK_FILE_OWNER_UID = 9755;
 const uint32_t NON_EXISTENT_DISK_FILE_GID = 9756;
 
 namespace {
+  cta::common::dataStructures::SecurityIdentity getLocalAdmin() {
+    using namespace cta;
+
+    common::dataStructures::SecurityIdentity localAdmin;
+    localAdmin.username = "local_admin_user";
+    localAdmin.host = "local_admin_host";
+
+    return localAdmin;
+  }
+
   cta::common::dataStructures::VirtualOrganization getVo() {
     using namespace cta;
 
@@ -128,15 +138,13 @@ namespace {
 //------------------------------------------------------------------------------
 cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
         m_dummyLog("dummy", "dummy"),
+        m_localAdmin(getLocalAdmin()),
         m_vo(getVo()),
         m_storageClassSingleCopy(getStorageClass()),
         m_storageClassDualCopy(getStorageClassDualCopy()),
         m_mediaType(getMediaType()),
         m_tape1(getTape1()),
         m_tape2(getTape2()) {
-  m_localAdmin.username = "local_admin_user";
-  m_localAdmin.host = "local_admin_host";
-
   m_admin.username = "admin_user_name";
   m_admin.host = "admin_host";
 }

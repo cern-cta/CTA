@@ -40,7 +40,7 @@ protected:
 
   cta::log::DummyLogger m_dummyLog;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  cta::common::dataStructures::SecurityIdentity m_localAdmin;
+  const cta::common::dataStructures::SecurityIdentity m_localAdmin;
   cta::common::dataStructures::SecurityIdentity m_admin;
   const cta::common::dataStructures::VirtualOrganization m_vo;
   const cta::common::dataStructures::StorageClass m_storageClassSingleCopy;
