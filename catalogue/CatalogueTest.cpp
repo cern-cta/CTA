@@ -127,13 +127,13 @@ namespace {
 // constructor
 //------------------------------------------------------------------------------
 cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
-  m_dummyLog("dummy", "dummy"),
-  m_vo(getVo()),
-  m_storageClass(getStorageClass()),
-  m_storageClassDualCopy(getStorageClassDualCopy()),
-  m_mediaType(getMediaType()),
-  m_tape1(getTape1()),
-  m_tape2(getTape2()) {
+        m_dummyLog("dummy", "dummy"),
+        m_vo(getVo()),
+        m_storageClassSingleCopy(getStorageClass()),
+        m_storageClassDualCopy(getStorageClassDualCopy()),
+        m_mediaType(getMediaType()),
+        m_tape1(getTape1()),
+        m_tape2(getTape2()) {
   m_localAdmin.username = "local_admin_user";
   m_localAdmin.host = "local_admin_host";
 
@@ -643,16 +643,16 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
 
   ASSERT_EQ(1, storageClasses.size());
   
-  ASSERT_EQ(m_storageClass.name, storageClasses.front().name);
-  ASSERT_EQ(m_storageClass.nbCopies, storageClasses.front().nbCopies);
-  ASSERT_EQ(m_storageClass.comment, storageClasses.front().comment);
-  ASSERT_EQ(m_storageClass.vo.name, storageClasses.front().vo.name);
+  ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
+  ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
+  ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
+  ASSERT_EQ(m_storageClassSingleCopy.vo.name, storageClasses.front().vo.name);
   
   const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
@@ -666,14 +666,14 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_twice) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
-  ASSERT_THROW(m_catalogue->createStorageClass(m_admin, m_storageClass), exception::UserError);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
+  ASSERT_THROW(m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringStorageClassName) {
   using namespace cta;
 
-  auto storageClass = m_storageClass;
+  auto storageClass = m_storageClassSingleCopy;
   storageClass.name = "";
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass), catalogue::UserSpecifiedAnEmptyStringStorageClassName);
@@ -682,7 +682,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringStorageClassNa
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringComment) {
   using namespace cta;
 
-  auto storageClass = m_storageClass;
+  auto storageClass = m_storageClassSingleCopy;
   storageClass.comment = "";
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass), catalogue::UserSpecifiedAnEmptyStringComment);
@@ -691,7 +691,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringComment) {
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringVo) {
   using namespace cta;
 
-  auto storageClass = m_storageClass;
+  auto storageClass = m_storageClassSingleCopy;
   storageClass.vo.name = "";
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass), catalogue::UserSpecifiedAnEmptyStringVo);
 }
@@ -699,7 +699,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringVo) {
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass_nonExistingVo) {
   using namespace cta;
 
-  auto storageClass = m_storageClass;
+  auto storageClass = m_storageClassSingleCopy;
   storageClass.vo.name = "NonExistingVO";
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass), exception::UserError);
 }
@@ -708,15 +708,15 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
 
   ASSERT_EQ(1, storageClasses.size());
 
-  ASSERT_EQ(m_storageClass.name, storageClasses.front().name);
-  ASSERT_EQ(m_storageClass.nbCopies, storageClasses.front().nbCopies);
-  ASSERT_EQ(m_storageClass.comment, storageClasses.front().comment);
+  ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
+  ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
+  ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
 
   const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
@@ -725,7 +725,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
   const common::dataStructures::EntryLog lastModificationLog = storageClasses.front().lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  m_catalogue->deleteStorageClass(m_storageClass.name);
+  m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name);
   ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
 }
 
@@ -739,7 +739,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
@@ -747,9 +747,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
     ASSERT_EQ(1, storageClasses.size());
 
     
-    ASSERT_EQ(m_storageClass.name, storageClasses.front().name);
-    ASSERT_EQ(m_storageClass.nbCopies, storageClasses.front().nbCopies);
-    ASSERT_EQ(m_storageClass.comment, storageClasses.front().comment);
+    ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
+    ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
+    ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
 
     const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
@@ -760,7 +760,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
   }
 
   const uint64_t modifiedNbCopies = 5;
-  m_catalogue->modifyStorageClassNbCopies(m_admin, m_storageClass.name, modifiedNbCopies);
+  m_catalogue->modifyStorageClassNbCopies(m_admin, m_storageClassSingleCopy.name, modifiedNbCopies);
 
   {
     const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
@@ -768,9 +768,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
     ASSERT_EQ(1, storageClasses.size());
 
     
-    ASSERT_EQ(m_storageClass.name, storageClasses.front().name);
+    ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(modifiedNbCopies, storageClasses.front().nbCopies);
-    ASSERT_EQ(m_storageClass.comment, storageClasses.front().comment);
+    ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
 
     const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
@@ -790,7 +790,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
@@ -798,9 +798,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
     ASSERT_EQ(1, storageClasses.size());
 
     
-    ASSERT_EQ(m_storageClass.name, storageClasses.front().name);
-    ASSERT_EQ(m_storageClass.nbCopies, storageClasses.front().nbCopies);
-    ASSERT_EQ(m_storageClass.comment, storageClasses.front().comment);
+    ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
+    ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
+    ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
 
     const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
@@ -811,7 +811,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
   }
 
   const std::string modifiedComment = "Modified comment";
-  m_catalogue->modifyStorageClassComment(m_admin, m_storageClass.name, modifiedComment);
+  m_catalogue->modifyStorageClassComment(m_admin, m_storageClassSingleCopy.name, modifiedComment);
 
   {
     const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
@@ -819,8 +819,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
     ASSERT_EQ(1, storageClasses.size());
 
     
-    ASSERT_EQ(m_storageClass.name, storageClasses.front().name);
-    ASSERT_EQ(m_storageClass.nbCopies, storageClasses.front().nbCopies);
+    ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
+    ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(modifiedComment, storageClasses.front().comment);
 
     const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
@@ -841,7 +841,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
@@ -849,9 +849,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
     ASSERT_EQ(1, storageClasses.size());
 
     
-    ASSERT_EQ(m_storageClass.name, storageClasses.front().name);
-    ASSERT_EQ(m_storageClass.nbCopies, storageClasses.front().nbCopies);
-    ASSERT_EQ(m_storageClass.comment, storageClasses.front().comment);
+    ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
+    ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
+    ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
 
     const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
@@ -862,7 +862,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
   }
 
   const std::string newStorageClassName = "new_storage_class_name";
-  m_catalogue->modifyStorageClassName(m_admin, m_storageClass.name, newStorageClassName);
+  m_catalogue->modifyStorageClassName(m_admin, m_storageClassSingleCopy.name, newStorageClassName);
 
   {
     const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
@@ -871,8 +871,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
 
     
     ASSERT_EQ(newStorageClassName, storageClasses.front().name);
-    ASSERT_EQ(m_storageClass.nbCopies, storageClasses.front().nbCopies);
-    ASSERT_EQ(m_storageClass.comment, storageClasses.front().comment);
+    ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
+    ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
 
     const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
@@ -892,28 +892,28 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_newNameAlreadyExists)
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
   
-  auto storageClass2 = m_storageClass;
+  auto storageClass2 = m_storageClassSingleCopy;
   storageClass2.name = "storage_class2";
   
   m_catalogue->createStorageClass(m_admin, storageClass2);
   
   //Try to rename the first storage class with the name of the second one
-  ASSERT_THROW(m_catalogue->modifyStorageClassName(m_admin, m_storageClass.name, storageClass2.name),exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyStorageClassName(m_admin, m_storageClassSingleCopy.name, storageClass2.name), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVo) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
   
   auto newVo = m_vo;
   newVo.name = "newVo";
   m_catalogue->createVirtualOrganization(m_admin, newVo);
   
-  m_catalogue->modifyStorageClassVo(m_admin, m_storageClass.name, newVo.name);
+  m_catalogue->modifyStorageClassVo(m_admin, m_storageClassSingleCopy.name, newVo.name);
   
   auto storageClasses = m_catalogue->getStorageClasses();
   ASSERT_EQ(newVo.name, storageClasses.front().vo.name);
@@ -923,18 +923,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassEmptyStringVo) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
   
-  ASSERT_THROW(m_catalogue->modifyStorageClassVo(m_admin, m_storageClass.name, ""), catalogue::UserSpecifiedAnEmptyStringVo);
+  ASSERT_THROW(m_catalogue->modifyStorageClassVo(m_admin, m_storageClassSingleCopy.name, ""), catalogue::UserSpecifiedAnEmptyStringVo);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVoDoesNotExist) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
   
-  ASSERT_THROW(m_catalogue->modifyStorageClassVo(m_admin, m_storageClass.name, "DOES_NOT_EXISTS"), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyStorageClassVo(m_admin, m_storageClassSingleCopy.name, "DOES_NOT_EXISTS"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createMediaType) {
@@ -2497,7 +2497,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -2507,7 +2507,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, comment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment);
       
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
@@ -2515,7 +2515,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
     ASSERT_EQ(1, routes.size());
       
     const common::dataStructures::ArchiveRoute route = routes.front();
-    ASSERT_EQ(m_storageClass.name, route.storageClassName);
+    ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(tapePoolName, route.tapePoolName);
     ASSERT_EQ(comment, route.comment);
@@ -2529,12 +2529,12 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   }
 
   {
-    const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes(m_storageClass.name, tapePoolName);
+    const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
       
     ASSERT_EQ(1, routes.size());
       
     const common::dataStructures::ArchiveRoute route = routes.front();
-    ASSERT_EQ(m_storageClass.name, route.storageClassName);
+    ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(tapePoolName, route.tapePoolName);
     ASSERT_EQ(comment, route.comment);
@@ -2664,7 +2664,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassNa
   
   common::dataStructures::StorageClass storageClass;
   
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -2683,7 +2683,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
   using namespace cta;
       
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2692,7 +2692,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
 
   const uint32_t copyNb = 0;
   const std::string comment = "Create archive route";
-  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, m_tape1.tapePoolName, comment), catalogue::UserSpecifiedAZeroCopyNb);
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment), catalogue::UserSpecifiedAZeroCopyNb);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringTapePoolName) {
@@ -2700,19 +2700,19 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringTapePoolName) 
       
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "";
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
   using namespace cta;
       
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2721,7 +2721,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "";
-  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, m_tape1.tapePoolName, comment), catalogue::UserSpecifiedAnEmptyStringComment);
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment), catalogue::UserSpecifiedAnEmptyStringComment);
 }
   
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_class) {
@@ -2744,21 +2744,21 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_tape_pool) {
   using namespace cta;
       
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "non_existent_tape_pool";
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
 
-  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, comment), exception::UserError);
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment), exception::UserError);
 }
   
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2767,15 +2767,15 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, m_tape1.tapePoolName, comment);
-  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, m_tape1.tapePoolName, comment), exception::Exception);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment), exception::Exception);
 }
   
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2784,18 +2784,18 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
 
   const uint32_t copyNb1 = 1;
   const std::string comment1 = "Create archive route for copy 1";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb1, m_tape1.tapePoolName, comment1);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb1, m_tape1.tapePoolName, comment1);
 
   const uint32_t copyNb2 = 2;
   const std::string comment2 = "Create archive route for copy 2";
-  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb2, m_tape1.tapePoolName, comment2), exception::UserError);
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb2, m_tape1.tapePoolName, comment2), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2804,14 +2804,14 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, m_tape1.tapePoolName, comment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
   ASSERT_EQ(comment, route.comment);
@@ -2823,7 +2823,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  m_catalogue->deleteArchiveRoute(m_storageClass.name, copyNb);
+  m_catalogue->deleteArchiveRoute(m_storageClassSingleCopy.name, copyNb);
 
   ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
 }
@@ -2838,7 +2838,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2847,14 +2847,14 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, m_tape1.tapePoolName, comment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
   ASSERT_EQ(comment, route.comment);
@@ -2866,15 +2866,15 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 
-  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClass.name), catalogue::UserSpecifiedStorageClassUsedByArchiveRoutes);
-  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClass.name), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name), catalogue::UserSpecifiedStorageClassUsedByArchiveRoutes);
+  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
   using namespace cta;
       
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2886,7 +2886,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, m_tape1.tapePoolName, comment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
@@ -2894,7 +2894,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
     ASSERT_EQ(1, routes.size());
       
     const common::dataStructures::ArchiveRoute route = routes.front();
-    ASSERT_EQ(m_storageClass.name, route.storageClassName);
+    ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
     ASSERT_EQ(comment, route.comment);
@@ -2907,7 +2907,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->modifyArchiveRouteTapePoolName(m_admin, m_storageClass.name, copyNb, anotherTapePoolName);
+  m_catalogue->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, anotherTapePoolName);
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
@@ -2915,7 +2915,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
     ASSERT_EQ(1, routes.size());
       
     const common::dataStructures::ArchiveRoute route = routes.front();
-    ASSERT_EQ(m_storageClass.name, route.storageClassName);
+    ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(anotherTapePoolName, route.tapePoolName);
     ASSERT_EQ(comment, route.comment);
@@ -2930,7 +2930,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentAr
   using namespace cta;
       
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2938,14 +2938,14 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentAr
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
-  ASSERT_THROW(m_catalogue->modifyArchiveRouteTapePoolName(m_admin, m_storageClass.name, copyNb, m_tape1.tapePoolName), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
   using namespace cta;
       
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2954,7 +2954,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, m_tape1.tapePoolName, comment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
@@ -2962,7 +2962,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
     ASSERT_EQ(1, routes.size());
       
     const common::dataStructures::ArchiveRoute route = routes.front();
-    ASSERT_EQ(m_storageClass.name, route.storageClassName);
+    ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
     ASSERT_EQ(comment, route.comment);
@@ -2976,7 +2976,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
   }
 
   const std::string modifiedComment = "Modified comment";
-  m_catalogue->modifyArchiveRouteComment(m_admin, m_storageClass.name, copyNb, modifiedComment);
+  m_catalogue->modifyArchiveRouteComment(m_admin, m_storageClassSingleCopy.name, copyNb, modifiedComment);
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
@@ -2984,7 +2984,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
     ASSERT_EQ(1, routes.size());
       
     const common::dataStructures::ArchiveRoute route = routes.front();
-    ASSERT_EQ(m_storageClass.name, route.storageClassName);
+    ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
     ASSERT_EQ(modifiedComment, route.comment);
@@ -2999,7 +2999,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchive
   using namespace cta;
       
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -3008,7 +3008,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchive
 
   const uint32_t copyNb = 1;
   const std::string comment = "Comment";
-  ASSERT_THROW(m_catalogue->modifyArchiveRouteComment(m_admin, m_storageClass.name, copyNb, comment), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyArchiveRouteComment(m_admin, m_storageClassSingleCopy.name, copyNb, comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
@@ -4112,7 +4112,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
   
   const std::string diskInstance = "disk_instance";
   const bool logicalLibraryIsDisabled= false;
@@ -4197,7 +4197,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
     file1Written.checksumBlob.insert(checksum::ADLER32, 0x1000); // tests checksum with embedded zeros
-    file1Written.storageClassName     = m_storageClass.name;
+    file1Written.storageClassName     = m_storageClassSingleCopy.name;
     file1Written.vid                  = m_tape1.vid;
     file1Written.fSeq                 = 1;
     file1Written.blockId              = 4321;
@@ -4332,7 +4332,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
@@ -4391,7 +4391,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
     file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-    file1Written.storageClassName     = m_storageClass.name;
+    file1Written.storageClassName     = m_storageClassSingleCopy.name;
     file1Written.vid                  = m_tape1.vid;
     file1Written.fSeq                 = 1;
     file1Written.blockId              = 4321;
@@ -7278,13 +7278,13 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_archive_rout
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   
   const std::string diskInstance = "disk_instance";
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstance, m_storageClass.name, requesterIdentity), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstance, m_storageClassSingleCopy.name, requesterIdentity), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules) {
@@ -7295,7 +7295,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   const std::string diskInstance = "disk_instance";
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -7305,14 +7305,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -7329,7 +7329,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstance, m_storageClass.name, requesterIdentity), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstance, m_storageClassSingleCopy.name, requesterIdentity), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_and_then_deleted_requester_mount_rule) {
@@ -7373,7 +7373,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -7383,14 +7383,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -7408,7 +7408,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
 
   // Get an archive ID which should pouplate for the first time the user mount
   // rule cache
-  m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClass.name, requesterIdentity);
+  m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
 
   // Delete the user mount rule which should immediately invalidate the user
   // mount rule cache
@@ -7419,7 +7419,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   // Try to get an archive ID which should now fail because there is no user
   // mount rule and the invalidated user mount rule cache should not hide this
   // fact
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClass.name, requesterIdentity), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount_rule) {
@@ -7463,7 +7463,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -7473,14 +7473,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -7499,7 +7499,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClass.name, requesterIdentity);
+      m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -7546,7 +7546,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -7556,14 +7556,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -7581,7 +7581,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
 
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
-    const uint64_t archiveFileId = m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClass.name, requesterIdentity);
+    const uint64_t archiveFileId = m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -7628,7 +7628,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -7638,14 +7638,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -7663,7 +7663,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
 
   // Get an archive ID which should populate for the first time the group mount
   // rule cache
-  m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClass.name, requesterIdentity);
+  m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
 
   // Delete the group mount rule which should immediately invalidate the group
   // mount rule cache
@@ -7674,7 +7674,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   // Try to get an archive ID which should now fail because there is no group
   // mount rule and the invalidated group mount rule cache should not hide this
   // fact
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClass.name, requesterIdentity), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount_rule_overide) {
@@ -7736,7 +7736,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   ASSERT_EQ(requesterGroupRule.creationLog, requesterGroupRule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -7746,14 +7746,14 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -7771,7 +7771,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
 
   std::set<uint64_t> archiveFileIds;
   for(uint64_t i = 0; i<10; i++) {
-    const uint64_t archiveFileId = m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClass.name, requesterIdentity);
+    const uint64_t archiveFileId = m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -7819,13 +7819,13 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_no_archive_route
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, m_storageClass.name, requesterIdentity), exception::UserError);
+  ASSERT_THROW(m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_rule) {
@@ -7869,7 +7869,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -7879,14 +7879,14 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -7901,7 +7901,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
-  m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, m_storageClass.name, requesterIdentity);
+  m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_mount_rule) {
@@ -7944,7 +7944,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -7954,14 +7954,14 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -7976,7 +7976,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
   common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = "username";
   requesterIdentity.group = requesterGroupName;
-  m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, m_storageClass.name, requesterIdentity);
+  m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_rule_overide) {
@@ -8038,7 +8038,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   ASSERT_EQ(requesterGroupRule.creationLog, requesterGroupRule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
@@ -8048,14 +8048,14 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->createArchiveRoute(m_admin, m_storageClass.name, copyNb, tapePoolName, archiveRouteComment);
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, archiveRouteComment);
 
   const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
   const common::dataStructures::ArchiveRoute route = routes.front();
-  ASSERT_EQ(m_storageClass.name, route.storageClassName);
+  ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
   ASSERT_EQ(archiveRouteComment, route.comment);
@@ -8070,7 +8070,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
-  m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, m_storageClass.name, requesterIdentity);
+  m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
@@ -8156,7 +8156,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
   
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
@@ -8172,7 +8172,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -8215,7 +8215,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClass.name;
+  file2Written.storageClassName     = m_storageClassSingleCopy.name;
   file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
@@ -8389,7 +8389,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
@@ -8406,7 +8406,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -8451,7 +8451,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClass.name;
+  file2Written.storageClassName     = m_storageClassSingleCopy.name;
   file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
@@ -8668,7 +8668,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existent_storage_class_witho
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
 
@@ -8677,9 +8677,9 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existent_storage_class_witho
   {
     const auto s = storageClasses.front();
 
-    ASSERT_EQ(m_storageClass.name, s.name);
-    ASSERT_EQ(m_storageClass.nbCopies, s.nbCopies);
-    ASSERT_EQ(m_storageClass.comment, s.comment);
+    ASSERT_EQ(m_storageClassSingleCopy.name, s.name);
+    ASSERT_EQ(m_storageClassSingleCopy.nbCopies, s.nbCopies);
+    ASSERT_EQ(m_storageClassSingleCopy.comment, s.comment);
 
     const common::dataStructures::EntryLog creationLog = s.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
@@ -8692,7 +8692,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existent_storage_class_witho
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.storageClass = m_storageClass.name;
+  searchCriteria.storageClass = m_storageClassSingleCopy.name;
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
@@ -9799,7 +9799,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
 
   common::dataStructures::StorageClass storageClass;
   
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapeDrive1 = "tape_drive1";
   const std::string tapeDrive2 = "tape_drive2";
@@ -10480,7 +10480,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
@@ -10497,7 +10497,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -10597,7 +10597,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
@@ -10614,7 +10614,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -10656,8 +10656,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClass.name), catalogue::UserSpecifiedStorageClassUsedByArchiveFiles);
-  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClass.name), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name), catalogue::UserSpecifiedStorageClassUsedByArchiveFiles);
+  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies) {
@@ -10748,7 +10748,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
@@ -10765,7 +10765,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -10819,7 +10819,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClass.name;
+  file2Written.storageClassName     = m_storageClassSingleCopy.name;
   file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
@@ -10954,7 +10954,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
@@ -10971,7 +10971,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -11025,7 +11025,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClass.name;
+  file2Written.storageClassName     = m_storageClassSingleCopy.name;
   file2Written.vid                  = m_tape2.vid;
   file2Written.fSeq                 = 1;
   file2Written.blockId              = 4331;
@@ -11092,7 +11092,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -11151,7 +11151,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -11205,7 +11205,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
   file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClass.name;
+  file2Written.storageClassName     = m_storageClassSingleCopy.name;
   file2Written.vid                  = m_tape1.vid;
   file2Written.fSeq                 = 2;
   file2Written.blockId              = 4331;
@@ -13517,7 +13517,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13570,7 +13570,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -13670,7 +13670,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13722,7 +13722,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -13773,7 +13773,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13826,7 +13826,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -13885,7 +13885,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
   m_catalogue->createTape(m_admin, m_tape2);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -13941,7 +13941,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -14026,7 +14026,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_superseded) 
   file1WrittenAgain.diskFileGid          = PUBLIC_DISK_GROUP;
   file1WrittenAgain.size                 = archiveFileSize;
   file1WrittenAgain.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1WrittenAgain.storageClassName     = m_storageClass.name;
+  file1WrittenAgain.storageClassName     = m_storageClassSingleCopy.name;
   file1WrittenAgain.vid                  = m_tape2.vid;
   file1WrittenAgain.fSeq                 = 1;
   file1WrittenAgain.blockId              = 4321;
@@ -14208,7 +14208,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -14263,7 +14263,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -14415,7 +14415,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -14470,7 +14470,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -14558,7 +14558,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
   m_catalogue->createTape(m_admin, m_tape2);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -14616,7 +14616,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -14700,7 +14700,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file_su
   file1WrittenAgain.diskFileGid          = PUBLIC_DISK_GROUP;
   file1WrittenAgain.size                 = archiveFileSize;
   file1WrittenAgain.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1WrittenAgain.storageClassName     = m_storageClass.name;
+  file1WrittenAgain.storageClassName     = m_storageClassSingleCopy.name;
   file1WrittenAgain.vid                  = m_tape2.vid;
   file1WrittenAgain.fSeq                 = 1;
   file1WrittenAgain.blockId              = 4321;
@@ -14920,7 +14920,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByStorageClass)
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
   ASSERT_THROW(m_catalogue->deleteVirtualOrganization(m_vo.name),exception::UserError);
 }
 
@@ -15028,7 +15028,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -15087,7 +15087,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
   file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClass.name;
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
   file1Written.vid                  = m_tape1.vid;
   file1Written.fSeq                 = 1;
   file1Written.blockId              = 4321;
@@ -15175,7 +15175,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   auto tape1 = m_tape1;
   tape1.tapePoolName = tapePoolName1;
@@ -15208,7 +15208,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
     fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
-    fileWritten.storageClassName = m_storageClass.name;
+    fileWritten.storageClassName = m_storageClassSingleCopy.name;
     fileWritten.vid = tape1.vid;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
@@ -15262,7 +15262,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
     ASSERT_EQ(PUBLIC_DISK_GROUP,deletedArchiveFile.diskFileInfo.gid);
     ASSERT_EQ(archiveFileSize,deletedArchiveFile.fileSize);
     ASSERT_EQ(cta::checksum::ChecksumBlob(checksum::ADLER32, "1357"),deletedArchiveFile.checksumBlob);
-    ASSERT_EQ(m_storageClass.name,deletedArchiveFile.storageClass);
+    ASSERT_EQ(m_storageClassSingleCopy.name, deletedArchiveFile.storageClass);
     ASSERT_EQ(diskFileId.str(),deletedArchiveFile.diskFileIdWhenDeleted);
     
     auto tapeFile = deletedArchiveFile.tapeFiles.at(1);
@@ -15304,7 +15304,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->createStorageClass(m_admin, m_storageClass);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapeDrive = "tape_drive";
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -15340,7 +15340,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
     fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
-    fileWritten.storageClassName = m_storageClass.name;
+    fileWritten.storageClassName = m_storageClassSingleCopy.name;
     fileWritten.vid = tape1.vid;
     fileWritten.fSeq = i;
     fileWritten.blockId = i * 100;
