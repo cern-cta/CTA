@@ -270,7 +270,8 @@ std::string BackendRados::read(std::string name) {
   rtl.logIfNeeded("In BackendRados::read(): m_radosCtx.read()", name);
   // Transient empty object can exist (due to locking)
   // They are regarded as not-existing.
-  if (!bl.length()) throw NoSuchObject("In BackendRados::read(): considering empty object as non-existing.");
+  std::string errorMsg = "In BackendRados::read(): considering empty object (name=" + name + ") as non-existing.";
+  if (!bl.length()) throw NoSuchObject(errorMsg);
   bl.copy(0, bl.length(), ret);
   return ret;
 }
@@ -1057,8 +1058,10 @@ void BackendRados::AsyncUpdater::UpdateJob::execute() {
     // The data is in the buffer list.
     // Transient empty object can exist (due to locking)
     // They are regarded as not-existing.
-    if (!au.m_radosBufferList.length()) throw NoSuchObject(
-        "In BackendRados::AsyncUpdater::UpdateJob::execute(): considering empty object as non-existing");
+    if (!au.m_radosBufferList.length()) {
+      std::string errorMsg = "In BackendRados::AsyncUpdater::UpdateJob::execute(): considering empty object (name=" + au.m_name +")  as non-existing";
+      throw NoSuchObject(errorMsg);
+    }
     std::string value;
     try {
       au.m_radosBufferList.copy(0, au.m_radosBufferList.length(), value);
@@ -1305,8 +1308,10 @@ void BackendRados::AsyncLockfreeFetcher::fetchCallback(librados::completion_t co
     // The data is in the buffer list.
     // Transient empty object can exist (due to locking)
     // They are regarded as not-existing.
-    if (!au.m_radosBufferList.length()) throw NoSuchObject(
-        "In BackendRados::AsyncLockfreeFetcher::fetchCallback(): considering empty object as non-existing");
+    if (!au.m_radosBufferList.length()) {
+      std::string errorMsg = "In BackendRados::AsyncLockfreeFetcher::fetchCallback(): considering empty object (name=" + au.m_name + ") as non-existing";
+      throw NoSuchObject(errorMsg);
+    }
     std::string value;
     try {
       au.m_radosBufferList.copy(0, au.m_radosBufferList.length(), value);
