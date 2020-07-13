@@ -337,12 +337,17 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       //Check if there are Repack Retrieve requests with forceDisabledTape flag in the queue
       for(auto &job: rqueue.dumpJobs()){
         cta::objectstore::RetrieveRequest rr(job.address,this->m_objectStore);
-        rr.fetchNoLock();
-        if(rr.getRepackInfo().forceDisabledTape){
-          //At least one Retrieve job is a Repack Retrieve job with the tape disabled flag,
-          //we have a potential mount.
-          isPotentialMount = true;
-          break;
+        try{
+          rr.fetchNoLock();
+          if(rr.getRepackInfo().forceDisabledTape){
+            //At least one Retrieve job is a Repack Retrieve job with the tape disabled flag,
+            //we have a potential mount.
+            isPotentialMount = true;
+            break;
+          }
+        } catch(const cta::objectstore::Backend::NoSuchObject & ex){
+          //In the case of a repack cancellation, the RetrieveRequest object is deleted, so we just ignore the exception
+          //it will not be a potential mount.
         }
       }
     } else {
