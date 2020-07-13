@@ -303,6 +303,7 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-unfollow-agent
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
 %attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object
+%attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
 
 #cta-systemtests installs libraries so we need ldconfig.
 %post -n cta-systemtests -p /sbin/ldconfig

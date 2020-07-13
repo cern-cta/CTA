@@ -163,5 +163,5 @@ target_link_libraries(cta-objectstore-create-missing-repack-index
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object cta-objectstore-unfollow-agent 
-  cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object
+  cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object cta-objectstore-create-missing-repack-index
   DESTINATION usr/bin)
