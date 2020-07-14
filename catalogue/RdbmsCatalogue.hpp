@@ -1869,6 +1869,23 @@ protected:
    * @param archiveFileId the archiveFileId of the archive file to delete
    */
   void deleteArchiveFileFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId);
+
+  /**
+   * Generates the SELECT statement required to search for tapes using 100 tape
+   * VIDs.  Each tape VID is represented in the SQL by a bind parameter with the
+   * naming convention of ":VN" where N is an integer from 1 to 100 with no
+   * padding.
+   */
+  std::string getSelectTapesBy100VidsSql() const;
+
+  /**
+   * Executes the specified "getTapesBy100Vids" statement and collects the
+   * results into the specified vidToTapeMap.
+   * @param stmt the "getTapesBy100Vids" statement
+   * @param vidToTapeMap the map from VID to tape
+   */
+  void executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &stmt,
+    common::dataStructures::VidToTapeMap &vidToTapeMap) const;
   
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific

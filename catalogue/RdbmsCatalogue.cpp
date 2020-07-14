@@ -3438,122 +3438,56 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::set<std::string> &vids) const {
   try {
     common::dataStructures::VidToTapeMap vidToTapeMap;
-    std::string sql =
-      "SELECT "
-        "TAPE.VID AS VID,"
-        "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
-        "TAPE.VENDOR AS VENDOR,"
-        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
-        "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
-        "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "TAPE.LAST_FSEQ AS LAST_FSEQ,"
-        "TAPE.IS_DISABLED AS IS_DISABLED,"
-        "TAPE.IS_FULL AS IS_FULL,"
-        "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
-        "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"    
 
-        "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
-        "TAPE.LABEL_TIME AS LABEL_TIME,"
+    if(vids.empty()) return vidToTapeMap;
 
-        "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
-
-        "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
-            
-        "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
-        "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
-
-        "TAPE.USER_COMMENT AS USER_COMMENT,"
-
-        "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-
-        "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-      "FROM "
-        "TAPE "
-      "INNER JOIN TAPE_POOL ON "
-        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
-      "INNER JOIN LOGICAL_LIBRARY ON "
-        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
-      "INNER JOIN MEDIA_TYPE ON "
-        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
-      "INNER JOIN VIRTUAL_ORGANIZATION ON "
-        "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID";
-
-    if(!vids.empty()) {
-      sql += " WHERE ";
-    }
-
-    {
-      for(uint64_t vidNb = 1; vidNb <= vids.size(); vidNb++) {
-        if(1 < vidNb) {
-          sql += " OR ";
-        }
-        sql += "TAPE.VID = :VID" + std::to_string(vidNb);
-      }
-    }
+    static const std::string selectTapesBy100VidsSql = getSelectTapesBy100VidsSql();
 
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql);
 
-    // The following should be replaced by an insert into a temporrary table
-    // because this code can create many different prepared statements when
-    // there should only be one
-    {
-      uint64_t vidNb = 1;
-      for(auto &vid : vids) {
-        stmt.bindString(":VID" + std::to_string(vidNb), vid);
+    auto stmt = conn.createStmt(selectTapesBy100VidsSql);
+    uint64_t vidNb = 1;
+
+    for(const auto &vid: vids) {
+      // Bind the current tape VID
+      std::ostringstream paramName;
+      paramName << ":V" << vidNb;
+      stmt.bindString(paramName.str(), vid);
+
+      // If the 100th tape VID has not yet been reached
+      if(100 > vidNb) {
         vidNb++;
+      } else { // The 100th VID has been reached
+        vidNb = 1;
+
+        // Execute the query and collect the results
+        executeGetTapesBy100VidsStmtAndCollectResults(stmt, vidToTapeMap);
+
+        // Create a new statement
+        stmt = conn.createStmt(selectTapesBy100VidsSql);
       }
     }
 
-    auto rset = stmt.executeQuery();
-    while (rset.next()) {
-      common::dataStructures::Tape tape;
+    // If there is a statement under construction
+    if(1 != vidNb) {
+      // Bind the remaining parameters with last tape VID.  This has no effect
+      // on the search results but makes the statement valid.
+      const std::string &lastVid = *vids.rbegin();
+      while(100 >= vidNb) {
+        std::ostringstream paramName;
+        paramName << ":V" << vidNb;
+        stmt.bindString(paramName.str(), lastVid);
+        vidNb++;
+      }
 
-      tape.vid = rset.columnString("VID");
-      tape.mediaType = rset.columnString("MEDIA_TYPE");
-      tape.vendor = rset.columnString("VENDOR");
-      tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
-      tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
-      tape.vo = rset.columnString("VO");
-      tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
-      tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
-      tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
-      tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
-      tape.disabled = rset.columnBool("IS_DISABLED");
-      tape.full = rset.columnBool("IS_FULL");
-      tape.readOnly = rset.columnBool("IS_READ_ONLY");
-      tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
-
-      tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
-      tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-      tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
-      
-      tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
-      tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
-
-      auto optionalComment = rset.columnOptionalString("USER_COMMENT");
-      tape.comment = optionalComment ? optionalComment.value() : "";
-      tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
-      tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
-      tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
-      tape.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
-      tape.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
-      tape.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-
-      vidToTapeMap[tape.vid] = tape;
+      // Execute the query and collect the results
+      executeGetTapesBy100VidsStmtAndCollectResults(stmt, vidToTapeMap);
     }
 
     if(vids.size() != vidToTapeMap.size()) {
-      throw exception::Exception("Not all tapes were found");
+      exception::Exception ex;
+      ex.getMessage() << "Not all tapes were found: expected=" << vids.size() << " actual=" << vidToTapeMap.size();
+      throw ex;
     }
 
     return vidToTapeMap;
@@ -3562,6 +3496,113 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getSelectTapesBy100VidsSql
+//------------------------------------------------------------------------------
+std::string RdbmsCatalogue::getSelectTapesBy100VidsSql() const {
+  std::stringstream sql;
+
+  sql <<
+    "SELECT "
+      "TAPE.VID AS VID,"
+      "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
+      "TAPE.VENDOR AS VENDOR,"
+      "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
+      "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
+      "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+      "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+      "TAPE.LAST_FSEQ AS LAST_FSEQ,"
+      "TAPE.IS_DISABLED AS IS_DISABLED,"
+      "TAPE.IS_FULL AS IS_FULL,"
+      "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
+      "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"    
+
+      "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
+      "TAPE.LABEL_TIME AS LABEL_TIME,"
+
+      "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+      "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
+
+      "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+      "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+            
+      "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
+      "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
+
+      "TAPE.USER_COMMENT AS USER_COMMENT,"
+
+      "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+      "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+      "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+      "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+      "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+      "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+    "FROM "
+      "TAPE "
+    "INNER JOIN TAPE_POOL ON "
+      "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
+    "INNER JOIN LOGICAL_LIBRARY ON "
+      "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+    "INNER JOIN MEDIA_TYPE ON "
+      "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
+    "INNER JOIN VIRTUAL_ORGANIZATION ON "
+      "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
+    "WHERE "
+      "VID IN (:V1";
+
+  for(uint32_t i=2; i<=100; i++) {
+    sql << ",:V" << i;
+  }
+
+  sql << ")";
+
+  return sql.str();
+}
+
+//------------------------------------------------------------------------------
+// executeGetTapesBy100VidsStmtAndCollectResults
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &stmt,
+  common::dataStructures::VidToTapeMap &vidToTapeMap) const {
+  auto rset = stmt.executeQuery();
+  while (rset.next()) {
+    common::dataStructures::Tape tape;
+
+    tape.vid = rset.columnString("VID");
+    tape.mediaType = rset.columnString("MEDIA_TYPE");
+    tape.vendor = rset.columnString("VENDOR");
+    tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
+    tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+    tape.vo = rset.columnString("VO");
+    tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
+    tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+    tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+    tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+    tape.disabled = rset.columnBool("IS_DISABLED");
+    tape.full = rset.columnBool("IS_FULL");
+    tape.readOnly = rset.columnBool("IS_READ_ONLY");
+    tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
+    tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
+    tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+    tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+    tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
+    tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
+    auto optionalComment = rset.columnOptionalString("USER_COMMENT");
+    tape.comment = optionalComment ? optionalComment.value() : "";
+    tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+    tape.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    tape.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    tape.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+    vidToTapeMap[tape.vid] = tape;
   }
 }
 
