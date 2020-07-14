@@ -239,7 +239,7 @@ void Stmt::bindString(const std::string &paramName, const optional<std::string> 
       throw exception::Exception("Stmt does not contain a cached statement");
     }
   } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: paramName=" + paramName + ": " + ex.getMessage().str());
     throw;
   }
 }
