@@ -64,18 +64,28 @@ int main(int argc, char ** argv) {
     ag.initialize();
     std::cout << "Inserting agent" << std::endl;
     ag.insertAndRegisterSelf(lc);
-    cta::objectstore::RootEntry re(*be);
-    cta::objectstore::ScopedExclusiveLock rel(re);
-    re.fetch();
-    try{
-      std::cout << "Trying to insert repack index" << std::endl;
-      std::string repackIndexAddress = re.addOrGetRepackIndexAndCommit(agr);
-      std::cout << "Repack index created. Address = " << repackIndexAddress << std::endl;
-    } catch(const cta::exception::Exception &e){
-      std::cout << "Repack index already exists, nothing to do." << std::endl;
+    {
+      cta::objectstore::RootEntry re(*be);
+      cta::objectstore::ScopedExclusiveLock rel(re);
+      re.fetch();
+      try {
+        std::cout << "Deleting already existing repack index" << std::endl;
+        re.removeRepackIndexAndCommit(lc);
+        std::cout << "Trying to insert repack index" << std::endl;
+        std::string repackIndexAddress = re.addOrGetRepackIndexAndCommit(agr);
+        std::cout << "Repack index created. Address = " << repackIndexAddress << std::endl;
+        
+      } catch (const cta::objectstore::RootEntry::DriveRegisterNotEmpty &ex ) {
+        std::cout << "Could not remove the already existing repack index, errorMsg = " << ex.getMessageValue();
+        return 1;
+      } catch(const cta::exception::Exception &e){
+        std::cout << "Unable to create repack index: " << e.getMessageValue() << std::endl;
+        return 1;
+      }
     }
   } catch (std::exception & e) {
     std::cerr << "Failed to create repack index: "
         << std::endl << e.what() << std::endl;
+    return 1;
   }
 }

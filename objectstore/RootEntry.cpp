@@ -780,21 +780,27 @@ void RootEntry::removeRepackIndexAndCommit(log::LogContext& lc) {
       !m_payload.repackindexpointer().address().size())
     return;
   std::string rtrAddress = m_payload.repackindexpointer().address();
-  RepackIndex ri(rtrAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-  ScopedExclusiveLock rtrl(ri);
-  ri.fetch();
-  // Check the drive register is empty
-  if (!ri.isEmpty()) {
-    throw DriveRegisterNotEmpty("In RootEntry::removeRepackIndexAndCommit(): "
-      "trying to remove a non-empty repack tape register");
+  try{
+    RepackIndex ri(rtrAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+    ScopedExclusiveLock rtrl(ri);
+    ri.fetch();
+    // Check the drive register is empty
+    if (!ri.isEmpty()) {
+      throw DriveRegisterNotEmpty("In RootEntry::removeRepackIndexAndCommit(): "
+        "trying to remove a non-empty repack tape register");
+    }
+    // we can delete the drive register
+    ri.remove();
+    log::ScopedParamContainer params(lc);
+    params.add("repackIndex", ri.getAddressIfSet());
+    lc.log(log::INFO, "In RootEntry::removeRepackIndexAndCommit(): removed repack tape register object.");
+  } catch(const Backend::NoSuchObject& ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("errorMsg",ex.getMessageValue());
+    lc.log(log::INFO, "In RootEntry::removeRepackIndexAndCommit(): the repack tape register object does not exist in the objectstore.");
   }
-  // we can delete the drive register
-  ri.remove();
-  log::ScopedParamContainer params(lc);
-  params.add("repackIndex", ri.getAddressIfSet());
-  lc.log(log::INFO, "In RootEntry::removeRepackIndexAndCommit(): removed repack tape register object.");
   // And update the root entry
-  m_payload.mutable_schedulerlockpointer()->set_address("");
+  m_payload.mutable_repackindexpointer()->set_address("");
   // We commit for safety and symmetry with the add operation
   commit();
 }
