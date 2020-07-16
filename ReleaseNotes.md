@@ -1,3 +1,14 @@
+# v3.1-1
+
+## Summary
+
+### Modification
+
+- Corrected bugs on cta-objectstore-create-missing-repack-index tool
+- Corrected a bug that caused crash of all tapeservers while scheduling
+- Catalogue schema version 3.1 : addition of a new index on the TAPE table
+- Catalogue and Unit tests improvements
+
 # v3.0-3
 
 ## Summary

@@ -462,6 +462,11 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Thu Jul 16 2020 julien.leduc (at) cern.ch - 3.1-1
+- Corrected bugs on cta-objectstore-create-missing-repack-index tool
+- Corrected a bug that caused crash of all tapeservers while scheduling
+- Catalogue schema version 3.1 : addition of a new index on the TAPE table
+- Catalogue and Unit tests improvements
 * Wed Jun 24 2020 julien.leduc (at) cern.ch - 3.0-3
 - The cta-statistics-update tool updates tape statistics one by one
 * Wed Jun 24 2020 julien.leduc (at) cern.ch - 3.0-2
