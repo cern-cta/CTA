@@ -462,6 +462,8 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Fri Jul 17 2020 steven.murray (at) cern.ch - 3.1-2
+- Added database upgrade/changelog script oracle/3.0to3.1.sql
 * Thu Jul 16 2020 julien.leduc (at) cern.ch - 3.1-1
 - Corrected bugs on cta-objectstore-create-missing-repack-index tool
 - Corrected a bug that caused crash of all tapeservers while scheduling

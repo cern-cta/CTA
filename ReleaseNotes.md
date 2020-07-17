@@ -1,3 +1,11 @@
+# v3.1-2
+
+## Summary
+
+### Moficiation
+
+- Added database upgrade/changelog script oracle/3.0to3.1.sql
+
 # v3.1-1
 
 ## Summary
