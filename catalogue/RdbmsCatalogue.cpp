@@ -4821,6 +4821,7 @@ void RdbmsCatalogue::createMountPolicy(
 
   m_groupMountPolicyCache.invalidate();
   m_userMountPolicyCache.invalidate();
+  m_allMountPoliciesCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5445,6 +5446,7 @@ void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
 
   m_groupMountPolicyCache.invalidate();
   m_userMountPolicyCache.invalidate();
+  m_allMountPoliciesCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5584,6 +5586,7 @@ void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructur
 
   m_groupMountPolicyCache.invalidate();
   m_userMountPolicyCache.invalidate();
+  m_allMountPoliciesCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5622,6 +5625,7 @@ void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStr
 
   m_groupMountPolicyCache.invalidate();
   m_userMountPolicyCache.invalidate();
+  m_allMountPoliciesCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5660,6 +5664,7 @@ void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructu
 
   m_groupMountPolicyCache.invalidate();
   m_userMountPolicyCache.invalidate();
+  m_allMountPoliciesCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5698,6 +5703,7 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
 
   m_groupMountPolicyCache.invalidate();
   m_userMountPolicyCache.invalidate();
+  m_allMountPoliciesCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5736,6 +5742,7 @@ void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructu
 
   m_groupMountPolicyCache.invalidate();
   m_userMountPolicyCache.invalidate();
+  m_allMountPoliciesCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5774,6 +5781,7 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 
   m_groupMountPolicyCache.invalidate();
   m_userMountPolicyCache.invalidate();
+  m_allMountPoliciesCache.invalidate();
 }
 
 //------------------------------------------------------------------------------

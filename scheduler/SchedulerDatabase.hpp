@@ -651,23 +651,23 @@ public:
       }
       //The smaller the oldest job start time is, the bigger the age is, hence the inverted comparison
       if(oldestJobStartTime > other.oldestJobStartTime)
-	return true;
+        return true;
       if(oldestJobStartTime < other.oldestJobStartTime)
-	return false;
+        return false;
       /**
        * For the tests, we try to have the priority by 
        * alphabetical order : vid1 / tapepool1 should be treated before vid2/tapepool2,
        * so if this->vid < other.vid : then this > other.vid, so return false
        */
       if(vid < other.vid)
-	return false;
+        return false;
       if(vid > other.vid)
-	return true;
+        return true;
       
       if(tapePool < other.tapePool)
-	return false;
+        return false;
       if(tapePool > other.tapePool)
-	return true;
+        return true;
       
       return false;
     }

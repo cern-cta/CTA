@@ -163,11 +163,11 @@ public:
     auto & catalogue=getCatalogue();
 
     const std::string mountPolicyName = s_mountPolicyName;
-    const uint64_t archivePriority = 1;
-    const uint64_t minArchiveRequestAge = 2;
-    const uint64_t retrievePriority = 3;
-    const uint64_t minRetrieveRequestAge = 4;
-    const uint64_t maxDrivesAllowed = 50;
+    const uint64_t archivePriority = s_archivePriority;
+    const uint64_t minArchiveRequestAge = s_minArchiveRequestAge;
+    const uint64_t retrievePriority = s_retrievePriority;
+    const uint64_t minRetrieveRequestAge = s_minRetrieveRequestAge;
+    const uint64_t maxDrivesAllowed = s_maxDrivesAllowed;
     const std::string mountPolicyComment = "create mount group";
 
     ASSERT_TRUE(catalogue.getMountPolicies().empty());
@@ -209,7 +209,7 @@ public:
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
     cta::common::dataStructures::VirtualOrganization vo;
-    vo.name = "vo";
+    vo.name = s_vo;
     vo.comment = "comment";
     m_catalogue->createVirtualOrganization(s_adminOnAdminHost,vo);
     
@@ -233,7 +233,7 @@ public:
     
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
-    mediaType.capacityInBytes = 10;
+    mediaType.capacityInBytes = s_mediaTypeCapacityInBytes;
     mediaType.cartridge = "cartridge";
     mediaType.comment = "comment";
     catalogue.createMediaType(s_adminOnAdminHost,mediaType);
@@ -269,6 +269,13 @@ protected:
   const bool s_defaultRepackNoRecall = false;
   const uint64_t s_minFilesToWarrantAMount = 5;
   const uint64_t s_minBytesToWarrantAMount = 2*1000*1000;
+  const uint64_t s_archivePriority = 1;
+  const uint64_t s_minArchiveRequestAge = 2; 
+  const uint64_t s_retrievePriority = 3;
+  const uint64_t s_minRetrieveRequestAge = 4; 
+  const uint64_t s_maxDrivesAllowed = 50;
+  const uint64_t s_mediaTypeCapacityInBytes = 10;
+  const std::string s_vo = "vo";
   //TempFile m_tempSqliteFile;
 
 }; // class SchedulerTest
@@ -4451,6 +4458,269 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       ASSERT_EQ(1,job.copyNb);
       ASSERT_EQ(archiveFileSize,job.size);
     }
+  }
+}
+
+TEST_P(SchedulerTest, getSchedulingInformations) {
+  //Queue 2 archive requests in two different logical libraries
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  auto &catalogue = getCatalogue();
+  
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  // Create the environment for the migration to happen (library + tape) 
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, libraryComment);
+  {
+    auto libraries = catalogue.getLogicalLibraries();
+    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
+  }
+  const std::string tapeComment = "Tape comment";
+  bool notDisabled = false;
+  bool notFull = false;
+  bool notReadOnly = false;
+
+  {
+    catalogue::CreateTapeAttributes tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
+  const std::string driveName = "tape_drive";
+
+  catalogue.tapeLabelled(s_vid, driveName);
+  
+  {
+    // This first initialization is normally done by the dataSession function.
+    cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
+  }
+  
+  uint64_t archiveFileId;
+
+  // Queue an archive request.
+  cta::common::dataStructures::EntryLog creationLog;
+  creationLog.host="host2";
+  creationLog.time=0;
+  creationLog.username="admin1";
+  cta::common::dataStructures::DiskFileInfo diskFileInfo;
+  diskFileInfo.gid=GROUP_2;
+  diskFileInfo.owner_uid=CMS_USER;
+  diskFileInfo.path="path/to/file";
+  cta::common::dataStructures::ArchiveRequest request;
+  request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+  request.creationLog=creationLog;
+  request.diskFileInfo=diskFileInfo;
+  request.diskFileID="diskFileID";
+  request.fileSize=100*1000*1000;
+  cta::common::dataStructures::RequesterIdentity requester;
+  requester.name = s_userName;
+  requester.group = "userGroup";
+  request.requester = requester;
+  request.srcURL="srcURL";
+  request.storageClass=s_storageClassName;
+  archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+  scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  
+  {
+    auto schedulerInformations = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulerInformations.empty());
+
+    auto & schedulerInfo = schedulerInformations.front();
+    ASSERT_EQ(s_libraryName,schedulerInfo.getLogicalLibraryName());
+    const auto & potentialMounts = schedulerInfo.getPotentialMounts();
+    
+    ASSERT_FALSE(potentialMounts.empty());
+    const auto & potentialMount = potentialMounts.front();
+
+    ASSERT_EQ(request.fileSize,potentialMount.bytesQueued);
+    ASSERT_EQ(0,potentialMount.capacityInBytes);
+    ASSERT_EQ("",potentialMount.diskSystemSleptFor);
+    ASSERT_EQ(1,potentialMount.filesQueued);
+    ASSERT_EQ(s_maxDrivesAllowed,potentialMount.maxDrivesAllowed);
+    ASSERT_EQ(0,potentialMount.mountCount);
+    ASSERT_EQ(s_minArchiveRequestAge,potentialMount.minRequestAge);
+    ASSERT_EQ(s_archivePriority,potentialMount.priority);
+    ASSERT_EQ(0,potentialMount.ratioOfMountQuotaUsed);
+    ASSERT_EQ(0,potentialMount.sleepTime);
+    ASSERT_FALSE(potentialMount.sleepingMount);
+    ASSERT_EQ(s_tapePoolName,potentialMount.tapePool);
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser,potentialMount.type);
+  }
+
+  {
+    std::unique_ptr<cta::TapeMount> mount;
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    std::unique_ptr<cta::ArchiveMount> archiveMount;
+    archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
+    ASSERT_NE(nullptr, archiveMount.get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_NE(nullptr, archiveJobBatch.front().get());
+    std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
+    archiveJob->tapeFile.blockId = 1;
+    archiveJob->tapeFile.fSeq = 1;
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.copyNb = 1;
+    archiveJob->validate();
+    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
+    std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
+    sDBarchiveJobBatch.emplace(std::move(archiveJob));
+    archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems,failedToReportArchiveJobs, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_EQ(0, archiveJobBatch.size());
+    archiveMount->complete();
+  }
+  
+  ASSERT_TRUE(scheduler.getSchedulingInformations(lc).empty());
+  
+  //Queue a retrieve request for the archived file
+  {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
+    diskFileInfo.path="path/to/file";
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = archiveFileId;
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.dstURL = "dstURL";
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    scheduler.queueRetrieve(s_diskInstance, request, lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+  
+  {
+    auto schedulerInformations = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulerInformations.empty());
+
+    auto & schedulerInfo = schedulerInformations.front();
+    ASSERT_EQ(s_libraryName,schedulerInfo.getLogicalLibraryName());
+    const auto & potentialMounts = schedulerInfo.getPotentialMounts();
+    
+    ASSERT_FALSE(potentialMounts.empty());
+    const auto & potentialMount = potentialMounts.front();
+
+    ASSERT_EQ(request.fileSize,potentialMount.bytesQueued);
+    ASSERT_EQ(s_mediaTypeCapacityInBytes,potentialMount.capacityInBytes);
+    ASSERT_EQ("",potentialMount.diskSystemSleptFor);
+    ASSERT_EQ(1,potentialMount.filesQueued);
+    ASSERT_EQ(s_maxDrivesAllowed,potentialMount.maxDrivesAllowed);
+    ASSERT_EQ(0,potentialMount.mountCount);
+    ASSERT_EQ(s_minRetrieveRequestAge,potentialMount.minRequestAge);
+    ASSERT_EQ(s_retrievePriority,potentialMount.priority);
+    ASSERT_EQ(0,potentialMount.ratioOfMountQuotaUsed);
+    ASSERT_EQ(0,potentialMount.sleepTime);
+    ASSERT_FALSE(potentialMount.sleepingMount);
+    ASSERT_EQ(s_tapePoolName,potentialMount.tapePool);
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,potentialMount.type);
+    ASSERT_EQ(s_libraryName,potentialMount.logicalLibrary);
+    ASSERT_EQ(s_vid,potentialMount.vid);
+    ASSERT_EQ(s_vo,potentialMount.vo);
+  }
+  //Now let's queue an Archive request with a high priority
+  //Modify the mount policy to have an equality between all values
+  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,1);
+  catalogue.modifyMountPolicyArchivePriority(s_adminOnAdminHost,s_mountPolicyName,1);
+  catalogue.modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,1);
+  catalogue.modifyMountPolicyRetrievePriority(s_adminOnAdminHost,s_mountPolicyName,1);
+  
+  {
+    auto schedulerInformations = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulerInformations.empty());
+    
+    // Queue an archive request.
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
+    diskFileInfo.path="path/to/file2";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0xabcd1234);
+    request.creationLog=creationLog;
+    request.diskFileInfo=diskFileInfo;
+    request.diskFileID="diskFileID";
+    request.fileSize=200*1000*1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL="srcURL2";
+    request.storageClass=s_storageClassName;
+    uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+  
+  {
+    auto schedulingInfos = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulingInfos.empty());
+    //We have only one logical library
+    ASSERT_EQ(1,schedulingInfos.size());
+    const auto & schedulingInfo = schedulingInfos.front();
+    //We have two potential mounts
+    auto potentialMounts = schedulingInfo.getPotentialMounts();
+    ASSERT_EQ(2,potentialMounts.size());
+    //The first mount should be an Archive and the second one a Retrieve as Archive is more prior than the Retrieve
+    auto & firstMount = potentialMounts.front();
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser,firstMount.type);
+    potentialMounts.pop_front();
+    auto & secondMount = potentialMounts.front();
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,secondMount.type);
+  }
+  
+  //Change the mount policies to have a Retrieve priority higher than the Archive priority
+  catalogue.modifyMountPolicyRetrievePriority(s_adminOnAdminHost,s_mountPolicyName,10);
+  
+  {
+    auto schedulingInfos = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulingInfos.empty());
+    //We have only one logical library
+    ASSERT_EQ(1,schedulingInfos.size());
+    const auto & schedulingInfo = schedulingInfos.front();
+    //We have two potential mounts
+    auto potentialMounts = schedulingInfo.getPotentialMounts();
+    ASSERT_EQ(2,potentialMounts.size());
+    //The first mount should be an Archive and the second one a Retrieve as Archive is more prior than the Retrieve
+    auto & firstMount = potentialMounts.front();
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,firstMount.type);
+    potentialMounts.pop_front();
+    auto & secondMount = potentialMounts.front();
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser,secondMount.type);
   }
 }
 
