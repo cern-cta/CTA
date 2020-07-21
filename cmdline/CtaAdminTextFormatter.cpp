@@ -1092,4 +1092,9 @@ void TextFormatter::print(const VersionItem & version_item){
   );
 }
 
+void TextFormatter::printSchedulingInfosLsHeader(){
+  push_back("HEADER");
+  push_back("No tabular output available for this command, please use the --json flag.");
+}
+
 }}

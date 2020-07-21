@@ -238,6 +238,7 @@ private:
   admincmdstream_t processDiskSystem_Ls;
   admincmdstream_t processVirtualOrganization_Ls;
   admincmdstream_t processVersion;
+  admincmdstream_t processSchedulingInfos_Ls;
 
   /*!
    * Log an admin command

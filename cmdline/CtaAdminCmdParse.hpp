@@ -220,7 +220,9 @@ const cmdLookup_t cmdLookup = {
    { "virtualorganization",     AdminCmd::CMD_VIRTUALORGANIZATION },
    { "vo",                      AdminCmd::CMD_VIRTUALORGANIZATION },
    { "version",                 AdminCmd::CMD_VERSION},
-   { "v",                 AdminCmd::CMD_VERSION},
+   { "v",                       AdminCmd::CMD_VERSION},
+   { "schedulinginfos",         AdminCmd::CMD_SCHEDULINGINFOS},
+   { "si",                      AdminCmd::CMD_SCHEDULINGINFOS},
 };
 
 
@@ -409,7 +411,8 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 			    "\n\n"
 					 }},
    { AdminCmd::CMD_VIRTUALORGANIZATION,  { "virtualorganization",   "vo",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_VERSION,              { "version",           "v",  { } }},
+   { AdminCmd::CMD_VERSION,              { "version",               "v",  { } }},
+   { AdminCmd::CMD_SCHEDULINGINFOS,      { "schedulinginfos",       "si",  { "ls" } }},
 };
 
 
@@ -642,6 +645,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },
       { }},
    {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
+   {{ AdminCmd::CMD_SCHEDULINGINFOS,      AdminCmd::SUBCMD_LS   }, { }},
 };
 
 
