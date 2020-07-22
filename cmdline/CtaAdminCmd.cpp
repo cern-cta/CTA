@@ -461,21 +461,21 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    if(admincmd == AdminCmd::CMD_NONE)
    {
       // Command has not been set: show generic help
-
       help << "CTA Admin commands:"                                                          << std::endl << std::endl
            << "For each command there is a short version and a long one. Subcommands (add/ch/ls/rm/etc.)" << std::endl
            << "do not have short versions. For detailed help on the options of each subcommand, type:"    << std::endl
            << "  " << m_execname << " <command> help"                                        << std::endl << std::endl;
 
-      for(auto cmd_it = cmdHelp.begin(); cmd_it != cmdHelp.end(); ++cmd_it)
-      {
-         help << "  " << m_execname << ' ' << cmd_it->second.short_help() << std::endl;
+      // List help for each command in lexicographic order
+      std::set<std::string> helpSet;
+      for(auto &helpPair : cmdHelp) {
+         helpSet.insert(helpPair.second.short_help());
       }
-   }
-   else
-   {
+      for(auto &helpItem : helpSet) {
+         help << "  " << m_execname << ' ' << helpItem << std::endl;
+      }
+   } else {
       // Command has been set: show command-specific help
-
       help << m_execname << ' ' << cmdHelp.at(admincmd).help();
    }
 
