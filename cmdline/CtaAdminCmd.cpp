@@ -461,10 +461,12 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    if(admincmd == AdminCmd::CMD_NONE)
    {
       // Command has not been set: show generic help
-      help << "CTA Admin commands:"                                                          << std::endl << std::endl
-           << "For each command there is a short version and a long one. Subcommands (add/ch/ls/rm/etc.)" << std::endl
-           << "do not have short versions. For detailed help on the options of each subcommand, type:"    << std::endl
-           << "  " << m_execname << " <command> help"                                        << std::endl << std::endl;
+      help << "CTA Administration Tool" << std::endl << std::endl
+           << "Usage: " << m_execname << " [--json] <command> [<subcommand> [<option>...]]" << std::endl
+           << "       " << m_execname << " <command> help" << std::endl << std::endl
+           << "By default, the output is in tabular format. If the --json option is supplied, the output is a JSON array." << std::endl
+           << "Commands have a long and short version. Subcommands (add/ch/ls/rm/etc.) do not have short versions. For" << std::endl
+           << "detailed help on the options of each subcommand, type: " << m_execname << " <command> help" << std::endl << std::endl;
 
       // List help for each command in lexicographic order
       std::set<std::string> helpSet;
