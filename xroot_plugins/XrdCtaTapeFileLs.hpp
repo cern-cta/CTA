@@ -58,6 +58,7 @@ private:
   catalogue::ArchiveFileItor    m_tapeFileItor;       //!< Iterator across files which have been archived
   grpc::EndpointMap             m_endpoints;          //!< List of gRPC endpoints
   bool                          m_LookupNamespace;    //!< True if namespace lookup is required
+  bool                          m_ShowSuperseded;     //!< True if superseded files should be included in the output
 
   static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";    //!< Identifier for log messages
 };
@@ -74,6 +75,7 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapeFileLsStream() constructor");
 
   m_LookupNamespace = true;
+  m_ShowSuperseded  = requestMsg.has_flag(OptionBoolean::SHOW_SUPERSEDED);
 
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = requestMsg.getRequired(OptionString::VID);
@@ -88,6 +90,9 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
 
     for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
       Data record;
+
+      // Skip superseded files unless explicitly requested to show them
+      if(!(m_ShowSuperseded || jt->supersededByVid.empty())) continue;
 
       // Archive file
       auto af = record.mutable_tfls_item()->mutable_af();
