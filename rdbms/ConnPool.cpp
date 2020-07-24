@@ -37,22 +37,6 @@ ConnPool::ConnPool(const Login &login, const uint64_t maxNbConns):
 }
 
 //------------------------------------------------------------------------------
-// createConns
-//------------------------------------------------------------------------------
-void ConnPool::createConns(const uint64_t nbConns) {
-  try {
-    for(uint64_t i = 0; i < nbConns; i++) {
-      auto connAndStmts = cta::make_unique<ConnAndStmts>();
-      connAndStmts->conn = m_connFactory->create();
-      connAndStmts->stmtPool = cta::make_unique<StmtPool>();
-      m_connsAndStmts.push_back(std::move(connAndStmts));
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // getConn
 //------------------------------------------------------------------------------
 Conn ConnPool::getConn() {
