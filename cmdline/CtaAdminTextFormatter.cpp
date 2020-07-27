@@ -925,7 +925,7 @@ void TextFormatter::print(const TapeFileLsItem &tfls_item) {
 
   if(!tfls_item.af().checksum().empty()) {
     const google::protobuf::EnumDescriptor *descriptor = cta::common::ChecksumBlob::Checksum::Type_descriptor();
-    std::string name = descriptor->FindValueByNumber(tfls_item.af().checksum().begin()->type())->name();
+    checksumType  = descriptor->FindValueByNumber(tfls_item.af().checksum().begin()->type())->name();
     checksumValue = "0x" + tfls_item.af().checksum().begin()->value();
   }
 
