@@ -109,6 +109,13 @@ private:
   rdbms::Rset m_rset;
 
   /**
+   * Releases the database resources.
+   *
+   * This method is idempotent.
+   */
+  void releaseDbResources() noexcept;
+
+  /**
    * Builds ArchiveFile objects from a stream of tape files ordered by archive
    * ID and then copy number.
    */

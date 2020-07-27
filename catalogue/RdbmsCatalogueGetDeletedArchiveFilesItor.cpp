@@ -72,6 +72,9 @@ namespace catalogue {
   }
 } // anonymous namespace
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 RdbmsCatalogueGetDeletedArchiveFilesItor::RdbmsCatalogueGetDeletedArchiveFilesItor(
   log::Logger &log,
   rdbms::ConnPool &connPool,
@@ -225,6 +228,7 @@ RdbmsCatalogueGetDeletedArchiveFilesItor::RdbmsCatalogueGetDeletedArchiveFilesIt
     }
 
     m_rsetIsEmpty = !m_rset.next();
+    if(m_rsetIsEmpty) releaseDbResources();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -233,9 +237,25 @@ RdbmsCatalogueGetDeletedArchiveFilesItor::RdbmsCatalogueGetDeletedArchiveFilesIt
   }
 }
 
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
 RdbmsCatalogueGetDeletedArchiveFilesItor::~RdbmsCatalogueGetDeletedArchiveFilesItor() {
+  releaseDbResources();
 }
 
+//------------------------------------------------------------------------------
+// releaseDbResources
+//------------------------------------------------------------------------------
+void RdbmsCatalogueGetDeletedArchiveFilesItor::releaseDbResources() noexcept {
+  m_rset.reset();
+  m_stmt.reset();
+  m_conn.reset();
+}
+
+//------------------------------------------------------------------------------
+// hasMore
+//------------------------------------------------------------------------------
 bool RdbmsCatalogueGetDeletedArchiveFilesItor::hasMore() {
   m_hasMoreHasBeenCalled = true;
 
@@ -251,7 +271,9 @@ bool RdbmsCatalogueGetDeletedArchiveFilesItor::hasMore() {
   }
 }
 
-
+//------------------------------------------------------------------------------
+// next
+//------------------------------------------------------------------------------
 common::dataStructures::DeletedArchiveFile RdbmsCatalogueGetDeletedArchiveFilesItor::next() {
   try {
     if(!m_hasMoreHasBeenCalled) {
@@ -280,6 +302,7 @@ common::dataStructures::DeletedArchiveFile RdbmsCatalogueGetDeletedArchiveFilesI
       auto completeArchiveFile = m_archiveFileBuilder.append(archiveFile);
 
       m_rsetIsEmpty = !m_rset.next();
+      if(m_rsetIsEmpty) releaseDbResources();
 
       // If the ArchiveFile object under construction is complete
       if (nullptr != completeArchiveFile.get()) {

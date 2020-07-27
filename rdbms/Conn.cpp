@@ -52,6 +52,13 @@ Conn::Conn(Conn &&other):
 // destructor
 //------------------------------------------------------------------------------
 Conn::~Conn() noexcept {
+  reset();
+}
+
+//------------------------------------------------------------------------------
+// reset
+//------------------------------------------------------------------------------
+void Conn::reset() noexcept {
   try {
     // If this smart database connection currently points to a database connection then return it back to its pool
     if(nullptr != m_pool && nullptr != m_connAndStmts) {
@@ -59,6 +66,9 @@ Conn::~Conn() noexcept {
     }
   } catch(...) {
   }
+
+  m_pool = nullptr;
+  m_connAndStmts.reset();
 }
 
 //------------------------------------------------------------------------------

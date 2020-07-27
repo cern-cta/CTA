@@ -76,6 +76,14 @@ public:
   ~Stmt() noexcept;
 
   /**
+   * Reset the statment by returning any owned statement back to its statment
+   * pool.
+   *
+   * This method is idempotent.
+   */
+  void reset() noexcept;
+
+  /**
    * Deletion of the copy assignment operator.
    */
   Stmt &operator=(const Stmt &) = delete;
