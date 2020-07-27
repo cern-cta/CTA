@@ -92,6 +92,11 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       Data record;
 
       // Skip superseded files unless explicitly requested to show them
+      //
+      // Note: This could be implemented more efficiently by adding a showSuperseded flag to TapeFileSearchCriteria and
+      //       filtering in the DB query in RdbmsCatalogueGetArchiveFilesItor. However, it is likely that the superseded
+      //       files concept will be replaced by something else. Keeping the implementation here makes it easier to
+      //       change the implementation.
       if(!(m_ShowSuperseded || jt->supersededByVid.empty())) continue;
 
       // Archive file
