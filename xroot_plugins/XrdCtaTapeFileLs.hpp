@@ -77,8 +77,23 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   m_LookupNamespace = true;
   m_ShowSuperseded  = requestMsg.has_flag(OptionBoolean::SHOW_SUPERSEDED);
 
+
+  bool has_any = false; // set to true if at least one optional option is set
+
+  // Get the search criteria from the optional options
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.vid = requestMsg.getRequired(OptionString::VID);
+
+  searchCriteria.vid         = requestMsg.getOptional(OptionString::VID,      &has_any);
+
+  // Disk file IDs can be a list or a single ID
+  searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
+  auto diskFileId            = requestMsg.getOptional(OptionStr::FID,         &has_any);
+  if(diskFileId) searchCriteria.diskFileIds.push_back(*diskFileId);
+
+  if(!has_any) {
+    throw cta::exception::UserError("Must specify at least one search option");
+  }
+
   m_tapeFileItor = m_catalogue.getArchiveFilesItor(searchCriteria);
 }
 

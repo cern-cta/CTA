@@ -84,6 +84,10 @@ struct TapeFileSearchCriteria {
    */
   optional<std::string> tapePool;
   
+  /**
+   * List of disk file IDs to search for.
+   */
+  optional<std::vector<std::string>> diskFileIds;
 }; // struct TapeFileSearchCriteria
 
 } // namespace catalogue
