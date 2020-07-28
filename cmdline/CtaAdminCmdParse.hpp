@@ -431,7 +431,7 @@ const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",        
 const Option opt_encryptionkeyname    { Option::OPT_STR,  "--encryptionkeyname",     "-k",   " <encryption_key_name>" };
 const Option opt_extended             { Option::OPT_FLAG, "--extended",              "-x",   "" };
 const Option opt_fid                  { Option::OPT_STR,  "--fxid",                  "-f",   " <eos_fxid>" };
-const Option opt_fidfile              { Option::OPT_STR_LIST, "--fidfile",           "-i",   " <filename>" };
+const Option opt_fidfile              { Option::OPT_STR_LIST, "--fidfile",           "-F",   " <filename>" };
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
 const Option opt_firstfseq            { Option::OPT_UINT, "--firstfseq",             "-f",   " <first_fseq>" };
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
@@ -599,7 +599,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_vid, opt_force.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
-      { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_lookupns.optional(), opt_show_superseded.optional() }},
+      { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_show_superseded.optional(), opt_lookupns.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},
