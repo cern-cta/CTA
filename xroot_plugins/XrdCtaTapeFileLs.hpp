@@ -83,11 +83,10 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   // Get the search criteria from the optional options
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
 
-  searchCriteria.vid         = requestMsg.getOptional(OptionString::VID,      &has_any);
-
+  searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
   // Disk file IDs can be a list or a single ID
+  auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
-  auto diskFileId            = requestMsg.getOptional(OptionString::FXID,     &has_any);
   if(diskFileId) {
     if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
 
@@ -99,6 +98,7 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
     }
     searchCriteria.diskFileIds->push_back(std::to_string(fid));
   }
+  searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE);
 
   if(!has_any) {
     throw cta::exception::UserError("Must specify at least one search option");

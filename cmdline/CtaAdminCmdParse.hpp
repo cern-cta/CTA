@@ -181,8 +181,6 @@ private:
 const cmdLookup_t cmdLookup = {
    { "admin",                   AdminCmd::CMD_ADMIN },
    { "ad",                      AdminCmd::CMD_ADMIN },
-   { "archivefile",             AdminCmd::CMD_ARCHIVEFILE },
-   { "af",                      AdminCmd::CMD_ARCHIVEFILE },
    { "archiveroute",            AdminCmd::CMD_ARCHIVEROUTE },
    { "ar",                      AdminCmd::CMD_ARCHIVEROUTE },
    { "drive",                   AdminCmd::CMD_DRIVE },
@@ -354,7 +352,6 @@ const std::map<std::string, OptionStrList::Key> strListOptions = {
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_ADMIN,                { "admin",                "ad",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" } }},
    { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls", "ch", "rm" },
                         "\n  This is a synchronous command that sets and reads back the state of one or\n"
@@ -442,7 +439,7 @@ const Option opt_force_flag           { Option::OPT_FLAG, "--force",            
 const Option opt_gid                  { Option::OPT_UINT, "--gid",                   "-g",   " <group_id>" };
 const Option opt_hostname_alias       { Option::OPT_STR,  "--name",                  "-n",   " <host_name>", "--hostname" };
 const Option opt_input                { Option::OPT_STR,  "--input",                 "-i",   " <\"zero\" or \"urandom\">" };
-const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <instance_name>" };
+const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <disk_instance>" };
 const Option opt_justarchive          { Option::OPT_FLAG, "--justarchive",           "-a",   "" };
 const Option opt_justmove             { Option::OPT_FLAG, "--justmove",              "-m",   "" };
 const Option opt_justaddcopies        { Option::OPT_FLAG, "--justaddcopies",         "-a",   "" };
@@ -505,12 +502,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_CH    }, { opt_username, opt_comment }},
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_RM    }, { opt_username }},
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_ARCHIVEFILE,          AdminCmd::SUBCMD_LS    },
-      { opt_archivefileid.optional(), opt_diskid.optional(), opt_copynb.optional(),
-        opt_vid.optional(), opt_tapepool.optional(), opt_owner_uid.optional(), opt_gid.optional(),
-        opt_storageclass.optional(), opt_path.optional(), opt_instance.optional(), opt_all.optional(),
-        opt_summary.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_ADD   },
       { opt_storageclass, opt_copynb, opt_tapepool, opt_comment }},
@@ -608,7 +599,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_vid, opt_force.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
-      { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_lookupns.optional(), opt_show_superseded.optional() }},
+      { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_lookupns.optional(), opt_show_superseded.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},
