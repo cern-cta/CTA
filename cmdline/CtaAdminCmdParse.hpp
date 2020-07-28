@@ -341,7 +341,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
  * Map string list options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionStrList::Key> strListOptions = {
-   { "--fidfile",               OptionStrList::FILE_ID },
+   { "--fxidfile",              OptionStrList::FILE_ID },
    { "--vidfile",               OptionStrList::VID }
 };
 
@@ -384,7 +384,11 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
-   { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls" } }},
+   { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls" },
+                            "  Tape files can be listed by VID or by EOS disk instance + EOS disk file ID.\n"
+                            "  Disk file IDs should be provided in hexadecimal (fxid). The --fxidfile option\n"
+                            "  takes a file in the same format as the output of 'eos find --fid <path>'\n\n"
+   }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" },
 			  "\n  This command allows to manage disk systems (useful for the backpressure).\n"
@@ -431,7 +435,7 @@ const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",        
 const Option opt_encryptionkeyname    { Option::OPT_STR,  "--encryptionkeyname",     "-k",   " <encryption_key_name>" };
 const Option opt_extended             { Option::OPT_FLAG, "--extended",              "-x",   "" };
 const Option opt_fid                  { Option::OPT_STR,  "--fxid",                  "-f",   " <eos_fxid>" };
-const Option opt_fidfile              { Option::OPT_STR_LIST, "--fidfile",           "-F",   " <filename>" };
+const Option opt_fidfile              { Option::OPT_STR_LIST, "--fxidfile",          "-F",   " <filename>" };
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
 const Option opt_firstfseq            { Option::OPT_UINT, "--firstfseq",             "-f",   " <first_fseq>" };
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
