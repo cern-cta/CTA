@@ -87,9 +87,6 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   m_hasMoreHasBeenCalled(false),
   m_archiveFileBuilder(log)
 {
-  if(isSetAndEmpty(searchCriteria.vid)) throw exception::UserError("VID cannot be an empty string");
-  if(isSetAndEmpty(searchCriteria.diskFileIds)) throw exception::UserError("Disk file ID list cannot be empty");
-
   try {
     std::string sql =
       "SELECT "

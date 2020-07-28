@@ -87,8 +87,18 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
 
   // Disk file IDs can be a list or a single ID
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
-  auto diskFileId            = requestMsg.getOptional(OptionStr::FID,         &has_any);
-  if(diskFileId) searchCriteria.diskFileIds.push_back(*diskFileId);
+  auto diskFileId            = requestMsg.getOptional(OptionString::FXID,     &has_any);
+  if(diskFileId) {
+    if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
+
+    // cta-admin converts the list from EOS fxid (hex) to fid (dec). In the case of the 
+    // single option on the command line we need to do the conversion ourselves.
+    auto fid = strtol(diskFileId->c_str(), nullptr, 16);
+    if(fid < 1 || fid == LONG_MAX) {
+       throw cta::exception::UserError(*diskFileId + " is not a valid file ID");
+    }
+    searchCriteria.diskFileIds->push_back(std::to_string(fid));
+  }
 
   if(!has_any) {
     throw cta::exception::UserError("Must specify at least one search option");

@@ -314,7 +314,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--diskid",                OptionString::DISKID },
    { "--drive",                 OptionString::DRIVE },
    { "--encryptionkeyname",     OptionString::ENCRYPTION_KEY_NAME },
-   { "--fid",                   OptionString::FID },
+   { "--fxid",                  OptionString::FXID },
    { "--file",                  OptionString::FILENAME },
    { "--hostname",              OptionString::HOSTNAME },
    { "--input",                 OptionString::INPUT },
@@ -433,7 +433,7 @@ const Option opt_drivename_cmd        { Option::OPT_CMD,  "--drive",            
 const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",             "-e",   " <\"true\" or \"false\">" };
 const Option opt_encryptionkeyname    { Option::OPT_STR,  "--encryptionkeyname",     "-k",   " <encryption_key_name>" };
 const Option opt_extended             { Option::OPT_FLAG, "--extended",              "-x",   "" };
-const Option opt_fid                  { Option::OPT_STR,  "--fid",                   "-f",   " <eos_fxid>" };
+const Option opt_fid                  { Option::OPT_STR,  "--fxid",                  "-f",   " <eos_fxid>" };
 const Option opt_fidfile              { Option::OPT_STR_LIST, "--fidfile",           "-i",   " <filename>" };
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
 const Option opt_firstfseq            { Option::OPT_UINT, "--firstfseq",             "-f",   " <first_fseq>" };
