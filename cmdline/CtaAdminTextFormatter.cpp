@@ -903,7 +903,7 @@ void TextFormatter::printTapeFileLsHeader() {
     "fseq",
     "block id",
     "instance",
-    "disk id",
+    "disk fxid",
     "size",
     "checksum type",
     "checksum value",
@@ -911,8 +911,8 @@ void TextFormatter::printTapeFileLsHeader() {
     "owner",
     "group",
     "creation time",
-    "sc vid", // superceded
-    "sc fseq",
+    "ss vid", // superseded
+    "ss fseq",
     "path"
   );
 }
@@ -926,8 +926,11 @@ void TextFormatter::print(const TapeFileLsItem &tfls_item) {
   if(!tfls_item.af().checksum().empty()) {
     const google::protobuf::EnumDescriptor *descriptor = cta::common::ChecksumBlob::Checksum::Type_descriptor();
     checksumType  = descriptor->FindValueByNumber(tfls_item.af().checksum().begin()->type())->name();
-    checksumValue = "0x" + tfls_item.af().checksum().begin()->value();
+    checksumValue = tfls_item.af().checksum().begin()->value();
   }
+  auto fid = strtol(tfls_item.df().disk_id().c_str(), nullptr, 10);
+  std::stringstream fxid;
+  fxid << std::hex << fid;
 
   push_back(
     tfls_item.af().archive_id(),
@@ -936,7 +939,7 @@ void TextFormatter::print(const TapeFileLsItem &tfls_item) {
     tfls_item.tf().f_seq(),
     tfls_item.tf().block_id(),
     tfls_item.df().disk_instance(),
-    tfls_item.df().disk_id(),
+    fxid.str(),
     dataSizeToStr(tfls_item.af().size()),
     checksumType,
     checksumValue,
