@@ -85,7 +85,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   m_searchCriteria(searchCriteria),
   m_rsetIsEmpty(true),
   m_hasMoreHasBeenCalled(false),
-  m_archiveFileBuilder(log) {
+  m_archiveFileBuilder(log)
+{
+  if(isSetAndEmpty(searchCriteria.vid)) throw exception::UserError("VID cannot be an empty string");
+  if(isSetAndEmpty(searchCriteria.diskFileIds)) throw exception::UserError("Disk file ID list cannot be empty");
+
   try {
     std::string sql =
       "SELECT "
@@ -129,7 +133,8 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       searchCriteria.storageClass   ||
       searchCriteria.vid            ||
       searchCriteria.tapeFileCopyNb ||
-      searchCriteria.tapePool;
+      searchCriteria.tapePool ||
+      searchCriteria.diskFileIds;
 
     if(thereIsAtLeastOneSearchCriteria) {
     sql += " WHERE ";
@@ -179,6 +184,17 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     if(searchCriteria.tapePool) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    }
+    if(searchCriteria.diskFileIds) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "ARCHIVE_FILE.DISK_FILE_ID IN ";
+      char delim = '(';
+      for(auto &diskFileId : searchCriteria.diskFileIds.value()) {
+        sql += delim + diskFileId;
+        delim = ',';
+      }
+      sql += ')';
+      addedAWhereConstraint = true;
     }
 
     // Order by FSEQ if we are listing the contents of a tape, else order by
