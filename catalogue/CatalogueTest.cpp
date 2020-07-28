@@ -8615,6 +8615,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existance_archiveFileId)
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
+#if 0
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_group_without_instance) {
   using namespace cta;
 
@@ -8736,6 +8737,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_tape_pool) {
 
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
+#endif
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_vid) {
   using namespace cta;
@@ -9027,6 +9029,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     }
   }
 
+#if 0
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.archiveFileId = 1;
@@ -9055,6 +9058,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->vid);
   }
+#endif
 
   {
     auto archiveFileItor = m_catalogue->getArchiveFilesItor();
@@ -9393,6 +9397,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles * m_storageClassDualCopy.nbCopies, summary.totalFiles);
   }
 
+#if 0
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = diskInstance;
@@ -9445,6 +9450,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles * m_storageClassDualCopy.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles * m_storageClassDualCopy.nbCopies, summary.totalFiles);
   }
+#endif
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
@@ -9469,6 +9475,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
+#if 0
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.tapeFileCopyNb = 1;
@@ -9504,6 +9511,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
+#endif
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
@@ -9909,6 +9917,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     }
   }
 
+#if 0
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.archiveFileId = 1;
@@ -9937,6 +9946,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->vid);
   }
+#endif
 
   auto afidToSeq = [](const uint64_t l_nbTot, const uint64_t l_batchsize, const uint64_t l_afid, uint64_t &l_seq1, uint64_t &l_seq2) {
     l_seq1 = l_afid;
@@ -10304,6 +10314,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
 
+#if 0
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = diskInstance;
@@ -10317,6 +10328,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
+#endif
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
@@ -10331,6 +10343,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
 
+#if 0
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.diskInstance = diskInstance;
@@ -10369,6 +10382,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
+#endif
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
@@ -10393,6 +10407,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
+#if 0
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.tapeFileCopyNb = 1;
@@ -10428,6 +10443,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
+#endif
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;

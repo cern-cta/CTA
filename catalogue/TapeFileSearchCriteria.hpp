@@ -28,15 +28,11 @@ namespace catalogue {
 
 /**
  * The collection of criteria used to select a set of tape files.
- *
- * An tape file is selected if it meets all of the specified criteria.
- *
+ * A tape file is selected if it meets all of the specified criteria.
  * A criterion is only considered specified if it has been set.
- *
  * Please note that no wild cards, for example '*' or '%', are supported.
  */
 struct TapeFileSearchCriteria {
-
   /**
    * The unique identifier of an archive file.
    */
@@ -48,47 +44,22 @@ struct TapeFileSearchCriteria {
   optional<std::string> diskInstance;
 
   /**
-   * The unique identifier of a disk file within its disk instance.
-   *
-   * The combination of diskInstance and diskFileId is unique across all disk
-   * instances.
-   */
-  optional<std::string> diskFileId;
-
-  /**
-   * The owner of a file within its disk instance.
-   */
-  optional<uint64_t> diskFileOwnerUid;
-
-  /**
-   * The group of a file within its disk instance.
-   */
-  optional<uint64_t> diskFileGid;
-
-  /**
-   * The storage class name of the file.
-   */
-  optional<std::string> storageClass;
-
-  /**
    * The volume identifier of a tape.
    */
   optional<std::string> vid;
 
   /**
-   * The copy number of a tape file.
-   */
-  optional<uint64_t> tapeFileCopyNb;
-
-  /**
-   * The name of a tape pool.
-   */
-  optional<std::string> tapePool;
-  
-  /**
-   * List of disk file IDs to search for.
+   * List of disk file IDs.
+   *
+   * These are given as a list of strings in DECIMAL format. EOS provides the fxids in hex format. The parsing and
+   * conversion into decimal is done in the cta-admin client, ready to be built into a SQL query string.
    */
   optional<std::vector<std::string>> diskFileIds;
+
+  /**
+   * Include superseded files in the output?
+   */
+  optional<bool> showSuperseded;
 }; // struct TapeFileSearchCriteria
 
 } // namespace catalogue

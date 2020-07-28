@@ -6522,58 +6522,8 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
     }
   }
 
-  if(searchCriteria.diskFileGid && !searchCriteria.diskInstance) {
-    throw exception::UserError(std::string("Disk file group ") + std::to_string(searchCriteria.diskFileGid.value()) +
-      " is ambiguous without disk instance name");
-  }
-
-  if(searchCriteria.diskInstance && searchCriteria.diskFileGid) {
-    if(!diskFileGroupExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileGid.value())) {
-      throw exception::UserError(std::string("Disk file group ") + searchCriteria.diskInstance.value() + "::" +
-        std::to_string(searchCriteria.diskFileGid.value()) + " does not exist");
-    }
-  }
-
-  if(searchCriteria.diskFileId && !searchCriteria.diskInstance) {
-    throw exception::UserError(std::string("Disk file ID ") + searchCriteria.diskFileId.value() + " is ambiguous "
-      "without disk instance name");
-  }
-
-  if(searchCriteria.diskInstance && searchCriteria.diskFileId) {
-    if(!diskFileIdExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileId.value())) {
-      throw exception::UserError(std::string("Disk file ID ") + searchCriteria.diskInstance.value() + "::" +
-        searchCriteria.diskFileId.value() + " does not exist");
-    }
-  }
-
-  if(searchCriteria.diskFileOwnerUid && !searchCriteria.diskInstance) {
-    throw exception::UserError(std::string("Disk file user ") + std::to_string(searchCriteria.diskFileOwnerUid.value()) +
-      " is ambiguous without disk instance name");
-  }
-
-  if(searchCriteria.diskInstance && searchCriteria.diskFileOwnerUid) {
-    if(!diskFileUserExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileOwnerUid.value())) {
-      throw exception::UserError(std::string("Disk file user ") + searchCriteria.diskInstance.value() + "::" +
-        std::to_string(searchCriteria.diskFileOwnerUid.value()) + " does not exist");
-    }
-  }
-
-  if(searchCriteria.storageClass && !searchCriteria.diskInstance) {
-    throw exception::UserError(std::string("Storage class ") + searchCriteria.storageClass.value() + " is ambiguous "
-      "without disk instance name");
-  }
-
-  if(searchCriteria.diskInstance && searchCriteria.storageClass) {
-    if(!storageClassExists(conn, searchCriteria.storageClass.value())) {
-      throw exception::UserError(std::string("Storage class ") + "::" +
-        searchCriteria.storageClass.value() + " does not exist");
-    }
-  }
-
-  if(searchCriteria.tapePool) {
-    if(!tapePoolExists(conn, searchCriteria.tapePool.value())) {
-      throw exception::UserError(std::string("Tape pool ") + searchCriteria.tapePool.value() + " does not exist");
-    }
+  if(searchCriteria.diskFileIds && !searchCriteria.diskInstance) {
+    throw exception::UserError(std::string("Disk file IDs are ambiguous without disk instance name"));
   }
 
   if(searchCriteria.vid) {
@@ -6750,6 +6700,7 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
 
+#if 0
     if(
       searchCriteria.archiveFileId  ||
       searchCriteria.diskInstance   ||
@@ -6808,9 +6759,11 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       if(addedAWhereConstraint) sql += " AND ";
       sql += "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
     }
+#endif
 
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
+#if 0
     if(searchCriteria.archiveFileId) {
       stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
@@ -6838,9 +6791,10 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     if(searchCriteria.tapePool) {
       stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     }
+#endif
     auto rset = stmt.executeQuery();
     if(!rset.next()) {
-      throw exception::Exception("SELECT COUNT statement did not returned a row");
+      throw exception::Exception("SELECT COUNT statement did not return a row");
     }
 
     common::dataStructures::ArchiveFileSummary summary;
