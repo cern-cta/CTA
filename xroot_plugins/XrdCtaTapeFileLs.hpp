@@ -58,7 +58,6 @@ private:
   catalogue::ArchiveFileItor    m_tapeFileItor;       //!< Iterator across files which have been archived
   grpc::EndpointMap             m_endpoints;          //!< List of gRPC endpoints
   bool                          m_LookupNamespace;    //!< True if namespace lookup is required
-  bool                          m_ShowSuperseded;     //!< True if superseded files should be included in the output
 
   static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";    //!< Identifier for log messages
 };
@@ -75,13 +74,13 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapeFileLsStream() constructor");
 
   m_LookupNamespace = true;
-  m_ShowSuperseded  = requestMsg.has_flag(OptionBoolean::SHOW_SUPERSEDED);
-
 
   bool has_any = false; // set to true if at least one optional option is set
 
   // Get the search criteria from the optional options
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
+
+  searchCriteria.showSuperseded = requestMsg.has_flag(OptionBoolean::SHOW_SUPERSEDED);
 
   searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
   // Disk file IDs can be a list or a single ID
@@ -98,6 +97,7 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
     }
     searchCriteria.diskFileIds->push_back(std::to_string(fid));
   }
+  // Disk instance on its own does not give a valid set of search criteria (no &has_any)
   searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE);
 
   if(!has_any) {
@@ -115,14 +115,6 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
 
     for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
       Data record;
-
-      // Skip superseded files unless explicitly requested to show them
-      //
-      // Note: This could be implemented more efficiently by adding a showSuperseded flag to TapeFileSearchCriteria and
-      //       filtering in the DB query in RdbmsCatalogueGetArchiveFilesItor. However, it is likely that the superseded
-      //       files concept will be replaced by something else. Keeping the implementation here makes it easier to
-      //       change the implementation.
-      if(!(m_ShowSuperseded || jt->supersededByVid.empty())) continue;
 
       // Archive file
       auto af = record.mutable_tfls_item()->mutable_af();

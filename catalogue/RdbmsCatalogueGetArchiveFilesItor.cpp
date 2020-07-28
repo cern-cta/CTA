@@ -162,7 +162,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     }
     if(hideSuperseded) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE_FILE.SUPERSEDED_BY_VID != ''";
+      sql += "TAPE_FILE.SUPERSEDED_BY_VID IS NULL";
       addedAWhereConstraint = true;
     }
 
