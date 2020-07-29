@@ -8628,19 +8628,6 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_id_without_instanc
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existent_disk_file_id) {
-  using namespace cta;
-  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
-
-  catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.diskInstance = "non_existent_disk_instance";
-  std::vector<std::string> diskFileIds;
-  diskFileIds.push_back("non_existent_disk_file_id");
-  searchCriteria.diskFileIds = diskFileIds;
-
-  ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
-}
-
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existent_storage_class_without_disk_instance) {
   using namespace cta;
 
@@ -9768,7 +9755,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     searchCriteria.diskInstance = diskInstance;
     std::vector<std::string> diskFileIds;
     diskFileIds.push_back("12345678");
-    searchCriteria.diskFileId = diskFileIds;
+    searchCriteria.diskFileIds = diskFileIds;
     searchCriteria.vid = tape1.vid;
 
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);

@@ -6681,6 +6681,10 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFilesForRepackItor(const std::string &
 
 //------------------------------------------------------------------------------
 // getTapeFileSummary
+//
+// NOTE: As "archivefile ls" has been deprecated, there is no longer a way for
+//       operators to request a tape file summary. (Use "tape ls" instead).
+//       This method is used exclusively by the unit tests.
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
   const TapeFileSearchCriteria &searchCriteria) const
@@ -6746,26 +6750,18 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       addedAWhereConstraint = true;
     }
 
-    // Order by FSEQ if we are listing the contents of a tape, else order by
-    // archive file ID
-    if(searchCriteria.vid) {
-      sql += " ORDER BY FSEQ";
-    } else {
-      sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
-    }
-
-    m_conn = connPool.getConn();
-    m_stmt = m_conn.createStmt(sql);
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
     if(searchCriteria.archiveFileId) {
-      m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
+      stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
     if(searchCriteria.diskInstance) {
-      m_stmt.bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
+      stmt.bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
     }
     if(searchCriteria.vid) {
-      m_stmt.bindString(":VID", searchCriteria.vid.value());
+      stmt.bindString(":VID", searchCriteria.vid.value());
     }
-    m_rset = m_stmt.executeQuery();
+    auto rset = stmt.executeQuery();
 
     if(!rset.next()) {
       throw exception::Exception("SELECT COUNT statement did not return a row");
