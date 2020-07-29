@@ -6739,7 +6739,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       std::string delim = "('";
       for(auto &diskFileId : searchCriteria.diskFileIds.value()) {
         sql += delim + diskFileId;
-        sql += delim + diskFileId;
         delim = "','";
       }
       sql += "')";
