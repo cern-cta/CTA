@@ -152,12 +152,12 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     if(searchCriteria.diskFileIds) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_ID IN ";
-      char delim = '(';
+      std::string delim = "('";
       for(auto &diskFileId : searchCriteria.diskFileIds.value()) {
         sql += delim + diskFileId;
-        delim = ',';
+        delim = "','";
       }
-      sql += ')';
+      sql += "')";
       addedAWhereConstraint = true;
     }
     if(hideSuperseded) {
