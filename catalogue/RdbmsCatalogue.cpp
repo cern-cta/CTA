@@ -6683,7 +6683,8 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFilesForRepackItor(const std::string &
 // getTapeFileSummary
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
-  const TapeFileSearchCriteria &searchCriteria) const {
+  const TapeFileSearchCriteria &searchCriteria) const
+{
   try {
     std::string sql =
       "SELECT "
@@ -6700,17 +6701,15 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
 
-#if 0
-    if(
+    const bool hideSuperseded = searchCriteria.showSuperseded ? !*searchCriteria.showSuperseded : false;
+    const bool thereIsAtLeastOneSearchCriteria =
       searchCriteria.archiveFileId  ||
       searchCriteria.diskInstance   ||
-      searchCriteria.diskFileId     ||
-      searchCriteria.diskFileOwnerUid   ||
-      searchCriteria.diskFileGid  ||
-      searchCriteria.storageClass   ||
       searchCriteria.vid            ||
-      searchCriteria.tapeFileCopyNb ||
-      searchCriteria.tapePool) {
+      searchCriteria.diskFileIds    ||
+      hideSuperseded;
+
+    if(thereIsAtLeastOneSearchCriteria) {
       sql += " WHERE ";
     }
 
@@ -6725,74 +6724,49 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       sql += "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.diskFileId) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
-      addedAWhereConstraint = true;
-    }
-    if(searchCriteria.diskFileOwnerUid) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_UID = :DISK_FILE_UID";
-      addedAWhereConstraint = true;
-    }
-    if(searchCriteria.diskFileGid) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_GID = :DISK_FILE_GID";
-      addedAWhereConstraint = true;
-    }
-    if(searchCriteria.storageClass) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-      addedAWhereConstraint = true;
-    }
     if(searchCriteria.vid) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "TAPE_FILE.VID = :VID";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.tapeFileCopyNb) {
+    if(searchCriteria.diskFileIds) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE_FILE.COPY_NB = :TAPE_FILE_COPY_NB";
+      sql += "ARCHIVE_FILE.DISK_FILE_ID IN ";
+      char delim = '(';
+      for(auto &diskFileId : searchCriteria.diskFileIds.value()) {
+        sql += delim + diskFileId;
+        delim = ',';
+      }
+      sql += ')';
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.tapePool) {
+    if(hideSuperseded) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+      sql += "TAPE_FILE.SUPERSEDED_BY_VID IS NULL";
+      addedAWhereConstraint = true;
     }
-#endif
 
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql);
-#if 0
+    // Order by FSEQ if we are listing the contents of a tape, else order by
+    // archive file ID
+    if(searchCriteria.vid) {
+      sql += " ORDER BY FSEQ";
+    } else {
+      sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
+    }
+
+    m_conn = connPool.getConn();
+    m_stmt = m_conn.createStmt(sql);
     if(searchCriteria.archiveFileId) {
-      stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
+      m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
     if(searchCriteria.diskInstance) {
-      stmt.bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
-    }
-    if(searchCriteria.diskFileId) {
-      stmt.bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
-    }
-    if(searchCriteria.diskFileOwnerUid) {
-      stmt.bindUint64(":DISK_FILE_UID", searchCriteria.diskFileOwnerUid.value());
-    }
-    if(searchCriteria.diskFileGid) {
-      stmt.bindUint64(":DISK_FILE_GID", searchCriteria.diskFileGid.value());
-    }
-    if(searchCriteria.storageClass) {
-      stmt.bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());
+      m_stmt.bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
     }
     if(searchCriteria.vid) {
-      stmt.bindString(":VID", searchCriteria.vid.value());
+      m_stmt.bindString(":VID", searchCriteria.vid.value());
     }
-    if(searchCriteria.tapeFileCopyNb) {
-      stmt.bindUint64(":TAPE_FILE_COPY_NB", searchCriteria.tapeFileCopyNb.value());
-    }
-    if(searchCriteria.tapePool) {
-      stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
-    }
-#endif
-    auto rset = stmt.executeQuery();
+    m_rset = m_stmt.executeQuery();
+
     if(!rset.next()) {
       throw exception::Exception("SELECT COUNT statement did not return a row");
     }
