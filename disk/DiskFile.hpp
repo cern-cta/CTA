@@ -208,37 +208,37 @@ namespace cta {
       };
       
       
-      class Directory {
-      public:
-	/**
-	 * Creates a directory
-	 * @throws an exception if the directory could not have been created
-	 */
-	virtual void mkdir() = 0;
-	/**
-	 * Check if the directory exist
-	 * @return true if the directory exists, false otherwise
-	 */
-	virtual bool exist() = 0;
-	/**
-	 * Return all the names of the files present in the directory
-	 * @return 
-	 */
-	virtual std::set<std::string> getFilesName() = 0;
-	
-	/**
-	 * Remove the directory located at this->m_URL 
-	 */
-	virtual void rmdir() = 0;
-	
-	virtual ~Directory() throw() {}
-      protected:
-	/**
-         * Storage for the URL
-         */
-	std::string m_URL;
-      };
-      
-    } //end of namespace disk  
+  class Directory {
+  public:
+    /**
+     * Creates a directory
+     * @throws an exception if the directory could not have been created
+     */
+    virtual void mkdir() = 0;
+    /**
+     * Check if the directory exist
+     * @return true if the directory exists, false otherwise
+     */
+    virtual bool exist() = 0;
+    /**
+     * Return all the names of the files present in the directory
+     * @return 
+     */
+    virtual std::set<std::string> getFilesName() = 0;
+
+    /**
+     * Remove the directory located at this->m_URL 
+     */
+    virtual void rmdir() = 0;
+
+    virtual ~Directory() throw() {}
+  protected:
+    /**
+    * Storage for the URL
+    */
+    std::string m_URL;
+  };
+
+} //end of namespace disk  
 } //end of namespace cta
 

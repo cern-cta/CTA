@@ -321,21 +321,24 @@ void Scheduler::checkTapeFullBeforeRepack(std::string vid){
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
-void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, const bool forceDisabledTape, log::LogContext & lc) {
+void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext & lc) {
   // Check request sanity
+  std::string vid = repackRequest.m_vid;
+  std::string repackBufferURL = repackRequest.m_repackBufferURL;
   if (vid.empty()) throw exception::UserError("Empty VID name.");
-  if (bufferURL.empty()) throw exception::UserError("Empty buffer URL.");
+  if (repackBufferURL.empty()) throw exception::UserError("Empty buffer URL.");
   utils::Timer t;
   checkTapeFullBeforeRepack(vid);
-  m_db.queueRepack(vid, bufferURL, repackType, mountPolicy, forceDisabledTape, lc);
+  m_db.queueRepack(repackRequest, lc);
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);
   log::ScopedParamContainer params(lc);
   params.add("tapeVid", vid)
-        .add("repackType", toString(repackType))
-        .add("disabledTape", forceDisabledTape)
-        .add("bufferURL", bufferURL);
+        .add("repackType", toString(repackRequest.m_repackType))
+        .add("forceDisabledTape", repackRequest.m_forceDisabledTape)
+        .add("mountPolicy", repackRequest.m_mountPolicy.name)
+        .add("noRecall", repackRequest.m_noRecall)
+        .add("bufferURL", repackRequest.m_repackBufferURL);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
 }
@@ -473,6 +476,11 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         lc.log(log::WARNING,"In Scheduler::expandRepackRequest(), received XRootdException while listing files in the buffer");
       }
     } else {
+      if(repackInfo.noRecall){
+        //The buffer directory should be created if the --no-recall flag has been passed
+        //So we throw an exception 
+        throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): the flag --use-buffer-do-not-recall is set but no buffer directory has been created.");
+      }
       dir->mkdir();
     }
   }
@@ -486,15 +494,37 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
   uint64_t nbRetrieveSubrequestsQueued = 0;
   
-  while(archiveFilesForCatalogue.hasMore() && !expansionTimeReached) {
+  std::list<cta::common::dataStructures::ArchiveFile> archiveFilesFromCatalogue;
+  
+  while(archiveFilesForCatalogue.hasMore()){
+    archiveFilesFromCatalogue.push_back(archiveFilesForCatalogue.next());
+  }
+  
+  if(repackInfo.noRecall){
+    archiveFilesFromCatalogue.remove_if([&repackInfo, &filesInDirectory](const common::dataStructures::ArchiveFile & archiveFile){
+      //We remove all the elements that are not in the repack buffer so that we don't recall them
+      return std::find_if(filesInDirectory.begin(), filesInDirectory.end(),[&archiveFile, &repackInfo](const std::string & fseq){
+        //If we find a tape file that has the current fseq and belongs to the VID to repack, then we DON'T remove it from
+        //the archiveFilesFromCatalogue list
+        return std::find_if(archiveFile.tapeFiles.begin(), archiveFile.tapeFiles.end(),[&repackInfo, &fseq](const common::dataStructures::TapeFile & tapeFile){
+          //Can we find, in the archiveFilesFromCatalogue list an archiveFile that contains a tapefile that belongs to the VID to repack and that has the 
+          //fseq of the current file read from the filesInDirectory list ?
+          return tapeFile.vid == repackInfo.vid && tapeFile.fSeq == cta::utils::toUint64(cta::utils::removePrefix(fseq,'0'));
+        }) != archiveFile.tapeFiles.end();
+      }) == filesInDirectory.end();
+    });
+  }
+  
+  while(!archiveFilesFromCatalogue.empty() && !expansionTimeReached) {
     size_t filesCount = 0;
     uint64_t maxAddedFSeq = 0;
     std::list<SchedulerDatabase::RepackRequest::Subrequest> retrieveSubrequests;
-    while(filesCount < c_defaultMaxNbFilesForRepack && !expansionTimeReached && archiveFilesForCatalogue.hasMore()){
+    while(filesCount < c_defaultMaxNbFilesForRepack && !expansionTimeReached && !archiveFilesFromCatalogue.empty()){
       filesCount++;
       fSeq++;
       retrieveSubrequests.push_back(cta::SchedulerDatabase::RepackRequest::Subrequest());
-      auto archiveFile = archiveFilesForCatalogue.next();
+      auto archiveFile = archiveFilesFromCatalogue.front();
+      archiveFilesFromCatalogue.pop_front();
       auto & retrieveSubRequest  = retrieveSubrequests.back();
       
       retrieveSubRequest.archiveFile = archiveFile;
@@ -642,7 +672,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     }
     timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
     {
-      if(!expansionTimeReached && archiveFilesForCatalogue.hasMore()){
+      if(!expansionTimeReached && !archiveFilesFromCatalogue.empty()){
         log::ScopedParamContainer params(lc);
         params.add("tapeVid",repackInfo.vid);
         timingList.addToLog(params);
@@ -653,7 +683,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   log::ScopedParamContainer params(lc);
   params.add("tapeVid",repackInfo.vid);
   timingList.addToLog(params);
-  if(archiveFilesForCatalogue.hasMore()){
+  if(!archiveFilesFromCatalogue.empty()){
     repackRequest->m_dbReq->requeueInToExpandQueue(lc);
     lc.log(log::INFO,"Repack Request requeued in ToExpand queue.");
   } else {

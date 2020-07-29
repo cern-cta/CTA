@@ -975,5 +975,14 @@ void appendParameterXRootFileURL(std::string &fileURL, const std::string &parame
   }
 }
 
+std::string removePrefix(const std::string& input, char prefixChar){
+  size_t position = input.find_first_not_of(prefixChar);
+  if(position == std::string::npos){
+    return input;
+  } else {
+    return input.substr(position,input.size());
+  }
+}
+
 } // namespace utils
 } // namespace cta

@@ -24,6 +24,7 @@ reportDirectory : the directory to generate the report of the repack test (defau
 -m : Launch a repack just move workflow
 -d : Force a repack on a disabled tape (adds --disabled to the repack add command)
 -p : enable backpressure test
+-u : recall only option flag
 EOF
 exit 1
 }
@@ -47,7 +48,7 @@ then
 fi;
 
 DISABLED_TAPE_FLAG=""
-while getopts "v:e:b:t:r:n:amdp" o; do
+while getopts "v:e:b:t:r:n:amdpu" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -78,6 +79,9 @@ while getopts "v:e:b:t:r:n:amdp" o; do
       ;;
     n)
       MOUNT_POLICY_NAME=${OPTARG}
+      ;;
+    u)
+      NO_RECALL=1
       ;;
     *)
       usage
@@ -139,7 +143,12 @@ fi
 
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
 
-admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG}
+NO_RECALL_FLAG=""
+if [ ! -z $NO_RECALL ]; then
+  NO_RECALL_FLAG="-nr"
+fi
+
+admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG} ${NO_RECALL_FLAG}
 
 if [ ! -z $BACKPRESSURE_TEST ]; then
   echo "Backpressure test: waiting to see a report of sleeping retrieve queue."

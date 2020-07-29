@@ -1576,8 +1576,12 @@ OStoreDB::RetrieveQueueItor_t* OStoreDB::getRetrieveJobItorPtr(const std::string
 //------------------------------------------------------------------------------
 // OStoreDB::queueRepack()
 //------------------------------------------------------------------------------
-void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
-    common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy& mountPolicy, const bool forceDisabledTape,log::LogContext & lc) {
+void OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest,log::LogContext & lc) {
+  std::string vid = repackRequest.m_vid;
+  common::dataStructures::RepackInfo::Type repackType = repackRequest.m_repackType;
+  std::string bufferURL = repackRequest.m_repackBufferURL;
+  common::dataStructures::MountPolicy mountPolicy = repackRequest.m_mountPolicy;
+  bool forceDisabledTape = repackRequest.m_forceDisabledTape;
   // Prepare the repack request object in memory.
   assertAgentAddressSet();
   cta::utils::Timer t;
@@ -1590,6 +1594,7 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   rr->setBufferURL(bufferURL);
   rr->setMountPolicy(mountPolicy);
   rr->setForceDisabledTape(forceDisabledTape);
+  rr->setNoRecall(repackRequest.m_noRecall);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
   try {
     Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
@@ -1813,6 +1818,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
     ret->repackInfo.status = repackInfo.status;
     ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
     ret->repackInfo.forceDisabledTape = repackInfo.forceDisabledTape;
+    ret->repackInfo.noRecall = repackInfo.noRecall;
     return std::move(ret);
   }
 }

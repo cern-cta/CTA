@@ -1,8 +1,21 @@
+# v3.1-3
+
+## Summary
+
+### Features
+
+- The --no-recall flag can be passed to cta-admin repack add command:
+  - The repack request will NOT trigger any retrieve mount.  Only the files that are in the repack buffer will be considered for archival.
+
+### Modification
+
+### Bug fixes
+
 # v3.1-2
 
 ## Summary
 
-### Moficiation
+### Modification
 
 - Added database upgrade/changelog script oracle/3.0to3.1.sql
 

@@ -143,6 +143,28 @@ public:
   virtual std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(
     const std::string &tapePoolName) const = 0;
 
+  /**
+   * Class holding necessary repack request elements for queueing
+   * @param vid
+   * @param repackBufferURL
+   * @param repackType
+   * @param mountPolicy
+   * @param forceDisabledTape
+   * @param noRecall
+   */
+  class QueueRepackRequest {
+  public:
+    QueueRepackRequest(const std::string & vid, const std::string repackBufferURL, const common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy & mountPolicy, const bool forceDisabledTape, const bool noRecall):
+    m_vid(vid), m_repackBufferURL(repackBufferURL), m_repackType(repackType), m_mountPolicy(mountPolicy), m_forceDisabledTape(forceDisabledTape),m_noRecall(noRecall){}
+    
+    std::string m_vid;
+    std::string m_repackBufferURL;
+    common::dataStructures::RepackInfo::Type m_repackType;
+    common::dataStructures::MountPolicy m_mountPolicy;
+    bool m_forceDisabledTape;
+    bool m_noRecall;
+  };
+  
   /*============ Archive management: tape server side =======================*/
   /**
    * The class used by the scheduler database to track the archive mounts
@@ -416,8 +438,7 @@ public:
   };
 
   /*============ Repack management: user side ================================*/
-  virtual void queueRepack(const std::string & vid, const std::string & bufferURL,
-      common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, const bool forceDisabledTape, log::LogContext & lc) = 0;
+  virtual void queueRepack(const cta::SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext & lc) = 0;
   virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
   virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
   virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;
