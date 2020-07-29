@@ -479,7 +479,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
       if(repackInfo.noRecall){
         //The buffer directory should be created if the --no-recall flag has been passed
         //So we throw an exception 
-        throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): the flag --use-buffer-do-not-recall is set but no buffer directory has been created.");
+        throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): the flag --no-recall is set but no buffer directory has been created.");
       }
       dir->mkdir();
     }

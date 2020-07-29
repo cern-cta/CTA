@@ -470,7 +470,7 @@ repackTapeRepair() {
 repackTapeRepairNoRecall() {
   echo
   echo "*******************************************************"
-  echo "STEP $1. Testing Repack \"Tape Repair\" NO RECALL workflow with the --no-recall"
+  echo "STEP $1. Testing Repack \"Tape Repair\" NO RECALL workflow"
   echo "*******************************************************"  
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
