@@ -189,10 +189,6 @@ const cmdLookup_t cmdLookup = {
    { "fr",                      AdminCmd::CMD_FAILEDREQUEST },
    { "groupmountrule",          AdminCmd::CMD_GROUPMOUNTRULE },
    { "gmr",                     AdminCmd::CMD_GROUPMOUNTRULE },
-   { "listpendingarchives",     AdminCmd::CMD_LISTPENDINGARCHIVES },
-   { "lpa",                     AdminCmd::CMD_LISTPENDINGARCHIVES },
-   { "listpendingretrieves",    AdminCmd::CMD_LISTPENDINGRETRIEVES },
-   { "lpr",                     AdminCmd::CMD_LISTPENDINGRETRIEVES },
    { "logicallibrary",          AdminCmd::CMD_LOGICALLIBRARY },
    { "ll",                      AdminCmd::CMD_LOGICALLIBRARY },
    { "mediatype",               AdminCmd::CMD_MEDIATYPE },
@@ -257,7 +253,6 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    // hasOption options
    { "--checkchecksum",         OptionBoolean::CHECK_CHECKSUM },
    { "--disabledtape",          OptionBoolean::DISABLED },
-   { "--extended",              OptionBoolean::EXTENDED },
    { "--justarchive",           OptionBoolean::JUSTARCHIVE },
    { "--justmove",              OptionBoolean::JUSTMOVE },
    { "--justaddcopies",         OptionBoolean::JUSTADDCOPIES },
@@ -361,8 +356,6 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                                          }},
    { AdminCmd::CMD_FAILEDREQUEST,        { "failedrequest",        "fr",  { "ls", "show", "retry", "rm" } }},
    { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_LISTPENDINGARCHIVES,  { "listpendingarchives",  "lpa", { } }},
-   { AdminCmd::CMD_LISTPENDINGRETRIEVES, { "listpendingretrieves", "lpr", { } }},
    { AdminCmd::CMD_LOGICALLIBRARY,       { "logicallibrary",       "ll",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_MEDIATYPE,            { "mediatype",            "mt",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_MOUNTPOLICY,          { "mountpolicy",          "mp",  { "add", "ch", "rm", "ls" } }},
@@ -433,7 +426,6 @@ const Option opt_drivename            { Option::OPT_STR,  "--drive",            
 const Option opt_drivename_cmd        { Option::OPT_CMD,  "--drive",                 "",     "<drive_name>" };
 const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",             "-e",   " <\"true\" or \"false\">" };
 const Option opt_encryptionkeyname    { Option::OPT_STR,  "--encryptionkeyname",     "-k",   " <encryption_key_name>" };
-const Option opt_extended             { Option::OPT_FLAG, "--extended",              "-x",   "" };
 const Option opt_fid                  { Option::OPT_STR,  "--fxid",                  "-f",   " <eos_fxid>" };
 const Option opt_fidfile              { Option::OPT_STR_LIST, "--fxidfile",          "-F",   " <filename>" };
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
@@ -533,12 +525,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_LISTPENDINGARCHIVES,  AdminCmd::SUBCMD_NONE  },
-      { opt_tapepool.optional(), opt_extended.optional() }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE  },
-      { opt_vid.optional(), opt_extended.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   },
       { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment }},
