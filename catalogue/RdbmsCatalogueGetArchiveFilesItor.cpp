@@ -88,6 +88,8 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   m_archiveFileBuilder(log)
 {
   try {
+    m_conn = connPool.getConn();
+
     std::string sql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
@@ -151,14 +153,23 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     }
     if(searchCriteria.diskFileIds) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_ID IN ";
-      std::string delim = "('";
-      for(auto &diskFileId : searchCriteria.diskFileIds.value()) {
-        sql += delim + diskFileId;
-        delim = "','";
-      }
-      sql += "')";
+      sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM ORA$PTT_INSERT_DISK_FIDS)";
       addedAWhereConstraint = true;
+
+      // Create and populate temporary table from fxid list
+      // ON COMMIT PRESERVE DEFINITION preserves the table until the end of the session
+      std::string sql_temp_table = "CREATE PRIVATE TEMPORARY TABLE"
+        " ORA$PTT_INSERT_DISK_FIDS(DISK_FILE_ID VARCHAR2(100))"
+        " ON COMMIT PRESERVE DEFINITION";
+      m_stmt = m_conn.createStmt(sql_temp_table);
+      m_stmt.executeNonQuery();
+
+      std::string sql_insert_fid = "INSERT INTO ORA$PTT_INSERT_DISK_FIDS VALUES(:DISK_FILE_ID)";
+      for(auto &diskFileId : searchCriteria.diskFileIds.value()) {
+        m_stmt = m_conn.createStmt(sql_insert_fid);
+        m_stmt.bindString(":DISK_FILE_ID", diskFileId);
+        m_stmt.executeNonQuery();
+      }
     }
     if(hideSuperseded) {
       if(addedAWhereConstraint) sql += " AND ";
@@ -174,7 +185,6 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
     }
 
-    m_conn = connPool.getConn();
     m_stmt = m_conn.createStmt(sql);
     if(searchCriteria.archiveFileId) {
       m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
