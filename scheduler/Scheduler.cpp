@@ -481,7 +481,11 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         //So we throw an exception 
         throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): the flag --no-recall is set but no buffer directory has been created.");
       }
-      dir->mkdir();
+      try {
+        dir->mkdir();
+      } catch (const cta::exception::XrootCl &ex){
+        throw ExpandRepackRequestException(ex.getMessageValue());
+      }
     }
   }
   double elapsedTime = 0;

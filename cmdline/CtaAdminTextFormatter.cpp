@@ -658,8 +658,7 @@ void TextFormatter::printRepackLsHeader() {
   push_back("HEADER");
   push_back(
     "vid",
-    "repackBufferURL",
-    "userProvidedFiles",
+    "providedFiles",
     "totalFilesToRetrieve",
     "totalBytesToRetrieve",
     "totalFilesToArchive",
@@ -667,10 +666,6 @@ void TextFormatter::printRepackLsHeader() {
     "retrievedFiles",
     "archivedFiles",
     "failedToRetrieveFiles",
-    "failedToRetrieveBytes",
-    "failedToArchiveFiles",
-    "failedToArchiveBytes",
-    "lastExpandedFSeq",
     "status"
   );
 }
@@ -678,7 +673,6 @@ void TextFormatter::printRepackLsHeader() {
 void TextFormatter::print(const RepackLsItem &rels_item) {
   push_back(
    rels_item.vid(),
-   rels_item.repack_buffer_url(),
    rels_item.user_provided_files(),
    rels_item.total_files_to_retrieve(),
    dataSizeToStr(rels_item.total_bytes_to_retrieve()),
@@ -687,10 +681,6 @@ void TextFormatter::print(const RepackLsItem &rels_item) {
    rels_item.retrieved_files(),
    rels_item.archived_files(),
    rels_item.failed_to_retrieve_files(),
-   dataSizeToStr(rels_item.failed_to_retrieve_bytes()),
-   rels_item.failed_to_archive_files(),
-   dataSizeToStr(rels_item.failed_to_archive_bytes()),
-   rels_item.last_expanded_fseq(),
    rels_item.status()
   );
 }
