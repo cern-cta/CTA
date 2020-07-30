@@ -984,5 +984,13 @@ std::string removePrefix(const std::string& input, char prefixChar){
   }
 }
 
+std::string getEnv(const std::string& variableName){
+  const char * envVarC = std::getenv(variableName.c_str());
+  if(envVarC == NULL){
+    return "";
+  }
+  return std::string(envVarC);
+}
+
 } // namespace utils
 } // namespace cta

@@ -119,6 +119,9 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   // Extract drive list from tpconfig + parsed config file
   ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
   
+  ret.authenticationProtocol.set(cta::utils::getEnv("XrdSecPROTOCOL"),"Environment variable");
+  ret.authenticationSSSKeytab.set(cta::utils::getEnv("XrdSecSSSKT"),"Environment variable");
+  
   // If we get here, the configuration file is good enough to be logged.
   ret.daemonUserName.log(log);
   ret.daemonGroupName.log(log);

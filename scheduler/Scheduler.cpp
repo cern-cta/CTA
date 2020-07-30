@@ -1157,8 +1157,8 @@ uint64_t Scheduler::getNbFilesAlreadyArchived(const common::dataStructures::Arch
 void Scheduler::checkNeededEnvironmentVariables(){
   std::set<std::string> environmentVariablesNotSet;
   for(auto & environmentVariable: c_mandatoryEnvironmentVariables){
-    const char * envVarC = std::getenv(environmentVariable.c_str());
-    if(envVarC == NULL){
+    std::string envVar = cta::utils::getEnv(environmentVariable);
+    if(envVar.empty()){
       environmentVariablesNotSet.insert(environmentVariable);
     }
   }

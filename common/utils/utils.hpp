@@ -471,6 +471,14 @@ namespace utils {
    */
   std::string removePrefix(const std::string & input, char prefixChar);
   
+   /**
+   * Returns the value of the environment variable passed in parameter
+   * @param variableName the name of the environment variable to be passed
+   * @return the value of the environment variable passed in parameter
+   * If the environment variable is not set, it will return an empty string
+   */
+  std::string getEnv(const std::string & variableName);
+  
 } // namespace utils
 
 } // namespace cta

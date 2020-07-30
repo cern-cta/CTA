@@ -120,6 +120,16 @@ struct TapedConfiguration {
   /// Path to the file catalog config file
   cta::SourcedParameter<std::string> fileCatalogConfigFile{
     "general", "FileCatalogConfigFile", "/etc/cta/cta-catalogue.conf", "Compile time default"};
+    
+  //----------------------------------------------------------------------------
+  // The authentication configuration
+  //---------------------------------------------------------------------------- 
+  /// The authentication protocol
+  cta::SourcedParameter<std::string> authenticationProtocol{
+    "environment", "XrdSecPROTOCOL"};
+  /// The authentication protocol
+  cta::SourcedParameter<std::string> authenticationSSSKeytab{
+    "environment", "XrdSecSSSKT"};
   
 private:
   /** A private dummy logger which will simplify the implementation of the 
