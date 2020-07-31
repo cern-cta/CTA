@@ -4,10 +4,17 @@
 
 ### Features
 
+- Upstream eos 4.8.10-1
 - The --no-recall flag can be passed to cta-admin repack add command:
   - The repack request will NOT trigger any retrieve mount.  Only the files that are in the repack buffer will be considered for archival.
+- New cta-admin schedulinginfos ls command available to list potential mounts detected by the scheduler
 
 ### Modification
+
+- Shrinked cta-admin repack ls tabular output
+- cta-admin help commands listed in alphabetical order
+- Catalogue connection pool improvements
+- The scheduler will take the tape that has the highest occupancy for archival in order to avoid data scattering across all available tapes.
 
 ### Bug fixes
 
