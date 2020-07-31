@@ -64,7 +64,7 @@ nsls_tapes()
   # 1. Query EOS namespace to get a list of file IDs
   # 2. Pipe to "tape ls" to get the list of tapes where those files are archived
   eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
-    admin_cta --json tape ls --fidfile /dev/stdin |\
+    admin_cta --json tape ls --fxidfile /dev/stdin |\
     jq '.[] | .vid' | sed 's/"//g'
 }
 
