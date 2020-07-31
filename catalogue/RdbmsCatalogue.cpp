@@ -6553,7 +6553,7 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSearchCriteria
     std::unique_ptr<rdbms::Conn> conn_p(new rdbms::Conn(m_archiveFileListingConnPool.getConn()));
     auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(*conn_p, searchCriteria);
     // Pass ownership of the connection to the Iterator object
-    auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, std::move(*(conn_p.release())), searchCriteria, tempDiskFxidsTableName);
+    auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, conn_p.release(), searchCriteria, tempDiskFxidsTableName);
     return ArchiveFileItor(impl);
   } catch(exception::UserError &) {
     throw;

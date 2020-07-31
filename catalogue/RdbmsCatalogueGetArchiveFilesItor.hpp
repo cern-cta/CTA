@@ -46,7 +46,7 @@ public:
    */
   RdbmsCatalogueGetArchiveFilesItor(
     log::Logger &log,
-    rdbms::Conn &&conn,
+    rdbms::Conn *conn,
     const TapeFileSearchCriteria &searchCriteria,
     const std::string &tempDiskFxidsTableName);
 
@@ -94,7 +94,7 @@ private:
   /**
    * The database connection.
    */
-  rdbms::Conn m_conn;
+  std::unique_ptr<rdbms::Conn> m_conn_ptr;
 
   /**
    * The database statement.

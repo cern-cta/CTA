@@ -78,14 +78,14 @@ namespace {
 //------------------------------------------------------------------------------
 RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   log::Logger &log,
-  rdbms::Conn &&conn,
+  rdbms::Conn *conn_ptr,
   const TapeFileSearchCriteria &searchCriteria,
   const std::string &tempDiskFxidsTableName) :
   m_log(log),
   m_searchCriteria(searchCriteria),
   m_rsetIsEmpty(true),
   m_hasMoreHasBeenCalled(false),
-  m_conn(std::move(conn)),
+  m_conn_ptr(conn_ptr),
   m_archiveFileBuilder(log)
 {
   try {
@@ -168,7 +168,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
     }
 
-    m_stmt = m_conn.createStmt(sql);
+    m_stmt = m_conn_ptr->createStmt(sql);
     if(searchCriteria.archiveFileId) {
       m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
@@ -207,7 +207,7 @@ RdbmsCatalogueGetArchiveFilesItor::~RdbmsCatalogueGetArchiveFilesItor() {
 void RdbmsCatalogueGetArchiveFilesItor::releaseDbResources() noexcept {
   m_rset.reset();
   m_stmt.reset();
-  m_conn.reset();
+  m_conn_ptr->reset();
 }
 
 //------------------------------------------------------------------------------
