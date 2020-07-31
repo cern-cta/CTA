@@ -2423,7 +2423,8 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
   m_repackRequest.setTotalStats(totalStatsFiles);
   uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
   common::dataStructures::MountPolicy mountPolicy = m_repackRequest.getMountPolicy();
-  bool forceDisabledTape = m_repackRequest.getInfo().forceDisabledTape;
+  bool forceDisabledTape = repackInfo.forceDisabledTape;
+  bool noRecall = repackInfo.noRecall;
   // We make sure the references to subrequests exist persistently before creating them.
   m_repackRequest.commit();
   // We keep holding the repack request lock: we need to ensure de deleted boolean of each subrequest does
@@ -2518,16 +2519,20 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
       // will set the initial recall on it. Retries will we requeue to best VID as usual if needed.
       std::string bestVid;
       uint32_t activeCopyNumber = 0;
-      // Make sure we have a copy on the vid we intend to repack.
-      for (auto & tc: rsr.archiveFile.tapeFiles) {
-        if (tc.vid == repackInfo.vid) {
-          try {
-            // Try to select the repack VID from a one-vid list.
-            Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,repackInfo.forceDisabledTape);
-            bestVid = repackInfo.vid;
-            activeCopyNumber = tc.copyNb;
-          } catch (Helpers::NoTapeAvailableForRetrieve &) {}
-          break;
+      if(noRecall){
+        bestVid = repackInfo.vid;
+      } else {
+        //No --no-recall flag, make sure we have a copy on the vid we intend to repack.
+        for (auto & tc: rsr.archiveFile.tapeFiles) {
+          if (tc.vid == repackInfo.vid) {
+            try {
+              // Try to select the repack VID from a one-vid list.
+              Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,repackInfo.forceDisabledTape);
+              bestVid = repackInfo.vid;
+              activeCopyNumber = tc.copyNb;
+            } catch (Helpers::NoTapeAvailableForRetrieve &) {}
+            break;
+          }
         }
       }
       // The repack vid was not appropriate, let's try all candidates.
