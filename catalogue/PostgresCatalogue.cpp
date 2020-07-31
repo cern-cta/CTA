@@ -178,6 +178,7 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
       throw;
     }
   }
+  return tempTableName;
 }
 
 //------------------------------------------------------------------------------
