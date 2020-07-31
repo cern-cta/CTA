@@ -184,11 +184,6 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       lc.log(log::INFO, "RdbmsCatalogueGetArchiveFilesItor - immediately after m_stmt.executeQuery()");
     }
 
-    // Clean up temporary table
-    if(searchCriteria.diskFileIds) {
-      m_conn.executeNonQuery("DROP TABLE " + tempDiskFxidsTableName);
-    }
-
     m_rsetIsEmpty = !m_rset.next();
     if(m_rsetIsEmpty) releaseDbResources();
   } catch(exception::UserError &) {

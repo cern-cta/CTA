@@ -159,9 +159,9 @@ std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, c
 
   try {
     if(tapeFileSearchCriteria.diskFileIds) {
-      // ON COMMIT PRESERVE DEFINITION preserves the table until the end of the session
+      conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
       std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName +
-        "(DISK_FILE_ID VARCHAR2(100)) ON COMMIT PRESERVE DEFINITION";
+        "(DISK_FILE_ID VARCHAR2(100))";
       conn.executeNonQuery(sql);
   
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";

@@ -199,25 +199,30 @@ void SqliteCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
 std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const {
   const std::string tempTableName = "TEMP.DISK_FXIDS";
 
-  try {
-    if(tapeFileSearchCriteria.diskFileIds) {
-      // ON COMMIT PRESERVE DEFINITION preserves the table until the end of the session
+  if(tapeFileSearchCriteria.diskFileIds) {
+    try {
       std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID TEXT)";
-      conn.executeNonQuery(sql);
-  
+      try {
+        conn.executeNonQuery(sql);
+      } catch(exception::Exception &ex) {
+        // SQLite does not drop temporary tables automatically; trying to create another temporary table
+        // in the same unit test will fail. If this happens, truncate the table and carry on.
+        sql = "DELETE FROM " + tempTableName;
+        conn.executeNonQuery(sql);
+      }
+
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
       auto stmt = conn.createStmt(sql);
       for(auto &diskFileId : tapeFileSearchCriteria.diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
       }
+    } catch(exception::Exception &ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+      throw;
     }
-
-    return tempTableName;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
   }
+  return tempTableName;
 }
 
 //------------------------------------------------------------------------------

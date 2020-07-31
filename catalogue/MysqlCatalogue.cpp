@@ -60,13 +60,12 @@ MysqlCatalogue::~MysqlCatalogue() {
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
 std::string MysqlCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const {
-  const std::string tempTableName = "ORA$PTT_DISK_FXIDS";
+  const std::string tempTableName = "TEMP_DISK_FXIDS";
 
   try {
     if(tapeFileSearchCriteria.diskFileIds) {
-      // ON COMMIT PRESERVE DEFINITION preserves the table until the end of the session
-      std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName +
-        "(DISK_FILE_ID VARCHAR2(100)) ON COMMIT PRESERVE DEFINITION";
+      std::string sql = "CREATE TEMPORARY TABLE " + tempTableName +
+        "(DISK_FILE_ID VARCHAR(100))";
       conn.executeNonQuery(sql);
   
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
