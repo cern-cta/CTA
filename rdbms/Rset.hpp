@@ -54,6 +54,18 @@ public:
   Rset(std::unique_ptr<wrapper::RsetWrapper> impl);
 
   /**
+   * Destructor.
+   */
+  ~Rset() noexcept;
+
+  /**
+   * Releases the underlying result set.
+   *
+   * This method is idempotent.
+   */
+  void reset() noexcept;
+
+  /**
    * Deletion of copy constructor.
    */
   Rset(const Rset &) = delete;

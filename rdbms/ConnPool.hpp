@@ -111,14 +111,6 @@ private:
    * The database connections within the pool.
    */
   std::list<std::unique_ptr<ConnAndStmts> > m_connsAndStmts;
-
-  /**
-   * Creates the specified number of database connections with the pool.
-   *
-   * @param nbConns The number of database connections to be created.
-   */
-  void createConns(const uint64_t nbConns);
-
 }; // class ConnPool
 
 } // namespace rdbms

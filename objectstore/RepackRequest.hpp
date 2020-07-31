@@ -64,6 +64,15 @@ public:
   bool getForceDisabledTape();
   
   /**
+   * Set the flag noRecall to only inject files that are in the buffer. This will prevent
+   * to retrieve the files from the repacked tape.
+   * @param noRecall if true, the repack expansion will only look at what is on the buffer
+   * if false, the expansion will create Retrieve subrequests for files that are not in the buffer
+   */
+  void setNoRecall(const bool noRecall);
+  bool getNoRecall();
+  
+  /**
    * Automatically set the new status of the Repack Request
    * regarding multiple parameters
    */

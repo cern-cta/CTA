@@ -215,6 +215,8 @@ const cmdLookup_t cmdLookup = {
    { "vo",                      AdminCmd::CMD_VIRTUALORGANIZATION },
    { "version",                 AdminCmd::CMD_VERSION},
    { "v",                       AdminCmd::CMD_VERSION},
+   { "schedulinginfos",         AdminCmd::CMD_SCHEDULINGINFOS},
+   { "si",                      AdminCmd::CMD_SCHEDULINGINFOS},
 };
 
 
@@ -260,7 +262,7 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
    { "--lookupnamespace",       OptionBoolean::LOOKUP_NAMESPACE },
    { "--showsuperseded",        OptionBoolean::SHOW_SUPERSEDED },
-   { "--summary",               OptionBoolean::SUMMARY }
+   { "--no-recall", OptionBoolean::NO_RECALL}
 };
 
 
@@ -363,14 +365,15 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 			 "\n  This command allows to manage repack requests.\n\n"
 			   "  Submit a repack request by using the \"add\" subcommand :\n"
 			   "   * Specify the vid (--vid option) or all the vids to repack by giving a file path to the --vidfile option.\n"
+         "   * Specify the mount policy (--mountpolicy parameter) to give a specific mount policy that will be applied to the repack subrequests (retrieve and archive requests).\n"
 			   "   * If the --bufferURL option is set, it will overwrite the default one. It should respect the following format : root://eosinstance//path/to/repack/buffer.\n"
 			   "     The default bufferURL is set in the CTA frontend configuration file.\n"
 			   "   * If the --justmove option is set, the files located on the tape to repack will be migrated on one or multiple tapes.\n"
 			   "     If the --justaddcopies option is set, new (or missing) copies (as defined by the storage class) of the files located on the tape to repack will be created and migrated.\n"
 			   "     By default, CTA will migrate AND add new (or missing) copies (as defined by the storage class) of the files located on the tape to repack.\n"
-                           "   * The --mountpolicy option allows to give a specific mount policy that will be applied to the repack subrequests (retrieve and archive requests).\n"
 			   "     By default, a hardcoded mount policy is applied (every request priorities and minimum request ages = 1).\n"
-			   "   * If the --disabledtape flag is set, the tape to repack will be mounted for retrieval even if it is disabled."
+			   "   * If the --disabledtape flag is set, the tape to repack will be mounted for retrieval even if it is disabled.\n"
+         "   * If the --no-recall flag is set, no retrieve mount will be triggered and only the files that are located in the buffer will be considered for archival."
 					"\n\n" 
 					 }},
    { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "ch", "rm", "ls" } }},
@@ -403,7 +406,8 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 			    "\n\n"
 					 }},
    { AdminCmd::CMD_VIRTUALORGANIZATION,  { "virtualorganization",   "vo",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_VERSION,              { "version",           "v",  { } }},
+   { AdminCmd::CMD_VERSION,              { "version",               "v",  { } }},
+   { AdminCmd::CMD_SCHEDULINGINFOS,      { "schedulinginfos",       "si",  { "ls" } }},
 };
 
 
@@ -484,11 +488,12 @@ const Option opt_disabled_tape        { Option::OPT_FLAG, "--disabledtape",     
 const Option opt_disksystem           { Option::OPT_STR,  "--disksystem",            "-n",   " <disk_system_name>" };
 const Option opt_file_regexp          { Option::OPT_STR,  "--fileregexp",            "-r",   " <file_regexp>" };
 const Option opt_free_space_query_url { Option::OPT_STR,  "--freespacequeryurl",     "-u",   " <free_space_query_url>" };
-const Option opt_refresh_interval     { Option::OPT_UINT,  "--refreshinterval",      "-i",   " <refresh_intreval>" };
-const Option opt_targeted_free_space  { Option::OPT_UINT,  "--targetedfreespace",    "-f",   " <targeted_free_space>" };
-const Option opt_sleep_time           { Option::OPT_UINT,  "--sleeptime",            "-s",   " <sleep time in s>" };
-const Option opt_reason               { Option::OPT_STR,   "--reason",               "-r",   " <reason_status_change>" };
-const Option opt_show_superseded      { Option::OPT_FLAG,  "--showsuperseded",       "-s",   "" };
+const Option opt_refresh_interval     { Option::OPT_UINT, "--refreshinterval",       "-i",   " <refresh_intreval>" };
+const Option opt_targeted_free_space  { Option::OPT_UINT, "--targetedfreespace",     "-f",   " <targeted_free_space>" };
+const Option opt_sleep_time           { Option::OPT_UINT, "--sleeptime",             "-s",   " <sleep time in s>" };
+const Option opt_reason               { Option::OPT_STR,  "--reason",                "-r",   " <reason_status_change>" };
+const Option opt_show_superseded      { Option::OPT_FLAG, "--showsuperseded",        "-s",   "" };
+const Option opt_no_recall            { Option::OPT_FLAG, "--no-recall",             "-nr",  "" };
 
 /*!
  * Map valid options to commands
@@ -551,7 +556,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ADD   },
-      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_mountpolicy, opt_disabled_tape.optional() }},
+      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_mountpolicy, opt_disabled_tape.optional(), opt_no_recall.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_vid.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},
@@ -616,6 +621,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },
       { }},
    {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
+   {{ AdminCmd::CMD_SCHEDULINGINFOS,      AdminCmd::SUBCMD_LS   }, { }},
 };
 
 

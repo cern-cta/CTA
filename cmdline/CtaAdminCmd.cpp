@@ -106,6 +106,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kVolsItem:      std::cout << Log::DumpProtobuf(&record.vols_item());    break;
          case Data::kVersionItem:   std::cout << Log::DumpProtobuf(&record.version_item()); break;
          case Data::kMtlsItem:      std::cout << Log::DumpProtobuf(&record.mtls_item());    break;
+         case Data::kSilsItem:      std::cout << Log::DumpProtobuf(&record.sils_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -137,6 +138,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kVolsItem:      formattedText.print(record.vols_item());    break;
          case Data::kVersionItem:   formattedText.print(record.version_item()); break;
          case Data::kMtlsItem:      formattedText.print(record.mtls_item());    break;
+         case Data::kSilsItem:      break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -298,6 +300,7 @@ void CtaAdminCmd::send() const
             case HeaderType::VIRTUALORGANIZATION_LS:       formattedText.printVirtualOrganizationLsHeader(); break;
             case HeaderType::VERSION_CMD:                  formattedText.printVersionHeader(); break;
             case HeaderType::MEDIATYPE_LS:                 formattedText.printMediaTypeLsHeader(); break;
+            case HeaderType::SCHEDULINGINFOS_LS:            formattedText.printSchedulingInfosLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }

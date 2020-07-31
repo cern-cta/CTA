@@ -69,6 +69,7 @@ public:
   void printVirtualOrganizationLsHeader();
   void printVersionHeader();
   void printMediaTypeLsHeader();
+  void printSchedulingInfosLsHeader();
    
   // Output records
   void print(const AdminLsItem &adls_item);

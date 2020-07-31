@@ -229,8 +229,8 @@ public:
     m_OStoreDB.cancelRetrieve(instanceName, rqst, lc);
   }
 
-  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy &mountPolicy, const bool forceDisabledTape, log::LogContext& lc) override {
-    m_OStoreDB.queueRepack(vid, bufferURL, repackType, mountPolicy, forceDisabledTape, lc);
+  void queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext& lc) override {
+    m_OStoreDB.queueRepack(repackRequest, lc);
   }
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override {

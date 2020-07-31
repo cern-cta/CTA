@@ -628,6 +628,7 @@ message RepackRequest {
   required MountPolicy mount_policy = 11563;
   required bool force_disabled_tape = 11564;
   required bool is_complete = 11565;
+  required bool no_recall = 11566;
   repeated RepackSubRequestPointer subrequests = 11570;
   repeated RepackDestinationInfo destination_infos = 11571;
 }

@@ -467,6 +467,107 @@ repackTapeRepair() {
   echo "*******************************************************"
 }
 
+repackTapeRepairNoRecall() {
+  echo
+  echo "*******************************************************"
+  echo "STEP $1. Testing Repack \"Tape Repair\" NO RECALL workflow"
+  echo "*******************************************************"  
+
+  VID_TO_REPACK=$(getFirstVidContainingFiles)
+  if [ "$VID_TO_REPACK" == "null" ] 
+  then
+    echo "No vid found to repack"
+    exit 1
+  fi
+  
+  echo "Getting files to inject into the repack buffer directory"
+  
+  tfls=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK}`
+  nbFilesOnTape=`echo $tfls | jq length`
+  nbFileToInject=10
+  
+  if [[ $nbFileToInject != 0 ]]
+  then
+    echo "Will inject $nbFileToInject files into the repack buffer directory"
+    bufferDirectory=${REPACK_BUFFER_URL}/${VID_TO_REPACK}
+    echo "Creating buffer directory in \"$bufferDirectory\""
+    kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir $bufferDirectory
+    kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 $bufferDirectory
+
+    echo "Retrieving files from the tape"
+    allPid=()
+    pathOfFilesToInject=()
+    diskIds=()
+    filesIndices=()
+    # Prepare array of indices to pick from the tfls output
+    for i in $(seq 0 $(( nbFileToInject - 1 )) )
+    do
+      filesIndices[$i]=$(( i + 1 )) 
+    done
+
+    for i in $(seq 0 $(( nbFileToInject - 1 )) )
+    do
+      diskId=`echo $tfls | jq -r ". [${filesIndices[$i]}] | .df.diskId"` || break
+      diskIds[$i]=$diskId
+      pathFileToInject=`kubectl -n ${NAMESPACE} exec ctaeos -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
+      pathOfFilesToInject[$i]=$pathFileToInject
+    done
+    
+    kubectl -n ${NAMESPACE} exec client -- bash /root/client_prepare_file.sh `for file in ${pathOfFilesToInject[@]}; do echo -n "-f $file "; done`
+
+    echo "Copying the retrieved files into the repack buffer $bufferDirectory"
+    
+    for i in $(seq 0 $(( nbFileToInject - 1)) )
+    do
+      fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
+      kubectl -n ${NAMESPACE} exec ctaeos -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
+    done
+   
+    echo "Launching a repack request on the vid ${VID_TO_REPACK}"
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepairNoRecall -n ctasystest -u ||      exit 1
+
+    repackLsResult=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]"`
+    userProvidedFiles=`echo $repackLsResult | jq -r ".userProvidedFiles"`
+    archivedFiles=`echo $repackLsResult | jq -r ".archivedFiles"`
+    retrievedFiles=`echo $repackLsResult | jq -r ".retrievedFiles"`
+    totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
+    totalFilesToArchive=`echo $repackLsResult | jq -r ".totalFilesToArchive"`
+
+    if [[ $totalFilesToRetrieve != $(( $totalFilesToArchive - $userProvidedFiles )) ]]
+    then
+      echo "totalFilesToRetrieve ($totalFilesToRetrieve) != totalFilesToArchive ($totalFilesToArchive) - userProvidedFiles ($userProvidedFiles), test FAILED"
+      exit 1
+    else
+      echo "totalFilesToRetrieve ($totalFilesToRetrieve) == totalFilesToArchive ($totalFilesToArchive) - userProvidedFiles ($userProvidedFiles), OK"
+    fi  
+
+    if [[ $retrievedFiles != $totalFilesToRetrieve ]]
+    then
+      echo "retrievedFiles ($retrievedFiles) != totalFilesToRetrieve ($totalFilesToRetrieve) test FAILED"
+      exit 1
+    else
+      echo "retrievedFiles ($retrievedFiles) == totalFilesToRetrieve ($totalFilesToRetrieve), OK"
+    fi
+
+    if [[ $archivedFiles != $totalFilesToArchive ]]
+    then
+      echo "archivedFiles ($archivedFiles) != totalFilesToArchive ($totalFilesToArchive), test FAILED"
+      exit 1
+    else
+       echo "archivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
+    fi
+
+  else 
+    echo "No file to inject, test not OK"
+    exit 1
+  fi
+
+  echo
+  echo "*******************************************************"
+  echo "STEP $1. Testing Repack \"Tape Repair\" workflow NO RECALL TEST OK"
+  echo "*******************************************************"
+}
+
 #Execution of each tests
 roundTripRepack 1
 repackDisableTape 2
@@ -476,3 +577,4 @@ repackTapeRepair 4
 repackJustAddCopies 5
 repackCancellation 6
 # repackMoveAndAddCopies 7
+repackTapeRepairNoRecall 7

@@ -163,11 +163,11 @@ public:
     auto & catalogue=getCatalogue();
 
     const std::string mountPolicyName = s_mountPolicyName;
-    const uint64_t archivePriority = 1;
-    const uint64_t minArchiveRequestAge = 2;
-    const uint64_t retrievePriority = 3;
-    const uint64_t minRetrieveRequestAge = 4;
-    const uint64_t maxDrivesAllowed = 50;
+    const uint64_t archivePriority = s_archivePriority;
+    const uint64_t minArchiveRequestAge = s_minArchiveRequestAge;
+    const uint64_t retrievePriority = s_retrievePriority;
+    const uint64_t minRetrieveRequestAge = s_minRetrieveRequestAge;
+    const uint64_t maxDrivesAllowed = s_maxDrivesAllowed;
     const std::string mountPolicyComment = "create mount group";
 
     ASSERT_TRUE(catalogue.getMountPolicies().empty());
@@ -209,7 +209,7 @@ public:
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
     cta::common::dataStructures::VirtualOrganization vo;
-    vo.name = "vo";
+    vo.name = s_vo;
     vo.comment = "comment";
     m_catalogue->createVirtualOrganization(s_adminOnAdminHost,vo);
     
@@ -233,7 +233,7 @@ public:
     
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
-    mediaType.capacityInBytes = 10;
+    mediaType.capacityInBytes = s_mediaTypeCapacityInBytes;
     mediaType.cartridge = "cartridge";
     mediaType.comment = "comment";
     catalogue.createMediaType(s_adminOnAdminHost,mediaType);
@@ -266,8 +266,16 @@ protected:
   const std::string s_vendor = "TestVendor";
   const std::string s_mountPolicyName = "mount_group";
   const bool s_defaultRepackDisabledTapeFlag = false;
+  const bool s_defaultRepackNoRecall = false;
   const uint64_t s_minFilesToWarrantAMount = 5;
   const uint64_t s_minBytesToWarrantAMount = 2*1000*1000;
+  const uint64_t s_archivePriority = 1;
+  const uint64_t s_minArchiveRequestAge = 2; 
+  const uint64_t s_retrievePriority = 3;
+  const uint64_t s_minRetrieveRequestAge = 4; 
+  const uint64_t s_maxDrivesAllowed = 50;
+  const uint64_t s_mediaTypeCapacityInBytes = 10;
+  const std::string s_vo = "vo";
   //TempFile m_tempSqliteFile;
 
 }; // class SchedulerTest
@@ -1355,14 +1363,18 @@ TEST_P(SchedulerTest, repack) {
   }
   
   //The queueing of a repack request should fail if the tape to repack is not full
-  ASSERT_THROW(scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,lc),cta::exception::UserError);
+  cta::SchedulerDatabase::QueueRepackRequest qrr(tape1,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+  ASSERT_THROW(scheduler.queueRepack(cliId, qrr, lc),cta::exception::UserError);
   //The queueing of a repack request in a vid that does not exist should throw an exception
-  ASSERT_THROW(scheduler.queueRepack(cliId, "NOT_EXIST", "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc),cta::exception::UserError);
+  qrr.m_vid = "NOT_EXIST";
+  ASSERT_THROW(scheduler.queueRepack(cliId, qrr, lc),cta::exception::UserError);
   
   catalogue.setTapeFull(cliId,tape1,true);
   
   // Create and then cancel repack
-  scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc);
+  qrr.m_vid = tape1;
+  scheduler.queueRepack(cliId, qrr, lc);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, repacks.size());
@@ -1386,7 +1398,8 @@ TEST_P(SchedulerTest, repack) {
     tape.comment = "Comment";
     catalogue.createTape(cliId, tape);
   }
-  scheduler.queueRepack(cliId, tape2, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc);
+  qrr.m_vid = tape2;
+  scheduler.queueRepack(cliId, qrr, lc);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, repacks.size());
@@ -1440,7 +1453,9 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   }
 
   //Queue the first repack request
-  scheduler.queueRepack(cliId, tape1, "file://"+tempDirectory.path(), common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc);
+  cta::SchedulerDatabase::QueueRepackRequest qrr(tape1,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+  scheduler.queueRepack(cliId, qrr, lc);
   
   std::string tape2 = "Tape2";
 
@@ -1459,7 +1474,9 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   }
 
   //Queue the second repack request
-  scheduler.queueRepack(cliId,tape2,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);
+  qrr.m_vid = tape2;
+  qrr.m_repackType = common::dataStructures::RepackInfo::Type::AddCopiesOnly;
+  scheduler.queueRepack(cliId,qrr,lc);
   
   //Test the repack request queued has status Pending
   ASSERT_EQ(scheduler.getRepack(tape1).status,common::dataStructures::RepackInfo::Status::Pending);
@@ -1599,7 +1616,10 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
     for(uint64_t i = 0; i < nbTapesToRepack ; ++i) {
-      scheduler.queueRepack(admin,allVid.at(i),"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag, lc);
+      //Queue the first repack request
+      cta::SchedulerDatabase::QueueRepackRequest qrr(allVid.at(i),"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+        common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+      scheduler.queueRepack(admin,qrr,lc);
     }
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();
@@ -1917,7 +1937,9 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+        common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
  
     log::TimingList tl;
@@ -2179,7 +2201,9 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();
  
@@ -2449,7 +2473,9 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc);
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     log::TimingList tl;
@@ -2752,7 +2778,9 @@ TEST_P(SchedulerTest, expandRepackRequestExpansionTimeLimitReached) {
   //one retrieve request
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag ,lc);
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     log::TimingList tl;
@@ -2877,7 +2905,9 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   //one retrieve request
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag ,lc);
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     log::TimingList tl;
@@ -3041,7 +3071,9 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
   
   //Queue a Repack Request with --disabledtape flag set to force Retrieve Mount for disabled tape
-  scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly, common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,true, lc);
+  cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,true,s_defaultRepackNoRecall);
+  scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   log::TimingList tl;
@@ -3463,7 +3495,9 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   //one retrieve request
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
     
     //Get the address of the Repack Request
@@ -3751,7 +3785,9 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   //one retrieve request
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveAndAddCopies,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag, lc);
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
     
     //Get the address of the Repack Request
@@ -4015,7 +4051,9 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
 
@@ -4065,7 +4103,9 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   }
   //Do another test to check the deletion of ArchiveSubrequests
   {
-    scheduler.queueRepack(admin,vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag,lc);
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
 
@@ -4370,7 +4410,9 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
 
   scheduler.waitSchedulerDbSubthreadsComplete();
   
-  scheduler.queueRepack(admin,s_vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack, s_defaultRepackDisabledTapeFlag, lc);
+  cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+  scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   scheduler.promoteRepackRequestsToToExpand(lc);
@@ -4417,6 +4459,377 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       ASSERT_EQ(archiveFileSize,job.size);
     }
   }
+}
+
+TEST_P(SchedulerTest, getSchedulingInformations) {
+  //Queue 2 archive requests in two different logical libraries
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  auto &catalogue = getCatalogue();
+  
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  // Create the environment for the migration to happen (library + tape) 
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, libraryComment);
+  {
+    auto libraries = catalogue.getLogicalLibraries();
+    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
+  }
+  const std::string tapeComment = "Tape comment";
+  bool notDisabled = false;
+  bool notFull = false;
+  bool notReadOnly = false;
+
+  {
+    catalogue::CreateTapeAttributes tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
+  const std::string driveName = "tape_drive";
+
+  catalogue.tapeLabelled(s_vid, driveName);
+  
+  {
+    // This first initialization is normally done by the dataSession function.
+    cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
+  }
+  
+  uint64_t archiveFileId;
+
+  // Queue an archive request.
+  cta::common::dataStructures::EntryLog creationLog;
+  creationLog.host="host2";
+  creationLog.time=0;
+  creationLog.username="admin1";
+  cta::common::dataStructures::DiskFileInfo diskFileInfo;
+  diskFileInfo.gid=GROUP_2;
+  diskFileInfo.owner_uid=CMS_USER;
+  diskFileInfo.path="path/to/file";
+  cta::common::dataStructures::ArchiveRequest request;
+  request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+  request.creationLog=creationLog;
+  request.diskFileInfo=diskFileInfo;
+  request.diskFileID="diskFileID";
+  request.fileSize=100*1000*1000;
+  cta::common::dataStructures::RequesterIdentity requester;
+  requester.name = s_userName;
+  requester.group = "userGroup";
+  request.requester = requester;
+  request.srcURL="srcURL";
+  request.storageClass=s_storageClassName;
+  archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+  scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  
+  {
+    auto schedulerInformations = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulerInformations.empty());
+
+    auto & schedulerInfo = schedulerInformations.front();
+    ASSERT_EQ(s_libraryName,schedulerInfo.getLogicalLibraryName());
+    const auto & potentialMounts = schedulerInfo.getPotentialMounts();
+    
+    ASSERT_FALSE(potentialMounts.empty());
+    const auto & potentialMount = potentialMounts.front();
+
+    ASSERT_EQ(request.fileSize,potentialMount.bytesQueued);
+    ASSERT_EQ(0,potentialMount.capacityInBytes);
+    ASSERT_EQ("",potentialMount.diskSystemSleptFor);
+    ASSERT_EQ(1,potentialMount.filesQueued);
+    ASSERT_EQ(s_maxDrivesAllowed,potentialMount.maxDrivesAllowed);
+    ASSERT_EQ(0,potentialMount.mountCount);
+    ASSERT_EQ(s_minArchiveRequestAge,potentialMount.minRequestAge);
+    ASSERT_EQ(s_archivePriority,potentialMount.priority);
+    ASSERT_EQ(0,potentialMount.ratioOfMountQuotaUsed);
+    ASSERT_EQ(0,potentialMount.sleepTime);
+    ASSERT_FALSE(potentialMount.sleepingMount);
+    ASSERT_EQ(s_tapePoolName,potentialMount.tapePool);
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser,potentialMount.type);
+  }
+
+  {
+    std::unique_ptr<cta::TapeMount> mount;
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    std::unique_ptr<cta::ArchiveMount> archiveMount;
+    archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
+    ASSERT_NE(nullptr, archiveMount.get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_NE(nullptr, archiveJobBatch.front().get());
+    std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
+    archiveJob->tapeFile.blockId = 1;
+    archiveJob->tapeFile.fSeq = 1;
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.copyNb = 1;
+    archiveJob->validate();
+    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
+    std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
+    sDBarchiveJobBatch.emplace(std::move(archiveJob));
+    archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems,failedToReportArchiveJobs, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_EQ(0, archiveJobBatch.size());
+    archiveMount->complete();
+  }
+  
+  ASSERT_TRUE(scheduler.getSchedulingInformations(lc).empty());
+  
+  //Queue a retrieve request for the archived file
+  {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
+    diskFileInfo.path="path/to/file";
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = archiveFileId;
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.dstURL = "dstURL";
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    scheduler.queueRetrieve(s_diskInstance, request, lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+  
+  {
+    auto schedulerInformations = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulerInformations.empty());
+
+    auto & schedulerInfo = schedulerInformations.front();
+    ASSERT_EQ(s_libraryName,schedulerInfo.getLogicalLibraryName());
+    const auto & potentialMounts = schedulerInfo.getPotentialMounts();
+    
+    ASSERT_FALSE(potentialMounts.empty());
+    const auto & potentialMount = potentialMounts.front();
+
+    ASSERT_EQ(request.fileSize,potentialMount.bytesQueued);
+    ASSERT_EQ(s_mediaTypeCapacityInBytes,potentialMount.capacityInBytes);
+    ASSERT_EQ("",potentialMount.diskSystemSleptFor);
+    ASSERT_EQ(1,potentialMount.filesQueued);
+    ASSERT_EQ(s_maxDrivesAllowed,potentialMount.maxDrivesAllowed);
+    ASSERT_EQ(0,potentialMount.mountCount);
+    ASSERT_EQ(s_minRetrieveRequestAge,potentialMount.minRequestAge);
+    ASSERT_EQ(s_retrievePriority,potentialMount.priority);
+    ASSERT_EQ(0,potentialMount.ratioOfMountQuotaUsed);
+    ASSERT_EQ(0,potentialMount.sleepTime);
+    ASSERT_FALSE(potentialMount.sleepingMount);
+    ASSERT_EQ(s_tapePoolName,potentialMount.tapePool);
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,potentialMount.type);
+    ASSERT_EQ(s_libraryName,potentialMount.logicalLibrary);
+    ASSERT_EQ(s_vid,potentialMount.vid);
+    ASSERT_EQ(s_vo,potentialMount.vo);
+  }
+  //Now let's queue an Archive request with a high priority
+  //Modify the mount policy to have an equality between all values
+  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,1);
+  catalogue.modifyMountPolicyArchivePriority(s_adminOnAdminHost,s_mountPolicyName,1);
+  catalogue.modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,1);
+  catalogue.modifyMountPolicyRetrievePriority(s_adminOnAdminHost,s_mountPolicyName,1);
+  
+  {
+    auto schedulerInformations = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulerInformations.empty());
+    
+    // Queue an archive request.
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid=GROUP_2;
+    diskFileInfo.owner_uid=CMS_USER;
+    diskFileInfo.path="path/to/file2";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0xabcd1234);
+    request.creationLog=creationLog;
+    request.diskFileInfo=diskFileInfo;
+    request.diskFileID="diskFileID";
+    request.fileSize=200*1000*1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL="srcURL2";
+    request.storageClass=s_storageClassName;
+    uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+  
+  {
+    auto schedulingInfos = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulingInfos.empty());
+    //We have only one logical library
+    ASSERT_EQ(1,schedulingInfos.size());
+    const auto & schedulingInfo = schedulingInfos.front();
+    //We have two potential mounts
+    auto potentialMounts = schedulingInfo.getPotentialMounts();
+    ASSERT_EQ(2,potentialMounts.size());
+    //The first mount should be an Archive and the second one a Retrieve as Archive is more prior than the Retrieve
+    auto & firstMount = potentialMounts.front();
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser,firstMount.type);
+    potentialMounts.pop_front();
+    auto & secondMount = potentialMounts.front();
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,secondMount.type);
+  }
+  
+  //Change the mount policies to have a Retrieve priority higher than the Archive priority
+  catalogue.modifyMountPolicyRetrievePriority(s_adminOnAdminHost,s_mountPolicyName,10);
+  
+  {
+    auto schedulingInfos = scheduler.getSchedulingInformations(lc);
+    ASSERT_FALSE(schedulingInfos.empty());
+    //We have only one logical library
+    ASSERT_EQ(1,schedulingInfos.size());
+    const auto & schedulingInfo = schedulingInfos.front();
+    //We have two potential mounts
+    auto potentialMounts = schedulingInfo.getPotentialMounts();
+    ASSERT_EQ(2,potentialMounts.size());
+    //The first mount should be an Archive and the second one a Retrieve as Archive is more prior than the Retrieve
+    auto & firstMount = potentialMounts.front();
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,firstMount.type);
+    potentialMounts.pop_front();
+    auto & secondMount = potentialMounts.front();
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser,secondMount.type);
+  }
+}
+
+TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDirectoryCreated){
+  using namespace cta;
+  unitTests::TempDirectory tempDirectory;
+  
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  
+  setupDefaultCatalogue();
+  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", tempDirectory.path(), "eos:ctaeos:default", 10, 10L*1000*1000*1000, 15*60, "no comment");
+  
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  std::string agentReferenceName = "expandRepackRequestTest";
+  std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
+ 
+  
+  const bool disabledValue = false;
+  const bool fullValue = true;
+  const bool readOnlyValue = false;
+  const std::string comment = "Create tape";
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+  
+  //Create a logical library in the catalogue
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+
+  {
+    catalogue::CreateTapeAttributes tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.full = fullValue;
+    tape.disabled = disabledValue;
+    tape.readOnly = readOnlyValue;
+    tape.comment = comment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+  
+  //Create a storage class in the catalogue
+  common::dataStructures::StorageClass storageClass;
+  storageClass.name = s_storageClassName;
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesPerTape = 10;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+
+  //Simulate the writing of 10 files per tape in the catalogue
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  checksum::ChecksumBlob checksumBlob;
+  checksumBlob.insert(cta::checksum::ADLER32, "1234");
+  {
+    uint64_t archiveFileId = 1;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + archiveFileId);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<j;
+      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = archiveFileId++;
+      fileWritten.diskInstance = s_diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+      
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumBlob = checksumBlob;
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = s_vid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.copyNb = 1;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    tapeFilesWrittenCopy1.clear();
+  }
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  
+  bool noRecall = true;
+  
+  cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,"file://DOES_NOT_EXIST",common::dataStructures::RepackInfo::Type::MoveOnly,
+  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,noRecall);
+  scheduler.queueRepack(admin,qrr, lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+  log::TimingList tl;
+  utils::Timer t;
+  ASSERT_THROW(scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc),cta::ExpandRepackRequestException);
 }
 
 /* DEACTIVATED BECAUSE OF THE 1 MINUTE caching of getCachedMountPolicies

@@ -143,6 +143,7 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
     m_rset = m_stmt.executeQuery();
 
     m_rsetIsEmpty = !m_rset.next();
+    if(m_rsetIsEmpty) releaseDbResources();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -155,6 +156,16 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
 // destructor
 //------------------------------------------------------------------------------
 RdbmsCatalogueGetArchiveFilesForRepackItor::~RdbmsCatalogueGetArchiveFilesForRepackItor() {
+  releaseDbResources();
+}
+
+//------------------------------------------------------------------------------
+// releaseDbResources
+//------------------------------------------------------------------------------
+void RdbmsCatalogueGetArchiveFilesForRepackItor::releaseDbResources() noexcept {
+  m_rset.reset();
+  m_stmt.reset();
+  m_conn.reset();
 }
 
 //------------------------------------------------------------------------------
@@ -206,6 +217,7 @@ common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesForRepackItor::
       auto completeArchiveFile = m_archiveFileBuilder.append(archiveFile);
 
       m_rsetIsEmpty = !m_rset.next();
+      if(m_rsetIsEmpty) releaseDbResources();
 
       // If the ArchiveFile object under construction is complete
       if (nullptr != completeArchiveFile.get()) {

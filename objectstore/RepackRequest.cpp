@@ -79,6 +79,7 @@ void RepackRequest::initialize() {
   m_payload.set_is_expand_finished(false);
   m_payload.set_is_expand_started(false);
   m_payload.set_force_disabled_tape(false);
+  m_payload.set_no_recall(false);
   m_payload.set_is_complete(false);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
@@ -148,6 +149,7 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.userProvidedFiles = m_payload.userprovidedfiles();
   ret.isExpandFinished = m_payload.is_expand_finished();
   ret.forceDisabledTape = m_payload.force_disabled_tape();
+  ret.noRecall = m_payload.no_recall();
   for(auto & rdi: m_payload.destination_infos()){
     RepackInfo::RepackDestinationInfo rdiToInsert;
     rdiToInsert.vid = rdi.vid();
@@ -272,6 +274,17 @@ bool RepackRequest::getForceDisabledTape() {
   checkPayloadReadable();
   return m_payload.force_disabled_tape();
 }
+
+void RepackRequest::setNoRecall(const bool noRecall) {
+  checkPayloadWritable();
+  m_payload.set_no_recall(noRecall);
+}
+
+bool RepackRequest::getNoRecall(){
+  checkPayloadReadable();
+  return m_payload.no_recall();
+}
+
 void RepackRequest::setStatus(){
   checkPayloadWritable();
   checkPayloadReadable();
@@ -730,6 +743,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       retRef.m_repackInfo.vid = payload.vid();
       retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
       retRef.m_repackInfo.forceDisabledTape = payload.force_disabled_tape();
+      retRef.m_repackInfo.noRecall = payload.no_recall();
       if (payload.move_mode()) {
         if (payload.add_copies_mode()) {
           retRef.m_repackInfo.type = RepackInfo::Type::MoveAndAddCopies;

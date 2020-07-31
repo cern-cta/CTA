@@ -51,6 +51,13 @@ Stmt::Stmt(Stmt &&other):
 // destructor
 //-----------------------------------------------------------------------------
 Stmt::~Stmt() noexcept {
+  reset();
+}
+
+//-----------------------------------------------------------------------------
+// reset
+//-----------------------------------------------------------------------------
+void Stmt::reset() noexcept {
   try {
     // If this smart prepared statement currently points to a prepared
     // statement then return it back to its pool
@@ -60,6 +67,9 @@ Stmt::~Stmt() noexcept {
   } catch(...) {
     // Ignore any exceptions
   }
+
+  m_stmtPool = nullptr;
+  m_stmt.reset();
 }
 
 //-----------------------------------------------------------------------------

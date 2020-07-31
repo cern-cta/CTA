@@ -462,6 +462,23 @@ namespace utils {
     return ret;
   }
   
+   /**
+   * Allows to remove the first c chars from the beginning of a string
+   * Example : removePrefix(aaaaaabcdef,'a') -> bcdef
+   * @param input the string from which we will remove the chars c from it
+   * @param prefixChar the character that we want to remove from the beginning
+   * @return a new string with the prefix.
+   */
+  std::string removePrefix(const std::string & input, char prefixChar);
+  
+   /**
+   * Returns the value of the environment variable passed in parameter
+   * @param variableName the name of the environment variable to be passed
+   * @return the value of the environment variable passed in parameter
+   * If the environment variable is not set, it will return an empty string
+   */
+  std::string getEnv(const std::string & variableName);
+  
 } // namespace utils
 
 } // namespace cta

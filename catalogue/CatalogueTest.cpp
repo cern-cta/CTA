@@ -138,7 +138,6 @@ namespace {
     auto tape = getTape1();
     tape.vid = "VIDTWO";
     tape.comment = "Creation of tape two";
-
     return tape;
   }
 }
@@ -5878,6 +5877,69 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   ASSERT_EQ(0, tape.lastFSeq);
   ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapesForWritingOrderedByDataInBytesDesc) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+  
+
+  m_catalogue->tapeLabelled(m_tape1.vid, "tape_drive");
+
+  const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(m_tape1.logicalLibraryName);
+
+  ASSERT_EQ(1, tapes.size());
+
+  const catalogue::TapeForWriting tape = tapes.front();
+  ASSERT_EQ(m_tape1.vid, tape.vid);
+  ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+  ASSERT_EQ(m_tape1.vendor, tape.vendor);
+  ASSERT_EQ(m_tape1.tapePoolName, tape.tapePool);
+  ASSERT_EQ(m_vo.name, tape.vo);
+  ASSERT_EQ(0, tape.lastFSeq);
+  ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(0, tape.dataOnTapeInBytes);
+  
+  //Create a tape and insert a file in it
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
+  m_catalogue->createTape(m_admin, m_tape2);
+  m_catalogue->tapeLabelled(m_tape2.vid, "tape_drive");
+  
+  const uint64_t fileSize = 1234 * 1000000000UL;
+  {
+    auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & file1Written = *file1WrittenUP;
+    std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+    file1WrittenSet.insert(file1WrittenUP.release());
+    file1Written.archiveFileId        = 1234;
+    file1Written.diskInstance         = "diskInstance";
+    file1Written.diskFileId           = "5678";
+    file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
+    file1Written.size                 = fileSize;
+    file1Written.checksumBlob.insert(checksum::ADLER32, 0x1000); // tests checksum with embedded zeros
+    file1Written.storageClassName     = m_storageClassSingleCopy.name;
+    file1Written.vid                  = m_tape2.vid;
+    file1Written.fSeq                 = 1;
+    file1Written.blockId              = 4321;
+    file1Written.copyNb               = 1;
+    file1Written.tapeDrive            = "tape_drive";
+    m_catalogue->filesWrittenToTape(file1WrittenSet);
+  }
+  
+  //The tape m_tape2 should be returned by the Catalogue::getTapesForWriting() method
+  ASSERT_EQ(m_tape2.vid,m_catalogue->getTapesForWriting(m_tape2.logicalLibraryName).front().vid);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_disabled_tape) {

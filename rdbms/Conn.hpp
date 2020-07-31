@@ -73,6 +73,13 @@ public:
   ~Conn() noexcept;
 
   /**
+   * Returns the database connection back to its pool.
+   *
+   * This method is idempotent.
+   */
+  void reset() noexcept;
+
+  /**
    * Deletion of the copy assignment operator.
    */
   Conn &operator=(const Conn &) = delete;

@@ -118,7 +118,7 @@ static int exceptionThrowingMain(
     std::list<cta::log::Param> params = {cta::log::Param("logMask", globalConfig.logMask.value())};
     log(log::INFO, "Set log mask", params);
   }
-    
+  
   // Create the object providing utilities for working with UNIX capabilities
   cta::server::ProcessCap capUtils;
 

@@ -41,6 +41,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaDiskSystemLs.hpp"
 #include "XrdCtaVirtualOrganizationLs.hpp"
 #include "XrdCtaVersion.hpp"
+#include "XrdCtaSchedulingInfosLs.hpp"
 
 #include <limits>
 #include <sstream>
@@ -288,6 +289,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                break;
            case cmd_pair(AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE):
              processVersion(response, stream);
+             break;
+           case cmd_pair(AdminCmd::CMD_SCHEDULINGINFOS, AdminCmd::SUBCMD_LS):
+             processSchedulingInfos_Ls(response,stream);
              break;
             default:
                throw PbException("Admin command pair <" +
@@ -1490,10 +1494,13 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
   }
 
   bool forceDisabledTape = has_flag(OptionBoolean::DISABLED);
+  
+  bool noRecall = has_flag(OptionBoolean::NO_RECALL);
 
   // Process each item in the list
   for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-     m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL, type, mountPolicy, forceDisabledTape, m_lc);
+    SchedulerDatabase::QueueRepackRequest repackRequest(*it,bufferURL,type,mountPolicy,forceDisabledTape, noRecall);
+    m_scheduler.queueRepack(m_cliIdentity, repackRequest, m_lc);
   }
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -2107,6 +2114,16 @@ void RequestMessage::processVersion(cta::xrd::Response &response, XrdSsiStream *
   stream = new VersionStream(*this,m_catalogue,m_scheduler,m_catalogue_conn_string);
   
   response.set_show_header(HeaderType::VERSION_CMD);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processSchedulingInfos_Ls(cta::xrd::Response &response, XrdSsiStream * & stream) {
+  using namespace cta::admin;
+  
+  stream = new SchedulingInfosLsStream(*this,m_catalogue,m_scheduler,m_lc);
+  
+  //TODO TO BE CHANGED
+  response.set_show_header(HeaderType::SCHEDULINGINFOS_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
