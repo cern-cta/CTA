@@ -58,6 +58,15 @@ public:
   ~OracleCatalogue() override;
 
   /**
+   * Creates a temporary table from the list of disk file IDs provided in the search criteria.
+   *
+   * @param conn The database connection.
+   * @param tapeFileSearchCriteria Search criteria containing a list of disk file IDs (fxid).
+   * @return Name of the temporary table
+   */
+  std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const override;
+
+  /**
    * Returns a unique archive ID that can be used by a new archive file within
    * the catalogue.
    *

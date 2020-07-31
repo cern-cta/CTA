@@ -150,6 +150,34 @@ PostgresCatalogue::~PostgresCatalogue() {
 }
 
 //------------------------------------------------------------------------------
+// createAndPopulateTempTableFxid
+//------------------------------------------------------------------------------
+std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const {
+  const std::string tempTableName = "ORA$PTT_DISK_FXIDS";
+
+  try {
+    if(tapeFileSearchCriteria.diskFileIds) {
+      // ON COMMIT PRESERVE DEFINITION preserves the table until the end of the session
+      std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName +
+        "(DISK_FILE_ID VARCHAR2(100)) ON COMMIT PRESERVE DEFINITION";
+      conn.executeNonQuery(sql);
+  
+      sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
+      auto stmt = conn.createStmt(sql);
+      for(auto &diskFileId : tapeFileSearchCriteria.diskFileIds.value()) {
+        stmt.bindString(":DISK_FILE_ID", diskFileId);
+        stmt.executeNonQuery();
+      }
+    }
+
+    return tempTableName;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t PostgresCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {

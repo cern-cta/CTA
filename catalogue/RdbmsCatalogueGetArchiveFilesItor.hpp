@@ -40,14 +40,15 @@ public:
    * Constructor.
    *
    * @param log Object representing the API to the CTA logging system.
-   * @param connPool The database connection pool.
+   * @param conn The database connection.
    * @param searchCriteria The search criteria to be used when listing archive
    * files.
    */
   RdbmsCatalogueGetArchiveFilesItor(
     log::Logger &log,
-    rdbms::ConnPool &connPool,
-    const TapeFileSearchCriteria &searchCriteria);
+    rdbms::Conn &&conn,
+    const TapeFileSearchCriteria &searchCriteria,
+    const std::string &tempDiskFxidsTableName);
 
   /**
    * Destructor.
@@ -70,11 +71,6 @@ private:
    * Object representing the API to the CTA logging system.
    */
   log::Logger &m_log;
-
-  /**
-   * The database connection pool.
-   */
-  rdbms::ConnPool &m_connPool;
 
   /**
    * The search criteria to be used when listing archive files.
