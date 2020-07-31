@@ -62,25 +62,30 @@ MysqlCatalogue::~MysqlCatalogue() {
 std::string MysqlCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const {
   const std::string tempTableName = "TEMP_DISK_FXIDS";
 
-  try {
-    if(tapeFileSearchCriteria.diskFileIds) {
-      std::string sql = "CREATE TEMPORARY TABLE " + tempTableName +
-        "(DISK_FILE_ID VARCHAR(100))";
-      conn.executeNonQuery(sql);
-  
+  if(tapeFileSearchCriteria.diskFileIds) {
+    try {
+      std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID VARCHAR(100))";
+      try {
+        conn.executeNonQuery(sql);
+      } catch(exception::Exception &ex) {
+        // MySQL does not drop temporary tables until the end of the session; trying to create another
+        // temporary table in the same unit test will fail. If this happens, truncate the table and carry on.
+        sql = "TRUNCATE TABLE " + tempTableName;
+        conn.executeNonQuery(sql);
+      }
+
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
       auto stmt = conn.createStmt(sql);
       for(auto &diskFileId : tapeFileSearchCriteria.diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
       }
+    } catch(exception::Exception &ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+      throw;
     }
-
-    return tempTableName;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
   }
+  return tempTableName;
 }
 
 //------------------------------------------------------------------------------

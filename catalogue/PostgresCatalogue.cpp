@@ -158,7 +158,7 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
   try {
     if(tapeFileSearchCriteria.diskFileIds) {
       std::string sql = "CREATE TEMPORARY TABLE " + tempTableName +
-        "(DISK_FILE_ID VARCHAR(100)) ON COMMIT DROP";
+        "(DISK_FILE_ID VARCHAR(100))";
       conn.executeNonQuery(sql);
   
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
