@@ -6702,6 +6702,8 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
   const TapeFileSearchCriteria &searchCriteria) const
 {
   try {
+    auto conn = m_connPool.getConn();
+
     std::string sql =
       "SELECT "
         "COALESCE(SUM(ARCHIVE_FILE.SIZE_IN_BYTES), 0) AS TOTAL_BYTES,"
@@ -6746,14 +6748,10 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileIds) {
+      auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
+
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_ID IN ";
-      std::string delim = "('";
-      for(auto &diskFileId : searchCriteria.diskFileIds.value()) {
-        sql += delim + diskFileId;
-        delim = "','";
-      }
-      sql += "')";
+      sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
       addedAWhereConstraint = true;
     }
     if(hideSuperseded) {
@@ -6762,7 +6760,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       addedAWhereConstraint = true;
     }
 
-    auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     if(searchCriteria.archiveFileId) {
       stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
