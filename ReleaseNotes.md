@@ -5,18 +5,18 @@
 ### Features
 
 - Upstream eos 4.8.10-1
-- The --no-recall flag can be passed to cta-admin repack add command:
-  - The repack request will NOT trigger any retrieve mount.  Only the files that are in the repack buffer will be considered for archival.
-- New cta-admin schedulinginfos ls command available to list potential mounts detected by the scheduler
+  - Adds a fix for `eos-ns-inspect` to [correctly list extended attributes on files](https://its.cern.ch/jira/browse/EOS-4319)
+- The `--no-recall` flag can be passed to `cta-admin repack add` command:
+  - The repack request will NOT trigger any retrieve mount.  Only the files that are in the repack buffer will be considered for archival. This is used to inject recoverred files from a tape with some hard to read fseqs.
+- New `cta-admin schedulinginfos ls` command available to list potential mounts detected by the scheduler
 
 ### Modification
 
-- Shrinked cta-admin repack ls tabular output
+- Shrinked `cta-admin repack ls` tabular output
 - cta-admin help commands listed in alphabetical order
 - Catalogue connection pool improvements
-- The scheduler will take the tape that has the highest occupancy for archival in order to avoid data scattering across all available tapes.
+- The scheduler will take the tape that has the highest occupancy for archival in order to limit data scattering across all available tapes
 
-### Bug fixes
 
 # v3.1-2
 
@@ -25,6 +25,7 @@
 ### Modification
 
 - Added database upgrade/changelog script oracle/3.0to3.1.sql
+
 
 # v3.1-1
 
@@ -37,6 +38,7 @@
 - Catalogue schema version 3.1 : addition of a new index on the TAPE table
 - Catalogue and Unit tests improvements
 
+
 # v3.0-3
 
 ## Summary
@@ -44,6 +46,7 @@
 ### Modification
 
 - The cta-statistics-update tool updates the tape statistics one by one
+
 
 # v3.0-2
 
