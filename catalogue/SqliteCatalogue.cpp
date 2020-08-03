@@ -201,18 +201,11 @@ std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, c
 
   if(tapeFileSearchCriteria.diskFileIds) {
     try {
-      std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID TEXT)";
-      try {
-        conn.executeNonQuery(sql);
-      } catch(exception::Exception &ex) {
-        // SQLite does not drop temporary tables automatically; trying to create another temporary table
-        // in the same unit test will fail. If this happens, truncate the table and carry on.
-        sql = "DELETE FROM " + tempTableName;
-        conn.executeNonQuery(sql);
-      }
+      // Drop any prexisting temporary table and create a new one
+      conn.executeNonQuery("DROP TABLE IF EXISTS " + tempTableName);
+      conn.executeNonQuery("CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID TEXT)");
 
-      sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
-      auto stmt = conn.createStmt(sql);
+      auto stmt = conn.createStmt("INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)");
       for(auto &diskFileId : tapeFileSearchCriteria.diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
