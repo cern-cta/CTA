@@ -57,7 +57,11 @@ echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 if [ "$KEEP_DATABASE" == "0" ]; then
   echo "Wiping database"
-  echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf || die "ERROR: Could not wipe database. cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf FAILED"
+  if [ "$DATABASETYPE" != "sqlite" ]; then
+    echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf || die "ERROR: Could not wipe database. cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf FAILED"
+  else
+    rm -fr $(dirname $(echo ${DATABASEURL} | cut -d: -f2))
+  fi
 
   if [ "$DATABASETYPE" == "sqlite" ]; then
     mkdir -p $(dirname $(echo ${DATABASEURL} | cut -d: -f2))
