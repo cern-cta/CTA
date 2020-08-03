@@ -6551,7 +6551,7 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSearchCriteria
   try {
     // Create a connection to populate the temporary table (specialised by database type)
     auto conn = m_archiveFileListingConnPool.getConn();
-    auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
+    const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
     // Pass ownership of the connection to the Iterator object
     auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
     return ArchiveFileItor(impl);
@@ -6748,7 +6748,7 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileIds) {
-      auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
+      const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
 
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
