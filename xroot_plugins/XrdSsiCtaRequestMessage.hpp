@@ -218,7 +218,6 @@ private:
   typedef void admincmdstream_t(cta::xrd::Response &response, XrdSsiStream* &stream);
 
   admincmdstream_t processAdmin_Ls;
-  admincmdstream_t processArchiveFile_Ls;
   admincmdstream_t processArchiveRoute_Ls;
   admincmdstream_t processDrive_Ls;
   admincmdstream_t processFailedRequest_Ls;

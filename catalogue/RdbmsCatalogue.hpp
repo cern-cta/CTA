@@ -1520,6 +1520,15 @@ protected:
     const std::string &requesterGroupName) const;
 
   /**
+   * Creates a temporary table from the list of disk file IDs provided in the search criteria.
+   *
+   * @param conn The database connection.
+   * @param tapeFileSearchCriteria Search criteria containing a list of disk file IDs (fxid).
+   * @return Name of the temporary table
+   */
+  virtual std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const = 0;
+
+  /**
    * Returns a unique archive ID that can be used by a new archive file within
    * the catalogue.
    *

@@ -20,7 +20,6 @@
 
 #include "catalogue/ArchiveFileBuilder.hpp"
 #include "catalogue/ArchiveFileItorImpl.hpp"
-#include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Stmt.hpp"

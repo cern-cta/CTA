@@ -2,7 +2,7 @@
  * @project        The CERN Tape Archive (CTA)
  * @brief          Definitions for parsing the options of the CTA Admin command-line tool
  * @description    CTA Admin command using Google Protocol Buffers and XRootD SSI transport
- * @copyright      Copyright 2017 CERN
+ * @copyright      Copyright 2020 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -181,8 +181,6 @@ private:
 const cmdLookup_t cmdLookup = {
    { "admin",                   AdminCmd::CMD_ADMIN },
    { "ad",                      AdminCmd::CMD_ADMIN },
-   { "archivefile",             AdminCmd::CMD_ARCHIVEFILE },
-   { "af",                      AdminCmd::CMD_ARCHIVEFILE },
    { "archiveroute",            AdminCmd::CMD_ARCHIVEROUTE },
    { "ar",                      AdminCmd::CMD_ARCHIVEROUTE },
    { "drive",                   AdminCmd::CMD_DRIVE },
@@ -191,10 +189,6 @@ const cmdLookup_t cmdLookup = {
    { "fr",                      AdminCmd::CMD_FAILEDREQUEST },
    { "groupmountrule",          AdminCmd::CMD_GROUPMOUNTRULE },
    { "gmr",                     AdminCmd::CMD_GROUPMOUNTRULE },
-   { "listpendingarchives",     AdminCmd::CMD_LISTPENDINGARCHIVES },
-   { "lpa",                     AdminCmd::CMD_LISTPENDINGARCHIVES },
-   { "listpendingretrieves",    AdminCmd::CMD_LISTPENDINGRETRIEVES },
-   { "lpr",                     AdminCmd::CMD_LISTPENDINGRETRIEVES },
    { "logicallibrary",          AdminCmd::CMD_LOGICALLIBRARY },
    { "ll",                      AdminCmd::CMD_LOGICALLIBRARY },
    { "mediatype",               AdminCmd::CMD_MEDIATYPE },
@@ -260,15 +254,14 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
 
    // hasOption options
    { "--checkchecksum",         OptionBoolean::CHECK_CHECKSUM },
-   { "--disabledtape",		OptionBoolean::DISABLED },
-   { "--extended",              OptionBoolean::EXTENDED },
+   { "--disabledtape",          OptionBoolean::DISABLED },
    { "--justarchive",           OptionBoolean::JUSTARCHIVE },
    { "--justmove",              OptionBoolean::JUSTMOVE },
    { "--justaddcopies",         OptionBoolean::JUSTADDCOPIES },
    { "--justretrieve",          OptionBoolean::JUSTRETRIEVE },
    { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
    { "--lookupnamespace",       OptionBoolean::LOOKUP_NAMESPACE },
-   { "--summary",               OptionBoolean::SUMMARY },
+   { "--showsuperseded",        OptionBoolean::SHOW_SUPERSEDED },
    { "--no-recall", OptionBoolean::NO_RECALL}
 };
 
@@ -316,6 +309,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--diskid",                OptionString::DISKID },
    { "--drive",                 OptionString::DRIVE },
    { "--encryptionkeyname",     OptionString::ENCRYPTION_KEY_NAME },
+   { "--fxid",                  OptionString::FXID },
    { "--file",                  OptionString::FILENAME },
    { "--hostname",              OptionString::HOSTNAME },
    { "--input",                 OptionString::INPUT },
@@ -344,7 +338,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
  * Map string list options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionStrList::Key> strListOptions = {
-   { "--fidfile",               OptionStrList::FILE_ID },
+   { "--fxidfile",              OptionStrList::FILE_ID },
    { "--vidfile",               OptionStrList::VID }
 };
 
@@ -355,7 +349,6 @@ const std::map<std::string, OptionStrList::Key> strListOptions = {
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_ADMIN,                { "admin",                "ad",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" } }},
    { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls", "ch", "rm" },
                         "\n  This is a synchronous command that sets and reads back the state of one or\n"
@@ -365,8 +358,6 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                                          }},
    { AdminCmd::CMD_FAILEDREQUEST,        { "failedrequest",        "fr",  { "ls", "show", "retry", "rm" } }},
    { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_LISTPENDINGARCHIVES,  { "listpendingarchives",  "lpa", { } }},
-   { AdminCmd::CMD_LISTPENDINGRETRIEVES, { "listpendingretrieves", "lpr", { } }},
    { AdminCmd::CMD_LOGICALLIBRARY,       { "logicallibrary",       "ll",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_MEDIATYPE,            { "mediatype",            "mt",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_MOUNTPOLICY,          { "mountpolicy",          "mp",  { "add", "ch", "rm", "ls" } }},
@@ -389,7 +380,11 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
-   { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls" } }},
+   { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls" },
+                            "  Tape files can be listed by VID or by EOS disk instance + EOS disk file ID.\n"
+                            "  Disk file IDs should be provided in hexadecimal (fxid). The --fxidfile option\n"
+                            "  takes a file in the same format as the output of 'eos find --fid <path>'\n\n"
+   }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" },
 			  "\n  This command allows to manage disk systems (useful for the backpressure).\n"
@@ -435,17 +430,16 @@ const Option opt_drivename            { Option::OPT_STR,  "--drive",            
 const Option opt_drivename_cmd        { Option::OPT_CMD,  "--drive",                 "",     "<drive_name>" };
 const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",             "-e",   " <\"true\" or \"false\">" };
 const Option opt_encryptionkeyname    { Option::OPT_STR,  "--encryptionkeyname",     "-k",   " <encryption_key_name>" };
-const Option opt_extended             { Option::OPT_FLAG, "--extended",              "-x",   "" };
-const Option opt_fidfile              { Option::OPT_STR_LIST, "--fidfile",           "-i",   " <filename>" };
+const Option opt_fid                  { Option::OPT_STR,  "--fxid",                  "-f",   " <eos_fxid>" };
+const Option opt_fidfile              { Option::OPT_STR_LIST, "--fxidfile",          "-F",   " <filename>" };
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
 const Option opt_firstfseq            { Option::OPT_UINT, "--firstfseq",             "-f",   " <first_fseq>" };
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
 const Option opt_force_flag           { Option::OPT_FLAG, "--force",                 "-f",   "" };
 const Option opt_gid                  { Option::OPT_UINT, "--gid",                   "-g",   " <group_id>" };
-const Option opt_hostname_alias       { Option::OPT_STR,  "--name",                  "-n",   " <host_name>",
-                                        "--hostname" };
+const Option opt_hostname_alias       { Option::OPT_STR,  "--name",                  "-n",   " <host_name>", "--hostname" };
 const Option opt_input                { Option::OPT_STR,  "--input",                 "-i",   " <\"zero\" or \"urandom\">" };
-const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <instance_name>" };
+const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <disk_instance>" };
 const Option opt_justarchive          { Option::OPT_FLAG, "--justarchive",           "-a",   "" };
 const Option opt_justmove             { Option::OPT_FLAG, "--justmove",              "-m",   "" };
 const Option opt_justaddcopies        { Option::OPT_FLAG, "--justaddcopies",         "-a",   "" };
@@ -453,60 +447,53 @@ const Option opt_justretrieve         { Option::OPT_FLAG, "--justretrieve",     
 const Option opt_lastfseq             { Option::OPT_UINT, "--lastfseq",              "-l",   " <last_fseq>" };
 const Option opt_log                  { Option::OPT_FLAG, "--log",                   "-l",   "" };
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
-const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>",
-                                        "--logicallibrary" };
+const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>", "--logicallibrary" };
 const Option opt_lookupns             { Option::OPT_FLAG, "--lookupnamespace",       "-l",   "" };
 const Option opt_maxdrivesallowed     { Option::OPT_UINT, "--maxdrivesallowed",      "-d",   " <max_drives_allowed>" };
-const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "-maxl",   " <maximum_longitudinal_position>" };
+const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "-maxl", " <maximum_longitudinal_position>" };
 const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type_name>" };
-const Option opt_mediatype_alias      { Option::OPT_STR,  "--name",                  "-n",   " <media_type_name>",
-                                        "--mediatype" };
+const Option opt_mediatype_alias      { Option::OPT_STR,  "--name",                  "-n",   " <media_type_name>", "--mediatype" };
 const Option opt_minarchiverequestage { Option::OPT_UINT, "--minarchiverequestage",  "--aa", " <min_request_age>" };
-const Option opt_minlpos              { Option::OPT_UINT, "--minlpos",               "-minl",   " <minimum_longitudinal_position>" };
+const Option opt_minlpos              { Option::OPT_UINT, "--minlpos",               "-minl", " <minimum_longitudinal_position>" };
 const Option opt_minretrieverequestage{ Option::OPT_UINT, "--minretrieverequestage", "--ra", " <min_request_age>" };
 const Option opt_mountpolicy          { Option::OPT_STR,  "--mountpolicy",           "-u",   " <mount_policy_name>" };
-const Option opt_mountpolicy_alias    { Option::OPT_STR,  "--name",                  "-n",   " <mount_policy_name>",
-                                        "--mountpolicy" };
+const Option opt_mountpolicy_alias    { Option::OPT_STR,  "--name",                  "-n",   " <mount_policy_name>", "--mountpolicy" };
 const Option opt_number_of_files      { Option::OPT_UINT, "--nbfiles",               "-n",   " <number_of_files_per_tape>" };
-const Option opt_number_of_files_alias{ Option::OPT_UINT, "--number",                "-n",   " <number_of_files>",
-                                        "--nbfiles" };
+const Option opt_number_of_files_alias{ Option::OPT_UINT, "--number",                "-n",   " <number_of_files>", "--nbfiles" };
 const Option opt_number_of_wraps      { Option::OPT_UINT, "--nbwraps",               "-w",   " <number_of_wraps>" };
 const Option opt_output               { Option::OPT_STR,  "--output",                "-o",   " <\"null\" or output_dir>" };
 const Option opt_owner_uid            { Option::OPT_UINT, "--uid",                   "-u",   " <owner_uid>" };
 const Option opt_partialfiles         { Option::OPT_UINT, "--partial",               "-p",   " <number_of_files_per_tape>" };
 const Option opt_partialtapes         { Option::OPT_UINT, "--partialtapesnumber",    "-p",   " <number_of_partial_tapes>" };
 const Option opt_path                 { Option::OPT_STR,  "--path",                  "-p",   " <full_path>" };
-const Option opt_primarydensitycode   { Option::OPT_UINT,  "--primarydensitycode",    "-p",   " <primary_density_code>" };
+const Option opt_primarydensitycode   { Option::OPT_UINT,  "--primarydensitycode",   "-p",   " <primary_density_code>" };
 const Option opt_retrievepriority     { Option::OPT_UINT, "--retrievepriority",      "--rp", " <priority_value>" };
 const Option opt_secondarydensitycode { Option::OPT_UINT, "--secondarydensitycode",  "-s",   " <secondary_density_code>" };
 const Option opt_size                 { Option::OPT_UINT, "--size",                  "-s",   " <file_size>" };
 const Option opt_storageclass         { Option::OPT_STR,  "--storageclass",          "-s",   " <storage_class_name>" };
-const Option opt_storageclass_alias   { Option::OPT_STR,  "--name",                  "-n",   " <storage_class_name>",
-                                        "--storageclass" };
+const Option opt_storageclass_alias   { Option::OPT_STR,  "--name",                  "-n",   " <storage_class_name>", "--storageclass" };
 const Option opt_summary              { Option::OPT_FLAG, "--summary",               "-S",   "" };
 const Option opt_supply               { Option::OPT_STR,  "--supply",                "-s",   " <supply_value>" };
 const Option opt_tapepool             { Option::OPT_STR,  "--tapepool",              "-t",   " <tapepool_name>" };
-const Option opt_tapepool_alias       { Option::OPT_STR,  "--name",                  "-n",   " <tapepool_name>",
-                                        "--tapepool" };
+const Option opt_tapepool_alias       { Option::OPT_STR,  "--name",                  "-n",   " <tapepool_name>", "--tapepool" };
 const Option opt_username             { Option::OPT_STR,  "--username",              "-u",   " <user_name>" };
-const Option opt_username_alias       { Option::OPT_STR,  "--name",                  "-n",   " <user_name>",
-                                        "--username" };
+const Option opt_username_alias       { Option::OPT_STR,  "--name",                  "-n",   " <user_name>", "--username" };
 const Option opt_vendor               { Option::OPT_STR,  "--vendor",                "--ve", " <vendor>" };
 const Option opt_vid                  { Option::OPT_STR,  "--vid",                   "-v",   " <vid>" };
 const Option opt_vo                   { Option::OPT_STR,  "--vo",                    "--vo", " <vo>" };
 const Option opt_vidfile              { Option::OPT_STR_LIST, "--vidfile",           "-f",   " <filename>" };
 const Option opt_full                 { Option::OPT_BOOL, "--full",                  "-f",   " <\"true\" or \"false\">" };
 const Option opt_readonly             { Option::OPT_BOOL, "--readonly",              "-r",   " <\"true\" or \"false\">" };
-const Option opt_disabled_tape        { Option::OPT_FLAG, "--disabledtape",          "-d",   ""};
-
-const Option opt_disksystem           { Option::OPT_STR,  "--disksystem",            "-n", " <disk_system_name>" };
-const Option opt_file_regexp          { Option::OPT_STR,  "--fileregexp",            "-r", " <file_regexp>" };
-const Option opt_free_space_query_url { Option::OPT_STR,  "--freespacequeryurl",     "-u", " <free_space_query_url>" };
-const Option opt_refresh_interval     { Option::OPT_UINT,  "--refreshinterval",      "-i", " <refresh_intreval>" };
-const Option opt_targeted_free_space  { Option::OPT_UINT,  "--targetedfreespace",    "-f", " <targeted_free_space>" };
-const Option opt_sleep_time           { Option::OPT_UINT,  "--sleeptime",            "-s", " <sleep time in s>" };
-const Option opt_reason               { Option::OPT_STR,   "--reason",               "-r", " <reason_status_change>" };
-const Option opt_no_recall            { Option::OPT_FLAG, "--no-recall", "-nr", "" };
+const Option opt_disabled_tape        { Option::OPT_FLAG, "--disabledtape",          "-d",   "" };
+const Option opt_disksystem           { Option::OPT_STR,  "--disksystem",            "-n",   " <disk_system_name>" };
+const Option opt_file_regexp          { Option::OPT_STR,  "--fileregexp",            "-r",   " <file_regexp>" };
+const Option opt_free_space_query_url { Option::OPT_STR,  "--freespacequeryurl",     "-u",   " <free_space_query_url>" };
+const Option opt_refresh_interval     { Option::OPT_UINT, "--refreshinterval",       "-i",   " <refresh_intreval>" };
+const Option opt_targeted_free_space  { Option::OPT_UINT, "--targetedfreespace",     "-f",   " <targeted_free_space>" };
+const Option opt_sleep_time           { Option::OPT_UINT, "--sleeptime",             "-s",   " <sleep time in s>" };
+const Option opt_reason               { Option::OPT_STR,  "--reason",                "-r",   " <reason_status_change>" };
+const Option opt_show_superseded      { Option::OPT_FLAG, "--showsuperseded",        "-s",   "" };
+const Option opt_no_recall            { Option::OPT_FLAG, "--no-recall",             "-nr",  "" };
 
 /*!
  * Map valid options to commands
@@ -516,12 +503,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_CH    }, { opt_username, opt_comment }},
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_RM    }, { opt_username }},
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_ARCHIVEFILE,          AdminCmd::SUBCMD_LS    },
-      { opt_archivefileid.optional(), opt_diskid.optional(), opt_copynb.optional(),
-        opt_vid.optional(), opt_tapepool.optional(), opt_owner_uid.optional(), opt_gid.optional(),
-        opt_storageclass.optional(), opt_path.optional(), opt_instance.optional(), opt_all.optional(),
-        opt_summary.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_ADD   },
       { opt_storageclass, opt_copynb, opt_tapepool, opt_comment }},
@@ -549,12 +530,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_LS    }, { }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_LISTPENDINGARCHIVES,  AdminCmd::SUBCMD_NONE  },
-      { opt_tapepool.optional(), opt_extended.optional() }},
-   /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE  },
-      { opt_vid.optional(), opt_extended.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   },
       { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment }},
@@ -618,7 +593,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
       { opt_vid, opt_force.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
-   {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    }, { opt_vid, opt_lookupns.optional() }},
+   {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
+      { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_show_superseded.optional(), opt_lookupns.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},

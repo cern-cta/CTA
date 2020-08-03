@@ -23,7 +23,6 @@ using XrdSsiPb::PbException;
 #include <cmdline/CtaAdminCmdParse.hpp>
 #include "XrdSsiCtaRequestMessage.hpp"
 #include "XrdCtaAdminLs.hpp"
-#include "XrdCtaArchiveFileLs.hpp"
 #include "XrdCtaArchiveRouteLs.hpp"
 #include "XrdCtaDriveLs.hpp"
 #include "XrdCtaFailedRequestLs.hpp"
@@ -103,9 +102,11 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS):
                processAdmin_Ls(response, stream);
                break;
+#if 0
             case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_LS):
                processArchiveFile_Ls(response, stream);
                break;
+#endif
             case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD):
                processArchiveRoute_Add(response);
                break;
@@ -848,6 +849,7 @@ void RequestMessage::processAdmin_Ls(cta::xrd::Response &response, XrdSsiStream*
 
 
 
+#if 0
 void RequestMessage::processArchiveFile_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
   using namespace cta::admin;
@@ -861,6 +863,7 @@ void RequestMessage::processArchiveFile_Ls(cta::xrd::Response &response, XrdSsiS
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
+#endif
 
 
 

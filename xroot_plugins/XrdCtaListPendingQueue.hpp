@@ -20,6 +20,7 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include <common/checksum/ChecksumBlobSerDeser.hpp>
 
 
 namespace cta { namespace xrd {
