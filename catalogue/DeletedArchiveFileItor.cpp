@@ -60,8 +60,14 @@ DeletedArchiveFileItor::~DeletedArchiveFileItor() {
 // operator=
 //------------------------------------------------------------------------------
 DeletedArchiveFileItor &DeletedArchiveFileItor::operator=(DeletedArchiveFileItor &&rhs) {
-  m_impl = rhs.m_impl;
-  rhs.m_impl = nullptr;
+  // Protect against self assignment
+  if(this != &rhs) {
+    // Avoid memory leak
+    delete m_impl;
+
+    m_impl = rhs.m_impl;
+    rhs.m_impl = nullptr;
+  }
   return *this;
 }
 
