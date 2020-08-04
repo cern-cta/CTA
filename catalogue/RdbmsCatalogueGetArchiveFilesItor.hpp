@@ -46,7 +46,7 @@ public:
    */
   RdbmsCatalogueGetArchiveFilesItor(
     log::Logger &log,
-    rdbms::Conn conn,
+    rdbms::Conn &&conn,
     const TapeFileSearchCriteria &searchCriteria,
     const std::string &tempDiskFxidsTableName);
 

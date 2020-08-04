@@ -78,7 +78,7 @@ namespace {
 //------------------------------------------------------------------------------
 RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   log::Logger &log,
-  rdbms::Conn conn,
+  rdbms::Conn &&conn,
   const TapeFileSearchCriteria &searchCriteria,
   const std::string &tempDiskFxidsTableName) :
   m_log(log),
