@@ -95,7 +95,8 @@ void OStoreDB::assertAgentAddressSet() {
 // OStoreDB::waitSubthreadsComplete()
 //------------------------------------------------------------------------------
 void OStoreDB::waitSubthreadsComplete() {
-  while (m_taskQueueSize) std::this_thread::yield();
+  // This method is only used by unit tests so calling usleep() is good enough
+  while (m_taskQueueSize) ::usleep(1000);
 }
 
 //------------------------------------------------------------------------------
