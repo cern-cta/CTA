@@ -25,8 +25,6 @@ namespace catalogue {
 
 class DeletedArchiveFileItorImpl;
 
-class Catalogue;
-  
 class DeletedArchiveFileItor {
 public:
 

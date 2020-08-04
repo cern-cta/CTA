@@ -29,11 +29,6 @@ namespace catalogue {
 class ArchiveFileItorImpl;
 
 /**
- * Forward declaration.
- */
-class Catalogue;
-
-/**
  * A wrapper around an object that iterators over a list of archive files.
  *
  * This wrapper permits the user of the Catalogue API to use different
