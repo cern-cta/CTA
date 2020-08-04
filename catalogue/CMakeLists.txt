@@ -30,14 +30,12 @@ set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileBuilder.cpp
   ArchiveFileRow.cpp
   ArchiveFileItor.cpp
-  ArchiveFileItorImpl.cpp
   Catalogue.cpp
   CatalogueFactory.cpp
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
   DeletedArchiveFileItor.cpp
-  DeletedArchiveFileItorImpl.cpp
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
   MysqlCatalogue.cpp

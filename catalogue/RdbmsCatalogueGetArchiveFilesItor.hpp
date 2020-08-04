@@ -19,7 +19,6 @@
 #pragma once
 
 #include "catalogue/ArchiveFileBuilder.hpp"
-#include "catalogue/ArchiveFileItorImpl.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/log/Logger.hpp"
@@ -33,7 +32,7 @@ namespace catalogue {
 /**
  * RdbmsCatalogue::getArchiveFiles() implementation of ArchiveFileItorImpl.
  */
-class RdbmsCatalogueGetArchiveFilesItor: public ArchiveFileItorImpl {
+class RdbmsCatalogueGetArchiveFilesItor: public ArchiveFileItor::Impl {
 public:
 
   /**

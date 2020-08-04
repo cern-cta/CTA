@@ -19,14 +19,15 @@
 #pragma once
 
 #include "common/dataStructures/DeletedArchiveFile.hpp"
+#include "catalogue/CatalogueItorImpl.hpp"
 
 namespace cta {
 namespace catalogue {
 
-class DeletedArchiveFileItorImpl;
-
 class DeletedArchiveFileItor {
 public:
+
+  typedef CatalogueItorImpl<common::dataStructures::DeletedArchiveFile> Impl;
 
   /**
    * Constructor.
@@ -38,7 +39,7 @@ public:
    *
    * @param impl The object actually implementing this iterator.
    */
-  DeletedArchiveFileItor(DeletedArchiveFileItorImpl *const impl);
+  DeletedArchiveFileItor(Impl *const impl);
 
   /**
    * Deletion of copy constructor.
@@ -82,7 +83,7 @@ private:
   /**
    * The object actually implementing this iterator.
    */
-  DeletedArchiveFileItorImpl *m_impl;
+  Impl *m_impl;
 };
 
 }}

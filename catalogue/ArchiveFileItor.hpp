@@ -18,15 +18,11 @@
 
 #pragma once
 
+#include "catalogue/CatalogueItorImpl.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 
 namespace cta {
 namespace catalogue {
-
-/**
- * Forward declaration.
- */
-class ArchiveFileItorImpl;
 
 /**
  * A wrapper around an object that iterators over a list of archive files.
@@ -36,6 +32,8 @@ class ArchiveFileItorImpl;
  */
 class ArchiveFileItor {
 public:
+
+  typedef CatalogueItorImpl<common::dataStructures::ArchiveFile> Impl;
 
   /**
    * Constructor.
@@ -47,7 +45,7 @@ public:
    *
    * @param impl The object actually implementing this iterator.
    */
-  ArchiveFileItor(ArchiveFileItorImpl *const impl);
+  ArchiveFileItor(Impl *const impl);
 
   /**
    * Deletion of copy constructor.
@@ -91,7 +89,7 @@ private:
   /**
    * The object actually implementing this iterator.
    */
-  ArchiveFileItorImpl *m_impl;
+  Impl *m_impl;
 
 }; // class ArchiveFileItor
 

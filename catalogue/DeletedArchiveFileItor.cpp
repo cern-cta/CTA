@@ -17,7 +17,6 @@
  */
 
 #include "DeletedArchiveFileItor.hpp"
-#include "DeletedArchiveFileItorImpl.hpp"
 
 
 namespace cta {
@@ -34,7 +33,7 @@ DeletedArchiveFileItor::DeletedArchiveFileItor():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DeletedArchiveFileItor::DeletedArchiveFileItor(DeletedArchiveFileItorImpl *const impl):
+DeletedArchiveFileItor::DeletedArchiveFileItor(DeletedArchiveFileItor::Impl *const impl):
   m_impl(impl) {
   if(nullptr == impl) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");

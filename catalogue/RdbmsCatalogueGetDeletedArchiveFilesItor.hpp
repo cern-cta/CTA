@@ -18,20 +18,20 @@
 
 #pragma once
 
-#include "DeletedArchiveFileItorImpl.hpp"
+#include "catalogue/ArchiveFileBuilder.hpp"
+#include "catalogue/DeletedArchiveFileItor.hpp"
+#include "catalogue/TapeFileSearchCriteria.hpp"
+#include "common/dataStructures/DeletedArchiveFile.hpp"
 #include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Stmt.hpp"
 #include "rdbms/Rset.hpp"
-#include "TapeFileSearchCriteria.hpp"
-#include "ArchiveFileBuilder.hpp"
-#include "common/dataStructures/DeletedArchiveFile.hpp"
 
 
 namespace cta {
 namespace catalogue {
 
-class RdbmsCatalogueGetDeletedArchiveFilesItor: public DeletedArchiveFileItorImpl {
+class RdbmsCatalogueGetDeletedArchiveFilesItor: public DeletedArchiveFileItor::Impl {
 public:
 
   /**
