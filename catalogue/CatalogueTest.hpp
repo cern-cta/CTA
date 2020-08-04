@@ -70,7 +70,7 @@ protected:
    * @return Map from archive file ID to archive file.
    */
   std::map<uint64_t, cta::common::dataStructures::ArchiveFile> archiveFileItorToMap(
-    cta::catalogue::ArchiveFileItor &itor);
+    cta::catalogue::Catalogue::ArchiveFileItor &itor);
 
   /**
    * Creates a map from archive file ID to archive file from the specified

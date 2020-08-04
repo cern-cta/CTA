@@ -6544,7 +6544,7 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
 //------------------------------------------------------------------------------
 // getArchiveFilesItor
 //------------------------------------------------------------------------------
-ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const {
+Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const {
 
   checkTapeFileSearchCriteria(searchCriteria);
 
@@ -6566,7 +6566,8 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSearchCriteria
 //------------------------------------------------------------------------------
 // getDeletedArchiveFilesItor
 //------------------------------------------------------------------------------
-DeletedArchiveFileItor RdbmsCatalogue::getDeletedArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const {
+Catalogue::DeletedArchiveFileItor RdbmsCatalogue::getDeletedArchiveFilesItor(
+  const TapeFileSearchCriteria &searchCriteria) const {
 
   checkTapeFileSearchCriteria(searchCriteria);
 
@@ -6679,7 +6680,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
 //------------------------------------------------------------------------------
 // getArchiveFileItorForRepack
 //------------------------------------------------------------------------------
-ArchiveFileItor RdbmsCatalogue::getArchiveFilesForRepackItor(const std::string &vid, const uint64_t startFSeq) const {
+Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesForRepackItor(const std::string &vid, const uint64_t startFSeq) const {
   try {
     auto impl = new RdbmsCatalogueGetArchiveFilesForRepackItor(m_log, m_archiveFileListingConnPool, vid, startFSeq);
     return ArchiveFileItor(impl);

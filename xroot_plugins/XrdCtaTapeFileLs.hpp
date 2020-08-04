@@ -55,9 +55,9 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
-  catalogue::ArchiveFileItor    m_tapeFileItor;       //!< Iterator across files which have been archived
-  grpc::EndpointMap             m_endpoints;          //!< List of gRPC endpoints
-  bool                          m_LookupNamespace;    //!< True if namespace lookup is required
+  catalogue::Catalogue::ArchiveFileItor m_tapeFileItor;       //!< Iterator across files which have been archived
+  grpc::EndpointMap                     m_endpoints;          //!< List of gRPC endpoints
+  bool                                  m_LookupNamespace;    //!< True if namespace lookup is required
 
   static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";    //!< Identifier for log messages
 };

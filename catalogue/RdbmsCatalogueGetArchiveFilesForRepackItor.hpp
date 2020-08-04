@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/ArchiveFileBuilder.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Stmt.hpp"
@@ -32,7 +33,7 @@ namespace catalogue {
  * RdbmsCatalogue::getArchiveFilesForRepack() implementation of
  * ArchiveFileItorImpl.
  */
-class RdbmsCatalogueGetArchiveFilesForRepackItor: public ArchiveFileItor::Impl {
+class RdbmsCatalogueGetArchiveFilesForRepackItor: public Catalogue::ArchiveFileItor::Impl {
 public:
 
   /**

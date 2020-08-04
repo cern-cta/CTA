@@ -18,10 +18,11 @@
 
 #pragma once
 
-#include "catalogue/ArchiveFileItor.hpp"
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/MediaTypeWithLogs.hpp"
+#include "catalogue/SchemaVersion.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "catalogue/TapeFileWritten.hpp"
@@ -37,6 +38,7 @@
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
+#include "common/dataStructures/DeletedArchiveFile.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -60,22 +62,20 @@
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
-#include "disk/DiskSystem.hpp"
 #include "common/exception/FileSizeMismatch.hpp"
 #include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/optional.hpp"
-#include "SchemaVersion.hpp"
-#include "DeletedArchiveFileItor.hpp"
+#include "disk/DiskSystem.hpp"
 
 #include <list>
 #include <map>
+#include <memory>
 #include <set>
 #include <stdint.h>
 #include <string>
-#include <memory>
 
 namespace cta {
 
@@ -818,6 +818,8 @@ public:
     const std::string &name, const uint64_t sleepTime) = 0;
   virtual void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &comment) = 0;
+
+  typedef CatalogueItor<common::dataStructures::ArchiveFile> ArchiveFileItor;
       
   /**
    * Returns the specified archive files.  Please note that the list of files
@@ -828,6 +830,8 @@ public:
    */
   virtual ArchiveFileItor getArchiveFilesItor(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
+
+  typedef CatalogueItor<common::dataStructures::DeletedArchiveFile> DeletedArchiveFileItor;
 
   /**
    * Returns the specified deleted archive files.  Please note that the list of files

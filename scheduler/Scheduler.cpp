@@ -454,7 +454,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles totalStatsFile;
   repackRequest->m_dbReq->fillLastExpandedFSeqAndTotalStatsFile(fSeq,totalStatsFile);
   timingList.insertAndReset("fillTotalStatsFileBeforeExpandTime",t);
-  cta::catalogue::ArchiveFileItor archiveFilesForCatalogue = m_catalogue.getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
+  cta::catalogue::Catalogue::ArchiveFileItor archiveFilesForCatalogue = m_catalogue.getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
   timingList.insertAndReset("catalogueGetArchiveFilesForRepackItorTime",t);
   
   std::stringstream dirBufferURL;

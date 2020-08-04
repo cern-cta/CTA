@@ -19,7 +19,7 @@
 #pragma once
 
 #include "catalogue/ArchiveFileBuilder.hpp"
-#include "catalogue/DeletedArchiveFileItor.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/dataStructures/DeletedArchiveFile.hpp"
 #include "common/log/Logger.hpp"
@@ -31,7 +31,7 @@
 namespace cta {
 namespace catalogue {
 
-class RdbmsCatalogueGetDeletedArchiveFilesItor: public DeletedArchiveFileItor::Impl {
+class RdbmsCatalogueGetDeletedArchiveFilesItor: public Catalogue::DeletedArchiveFileItor::Impl {
 public:
 
   /**

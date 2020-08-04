@@ -28,7 +28,6 @@
 #include "common/threading/Thread.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
-#include "DeletedArchiveFileItor.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -347,7 +346,7 @@ std::map<std::string, cta::common::dataStructures::Tape> cta_catalogue_Catalogue
 // archiveFileItorToMap
 //------------------------------------------------------------------------------
 std::map<uint64_t, cta::common::dataStructures::ArchiveFile> cta_catalogue_CatalogueTest::archiveFileItorToMap(
-  cta::catalogue::ArchiveFileItor &itor) {
+  cta::catalogue::Catalogue::ArchiveFileItor &itor) {
   using namespace cta;
 
   try {
@@ -15184,7 +15183,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
   
   std::vector<common::dataStructures::DeletedArchiveFile> deletedArchiveFiles;
   {
-    cta::catalogue::DeletedArchiveFileItor itor = m_catalogue->getDeletedArchiveFilesItor();
+    auto itor = m_catalogue->getDeletedArchiveFilesItor();
     while(itor.hasMore()){
       deletedArchiveFiles.push_back(itor.next());
     }
@@ -15316,7 +15315,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
   
   std::vector<common::dataStructures::DeletedArchiveFile> deletedArchiveFiles;
   {
-    cta::catalogue::DeletedArchiveFileItor itor = m_catalogue->getDeletedArchiveFilesItor();
+    auto itor = m_catalogue->getDeletedArchiveFilesItor();
     while(itor.hasMore()){
       deletedArchiveFiles.push_back(itor.next());
     }

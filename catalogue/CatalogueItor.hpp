@@ -19,70 +19,104 @@
 #pragma once
 
 #include "catalogue/CatalogueItorImpl.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace cta {
 namespace catalogue {
 
 /**
- * A wrapper around an object that iterators over a list of archive files.
+ * A wrapper around an object that iterators over a list of items retrieved
+ * from the CTA catalogue.
  *
  * This wrapper permits the user of the Catalogue API to use different
  * iterator implementations whilst only using a single iterator type.
  */
-class ArchiveFileItor {
+template <typename Item>
+class CatalogueItor {
 public:
 
-  typedef CatalogueItorImpl<common::dataStructures::ArchiveFile> Impl;
+  typedef CatalogueItorImpl<Item> Impl;
 
   /**
    * Constructor.
    */
-  ArchiveFileItor();
+  CatalogueItor():
+    m_impl(nullptr) {
+  }
 
   /**
    * Constructor.
    *
    * @param impl The object actually implementing this iterator.
    */
-  ArchiveFileItor(Impl *const impl);
+  CatalogueItor(Impl *const impl):
+    m_impl(impl) {
+    if(nullptr == impl) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");
+    }
+  }
 
   /**
    * Deletion of copy constructor.
    */
-  ArchiveFileItor(const ArchiveFileItor &) = delete;
+  CatalogueItor(const CatalogueItor &) = delete;
 
   /**
    * Move constructor.
    *
    * @param other The other object to be moved.
    */
-  ArchiveFileItor(ArchiveFileItor &&other);
+  CatalogueItor(CatalogueItor &&other):
+    m_impl(other.m_impl) {
+    other.m_impl = nullptr;
+  }
 
   /**
    * Destructor.
    */
-  ~ArchiveFileItor();
+  ~CatalogueItor() {
+    delete m_impl;
+  }
 
   /**
    * Deletion of copy assignment.
    */
-  ArchiveFileItor &operator=(const ArchiveFileItor &) = delete;
+  CatalogueItor &operator=(const CatalogueItor &) = delete;
 
   /**
    * Move assignment.
    */
-  ArchiveFileItor &operator=(ArchiveFileItor &&rhs);
+  CatalogueItor &operator=(CatalogueItor &&rhs) {
+    // Protect against self assignment
+    if(this != &rhs) {
+      // Avoid memory leak
+      delete m_impl;
+
+      m_impl = rhs.m_impl;
+      rhs.m_impl = nullptr;
+    }
+    return *this;
+  }
 
   /**
-   * Returns true if a call to next would return another archive file.
+   * Returns true if a call to next would return another item.
    */
-  bool hasMore() const;
+  bool hasMore() const {
+    if(nullptr == m_impl) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed: This iterator is invalid");
+    }
+    return m_impl->hasMore();
+  }
 
   /**
-   * Returns the next archive or throws an exception if there isn't one.
+   * Returns the next item or throws an exception if there isn't one.
    */
-  common::dataStructures::ArchiveFile next();
+  Item next() {
+    if(nullptr == m_impl) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed: This iterator is invalid");
+    }
+    return m_impl->next();
+  }
 
 private:
 
@@ -91,7 +125,7 @@ private:
    */
   Impl *m_impl;
 
-}; // class ArchiveFileItor
+}; // class CatalogueItor
 
 } // namespace catalogue
 } // namespace cta
