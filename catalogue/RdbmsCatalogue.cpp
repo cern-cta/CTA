@@ -6566,13 +6566,10 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSea
 //------------------------------------------------------------------------------
 // getDeletedArchiveFilesItor
 //------------------------------------------------------------------------------
-Catalogue::DeletedArchiveFileItor RdbmsCatalogue::getDeletedArchiveFilesItor(
-  const TapeFileSearchCriteria &searchCriteria) const {
-
-  checkTapeFileSearchCriteria(searchCriteria);
+Catalogue::DeletedArchiveFileItor RdbmsCatalogue::getDeletedArchiveFilesItor() const {
 
   try {
-    auto impl = new RdbmsCatalogueGetDeletedArchiveFilesItor(m_log, m_archiveFileListingConnPool, searchCriteria);
+    auto impl = new RdbmsCatalogueGetDeletedArchiveFilesItor(m_log, m_archiveFileListingConnPool);
     return DeletedArchiveFileItor(impl);
   } catch(exception::UserError &) {
     throw;

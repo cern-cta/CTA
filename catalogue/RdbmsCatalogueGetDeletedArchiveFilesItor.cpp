@@ -77,11 +77,9 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 RdbmsCatalogueGetDeletedArchiveFilesItor::RdbmsCatalogueGetDeletedArchiveFilesItor(
   log::Logger &log,
-  rdbms::ConnPool &connPool,
-  const TapeFileSearchCriteria &searchCriteria):
+  rdbms::ConnPool &connPool):
   m_log(log),
   m_connPool(connPool),
-  m_searchCriteria(searchCriteria),
   m_rsetIsEmpty(true),
   m_hasMoreHasBeenCalled(false),
   m_archiveFileBuilder(log) {
@@ -120,72 +118,14 @@ RdbmsCatalogueGetDeletedArchiveFilesItor::RdbmsCatalogueGetDeletedArchiveFilesIt
       "INNER JOIN TAPE ON "
         "TAPE_FILE_RECYCLE_BIN.VID = TAPE.VID "
       "INNER JOIN TAPE_POOL ON "
-        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
-
-    const bool hideSuperseded = searchCriteria.showSuperseded ? !*searchCriteria.showSuperseded : false;
-    const bool thereIsAtLeastOneSearchCriteria =
-      searchCriteria.archiveFileId  ||
-      searchCriteria.diskInstance   ||
-      searchCriteria.vid            ||
-      searchCriteria.diskFileIds    ||
-      hideSuperseded;
-
-    if(thereIsAtLeastOneSearchCriteria) {
-    sql += " WHERE ";
-    }
-
-    bool addedAWhereConstraint = false;
-
-    if(searchCriteria.archiveFileId) {
-      sql += " ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      addedAWhereConstraint = true;
-    }
-    if(searchCriteria.diskInstance) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
-      addedAWhereConstraint = true;
-    }
-    if(searchCriteria.vid) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE_FILE.VID = :VID";
-      addedAWhereConstraint = true;
-    }
-    if(searchCriteria.diskFileIds) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.DISK_FILE_ID IN ";
-      char delim = '(';
-      for(auto &diskFileId : searchCriteria.diskFileIds.value()) {
-        sql += delim + diskFileId;
-        delim = ',';
-      }
-      sql += ')';
-      addedAWhereConstraint = true;
-    }
-    if(hideSuperseded) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE_FILE.SUPERSEDED_BY_VID != ''";
-      addedAWhereConstraint = true;
-    }
-
-    // Order by FSEQ if we are listing the contents of a tape, else order by
-    // archive file ID
-    if(searchCriteria.vid) {
-      sql += " ORDER BY FSEQ";
-    } else {
-      sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
-    }
+        "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
+      // The following ORDER BY CLAUSE is required by the ArchiveFileBuilder
+      // which needs tape files with a common archive file to be adjacent to
+      // each other in the result set
+      "ORDER BY ARCHIVE_FILE_ID, COPY_NB";
 
     m_conn = connPool.getConn();
     m_stmt = m_conn.createStmt(sql);
-    if(searchCriteria.archiveFileId) {
-      m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
-    }
-    if(searchCriteria.diskInstance) {
-      m_stmt.bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
-    }
-    if(searchCriteria.vid) {
-      m_stmt.bindString(":VID", searchCriteria.vid.value());
-    }
     m_rset = m_stmt.executeQuery();
 
     {

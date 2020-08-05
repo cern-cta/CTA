@@ -823,13 +823,12 @@ public:
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
-   * Returns the specified deleted archive files.  Please note that the list of files
-   * is ordered by archive file ID.
+   * Returns all the currently deleted archive files.  Please note that the list
+   * of archive files is ordered by archive file ID.
    *
-   * @param searchCriteria The search criteria.
-   * @return The deleted archive files.
+   * @return The deleted archive files ordered by archive file ID.
    */
-  DeletedArchiveFileItor getDeletedArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria) const override;
+  DeletedArchiveFileItor getDeletedArchiveFilesItor() const override;
   
   /**
    * Returns the specified files in tape file sequence order.

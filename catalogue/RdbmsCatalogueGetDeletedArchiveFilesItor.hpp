@@ -20,7 +20,6 @@
 
 #include "catalogue/ArchiveFileBuilder.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/dataStructures/DeletedArchiveFile.hpp"
 #include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
@@ -39,13 +38,8 @@ public:
    *
    * @param log Object representing the API to the CTA logging system.
    * @param connPool The database connection pool.
-   * @param searchCriteria The search criteria to be used when listing archive
-   * files.
    */
-  RdbmsCatalogueGetDeletedArchiveFilesItor(
-    log::Logger &log,
-    rdbms::ConnPool &connPool,
-    const TapeFileSearchCriteria &searchCriteria);
+  RdbmsCatalogueGetDeletedArchiveFilesItor(log::Logger &log, rdbms::ConnPool &connPool);
 
   /**
    * Destructor.
