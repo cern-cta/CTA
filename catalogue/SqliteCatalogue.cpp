@@ -65,7 +65,7 @@ void SqliteCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
     const auto getConnTime = t.secs();
     rdbms::AutoRollback autoRollback(conn);
     t.reset();
-    const auto archiveFile = getArchiveFileByArchiveFileId(conn, archiveFileId);
+    const auto archiveFile = getArchiveFileById(conn, archiveFileId);
     const auto getArchiveFileTime = t.secs();
 
     if(nullptr == archiveFile.get()) {
@@ -522,12 +522,12 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
     }
 
     const time_t now = time(nullptr);
-    const auto archiveFile = getArchiveFileByArchiveFileId(conn, event.archiveFileId);
+    const auto archiveFileRow = getArchiveFileRowById(conn, event.archiveFileId);
 
-    if(nullptr == archiveFile) {
+    if(nullptr == archiveFileRow) {
       // This should never happen
       exception::Exception ex;
-      ex.getMessage() << "Failed to find archive file: archiveFileId=" << event.archiveFileId;
+      ex.getMessage() << "Failed to find archive file row: archiveFileId=" << event.archiveFileId;
       throw ex;
     }
 
@@ -535,14 +535,14 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
     fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance <<
       ", diskFileId=" << event.diskFileId;
 
-    if(archiveFile->fileSize != event.size) {
+    if(archiveFileRow->size != event.size) {
       catalogue::FileSizeMismatch ex;
-      ex.getMessage() << "File size mismatch: expected=" << archiveFile->fileSize << ", actual=" << event.size << ": "
+      ex.getMessage() << "File size mismatch: expected=" << archiveFileRow->size << ", actual=" << event.size << ": "
         << fileContext.str();
       throw ex;
     }
 
-    archiveFile->checksumBlob.validate(event.checksumBlob);
+    archiveFileRow->checksumBlob.validate(event.checksumBlob);
 
     // Insert the tape file
     common::dataStructures::TapeFile tapeFile;

@@ -26,7 +26,9 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 ArchiveFileRow::ArchiveFileRow() :
   archiveFileId(0),
-  size(0) {
+  size(0),
+  creationTime(0),
+  reconciliationTime(0) {
 }
 
 //------------------------------------------------------------------------------

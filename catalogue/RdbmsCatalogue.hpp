@@ -874,10 +874,13 @@ public:
    * This method assumes that the archive file being requested exists and will
    * therefore throw an exception if it does not.
    *
+   * Please note that an archive file with no associated tape files is
+   * considered not to exist by this method.
+   *
    * @param id The unique identifier of the archive file.
    * @return The archive file.
    */
-  common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) override;
+  common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const override;
 
   /**
    * Returns true if the specified user has administrator privileges.
@@ -1410,21 +1413,27 @@ protected:
     const std::string &tapeDrive);
 
   /**
-   * Returns the specified archive file.   A nullptr pointer is returned if
-   * there is no corresponding row in the ARCHIVE_FILE table.  Please note that
-   * a non-nullptr is returned if there is a row in the ARCHIVE_FILE table and
-   * there are no rows in the TAPE_FILE table.
+   * Returns the archive file with the specified unique identifier or nullptr if
+   * it does not exist.
    *
-   * Please note that this method performs a LEFT OUTER JOIN from the
-   * ARCHIVE_FILE table to the TAPE_FILE table.
+   * Please note that an archive file with no associated tape files is
+   * considered not to exist by this method.
    *
    * @param conn The database connection.
-   * @param archiveFileId The identifier of the archive file.
-   * @return The archive file or nullptr.
+   * @param id The unique identifier of the archive file.
+   * @return The archive file.
    */
-  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileByArchiveFileId(
-    rdbms::Conn &conn,
-    const uint64_t archiveFileId) const;
+  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileById(rdbms::Conn &conn, const uint64_t archiveFileId) const;
+
+  /**
+   * Returns the specified archive file row.   A nullptr pointer is returned if
+   * there is no corresponding row in the ARCHIVE_FILE table.
+   *
+   * @param conn The database connection.
+   * @param id The identifier of the archive file.
+   * @return The archive file row or nullptr.
+   */
+  std::unique_ptr<ArchiveFileRow> getArchiveFileRowById(rdbms::Conn &conn, const uint64_t id) const;
 
   /**
    * Returns the specified archive file.   A nullptr pointer is returned if

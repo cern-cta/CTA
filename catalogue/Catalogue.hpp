@@ -885,10 +885,13 @@ public:
    * This method assumes that the archive file being requested exists and will
    * therefore throw an exception if it does not.
    *
+   * Please note that an archive file with no associated tape files is
+   * considered not to exist by this method.
+   *
    * @param id The unique identifier of the archive file.
    * @return The archive file.
    */
-  virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) = 0;
+  virtual common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const = 0;
 
   /**
    * !!!!!!!!!!!!!!!!!!! THIS METHOD SHOULD NOT BE USED !!!!!!!!!!!!!!!!!!!!!!!

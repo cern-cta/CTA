@@ -79,7 +79,7 @@ public:
   void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin, const std::string& name, const uint64_t sleepTime) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}  
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   DeletedArchiveFileItor getDeletedArchiveFilesItor() const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}

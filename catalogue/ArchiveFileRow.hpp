@@ -93,6 +93,16 @@ struct ArchiveFileRow {
    */
   std::string storageClassName;
 
+  /**
+   * Creation time in seconds since the Unix epoch.
+   */
+  time_t creationTime;
+
+  /**
+   * Reconciliation time in seconds since the Unix epoch.
+   */
+  time_t reconciliationTime;
+
 }; // struct ArchiveFileRow
 
 /**

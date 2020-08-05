@@ -6789,10 +6789,10 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
 //------------------------------------------------------------------------------
 // getArchiveFileById
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uint64_t id) {
+common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uint64_t id) const {
   try {
     auto conn = m_connPool.getConn();
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile(getArchiveFileByArchiveFileId(conn, id));
+    const auto archiveFile = getArchiveFileById(conn, id);
 
     // Throw an exception if the archive file does not exist
     if(nullptr == archiveFile.get()) {
@@ -6802,6 +6802,92 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uin
     }
 
     return *archiveFile;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getArchiveFileById
+//------------------------------------------------------------------------------
+std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFileById(rdbms::Conn &conn,
+  const uint64_t id) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
+        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+        "TAPE_FILE.VID AS VID,"
+        "TAPE_FILE.FSEQ AS FSEQ,"
+        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
+        "TAPE_FILE.COPY_NB AS COPY_NB,"
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
+        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
+      "FROM "
+        "ARCHIVE_FILE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
+      "INNER JOIN TAPE_FILE ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "WHERE "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+      "ORDER BY "
+        "TAPE_FILE.CREATION_TIME ASC";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", id);
+    auto rset = stmt.executeQuery();
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
+    while (rset.next()) {
+      if(nullptr == archiveFile.get()) {
+        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
+
+        archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+        archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+        archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
+        archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
+        archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
+        archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
+        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
+        archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
+        archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+        archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
+      }
+
+      // If there is a tape file
+      if(!rset.columnIsNull("VID")) {
+        // Add the tape file to the archive file's in-memory structure
+        common::dataStructures::TapeFile tapeFile;
+        tapeFile.vid = rset.columnString("VID");
+        tapeFile.fSeq = rset.columnUint64("FSEQ");
+        tapeFile.blockId = rset.columnUint64("BLOCK_ID");
+        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+        tapeFile.copyNb = rset.columnUint64("COPY_NB");
+        tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
+        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
+        if (!rset.columnIsNull("SSBY_VID")) {
+          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
+          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
+        }
+
+        archiveFile->tapeFiles.push_back(tapeFile);
+      }
+    }
+
+    return archiveFile;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7501,84 +7587,50 @@ uint64_t RdbmsCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &v
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileByArchiveId
+// getArchiveFileRowByArchiveId
 //------------------------------------------------------------------------------
-std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFileByArchiveFileId(
-  rdbms::Conn &conn,
-  const uint64_t archiveFileId) const {
+std::unique_ptr<ArchiveFileRow> RdbmsCatalogue::getArchiveFileRowById(rdbms::Conn &conn, const uint64_t id) const {
   try {
     const char *const sql =
-      "SELECT "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
-        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
-        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
-        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
-      "FROM "
-        "ARCHIVE_FILE "
-      "INNER JOIN STORAGE_CLASS ON "
-        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-      "LEFT OUTER JOIN TAPE_FILE ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-      "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
-      "ORDER BY "
-        "TAPE_FILE.CREATION_TIME ASC";
+      "SELECT"                                                           "\n"
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"               "\n"
+        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"         "\n"
+        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"                     "\n"
+        "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"                   "\n"
+        "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"                   "\n"
+        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"                   "\n"
+        "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"                   "\n"
+        "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"             "\n"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"        "\n"
+        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"      "\n"
+        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME"        "\n"
+      "FROM"                                                             "\n"
+        "ARCHIVE_FILE"                                                   "\n"
+      "INNER JOIN STORAGE_CLASS ON"                                      "\n"
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID" "\n"
+      "WHERE"                                                            "\n"
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
     auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", id);
     auto rset = stmt.executeQuery();
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
-    while (rset.next()) {
-      if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
 
-        archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
-        archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_UID");
-        archiveFile->diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
-        archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
-        archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
-        archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
-      }
+    std::unique_ptr<ArchiveFileRow> row;
+    if (rset.next()) {
+      row = cta::make_unique<ArchiveFileRow>();
 
-      // If there is a tape file
-      if(!rset.columnIsNull("VID")) {
-        // Add the tape file to the archive file's in-memory structure
-        common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = rset.columnString("VID");
-        tapeFile.fSeq = rset.columnUint64("FSEQ");
-        tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
-        tapeFile.copyNb = rset.columnUint64("COPY_NB");
-        tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        if (!rset.columnIsNull("SSBY_VID")) {
-          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
-          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
-        }
-
-        archiveFile->tapeFiles.push_back(tapeFile);
-      }
+      row->archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
+      row->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+      row->diskFileId = rset.columnString("DISK_FILE_ID");
+      row->diskFileOwnerUid = rset.columnUint64("DISK_FILE_UID");
+      row->diskFileGid = rset.columnUint64("DISK_FILE_GID");
+      row->size = rset.columnUint64("SIZE_IN_BYTES");
+      row->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"), rset.columnUint64("CHECKSUM_ADLER32"));
+      row->storageClassName = rset.columnString("STORAGE_CLASS_NAME");
+      row->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+      row->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
     }
 
-    return archiveFile;
+    return row;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

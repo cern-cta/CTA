@@ -532,7 +532,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapeFileSummary(searchCriteria);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) override {
+  common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFileById(id);}, m_maxTriesToConnect);
   }
 
