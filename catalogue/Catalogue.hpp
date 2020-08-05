@@ -834,15 +834,13 @@ public:
   typedef CatalogueItor<common::dataStructures::DeletedArchiveFile> DeletedArchiveFileItor;
 
   /**
-   * Returns the specified deleted archive files.  Please note that the list of files
-   * is ordered by archive file ID.
+   * Returns all the currently deleted archive files.  Please note that the list
+   * of archive files is ordered by archive file ID.
    *
-   * @param searchCriteria The search criteria.
-   * @return The deleted archive files.
+   * @return The deleted archive files ordered by archive file ID.
    */
-  virtual DeletedArchiveFileItor getDeletedArchiveFilesItor(
-    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
-  
+  virtual DeletedArchiveFileItor getDeletedArchiveFilesItor() const = 0;
+
   /**
    * Returns the specified files in tape file sequence order.
    *

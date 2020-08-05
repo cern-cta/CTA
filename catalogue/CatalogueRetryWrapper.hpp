@@ -512,8 +512,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
   }
   
-  DeletedArchiveFileItor getDeletedArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getDeletedArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
+  DeletedArchiveFileItor getDeletedArchiveFilesItor() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getDeletedArchiveFilesItor();}, m_maxTriesToConnect);
   }
   
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc){
