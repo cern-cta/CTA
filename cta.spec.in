@@ -198,6 +198,20 @@ The shared libraries base
 %defattr(0755,root,root,-)
 %{_libdir}/libctacommon.so*
 
+%package -n cta-lib-catalogue
+Summary: CERN Tape Archive libraries
+Group: Application/CTA
+# Explicity require protobuf3 to avoid clash with eos-protobuf3
+Requires: cta-lib-common
+%description -n cta-lib-catalogue
+CERN Tape Archive:
+Shared libraries required to access the CTA catalogue
+%files -n cta-lib-catalogue
+%defattr(0755,root,root,-)
+%{_libdir}/libctacatalogue.so*
+%{_libdir}/libctardbms.so*
+%{_libdir}/libctardbmswrapper.so*
+
 %package -n cta-lib
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
@@ -213,15 +227,12 @@ CERN Tape Archive:
 The shared libraries
 %files -n cta-lib
 %defattr(0755,root,root,-)
-%{_libdir}/libctacatalogue.so*
 #TODO: merge util and common
 %{_libdir}/libctascheduler.so*
 %{_libdir}/libctaobjectstore.so*
 %{_libdir}/libctamediachanger.so*
 %{_libdir}/libctamessages.so*
 %{_libdir}/libctamessagesutils.so*
-%{_libdir}/libctardbms.so*
-%{_libdir}/libctardbmswrapper.so*
 %{_libdir}/libctadisk.so*
 %{_libdir}/libctaschemachecker.so*
 %{_libdir}/libctastatistics.so*
@@ -334,7 +345,7 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %package -n cta-migration-tools
 Summary: Tools for migrating CASTOR to CTA
 Group: Application/CTA
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: cx_Oracle >= 7.1
 %description -n cta-migration-tools
 CERN Tape Archive:
