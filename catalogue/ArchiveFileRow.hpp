@@ -64,11 +64,6 @@ struct ArchiveFileRow {
   std::string diskFileId;
 
   /**
-   * The path of the source disk file within its host disk system.
-   */
-  std::string diskFilePath;
-
-  /**
    * The user ID of the owner of the source disk file within its host disk system.
    */
   uint32_t diskFileOwnerUid;

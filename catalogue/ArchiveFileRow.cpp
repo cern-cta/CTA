@@ -39,7 +39,6 @@ bool ArchiveFileRow::operator==(const ArchiveFileRow &rhs) const {
     archiveFileId == rhs.archiveFileId &&
     diskInstance == rhs.diskInstance &&
     diskFileId == rhs.diskFileId &&
-    diskFilePath == rhs.diskFilePath &&
     diskFileOwnerUid == rhs.diskFileOwnerUid &&
     diskFileGid == rhs.diskFileGid &&
     size == rhs.size &&
@@ -56,7 +55,6 @@ std::ostream &operator<<(std::ostream &os, const ArchiveFileRow &obj) {
   "archiveFileId=" << obj.archiveFileId <<
   "diskInstance=" << obj.diskInstance <<
   "diskFileId=" << obj.diskFileId <<
-  "diskFilePath=" << obj.diskFilePath <<
   "diskFileOwnerUid=" << obj.diskFileOwnerUid <<
   "diskFileGid=" << obj.diskFileGid <<
   "size=" << obj.size <<
