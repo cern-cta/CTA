@@ -1,3 +1,20 @@
+# v3.1-4
+
+## Summary
+
+This release improves database performance, improves the `cta-admin`
+command-line tool based on operator requests and removes the deprecated
+`cta-objectstore-unfollow-agent` command again for the benefit of operators.
+
+### Modification
+
+- cta/CTA#858 Remove dependency between the cta-migration-tools RPM and librados2
+- cta/CTA#857 Remove unnecessary LEFT OUTER JOIN clauses from the CTA catalogue
+- cta/CTA#852 Fixing sqlite CI use case
+- cta/CTA#850 [repack] If the --no-recall flag is passed to the repack request submission the --disabled-flag test should not be done.
+- cta/CTA#846 cta-admin tapefile ls: list by fileid
+- cta/CTA#840 Remove cta-objectstore-unfollow-agent from cta-objectstore-tools
+
 # v3.1-3
 
 ## Summary
