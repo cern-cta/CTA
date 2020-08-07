@@ -17,6 +17,7 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
+#include "catalogue/ArchiveFileRowWithoutTimestamps.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "catalogue/RdbmsCatalogueGetArchiveFilesItor.hpp"
 #include "catalogue/RdbmsCatalogueGetArchiveFilesForRepackItor.hpp"
@@ -6448,7 +6449,7 @@ void RdbmsCatalogue::modifyDiskSystemSleepTime(const common::dataStructures::Sec
 //------------------------------------------------------------------------------
 // insertArchiveFile
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row) {
+void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRowWithoutTimestamps &row) {
   try {
     if(!storageClassExists(conn, row.storageClassName)) {
       throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +

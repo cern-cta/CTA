@@ -29,6 +29,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileBuilder.cpp
   ArchiveFileRow.cpp
+  ArchiveFileRowWithoutTimestamps.cpp
   Catalogue.cpp
   CatalogueFactory.cpp
   CatalogueFactoryFactory.cpp

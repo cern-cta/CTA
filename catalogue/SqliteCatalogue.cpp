@@ -17,10 +17,12 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
+#include "catalogue/ArchiveFileRowWithoutTimestamps.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/log/TimingList.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
@@ -28,7 +30,6 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
-#include "common/log/TimingList.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -505,7 +506,7 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
     // Try to insert a row into the ARCHIVE_FILE table - it is normal this will
     // fail if another tape copy has already been written to tape
     try {
-      ArchiveFileRow row;
+      ArchiveFileRowWithoutTimestamps row;
       row.archiveFileId = event.archiveFileId;
       row.diskFileId = event.diskFileId;
       row.diskInstance = event.diskInstance;

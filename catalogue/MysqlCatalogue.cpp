@@ -17,6 +17,7 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
+#include "catalogue/ArchiveFileRowWithoutTimestamps.hpp"
 #include "catalogue/MysqlCatalogueSchema.hpp"
 #include "catalogue/MysqlCatalogue.hpp"
 #include "common/exception/Exception.hpp"
@@ -438,7 +439,7 @@ void MysqlCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten 
     // Try to insert a row into the ARCHIVE_FILE table - it is normal this will
     // fail if another tape copy has already been written to tape
     try {
-      ArchiveFileRow row;
+      ArchiveFileRowWithoutTimestamps row;
       row.archiveFileId = event.archiveFileId;
       row.diskFileId = event.diskFileId;
       row.diskInstance = event.diskInstance;

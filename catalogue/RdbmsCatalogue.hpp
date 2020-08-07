@@ -51,6 +51,11 @@ class ArchiveFileRow;
 /**
  * Forward declaration.
  */
+class ArchiveFileRowWithoutTimestamps;
+
+/**
+ * Forward declaration.
+ */
 class RdbmsCatalogueGetArchiveFilesItor;
 
 /**
@@ -1297,7 +1302,7 @@ protected:
    * @param conn The database connection.
    * @param row The row to be inserted.
    */
-  void insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row);
+  void insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRowWithoutTimestamps &row);
 
   /**
    * Creates the database schema.
