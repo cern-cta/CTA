@@ -1,3 +1,17 @@
+# Next release
+
+## Summary
+
+
+### Features
+
+
+### Modifications
+
+### Bug fixes
+
+cta/CTA#860 Correct contents of cta-lib-catalogue RPM and correct dependencies on it
+
 # v3.1-4
 
 ## Summary
