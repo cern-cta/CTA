@@ -113,6 +113,7 @@ Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: eos-client
 %description -n cta-taped
 CERN Tape Archive:
@@ -145,6 +146,7 @@ Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-server
 %description -n cta-frontend
 CERN Tape Archive:
@@ -203,6 +205,9 @@ Summary: CERN Tape Archive libraries
 Group: Application/CTA
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: cta-lib-common
+Requires: mariadb-libs
+Requires: oracle-instantclient19.3-basic
+Requires: postgresql-libs
 %description -n cta-lib-catalogue
 CERN Tape Archive:
 Shared libraries required to access the CTA catalogue
@@ -211,14 +216,13 @@ Shared libraries required to access the CTA catalogue
 %{_libdir}/libctacatalogue.so*
 %{_libdir}/libctardbms.so*
 %{_libdir}/libctardbmswrapper.so*
+%{_libdir}/libctaschemachecker.so*
+%{_libdir}/libctastatistics.so*
 
 %package -n cta-lib
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-Requires: oracle-instantclient19.3-basic
 Requires: librados2 = %{radosVersion}
-Requires: mariadb-libs
-Requires: postgresql-libs
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: protobuf3
 Requires: cta-lib-common = %{version}-%{release}
@@ -234,8 +238,6 @@ The shared libraries
 %{_libdir}/libctamessages.so*
 %{_libdir}/libctamessagesutils.so*
 %{_libdir}/libctadisk.so*
-%{_libdir}/libctaschemachecker.so*
-%{_libdir}/libctastatistics.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.conf.example
 
 #CTA-lib installs libraries so we need ldconfig.
@@ -322,7 +324,7 @@ Tools allowing initialization and inspection of the object store.
 %package -n cta-catalogueutils
 Summary: Utilities to faciliate working with the CTA catalogue
 Group: Application/CTA
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
 %description -n cta-catalogueutils
 CERN Tape Archive:
 Scripts and utilities to faciliate working with the CTA catalogue
