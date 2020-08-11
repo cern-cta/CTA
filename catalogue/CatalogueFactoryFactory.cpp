@@ -21,7 +21,6 @@
 #include "catalogue/MysqlCatalogueFactory.hpp"
 #include "catalogue/OracleCatalogueFactory.hpp"
 #include "catalogue/PostgresqlCatalogueFactory.hpp"
-#include "catalogue/SqliteCatalogueFactory.hpp"
 #include "common/make_unique.hpp"
 
 namespace cta {
@@ -48,7 +47,7 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
     case rdbms::Login::DBTYPE_POSTGRESQL:
       return cta::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_SQLITE:
-      return cta::make_unique<SqliteCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      throw exception::Exception("Sqlite file based databases are not supported");
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

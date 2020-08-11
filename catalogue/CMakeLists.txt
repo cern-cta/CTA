@@ -54,7 +54,6 @@ set (CATALOGUE_LIB_SRC_FILES
   RdbmsCatalogueGetDeletedArchiveFilesItor.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
-  SqliteCatalogueFactory.cpp
   SchemaVersion.cpp
   TapeForWriting.cpp
 )

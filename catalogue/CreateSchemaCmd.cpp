@@ -69,12 +69,11 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 
   switch(login.dbType) {
   case rdbms::Login::DBTYPE_IN_MEMORY:
+    std::cerr << "Creating the database schema for an in_memory database is not supported" << std::endl;
+    return 1;
   case rdbms::Login::DBTYPE_SQLITE:
-    {
-       SqliteCatalogueSchema schema;
-       executeNonQueries(conn, schema.sql);
-    }
-    break;
+    std::cerr << "Creating the database schema for an sqlite database is not supported" << std::endl;
+    return 1;
   case rdbms::Login::DBTYPE_POSTGRESQL:
     {
        PostgresCatalogueSchema schema;

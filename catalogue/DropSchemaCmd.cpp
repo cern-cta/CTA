@@ -18,9 +18,9 @@
 
 #include "catalogue/DropSchemaCmd.hpp"
 #include "catalogue/DropSchemaCmdLineArgs.hpp"
+#include "catalogue/SchemaChecker.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "catalogue/SchemaChecker.hpp"
 
 #include <algorithm>
 
@@ -107,9 +107,9 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
   try {
     switch(dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
+      throw exception::Exception("Dropping the schema of an in_memory database is not supported");
     case rdbms::Login::DBTYPE_SQLITE:
-      dropSqliteCatalogueSchema(conn);
-      break;
+      throw exception::Exception("Dropping the schema of an sqlite database is not supported");
     case rdbms::Login::DBTYPE_MYSQL:
       dropMysqlCatalogueSchema(conn);
       break;
@@ -120,7 +120,7 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
       dropOracleCatalogueSchema(conn);
       break;
     case rdbms::Login::DBTYPE_NONE:
-      throw exception::Exception("Cannot delete the schema of  catalogue database without a database type");
+      throw exception::Exception("Cannot delete the schema of catalogue database without a database type");
     default:
       {
         exception::Exception ex;
@@ -128,49 +128,6 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
         throw ex;
       }
     }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// dropSqliteCatalogueSchema
-//------------------------------------------------------------------------------
-void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
-  try {
-    std::list<std::string> tablesInDb = conn.getTableNames();
-    std::list<std::string> tablesToDrop = {
-      "CTA_CATALOGUE",
-      "ARCHIVE_ROUTE",
-      "TAPE_FILE",
-      "TEMP_TAPE_FILE",
-      "DATABASECHANGELOGLOCK", /* Liquibase specific table */
-      "DATABASECHANGELOG", /* Liquibase specific table */
-      "TAPE_FILE_RECYCLE_BIN",
-      "ARCHIVE_FILE_RECYCLE_BIN",
-      "ARCHIVE_FILE",
-      "ARCHIVE_FILE_ID",
-      "TAPE",
-      "MEDIA_TYPE",
-      "MEDIA_TYPE_ID",
-      "REQUESTER_MOUNT_RULE",
-      "REQUESTER_GROUP_MOUNT_RULE",
-      "ADMIN_USER",
-      "STORAGE_CLASS",
-      "STORAGE_CLASS_ID",
-      "TAPE_POOL",
-      "TAPE_POOL_ID",
-      "VIRTUAL_ORGANIZATION",
-      "VIRTUAL_ORGANIZATION_ID",
-      "LOGICAL_LIBRARY",
-      "LOGICAL_LIBRARY_ID",
-      "MOUNT_POLICY",
-      "ACTIVITIES_WEIGHTS",
-      "USAGESTATS",
-      "EXPERIMENTS",
-      "DISK_SYSTEM"
-    };
-    dropDatabaseTables(conn, tablesToDrop);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -373,7 +330,9 @@ bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
   throw cta::exception::Exception("Cannot check the IS_PRODUCTION bit because the CTA_CATALOGUE table is empty or does not exist.");
 }
 
-
+//------------------------------------------------------------------------------
+// isProductionProtectionCheckable
+//------------------------------------------------------------------------------
 bool DropSchemaCmd::isProductionProtectionCheckable(rdbms::Conn& conn, const cta::rdbms::Login::DbType dbType) {
   cta::catalogue::SchemaChecker::Builder builder("catalogue",dbType,conn);
   auto checker = builder.build();
