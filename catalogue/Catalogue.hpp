@@ -94,7 +94,9 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringDiskSystemName);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringFileRegexp);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringFreeSpaceQueryURL);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroRefreshInterval);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroSleepTime);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroTargetedFreeSpace);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringActivity);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringCartridge);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringDiskInstanceName);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringLogicalLibraryName);
@@ -107,11 +109,13 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringVendor);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringVid);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringVo);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyTapePool);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnOutOfRangeActivityWeight);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroCapacity);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroCopyNb);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedMediaTypeUsedByTapes);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByArchiveFiles);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByArchiveRoutes);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedTapePoolUsedInAnArchiveRoute);
 
 /**
  * Abstract class defining the interface to the CTA catalogue responsible for
@@ -430,7 +434,16 @@ public:
   virtual void modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
 
   virtual void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) = 0;
+
+ /**
+  * Deletes the specified tape pool.
+
+  * @name The name of th epatpe pool.
+  * @throw UserSpecifiedTapePoolUsedInAnArchiveRoute If the specified tape pool
+  *  is used in an archive route.
+  */
   virtual void deleteTapePool(const std::string &name) = 0;
+
   virtual std::list<TapePool> getTapePools() const = 0;
   virtual void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) = 0;
   virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) = 0;
@@ -1007,10 +1020,6 @@ public:
   virtual void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) = 0;
 
 }; // class Catalogue
-
-CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringActivity);
-CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnOutOfRangeActivityWeight);
-CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroSleepTime);
 
 } // namespace catalogue
 } // namespace cta

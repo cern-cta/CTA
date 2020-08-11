@@ -1008,6 +1008,15 @@ protected:
   bool tapePoolExists(rdbms::Conn &conn, const std::string &tapePoolName) const;
 
   /**
+   * Returns true if the specified tape pool is used in an archive route.
+   *
+   * @param conn The database connection.
+   * @param tapePoolName The name of the tape pool.
+   * @return True if the tape pool is used in an archive route.
+   */
+  bool tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, const std::string &tapePoolName) const;
+
+  /**
    * Returns true if the specified archive file identifier exists.
    *
    * @param conn The database connection.

@@ -1727,6 +1727,32 @@ bool RdbmsCatalogue::tapePoolExists(rdbms::Conn &conn, const std::string &tapePo
 }
 
 //------------------------------------------------------------------------------
+// tapePoolUsedInAnArchiveRoute
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, const std::string &tapePoolName) const {
+  try {
+    const char *const sql =
+      "SELECT"                                            "\n"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME"                "\n"
+      "FROM"                                              "\n"
+        "TAPE_POOL"                                       "\n"
+      "INNER JOIN ARCHIVE_ROUTE ON"                       "\n"
+        "TAPE_POOL.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID" "\n"
+      "WHERE"                                             "\n"
+        "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // archiveFileExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId) const {
@@ -1870,6 +1896,13 @@ bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn,
 void RdbmsCatalogue::deleteTapePool(const std::string &name) {
   try {
     auto conn = m_connPool.getConn();
+
+    if(tapePoolUsedInAnArchiveRoute(conn, name)) {
+      UserSpecifiedTapePoolUsedInAnArchiveRoute ex;
+      ex.getMessage() << "Cannot delete tape-pool " << name << " because it is used in an archive route";
+      throw ex;
+    }
+
     const uint64_t nbTapesInPool = getNbTapesInPool(conn, name);
 
     if(0 == nbTapesInPool) {

@@ -19,15 +19,15 @@
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueTest.hpp"
 #include "catalogue/SchemaVersion.hpp"
+#include "common/Constants.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
-#include "common/Constants.hpp"
-#include "rdbms/wrapper/ConnFactoryFactory.hpp"
-#include "rdbms/Conn.hpp"
 #include "common/threading/Thread.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "rdbms/wrapper/ConnFactoryFactory.hpp"
+#include "rdbms/Conn.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -1950,6 +1950,63 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_non_existent) {
   using namespace cta;
 
   ASSERT_THROW(m_catalogue->deleteTapePool("non_existent_tape_pool"), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_used_in_an_archive_route) {
+  using namespace cta;
+
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  const uint32_t copyNb = 1;
+  const std::string comment = "Create archive route";
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment);
+      
+  {
+    const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+      
+    ASSERT_EQ(1, routes.size());
+      
+    const common::dataStructures::ArchiveRoute route = routes.front();
+    ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
+    ASSERT_EQ(copyNb, route.copyNb);
+    ASSERT_EQ(tapePoolName, route.tapePoolName);
+    ASSERT_EQ(comment, route.comment);
+
+    const common::dataStructures::EntryLog creationLog = route.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  {
+    const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
+      
+    ASSERT_EQ(1, routes.size());
+      
+    const common::dataStructures::ArchiveRoute route = routes.front();
+    ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
+    ASSERT_EQ(copyNb, route.copyNb);
+    ASSERT_EQ(tapePoolName, route.tapePoolName);
+    ASSERT_EQ(comment, route.comment);
+
+    const common::dataStructures::EntryLog creationLog = route.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  ASSERT_THROW(m_catalogue->deleteTapePool(tapePoolName), catalogue::UserSpecifiedTapePoolUsedInAnArchiveRoute);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo) {
