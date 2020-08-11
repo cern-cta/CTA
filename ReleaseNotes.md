@@ -5,14 +5,14 @@
 
 ### Features
 
-cta/CTA#863 Prevent SQLite database files from being used as the CTA catalogue database backend
+- cta/CTA#863 Prevent SQLite database files from being used as the CTA catalogue database backend
 
 ### Modifications
 
 ### Bug fixes
 
-cta/CTA#862 Unable to delete tabtest tape pool because it's in an archive route
-cta/CTA#860 Correct contents of cta-lib-catalogue RPM and correct dependencies on it
+- cta/CTA#862 Unable to delete tabtest tape pool because it is in an archive route
+- cta/CTA#860 Correct contents of cta-lib-catalogue RPM and correct dependencies on it
 
 # v3.1-4
 
