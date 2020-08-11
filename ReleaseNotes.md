@@ -5,6 +5,7 @@
 
 ### Features
 
+cta/CTA#863 Prevent SQLite database files from being used as the CTA catalogue database backend
 
 ### Modifications
 
