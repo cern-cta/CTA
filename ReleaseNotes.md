@@ -9,10 +9,13 @@
 
 ### Modifications
 
+- cta/CTA#861 cta-admin comment column is flush left
+
 ### Bug fixes
 
 - cta/CTA#862 Unable to delete tabtest tape pool because it is in an archive route
 - cta/CTA#860 Correct contents of cta-lib-catalogue RPM and correct dependencies on it
+- Reinstates "cta-admin failedrequest --summary" option
 
 # v3.1-4
 
