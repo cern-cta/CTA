@@ -114,8 +114,6 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    // Format results in a tabular format for a human
    else switch(record.data_case()) {
          case Data::kAdlsItem:      formattedText.print(record.adls_item());    break;
-         case Data::kAflsItem:      formattedText.print(record.afls_item());    break;
-         case Data::kAflsSummary:   formattedText.print(record.afls_summary()); break;
          case Data::kArlsItem:      formattedText.print(record.arls_item());    break;
          case Data::kDrlsItem:      formattedText.print(record.drls_item());    break;
          case Data::kFrlsItem:      formattedText.print(record.frls_item());    break;
@@ -276,8 +274,6 @@ void CtaAdminCmd::send() const
          // Print streaming response header
          if(!isJson()) switch(response.show_header()) {
             case HeaderType::ADMIN_LS:                     formattedText.printAdminLsHeader(); break;
-            case HeaderType::ARCHIVEFILE_LS:               formattedText.printArchiveFileLsHeader(); break;
-            case HeaderType::ARCHIVEFILE_LS_SUMMARY:       formattedText.printArchiveFileLsSummaryHeader(); break;
             case HeaderType::ARCHIVEROUTE_LS:              formattedText.printArchiveRouteLsHeader(); break;
             case HeaderType::DRIVE_LS:                     formattedText.printDriveLsHeader(); break;
             case HeaderType::FAILEDREQUEST_LS:             formattedText.printFailedRequestLsHeader(); break;
