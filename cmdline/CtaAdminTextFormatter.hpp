@@ -155,7 +155,6 @@ private:
   static constexpr const char* const TEXT_RED    = "\x1b[31;1m";    //!< Terminal formatting code for red text
   static constexpr const char* const TEXT_NORMAL = "\x1b[0m";       //!< Terminal formatting code for normal text
   static constexpr const int NB_CHAR_REASON_DRIVE = 50;             //!< DriveLs reason max length to display in tabular output
-  static constexpr const char* const REASON_PREFIX = "REASON_";     //!< DriveLs reason prefix to be spot for left-align tabular output
 };
 
 }}
