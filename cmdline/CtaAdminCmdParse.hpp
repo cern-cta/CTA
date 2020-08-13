@@ -261,8 +261,9 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--justretrieve",          OptionBoolean::JUSTRETRIEVE },
    { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
    { "--lookupnamespace",       OptionBoolean::LOOKUP_NAMESPACE },
+   { "--summary",               OptionBoolean::SUMMARY },
    { "--showsuperseded",        OptionBoolean::SHOW_SUPERSEDED },
-   { "--no-recall", OptionBoolean::NO_RECALL}
+   { "--no-recall",             OptionBoolean::NO_RECALL }
 };
 
 
