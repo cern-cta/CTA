@@ -112,7 +112,13 @@ namespace drive {
     virtual lbpToUse getLbpToUse();
     virtual bool hasTapeInPlace();
     virtual castor::tape::SCSI::Structures::RAO::udsLimits getLimitUDS();
-    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported,const std::string & raoAlgorithm);
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
+  };
+  
+  class FakeNonRAODrive : public FakeDrive{
+  public:
+    FakeNonRAODrive();
+    virtual castor::tape::SCSI::Structures::RAO::udsLimits getLimitUDS(); 
   };
   
 }}}}

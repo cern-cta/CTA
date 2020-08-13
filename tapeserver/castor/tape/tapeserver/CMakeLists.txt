@@ -41,6 +41,7 @@ add_subdirectory(drive)
 add_subdirectory(system)
 add_subdirectory(file)
 add_subdirectory(daemon)
+add_subdirectory(RAO)
 
 # .. and of course, the tests (last to use the variable definition)
 add_subdirectory(test)

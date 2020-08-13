@@ -1076,7 +1076,8 @@ int DriveHandler::runChild() {
     dataTransferConfig.nbDiskThreads = m_tapedConfig.nbDiskThreads.value();
     dataTransferConfig.useLbp = true;
     dataTransferConfig.useRAO = m_tapedConfig.useRAO.value() == "yes" ? true : false;
-    dataTransferConfig.raoAlgorithm = m_tapedConfig.raoAlgorithm.value();
+    dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.raoLtoAlgorithm.value();
+    dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.raoLtoOptions.value();
     dataTransferConfig.xrootPrivateKey = "";
     
     // Before launching, and if this is the first session since daemon start, we will
@@ -1143,7 +1144,7 @@ int DriveHandler::runChild() {
       capUtils,
       dataTransferConfig,
       scheduler);
-    
+
     auto ret = dataTransferSession.execute();
     agentHeartbeat.stopAndWaitThread();
     return ret;

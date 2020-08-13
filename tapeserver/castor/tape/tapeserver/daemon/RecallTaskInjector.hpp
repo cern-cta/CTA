@@ -30,6 +30,8 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "castor/tape/tapeserver/RAO/RAOConfig.hpp"
+#include "castor/tape/tapeserver/RAO/RAOManager.hpp"
 
 #include <future>
 
@@ -122,7 +124,7 @@ public:
   /**
    * Initialize Recommended Access Order parameters
    */
-  void initRAO(const std::string & raoAlgorithm);
+  void initRAO(const castor::tape::tapeserver::rao::RAOConfig & config);
 
   void waitForPromise();
 
@@ -229,23 +231,11 @@ private:
   
   //maximal number of cumulated byte requested. at once
   const uint64_t m_maxBytes;
-
-  /** Flag indicating if the file recalls are performed using
-   * the Recommended Access Order (RAO)
-   */
-  bool m_useRAO;
   
   /**
-   * The RAO algorithm to use, it is given by the tapeserver parameter
-   * RAOAlgorithm
+   * The RAO manager to perofrm RAO operations
    */
-  std::string m_raoAlgorithm;
-
-  /** Drive-specific RAO parameters */
-  SCSI::Structures::RAO::udsLimits m_raoLimits;
-
-  /** Indicator that UDS limits gave been obtained */
-  bool m_hasUDS = false;
+  castor::tape::tapeserver::rao::RAOManager m_raoManager;
 
   /** Number of jobs to be fetched before the tape is mounted.
    *  The desired number is m_raoLimits.maxSupported

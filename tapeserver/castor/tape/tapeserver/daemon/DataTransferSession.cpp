@@ -39,6 +39,7 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/RetrieveMount.hpp"
+#include "castor/tape/tapeserver/RAO/RAOConfig.hpp"
 
 #include <google/protobuf/stubs/common.h>
 #include <memory>
@@ -272,7 +273,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     // The RecallTaskInjector and the TapeReadSingleThread share the promise
     if (m_castorConf.useRAO) {
-      rti.initRAO(m_castorConf.raoAlgorithm);
+      //castor::tape::tapeserver::rao::RAOConfig config;
+      castor::tape::tapeserver::rao::RAOConfig config(true, m_castorConf.raoLtoAlgorithm, m_castorConf.raoLtoAlgorithmOptions);
+      rti.initRAO(config);
     }
     bool noFilesToRecall = false;
     if (rti.synchronousFetch(noFilesToRecall)) {  //adapt the recall task injector (starting from synchronousFetch)

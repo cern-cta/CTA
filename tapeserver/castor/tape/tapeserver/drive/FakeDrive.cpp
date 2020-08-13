@@ -23,6 +23,7 @@
 
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "DriveGeneric.hpp"
 #include <iostream>
 
 namespace {
@@ -325,7 +326,7 @@ castor::tape::SCSI::Structures::RAO::udsLimits
 }
 
 void castor::tape::tapeserver::drive::FakeDrive::queryRAO(
-            std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported, const std::string & queryRAO)  {
+            std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported)  {
   files.reverse();
 }
 
@@ -386,4 +387,15 @@ std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getVo
   // No available data
   return std::map<std::string,uint32_t>();
 }
+
+
+castor::tape::tapeserver::drive::FakeNonRAODrive::FakeNonRAODrive():FakeDrive() {
+  
+}
+
+castor::tape::SCSI::Structures::RAO::udsLimits castor::tape::tapeserver::drive::FakeNonRAODrive::getLimitUDS() {
+  throw castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException("UnitTests");
+}
+
+
 

@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
 
 #include <stdint.h>
 
@@ -49,7 +50,6 @@ RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
         m_retrieveMount(retrieveMount),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold),
-        m_useRAO(false),
         m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()){}
 //------------------------------------------------------------------------------
 //destructor
@@ -93,9 +93,8 @@ void RecallTaskInjector::setDriveInterface(castor::tape::tapeserver::drive::Driv
 //------------------------------------------------------------------------------
 //initRAO
 //------------------------------------------------------------------------------
-void RecallTaskInjector::initRAO(const std::string & raoAlgorithm) {
-  m_useRAO = true;
-  m_raoAlgorithm = raoAlgorithm;
+void RecallTaskInjector::initRAO(const castor::tape::tapeserver::rao::RAOConfig & config) {
+  this->m_raoManager = castor::tape::tapeserver::rao::RAOManager(config,m_drive);
   m_raoFuture = m_raoPromise.get_future();
 }
 //------------------------------------------------------------------------------
@@ -141,63 +140,26 @@ void RecallTaskInjector::waitForFirstTasksInjectedPromise(){
 //injectBulkRecalls
 //------------------------------------------------------------------------------
 void RecallTaskInjector::injectBulkRecalls() {
-
-  uint32_t block_size = 262144;
   uint32_t njobs = m_jobs.size();
-  std::vector<uint32_t> raoOrder;
+  std::vector<uint64_t> raoOrder;
 
-  if (m_useRAO) {
+  bool useRAO = m_raoManager.useRAO();
+  if (useRAO) {
     std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
     m_lc.log(cta::log::INFO, "Performing RAO reordering");
-
-    for (uint32_t i = 0; i < njobs; i++) {
-      cta::RetrieveJob *job = m_jobs.at(i).get();
-
-      castor::tape::SCSI::Structures::RAO::blockLims lims;
-      strncpy((char*)lims.fseq, std::to_string(i).c_str(), sizeof(i));
-      lims.begin = job->selectedTapeFile().blockId;
-      lims.end = job->selectedTapeFile().blockId + 8 +
-                 /* ceiling the number of blocks */
-                 ((job->archiveFile.fileSize + block_size - 1) / block_size);
-
-      files.push_back(lims);
-
-      if (files.size() == m_raoLimits.maxSupported ||
-              ((i == njobs - 1) && (files.size() > 1))) {
-        /* We do a RAO query if:
-         *  1. the maximum number of files supported by the drive
-         *     for RAO query has been reached
-         *  2. the end of the jobs list has been reached and there are at least
-         *     2 unordered files
-         */
-        m_drive->queryRAO(files, m_raoLimits.maxSupported,m_raoAlgorithm);
-
-        /* Add the RAO sorted files to the new list*/
-        for (auto fit = files.begin(); fit != files.end(); fit++) {
-          uint64_t id = atoi((char*)fit->fseq);
-          raoOrder.push_back(id);
-        }
-        files.clear();
-      }
-    }
     
-    /* Copy the rest of the files in the new ordered list */
-    for (auto fit = files.begin(); fit != files.end(); fit++) {
-      uint64_t id = atoi((char*)fit->fseq);
-      raoOrder.push_back(id);
-    }
-    files.clear();
+    raoOrder = m_raoManager.queryRAO(m_jobs,m_lc);
   }
 
   std::ostringstream recallOrderLog;
-  if(m_useRAO) {
+  if(useRAO) {
     recallOrderLog << "Recall order of FSEQs using RAO:";
   } else {
     recallOrderLog << "Recall order of FSEQs:";
   }
 
   for (uint32_t i = 0; i < njobs; i++) {
-    uint32_t index = m_useRAO ? raoOrder.at(i) : i;
+    uint64_t index = useRAO ? raoOrder.at(i) : i;
 
     cta::RetrieveJob *job = m_jobs.at(index).release();
     recallOrderLog << " " << job->selectedTapeFile().fSeq;
@@ -237,12 +199,12 @@ void RecallTaskInjector::injectBulkRecalls() {
 bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
 {
   noFilesToRecall = false;
-  uint64_t reqFiles = (m_useRAO && m_hasUDS) ? m_raoLimits.maxSupported - m_fetched : m_maxFiles;
+  uint64_t reqFiles = (m_raoManager.useRAO() && m_raoManager.getMaxFilesSupported()) ? m_raoManager.getMaxFilesSupported().value() - m_fetched : m_maxFiles;
   /* If RAO is enabled, we must ask for files up to 1PB.
    * We are limiting to 1PB because the size will be passed as
    * oracle::occi::Number which is limited to ~56 bits precision
    */
-  uint64_t reqSize = (m_useRAO && m_hasUDS) ? 1024L * 1024 * 1024 * 1024 * 1024 : m_maxBytes;
+  uint64_t reqSize = (m_raoManager.useRAO() && m_raoManager.hasUDS()) ? 1024L * 1024 * 1024 * 1024 * 1024 : m_maxBytes;
   try {
     auto jobsList = m_retrieveMount.getNextJobBatch(reqFiles, reqSize, m_lc);
     for (auto & j: jobsList)
@@ -266,7 +228,7 @@ bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
     return false;
   }
   else {
-    if (! m_useRAO)
+    if (! m_raoManager.useRAO())
       injectBulkRecalls();
     else {
       cta::log::ScopedParamContainer scoped(m_lc);
@@ -302,34 +264,37 @@ void RecallTaskInjector::WorkerThread::run()
   using cta::log::LogContext;
   m_parent.m_lc.pushOrReplace(Param("thread", "RecallTaskInjector"));
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallTaskInjector thread");
-  if (m_parent.m_useRAO) {
+  if (m_parent.m_raoManager.useRAO()) {
     /* RecallTaskInjector is waiting to have access to the drive in order
      * to perform the RAO query;
      * This waitForPromise() call means that the drive is mounted 
      */
     m_parent.waitForPromise();
     try {
-      m_parent.m_raoLimits = m_parent.m_drive->getLimitUDS();
-      m_parent.m_hasUDS = true;
-      LogContext::ScopedParam sp(m_parent.m_lc, Param("maxSupportedUDS", m_parent.m_raoLimits.maxSupported));
-      m_parent.m_lc.log(cta::log::INFO,"Query getLimitUDS for RAO completed");
-      if (m_parent.m_fetched < m_parent.m_raoLimits.maxSupported) {
-        /* Fetching until we reach maxSupported for the tape drive RAO */
-        bool noFilesToRecall;
-        m_parent.synchronousFetch(noFilesToRecall);
-      }
-      m_parent.injectBulkRecalls();
-      /**
-       * Commenting this line as we want the RAO to be executed on
-       * all the batchs and not only one.
-       */
-      //m_parent.m_useRAO = false;
+      m_parent.m_raoManager.setEnterpriseRAOUdsLimits(m_parent.m_drive->getLimitUDS());
+      LogContext::ScopedParam sp(m_parent.m_lc, Param("maxSupportedUDS", m_parent.m_raoManager.getMaxFilesSupported().value()));
+      m_parent.m_lc.log(cta::log::INFO,"Query getLimitUDS for RAO Enterprise completed");
+    } catch (castor::tape::SCSI::Exception& e) {
+      m_parent.m_raoManager.disableRAO();
+      cta::log::ScopedParamContainer spc(m_parent.m_lc);
+      spc.add("exceptionMessage",e.getMessageValue());
+      m_parent.m_lc.log(cta::log::ERR, "Error while fetching the limitUDS for RAO enterprise drive.");
+    } catch(const castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException &ex){
+      m_parent.m_lc.log(cta::log::INFO, "The drive does not support RAO Enterprise, will run a CTA RAO.");
     }
-    catch (castor::tape::SCSI::Exception& e) {
-      m_parent.m_lc.log(cta::log::WARNING, "The drive does not support RAO: disabled");
-      m_parent.m_useRAO = false;
-      m_parent.injectBulkRecalls();
+    cta::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();
+    if (maxFilesSupportedByRAO && m_parent.m_fetched < maxFilesSupportedByRAO.value()) {
+      /* Fetching until we reach maxSupported for the tape drive RAO */
+      //unused boolean here but need to be kept to respect the synchronousFetch signature
+      bool noFilesToRecall;
+      m_parent.synchronousFetch(noFilesToRecall);
     }
+    m_parent.injectBulkRecalls();
+    /**
+     * Commenting this line as we want the RAO to be executed on
+     * all the batchs and not only one.
+     */
+    //m_parent.m_raoManager.disableRAO();
   }
   try{
     while (1) {

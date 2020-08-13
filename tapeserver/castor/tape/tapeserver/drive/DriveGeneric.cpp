@@ -156,7 +156,12 @@ std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> drive::DriveLTO:
   return ret;
 }
 
-void drive::DriveLTO::queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported, const std::string & raoAlgorithm) {
+SCSI::Structures::RAO::udsLimits drive::DriveLTO::getLimitUDS() {
+  throw castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException("Drive does not support RAO enterprise.");
+}
+
+
+void drive::DriveLTO::queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) {
   //TODO : Create an interface RAOAlgorithm with a method called getRAO() taking the files list as input/output parameter
   //Implement this method in three different classes : LinearRAOAlgorithm, RandomRAOAlgorithm, CERNRAOAlgorithm (or another name)
   //Create a factory to return the correct implementation subclass regarding the raoAlgorithm string parameter.
@@ -253,6 +258,7 @@ drive::deviceInfo drive::DriveMHVTL::getDeviceInfo()  {
 }
 
 SCSI::Structures::RAO::udsLimits drive::DriveMHVTL::getLimitUDS(){
+  throw drive::DriveDoesNotSupportRAOException("MHVTL does not support getLimitUDS");
   SCSI::Structures::RAO::udsLimits lims;
   //For MHVTL and for tests, assume that
   //the max number of files for RAO supported by an MHVTL drive 
@@ -262,7 +268,7 @@ SCSI::Structures::RAO::udsLimits drive::DriveMHVTL::getLimitUDS(){
   return lims;
 }
 
-void drive::DriveMHVTL::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported, const std::string & raoAlgorithm){
+void drive::DriveMHVTL::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported){
   //The query RAO method of MHVTL drive returns nothing
   //something could be implemented for testing...
 }
@@ -972,7 +978,7 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
 }
 
 void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
-                                   int maxSupported, const std::string & raoAlgorithm) {
+                                   int maxSupported) {
     generateRAO(files, maxSupported);
     receiveRAO(files);
 }

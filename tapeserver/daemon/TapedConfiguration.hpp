@@ -97,8 +97,11 @@ struct TapedConfiguration {
   cta::SourcedParameter<std::string> useRAO{
     "taped", "UseRAO", "no", "Compile time default"};
   /// RAO type of algorithm
-  cta::SourcedParameter<std::string> raoAlgorithm{
-    "taped", "RAOAlgorithm","linear","Compile time default"};
+  cta::SourcedParameter<std::string> raoLtoAlgorithm{
+    "taped", "RAOLTOAlgorithm","linear","Compile time default"};
+  cta::SourcedParameter<std::string> raoLtoOptions {
+    "taped", "RAOLTOAlgorithmOptions","","Compile time default"
+  };
   //----------------------------------------------------------------------------
   // Watchdog: parameters for timeouts in various situations.
   //----------------------------------------------------------------------------

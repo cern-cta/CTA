@@ -281,6 +281,8 @@ void DriveState::setConfig(const cta::tape::daemon::TapedConfiguration& tapedCon
   fillConfig(config->mountCriteria);
   fillConfig(config->nbDiskThreads);
   fillConfig(config->useRAO);
+  fillConfig(config->raoLtoAlgorithm);
+  fillConfig(config->raoLtoOptions);
   fillConfig(config->wdScheduleMaxSecs);
   fillConfig(config->wdMountMaxSecs);
   fillConfig(config->wdNoBlockMoveMaxSecs);

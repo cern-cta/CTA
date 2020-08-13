@@ -28,6 +28,8 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace drive {
+  
+  CTA_GENERATE_EXCEPTION_CLASS(DriveDoesNotSupportRAOException);
 /**
    * Class abstracting the tape drives. This class is templated to allow the use
    * of unrelated test harness and real system. The test harness is made up of 
@@ -479,11 +481,9 @@ namespace drive {
      * @param filename The name of the file containing the sequential order of
      * a list of files [line format: ID:BLOCK_START:BLOCK_END]
      * @param maxSupported, the max number of files the drive is able to perform an RAO on
-     * @param raoAlgorithm, the name of the RAO algorithm to use, if the specified name
-     * does not match any raoAlgorithm, the linear algorithm will be used.
      */
-    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported, const std::string & raoAlgorithm);
-
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
+    
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD; 
@@ -583,7 +583,7 @@ namespace drive {
     virtual std::map<std::string,uint32_t> getVolumeStats();
     virtual drive::deviceInfo getDeviceInfo();
     virtual SCSI::Structures::RAO::udsLimits getLimitUDS();
-    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported, const std::string & raoAlgorithm);
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
   };
 
   class DriveLTO : public DriveGeneric {
@@ -595,8 +595,8 @@ namespace drive {
     virtual compressionStats getCompression();
     virtual void clearCompressionStats();
     virtual std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> getEndOfWrapPositions();
-    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported, const std::string& raoAlgorithm);
-
+    virtual SCSI::Structures::RAO::udsLimits getLimitUDS();
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported);
   };
 
   class DriveIBM3592 : public DriveGeneric {
