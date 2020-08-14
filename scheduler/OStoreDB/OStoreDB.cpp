@@ -336,7 +336,9 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto vidToTapeMap = m_catalogue.getTapesByVid({rqp.vid});
     if(vidToTapeMap.at(rqp.vid).disabled){
       //Check if there are Repack Retrieve requests with forceDisabledTape flag in the queue
-      for(auto &job: rqueue.dumpJobs()){
+      auto retrieveQueueJobs = rqueue.dumpJobs();
+      uint64_t nbJobsNotExistInQueue = 0;
+      for(auto &job: retrieveQueueJobs){
         cta::objectstore::RetrieveRequest rr(job.address,this->m_objectStore);
         try{
           rr.fetchNoLock();
@@ -349,7 +351,14 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         } catch(const cta::objectstore::Backend::NoSuchObject & ex){
           //In the case of a repack cancellation, the RetrieveRequest object is deleted, so we just ignore the exception
           //it will not be a potential mount.
+          nbJobsNotExistInQueue++;
         }
+      }
+      if(!isPotentialMount && nbJobsNotExistInQueue == retrieveQueueJobs.size()){
+        //The tape is disabled, there are only jobs that have been deleted, it is a potential mount as we want to flush the queue.
+        //If there is at least one job that is in the queue, and is not a repack with the --disabledtape flag,
+        //the jobs have to stay in the queue as long as the tape is disabled.
+        isPotentialMount = true;
       }
     } else {
       isPotentialMount = true;
