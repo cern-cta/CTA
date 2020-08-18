@@ -989,12 +989,12 @@ void TextFormatter::print(const VirtualOrganizationLsItem& vols_item){
 void TextFormatter::printVersionHeader(){
   push_back("HEADER");
   push_back(
-    "Client CTA version",
-    "Client xrd-ssi-proto-int version",
-    "Server CTA version",
-    "Server xrd-ssi-proto-int version",
-    "Catalogue version",
-    "Catalogue connection string"
+    "CTA Admin",
+    "Client xrd-ssi-protobuf",
+    "CTA Frontend",
+    "Server xrd-ssi-protobuf",
+    "Catalogue schema",
+    "DB connection string"
   );
 }
 
