@@ -357,7 +357,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                           "  --force option is not set, the drives will complete any running mount and\n"
                           "  drives must be in the down state before deleting.\n\n"
                                          }},
-   { AdminCmd::CMD_FAILEDREQUEST,        { "failedrequest",        "fr",  { "ls", "show", "retry", "rm" } }},
+   { AdminCmd::CMD_FAILEDREQUEST,        { "failedrequest",        "fr",  { "ls" } }},
    { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_LOGICALLIBRARY,       { "logicallibrary",       "ll",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_MEDIATYPE,            { "mediatype",            "mt",  { "add", "ch", "rm", "ls" } }},
@@ -521,9 +521,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_LS    },
       { opt_justarchive.optional(), opt_justretrieve.optional(), opt_tapepool.optional(),
         opt_vid.optional(), opt_log.optional(), opt_summary.optional() }},
-   {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_SHOW  }, { opt_copynb.optional() }},
-   {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_RETRY }, { opt_copynb.optional() }},
-   {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_RM    }, { opt_copynb.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_ADD   },
       { opt_instance, opt_username_alias, opt_mountpolicy, opt_comment }},
