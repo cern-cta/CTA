@@ -93,8 +93,8 @@ void RecallTaskInjector::setDriveInterface(castor::tape::tapeserver::drive::Driv
 //------------------------------------------------------------------------------
 //initRAO
 //------------------------------------------------------------------------------
-void RecallTaskInjector::initRAO(const castor::tape::tapeserver::rao::RAOConfig & config) {
-  this->m_raoManager = castor::tape::tapeserver::rao::RAOManager(config,m_drive);
+void RecallTaskInjector::initRAO(const castor::tape::tapeserver::rao::RAOConfigurationData & dataConfig, cta::catalogue::Catalogue * catalogue) {
+  m_raoManager = castor::tape::tapeserver::rao::RAOManager(dataConfig,m_drive,catalogue);
   m_raoFuture = m_raoPromise.get_future();
 }
 //------------------------------------------------------------------------------
@@ -145,7 +145,6 @@ void RecallTaskInjector::injectBulkRecalls() {
 
   bool useRAO = m_raoManager.useRAO();
   if (useRAO) {
-    std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
     m_lc.log(cta::log::INFO, "Performing RAO reordering");
     
     raoOrder = m_raoManager.queryRAO(m_jobs,m_lc);

@@ -175,6 +175,10 @@ public:
   std::list<MediaTypeWithLogs> getMediaTypes() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getMediaTypes();}, m_maxTriesToConnect);
   }
+  
+  MediaType getMediaTypeByVid(const std::string & vid) const override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getMediaTypeByVid(vid);}, m_maxTriesToConnect);
+  }
 
   void modifyMediaTypeName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeName(admin, currentName, newName);}, m_maxTriesToConnect);

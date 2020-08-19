@@ -16,35 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NoParamRAOAlgorithmFactory.hpp"
-#include "LinearRAOAlgorithm.hpp"
-#include "RandomRAOAlgorithm.hpp"
+#include "Position.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-NoParamRAOAlgorithmFactory::NoParamRAOAlgorithmFactory(const RAOConfig::RAOAlgorithmType & type) : m_type(type) {
+Position::Position():m_wrap(0),m_lpos(0) {
 }
 
-NoParamRAOAlgorithmFactory::~NoParamRAOAlgorithmFactory() {
+Position::~Position() {
 }
 
-std::unique_ptr<RAOAlgorithm> NoParamRAOAlgorithmFactory::createRAOAlgorithm() {
-  std::unique_ptr<RAOAlgorithm> ret;
-  switch(m_type){
-    case RAOConfig::linear:{
-      ret.reset(new LinearRAOAlgorithm());
-      break;
-    }
-    case RAOConfig::random:{
-      ret.reset(new RandomRAOAlgorithm());
-      break;
-    }
-    default:
-    {
-      throw cta::exception::Exception("In NoParamRAOAlgorithmFactory::createRAOAlgorithm(): unknown type of algorithm");
-    }
-  }
-  return ret;
+uint32_t Position::getLPos() const {
+  return m_lpos;
+}
+
+uint32_t Position::getWrap() const {
+  return m_wrap;
+        }
+
+void Position::setLPos(const uint32_t lpos) {
+  m_lpos = lpos;
+}
+
+void Position::setWrap(const uint32_t wrap) {
+  m_wrap = wrap;
 }
 
 

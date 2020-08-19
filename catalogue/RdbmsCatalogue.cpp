@@ -1263,6 +1263,56 @@ std::list<MediaTypeWithLogs> RdbmsCatalogue::getMediaTypes() const {
   }
 }
 
+MediaType RdbmsCatalogue::getMediaTypeByVid(const std::string& vid) const {
+  try {
+    std::list<MediaTypeWithLogs> mediaTypes;
+    const char *const sql =
+      "SELECT"                                              "\n"
+        "MEDIA_TYPE_NAME AS MEDIA_TYPE_NAME,"               "\n"
+        "CARTRIDGE AS CARTRIDGE,"                           "\n"
+        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"           "\n"
+        "PRIMARY_DENSITY_CODE AS PRIMARY_DENSITY_CODE,"     "\n"
+        "SECONDARY_DENSITY_CODE AS SECONDARY_DENSITY_CODE," "\n"
+        "NB_WRAPS AS NB_WRAPS,"                             "\n"
+        "MIN_LPOS AS MIN_LPOS,"                             "\n"
+        "MAX_LPOS AS MAX_LPOS,"                             "\n"
+
+        "MEDIA_TYPE.USER_COMMENT AS USER_COMMENT "          "\n"
+      "FROM"                                                "\n"
+        "MEDIA_TYPE "                                       "\n"
+      "INNER JOIN TAPE "                                    "\n"
+        "ON MEDIA_TYPE.MEDIA_TYPE_ID = TAPE.MEDIA_TYPE_ID " "\n"
+      "WHERE "                                              "\n"
+        "TAPE.VID = :VID"                                   "\n";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID",vid);
+    auto rset = stmt.executeQuery();
+    if(rset.next()){
+      MediaType mediaType;
+
+      mediaType.name = rset.columnString("MEDIA_TYPE_NAME");
+      mediaType.cartridge = rset.columnString("CARTRIDGE");
+      mediaType.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+      mediaType.primaryDensityCode = rset.columnOptionalUint8("PRIMARY_DENSITY_CODE");
+      mediaType.secondaryDensityCode = rset.columnOptionalUint8("SECONDARY_DENSITY_CODE");
+      mediaType.nbWraps = rset.columnOptionalUint32("NB_WRAPS");
+      mediaType.minLPos = rset.columnOptionalUint64("MIN_LPOS");
+      mediaType.maxLPos = rset.columnOptionalUint64("MAX_LPOS");
+      mediaType.comment = rset.columnString("USER_COMMENT");
+      
+      return mediaType;
+    } else {
+      throw exception::Exception("The tape vid "+vid+" does not exist.");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 //------------------------------------------------------------------------------
 // modifyMediaTypeName
 //------------------------------------------------------------------------------

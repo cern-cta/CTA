@@ -39,7 +39,7 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/RetrieveMount.hpp"
-#include "castor/tape/tapeserver/RAO/RAOConfig.hpp"
+#include "castor/tape/tapeserver/RAO/RAOConfigurationData.hpp"
 
 #include <google/protobuf/stubs/common.h>
 #include <memory>
@@ -56,7 +56,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     cta::tape::daemon::TapedProxy & initialProcess,
     cta::server::ProcessCap & capUtils,
     const DataTransferConfig & castorConf,
-    cta::Scheduler & scheduler): 
+    cta::Scheduler & scheduler):
     m_log(log),
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),
@@ -273,9 +273,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     // The RecallTaskInjector and the TapeReadSingleThread share the promise
     if (m_castorConf.useRAO) {
-      //castor::tape::tapeserver::rao::RAOConfig config;
-      castor::tape::tapeserver::rao::RAOConfig config(true, m_castorConf.raoLtoAlgorithm, m_castorConf.raoLtoAlgorithmOptions);
-      rti.initRAO(config);
+      castor::tape::tapeserver::rao::RAOConfigurationData raoDataConfig(m_castorConf.useRAO,m_castorConf.raoLtoAlgorithm, m_castorConf.raoLtoAlgorithmOptions,m_volInfo.vid);
+      rti.initRAO(raoDataConfig, &m_scheduler.getCatalogue());
     }
     bool noFilesToRecall = false;
     if (rti.synchronousFetch(noFilesToRecall)) {  //adapt the recall task injector (starting from synchronousFetch)

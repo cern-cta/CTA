@@ -18,29 +18,22 @@
 
 #pragma once
 
-#include "RAOAlgorithm.hpp"
-#include "NonConfigurableRAOAlgorithmFactory.hpp"
+#include "Position.hpp"
+
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-class NonConfigurableRAOAlgorithmFactory;
-
-/**
- * This RAO Algorithm is a random one. The indexes of the jobs passed in parameter
- * will be organized randomly 
- */
-class RandomRAOAlgorithm : public RAOAlgorithm{
+class FilePosition {
 public:
-  friend NonConfigurableRAOAlgorithmFactory;
-  /**
-   * Returns a randomly organized vector of the indexes of the jobs passed in parameter
-   * @param jobs the jobs to perform the random RAO on
-   */
-  std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
-  
-  virtual ~RandomRAOAlgorithm();
+  FilePosition();
+  void setStartPosition(const Position & startPosition);
+  void setEndPosition(const Position & endPosition);
+  Position getStartPosition() const;
+  Position getEndPosition() const;
+  virtual ~FilePosition();
 private:
-  RandomRAOAlgorithm();
+  Position m_startPosition;
+  Position m_endPosition;
 };
 
 }}}}

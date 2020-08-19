@@ -16,31 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include "RAOAlgorithm.hpp"
-#include "NonConfigurableRAOAlgorithmFactory.hpp"
+#include "InterpolationFilePositionEstimator.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-class NonConfigurableRAOAlgorithmFactory;
+InterpolationFilePositionEstimator::InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & endOfWrapPositions, 
+  const cta::catalogue::MediaType & mediaType): m_endOfWrapPositions(endOfWrapPositions), m_mediaType(mediaType) {
+}
 
-/**
- * This RAO Algorithm is a random one. The indexes of the jobs passed in parameter
- * will be organized randomly 
- */
-class RandomRAOAlgorithm : public RAOAlgorithm{
-public:
-  friend NonConfigurableRAOAlgorithmFactory;
-  /**
-   * Returns a randomly organized vector of the indexes of the jobs passed in parameter
-   * @param jobs the jobs to perform the random RAO on
-   */
-  std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
-  
-  virtual ~RandomRAOAlgorithm();
-private:
-  RandomRAOAlgorithm();
-};
+InterpolationFilePositionEstimator::~InterpolationFilePositionEstimator() {
+}
+
+FilePosition InterpolationFilePositionEstimator::getFilePosition(const cta::RetrieveJob& job) const {
+  return FilePosition();
+}
+
 
 }}}}

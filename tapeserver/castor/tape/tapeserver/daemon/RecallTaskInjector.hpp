@@ -30,7 +30,7 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/RAO/RAOConfig.hpp"
+#include "castor/tape/tapeserver/RAO/RAOConfigurationData.hpp"
 #include "castor/tape/tapeserver/RAO/RAOManager.hpp"
 
 #include <future>
@@ -124,7 +124,7 @@ public:
   /**
    * Initialize Recommended Access Order parameters
    */
-  void initRAO(const castor::tape::tapeserver::rao::RAOConfig & config);
+  void initRAO(const castor::tape::tapeserver::rao::RAOConfigurationData & dataConfig, cta::catalogue::Catalogue * catalogue);
 
   void waitForPromise();
 

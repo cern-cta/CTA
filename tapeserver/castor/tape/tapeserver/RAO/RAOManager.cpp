@@ -20,35 +20,40 @@
 #include "RAOManager.hpp"
 #include "EnterpriseRAOAlgorithm.hpp"
 #include "EnterpriseRAOAlgorithmFactory.hpp"
-#include "NoParamRAOAlgorithmFactory.hpp"
+#include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "RAOAlgorithmFactoryFactory.hpp"
+#include "catalogue/Catalogue.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   
-RAOManager::RAOManager(){
-  m_config.disableRAO();
-}  
-  
-RAOManager::RAOManager(const castor::tape::tapeserver::rao::RAOConfig & config, castor::tape::tapeserver::drive::DriveInterface * drive):m_config(config),m_drive(drive) {
+RAOManager::RAOManager() {
+
 }
+  
+RAOManager::RAOManager(const RAOConfigurationData & config, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue):m_raoConfigurationData(config), 
+  m_drive(drive), m_catalogue(catalogue){}
 
 RAOManager::RAOManager(const RAOManager& manager){
   if(this != &manager){
-    m_config = manager.m_config;
+    m_catalogue = manager.m_catalogue;
     m_drive = manager.m_drive;
     m_enterpriseRaoLimits = manager.m_enterpriseRaoLimits;
     m_hasUDS = manager.m_hasUDS;
+    m_isDriveEnterpriseEnabled = manager.m_isDriveEnterpriseEnabled;
     m_maxFilesSupported = manager.m_maxFilesSupported;
+    m_raoConfigurationData = manager.m_raoConfigurationData;
   }
 }
 
 RAOManager& RAOManager::operator=(const RAOManager& manager) {
   if(this != &manager){
-    m_config = manager.m_config;
+    m_catalogue = manager.m_catalogue;
     m_drive = manager.m_drive;
     m_enterpriseRaoLimits = manager.m_enterpriseRaoLimits;
     m_hasUDS = manager.m_hasUDS;
+    m_isDriveEnterpriseEnabled = manager.m_isDriveEnterpriseEnabled;
     m_maxFilesSupported = manager.m_maxFilesSupported;
+    m_raoConfigurationData = manager.m_raoConfigurationData;
   }
   return *this;
 }
@@ -58,7 +63,7 @@ RAOManager::~RAOManager() {
 }
 
 bool RAOManager::useRAO() const{
-  return m_config.useRAO();
+  return m_raoConfigurationData.useRAO();
 }
 
 bool RAOManager::hasUDS() const {
@@ -69,14 +74,17 @@ bool RAOManager::isDriveEnterpriseEnabled() const {
   return m_isDriveEnterpriseEnabled;
 }
 
-
 castor::tape::tapeserver::drive::DriveInterface* RAOManager::getDrive() const {
   return m_drive;
 }
 
+cta::catalogue::Catalogue* RAOManager::getCatalogue() const {
+  return m_catalogue;
+}
+
 
 void RAOManager::disableRAO(){
-  m_config.disableRAO();
+  m_raoConfigurationData.disableRAO();
 }
 
 void RAOManager::setEnterpriseRAOUdsLimits(const SCSI::Structures::RAO::udsLimits& raoLimits) {
@@ -90,10 +98,9 @@ cta::optional<uint64_t> RAOManager::getMaxFilesSupported() const{
   return m_maxFilesSupported;
 }
 
-RAOConfig RAOManager::getConfig() const {
-  return m_config;
+RAOConfigurationData RAOManager::getRAODataConfig() const {
+  return m_raoConfigurationData;
 }
-
 
 std::vector<uint64_t> RAOManager::queryRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>> & jobs, cta::log::LogContext & lc){
   RAOAlgorithmFactoryFactory raoAlgoFactoryFactory(*this,lc);

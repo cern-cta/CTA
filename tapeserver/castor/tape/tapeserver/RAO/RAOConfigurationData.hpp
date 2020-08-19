@@ -23,6 +23,8 @@
 #include <memory>
 #include <common/log/LogContext.hpp>
 #include <vector>
+#include "catalogue/Catalogue.hpp"
+#include "RAOOptions.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   
@@ -30,7 +32,7 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
    * This class contains the configuration of the CTA RAO Algorithm
    * It is initialized by the DataTransferSession and is filled from the configuration file of the tapeserver.
    */
-  class RAOConfig{
+  class RAOConfigurationData{
   public:
     /**
      * This enum represent the RAO algorithm type implemented
@@ -42,16 +44,30 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
       //Short Locate Time First
       sltf
     };
-
-    RAOConfig();
     
     /**
-     * Construct an RAO config
+     * Default constructor, sets useRAO to false
+     */
+    RAOConfigurationData();
+    
+    /**
+     * Construct an RAO data
      * @param useRAO if set to true, the RAO will be enabled. If false, not enabled.
      * @param raoAlgorithmName the RAO algorithm that will be executed when called
      * @param raoAlgorithmOptions the options that could be passed to the RAO algorithm
+     * @param vid the vid of the tape that is currently mounted for retrieval
      */
-    RAOConfig(const bool useRAO, const std::string & raoAlgorithmName, const std::string raoAlgorithmOptions);
+    RAOConfigurationData(const bool useRAO, const std::string & raoAlgorithmName, const std::string & raoAlgorithmOptions, const std::string & vid);
+    
+    /**
+     * Copy constructor
+     */
+    RAOConfigurationData(const RAOConfigurationData & other);
+    
+    /**
+     * Operator =
+     */
+    RAOConfigurationData & operator=(const RAOConfigurationData & other);
     
     /**
      * Returns true if RAO has to be used, false otherwise
@@ -59,15 +75,14 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
     bool useRAO() const;
     
     /**
-     * Returns the RAO algorithm name of this configuration
+     * Returns the RAO algorithm name of this RAO data instance
      */
     std::string getRAOAlgorithmName() const;
     
     /**
-     * Returns the RAO algorithm options of this configuration
-     * @return 
+     * Returns the RAO algorithm options of this RAO data instance
      */
-    std::string getRAOAlgorithmOptions() const;
+    RAOOptions getRAOAlgorithmOptions() const;
     
     /**
      * Disable RAO from this configuration
@@ -82,14 +97,21 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
     RAOAlgorithmType getAlgorithmType() const;
     
     /**
-     * Returns the CTA RAO algorithm name that can be used
+     * Returns the CTA RAO algorithm names that can be used
      */
     std::string getCTARAOAlgorithmNameAvailable() const;
+    
+    /**
+     * Returns the vid of the tape that is mounted for retrieval
+     */
+    std::string getMountedVid() const;
     
   private:
     bool m_useRAO = false;
     std::string m_raoAlgorithmName;
-    std::string m_raoAlgorithmOptions;
+    RAOOptions m_raoAlgorithmOptions;
+    std::string m_vid;
+    
     
     /**
      * Static map in order to match the string representing an algorithm name and its enum type

@@ -1940,4 +1940,8 @@ reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>> & retrieveJobsBa
   lc.log(log::ERR, "In Scheduler::reportRetrieveJobsBatch(): reported a batch of retrieve jobs.");
 }
 
+cta::catalogue::Catalogue & Scheduler::getCatalogue(){
+  return m_catalogue;
+}
+
 } // namespace cta

@@ -4,7 +4,7 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 
 set(CTARAO_LIBRARY_SRCS
-  RAOConfig.cpp
+  RAOConfigurationData.cpp
   RAOManager.cpp
   RAOAlgorithm.cpp
   EnterpriseRAOAlgorithm.cpp
@@ -12,8 +12,16 @@ set(CTARAO_LIBRARY_SRCS
   EnterpriseRAOAlgorithmFactory.cpp
   LinearRAOAlgorithm.cpp
   RandomRAOAlgorithm.cpp
-  NoParamRAOAlgorithmFactory.cpp
+  NonConfigurableRAOAlgorithmFactory.cpp
+  ConfigurableRAOAlgorithmFactory.cpp
   RAOAlgorithmFactoryFactory.cpp
+  SLTFRAOAlgorithm.cpp
+  RAOOptions.cpp
+  CostHeuristic.cpp
+  FilePosition.cpp
+  Position.cpp
+  FilePositionEstimator.cpp
+  InterpolationFilePositionEstimator.cpp
 )
 
 add_library (ctarao SHARED

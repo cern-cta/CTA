@@ -20,7 +20,8 @@
 #include "RAOAlgorithmFactoryFactory.hpp"
 #include "common/log/LogContext.hpp"
 #include "EnterpriseRAOAlgorithmFactory.hpp"
-#include "NoParamRAOAlgorithmFactory.hpp"
+#include "NonConfigurableRAOAlgorithmFactory.hpp"
+#include "ConfigurableRAOAlgorithmFactory.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -36,27 +37,32 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
       ret.reset(new EnterpriseRAOAlgorithmFactory(m_raoManager.getDrive(),maxFilesSupported.value()));
     } 
   } else {
+    RAOConfigurationData raoData = m_raoManager.getRAODataConfig();
     //We will instanciate a CTA RAO algorithm
-    RAOConfig::RAOAlgorithmType raoAlgoType;
+    RAOConfigurationData::RAOAlgorithmType raoAlgoType;
     try {
-      raoAlgoType = m_raoManager.getConfig().getAlgorithmType();
+      raoAlgoType = raoData.getAlgorithmType();
     } catch (const cta::exception::Exception & ex) {
       //We failed to determine the RAOAlgorithmType, we use the linear algorithm by default
       //log a warning
       std::string msg = "In RAOAlgorithmFactoryFactory::createAlgorithmFactory(), unable to determine the RAO algorithm to use, the algorithm name provided"
-        " in the tapeserver configuration is " + m_raoManager.getConfig().getRAOAlgorithmName() + " the available algorithm names are " + m_raoManager.getConfig().getCTARAOAlgorithmNameAvailable()
+        " in the tapeserver configuration is " + raoData.getRAOAlgorithmName() + " the available algorithm names are " + raoData.getCTARAOAlgorithmNameAvailable()
         + ". We will apply a linear algorithm instead.";
       m_lc.log(cta::log::WARNING, msg);
-      raoAlgoType = RAOConfig::RAOAlgorithmType::linear;
+      raoAlgoType = RAOConfigurationData::RAOAlgorithmType::linear;
     }
     switch(raoAlgoType){
-      case RAOConfig::RAOAlgorithmType::linear:
-      case RAOConfig::RAOAlgorithmType::random:
+      case RAOConfigurationData::RAOAlgorithmType::linear:
+      case RAOConfigurationData::RAOAlgorithmType::random:
       {
-        ret.reset(new NoParamRAOAlgorithmFactory(raoAlgoType));
+        ret.reset(new NonConfigurableRAOAlgorithmFactory(raoAlgoType));
         break;
       }
-      case RAOConfig::RAOAlgorithmType::sltf:
+      case RAOConfigurationData::RAOAlgorithmType::sltf:
+      { 
+        ret.reset(new ConfigurableRAOAlgorithmFactory(m_raoManager.getDrive(),m_raoManager.getCatalogue(), raoData));
+        break;
+      }
       default:
         break;
     }

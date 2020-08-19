@@ -16,35 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once 
+#pragma once
 
-#include "RAOConfig.hpp"
+#include "RAOConfigurationData.hpp"
 #include "RAOAlgorithmFactory.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "RAOManager.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   
-/**
- * This factory allows to instanciate RAO algorithm that do not need any
- * parameter to work. E.G the linear algorithm just does a sort of the fseqs,
- * it does not need any parameter.
- */
-class NoParamRAOAlgorithmFactory : public RAOAlgorithmFactory {
+class ConfigurableRAOAlgorithmFactory : public RAOAlgorithmFactory{
 public:
-  /**
-   * Constructor
-   * @param type the type given will be used by the createRAOAlgorithm() method
-   * to instanciate the correct algorithm regarding its type
-   */
-  NoParamRAOAlgorithmFactory(const RAOConfig::RAOAlgorithmType & type);
-  /**
-   * Returns the correct instance of RAO algorithm regarding the type
-   * given while constructing this factory.
-   * @throws Exception if the type is unknown
-   */
+  ConfigurableRAOAlgorithmFactory(drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue, const RAOConfigurationData & raoConfigurationData);
   std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() override;
-  virtual ~NoParamRAOAlgorithmFactory();
+  virtual ~ConfigurableRAOAlgorithmFactory();
 private:
-  RAOConfig::RAOAlgorithmType m_type;
+  drive::DriveInterface * m_drive;
+  cta::catalogue::Catalogue * m_catalogue;
+  RAOConfigurationData m_raoConfigurationData;
 };
 
 }}}}
+

@@ -1682,6 +1682,42 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeComment_nonExistentMediaType)
   ASSERT_THROW(m_catalogue->modifyMediaTypeComment(m_admin, name, comment), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getMediaTypeByVid_nonExistentTape) {
+  using namespace cta;
+
+  ASSERT_THROW(m_catalogue->getMediaTypeByVid("DOES_NOT_EXIST"),exception::Exception);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getMediaTypeByVid) {
+  using namespace cta;
+
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+  
+  auto tapeMediaType = m_catalogue->getMediaTypeByVid(m_tape1.vid);
+  ASSERT_EQ(m_mediaType.name, tapeMediaType.name);
+  ASSERT_EQ(m_mediaType.capacityInBytes, tapeMediaType.capacityInBytes);
+  ASSERT_EQ(m_mediaType.cartridge, tapeMediaType.cartridge);
+  ASSERT_EQ(m_mediaType.comment, tapeMediaType.comment);
+  ASSERT_EQ(m_mediaType.maxLPos, tapeMediaType.maxLPos);
+  ASSERT_EQ(m_mediaType.minLPos, tapeMediaType.minLPos);
+  ASSERT_EQ(m_mediaType.nbWraps, tapeMediaType.nbWraps);
+  ASSERT_EQ(m_mediaType.primaryDensityCode, tapeMediaType.primaryDensityCode);
+  ASSERT_EQ(m_mediaType.secondaryDensityCode, tapeMediaType.secondaryDensityCode);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   using namespace cta;
       

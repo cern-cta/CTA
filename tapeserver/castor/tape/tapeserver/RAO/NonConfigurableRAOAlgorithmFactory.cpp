@@ -16,34 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include "RAOAlgorithm.hpp"
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
-
+#include "LinearRAOAlgorithm.hpp"
+#include "RandomRAOAlgorithm.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-class NonConfigurableRAOAlgorithmFactory;
-  
-/**
- * This class represents a LinearRAOAlgorithm 
- */
-class LinearRAOAlgorithm : public RAOAlgorithm {
-public:
-  friend NonConfigurableRAOAlgorithmFactory;
-  
-  /**
-   * This method will return the indexes of the jobs that are reoreded in a linear way (sorted by fseq ascendant)
-   * Example : if the fseqs of jobs in parameter are arranged like this [2, 3, 1, 4] the 
-   * algorithm will return the following indexes vector : [2, 0, 1, 3]
-   * @param jobs the jobs to perform the linear RAO query
-   * @return the indexes of the jobs ordered by fseq ascendant
-   */
-  std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
-  virtual ~LinearRAOAlgorithm();
-private:
-  LinearRAOAlgorithm();
-};
+NonConfigurableRAOAlgorithmFactory::NonConfigurableRAOAlgorithmFactory(const RAOConfigurationData::RAOAlgorithmType & type) : m_type(type) {
+}
+
+NonConfigurableRAOAlgorithmFactory::~NonConfigurableRAOAlgorithmFactory() {
+}
+
+std::unique_ptr<RAOAlgorithm> NonConfigurableRAOAlgorithmFactory::createRAOAlgorithm() {
+  std::unique_ptr<RAOAlgorithm> ret;
+  switch(m_type){
+    case RAOConfigurationData::linear:{
+      ret.reset(new LinearRAOAlgorithm());
+      break;
+    }
+    case RAOConfigurationData::random:{
+      ret.reset(new RandomRAOAlgorithm());
+      break;
+    }
+    default:
+    {
+      throw cta::exception::Exception("In NoParamRAOAlgorithmFactory::createRAOAlgorithm(): unknown type of algorithm");
+    }
+  }
+  return ret;
+}
+
 
 }}}}

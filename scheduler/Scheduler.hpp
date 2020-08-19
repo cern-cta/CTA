@@ -438,6 +438,8 @@ public:
   
   double getRepackRequestExpansionTimeLimit() const;
   
+  cta::catalogue::Catalogue & getCatalogue();
+  
 private:
 
   /**

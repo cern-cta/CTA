@@ -19,7 +19,7 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include "castor/tape/tapeserver/RAO/RAOConfig.hpp"
+#include "castor/tape/tapeserver/RAO/RAOConfigurationData.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
@@ -34,25 +34,25 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
  * It centralizes all the RAO-related task that are executed during the
  * RecallTaskInjector lifecycle.
  */
+class RAOAlgorithmFactoryFactory;
+
 class RAOManager {
 public:
-  /**
-   * Default constructor, disable the RAO
-   */
+  friend RAOAlgorithmFactoryFactory;
   RAOManager();
+   /**
+   * Constructor of a RAO manager
+   * @param config the configuration of the RAO to manage
+   * @param drive the DriveInterface of the drive that is mounting.
+   * @param catalogue the pointer to the CTA catalogue
+   */
+  RAOManager(const RAOConfigurationData & config, castor::tape::tapeserver::drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue);
   
   /**
    * Copy constructor
    * @param manager the RAOManager to copy
    */
   RAOManager(const RAOManager & manager);
-  
-  /**
-   * Constructor of a RAO manager
-   * @param config the configuration of the RAO to manage
-   * @param drive the DriveInterface of the drive that is mounting
-   */
-  RAOManager(const RAOConfig & config, castor::tape::tapeserver::drive::DriveInterface * drive);
   
   /**
    * Assignment operator
@@ -71,25 +71,9 @@ public:
   bool hasUDS() const;
   
   /**
-   * Returns true if the manager can ask for an Enterprise RAO Algorithm
-   * false otherwise
-   */
-  bool isDriveEnterpriseEnabled() const;
-  
-  /**
-   * Returns the pointer to the interface of that is mounting
-   */
-  castor::tape::tapeserver::drive::DriveInterface * getDrive() const;
-  
-  /**
    * Returns the number of files that will be supported by the RAO algorithm
    */
   cta::optional<uint64_t> getMaxFilesSupported() const;
-  
-  /**
-   * Returns the RAOConfig that is used by this RAOManager
-   */
-  RAOConfig getConfig() const;
   
   /**
    * Disable the RAO algorithm
@@ -116,7 +100,8 @@ public:
   virtual ~RAOManager();
   
 private:
-  RAOConfig m_config;
+  //RAO Configuration Data
+  RAOConfigurationData m_raoConfigurationData;
   /** Enterprise Drive-specific RAO parameters */
   SCSI::Structures::RAO::udsLimits m_enterpriseRaoLimits;
   //Is true if the drive have been able to get the RAO UDS limits numbers
@@ -126,6 +111,29 @@ private:
   //Pointer to the drive interface of the drive currently used by the tapeserver
   castor::tape::tapeserver::drive::DriveInterface * m_drive;
   bool m_isDriveEnterpriseEnabled = false;
+  cta::catalogue::Catalogue * m_catalogue;
+  
+  /**
+   * Returns true if the manager can instanciate an Enterprise RAO Algorithm
+   * false otherwise
+   */
+  bool isDriveEnterpriseEnabled() const;
+  
+  /**
+   * Returns the pointer to the interface of the drive currently mounting the tape
+   */
+  castor::tape::tapeserver::drive::DriveInterface * getDrive() const;
+  
+  /**
+   * Returns the pointer to the catalogue of this manager
+   */
+  cta::catalogue::Catalogue * getCatalogue() const;
+  
+   /**
+   * Returns the RAO data that is used by this RAOManager
+   */
+  RAOConfigurationData getRAODataConfig() const;
+  
 };
 
 }}}}

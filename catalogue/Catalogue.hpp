@@ -351,6 +351,14 @@ public:
    * @return All tape media types.
    */
   virtual std::list<MediaTypeWithLogs> getMediaTypes() const = 0;
+  
+  /**
+   * Return the media type associated to the tape corresponding to the
+   * vid passed in parameter
+   * @param vid the vid of the tape to return its media type
+   * @return the media type associated to the tape corresponding to the vid passed in parameter
+   */
+  virtual MediaType getMediaTypeByVid(const std::string & vid) const = 0;
 
   /**
    * Modifies the name of the specified tape media type.

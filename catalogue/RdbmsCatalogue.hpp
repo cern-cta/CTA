@@ -302,6 +302,15 @@ public:
    * @return All tape media types.
    */
   std::list<MediaTypeWithLogs> getMediaTypes() const override;
+  
+  /**
+   * Return the media type associated to the tape corresponding to the
+   * vid passed in parameter
+   * 
+   * @param vid the vid of the tape to return its media type
+   * @return the media type associated to the tape corresponding to the vid passed in parameter
+   */
+  MediaType getMediaTypeByVid(const std::string & vid) const override;
 
   /**
    * Modifies the name of the specified tape media type.
