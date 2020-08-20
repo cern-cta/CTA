@@ -18,6 +18,7 @@
 
 
 #include "RAOAlgorithmFactory.hpp"
+#include "LinearRAOAlgorithm.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -25,5 +26,12 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
 RAOAlgorithmFactory::~RAOAlgorithmFactory() {
 }
+
+std::unique_ptr<RAOAlgorithm> RAOAlgorithmFactory::createDefaultLinearAlgorithm() {
+  std::unique_ptr<RAOAlgorithm> ret;
+  ret.reset(new LinearRAOAlgorithm());
+  return ret;
+}
+
 
 }}}}

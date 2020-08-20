@@ -37,9 +37,9 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
       ret.reset(new EnterpriseRAOAlgorithmFactory(m_raoManager.getDrive(),maxFilesSupported.value()));
     } 
   } else {
-    RAOConfigurationData raoData = m_raoManager.getRAODataConfig();
+    RAOParams raoData = m_raoManager.getRAODataConfig();
     //We will instanciate a CTA RAO algorithm
-    RAOConfigurationData::RAOAlgorithmType raoAlgoType;
+    RAOParams::RAOAlgorithmType raoAlgoType;
     try {
       raoAlgoType = raoData.getAlgorithmType();
     } catch (const cta::exception::Exception & ex) {
@@ -49,16 +49,16 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
         " in the tapeserver configuration is " + raoData.getRAOAlgorithmName() + " the available algorithm names are " + raoData.getCTARAOAlgorithmNameAvailable()
         + ". We will apply a linear algorithm instead.";
       m_lc.log(cta::log::WARNING, msg);
-      raoAlgoType = RAOConfigurationData::RAOAlgorithmType::linear;
+      raoAlgoType = RAOParams::RAOAlgorithmType::linear;
     }
     switch(raoAlgoType){
-      case RAOConfigurationData::RAOAlgorithmType::linear:
-      case RAOConfigurationData::RAOAlgorithmType::random:
+      case RAOParams::RAOAlgorithmType::linear:
+      case RAOParams::RAOAlgorithmType::random:
       {
         ret.reset(new NonConfigurableRAOAlgorithmFactory(raoAlgoType));
         break;
       }
-      case RAOConfigurationData::RAOAlgorithmType::sltf:
+      case RAOParams::RAOAlgorithmType::sltf:
       { 
         ret.reset(new ConfigurableRAOAlgorithmFactory(m_raoManager.getDrive(),m_raoManager.getCatalogue(), raoData));
         break;

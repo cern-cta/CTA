@@ -23,16 +23,13 @@
 
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
-
-class NonConfigurableRAOAlgorithmFactory;
   
 /**
  * This class represents a LinearRAOAlgorithm 
  */
 class LinearRAOAlgorithm : public RAOAlgorithm {
 public:
-  friend NonConfigurableRAOAlgorithmFactory;
-  
+  LinearRAOAlgorithm();
   /**
    * This method will return the indexes of the jobs that are reoreded in a linear way (sorted by fseq ascendant)
    * Example : if the fseqs of jobs in parameter are arranged like this [2, 3, 1, 4] the 
@@ -42,8 +39,7 @@ public:
    */
   std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
   virtual ~LinearRAOAlgorithm();
-private:
-  LinearRAOAlgorithm();
+
 };
 
 }}}}

@@ -31,6 +31,9 @@ public:
   FilePosition getFilePosition(const cta::RetrieveJob& job) const override;
   virtual ~InterpolationFilePositionEstimator();
 private:
+  Position getPhysicalPosition(const uint64_t blockId) const;
+  uint64_t determineWrapNb(const uint64_t blockId) const;
+  uint64_t determineLPos(const uint64_t blockId, const uint64_t wrapNumber) const;
   std::vector<drive::endOfWrapPosition> m_endOfWrapPositions;
   cta::catalogue::MediaType m_mediaType;
 };

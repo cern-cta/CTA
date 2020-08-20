@@ -26,19 +26,19 @@ Position::Position():m_wrap(0),m_lpos(0) {
 Position::~Position() {
 }
 
-uint32_t Position::getLPos() const {
+uint64_t Position::getLPos() const {
   return m_lpos;
 }
 
-uint32_t Position::getWrap() const {
+uint64_t Position::getWrap() const {
   return m_wrap;
-        }
+}
 
-void Position::setLPos(const uint32_t lpos) {
+void Position::setLPos(const uint64_t lpos) {
   m_lpos = lpos;
 }
 
-void Position::setWrap(const uint32_t wrap) {
+void Position::setWrap(const uint64_t wrap) {
   m_wrap = wrap;
 }
 

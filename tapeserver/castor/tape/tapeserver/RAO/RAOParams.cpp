@@ -16,26 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RAOConfigurationData.hpp"
+#include "RAOParams.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   
-const std::map<std::string,RAOConfigurationData::RAOAlgorithmType> RAOConfigurationData::c_raoAlgoStringTypeMap = {
-  {"linear",RAOConfigurationData::RAOAlgorithmType::linear},
-  {"random",RAOConfigurationData::RAOAlgorithmType::random},
-  {"sltf",RAOConfigurationData::RAOAlgorithmType::sltf}
+const std::map<std::string,RAOParams::RAOAlgorithmType> RAOParams::c_raoAlgoStringTypeMap = {
+  {"linear",RAOParams::RAOAlgorithmType::linear},
+  {"random",RAOParams::RAOAlgorithmType::random},
+  {"sltf",RAOParams::RAOAlgorithmType::sltf}
 };  
 
-RAOConfigurationData::RAOConfigurationData():m_useRAO(false){}
+RAOParams::RAOParams():m_useRAO(false){}
 
-RAOConfigurationData::RAOConfigurationData(const bool useRAO, const std::string& raoAlgorithmName, const std::string & raoAlgorithmOptions, const std::string & vid):m_useRAO(useRAO), m_raoAlgorithmName(raoAlgorithmName), 
+RAOParams::RAOParams(const bool useRAO, const std::string& raoAlgorithmName, const std::string & raoAlgorithmOptions, const std::string & vid):m_useRAO(useRAO), m_raoAlgorithmName(raoAlgorithmName), 
     m_raoAlgorithmOptions(raoAlgorithmOptions), m_vid(vid) {
 
 }
 
-RAOConfigurationData::RAOConfigurationData(const RAOConfigurationData& other) {
+RAOParams::RAOParams(const RAOParams& other) {
   if(this != &other){
     m_useRAO = other.m_useRAO;
     m_raoAlgorithmName = other.m_raoAlgorithmName;
@@ -44,7 +44,7 @@ RAOConfigurationData::RAOConfigurationData(const RAOConfigurationData& other) {
   }
 }
 
-RAOConfigurationData& RAOConfigurationData::operator=(const RAOConfigurationData& other) {
+RAOParams& RAOParams::operator=(const RAOParams& other) {
   if(this != &other){
     m_useRAO = other.m_useRAO;
     m_raoAlgorithmName = other.m_raoAlgorithmName;
@@ -54,23 +54,23 @@ RAOConfigurationData& RAOConfigurationData::operator=(const RAOConfigurationData
   return *this;
 }
 
-bool RAOConfigurationData::useRAO() const {
+bool RAOParams::useRAO() const {
   return m_useRAO;
 }
 
-std::string RAOConfigurationData::getRAOAlgorithmName() const {
+std::string RAOParams::getRAOAlgorithmName() const {
   return m_raoAlgorithmName;
 }
 
-RAOOptions RAOConfigurationData::getRAOAlgorithmOptions() const {
+RAOOptions RAOParams::getRAOAlgorithmOptions() const {
   return m_raoAlgorithmOptions;
 }
 
-void RAOConfigurationData::disableRAO(){
+void RAOParams::disableRAO(){
   m_useRAO = false;
 }
 
-RAOConfigurationData::RAOAlgorithmType RAOConfigurationData::getAlgorithmType() const {
+RAOParams::RAOAlgorithmType RAOParams::getAlgorithmType() const {
   try {
     return c_raoAlgoStringTypeMap.at(m_raoAlgorithmName);  
   } catch (const std::out_of_range &){
@@ -78,7 +78,7 @@ RAOConfigurationData::RAOAlgorithmType RAOConfigurationData::getAlgorithmType() 
   }
 }
 
-std::string RAOConfigurationData::getCTARAOAlgorithmNameAvailable() const {
+std::string RAOParams::getCTARAOAlgorithmNameAvailable() const {
   std::string ret;
   for(auto & kv: c_raoAlgoStringTypeMap){
     ret += kv.first + " ";
@@ -90,7 +90,7 @@ std::string RAOConfigurationData::getCTARAOAlgorithmNameAvailable() const {
   return ret;
 }
 
-std::string RAOConfigurationData::getMountedVid() const {
+std::string RAOParams::getMountedVid() const {
   if(m_vid.empty()){
     throw cta::exception::Exception("In RAOData::getMountedVid(), no mounted vid found.");
   }

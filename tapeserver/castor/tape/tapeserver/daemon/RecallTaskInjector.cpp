@@ -93,7 +93,7 @@ void RecallTaskInjector::setDriveInterface(castor::tape::tapeserver::drive::Driv
 //------------------------------------------------------------------------------
 //initRAO
 //------------------------------------------------------------------------------
-void RecallTaskInjector::initRAO(const castor::tape::tapeserver::rao::RAOConfigurationData & dataConfig, cta::catalogue::Catalogue * catalogue) {
+void RecallTaskInjector::initRAO(const castor::tape::tapeserver::rao::RAOParams & dataConfig, cta::catalogue::Catalogue * catalogue) {
   m_raoManager = castor::tape::tapeserver::rao::RAOManager(dataConfig,m_drive,catalogue);
   m_raoFuture = m_raoPromise.get_future();
 }

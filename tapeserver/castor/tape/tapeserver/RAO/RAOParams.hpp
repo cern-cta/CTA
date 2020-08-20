@@ -30,9 +30,8 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
   
   /**
    * This class contains the configuration of the CTA RAO Algorithm
-   * It is initialized by the DataTransferSession and is filled from the configuration file of the tapeserver.
    */
-  class RAOConfigurationData{
+  class RAOParams{
   public:
     /**
      * This enum represent the RAO algorithm type implemented
@@ -48,26 +47,26 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
     /**
      * Default constructor, sets useRAO to false
      */
-    RAOConfigurationData();
+    RAOParams();
     
     /**
-     * Construct an RAO data
+     * Construct an RAOParams object
      * @param useRAO if set to true, the RAO will be enabled. If false, not enabled.
      * @param raoAlgorithmName the RAO algorithm that will be executed when called
      * @param raoAlgorithmOptions the options that could be passed to the RAO algorithm
      * @param vid the vid of the tape that is currently mounted for retrieval
      */
-    RAOConfigurationData(const bool useRAO, const std::string & raoAlgorithmName, const std::string & raoAlgorithmOptions, const std::string & vid);
+    RAOParams(const bool useRAO, const std::string & raoAlgorithmName, const std::string & raoAlgorithmOptions, const std::string & vid);
     
     /**
      * Copy constructor
      */
-    RAOConfigurationData(const RAOConfigurationData & other);
+    RAOParams(const RAOParams & other);
     
     /**
      * Operator =
      */
-    RAOConfigurationData & operator=(const RAOConfigurationData & other);
+    RAOParams & operator=(const RAOParams & other);
     
     /**
      * Returns true if RAO has to be used, false otherwise

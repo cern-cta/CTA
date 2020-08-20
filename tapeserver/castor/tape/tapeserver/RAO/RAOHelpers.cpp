@@ -16,30 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include "RAOAlgorithm.hpp"
+#include "RAOHelpers.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-/**
- * Abstract class that will be extended by subclasses in order
- * to instanciate an RAOAlgorithm
- */
-class RAOAlgorithmFactory {
-public:
-  /**
-   * Creates an RAO algorithm that will be used to do a Recommended Access Order
-   * in order to give an optimized order to Retrieve files efficiently from a tape
-   * @return the RAO algorithm instance
-   */
-  virtual std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() = 0;
-  
-  std::unique_ptr<RAOAlgorithm> createDefaultLinearAlgorithm();
-  
-  virtual ~RAOAlgorithmFactory();
-private:
-
-};
+  void RAOHelpers::improveEndOfLastWrapPositionIfPossible(std::vector<drive::endOfWrapPosition>& endOfWrapPositions) {
+    uint64_t nbBlocksPerWrap = 0;
+    auto nbEndOfWrapPositions = endOfWrapPositions.size();
+    if(nbEndOfWrapPositions < 2){
+      //No improvement possible
+      return;
+    }
+    for(uint64_t i = 0; i < nbEndOfWrapPositions - 1; ++i){
+      nbBlocksPerWrap += (endOfWrapPositions.at(i).blockId - endOfWrapPositions.at(i-1).blockId);
+    }
+    uint64_t meanNbBlocksPerWrap = nbBlocksPerWrap / nbEndOfWrapPositions;
+    endOfWrapPositions[nbEndOfWrapPositions-1].blockId = endOfWrapPositions.at(nbEndOfWrapPositions-2).blockId + meanNbBlocksPerWrap;
+  }
 
 }}}}

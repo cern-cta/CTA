@@ -19,7 +19,7 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include "castor/tape/tapeserver/RAO/RAOConfigurationData.hpp"
+#include "castor/tape/tapeserver/RAO/RAOParams.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
@@ -46,7 +46,7 @@ public:
    * @param drive the DriveInterface of the drive that is mounting.
    * @param catalogue the pointer to the CTA catalogue
    */
-  RAOManager(const RAOConfigurationData & config, castor::tape::tapeserver::drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue);
+  RAOManager(const RAOParams & config, castor::tape::tapeserver::drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue);
   
   /**
    * Copy constructor
@@ -101,7 +101,7 @@ public:
   
 private:
   //RAO Configuration Data
-  RAOConfigurationData m_raoConfigurationData;
+  RAOParams m_raoParams;
   /** Enterprise Drive-specific RAO parameters */
   SCSI::Structures::RAO::udsLimits m_enterpriseRaoLimits;
   //Is true if the drive have been able to get the RAO UDS limits numbers
@@ -132,7 +132,7 @@ private:
    /**
    * Returns the RAO data that is used by this RAOManager
    */
-  RAOConfigurationData getRAODataConfig() const;
+  RAOParams getRAODataConfig() const;
   
 };
 

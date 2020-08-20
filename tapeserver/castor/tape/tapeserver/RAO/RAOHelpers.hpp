@@ -18,27 +18,21 @@
 
 #pragma once
 
-#include "RAOAlgorithm.hpp"
+#include <vector>
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
-
-/**
- * Abstract class that will be extended by subclasses in order
- * to instanciate an RAOAlgorithm
- */
-class RAOAlgorithmFactory {
+  
+class RAOHelpers {
 public:
   /**
-   * Creates an RAO algorithm that will be used to do a Recommended Access Order
-   * in order to give an optimized order to Retrieve files efficiently from a tape
-   * @return the RAO algorithm instance
+   * In the LTO documentation, the Read End Of Wrap Position (REOWP) command will not give the last
+   * wrap correct EOWP. It will give the last blockId written by the drive
+   * on the tape
+   * This method will modify the last wrap EOWP (blockId) from the vector of EOWP passed in parameter
+   * to set it to the penultimate wrap EOWP + the mean of the number of blocks each wrap contains 
    */
-  virtual std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() = 0;
-  
-  std::unique_ptr<RAOAlgorithm> createDefaultLinearAlgorithm();
-  
-  virtual ~RAOAlgorithmFactory();
-private:
+  static void improveEndOfLastWrapPositionIfPossible(std::vector<drive::endOfWrapPosition> & endOfWrapPositions);
 
 };
 

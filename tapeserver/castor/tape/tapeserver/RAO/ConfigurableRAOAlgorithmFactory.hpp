@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "RAOConfigurationData.hpp"
+#include "RAOParams.hpp"
 #include "RAOAlgorithmFactory.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "RAOManager.hpp"
@@ -27,13 +27,13 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
   
 class ConfigurableRAOAlgorithmFactory : public RAOAlgorithmFactory{
 public:
-  ConfigurableRAOAlgorithmFactory(drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue, const RAOConfigurationData & raoConfigurationData);
+  ConfigurableRAOAlgorithmFactory(drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue, const RAOParams & raoParams);
   std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() override;
   virtual ~ConfigurableRAOAlgorithmFactory();
 private:
   drive::DriveInterface * m_drive;
   cta::catalogue::Catalogue * m_catalogue;
-  RAOConfigurationData m_raoConfigurationData;
+  RAOParams m_raoParams;
 };
 
 }}}}

@@ -18,7 +18,7 @@
 
 #pragma once 
 
-#include "RAOConfigurationData.hpp"
+#include "RAOParams.hpp"
 #include "RAOAlgorithmFactory.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
@@ -35,7 +35,7 @@ public:
    * @param type the type given will be used by the createRAOAlgorithm() method
    * to instanciate the correct algorithm regarding its type
    */
-  NonConfigurableRAOAlgorithmFactory(const RAOConfigurationData::RAOAlgorithmType & type);
+  NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType & type);
   /**
    * Returns the correct instance of RAO algorithm regarding the type
    * given while constructing this factory.
@@ -44,7 +44,7 @@ public:
   std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() override;
   virtual ~NonConfigurableRAOAlgorithmFactory();
 private:
-  RAOConfigurationData::RAOAlgorithmType m_type;
+  RAOParams::RAOAlgorithmType m_type;
 };
 
 }}}}

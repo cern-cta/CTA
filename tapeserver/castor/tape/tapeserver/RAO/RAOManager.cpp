@@ -23,6 +23,7 @@
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "RAOAlgorithmFactoryFactory.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "LinearRAOAlgorithm.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   
@@ -30,7 +31,7 @@ RAOManager::RAOManager() {
 
 }
   
-RAOManager::RAOManager(const RAOConfigurationData & config, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue):m_raoConfigurationData(config), 
+RAOManager::RAOManager(const RAOParams & config, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue):m_raoParams(config), 
   m_drive(drive), m_catalogue(catalogue){}
 
 RAOManager::RAOManager(const RAOManager& manager){
@@ -41,7 +42,7 @@ RAOManager::RAOManager(const RAOManager& manager){
     m_hasUDS = manager.m_hasUDS;
     m_isDriveEnterpriseEnabled = manager.m_isDriveEnterpriseEnabled;
     m_maxFilesSupported = manager.m_maxFilesSupported;
-    m_raoConfigurationData = manager.m_raoConfigurationData;
+    m_raoParams = manager.m_raoParams;
   }
 }
 
@@ -53,7 +54,7 @@ RAOManager& RAOManager::operator=(const RAOManager& manager) {
     m_hasUDS = manager.m_hasUDS;
     m_isDriveEnterpriseEnabled = manager.m_isDriveEnterpriseEnabled;
     m_maxFilesSupported = manager.m_maxFilesSupported;
-    m_raoConfigurationData = manager.m_raoConfigurationData;
+    m_raoParams = manager.m_raoParams;
   }
   return *this;
 }
@@ -63,7 +64,7 @@ RAOManager::~RAOManager() {
 }
 
 bool RAOManager::useRAO() const{
-  return m_raoConfigurationData.useRAO();
+  return m_raoParams.useRAO();
 }
 
 bool RAOManager::hasUDS() const {
@@ -84,7 +85,7 @@ cta::catalogue::Catalogue* RAOManager::getCatalogue() const {
 
 
 void RAOManager::disableRAO(){
-  m_raoConfigurationData.disableRAO();
+  m_raoParams.disableRAO();
 }
 
 void RAOManager::setEnterpriseRAOUdsLimits(const SCSI::Structures::RAO::udsLimits& raoLimits) {
@@ -98,14 +99,41 @@ cta::optional<uint64_t> RAOManager::getMaxFilesSupported() const{
   return m_maxFilesSupported;
 }
 
-RAOConfigurationData RAOManager::getRAODataConfig() const {
-  return m_raoConfigurationData;
+RAOParams RAOManager::getRAODataConfig() const {
+  return m_raoParams;
 }
 
 std::vector<uint64_t> RAOManager::queryRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>> & jobs, cta::log::LogContext & lc){
   RAOAlgorithmFactoryFactory raoAlgoFactoryFactory(*this,lc);
-  std::unique_ptr<RAOAlgorithm> raoAlgo = raoAlgoFactoryFactory.createAlgorithmFactory()->createRAOAlgorithm();
-  return raoAlgo->performRAO(jobs);
+  std::unique_ptr<RAOAlgorithmFactory> raoAlgoFactory = raoAlgoFactoryFactory.createAlgorithmFactory();
+  std::unique_ptr<RAOAlgorithm> raoAlgo;
+  std::vector<uint64_t> ret;
+  try {
+    raoAlgo = raoAlgoFactory->createRAOAlgorithm();
+  } catch(const cta::exception::Exception & ex){
+    cta::log::ScopedParamContainer spc(lc);
+    spc.add("errorMsg",ex.getMessageValue())
+       .add("raoAlgorithmName",m_raoParams.getRAOAlgorithmName())
+       .add("raoAlgorithmOptions",m_raoParams.getRAOAlgorithmOptions().getOptionsString())
+       .add("useRAO",m_raoParams.useRAO())
+       .add("vid",m_raoParams.getMountedVid());
+    lc.log(cta::log::WARNING,"In RAOManager::queryRAO(), failed to instanciate the RAO algorithm, will perform a linear RAO.");
+    raoAlgo = raoAlgoFactory->createDefaultLinearAlgorithm();
+  }
+  try {
+    ret = raoAlgo->performRAO(jobs);
+  } catch (const cta::exception::Exception & ex) {
+    cta::log::ScopedParamContainer spc(lc);
+    spc.add("errorMsg",ex.getMessageValue())
+       .add("raoAlgorithmName",m_raoParams.getRAOAlgorithmName())
+       .add("raoAlgorithmOptions",m_raoParams.getRAOAlgorithmOptions().getOptionsString())
+       .add("useRAO",m_raoParams.useRAO())
+       .add("vid",m_raoParams.getMountedVid());
+    lc.log(cta::log::WARNING,"In RAOManager::queryRAO(), failed to perform the RAO algorithm, will perform a linear RAO.");
+    raoAlgo = raoAlgoFactory->createDefaultLinearAlgorithm();
+    ret = raoAlgo->performRAO(jobs);
+  }
+  return ret;
 }
 
 

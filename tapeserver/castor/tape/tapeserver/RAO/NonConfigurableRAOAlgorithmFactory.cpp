@@ -22,7 +22,7 @@
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-NonConfigurableRAOAlgorithmFactory::NonConfigurableRAOAlgorithmFactory(const RAOConfigurationData::RAOAlgorithmType & type) : m_type(type) {
+NonConfigurableRAOAlgorithmFactory::NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType & type) : m_type(type) {
 }
 
 NonConfigurableRAOAlgorithmFactory::~NonConfigurableRAOAlgorithmFactory() {
@@ -31,11 +31,11 @@ NonConfigurableRAOAlgorithmFactory::~NonConfigurableRAOAlgorithmFactory() {
 std::unique_ptr<RAOAlgorithm> NonConfigurableRAOAlgorithmFactory::createRAOAlgorithm() {
   std::unique_ptr<RAOAlgorithm> ret;
   switch(m_type){
-    case RAOConfigurationData::linear:{
+    case RAOParams::linear:{
       ret.reset(new LinearRAOAlgorithm());
       break;
     }
-    case RAOConfigurationData::random:{
+    case RAOParams::random:{
       ret.reset(new RandomRAOAlgorithm());
       break;
     }

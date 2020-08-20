@@ -41,7 +41,6 @@ public:
   /**
    * Returns the correct RAOAlgorithmFactory according to the informations
    * stored in the RAO manager
-   * @return 
    */
   std::unique_ptr<RAOAlgorithmFactory> createAlgorithmFactory();
   virtual ~RAOAlgorithmFactoryFactory();

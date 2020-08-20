@@ -22,17 +22,17 @@
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-ConfigurableRAOAlgorithmFactory::ConfigurableRAOAlgorithmFactory(drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue, const RAOConfigurationData & raoConfigurationData):m_drive(drive),
-    m_catalogue(catalogue), m_raoConfigurationData(raoConfigurationData){}
+ConfigurableRAOAlgorithmFactory::ConfigurableRAOAlgorithmFactory(drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue, const RAOParams & raoParams):m_drive(drive),
+    m_catalogue(catalogue), m_raoParams(raoParams){}
 
 ConfigurableRAOAlgorithmFactory::~ConfigurableRAOAlgorithmFactory() {
 }
 
 std::unique_ptr<RAOAlgorithm> ConfigurableRAOAlgorithmFactory::createRAOAlgorithm() {
   std::unique_ptr<RAOAlgorithm> ret;
-  switch(m_raoConfigurationData.getAlgorithmType()){
-    case RAOConfigurationData::RAOAlgorithmType::sltf:{
-      SLTFRAOAlgorithm::Builder builder(m_raoConfigurationData,m_drive,m_catalogue);
+  switch(m_raoParams.getAlgorithmType()){
+    case RAOParams::RAOAlgorithmType::sltf:{
+      SLTFRAOAlgorithm::Builder builder(m_raoParams,m_drive,m_catalogue);
       ret.reset(builder.build().release());
       break;
     }

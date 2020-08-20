@@ -42,6 +42,8 @@ public:
   
   FilePositionEstimatorType getFilePositionEstimatorType();
   
+  std::string getOptionsString();
+  
   virtual ~RAOOptions();
   
 private:

@@ -45,7 +45,9 @@ target_link_libraries(cta-unitTests
   ctadiskunittests
   ctatapelabelunittests
   gtest
-  pthread)
+  pthread
+  ctatapeserverraounittests
+)
 
 set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)

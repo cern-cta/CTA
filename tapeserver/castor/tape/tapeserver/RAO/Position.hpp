@@ -26,13 +26,13 @@ class Position {
 public:
   Position();
   virtual ~Position();
-  uint32_t getWrap() const;
-  uint32_t getLPos() const;
-  void setWrap(const uint32_t wrap);
-  void setLPos(const uint32_t lpos);
+  uint64_t getWrap() const;
+  uint64_t getLPos() const;
+  void setWrap(const uint64_t wrap);
+  void setLPos(const uint64_t lpos);
 private:
-  uint32_t m_wrap;
-  unsigned int m_lpos;
+  uint64_t m_wrap;
+  uint64_t m_lpos;
 };
 
 }}}}

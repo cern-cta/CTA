@@ -15,31 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <gtest/gtest.h>
 
-#pragma once
 
-#include "RAOAlgorithm.hpp"
+namespace unitTests {
+  class castor_tape_tapeserver_rao_RAOTest: public ::testing::Test {
+  protected:
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+    void SetUp() {
+    }
 
-/**
- * Abstract class that will be extended by subclasses in order
- * to instanciate an RAOAlgorithm
- */
-class RAOAlgorithmFactory {
-public:
-  /**
-   * Creates an RAO algorithm that will be used to do a Recommended Access Order
-   * in order to give an optimized order to Retrieve files efficiently from a tape
-   * @return the RAO algorithm instance
-   */
-  virtual std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() = 0;
+    void TearDown() {
+    }
+
+  }; 
   
-  std::unique_ptr<RAOAlgorithm> createDefaultLinearAlgorithm();
+  TEST_F(castor_tape_tapeserver_rao_RAOTest,InterpolationFilePositionEstimatorTest){
+    //TODO
+    ASSERT_TRUE(true);
+  }
   
-  virtual ~RAOAlgorithmFactory();
-private:
-
-};
-
-}}}}
+}

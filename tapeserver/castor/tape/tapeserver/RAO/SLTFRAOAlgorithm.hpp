@@ -19,7 +19,7 @@
 #pragma once
 
 #include "RAOAlgorithm.hpp"
-#include "RAOConfigurationData.hpp"
+#include "RAOParams.hpp"
 #include "CostHeuristic.hpp"
 #include "FilePositionEstimator.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
@@ -33,13 +33,13 @@ public:
   
   class Builder {
   public:
-    Builder(const RAOConfigurationData & data, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue);
+    Builder(const RAOParams & data, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue);
     std::unique_ptr<SLTFRAOAlgorithm> build();
   private:
     void initializeFilePositionEstimator();
     void initializeCostHeuristic();
     std::unique_ptr<SLTFRAOAlgorithm> m_algorithm;
-    RAOConfigurationData m_data;
+    RAOParams m_data;
     drive::DriveInterface * m_drive;
     cta::catalogue::Catalogue * m_catalogue;
   };

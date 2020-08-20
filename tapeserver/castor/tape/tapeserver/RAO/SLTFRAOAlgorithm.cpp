@@ -18,6 +18,7 @@
 
 #include "SLTFRAOAlgorithm.hpp"
 #include "InterpolationFilePositionEstimator.hpp"
+#include "RAOHelpers.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -33,7 +34,7 @@ SLTFRAOAlgorithm::~SLTFRAOAlgorithm() {
 }
 
 
-SLTFRAOAlgorithm::Builder::Builder(const RAOConfigurationData& data, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue):m_data(data),m_drive(drive),m_catalogue(catalogue){
+SLTFRAOAlgorithm::Builder::Builder(const RAOParams& data, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue):m_data(data),m_drive(drive),m_catalogue(catalogue){
   m_algorithm.reset(new SLTFRAOAlgorithm());
 }
 
@@ -49,6 +50,7 @@ void SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() {
       std::string vid = m_data.getMountedVid();
       cta::catalogue::MediaType tapeMediaType = m_catalogue->getMediaTypeByVid(vid);
       std::vector<drive::endOfWrapPosition> endOfWrapPositions = m_drive->getEndOfWrapPositions();
+      RAOHelpers::improveEndOfLastWrapPositionIfPossible(endOfWrapPositions);
       m_algorithm->m_filePositionEstimator.reset(new InterpolationFilePositionEstimator(endOfWrapPositions,tapeMediaType));
       break;
     }
