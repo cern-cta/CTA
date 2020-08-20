@@ -1,7 +1,8 @@
-# Next release
+# v3.1-5
 
 ## Summary
 
+This release is a bug fix release.
 
 ### Features
 
@@ -17,6 +18,7 @@
 - cta/CTA#860 Correct contents of cta-lib-catalogue RPM and correct dependencies on it
 - Reinstates "cta-admin failedrequest --summary" option
 - cta/CTA#865 Empty the RetrieveQueue in the case of cancellation of a retrieve request when the drive is down
+
 
 # v3.1-4
 
@@ -34,6 +36,7 @@ command-line tool based on operator requests and removes the deprecated
 - cta/CTA#850 [repack] If the --no-recall flag is passed to the repack request submission the --disabled-flag test should not be done.
 - cta/CTA#846 cta-admin tapefile ls: list by fileid
 - cta/CTA#840 Remove cta-objectstore-unfollow-agent from cta-objectstore-tools
+
 
 # v3.1-3
 

@@ -474,7 +474,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
-* Thu 20 Aug 2020 julien.leduc (at) cern.ch - 3.1-5
+* Thu Aug 20 2020 julien.leduc (at) cern.ch - 3.1-5
 - cta/CTA#863 Prevent SQLite database files from being used as the CTA catalogue database backend
 - cta/CTA#861 cta-admin comment column is flush left
 - cta/CTA#862 Unable to delete tabtest tape pool because it is in an archive route
