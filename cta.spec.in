@@ -474,6 +474,13 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Thu 20 Aug 2020 julien.leduc (at) cern.ch - 3.1-5
+- cta/CTA#863 Prevent SQLite database files from being used as the CTA catalogue database backend
+- cta/CTA#861 cta-admin comment column is flush left
+- cta/CTA#862 Unable to delete tabtest tape pool because it is in an archive route
+- cta/CTA#860 Correct contents of cta-lib-catalogue RPM and correct dependencies on it
+- Reinstates "cta-admin failedrequest --summary" option
+- cta/CTA#865 Empty the RetrieveQueue in the case of cancellation of a retrieve request when the drive is down
 * Fri Aug 7 2020 steven.murray (at) cern.ch - 3.1-4
 - cta/CTA#858 Remove dependency between the cta-migration-tools RPM and librados2
 - cta/CTA#857 Remove unnecessary LEFT OUTER JOIN clauses from the CTA catalogue
