@@ -229,6 +229,10 @@ public:
     m_OStoreDB.cancelRetrieve(instanceName, rqst, lc);
   }
 
+  void deleteFailed(const std::string &objectId, log::LogContext & lc) override {
+    m_OStoreDB.deleteFailed(objectId, lc);
+  }
+
   void queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext& lc) override {
     m_OStoreDB.queueRepack(repackRequest, lc);
   }

@@ -137,6 +137,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS):
                processFailedRequest_Ls(response, stream);
                break;
+            case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_RM):
+               processFailedRequest_Rm(response);
+               break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD):
                processGroupMountRule_Add(response);
                break;
@@ -1056,6 +1059,19 @@ void RequestMessage::processFailedRequest_Ls(cta::xrd::Response &response, XrdSs
                                                             : HeaderType::FAILEDREQUEST_LS);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processFailedRequest_Rm(cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   auto &objectId = getRequired(OptionString::OBJECTID);
+
+   m_scheduler.deleteFailed(objectId, m_lc);
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 

@@ -1538,6 +1538,120 @@ void OStoreDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest 
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::deleteFailed()
+//------------------------------------------------------------------------------
+void OStoreDB::deleteFailed(const std::string &objectId, log::LogContext &lc)
+{
+  // Fetch the object
+  objectstore::GenericObject fr(objectId, m_objectStore);
+  objectstore::ScopedExclusiveLock sel;
+  try {
+    sel.lock(fr);
+    fr.fetch();
+  } catch (objectstore::Backend::NoSuchObject &) {
+    throw exception::Exception("Object " + objectId + " not found.");
+  }
+
+  // Validate that the object is an Archive or Retrieve request
+  if(fr.type() != objectstore::serializers::ArchiveRequest_t &&
+     fr.type() != objectstore::serializers::RetrieveRequest_t) {
+    throw exception::Exception("Object " + objectId + " is not an archive or retrieve request.");
+  }
+
+  // Make a list of all owners of the object
+  std::list<std::string> queueIds;
+  if(!fr.getOwner().empty()) queueIds.push_back(fr.getOwner());
+  if(!fr.getBackupOwner().empty()) queueIds.push_back(fr.getBackupOwner());
+  if(fr.type() == objectstore::serializers::ArchiveRequest_t) {
+    // Archive requests can be in two queues, so ownership is per job not per request
+    objectstore::ArchiveRequest ar(fr);
+    // We already hold a lock on the generic object
+    ar.fetchNoLock();
+    for(auto &job : ar.dumpJobs()) {
+      if(!job.owner.empty()) queueIds.push_back(job.owner);
+    }
+  }
+  if(queueIds.empty()) {
+    throw exception::Exception("Object " + objectId + " is not owned by any queue.");
+  }
+
+  // Make a set of failed archive or retrieve queues
+  std::set<std::string> failedQueueIds;
+  {
+    RootEntry re(m_objectStore);
+    ScopedExclusiveLock rel(re);
+    re.fetch();
+
+    switch(fr.type()) {
+      case objectstore::serializers::ArchiveRequest_t: {
+        auto archiveQueueList = re.dumpArchiveQueues(JobQueueType::FailedJobs);
+        for(auto &r : archiveQueueList) {
+          failedQueueIds.insert(r.address);
+        }
+        break;
+      }
+      case objectstore::serializers::RetrieveRequest_t: {
+        auto retrieveQueueList = re.dumpRetrieveQueues(JobQueueType::FailedJobs);
+        for(auto &r : retrieveQueueList) {
+          failedQueueIds.insert(r.address);
+        }
+        break;
+      }
+      default: ;
+    }
+  }
+
+  // Validate that all owners of the object are failed queues and therefore it is safe to delete the job
+  for(auto &qid : queueIds) {
+    if(failedQueueIds.find(qid) == failedQueueIds.end()) {
+      throw exception::Exception("Will not delete object " + objectId + "\nwhich is owned by " + qid);
+    }
+  }
+
+  // Checks passed, delete the request
+  log::ScopedParamContainer params(lc);
+  params.add("objectId", objectId);
+  int owner_no = 0;
+  for(auto &qid : queueIds) {
+    params.add("owner" + std::to_string(owner_no++), qid);
+  }
+
+  // Delete the references
+  lc.log(log::INFO, "OStoreDB::deleteFailed(): deleting references");
+  bool isQueueEmpty = false;
+  switch(fr.type()) {
+    case objectstore::serializers::ArchiveRequest_t: {
+      for(auto &arq_id : queueIds) {
+        ArchiveQueue arq(arq_id, m_objectStore);
+        ScopedExclusiveLock arq_el(arq);
+        arq.fetch();
+        arq.removeJobsAndCommit(std::list<std::string>(1, objectId));
+        if(arq.isEmpty()) isQueueEmpty = true;
+      }
+      break;
+    }
+    case objectstore::serializers::RetrieveRequest_t: {
+      for(auto &rrq_id : queueIds) {
+        RetrieveQueue rrq(rrq_id, m_objectStore);
+        ScopedExclusiveLock rrq_el(rrq);
+        rrq.fetch();
+        rrq.removeJobsAndCommit(std::list<std::string>(1, objectId));
+        if(rrq.isEmpty()) isQueueEmpty = true;
+      }
+      break;
+    }
+    default: ;
+  }
+
+  // Delete the request
+  lc.log(log::INFO, "OStoreDB::deleteFailed(): deleting failed request");
+  fr.remove();
+
+  // Trim empty queues
+  if(isQueueEmpty) trimEmptyQueues(lc);
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getRetrieveJobs()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::RetrieveJob>

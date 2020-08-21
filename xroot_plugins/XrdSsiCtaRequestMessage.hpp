@@ -172,6 +172,7 @@ private:
   void processDrive_Down            (cta::xrd::Response &response);
   void processDrive_Ch              (cta::xrd::Response &response);
   void processDrive_Rm              (cta::xrd::Response &response);
+  void processFailedRequest_Rm      (cta::xrd::Response &response);
   void processGroupMountRule_Add    (cta::xrd::Response &response);
   void processGroupMountRule_Ch     (cta::xrd::Response &response);
   void processGroupMountRule_Rm     (cta::xrd::Response &response);
