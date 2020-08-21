@@ -7,6 +7,7 @@ This release is a bug fix release.
 ### Features
 
 - cta/CTA#863 Prevent SQLite database files from being used as the CTA catalogue database backend
+- cta/CTA#870 Adds "cta-admin failedrequest rm" command
 
 ### Modifications
 
@@ -16,7 +17,7 @@ This release is a bug fix release.
 
 - cta/CTA#862 Unable to delete tabtest tape pool because it is in an archive route
 - cta/CTA#860 Correct contents of cta-lib-catalogue RPM and correct dependencies on it
-- Reinstates "cta-admin failedrequest --summary" option
+- Reinstates missing "cta-admin failedrequest ls --summary" option
 - cta/CTA#865 Empty the RetrieveQueue in the case of cancellation of a retrieve request when the drive is down
 
 

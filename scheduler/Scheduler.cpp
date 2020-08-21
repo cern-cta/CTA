@@ -268,10 +268,14 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
 }
 
 //------------------------------------------------------------------------------
-// cancelRetrieve
+// abortRetrieve
 //------------------------------------------------------------------------------
 void Scheduler::abortRetrieve(const std::string &instanceName, const common::dataStructures::CancelRetrieveRequest &request, log::LogContext & lc) {
   m_db.cancelRetrieve(instanceName, request, lc);
+}
+
+void Scheduler::deleteFailed(const std::string &objectId, log::LogContext & lc) {
+  m_db.deleteFailed(objectId, lc);
 }
 
 //------------------------------------------------------------------------------

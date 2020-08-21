@@ -168,6 +168,11 @@ public:
     const cta::common::dataStructures::CancelRetrieveRequest &request, log::LogContext & lc);
   
   /** 
+   * Delete a job from the failed queue.
+   */
+  void deleteFailed(const std::string &objectId, log::LogContext & lc);
+  
+  /** 
    * Update the file information of an archived file.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request

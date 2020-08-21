@@ -362,6 +362,8 @@ public:
    */
   virtual void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc) override;
 
+  virtual void deleteFailed(const std::string &objectId, log::LogContext &lc) override;
+
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string &vid) const override;
 
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>> getRetrieveJobs() const override;

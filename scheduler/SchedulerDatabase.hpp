@@ -358,6 +358,13 @@ public:
   virtual void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request,  log::LogContext & lc) = 0;
   
   /**
+   * Idempotently deletes the specified ArchiveRequest from the objectstore
+   * @param request, the ArchiveRequest to delete
+   * @param lc the LogContext
+   */
+  virtual void deleteFailed(const std::string &objectId, log::LogContext & lc) = 0;
+  
+  /**
    * Returns all of the queued archive jobs.  The returned jobs are
    * grouped by tape pool and then sorted by creation time, oldest first.
    *
