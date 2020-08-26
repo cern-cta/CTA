@@ -15,15 +15,12 @@ cat gitScripts/bash_profile.hook >> ~eric/.bash_profile
 sudo -u eric cp tigConf/tigrc ~eric/.tigrc
 
 echo Installing minimal tools and tape tools
-yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc mariadb-devel yum-plugin-versionlock krb5-workstation wget yum-utils
+sudo yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc mariadb-devel yum-plugin-versionlock krb5-workstation wget yum-utils
 
 echo Installing Oracle instant client
-wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-cd /etc/yum.repos.d
-rm -f public-yum-ol7.repo
-wget https://yum.oracle.com/public-yum-ol7.repo
-yum-config-manager --enable ol7_oracle_instantclient
-yum install -y oracle-instantclient19.3-basic.x86_64 oracle-instantclient19.3-devel.x86_64
+sudo wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+sudo wget https://yum.oracle.com/public-yum-ol7.repo -O /etc/yum.repos.d/public-yum-ol7.repo
+sudo yum install -y oracle-instantclient19.3-basic.x86_64 oracle-instantclient19.3-devel.x86_64 --enablerepo=ol7_oracle_instantclient
 
 (cd / ; sudo -u eric git config --global color.ui true)
 (cd / ; sudo -u eric git config --global user.email "Eric.Cano@cern.ch")
