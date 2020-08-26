@@ -1,5 +1,0 @@
-[ceph-internal]
-name=ceph-internal
-enabled=1
-baseurl=http://castorwww.web.cern.ch/castorwww/repos/ceph/
-priority=4
