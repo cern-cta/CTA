@@ -29,7 +29,6 @@
 
 #include <algorithm>
 #include <exception>
-#include <pgsql/server/utils/errcodes.h>
 #include <sstream>
 #include <utility>
 
