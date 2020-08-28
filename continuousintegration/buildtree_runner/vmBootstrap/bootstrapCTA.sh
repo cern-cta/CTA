@@ -2,8 +2,7 @@
 
 set -x
 
-echo Getting CTA sources...
-( cd ~ ; git clone https://:@gitlab.cern.ch:8443/cta/CTA.git; cd CTA ; git submodule update --init --recursive)
+echo Preparing CTA sources...
 cat > ~/CTA/.git/hooks/post-checkout << EOFGitHook
 #!/bin/sh
 cd `git rev-parse --show-toplevel`

@@ -32,3 +32,8 @@ echo Installing Oracle instant client
 sudo wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
 sudo wget https://yum.oracle.com/public-yum-ol7.repo -O /etc/yum.repos.d/public-yum-ol7.repo
 sudo yum install -y oracle-instantclient19.3-basic.x86_64 oracle-instantclient19.3-devel.x86_64 --enablerepo=ol7_oracle_instantclient
+
+echo "Getting CTA sources for $CTAUSER..."
+sudo -u $CTAUSER bash -c 'cd ~ ; git clone https://gitlab.cern.ch/cta/CTA.git; cd CTA ; git submodule update --init --recursive'
+
+echo System bootstrap finished!
