@@ -8,7 +8,6 @@
 #                              words the header files that do not contribute to
 #                              the xrootd ABI.
 # XROOTD_XRDCL_LIB           - location of the XrdCl library
-# XROOTD_XRDCLIENT_LIB       - location of the XrdClient library
 # XROOTD_XRDSERVER_LIB       - location of the XrdServer library
 # XROOTD_XRDUTILS_LIB        - location of the XrdUtils library
 # XROOTD_XRDPOSIX_LIB        - location of the XrdPosix library
@@ -27,7 +26,6 @@ find_path (XROOTD_PRIVATE_INCLUDE_DIR XrdOss/XrdOssApi.hh
 )
 
 find_library (XROOTD_XRDCL_LIB XrdCl)
-find_library (XROOTD_XRDCLIENT_LIB XrdClient)
 find_library (XROOTD_XRDSERVER_LIB XrdServer)
 find_library (XROOTD_XRDUTILS_LIB XrdUtils)
 find_library (XROOTD_XRDPOSIX_LIB XrdPosixPreload)
@@ -35,7 +33,6 @@ find_library (XROOTD_XRDPOSIX_LIB XrdPosixPreload)
 message (STATUS "XROOTD_INCLUDE_DIR         = ${XROOTD_INCLUDE_DIR}")
 message (STATUS "XROOTD_PRIVATE_INCLUDE_DIR = ${XROOTD_PRIVATE_INCLUDE_DIR}")
 message (STATUS "XROOTD_XRDCL_LIB           = ${XROOTD_XRDCL_LIB}")
-message (STATUS "XROOTD_XRDCLIENT_LIB       = ${XROOTD_XRDCLIENT_LIB}")
 message (STATUS "XROOTD_XRDSERVER_LIB       = ${XROOTD_XRDSERVER_LIB}")
 message (STATUS "XROOTD_XRDPOSIX_LIB        = ${XROOTD_XRDPOSIX_LIB}")
 
@@ -44,7 +41,6 @@ find_package_handle_standard_args (xrootd DEFAULT_MSG
   XROOTD_INCLUDE_DIR
   XROOTD_PRIVATE_INCLUDE_DIR
   XROOTD_XRDCL_LIB
-  XROOTD_XRDCLIENT_LIB
   XROOTD_XRDSERVER_LIB
   XROOTD_XRDUTILS_LIB
   XROOTD_XRDPOSIX_LIB)
