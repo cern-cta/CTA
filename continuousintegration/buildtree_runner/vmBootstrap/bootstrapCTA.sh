@@ -18,7 +18,7 @@ mkdir -p ~/CTA-build-srpm
 (cd ~/CTA-build-srpm && cmake -DPackageOnly:Bool=true ../CTA; make cta_srpm)
 
 echo Installing repos
-for r in `ls -1 ../../docker/ctafrontend/cc7/etc/yum.repos.d/*.repo` ceph-internal.repo; do
+for r in `ls -1 ../../docker/ctafrontend/cc7/etc/yum.repos.d/*.repo` ; do
   sudo yum-config-manager --add-repo=$r
 done
 sudo yum install -y yum-plugin-priorities
