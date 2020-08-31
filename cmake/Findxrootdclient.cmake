@@ -22,6 +22,6 @@ message (STATUS "XROOTD_INCLUDE_DIR         = ${XROOTD_INCLUDE_DIR}")
 message (STATUS "XROOTD_XRDCL_LIB           = ${XROOTD_XRDCL_LIB}")
 
 include (FindPackageHandleStandardArgs)
-find_package_handle_standard_args (xrootd DEFAULT_MSG 
+find_package_handle_standard_args (xrootdclient DEFAULT_MSG 
   XROOTD_INCLUDE_DIR
   XROOTD_XRDCL_LIB)
