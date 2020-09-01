@@ -32,6 +32,17 @@
 
 #include <gtest/gtest.h>
 
+std::ostream& operator<<(std::ostream& os, const cta::objectstore::ContainerTraits<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::PoppedElementsSummary& s) {
+  os <<
+    "{"
+      "files=" << s.files << ","
+      "bytes=" << s.bytes << ","
+      "diskSystemFull=" << (s.diskSystemFull ? "true" : "false") << ","
+      "fullDiskSystem=\"" << s.fullDiskSystem << "\""
+    "}";
+  return os;
+}
+
 namespace unitTests {
 
 /**
