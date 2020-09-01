@@ -28,7 +28,7 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
       //No improvement possible
       return;
     }
-    for(uint64_t i = 0; i < nbEndOfWrapPositions - 1; ++i){
+    for(uint64_t i = 1; i < nbEndOfWrapPositions; ++i){
       nbBlocksPerWrap += (endOfWrapPositions.at(i).blockId - endOfWrapPositions.at(i-1).blockId);
     }
     uint64_t meanNbBlocksPerWrap = nbBlocksPerWrap / nbEndOfWrapPositions;

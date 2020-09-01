@@ -79,9 +79,9 @@ uint64_t InterpolationFilePositionEstimator::determineLPos(const uint64_t blockI
     fileBlockId -= previousWrapPositionInfos.blockId;
   }
   if(wrapNumber % 2 == 0){
-    fileLpos = minLpos + fileBlockId * (maxLpos - minLpos) / b_max;
+    fileLpos = minLpos + fileBlockId * (maxLpos - minLpos) / (double)b_max;
   } else {
-    fileLpos = maxLpos - fileBlockId * (maxLpos - minLpos) / b_max;
+    fileLpos = maxLpos - fileBlockId * (maxLpos - minLpos) / (double)b_max;
   }
   return fileLpos;
 }
