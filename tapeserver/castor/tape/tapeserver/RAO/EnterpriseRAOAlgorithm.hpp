@@ -55,6 +55,8 @@ private:
   castor::tape::tapeserver::drive::DriveInterface * m_drive;
   //Maximum number of files supported by the drive to perform the RAO
   uint64_t m_maxFilesSupported;
+  
+  const uint32_t c_blockSize = 262144;
 };
 
 }}}}

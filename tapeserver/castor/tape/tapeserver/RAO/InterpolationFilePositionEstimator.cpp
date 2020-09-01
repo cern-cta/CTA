@@ -33,7 +33,9 @@ FilePosition InterpolationFilePositionEstimator::getFilePosition(const cta::Retr
   uint64_t startBlock = tapeFile.blockId;
   Position startPosition = getPhysicalPosition(startBlock);
   ret.setStartPosition(startPosition);
-  
+  uint64_t endBlock = determineEndBlock(tapeFile);
+  Position endPosition = getPhysicalPosition(endBlock);
+  ret.setEndPosition(endPosition);
   return ret;
 }
 
@@ -86,5 +88,8 @@ uint64_t InterpolationFilePositionEstimator::determineLPos(const uint64_t blockI
   return fileLpos;
 }
 
+uint64_t InterpolationFilePositionEstimator::determineEndBlock(const cta::common::dataStructures::TapeFile& file) const{
+  return file.blockId + (file.fileSize / c_blockSize) + 1; 
+}
 
 }}}}

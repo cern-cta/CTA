@@ -32,7 +32,7 @@ EnterpriseRAOAlgorithm::~EnterpriseRAOAlgorithm() {
 std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
   std::vector<uint64_t> raoOrder;
   uint64_t njobs = jobs.size();
-  uint32_t block_size = 262144;
+  uint32_t block_size = c_blockSize;
   std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
   for (uint32_t i = 0; i < njobs; i++) {
     cta::RetrieveJob *job = jobs.at(i).get();

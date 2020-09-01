@@ -30,10 +30,13 @@ public:
   InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & endOfWrapPositions, const cta::catalogue::MediaType & mediaType);
   FilePosition getFilePosition(const cta::RetrieveJob& job) const override;
   virtual ~InterpolationFilePositionEstimator();
+  
+  static const uint64_t c_blockSize = 256000;
 private:
   Position getPhysicalPosition(const uint64_t blockId) const;
   uint64_t determineWrapNb(const uint64_t blockId) const;
   uint64_t determineLPos(const uint64_t blockId, const uint64_t wrapNumber) const;
+  uint64_t determineEndBlock(const cta::common::dataStructures::TapeFile & file) const;
   std::vector<drive::endOfWrapPosition> m_endOfWrapPositions;
   cta::catalogue::MediaType m_mediaType;
 };

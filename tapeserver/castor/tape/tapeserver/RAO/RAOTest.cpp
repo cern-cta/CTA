@@ -56,7 +56,7 @@ namespace unitTests {
       tapeFile.fSeq = fseq;
       tapeFile.fileSize = fileSize;
       archiveFile.tapeFiles.push_back(tapeFile);
-       cta::common::dataStructures::RetrieveRequest retrieveRequest;
+      cta::common::dataStructures::RetrieveRequest retrieveRequest;
       ret.reset(new cta::RetrieveJob(nullptr,retrieveRequest,archiveFile,1,cta::PositioningMethod::ByBlock));
       return ret;
     }
@@ -92,21 +92,29 @@ namespace unitTests {
     
     rao::InterpolationFilePositionEstimator estimator(eowPositions,mediaType);
     {
-      cta::RetrieveJob & retrieveJob = *RAOTestEnvironment::createRetrieveJobForRAOTests(0,1,1,10);
-      rao::FilePosition positionFile = estimator.getFilePosition(retrieveJob);
+      std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(0,1,1,10);
+      rao::FilePosition positionFile = estimator.getFilePosition(*retrieveJob);
       //The LPOS start position of the file should be equal to the minLPos of the LTO7 media type
       rao::Position startPositionFile = positionFile.getStartPosition();
       ASSERT_EQ(0,startPositionFile.getWrap());
       ASSERT_EQ(mediaType.minLPos.value(), startPositionFile.getLPos());
+      
+      rao::Position endPositionFile = positionFile.getEndPosition();
+      ASSERT_EQ(0,endPositionFile.getWrap());
+      
+      /*TODO : TO BE CONTINUED
+       * auto jobTapeFile = retrieveJob->selectedTapeFile();
+      uint64_t endPositionBlockId = mediaType.minLPos.value() + (jobTapeFile.blockId / rao::InterpolationFilePositionEstimator::c_blockSize) + 1;
+      ASSERT_EQ(mediaType.minLPos.value() + endPositionBlockId,endPositionFile.getLPos());*/
     }
     
     {
-      cta::RetrieveJob & retrieveJob = *RAOTestEnvironment::createRetrieveJobForRAOTests(11,1,2,25);
-      rao::FilePosition positionFile = estimator.getFilePosition(retrieveJob);
+      std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(2,1,2,25);
+      rao::FilePosition positionFile = estimator.getFilePosition(*retrieveJob);
       rao::Position startPositionFile = positionFile.getStartPosition();
       ASSERT_EQ(0,startPositionFile.getWrap());
       double b_max = (double) eowPositions.at(0).blockId;
-      uint64_t expectedLPos = mediaType.minLPos.value() + retrieveJob.selectedTapeFile().blockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / b_max;
+      uint64_t expectedLPos = mediaType.minLPos.value() + retrieveJob->selectedTapeFile().blockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / b_max;
       ASSERT_EQ(expectedLPos,positionFile.getStartPosition().getLPos());
     }
   }
@@ -119,10 +127,10 @@ namespace unitTests {
     
     {
       //Now create a retrieve job that has a blockId greater than the first wrap end of wrap position
-      cta::RetrieveJob & retrieveJob = *RAOTestEnvironment::createRetrieveJobForRAOTests(210000,1,1,10);
-      rao::FilePosition positionFile = estimator.getFilePosition(retrieveJob);
+     std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(210000,1,1,10);
+      rao::FilePosition positionFile = estimator.getFilePosition(*retrieveJob);
       double b_max = (double) eowPositions.at(1).blockId - (double) eowPositions.at(0).blockId; 
-      uint64_t fileBlockId = retrieveJob.selectedTapeFile().blockId - eowPositions.at(0).blockId;
+      uint64_t fileBlockId = retrieveJob->selectedTapeFile().blockId - eowPositions.at(0).blockId;
       uint64_t expectedLPos = mediaType.maxLPos.value() - fileBlockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / b_max;
       ASSERT_EQ(1,positionFile.getStartPosition().getWrap());
       ASSERT_EQ(expectedLPos,positionFile.getStartPosition().getLPos());
@@ -136,8 +144,8 @@ namespace unitTests {
     rao::InterpolationFilePositionEstimator estimator(eowPositions,mediaType);
     
     {
-      cta::RetrieveJob & retrieveJob = *RAOTestEnvironment::createRetrieveJobForRAOTests(100000000,1,3,30);
-      ASSERT_THROW(estimator.getFilePosition(retrieveJob),cta::exception::Exception);
+      std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(100000000,1,3,30);
+      ASSERT_THROW(estimator.getFilePosition(*retrieveJob),cta::exception::Exception);
     }
   }
   
@@ -147,7 +155,6 @@ namespace unitTests {
     rao::RAOHelpers::improveEndOfLastWrapPositionIfPossible(eowPositions);
     drive::endOfWrapPosition eowpAfterImprovement = eowPositions.at(eowPositions.size()-1);
     ASSERT_LT(eowpBeforeImprovement.blockId,eowpAfterImprovement.blockId);
-    
   }
   
 }
