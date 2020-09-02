@@ -380,7 +380,9 @@ std::string ImmutableFileTest::xErrorCodeToString(const uint32_t code) {
   case kXR_NotFile: return "kXR_NotFile";
   case kXR_isDirectory: return "kXR_isDirectory";
   case kXR_Cancelled: return "kXR_Cancelled";
+#if XrdMajorVNUM( XrdVNUMBER ) < 5
   case kXR_ChkLenErr: return "kXR_ChkLenErr";
+#endif
   case kXR_ChkSumErr: return "kXR_ChkSumErr";
   case kXR_inProgress: return "kXR_inProgress";
   case kXR_overQuota: return "kXR_overQuota";
