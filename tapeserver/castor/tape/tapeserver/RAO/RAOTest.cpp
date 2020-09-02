@@ -92,7 +92,7 @@ namespace unitTests {
     
     rao::InterpolationFilePositionEstimator estimator(eowPositions,mediaType);
     {
-      std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(0,1,1,10);
+      std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(0,1,1,100000000);
       rao::FilePosition positionFile = estimator.getFilePosition(*retrieveJob);
       //The LPOS start position of the file should be equal to the minLPos of the LTO7 media type
       rao::Position startPositionFile = positionFile.getStartPosition();
@@ -102,20 +102,10 @@ namespace unitTests {
       rao::Position endPositionFile = positionFile.getEndPosition();
       ASSERT_EQ(0,endPositionFile.getWrap());
       
-      /*TODO : TO BE CONTINUED
-       * auto jobTapeFile = retrieveJob->selectedTapeFile();
-      uint64_t endPositionBlockId = mediaType.minLPos.value() + (jobTapeFile.blockId / rao::InterpolationFilePositionEstimator::c_blockSize) + 1;
-      ASSERT_EQ(mediaType.minLPos.value() + endPositionBlockId,endPositionFile.getLPos());*/
-    }
-    
-    {
-      std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(2,1,2,25);
-      rao::FilePosition positionFile = estimator.getFilePosition(*retrieveJob);
-      rao::Position startPositionFile = positionFile.getStartPosition();
-      ASSERT_EQ(0,startPositionFile.getWrap());
-      double b_max = (double) eowPositions.at(0).blockId;
-      uint64_t expectedLPos = mediaType.minLPos.value() + retrieveJob->selectedTapeFile().blockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / b_max;
-      ASSERT_EQ(expectedLPos,positionFile.getStartPosition().getLPos());
+      auto jobTapeFile = retrieveJob->selectedTapeFile();
+      uint64_t endPositionBlockId = jobTapeFile.blockId + (jobTapeFile.fileSize / rao::InterpolationFilePositionEstimator::c_blockSize) + 1;
+      uint64_t expectedEndPositionLPos = mediaType.minLPos.value() + endPositionBlockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / eowPositions.at(0).blockId;
+      ASSERT_EQ(expectedEndPositionLPos,endPositionFile.getLPos());
     }
   }
   
@@ -127,13 +117,21 @@ namespace unitTests {
     
     {
       //Now create a retrieve job that has a blockId greater than the first wrap end of wrap position
-     std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(210000,1,1,10);
+      std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(210000,1,1,100000000);
       rao::FilePosition positionFile = estimator.getFilePosition(*retrieveJob);
       double b_max = (double) eowPositions.at(1).blockId - (double) eowPositions.at(0).blockId; 
-      uint64_t fileBlockId = retrieveJob->selectedTapeFile().blockId - eowPositions.at(0).blockId;
+      auto jobTapeFile = retrieveJob->selectedTapeFile();
+      uint64_t fileBlockId = jobTapeFile.blockId - eowPositions.at(0).blockId;
       uint64_t expectedLPos = mediaType.maxLPos.value() - fileBlockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / b_max;
       ASSERT_EQ(1,positionFile.getStartPosition().getWrap());
       ASSERT_EQ(expectedLPos,positionFile.getStartPosition().getLPos());
+      
+      rao::Position endPositionFile = positionFile.getEndPosition();
+      ASSERT_EQ(1,endPositionFile.getWrap());
+      
+      uint64_t endPositionBlockId = jobTapeFile.blockId + (jobTapeFile.fileSize / rao::InterpolationFilePositionEstimator::c_blockSize) + 1 - eowPositions.at(0).blockId;
+      uint64_t expectedEndPositionLPos = mediaType.maxLPos.value() - endPositionBlockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / b_max;
+      ASSERT_EQ(expectedEndPositionLPos,endPositionFile.getLPos());
     }
   }
   

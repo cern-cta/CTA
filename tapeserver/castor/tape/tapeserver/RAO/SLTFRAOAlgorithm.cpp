@@ -64,7 +64,12 @@ void SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() {
 
 
 void SLTFRAOAlgorithm::Builder::initializeCostHeuristic() {
-  //TODO
+  /*switch(m_data.getRAOAlgorithmOptions().getCostHeuristicType()){
+    case RAOOptions::CostHeuristicType::cta:
+    {
+      m_algorithm->m_costHeuristic.reset(new )
+    }
+  }*/
 }
 
 
