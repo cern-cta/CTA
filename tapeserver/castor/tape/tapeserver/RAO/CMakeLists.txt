@@ -18,7 +18,7 @@ set(CTARAO_LIBRARY_SRCS
   SLTFRAOAlgorithm.cpp
   RAOOptions.cpp
   CostHeuristic.cpp
-  FilePosition.cpp
+  FilePositionInfos.cpp
   Position.cpp
   FilePositionEstimator.cpp
   InterpolationFilePositionEstimator.cpp

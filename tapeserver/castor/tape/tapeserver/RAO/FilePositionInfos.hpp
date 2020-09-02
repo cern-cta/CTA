@@ -23,17 +23,31 @@
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-class FilePosition {
+class FilePositionInfos {
 public:
-  FilePosition();
+  FilePositionInfos();
+  FilePositionInfos(const FilePositionInfos & other);
+  FilePositionInfos & operator=(const FilePositionInfos & other);
   void setStartPosition(const Position & startPosition);
   void setEndPosition(const Position & endPosition);
+  void setStartBand(const uint8_t startBand);
+  void setEndBand(const uint8_t endBand);
+  void setStartLandingZone(const uint8_t startLandingZone);
+  void setEndLandingZone(const uint8_t endLandingZone);
   Position getStartPosition() const;
   Position getEndPosition() const;
-  virtual ~FilePosition();
+  uint8_t getStartBand() const;
+  uint8_t getEndBand() const;
+  uint8_t getStartLandingZone() const;
+  uint8_t getEndLandingZone() const;
+  virtual ~FilePositionInfos();
 private:
   Position m_startPosition;
   Position m_endPosition;
+  uint8_t m_startBand;
+  uint8_t m_endBand;
+  uint8_t m_startLandingZone;
+  uint8_t m_endLandingZone;
 };
 
 }}}}

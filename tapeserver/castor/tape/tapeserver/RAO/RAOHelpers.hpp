@@ -34,6 +34,10 @@ public:
    */
   static void improveEndOfLastWrapPositionIfPossible(std::vector<drive::endOfWrapPosition> & endOfWrapPositions);
 
+  static uint8_t determineBand(uint32_t nbWrapsOnTape, uint32_t wrapNumber);
+  
+  static uint8_t determineLandingZone(uint64_t minTapeLPos, uint64_t maxTapeLpos, uint64_t fileLPos);
+  
 };
 
 }}}}

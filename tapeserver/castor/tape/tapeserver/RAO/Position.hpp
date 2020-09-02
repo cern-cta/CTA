@@ -25,13 +25,15 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
 class Position {
 public:
   Position();
+  Position(const Position & other);
+  Position &operator=(const Position &other);
   virtual ~Position();
-  uint64_t getWrap() const;
+  uint32_t getWrap() const;
   uint64_t getLPos() const;
-  void setWrap(const uint64_t wrap);
+  void setWrap(const uint32_t wrap);
   void setLPos(const uint64_t lpos);
 private:
-  uint64_t m_wrap;
+  uint32_t m_wrap;
   uint64_t m_lpos;
 };
 

@@ -23,6 +23,21 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
 Position::Position():m_wrap(0),m_lpos(0) {
 }
 
+Position::Position(const Position& other){
+  if(this != &other){
+    m_wrap = other.m_wrap;
+    m_lpos = other.m_lpos;
+  }
+}
+
+Position & Position::operator=(const Position& other){
+  if(this != &other){
+    m_wrap = other.m_wrap;
+    m_lpos = other.m_lpos;
+  }
+  return *this;
+}
+
 Position::~Position() {
 }
 
@@ -30,7 +45,7 @@ uint64_t Position::getLPos() const {
   return m_lpos;
 }
 
-uint64_t Position::getWrap() const {
+uint32_t Position::getWrap() const {
   return m_wrap;
 }
 
@@ -38,7 +53,7 @@ void Position::setLPos(const uint64_t lpos) {
   m_lpos = lpos;
 }
 
-void Position::setWrap(const uint64_t wrap) {
+void Position::setWrap(const uint32_t wrap) {
   m_wrap = wrap;
 }
 

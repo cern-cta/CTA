@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "FilePosition.hpp"
+#include "FilePositionInfos.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
@@ -26,7 +26,7 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
 class FilePositionEstimator {
 public:
   FilePositionEstimator();
-  virtual FilePosition getFilePosition(const cta::RetrieveJob & job) const = 0;
+  virtual FilePositionInfos getFilePosition(const cta::RetrieveJob & job) const = 0;
   virtual ~FilePositionEstimator();
 private:
 

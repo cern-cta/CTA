@@ -44,6 +44,7 @@ namespace unitTests {
       mediaType.name = "LTO7M";
       mediaType.minLPos = 2696;
       mediaType.maxLPos = 171097;
+      mediaType.nbWraps = 112;
       return mediaType;
     }
     
@@ -93,7 +94,7 @@ namespace unitTests {
     rao::InterpolationFilePositionEstimator estimator(eowPositions,mediaType);
     {
       std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(0,1,1,100000000);
-      rao::FilePosition positionFile = estimator.getFilePosition(*retrieveJob);
+      rao::FilePositionInfos positionFile = estimator.getFilePosition(*retrieveJob);
       //The LPOS start position of the file should be equal to the minLPos of the LTO7 media type
       rao::Position startPositionFile = positionFile.getStartPosition();
       ASSERT_EQ(0,startPositionFile.getWrap());
@@ -106,6 +107,11 @@ namespace unitTests {
       uint64_t endPositionBlockId = jobTapeFile.blockId + (jobTapeFile.fileSize / rao::InterpolationFilePositionEstimator::c_blockSize) + 1;
       uint64_t expectedEndPositionLPos = mediaType.minLPos.value() + endPositionBlockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / eowPositions.at(0).blockId;
       ASSERT_EQ(expectedEndPositionLPos,endPositionFile.getLPos());
+      
+      ASSERT_EQ(0,positionFile.getStartBand());
+      ASSERT_EQ(0,positionFile.getEndBand());
+      ASSERT_EQ(0,positionFile.getStartLandingZone());
+      ASSERT_EQ(0,positionFile.getEndLandingZone());
     }
   }
   
@@ -118,7 +124,7 @@ namespace unitTests {
     {
       //Now create a retrieve job that has a blockId greater than the first wrap end of wrap position
       std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(210000,1,1,100000000);
-      rao::FilePosition positionFile = estimator.getFilePosition(*retrieveJob);
+      rao::FilePositionInfos positionFile = estimator.getFilePosition(*retrieveJob);
       double b_max = (double) eowPositions.at(1).blockId - (double) eowPositions.at(0).blockId; 
       auto jobTapeFile = retrieveJob->selectedTapeFile();
       uint64_t fileBlockId = jobTapeFile.blockId - eowPositions.at(0).blockId;
@@ -132,6 +138,11 @@ namespace unitTests {
       uint64_t endPositionBlockId = jobTapeFile.blockId + (jobTapeFile.fileSize / rao::InterpolationFilePositionEstimator::c_blockSize) + 1 - eowPositions.at(0).blockId;
       uint64_t expectedEndPositionLPos = mediaType.maxLPos.value() - endPositionBlockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / b_max;
       ASSERT_EQ(expectedEndPositionLPos,endPositionFile.getLPos());
+      
+      ASSERT_EQ(0,positionFile.getStartBand());
+      ASSERT_EQ(0,positionFile.getEndBand());
+      ASSERT_EQ(1,positionFile.getStartLandingZone());
+      ASSERT_EQ(1,positionFile.getEndLandingZone());
     }
   }
   

@@ -34,5 +34,16 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
     uint64_t meanNbBlocksPerWrap = nbBlocksPerWrap / nbEndOfWrapPositions;
     endOfWrapPositions[nbEndOfWrapPositions-1].blockId = endOfWrapPositions.at(nbEndOfWrapPositions-2).blockId + meanNbBlocksPerWrap;
   }
+  
+  uint8_t RAOHelpers::determineBand(uint32_t nbWrapsOnTape, uint32_t wrapNumber){
+    //As a tape has always 4 bands the following formula will give the band number to which the wrapNumber
+    //belongs to
+    return (wrapNumber / (nbWrapsOnTape / 4));
+  }
+  
+  uint8_t RAOHelpers::determineLandingZone(uint64_t minTapeLPos, uint64_t maxTapeLpos, uint64_t fileLPos){
+    uint64_t mid = (maxTapeLpos - minTapeLPos) / 2;
+    return fileLPos < mid ? 0 : 1;
+  }
 
 }}}}
