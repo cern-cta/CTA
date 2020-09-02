@@ -27,6 +27,7 @@
 #include <sstream>
 #include <utility>
 #include <XrdCl/XrdClFile.hh>
+#include <XrdVersion.hh>
 
 namespace cta {
 
@@ -275,7 +276,9 @@ std::string ImmutableFileTest::openFlagsToString(XrdCl::OpenFlags::Flags flags) 
   allFlags.emplace_back(XrdCl::OpenFlags::MakePath, "MakePath");
   allFlags.emplace_back(XrdCl::OpenFlags::New, "New");
   allFlags.emplace_back(XrdCl::OpenFlags::NoWait, "NoWait");
+#if XrdMajorVNUM( XrdVNUMBER ) < 5
   allFlags.emplace_back(XrdCl::OpenFlags::Append, "Append");
+#endif
   allFlags.emplace_back(XrdCl::OpenFlags::Read, "Read");
   allFlags.emplace_back(XrdCl::OpenFlags::Update, "Update");
   allFlags.emplace_back(XrdCl::OpenFlags::Write, "Write");
