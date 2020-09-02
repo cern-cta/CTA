@@ -18,20 +18,15 @@
 
 #pragma once
 
-#include "FilePositionInfos.hpp"
+#include "CostHeuristic.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-class CostHeuristic {
+class CTACostHeuristic : public CostHeuristic{
 public:
-  /**
-   * Compute the cost for going from the end of file1 to the beginning of file2
-   * @param file1 the file from which we will go from it's end position
-   * @param file2 the file to which we will arrive (beginning position)
-   * @return the value it costs for going from the end of file1 to the beginning of file2
-   */
-  virtual double getCost(const FilePositionInfos & file1, const FilePositionInfos & file2) const = 0;
-  virtual ~CostHeuristic();
+  CTACostHeuristic();
+  double getCost(const FilePositionInfos & file1, const FilePositionInfos & file2) const override;
+  virtual ~CTACostHeuristic();
 private:
 
 };

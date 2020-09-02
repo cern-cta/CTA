@@ -19,6 +19,7 @@
 #include "SLTFRAOAlgorithm.hpp"
 #include "InterpolationFilePositionEstimator.hpp"
 #include "RAOHelpers.hpp"
+#include "CTACostHeuristic.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -60,16 +61,16 @@ void SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() {
   }
 }
 
-
-
-
 void SLTFRAOAlgorithm::Builder::initializeCostHeuristic() {
-  /*switch(m_data.getRAOAlgorithmOptions().getCostHeuristicType()){
+  switch(m_data.getRAOAlgorithmOptions().getCostHeuristicType()){
     case RAOOptions::CostHeuristicType::cta:
     {
-      m_algorithm->m_costHeuristic.reset(new )
+      m_algorithm->m_costHeuristic.reset(new CTACostHeuristic());
+      break;
     }
-  }*/
+    default:
+      throw cta::exception::Exception("In SLTFRAOAlgorithm::Builder::initializeCostHeuristic() unknown type of cost heuristic.");
+  }
 }
 
 

@@ -20,12 +20,6 @@
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-CostHeuristic::CostHeuristic() {
-}
-
-CostHeuristic::CostHeuristic(const CostHeuristic& orig) {
-}
-
 CostHeuristic::~CostHeuristic() {
 }
 
