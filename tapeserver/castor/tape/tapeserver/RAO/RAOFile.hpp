@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include <utility>
+#include <list>
+
 #include "FilePositionInfos.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
@@ -29,10 +32,13 @@ public:
   RAOFile &operator=(const RAOFile & other);
   uint64_t getIndex() const;
   FilePositionInfos getFilePositionInfos() const;
+  void addDistanceToFile(const double distance, const RAOFile & file);
   virtual ~RAOFile();
+  typedef std::pair<double,uint64_t> DistanceToFile;
 private:
   uint64_t m_index;
   FilePositionInfos m_filePositionInfos;
+  std::list<DistanceToFile> m_distancesWithOtherFiles;
 };
 
 }}}}

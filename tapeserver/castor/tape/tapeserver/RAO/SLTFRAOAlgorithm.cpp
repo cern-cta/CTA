@@ -20,7 +20,6 @@
 #include "InterpolationFilePositionEstimator.hpp"
 #include "RAOHelpers.hpp"
 #include "CTACostHeuristic.hpp"
-#include "RAOFile.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -29,11 +28,9 @@ SLTFRAOAlgorithm::SLTFRAOAlgorithm() {}
 std::vector<uint64_t> SLTFRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
   std::vector<uint64_t> ret;
   //Determine all the files position
-  std::vector<RAOFile> files;
-  for(uint64_t i = 0; i < jobs.size(); ++i){
-    files.push_back(RAOFile(i,m_filePositionEstimator->getFilePosition(*(jobs.at(i)))));
-  }
-  //Determine the matrix of the costs between each file
+  std::vector<RAOFile> files = computeAllFilesPosition(jobs);
+  computeCostBetweenAllFiles(files);
+  
   return ret;
 }
 
@@ -80,6 +77,31 @@ void SLTFRAOAlgorithm::Builder::initializeCostHeuristic() {
   }
 }
 
+std::vector<RAOFile> SLTFRAOAlgorithm::computeAllFilesPosition(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) const {
+  std::vector<RAOFile> files;
+  for(uint64_t i = 0; i < jobs.size(); ++i){
+    files.push_back(RAOFile(i,m_filePositionEstimator->getFilePosition(*(jobs.at(i)))));
+  }
+  return files;
+}
 
+void SLTFRAOAlgorithm::computeCostBetweenAllFiles(std::vector<RAOFile> & files) const {
+  for(uint64_t i = 0; i < files.size(); ++i){
+    auto & sourceFile = files.at(i);
+    for(uint64_t j = 0; j < files.size(); ++j){
+      //We don't want the distance between the same file
+      if(i != j){
+        auto & destinationFile = files.at(j);
+        double distanceToFileJ = m_costHeuristic->getCost(sourceFile.getFilePositionInfos(),destinationFile.getFilePositionInfos());
+        files.at(i).addDistanceToFile(distanceToFileJ,destinationFile);
+      }
+    }
+  }
+}
+
+std::vector<uint64_t> SLTFRAOAlgorithm::performSLTF(const std::vector<RAOFile>& files) const {
+  //TODO
+  return std::vector<uint64_t>();
+}
 
 }}}}

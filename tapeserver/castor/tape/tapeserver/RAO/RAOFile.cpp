@@ -46,6 +46,10 @@ FilePositionInfos RAOFile::getFilePositionInfos() const{
   return m_filePositionInfos;
 }
 
+void RAOFile::addDistanceToFile(const double distance, const RAOFile& file){
+  m_distancesWithOtherFiles.push_back(std::make_pair(distance,file.getIndex()));
+}
+
 RAOFile::~RAOFile() {
 }
 
