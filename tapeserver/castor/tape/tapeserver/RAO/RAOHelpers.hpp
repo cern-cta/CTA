@@ -36,7 +36,17 @@ public:
 
   static uint8_t determineBand(uint32_t nbWrapsOnTape, uint32_t wrapNumber);
   
-  static uint8_t determineLandingZone(uint64_t minTapeLPos, uint64_t maxTapeLpos, uint64_t fileLPos);
+  static uint8_t determineLandingZone(uint64_t minTapeLpos, uint64_t maxTapeLpos, uint64_t fileLpos);
+  
+  static bool doesWrapChange(uint32_t wrap1, uint32_t wrap2);
+  
+  static bool doesBandChange(uint8_t band1, uint8_t band2);
+  
+  static bool doesLandingZoneChange(uint8_t landingZone1, uint8_t landingZone2);
+  
+  static bool doesDirectionChange(uint32_t wrap1, uint32_t wrap2);
+  
+  static bool doesStepBack(uint32_t wrap1, uint64_t lpos1, uint32_t wrap2, uint64_t lpos2);
   
 };
 

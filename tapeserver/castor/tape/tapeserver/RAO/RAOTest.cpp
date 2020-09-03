@@ -158,7 +158,7 @@ namespace unitTests {
     }
   }
   
-  TEST_F(RAOTest,ImproveLastEOWPIfPossible){
+  TEST_F(RAOTest,RAOHelpersImproveLastEOWPIfPossible){
     std::vector<drive::endOfWrapPosition> eowPositions = RAOTestEnvironment::getEndOfWrapPositions();
     drive::endOfWrapPosition eowpBeforeImprovement = eowPositions.at(eowPositions.size()-1);
     rao::RAOHelpers::improveEndOfLastWrapPositionIfPossible(eowPositions);
@@ -166,4 +166,59 @@ namespace unitTests {
     ASSERT_LT(eowpBeforeImprovement.blockId,eowpAfterImprovement.blockId);
   }
   
+  TEST_F(RAOTest,RAOHelpersDetermineBand){
+    uint32_t nbWrapsLTO7 = 112;
+    ASSERT_EQ(0,rao::RAOHelpers::determineBand(nbWrapsLTO7,0));
+    ASSERT_EQ(0,rao::RAOHelpers::determineBand(nbWrapsLTO7,27));
+    ASSERT_EQ(1,rao::RAOHelpers::determineBand(nbWrapsLTO7,28));
+    ASSERT_EQ(3,rao::RAOHelpers::determineBand(nbWrapsLTO7,111));
+    ASSERT_THROW(rao::RAOHelpers::determineBand(nbWrapsLTO7,112),cta::exception::Exception);
+  }
+  
+  TEST_F(RAOTest,RAOHelpersDetermineLandingZone){
+    auto LTO7MediaType = RAOTestEnvironment::getLTO7MMediaType();
+    uint64_t minTapeLpos = LTO7MediaType.minLPos.value();
+    uint64_t maxTapeLpos = LTO7MediaType.maxLPos.value();
+    
+    uint64_t file1Lpos = minTapeLpos + 50;
+    uint64_t file2Lpos = maxTapeLpos - 50;
+    uint64_t file3Lpos = (maxTapeLpos - minTapeLpos) / 2;
+    
+    ASSERT_EQ(0,rao::RAOHelpers::determineLandingZone(minTapeLpos,maxTapeLpos,file1Lpos));
+    ASSERT_EQ(1,rao::RAOHelpers::determineLandingZone(minTapeLpos,maxTapeLpos,file2Lpos));
+    ASSERT_EQ(1,rao::RAOHelpers::determineLandingZone(minTapeLpos,maxTapeLpos,file3Lpos));
+  }
+  
+  TEST_F(RAOTest,RAOHelpersDoesWrapChange){
+    ASSERT_TRUE(rao::RAOHelpers::doesWrapChange(0,1));
+    ASSERT_FALSE(rao::RAOHelpers::doesWrapChange(5,5));
+  }
+  
+  TEST_F(RAOTest,RAOHelpersDoesBandChange){
+    ASSERT_TRUE(rao::RAOHelpers::doesBandChange(0,1));
+    ASSERT_FALSE(rao::RAOHelpers::doesBandChange(5,5));
+  }
+  
+  TEST_F(RAOTest,RAOHelpersDoesLandingZoneChange){
+    ASSERT_TRUE(rao::RAOHelpers::doesLandingZoneChange(0,1));
+    ASSERT_FALSE(rao::RAOHelpers::doesLandingZoneChange(0,0));
+  }
+  
+  TEST_F(RAOTest,RAOHelpersDoesDirectionChange){
+    ASSERT_TRUE(rao::RAOHelpers::doesDirectionChange(0,1));
+    ASSERT_FALSE(rao::RAOHelpers::doesDirectionChange(0,0));
+    ASSERT_FALSE(rao::RAOHelpers::doesDirectionChange(0,2));
+    ASSERT_FALSE(rao::RAOHelpers::doesDirectionChange(1,3));
+  }
+  
+  TEST_F(RAOTest,RAOHelpersDoesStepBack){
+    //Wrap 0 lpos1 > lpos 2: stepback
+    ASSERT_TRUE(rao::RAOHelpers::doesStepBack(0,1,0,0));
+    //Wrap 1 lpos1 < lpos2: steback
+    ASSERT_TRUE(rao::RAOHelpers::doesStepBack(1,0,1,1));
+    //Wrap 0 lpos 1 < lpos 2: no stepback
+    ASSERT_FALSE(rao::RAOHelpers::doesStepBack(0,0,0,1));
+    //Wrap 1 lpos 1 > lpos 2: no stepback
+    ASSERT_FALSE(rao::RAOHelpers::doesStepBack(1,1,1,0));
+  }
 }

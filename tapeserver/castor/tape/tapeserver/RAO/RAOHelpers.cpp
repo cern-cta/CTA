@@ -38,12 +38,45 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
   uint8_t RAOHelpers::determineBand(uint32_t nbWrapsOnTape, uint32_t wrapNumber){
     //As a tape has always 4 bands the following formula will give the band number to which the wrapNumber
     //belongs to
-    return (wrapNumber / (nbWrapsOnTape / 4));
+    unsigned int nbBandsTape = 4;
+    if(wrapNumber > nbWrapsOnTape - 1){
+      std::string errorMsg = "In RAOHelpers::determineBand(), the wrapNumber (" + std::to_string(wrapNumber) + ") of the file is greater than the number of wraps the tape contains (" + std::to_string(nbWrapsOnTape) + ").";
+      throw cta::exception::Exception(errorMsg);
+    }
+    return (wrapNumber / (nbWrapsOnTape / nbBandsTape));
   }
   
-  uint8_t RAOHelpers::determineLandingZone(uint64_t minTapeLPos, uint64_t maxTapeLpos, uint64_t fileLPos){
-    uint64_t mid = (maxTapeLpos - minTapeLPos) / 2;
-    return fileLPos < mid ? 0 : 1;
+  uint8_t RAOHelpers::determineLandingZone(uint64_t minTapeLpos, uint64_t maxTapeLpos, uint64_t fileLpos){
+    uint64_t mid = (maxTapeLpos - minTapeLpos) / 2;
+    return fileLpos < mid ? 0 : 1;
+  }
+  
+  bool RAOHelpers::doesWrapChange(uint32_t wrap1, uint32_t wrap2){
+    return (wrap1 != wrap2);
+  }
+  
+  bool RAOHelpers::doesBandChange(uint8_t band1, uint8_t band2){
+    return (band1 != band2);
+  }
+  
+  bool RAOHelpers::doesLandingZoneChange(uint8_t landingZone1, uint8_t landingZone2){
+    return (landingZone1 != landingZone2);
+  }
+  
+  bool RAOHelpers::doesDirectionChange(uint32_t wrap1, uint32_t wrap2){
+    return ((wrap1 % 2) != (wrap2 % 2));
   }
 
+  bool RAOHelpers::doesStepBack(uint32_t wrap1, uint64_t lpos1, uint32_t wrap2, uint64_t lpos2){
+    bool stepBack = false;
+    if(wrap1 == wrap2){
+      if((wrap1 % 2 == 0) && (lpos1 > lpos2)){
+        stepBack = true;
+      } else if((wrap1 % 2 == 1) && (lpos1 < lpos2)){
+        stepBack = true;
+      }
+    }
+    return stepBack;
+  }
+  
 }}}}

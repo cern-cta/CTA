@@ -17,6 +17,7 @@
  */
 
 #include "CTACostHeuristic.hpp"
+#include "RAOHelpers.hpp"
 #include <cmath>
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
@@ -43,21 +44,13 @@ double CTACostHeuristic::getCost(const FilePositionInfos& file1, const FilePosit
   uint8_t startFile2LandingZone = file2.getStartLandingZone();
   
   uint64_t distance = std::abs(endFile1Position.getLPos() - startFile2Position.getLPos());
-  //TODO : Refactor with the RAOHelpers
-  int wrapChange = (endFile1Wrap != startFile2Wrap);
-  int bandChange = (endFile1Band != startFile2Band);
-  int landingZoneChange = (endFile1LandingZone != startFile2LandingZone);
-  int directionChange = ((endFile1Wrap % 2) != (startFile2Wrap % 2));
+
+  int wrapChange = RAOHelpers::doesWrapChange(endFile1Wrap,startFile2Wrap);
+  int bandChange = RAOHelpers::doesBandChange(endFile1Band,startFile2Band);
+  int landingZoneChange = RAOHelpers::doesLandingZoneChange(endFile1LandingZone,startFile2LandingZone);
+  int directionChange = RAOHelpers::doesDirectionChange(endFile1Wrap,startFile2Wrap);
   
-  int stepBack = 0;
-  
-  if(endFile1Wrap == startFile2Wrap){
-    if((endFile1Wrap % 2) == 0 && (startFile2LPos < endFile1LPos)){
-      stepBack = 1;
-    } else if ((endFile1Wrap % 2) == 1 && (startFile2LPos > endFile1LPos)){
-      stepBack = 1;
-    }
-  }
+  int stepBack = RAOHelpers::doesStepBack(endFile1LPos,endFile1Wrap,startFile2Wrap,startFile2LPos);
   
   cost = 4.29 + wrapChange * 6.69 + bandChange * 3.2 + landingZoneChange * (-6.04) + directionChange * 5.22 + stepBack * 11.32 + distance * 0.0006192;
   return cost;
