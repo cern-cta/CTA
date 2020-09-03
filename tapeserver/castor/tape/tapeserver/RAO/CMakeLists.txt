@@ -24,6 +24,7 @@ set(CTARAO_LIBRARY_SRCS
   InterpolationFilePositionEstimator.cpp
   RAOHelpers.cpp
   CTACostHeuristic.cpp
+  RAOFile.cpp
 )
 
 add_library (ctarao SHARED

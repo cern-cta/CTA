@@ -20,6 +20,7 @@
 #include "InterpolationFilePositionEstimator.hpp"
 #include "RAOHelpers.hpp"
 #include "CTACostHeuristic.hpp"
+#include "RAOFile.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -27,6 +28,12 @@ SLTFRAOAlgorithm::SLTFRAOAlgorithm() {}
 
 std::vector<uint64_t> SLTFRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
   std::vector<uint64_t> ret;
+  //Determine all the files position
+  std::vector<RAOFile> files;
+  for(uint64_t i = 0; i < jobs.size(); ++i){
+    files.push_back(RAOFile(i,m_filePositionEstimator->getFilePosition(*(jobs.at(i)))));
+  }
+  //Determine the matrix of the costs between each file
   return ret;
 }
 
