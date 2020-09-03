@@ -27,7 +27,7 @@ echo Adding versionlock for xrootd:
 sudo cp ../../docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/versionlock.list
 
 echo Installing build dependencies
-sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm --enablerepo=cernonly --nogpgcheck
+sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm --nogpgcheck
 
 echo Installing mhvtl
 sudo yum install -y mhvtl-utils kmod-mhvtl mhvtl-utils --enablerepo=castor
