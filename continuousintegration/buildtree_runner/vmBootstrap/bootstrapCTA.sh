@@ -18,13 +18,13 @@ mkdir -p ~/CTA-build-srpm
 (cd ~/CTA-build-srpm && cmake -DPackageOnly:Bool=true ../CTA; make cta_srpm)
 
 echo Installing repos
-for r in `ls -1 ../../docker/ctafrontend/cc7/etc/yum.repos.d/*.repo` ; do
+for r in `ls -1 ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo` ; do
   sudo yum-config-manager --add-repo=$r
 done
 sudo yum install -y yum-plugin-priorities
 
 echo Adding versionlock for xrootd:
-sudo cp ../../docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/versionlock.list
+sudo cp ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/versionlock.list
 
 echo Installing build dependencies
 sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm --nogpgcheck
