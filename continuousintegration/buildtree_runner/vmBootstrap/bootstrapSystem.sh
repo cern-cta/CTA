@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 echo Initializing krb5.conf...
 sudo cp -fv krb5.conf /etc/krb5.conf
@@ -10,8 +10,8 @@ fi
 export CTAUSER
 
 echo "Adding user '$CTAUSER'"
-sudo adduser $CTAUSER
-sudo passwd $CTAUSER
+sudo adduser $CTAUSER || true
+sudo passwd $CTAUSER || true
 
 sudo -E bash -c 'cat >> /etc/sudoers << EOFsudoers
 $CTAUSER ALL=(ALL) NOPASSWD: ALL
