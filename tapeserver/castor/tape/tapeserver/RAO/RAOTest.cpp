@@ -68,7 +68,6 @@ namespace unitTests {
       return ret;
     }
     
-    
   };
   
   class RAOTest: public ::testing::Test {

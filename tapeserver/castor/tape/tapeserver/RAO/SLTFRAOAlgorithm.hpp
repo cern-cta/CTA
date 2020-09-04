@@ -49,11 +49,11 @@ private:
   SLTFRAOAlgorithm();
   std::unique_ptr<FilePositionEstimator> m_filePositionEstimator;
   std::unique_ptr<CostHeuristic> m_costHeuristic;
-  
+    
   std::vector<RAOFile> computeAllFilesPosition(const std::vector<std::unique_ptr<cta::RetrieveJob> > & jobs) const;
   void computeCostBetweenAllFiles(std::vector<RAOFile> & files) const;
   std::vector<uint64_t> performSLTF(const std::vector<RAOFile> & files) const;
-  
+  std::unique_ptr<cta::RetrieveJob> createFakeRetrieveJobForFileAtBeginningOfTape() const;
 };
 
 }}}}

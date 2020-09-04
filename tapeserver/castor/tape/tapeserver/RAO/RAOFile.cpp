@@ -18,6 +18,8 @@
 
 #include "RAOFile.hpp"
 
+#include <algorithm>
+
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
 RAOFile::RAOFile(const uint64_t index, const FilePositionInfos & filePositionInfos):m_index(index),m_filePositionInfos(filePositionInfos) {
@@ -47,10 +49,31 @@ FilePositionInfos RAOFile::getFilePositionInfos() const{
 }
 
 void RAOFile::addDistanceToFile(const double distance, const RAOFile& file){
-  m_distancesWithOtherFiles.push_back(std::make_pair(distance,file.getIndex()));
+  m_distancesWithOtherFiles.push_back(DistanceToFile(distance,file.getIndex()));
+}
+
+uint64_t RAOFile::getClosestFileIndex() const {
+  //The closest file is the one that has the lower cost
+  auto minElementItor = std::min_element(m_distancesWithOtherFiles.begin(), m_distancesWithOtherFiles.end());
+  //This method should never throw as there is always at least two files in a RAO batch
+  return minElementItor->getCost();
 }
 
 RAOFile::~RAOFile() {
 }
 
+RAOFile::DistanceToFile::DistanceToFile(const double cost, const uint64_t destinationFileIndex):m_cost(cost),m_destinationFileIndex(destinationFileIndex){
+}
+
+bool RAOFile::DistanceToFile::operator <(const DistanceToFile& other) const {
+  return m_cost < other.m_cost;
+}
+
+double RAOFile::DistanceToFile::getCost() const{
+  return m_cost;
+}
+
+uint64_t RAOFile::DistanceToFile::getDestinationFileIndex() const {
+  return m_destinationFileIndex;
+}
 }}}}

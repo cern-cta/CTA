@@ -33,8 +33,20 @@ public:
   uint64_t getIndex() const;
   FilePositionInfos getFilePositionInfos() const;
   void addDistanceToFile(const double distance, const RAOFile & file);
+  uint64_t getClosestFileIndex() const;
   virtual ~RAOFile();
-  typedef std::pair<double,uint64_t> DistanceToFile;
+  
+  class DistanceToFile {
+  public:
+    DistanceToFile(const double cost, const uint64_t destinationFileIndex);
+    bool operator<(const DistanceToFile &other) const;
+    double getCost() const;
+    uint64_t getDestinationFileIndex() const;
+  private:
+    double m_cost;
+    uint64_t m_destinationFileIndex;
+  };
+  
 private:
   uint64_t m_index;
   FilePositionInfos m_filePositionInfos;
