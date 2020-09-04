@@ -33,8 +33,8 @@ dns_clusterip='10.254.199.254'
 #dns_domainname=`hostname -d`
 dns_domainname=cluster.local
 docker_ipaddress=`ifconfig docker0  | perl -e 'while(<>) { if (/inet\s+(\S+)\s/) { print $1."\n"; } }'`
-sudo systemctl stop firewalld
-sudo systemctl disable firewalld
+sudo systemctl stop firewalld || true
+sudo systemctl disable firewalld || true
 #my_ipaddress=127.0.0.1
 upper_level_dns=`perl -e 'while (<>) { if ($_=~ /nameserver (.*)/) { print $1."\n"; exit }}' < /etc/resolv.conf`
 
