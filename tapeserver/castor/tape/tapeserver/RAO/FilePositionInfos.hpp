@@ -23,31 +23,80 @@
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
+/**
+ * This class holds the position informations about a file : its physical position (start and end) and
+ * informations about the band and the landing zone of the beginning and the end of the file.
+ */
 class FilePositionInfos {
 public:
+  /**
+   * Default constructor
+   */
   FilePositionInfos();
   FilePositionInfos(const FilePositionInfos & other);
   FilePositionInfos & operator=(const FilePositionInfos & other);
-  void setStartPosition(const Position & startPosition);
+  /**
+   * Set the beginning of the file position
+   * @param beginningPosition the beginning of the file position
+   */
+  void setBeginningPosition(const Position & beginningPosition);
+  /**
+   * Set the end of the file position
+   * @param endPosition the end of the file position
+   */
   void setEndPosition(const Position & endPosition);
-  void setStartBand(const uint8_t startBand);
+  /**
+   * Set the beginning of the file band
+   * @param beginningBand the beginning of the file band
+   */
+  void setBeginningBand(const uint8_t beginningBand);
+  /**
+   * Set the end of the file band
+   * @param endBand the end of the file band
+   */
   void setEndBand(const uint8_t endBand);
-  void setStartLandingZone(const uint8_t startLandingZone);
+  /**
+   * Set the beginning of the file landing zone
+   * @param startLandingZone
+   */
+  void setBeginningLandingZone(const uint8_t beginningLandingZone);
+  /**
+   * Set the end of the file landing zone
+   * @param endLandingZone
+   */
   void setEndLandingZone(const uint8_t endLandingZone);
-  Position getStartPosition() const;
+  /**
+   * Get the physical position of the beginning of the file
+   */
+  Position getBeginningPosition() const;
+  /**
+   * Get the physical position of the end of the file
+   */
   Position getEndPosition() const;
-  uint8_t getStartBand() const;
+  /**
+   * Get the beginning of the file band
+   */
+  uint8_t getBeginningBand() const;
+  /**
+   * Get the end of the file band
+   */
   uint8_t getEndBand() const;
-  uint8_t getStartLandingZone() const;
+  /**
+   * Get the beginning of the file landing zone
+   */
+  uint8_t getBeginningLandingZone() const;
+  /**
+   * Get the end of the file landing zone
+   */
   uint8_t getEndLandingZone() const;
   virtual ~FilePositionInfos();
 private:
-  Position m_startPosition;
+  Position m_beginningPosition;
   Position m_endPosition;
-  uint8_t m_startBand;
-  uint8_t m_endBand;
-  uint8_t m_startLandingZone;
-  uint8_t m_endLandingZone;
+  uint8_t m_beginningBand = 0;
+  uint8_t m_endBand = 0;
+  uint8_t m_beginningLandingZone = 0;
+  uint8_t m_endLandingZone = 0;
 };
 
 }}}}

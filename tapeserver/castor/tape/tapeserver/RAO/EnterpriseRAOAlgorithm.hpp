@@ -43,6 +43,8 @@ public:
    */
   std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>> & jobs) override;
   
+  std::string getName() const override;
+  
 private:
   /**
    * Constructs an EnterpriseRAOAlgorithm

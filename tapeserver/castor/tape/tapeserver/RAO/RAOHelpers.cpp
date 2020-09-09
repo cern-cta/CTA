@@ -46,37 +46,49 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
     return (wrapNumber / (nbWrapsOnTape / nbBandsTape));
   }
   
-  uint8_t RAOHelpers::determineLandingZone(uint64_t minTapeLpos, uint64_t maxTapeLpos, uint64_t fileLpos){
+  uint8_t RAOHelpers::determineLandingZone(uint64_t minTapeLpos, uint64_t maxTapeLpos, uint64_t blockLpos){
     uint64_t mid = (maxTapeLpos - minTapeLpos) / 2;
-    return fileLpos < mid ? 0 : 1;
+    return blockLpos < mid ? 0 : 1;
   }
   
-  bool RAOHelpers::doesWrapChange(uint32_t wrap1, uint32_t wrap2){
-    return (wrap1 != wrap2);
+  bool RAOHelpers::doesWrapChange(const FilePositionInfos & file1PositionInfos, const FilePositionInfos & file2PositionInfos){
+    return (file1PositionInfos.getEndPosition().getWrap() != file2PositionInfos.getBeginningPosition().getWrap());
   }
   
-  bool RAOHelpers::doesBandChange(uint8_t band1, uint8_t band2){
-    return (band1 != band2);
+  bool RAOHelpers::doesBandChange(const FilePositionInfos & file1PositionInfos, const FilePositionInfos & file2PositionInfos){
+    return (file1PositionInfos.getEndBand() != file2PositionInfos.getBeginningBand());
   }
   
-  bool RAOHelpers::doesLandingZoneChange(uint8_t landingZone1, uint8_t landingZone2){
-    return (landingZone1 != landingZone2);
+  bool RAOHelpers::doesLandingZoneChange(const FilePositionInfos & file1PositionInfos, const FilePositionInfos & file2PositionInfos){
+    return (file1PositionInfos.getEndLandingZone() != file2PositionInfos.getBeginningLandingZone());
   }
   
-  bool RAOHelpers::doesDirectionChange(uint32_t wrap1, uint32_t wrap2){
-    return ((wrap1 % 2) != (wrap2 % 2));
+  bool RAOHelpers::doesDirectionChange(const FilePositionInfos & file1PositionInfos, const FilePositionInfos & file2PositionInfos){
+    return ((file1PositionInfos.getEndPosition().getWrap() % 2) != (file2PositionInfos.getBeginningPosition().getWrap() % 2));
   }
 
-  bool RAOHelpers::doesStepBack(uint32_t wrap1, uint64_t lpos1, uint32_t wrap2, uint64_t lpos2){
+  bool RAOHelpers::doesStepBack(const FilePositionInfos & file1PositionInfos, const FilePositionInfos & file2PositionInfos){
+    Position endOfFile1Position = file1PositionInfos.getEndPosition();
+    Position beginningOfFile2Position = file2PositionInfos.getBeginningPosition();
+    uint32_t endOfFile1Wrap = endOfFile1Position.getWrap();
+    uint64_t endOfFile1LPos = endOfFile1Position.getLPos();
+    uint32_t beginningOfFile2Wrap = beginningOfFile2Position.getWrap();
+    uint64_t beginningOfFile2LPos = beginningOfFile2Position.getLPos();
     bool stepBack = false;
-    if(wrap1 == wrap2){
-      if((wrap1 % 2 == 0) && (lpos1 > lpos2)){
+    if(endOfFile1Wrap == beginningOfFile2Wrap){
+      if((endOfFile1Wrap % 2 == 0) && (endOfFile1LPos > beginningOfFile2LPos)){
         stepBack = true;
-      } else if((wrap1 % 2 == 1) && (lpos1 < lpos2)){
+      } else if((endOfFile1Wrap % 2 == 1) && (endOfFile1LPos < beginningOfFile2LPos)){
         stepBack = true;
       }
     }
     return stepBack;
+  }
+  
+  uint64_t RAOHelpers::computeLongitudinalDistance(const FilePositionInfos & file1PositionInfos, const FilePositionInfos & file2PositionInfos) {
+    uint64_t endOfFile1Lpos = file1PositionInfos.getEndPosition().getLPos();
+    uint64_t beginningOfFile2Lpos = file2PositionInfos.getBeginningPosition().getLPos();
+    return endOfFile1Lpos > beginningOfFile2Lpos ? endOfFile1Lpos - beginningOfFile2Lpos : beginningOfFile2Lpos - endOfFile1Lpos;
   }
   
 }}}}

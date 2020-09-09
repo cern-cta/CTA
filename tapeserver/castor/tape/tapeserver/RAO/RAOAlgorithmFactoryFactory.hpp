@@ -29,9 +29,10 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
  * 
  * This logic is the following:
  * If we were able to query the drive User Data Segments (UDS) limits, then it means
- * that the type of algorithm to instanciate will be an enterprise drive one (instanciate a EnteprpriseRAOAlgorithmFactory)
+ * that the type of algorithm to instanciate will be an enterprise drive one (instanciate a EnterpriseRAOAlgorithmFactory)
  * 
- * If we were not able to query the drive UDS limits, then it means that we will use a CTA RAO algorithm : linear, random or sltf
+ * If we were not able to query the drive UDS limits, then it means that we will use a CTA RAO algorithm : linear, random (NonConfigurable RAO Algorithms) or
+ * sltf (Configurable RAO Algorithm) 
  * 
  * For implementation, see the implementation of the createAlgorithmFactory() method
  */

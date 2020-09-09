@@ -22,8 +22,7 @@
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-ConfigurableRAOAlgorithmFactory::ConfigurableRAOAlgorithmFactory(drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue, const RAOParams & raoParams):m_drive(drive),
-    m_catalogue(catalogue), m_raoParams(raoParams){}
+ConfigurableRAOAlgorithmFactory::ConfigurableRAOAlgorithmFactory(const RAOParams & raoParams):m_raoParams(raoParams){}
 
 ConfigurableRAOAlgorithmFactory::~ConfigurableRAOAlgorithmFactory() {
 }
@@ -32,8 +31,10 @@ std::unique_ptr<RAOAlgorithm> ConfigurableRAOAlgorithmFactory::createRAOAlgorith
   std::unique_ptr<RAOAlgorithm> ret;
   switch(m_raoParams.getAlgorithmType()){
     case RAOParams::RAOAlgorithmType::sltf:{
+      checkDriveInterfaceSet();
+      checkCatalogueSet();
       SLTFRAOAlgorithm::Builder builder(m_raoParams,m_drive,m_catalogue);
-      ret.reset(builder.build().release());
+      ret = builder.build();
       break;
     }
     default:
@@ -43,5 +44,33 @@ std::unique_ptr<RAOAlgorithm> ConfigurableRAOAlgorithmFactory::createRAOAlgorith
   return ret;
 }
 
+void ConfigurableRAOAlgorithmFactory::checkDriveInterfaceSet() const {
+  if(m_drive == nullptr){
+    throw cta::exception::Exception("In ConfigurableRAOAlgorithmFactory::checkDriveInterfaceSet(), the drive interface has not been set");
+  }
+}
+
+void ConfigurableRAOAlgorithmFactory::checkCatalogueSet() const {
+  if(m_catalogue == nullptr){
+    throw cta::exception::Exception("In ConfigurableRAOAlgorithmFactory::checkCatalogueSet(), the catalogue has not been set.");
+  }
+}
+
+
+ConfigurableRAOAlgorithmFactory::Builder::Builder(const RAOParams& raoParams){
+  m_configurableRAOAlgoFactory.reset(new ConfigurableRAOAlgorithmFactory(raoParams));
+}
+
+void ConfigurableRAOAlgorithmFactory::Builder::setCatalogue(cta::catalogue::Catalogue * catalogue) {
+  m_configurableRAOAlgoFactory->m_catalogue = catalogue;
+}
+
+void ConfigurableRAOAlgorithmFactory::Builder::setDriveInterface(drive::DriveInterface* drive) {
+  m_configurableRAOAlgoFactory->m_drive = drive;
+}
+
+std::unique_ptr<ConfigurableRAOAlgorithmFactory> ConfigurableRAOAlgorithmFactory::Builder::build(){
+  return std::move(m_configurableRAOAlgoFactory);
+}
 
 }}}}

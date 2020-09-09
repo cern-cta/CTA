@@ -23,6 +23,8 @@
 #include "InterpolationFilePositionEstimator.hpp"
 #include "common/make_unique.hpp"
 #include "RAOHelpers.hpp"
+#include "SLTFRAOAlgorithm.hpp"
+#include "CTACostHeuristic.hpp"
 
 namespace unitTests {
   
@@ -30,7 +32,7 @@ namespace unitTests {
   
   class RAOTestEnvironment : public ::testing::Environment {
   public:
-    static std::vector<drive::endOfWrapPosition> getEndOfWrapPositions() {
+    static std::vector<drive::endOfWrapPosition> getLTO7MEndOfWrapPositions() {
       std::vector<drive::endOfWrapPosition> ret;
       ret.push_back({0,208310,0});
       ret.push_back({1,416271,0});
@@ -68,6 +70,19 @@ namespace unitTests {
       return ret;
     }
     
+    static std::vector<std::unique_ptr<cta::RetrieveJob>> generateRetrieveJobsForSLTF(){
+      std::vector<std::unique_ptr<cta::RetrieveJob>> ret;
+      ret.emplace_back(createRetrieveJobForRAOTests(420000,1,11,1000000000)); //0
+      ret.emplace_back(createRetrieveJobForRAOTests(300000,1,12,1000000000)); //1
+      ret.emplace_back(createRetrieveJobForRAOTests(30528,1,9,1000000000)); //2
+      ret.emplace_back(createRetrieveJobForRAOTests(26712,1,8,1000000000)); //3
+      ret.emplace_back(createRetrieveJobForRAOTests(0,1,1,1000000000)); //4
+      ret.emplace_back(createRetrieveJobForRAOTests(19080,1,6,1000000000)); //5
+      ret.emplace_back(createRetrieveJobForRAOTests(15264,1,5,1000000000)); //6
+      ret.emplace_back(createRetrieveJobForRAOTests(34344,1,10,1000000000)); //7
+      return ret;
+    }
+    
   };
   
   class RAOTest: public ::testing::Test {
@@ -87,7 +102,7 @@ namespace unitTests {
      * This test tests the InterpolationFilePositionEstimator::getFilePosition() method
      */
     
-    std::vector<drive::endOfWrapPosition> eowPositions = RAOTestEnvironment::getEndOfWrapPositions();
+    std::vector<drive::endOfWrapPosition> eowPositions = RAOTestEnvironment::getLTO7MEndOfWrapPositions();
     cta::catalogue::MediaType mediaType = RAOTestEnvironment::getLTO7MMediaType();
     
     rao::InterpolationFilePositionEstimator estimator(eowPositions,mediaType);
@@ -95,7 +110,7 @@ namespace unitTests {
       std::unique_ptr<cta::RetrieveJob> retrieveJob = RAOTestEnvironment::createRetrieveJobForRAOTests(0,1,1,100000000);
       rao::FilePositionInfos positionFile = estimator.getFilePosition(*retrieveJob);
       //The LPOS start position of the file should be equal to the minLPos of the LTO7 media type
-      rao::Position startPositionFile = positionFile.getStartPosition();
+      rao::Position startPositionFile = positionFile.getBeginningPosition();
       ASSERT_EQ(0,startPositionFile.getWrap());
       ASSERT_EQ(mediaType.minLPos.value(), startPositionFile.getLPos());
       
@@ -107,15 +122,15 @@ namespace unitTests {
       uint64_t expectedEndPositionLPos = mediaType.minLPos.value() + endPositionBlockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / eowPositions.at(0).blockId;
       ASSERT_EQ(expectedEndPositionLPos,endPositionFile.getLPos());
       
-      ASSERT_EQ(0,positionFile.getStartBand());
+      ASSERT_EQ(0,positionFile.getBeginningBand());
       ASSERT_EQ(0,positionFile.getEndBand());
-      ASSERT_EQ(0,positionFile.getStartLandingZone());
+      ASSERT_EQ(0,positionFile.getBeginningLandingZone());
       ASSERT_EQ(0,positionFile.getEndLandingZone());
     }
   }
   
   TEST_F(RAOTest,InterpolationFilePositionEstimatorWrap1Test){
-    std::vector<drive::endOfWrapPosition> eowPositions = RAOTestEnvironment::getEndOfWrapPositions();
+    std::vector<drive::endOfWrapPosition> eowPositions = RAOTestEnvironment::getLTO7MEndOfWrapPositions();
     cta::catalogue::MediaType mediaType = RAOTestEnvironment::getLTO7MMediaType();
     
     rao::InterpolationFilePositionEstimator estimator(eowPositions,mediaType);
@@ -128,8 +143,8 @@ namespace unitTests {
       auto jobTapeFile = retrieveJob->selectedTapeFile();
       uint64_t fileBlockId = jobTapeFile.blockId - eowPositions.at(0).blockId;
       uint64_t expectedLPos = mediaType.maxLPos.value() - fileBlockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / b_max;
-      ASSERT_EQ(1,positionFile.getStartPosition().getWrap());
-      ASSERT_EQ(expectedLPos,positionFile.getStartPosition().getLPos());
+      ASSERT_EQ(1,positionFile.getBeginningPosition().getWrap());
+      ASSERT_EQ(expectedLPos,positionFile.getBeginningPosition().getLPos());
       
       rao::Position endPositionFile = positionFile.getEndPosition();
       ASSERT_EQ(1,endPositionFile.getWrap());
@@ -138,15 +153,15 @@ namespace unitTests {
       uint64_t expectedEndPositionLPos = mediaType.maxLPos.value() - endPositionBlockId * (mediaType.maxLPos.value() - mediaType.minLPos.value()) / b_max;
       ASSERT_EQ(expectedEndPositionLPos,endPositionFile.getLPos());
       
-      ASSERT_EQ(0,positionFile.getStartBand());
+      ASSERT_EQ(0,positionFile.getBeginningBand());
       ASSERT_EQ(0,positionFile.getEndBand());
-      ASSERT_EQ(1,positionFile.getStartLandingZone());
+      ASSERT_EQ(1,positionFile.getBeginningLandingZone());
       ASSERT_EQ(1,positionFile.getEndLandingZone());
     }
   }
   
   TEST_F(RAOTest,InterpolationFilePositionEstimatorThrowsExceptionIfBlockIdGreaterThanLastEOWP){
-    std::vector<drive::endOfWrapPosition> eowPositions = RAOTestEnvironment::getEndOfWrapPositions();
+    std::vector<drive::endOfWrapPosition> eowPositions = RAOTestEnvironment::getLTO7MEndOfWrapPositions();
     cta::catalogue::MediaType mediaType = RAOTestEnvironment::getLTO7MMediaType();
     
     rao::InterpolationFilePositionEstimator estimator(eowPositions,mediaType);
@@ -158,7 +173,7 @@ namespace unitTests {
   }
   
   TEST_F(RAOTest,RAOHelpersImproveLastEOWPIfPossible){
-    std::vector<drive::endOfWrapPosition> eowPositions = RAOTestEnvironment::getEndOfWrapPositions();
+    std::vector<drive::endOfWrapPosition> eowPositions = RAOTestEnvironment::getLTO7MEndOfWrapPositions();
     drive::endOfWrapPosition eowpBeforeImprovement = eowPositions.at(eowPositions.size()-1);
     rao::RAOHelpers::improveEndOfLastWrapPositionIfPossible(eowPositions);
     drive::endOfWrapPosition eowpAfterImprovement = eowPositions.at(eowPositions.size()-1);
@@ -189,35 +204,151 @@ namespace unitTests {
   }
   
   TEST_F(RAOTest,RAOHelpersDoesWrapChange){
-    ASSERT_TRUE(rao::RAOHelpers::doesWrapChange(0,1));
-    ASSERT_FALSE(rao::RAOHelpers::doesWrapChange(5,5));
+    rao::Position pos1;
+    pos1.setWrap(0);
+    rao::FilePositionInfos file1;
+    file1.setEndPosition(pos1);
+    rao::Position pos2;
+    pos2.setWrap(1);
+    rao::FilePositionInfos file2;
+    file2.setBeginningPosition(pos2);
+    
+    ASSERT_TRUE(rao::RAOHelpers::doesWrapChange(file1,file2));
+    pos1.setWrap(5);
+    file1.setEndPosition(pos1);
+    pos2.setWrap(5);
+    file2.setBeginningPosition(pos2);
+    ASSERT_FALSE(rao::RAOHelpers::doesWrapChange(file1,file2));
   }
   
   TEST_F(RAOTest,RAOHelpersDoesBandChange){
-    ASSERT_TRUE(rao::RAOHelpers::doesBandChange(0,1));
-    ASSERT_FALSE(rao::RAOHelpers::doesBandChange(5,5));
+    rao::FilePositionInfos file1;
+    file1.setEndBand(0);
+    rao::FilePositionInfos file2;
+    file2.setBeginningBand(1);
+    ASSERT_TRUE(rao::RAOHelpers::doesBandChange(file1,file2));
+    file1.setEndBand(4);
+    file2.setBeginningBand(4);
+    ASSERT_FALSE(rao::RAOHelpers::doesBandChange(file1,file2));
   }
   
   TEST_F(RAOTest,RAOHelpersDoesLandingZoneChange){
-    ASSERT_TRUE(rao::RAOHelpers::doesLandingZoneChange(0,1));
-    ASSERT_FALSE(rao::RAOHelpers::doesLandingZoneChange(0,0));
+    rao::FilePositionInfos file1;
+    file1.setEndLandingZone(0);
+    rao::FilePositionInfos file2;
+    file2.setBeginningLandingZone(1);
+    ASSERT_TRUE(rao::RAOHelpers::doesLandingZoneChange(file1,file2));
+    file1.setEndLandingZone(0);
+    file2.setBeginningLandingZone(0);
+    ASSERT_FALSE(rao::RAOHelpers::doesLandingZoneChange(file1,file2));
   }
   
   TEST_F(RAOTest,RAOHelpersDoesDirectionChange){
-    ASSERT_TRUE(rao::RAOHelpers::doesDirectionChange(0,1));
-    ASSERT_FALSE(rao::RAOHelpers::doesDirectionChange(0,0));
-    ASSERT_FALSE(rao::RAOHelpers::doesDirectionChange(0,2));
-    ASSERT_FALSE(rao::RAOHelpers::doesDirectionChange(1,3));
+    rao::Position pos1;
+    pos1.setWrap(0);
+    
+    rao::FilePositionInfos file1;
+    file1.setEndPosition(pos1);
+    
+    rao::Position pos2;
+    pos2.setWrap(1);
+    
+    rao::FilePositionInfos file2;
+    file2.setBeginningPosition(pos2);
+    //end of file 1 wrap = 0, beginning of file 2 wrap = 1, direction change = true
+    ASSERT_TRUE(rao::RAOHelpers::doesDirectionChange(file1,file2));
+    pos2.setWrap(0);
+    file2.setBeginningPosition(pos2);
+    //end of file 1 wrap = 0, beginning of file2 wrap = 0, direction change = false
+    ASSERT_FALSE(rao::RAOHelpers::doesDirectionChange(file1,file2));
+    pos2.setWrap(2);
+    file2.setBeginningPosition(pos2);
+    //end of file 1 wrap = 0, beginning of file2 wrap = 2, direction change = false
+    ASSERT_FALSE(rao::RAOHelpers::doesDirectionChange(file1,file2));
+    pos1.setWrap(1);
+    file1.setEndPosition(pos1);
+    pos2.setWrap(3);
+    file2.setBeginningPosition(pos2);
+    //end of file 1 wrap = 1, beginning of file2 wrap = 3, direction change = false
+    ASSERT_FALSE(rao::RAOHelpers::doesDirectionChange(file1,file2));
   }
   
   TEST_F(RAOTest,RAOHelpersDoesStepBack){
-    //Wrap 0 lpos1 > lpos 2: stepback
-    ASSERT_TRUE(rao::RAOHelpers::doesStepBack(0,1,0,0));
-    //Wrap 1 lpos1 < lpos2: steback
-    ASSERT_TRUE(rao::RAOHelpers::doesStepBack(1,0,1,1));
-    //Wrap 0 lpos 1 < lpos 2: no stepback
-    ASSERT_FALSE(rao::RAOHelpers::doesStepBack(0,0,0,1));
-    //Wrap 1 lpos 1 > lpos 2: no stepback
-    ASSERT_FALSE(rao::RAOHelpers::doesStepBack(1,1,1,0));
+    rao::FilePositionInfos file1;
+    rao::FilePositionInfos file2;
+    
+    rao::Position endFile1Pos;
+    
+    rao::Position beginningFile2Pos;
+    
+    endFile1Pos.setWrap(0);
+    endFile1Pos.setLPos(1);
+    file1.setEndPosition(endFile1Pos);
+    beginningFile2Pos.setWrap(0);
+    beginningFile2Pos.setLPos(0);
+    file2.setBeginningPosition(beginningFile2Pos);
+    //endOfFileLpos > beginningFile2Lpos, file1 and file 2 are on the same wrap = 0: stepback = true
+    ASSERT_TRUE(rao::RAOHelpers::doesStepBack(file1,file2));
+    endFile1Pos.setWrap(1);
+    endFile1Pos.setLPos(0);
+    file1.setEndPosition(endFile1Pos);
+    beginningFile2Pos.setWrap(1);
+    beginningFile2Pos.setLPos(1);
+    file2.setBeginningPosition(beginningFile2Pos);
+    //endOfFile1 and beginningOfFile2 Wrap = 1, endOfFile1Lpos < beginningOfFile2Lpos: steback = true
+    ASSERT_TRUE(rao::RAOHelpers::doesStepBack(file1,file2));
+    endFile1Pos.setWrap(0);
+    endFile1Pos.setLPos(0);
+    file1.setEndPosition(endFile1Pos);
+    beginningFile2Pos.setWrap(0);
+    beginningFile2Pos.setLPos(1);
+    file2.setBeginningPosition(beginningFile2Pos);
+    //endOfFile1 and beginningOfFile2 Wrap = 0, endOfFile1Lpos < beginningOfFile2Lpos: stepback = false
+    ASSERT_FALSE(rao::RAOHelpers::doesStepBack(file1,file2));
+    endFile1Pos.setWrap(1);
+    endFile1Pos.setLPos(1);
+    file1.setEndPosition(endFile1Pos);
+    beginningFile2Pos.setWrap(1);
+    beginningFile2Pos.setLPos(0);
+    file2.setBeginningPosition(beginningFile2Pos);
+    //endOfFile1 and beginningOfFile2 wrap = 1, endOfFile1Lpos > beginningOfFile2Lpos: stepback = false
+    ASSERT_FALSE(rao::RAOHelpers::doesStepBack(file1,file2));
+  }
+  
+  TEST_F(RAOTest,RAOHelpersComputeDistance){
+    rao::FilePositionInfos file1;
+    rao::FilePositionInfos file2;
+    
+    rao::Position endFile1Position;
+    endFile1Position.setLPos(2);
+    rao::Position beginningFile2Position;
+    beginningFile2Position.setLPos(2);
+    file1.setEndPosition(endFile1Position);
+    file2.setBeginningPosition(beginningFile2Position);
+    ASSERT_EQ(0,rao::RAOHelpers::computeLongitudinalDistance(file1,file2));
+    
+    endFile1Position.setLPos(2);
+    beginningFile2Position.setLPos(1);
+    file1.setEndPosition(endFile1Position);
+    file2.setBeginningPosition(beginningFile2Position);
+    ASSERT_EQ(1,rao::RAOHelpers::computeLongitudinalDistance(file1,file2));
+    
+    endFile1Position.setLPos(1);
+    beginningFile2Position.setLPos(2);
+    file1.setEndPosition(endFile1Position);
+    file2.setBeginningPosition(beginningFile2Position);
+    ASSERT_EQ(1,rao::RAOHelpers::computeLongitudinalDistance(file1,file2));
+  }
+  
+  TEST_F(RAOTest, RAOSLTFAlgorithm){
+    auto jobs = RAOTestEnvironment::generateRetrieveJobsForSLTF();
+    std::unique_ptr<rao::FilePositionEstimator> filePositionEstimator;
+    std::unique_ptr<rao::CostHeuristic> costHeuristic;
+    filePositionEstimator.reset(new rao::InterpolationFilePositionEstimator(RAOTestEnvironment::getLTO7MEndOfWrapPositions(),RAOTestEnvironment::getLTO7MMediaType()));
+    costHeuristic.reset(new rao::CTACostHeuristic());
+    std::unique_ptr<rao::SLTFRAOAlgorithm> sltfRAOAlgorithm = cta::make_unique<rao::SLTFRAOAlgorithm>(filePositionEstimator,costHeuristic);
+    std::vector<uint64_t> raoOrder = sltfRAOAlgorithm->performRAO(jobs);
+    std::vector<uint64_t> expectedRAOOrder = {4,6,3,7,2,5,0,1};
+    ASSERT_EQ(expectedRAOOrder,raoOrder);
   }
 }

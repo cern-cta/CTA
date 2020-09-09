@@ -25,22 +25,22 @@ FilePositionInfos::FilePositionInfos() {
 
 FilePositionInfos::FilePositionInfos(const FilePositionInfos& other){
   if(this != &other){
-    m_startPosition = other.m_startPosition;
+    m_beginningPosition = other.m_beginningPosition;
     m_endPosition = other.m_endPosition;
-    m_startBand = other.m_startBand;
+    m_beginningBand = other.m_beginningBand;
     m_endBand = other.m_endBand;
-    m_startLandingZone = other.m_startLandingZone;
+    m_beginningLandingZone = other.m_beginningLandingZone;
     m_endLandingZone = other.m_endLandingZone;
   }
 }
 
 FilePositionInfos & FilePositionInfos::operator =(const FilePositionInfos& other){
   if(this != &other){
-    m_startPosition = other.m_startPosition;
+    m_beginningPosition = other.m_beginningPosition;
     m_endPosition = other.m_endPosition;
-    m_startBand = other.m_startBand;
+    m_beginningBand = other.m_beginningBand;
     m_endBand = other.m_endBand;
-    m_startLandingZone = other.m_startLandingZone;
+    m_beginningLandingZone = other.m_beginningLandingZone;
     m_endLandingZone = other.m_endLandingZone;
   }
   return *this;
@@ -49,48 +49,48 @@ FilePositionInfos & FilePositionInfos::operator =(const FilePositionInfos& other
 FilePositionInfos::~FilePositionInfos() {
 }
 
-void FilePositionInfos::setStartPosition(const Position & startPosition) {
-  m_startPosition = startPosition;
+void FilePositionInfos::setBeginningPosition(const Position & beginningPosition) {
+  m_beginningPosition = beginningPosition;
 }
 
 void FilePositionInfos::setEndPosition(const Position& endPosition) {
   m_endPosition = endPosition;
 }
 
-Position FilePositionInfos::getStartPosition() const {
-  return m_startPosition;
+Position FilePositionInfos::getBeginningPosition() const {
+  return m_beginningPosition;
 }
 
 Position FilePositionInfos::getEndPosition() const {
   return m_endPosition;
 }
 
-void FilePositionInfos::setStartBand(const uint8_t startBand){
-  m_startBand = startBand;
+void FilePositionInfos::setBeginningBand(const uint8_t beginningBand){
+  m_beginningBand = beginningBand;
 }
 
 void FilePositionInfos::setEndBand(const uint8_t endBand){
   m_endBand = endBand;
 }
 
-void FilePositionInfos::setStartLandingZone(const uint8_t startLandingZone){
-  m_startLandingZone = startLandingZone;
+void FilePositionInfos::setBeginningLandingZone(const uint8_t beginningLandingZone){
+  m_beginningLandingZone = beginningLandingZone;
 }
 
 void FilePositionInfos::setEndLandingZone(const uint8_t endLandingZone){
   m_endLandingZone = endLandingZone;
 }
 
-uint8_t FilePositionInfos::getStartBand() const {
-  return m_startBand;
+uint8_t FilePositionInfos::getBeginningBand() const {
+  return m_beginningBand;
 }
 
 uint8_t FilePositionInfos::getEndBand() const {
   return m_endBand;
 }
 
-uint8_t FilePositionInfos::getStartLandingZone() const {
-  return m_startLandingZone;
+uint8_t FilePositionInfos::getBeginningLandingZone() const {
+  return m_beginningLandingZone;
 }
 
 uint8_t FilePositionInfos::getEndLandingZone() const {

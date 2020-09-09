@@ -56,7 +56,15 @@ uint64_t RAOFile::getClosestFileIndex() const {
   //The closest file is the one that has the lower cost
   auto minElementItor = std::min_element(m_distancesWithOtherFiles.begin(), m_distancesWithOtherFiles.end());
   //This method should never throw as there is always at least two files in a RAO batch
-  return minElementItor->getCost();
+  return minElementItor->getDestinationFileIndex();
+}
+
+bool RAOFile::operator <(const RAOFile& other) const {
+  return m_index < other.m_index;
+}
+
+bool RAOFile::operator ==(const RAOFile& other) const {
+  return m_index == m_index;
 }
 
 RAOFile::~RAOFile() {

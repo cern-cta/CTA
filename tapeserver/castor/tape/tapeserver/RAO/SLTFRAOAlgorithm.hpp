@@ -25,13 +25,34 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "RAOFile.hpp"
 
+#include <map>
+
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   
 class SLTFRAOAlgorithm : public RAOAlgorithm {
 public:
+  /**
+   * Constructor of a ShortLocateTimeFirst RAO Algorithm
+   * @param filePositionEstimator the file position estimator to determine the position of all files given to the performRAO() method
+   * @param costHeuristic the cost heuristic to use to determine the cost between two files
+   */
+  SLTFRAOAlgorithm(std::unique_ptr<FilePositionEstimator> & filePositionEstimator, std::unique_ptr<CostHeuristic> & costHeuristic);
+  /**
+   * Perform the SLTF RAO algorithm on the Retrieve jobs passed in parameter
+   * @param jobs the jobs to perform the SLTF RAO algorithm
+   * @return the vector of the indexes of the jobs rearranged with the SLTF method
+   */
   std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
+  std::string getName() const override;
   virtual ~SLTFRAOAlgorithm();
   
+  /**
+   * This builder helps to build the SLTF RAO algorithm. It initializes the file position estimator and the cost heuristic
+   * according to what are the parameters of the RAO but also by asking to the drive the drive'
+   * @param data
+   * @param drive
+   * @param catalogue
+   */
   class Builder {
   public:
     Builder(const RAOParams & data, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue);
@@ -40,7 +61,7 @@ public:
     void initializeFilePositionEstimator();
     void initializeCostHeuristic();
     std::unique_ptr<SLTFRAOAlgorithm> m_algorithm;
-    RAOParams m_data;
+    RAOParams m_raoParams;
     drive::DriveInterface * m_drive;
     cta::catalogue::Catalogue * m_catalogue;
   };
@@ -50,9 +71,11 @@ private:
   std::unique_ptr<FilePositionEstimator> m_filePositionEstimator;
   std::unique_ptr<CostHeuristic> m_costHeuristic;
     
-  std::vector<RAOFile> computeAllFilesPosition(const std::vector<std::unique_ptr<cta::RetrieveJob> > & jobs) const;
-  void computeCostBetweenAllFiles(std::vector<RAOFile> & files) const;
-  std::vector<uint64_t> performSLTF(const std::vector<RAOFile> & files) const;
+  typedef std::map<uint64_t,RAOFile> RAOFilesContainer;
+  
+  RAOFilesContainer computeAllFilesPosition(const std::vector<std::unique_ptr<cta::RetrieveJob> > & jobs) const;
+  void computeCostBetweenFileAndOthers(RAOFile & file, const RAOFilesContainer & files) const;
+  std::vector<uint64_t> performSLTF(RAOFilesContainer & files) const;
   std::unique_ptr<cta::RetrieveJob> createFakeRetrieveJobForFileAtBeginningOfTape() const;
 };
 

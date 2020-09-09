@@ -18,7 +18,6 @@
 
 #include "CTACostHeuristic.hpp"
 #include "RAOHelpers.hpp"
-#include <cmath>
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -28,29 +27,18 @@ CTACostHeuristic::CTACostHeuristic() {
 CTACostHeuristic::~CTACostHeuristic() {
 }
 
-double CTACostHeuristic::getCost(const FilePositionInfos& file1, const FilePositionInfos& file2) const {
+double CTACostHeuristic::getCost(const FilePositionInfos & file1, const FilePositionInfos & file2) const {
   
   double cost = 0.0;
   
-  Position endFile1Position = file1.getEndPosition();
-  Position startFile2Position = file2.getStartPosition();
-  uint64_t endFile1LPos = endFile1Position.getLPos();
-  uint64_t startFile2LPos = startFile2Position.getLPos();
-  uint32_t endFile1Wrap = endFile1Position.getWrap();
-  uint32_t startFile2Wrap = startFile2Position.getWrap();
-  uint8_t endFile1Band = file1.getEndBand();
-  uint8_t startFile2Band = file2.getStartBand();
-  uint8_t endFile1LandingZone = file1.getEndLandingZone();
-  uint8_t startFile2LandingZone = file2.getStartLandingZone();
-  
-  uint64_t distance = std::abs(endFile1Position.getLPos() - startFile2Position.getLPos());
+  uint64_t distance = RAOHelpers::computeLongitudinalDistance(file1,file2);
 
-  int wrapChange = RAOHelpers::doesWrapChange(endFile1Wrap,startFile2Wrap);
-  int bandChange = RAOHelpers::doesBandChange(endFile1Band,startFile2Band);
-  int landingZoneChange = RAOHelpers::doesLandingZoneChange(endFile1LandingZone,startFile2LandingZone);
-  int directionChange = RAOHelpers::doesDirectionChange(endFile1Wrap,startFile2Wrap);
+  int wrapChange = RAOHelpers::doesWrapChange(file1,file2);
+  int bandChange = RAOHelpers::doesBandChange(file1,file2);
+  int landingZoneChange = RAOHelpers::doesLandingZoneChange(file1,file2);
+  int directionChange = RAOHelpers::doesDirectionChange(file1,file2);
   
-  int stepBack = RAOHelpers::doesStepBack(endFile1LPos,endFile1Wrap,startFile2Wrap,startFile2LPos);
+  int stepBack = RAOHelpers::doesStepBack(file1,file2);
   
   cost = 4.29 + wrapChange * 6.69 + bandChange * 3.2 + landingZoneChange * (-6.04) + directionChange * 5.22 + stepBack * 11.32 + distance * 0.0006192;
   return cost;

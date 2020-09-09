@@ -132,7 +132,14 @@ private:
    /**
    * Returns the RAO data that is used by this RAOManager
    */
-  RAOParams getRAODataConfig() const;
+  RAOParams getRAOParams() const;
+  
+  /**
+   * Log a warning message after failing an RAO instanciation or execution
+   * @param exceptionMsg the exception message to log
+   * @param lc the log context to log the warning message
+   */
+  void logWarningAfterRAOOperationFailed(const std::string & warningMsg, const std::string & exceptionMsg, cta::log::LogContext & lc) const;
   
 };
 

@@ -29,6 +29,8 @@ EnterpriseRAOAlgorithmFactory::~EnterpriseRAOAlgorithmFactory() {
 }
 
 std::unique_ptr<RAOAlgorithm> EnterpriseRAOAlgorithmFactory::createRAOAlgorithm() {
+  //For now we only have the EnterpriseRAOAlgorithm, but we could maybe have another one,
+  //this method should be modified consequently
   return std::unique_ptr<RAOAlgorithm>(new EnterpriseRAOAlgorithm(m_drive,m_maxFilesSupported));
 }
 

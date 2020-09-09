@@ -37,16 +37,16 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
       ret.reset(new EnterpriseRAOAlgorithmFactory(m_raoManager.getDrive(),maxFilesSupported.value()));
     } 
   } else {
-    RAOParams raoData = m_raoManager.getRAODataConfig();
+    RAOParams raoParams = m_raoManager.getRAOParams();
     //We will instanciate a CTA RAO algorithm
     RAOParams::RAOAlgorithmType raoAlgoType;
     try {
-      raoAlgoType = raoData.getAlgorithmType();
+      raoAlgoType = raoParams.getAlgorithmType();
     } catch (const cta::exception::Exception & ex) {
       //We failed to determine the RAOAlgorithmType, we use the linear algorithm by default
       //log a warning
       std::string msg = "In RAOAlgorithmFactoryFactory::createAlgorithmFactory(), unable to determine the RAO algorithm to use, the algorithm name provided"
-        " in the tapeserver configuration is " + raoData.getRAOAlgorithmName() + " the available algorithm names are " + raoData.getCTARAOAlgorithmNameAvailable()
+        " in the tapeserver configuration is " + raoParams.getRAOAlgorithmName() + " the available algorithm names are " + raoParams.getCTARAOAlgorithmNameAvailable()
         + ". We will apply a linear algorithm instead.";
       m_lc.log(cta::log::WARNING, msg);
       raoAlgoType = RAOParams::RAOAlgorithmType::linear;
@@ -60,7 +60,10 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
       }
       case RAOParams::RAOAlgorithmType::sltf:
       { 
-        ret.reset(new ConfigurableRAOAlgorithmFactory(m_raoManager.getDrive(),m_raoManager.getCatalogue(), raoData));
+        ConfigurableRAOAlgorithmFactory::Builder builder(raoParams);
+        builder.setDriveInterface(m_raoManager.getDrive());
+        builder.setCatalogue(m_raoManager.getCatalogue());
+        ret = builder.build();
         break;
       }
       default:

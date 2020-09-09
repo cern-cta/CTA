@@ -37,7 +37,7 @@ public:
    * @param jobs the jobs to perform the random RAO on
    */
   std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
-  
+  std::string getName() const override;
   virtual ~RandomRAOAlgorithm();
 private:
   RandomRAOAlgorithm();

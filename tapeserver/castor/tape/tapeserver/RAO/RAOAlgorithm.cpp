@@ -20,7 +20,9 @@
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
-RAOAlgorithm::RAOAlgorithm() {
+
+cta::log::TimingList RAOAlgorithm::getRAOTimings(){
+  return m_raoTimings;
 }
 
 RAOAlgorithm::~RAOAlgorithm() {

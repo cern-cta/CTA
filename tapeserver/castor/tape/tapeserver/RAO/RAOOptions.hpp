@@ -24,24 +24,58 @@
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
+/**
+ * This class allows to manage the RAO options given
+ * by the tapeserver configuration RAOLTOAlgorithmOptions
+ */
 class RAOOptions {
 public:
   
+  /**
+   * Existing CostHeuristic type
+   */
   enum CostHeuristicType{
     cta
   };
   
+  /**
+   * Existing FilePositionEstimator type
+   */
   enum FilePositionEstimatorType {
     interpolation
   };
   
+  /**
+   * Default constructor
+   */
   RAOOptions();
+  
+  /**
+   * Constructor of a RAOOptions instance
+   * @param options the option string that should be under the format option1Name:value1,option2Name:value2,[...],optionNName:valueN
+   */
   RAOOptions(const std::string & options);
   
+  /**
+   * Returns the cost heuristic type from the RAO option string passed in the constructor
+   * @return the cost heuristic type
+   * @throws cta::exception::Exception if the CostHeuristicType is unknown or if it cannot be fetched
+   */
   CostHeuristicType getCostHeuristicType();
   
+  /**
+   * Returns the file position estimator type from the RAO option string passed in the constructor
+   * !!! WARNING !!! For now it only returns the interpolation FilePositionEstimatorType, this method
+   * should be modified if we want to get the estimator from the options
+   * @return the file position estimator type
+   * @throws cta::exception::Exception if the FilePositionEstimatorType is unknown or if it cannot be fetched
+   */
   FilePositionEstimatorType getFilePositionEstimatorType();
   
+  /**
+   * Returns the RAOLTOAlgorithmOptions
+   * @return 
+   */
   std::string getOptionsString();
   
   virtual ~RAOOptions();

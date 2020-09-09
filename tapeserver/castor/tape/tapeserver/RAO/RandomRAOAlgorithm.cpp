@@ -17,6 +17,7 @@
  */
 
 #include "RandomRAOAlgorithm.hpp"
+#include "common/Timer.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -25,12 +26,18 @@ RandomRAOAlgorithm::RandomRAOAlgorithm() {
 
 std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
   std::vector<uint64_t> raoIndices(jobs.size());
+  cta::utils::Timer totalTimer;
   std::iota(raoIndices.begin(),raoIndices.end(),0);
   std::random_shuffle(raoIndices.begin(), raoIndices.end());
+  m_raoTimings.insertAndReset("totalTime",totalTimer);
   return raoIndices;
 }
 
 RandomRAOAlgorithm::~RandomRAOAlgorithm() {
+}
+
+std::string RandomRAOAlgorithm::getName() const {
+  return "random";
 }
 
 }}}}

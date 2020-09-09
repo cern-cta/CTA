@@ -84,7 +84,7 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
     RAOOptions getRAOAlgorithmOptions() const;
     
     /**
-     * Disable RAO from this configuration
+     * Disable RAO of this configuration
      */
     void disableRAO();
     

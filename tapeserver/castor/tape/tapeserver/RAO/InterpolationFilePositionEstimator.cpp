@@ -31,20 +31,20 @@ InterpolationFilePositionEstimator::~InterpolationFilePositionEstimator() {
 
 FilePositionInfos InterpolationFilePositionEstimator::getFilePosition(const cta::RetrieveJob& job) const {
   FilePositionInfos ret;
+  //Get the tape file informations
   cta::common::dataStructures::TapeFile tapeFile = job.selectedTapeFile();
-  uint64_t startBlock = tapeFile.blockId;
-  Position startPosition = getPhysicalPosition(startBlock);
-  ret.setStartPosition(startPosition);
-  uint64_t endBlock = determineEndBlock(tapeFile);
-  Position endPosition = getPhysicalPosition(endBlock);
+  uint64_t beginningBlockId = tapeFile.blockId;
+  //Set physical positions
+  Position beginningPosition = getPhysicalPosition(beginningBlockId);
+  ret.setBeginningPosition(beginningPosition);
+  uint64_t endBlockId = determineEndBlockId(tapeFile);
+  Position endPosition = getPhysicalPosition(endBlockId);
   ret.setEndPosition(endPosition);
-  if(!m_mediaType.nbWraps){
-    std::string errorMsg = "In InterpolationFilePositionEstimator::getFilePosition(), the media type " + m_mediaType.name+" does not contain any information about the number of wraps the media has.";
-    throw cta::exception::Exception(errorMsg);
-  }
-  ret.setStartBand(RAOHelpers::determineBand(m_mediaType.nbWraps.value(),startPosition.getWrap()));
+  //Set band informations
+  ret.setBeginningBand(RAOHelpers::determineBand(m_mediaType.nbWraps.value(),beginningPosition.getWrap()));
   ret.setEndBand(RAOHelpers::determineBand(m_mediaType.nbWraps.value(),endPosition.getWrap()));
-  ret.setStartLandingZone(RAOHelpers::determineLandingZone(m_mediaType.minLPos.value(),m_mediaType.maxLPos.value(),startPosition.getLPos()));
+  //Set landing zone informations
+  ret.setBeginningLandingZone(RAOHelpers::determineLandingZone(m_mediaType.minLPos.value(),m_mediaType.maxLPos.value(),beginningPosition.getLPos()));
   ret.setEndLandingZone(RAOHelpers::determineLandingZone(m_mediaType.minLPos.value(),m_mediaType.maxLPos.value(),endPosition.getLPos()));
   return ret;
 }
@@ -60,6 +60,10 @@ uint64_t InterpolationFilePositionEstimator::determineWrapNb(const uint64_t bloc
   if(m_endOfWrapPositions.empty()){
     std::string errorMsg = "In InterpolationFilePositionEstimator::determineWrapNb(), unable to find the wrap number of the blockId " + std::to_string(blockId) + " because no EOWP informations have been found.";
     throw cta::exception::Exception(errorMsg);
+  }
+  if(m_endOfWrapPositions.size() == 1){
+    //We are sure that if we have only 1 wrap, the file will be on the wrap 0
+    return 0;
   }
   auto eowpItor = m_endOfWrapPositions.begin();
   while(eowpItor != m_endOfWrapPositions.end() && blockId > eowpItor->blockId){
@@ -92,7 +96,7 @@ uint64_t InterpolationFilePositionEstimator::determineLPos(const uint64_t blockI
   return retLpos;
 }
 
-uint64_t InterpolationFilePositionEstimator::determineEndBlock(const cta::common::dataStructures::TapeFile& file) const{
+uint64_t InterpolationFilePositionEstimator::determineEndBlockId(const cta::common::dataStructures::TapeFile& file) const {
   return file.blockId + (file.fileSize / c_blockSize) + 1; 
 }
 
@@ -103,7 +107,7 @@ void InterpolationFilePositionEstimator::checkMediaTypeConsistency(){
     throw cta::exception::Exception(errorMsg);
   }
   if(!m_mediaType.nbWraps){
-    std::string errorMsg = "In InterpolationFilePositionEstimator::checkMediaTypeConsistency(), the media type (" + m_mediaType.name + ") associated to the tape does not give informations about number of wraps the media contains.";
+    std::string errorMsg = "In InterpolationFilePositionEstimator::checkMediaTypeConsistency(), the media type (" + m_mediaType.name + ") associated to the tape mounted does not give informations about the number of wraps the media contains.";
     throw cta::exception::Exception(errorMsg);
   }
 }

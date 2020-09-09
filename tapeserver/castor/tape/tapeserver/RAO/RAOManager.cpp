@@ -99,7 +99,7 @@ cta::optional<uint64_t> RAOManager::getMaxFilesSupported() const{
   return m_maxFilesSupported;
 }
 
-RAOParams RAOManager::getRAODataConfig() const {
+RAOParams RAOManager::getRAOParams() const {
   return m_raoParams;
 }
 
@@ -111,29 +111,35 @@ std::vector<uint64_t> RAOManager::queryRAO(const std::vector<std::unique_ptr<cta
   try {
     raoAlgo = raoAlgoFactory->createRAOAlgorithm();
   } catch(const cta::exception::Exception & ex){
-    cta::log::ScopedParamContainer spc(lc);
-    spc.add("errorMsg",ex.getMessageValue())
-       .add("raoAlgorithmName",m_raoParams.getRAOAlgorithmName())
-       .add("raoAlgorithmOptions",m_raoParams.getRAOAlgorithmOptions().getOptionsString())
-       .add("useRAO",m_raoParams.useRAO())
-       .add("vid",m_raoParams.getMountedVid());
-    lc.log(cta::log::WARNING,"In RAOManager::queryRAO(), failed to instanciate the RAO algorithm, will perform a linear RAO.");
+    this->logWarningAfterRAOOperationFailed("In RAOManager::queryRAO(), failed to instanciate the RAO algorithm, will perform a linear RAO.",ex.getMessageValue(),lc);
     raoAlgo = raoAlgoFactory->createDefaultLinearAlgorithm();
   }
   try {
     ret = raoAlgo->performRAO(jobs);
   } catch (const cta::exception::Exception & ex) {
-    cta::log::ScopedParamContainer spc(lc);
-    spc.add("errorMsg",ex.getMessageValue())
-       .add("raoAlgorithmName",m_raoParams.getRAOAlgorithmName())
-       .add("raoAlgorithmOptions",m_raoParams.getRAOAlgorithmOptions().getOptionsString())
-       .add("useRAO",m_raoParams.useRAO())
-       .add("vid",m_raoParams.getMountedVid());
-    lc.log(cta::log::WARNING,"In RAOManager::queryRAO(), failed to perform the RAO algorithm, will perform a linear RAO.");
+    this->logWarningAfterRAOOperationFailed("In RAOManager::queryRAO(), failed to perform the RAO algorithm, will perform a linear RAO.",ex.getMessageValue(),lc);
+    raoAlgo = raoAlgoFactory->createDefaultLinearAlgorithm();
+    ret = raoAlgo->performRAO(jobs);
+  } catch(const std::exception &ex2){
+    this->logWarningAfterRAOOperationFailed("In RAOManager::queryRAO(), failed to perform the RAO algorithm after a standard exception, will perform a linear RAO.",std::string(ex2.what()),lc);
     raoAlgo = raoAlgoFactory->createDefaultLinearAlgorithm();
     ret = raoAlgo->performRAO(jobs);
   }
+  cta::log::ScopedParamContainer spc(lc);
+  spc.add("executedRAOAlgorithm",raoAlgo->getName());
+  raoAlgo->getRAOTimings().addToLog(spc);
+  lc.log(cta::log::INFO, "In RAOManager::queryRAO(), successfully performed RAO.");
   return ret;
+}
+
+void RAOManager::logWarningAfterRAOOperationFailed(const std::string & warningMsg, const std::string & exceptionMsg, cta::log::LogContext & lc) const{
+  cta::log::ScopedParamContainer spc(lc);
+  spc.add("errorMsg",exceptionMsg)
+     .add("raoAlgorithmName",m_raoParams.getRAOAlgorithmName())
+     .add("raoAlgorithmOptions",m_raoParams.getRAOAlgorithmOptions().getOptionsString())
+     .add("useRAO",m_raoParams.useRAO())
+     .add("vid",m_raoParams.getMountedVid());
+  lc.log(cta::log::WARNING,warningMsg);
 }
 
 

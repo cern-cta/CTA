@@ -100,12 +100,10 @@ castor::tape::tapeserver::drive::physicalPositionInfo castor::tape::tapeserver::
 }
 
 std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> castor::tape::tapeserver::drive::FakeDrive::getEndOfWrapPositions() {
-  endOfWrapPosition eowp;
-  eowp.blockId = 1;
-  eowp.partition = 1;
-  eowp.wrapNumber = 1;
-  std::vector<endOfWrapPosition> ret;
-  ret.push_back(eowp);
+  std::vector<drive::endOfWrapPosition> ret;
+  ret.push_back({0,208310,0});
+  ret.push_back({1,416271,0});
+  ret.push_back({2,624562,0});
   return ret;
 }
 

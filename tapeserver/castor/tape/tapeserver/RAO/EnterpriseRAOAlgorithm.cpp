@@ -20,6 +20,7 @@
 
 #include "EnterpriseRAOAlgorithm.hpp"
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "common/Timer.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -30,6 +31,7 @@ EnterpriseRAOAlgorithm::~EnterpriseRAOAlgorithm() {
 }
 
 std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
+  cta::utils::Timer totalTime;
   std::vector<uint64_t> raoOrder;
   uint64_t njobs = jobs.size();
   uint32_t block_size = c_blockSize;
@@ -67,8 +69,12 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
     raoOrder.push_back(id);
   }
   files.clear();
+  m_raoTimings.insertAndReset("totalTime",totalTime);
   return raoOrder;
 }
 
+std::string EnterpriseRAOAlgorithm::getName() const {
+  return "enterprise";
+}
 
 }}}}

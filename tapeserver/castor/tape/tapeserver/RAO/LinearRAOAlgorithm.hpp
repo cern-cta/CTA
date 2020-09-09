@@ -39,7 +39,8 @@ public:
    */
   std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
   virtual ~LinearRAOAlgorithm();
-
+  
+  std::string getName() const override;
 };
 
 }}}}
