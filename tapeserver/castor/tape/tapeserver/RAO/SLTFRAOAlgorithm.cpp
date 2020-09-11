@@ -21,6 +21,8 @@
 #include "RAOHelpers.hpp"
 #include "CTACostHeuristic.hpp"
 #include "common/Timer.hpp"
+#include "CostHeuristicFactory.hpp"
+#include "FilePositionEstimatorFactory.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -47,8 +49,16 @@ SLTFRAOAlgorithm::~SLTFRAOAlgorithm() {
 }
 
 
-SLTFRAOAlgorithm::Builder::Builder(const RAOParams& data, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue):m_raoParams(data),m_drive(drive),m_catalogue(catalogue){
+SLTFRAOAlgorithm::Builder::Builder(const RAOParams& data):m_raoParams(data){
   m_algorithm.reset(new SLTFRAOAlgorithm());
+}
+
+void SLTFRAOAlgorithm::Builder::setCatalogue(cta::catalogue::Catalogue* catalogue){
+  m_catalogue = catalogue;
+}
+
+void SLTFRAOAlgorithm::Builder::setDrive(drive::DriveInterface* drive) {
+  m_drive = drive;
 }
 
 std::unique_ptr<SLTFRAOAlgorithm> SLTFRAOAlgorithm::Builder::build() {
@@ -58,35 +68,29 @@ std::unique_ptr<SLTFRAOAlgorithm> SLTFRAOAlgorithm::Builder::build() {
 }
 
 void SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() {
-  switch(m_raoParams.getRAOAlgorithmOptions().getFilePositionEstimatorType()){
+  RAOOptions::FilePositionEstimatorType filePositionType = m_raoParams.getRAOAlgorithmOptions().getFilePositionEstimatorType();
+  switch(filePositionType){
     case RAOOptions::FilePositionEstimatorType::interpolation: {
-      std::string vid = m_raoParams.getMountedVid();
-      cta::utils::Timer t;
-      cta::catalogue::MediaType tapeMediaType = m_catalogue->getMediaTypeByVid(vid);
-      m_algorithm->m_raoTimings.insertAndReset("catalogueGetMediaTypeByVidTime",t);
-      std::vector<drive::endOfWrapPosition> endOfWrapPositions = m_drive->getEndOfWrapPositions();
-      m_algorithm->m_raoTimings.insertAndReset("getEndOfWrapPositionsTime",t);
-      RAOHelpers::improveEndOfLastWrapPositionIfPossible(endOfWrapPositions);
-      m_algorithm->m_raoTimings.insertAndReset("improveEndOfWrapPositionsIfPossibleTime",t);
-      m_algorithm->m_filePositionEstimator.reset(new InterpolationFilePositionEstimator(endOfWrapPositions,tapeMediaType));
+      if(m_catalogue != nullptr && m_drive != nullptr) {
+        m_algorithm->m_filePositionEstimator = FilePositionEstimatorFactory::createInterpolationFilePositionEstimator(m_raoParams.getMountedVid(),m_catalogue,m_drive,m_algorithm->m_raoTimings);
+      } else {
+        //If the catalogue or the drive is not set, we don't have any way to give the InterpolationFilePositionEstimator the end of wrap position 
+        //infos and the media type. Throw an exception
+        throw cta::exception::Exception("In SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator(), the drive and the catalogue are needed to build the InterpolationFilePositionEstimator.");
+      }
       break;
     }
     default:
-      throw cta::exception::Exception("In SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() unable to instanciate an estimator to estimate the position of the files on tape.");
+      std::string errorMsg = "In SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() unable to instanciate an estimator to estimate the position of the files on tape "
+        "because the type given in parameter is unknown ("+std::to_string(filePositionType)+").";
+      throw cta::exception::Exception(errorMsg);
       break;
   }
 }
 
 void SLTFRAOAlgorithm::Builder::initializeCostHeuristic() {
-  switch(m_raoParams.getRAOAlgorithmOptions().getCostHeuristicType()){
-    case RAOOptions::CostHeuristicType::cta:
-    {
-      m_algorithm->m_costHeuristic.reset(new CTACostHeuristic());
-      break;
-    }
-    default:
-      throw cta::exception::Exception("In SLTFRAOAlgorithm::Builder::initializeCostHeuristic() unknown type of cost heuristic.");
-  }
+  CostHeuristicFactory factory;
+  m_algorithm->m_costHeuristic = factory.createCostHeuristic(m_raoParams.getRAOAlgorithmOptions().getCostHeuristicType());
 }
 
 SLTFRAOAlgorithm::RAOFilesContainer SLTFRAOAlgorithm::computeAllFilesPosition(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) const {

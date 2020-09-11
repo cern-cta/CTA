@@ -25,6 +25,8 @@ set(CTARAO_LIBRARY_SRCS
   RAOHelpers.cpp
   CTACostHeuristic.cpp
   RAOFile.cpp
+  CostHeuristicFactory.cpp
+  FilePositionEstimatorFactory.cpp
 )
 
 add_library (ctarao SHARED

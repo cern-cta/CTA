@@ -21,7 +21,7 @@
 #include "RAOParams.hpp"
 #include "RAOAlgorithmFactory.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "RAOManager.hpp"
+#include "catalogue/Catalogue.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -69,8 +69,6 @@ public:
   
 private:
   ConfigurableRAOAlgorithmFactory(const RAOParams & raoParams);
-  void checkDriveInterfaceSet() const;
-  void checkCatalogueSet() const;
   drive::DriveInterface * m_drive = nullptr;
   cta::catalogue::Catalogue * m_catalogue = nullptr;
   RAOParams m_raoParams;

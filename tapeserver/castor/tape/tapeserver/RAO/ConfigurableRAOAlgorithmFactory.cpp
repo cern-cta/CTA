@@ -31,9 +31,9 @@ std::unique_ptr<RAOAlgorithm> ConfigurableRAOAlgorithmFactory::createRAOAlgorith
   std::unique_ptr<RAOAlgorithm> ret;
   switch(m_raoParams.getAlgorithmType()){
     case RAOParams::RAOAlgorithmType::sltf:{
-      checkDriveInterfaceSet();
-      checkCatalogueSet();
-      SLTFRAOAlgorithm::Builder builder(m_raoParams,m_drive,m_catalogue);
+      SLTFRAOAlgorithm::Builder builder(m_raoParams);
+      builder.setCatalogue(m_catalogue);
+      builder.setDrive(m_drive);
       ret = builder.build();
       break;
     }
@@ -43,19 +43,6 @@ std::unique_ptr<RAOAlgorithm> ConfigurableRAOAlgorithmFactory::createRAOAlgorith
   }
   return ret;
 }
-
-void ConfigurableRAOAlgorithmFactory::checkDriveInterfaceSet() const {
-  if(m_drive == nullptr){
-    throw cta::exception::Exception("In ConfigurableRAOAlgorithmFactory::checkDriveInterfaceSet(), the drive interface has not been set");
-  }
-}
-
-void ConfigurableRAOAlgorithmFactory::checkCatalogueSet() const {
-  if(m_catalogue == nullptr){
-    throw cta::exception::Exception("In ConfigurableRAOAlgorithmFactory::checkCatalogueSet(), the catalogue has not been set.");
-  }
-}
-
 
 ConfigurableRAOAlgorithmFactory::Builder::Builder(const RAOParams& raoParams){
   m_configurableRAOAlgoFactory.reset(new ConfigurableRAOAlgorithmFactory(raoParams));

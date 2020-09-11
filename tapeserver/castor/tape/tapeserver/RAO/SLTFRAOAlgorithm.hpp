@@ -55,15 +55,17 @@ public:
    */
   class Builder {
   public:
-    Builder(const RAOParams & data, drive::DriveInterface * drive, cta::catalogue::Catalogue * catalogue);
+    Builder(const RAOParams & data);
+    void setCatalogue(cta::catalogue::Catalogue * catalogue);
+    void setDrive(drive::DriveInterface * drive);
     std::unique_ptr<SLTFRAOAlgorithm> build();
   private:
     void initializeFilePositionEstimator();
     void initializeCostHeuristic();
     std::unique_ptr<SLTFRAOAlgorithm> m_algorithm;
     RAOParams m_raoParams;
-    drive::DriveInterface * m_drive;
-    cta::catalogue::Catalogue * m_catalogue;
+    drive::DriveInterface * m_drive = nullptr;
+    cta::catalogue::Catalogue * m_catalogue = nullptr;
   };
   
 private:
