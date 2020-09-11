@@ -43,6 +43,9 @@ Prints the usage message.
 \fB\-c CONFIG, \-\-config CONFIG
 Sets the path of the configuration file.  If not set then the default value of
 \fB/etc/cta/cta-fst-gcd.conf\fP is used.
+.TP
+\fB\-s, \-\-stdout
+Sets log output to stdout. This disables use of a log file.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH FILES
@@ -57,7 +60,7 @@ parameters.
 .TP
 .B /var/log/eos/fst/cta-fst-gcd.log
 The default log file of the \fBcta-fst-gcd\fP daemon.  This can be overriden by
-modifying \fBcta-fst-gcd.conf\fP accordingly.
-
+modifying \fBcta-fst-gcd.conf\fP accordingly or disabled using the
+\fB\-s\fP/\fB\-\-stdout\fP option.
 .SH AUTHOR
 \fBCTA\fP Team
