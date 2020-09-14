@@ -573,4 +573,8 @@ auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
 getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elementsToSkip,
   log::LogContext &lc) -> PoppedElementsBatch;
 
+template<>
+auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
+getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary;
+
 }} // namespace cta::objectstore
