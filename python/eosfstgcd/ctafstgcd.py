@@ -504,6 +504,7 @@ def main():
 
   parser = argparse.ArgumentParser()
   parser.add_argument('-c', '--config', default='/etc/cta/{}.conf'.format(programname), help='Configuration file path')
+  parser.add_argument('-s', '--stdout', action='store_true', help='Print logs to standard output, overriding configuration file path')
   args = parser.parse_args()
 
   if not os.path.isfile(args.config):
@@ -521,7 +522,12 @@ def main():
   hostname = socket.gethostname()
   fqdn = socket.getfqdn()
 
-  log = get_logger(hostname, programname, config.log_file)
+  if args.stdout == True:
+    # If --stdout has been given on the command line, use False as the log path to set output to stdout
+    log = get_logger(hostname, programname, False)
+  else:
+    log = get_logger(hostname, programname, config.log_file)
+
   log.info('{} started'.format(programname))
   log.info('The fqdn of this machine is {}'.format(fqdn))
 
@@ -540,11 +546,15 @@ def get_logger(hostname, programname, logpath):
 
   log_handler = None
 
-  logging_dir = os.path.dirname(logpath)
-  if not os.path.isdir(logging_dir):
-    raise UserError('The logging directory {} is not a directory or does not exist'.format(logging_dir))
-  if not os.access(logging_dir, os.W_OK):
-    raise UserError('The logging directory {} cannot be written to'.format(logging_dir))
+  if logpath == False:
+    log_handler = logging.StreamHandler(stream = sys.stdout)
+  else:
+    logging_dir = os.path.dirname(logpath)
+    if not os.path.isdir(logging_dir):
+      raise UserError('The logging directory {} is not a directory or does not exist'.format(logging_dir))
+    if not os.access(logging_dir, os.W_OK):
+      raise UserError('The logging directory {} cannot be written to'.format(logging_dir))
+    log_handler = logging.handlers.TimedRotatingFileHandler(filename = logpath, when = 'midnight')
 
   log_handler = logging.handlers.TimedRotatingFileHandler(filename = logpath, when = 'midnight')
   log_handler.setLevel(logging.INFO)
