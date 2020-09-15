@@ -38,7 +38,7 @@ public:
   FilePositionInfos getFilePosition(const cta::RetrieveJob& job) const override;
   virtual ~InterpolationFilePositionEstimator();
   
-  static const uint64_t c_blockSize = 256000;
+  static const uint64_t c_blockSize = 256 * 1024;
 private:
   std::vector<drive::endOfWrapPosition> m_endOfWrapPositions;
   cta::catalogue::MediaType m_mediaType;

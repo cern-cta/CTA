@@ -348,7 +348,7 @@ namespace unitTests {
     costHeuristic.reset(new rao::CTACostHeuristic());
     std::unique_ptr<rao::SLTFRAOAlgorithm> sltfRAOAlgorithm = cta::make_unique<rao::SLTFRAOAlgorithm>(filePositionEstimator,costHeuristic);
     std::vector<uint64_t> raoOrder = sltfRAOAlgorithm->performRAO(jobs);
-    std::vector<uint64_t> expectedRAOOrder = {4,6,3,7,2,5,0,1};
+    std::vector<uint64_t> expectedRAOOrder = {4,6,5,3,2,7,0,1};
     ASSERT_EQ(expectedRAOOrder,raoOrder);
   }
 }
