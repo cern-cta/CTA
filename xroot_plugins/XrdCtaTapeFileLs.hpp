@@ -100,6 +100,8 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   // Disk instance on its own does not give a valid set of search criteria (no &has_any)
   searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE);
 
+  searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
+
   if(!has_any) {
     throw cta::exception::UserError("Must specify at least one search option");
   }

@@ -273,6 +273,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--archivepriority",       OptionUInt64::ARCHIVE_PRIORITY },
    { "--capacity",              OptionUInt64::CAPACITY },
    { "--copynb",                OptionUInt64::COPY_NUMBER },
+   { "--id",                    OptionUInt64::ARCHIVE_FILE_ID },
    { "--maxdrivesallowed",      OptionUInt64::MAX_DRIVES_ALLOWED },
    { "--maxlpos",               OptionUInt64::MAX_LPOS },
    { "--minarchiverequestage",  OptionUInt64::MIN_ARCHIVE_REQUEST_AGE },
@@ -402,6 +403,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
  * Enumerate options
  */
 const Option opt_all                  { Option::OPT_FLAG, "--all",                   "-a",   "" };
+const Option opt_archivefileid        { Option::OPT_UINT, "--id",                    "-I",   " <archive_file_id>" };
 const Option opt_archivepriority      { Option::OPT_UINT, "--archivepriority",       "--ap", " <priority_value>" };
 const Option opt_bufferurl            { Option::OPT_STR,  "--bufferurl",             "-b",   " <buffer URL>" };
 const Option opt_capacity             { Option::OPT_UINT, "--capacity",              "-c",   " <capacity_in_bytes>" };
@@ -565,7 +567,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_vid, opt_force.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
-      { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_show_superseded.optional(), opt_lookupns.optional() }},
+      { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),
+        opt_show_superseded.optional(), opt_lookupns.optional(), opt_archivefileid.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},
