@@ -31,7 +31,7 @@ sudo yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace s
 echo Installing Oracle instant client
 sudo wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
 sudo wget https://yum.oracle.com/public-yum-ol7.repo -O /etc/yum.repos.d/public-yum-ol7.repo
-sudo yum install -y --enablerepo=ol7_oracle_instantclient $(grep 'Requires: oracle' ../../cta.spec.in | awk '{print $2}' | tr '\n' ' ')
+sudo yum install -y --enablerepo=ol7_oracle_instantclient $(grep 'Requires: oracle' ../../../cta.spec.in | awk '{print $2}' | tr '\n' ' ')
 sudo yum-config-manager --disable ol7_*
 
 echo "Getting CTA sources for $CTAUSER..."
