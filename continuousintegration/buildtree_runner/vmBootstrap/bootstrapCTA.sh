@@ -30,14 +30,14 @@ name=Oracle instant client
 baseurl=https://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
 gpgcheck=1
-enabled=0
+enabled=1
 EOF
 
 echo Adding versionlock for xrootd:
 sudo cp ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/versionlock.list
 
 echo Installing build dependencies
-sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm --nogpgcheck --enablerepo=oracle-instant-client
+sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm
 
 echo Installing mhvtl
 sudo yum install -y mhvtl-utils kmod-mhvtl mhvtl-utils --enablerepo=castor
