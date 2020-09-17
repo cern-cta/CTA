@@ -1,3 +1,25 @@
+# v3.1-6 NEXT RELEASE
+
+## Summary
+
+This release contains some minor improvements.
+
+### Features
+
+- #881 cta-fst-gcd logs can be now sent to stdout by command line option for container based deployments
+- cta/CTA#885 cta-admin should be able to query by sys.archive.file_id
+- Upgraded EOS to 4.8.15-1
+- Upgrading xrootd from 4.12.3-1 to 4.12.4-1
+
+### Modifications
+
+- NONE
+
+### Bug fixes
+
+- cta/CTA#877 ObjectStore.RetrieveQueueAlgorithms unit tests fails or succeeds base on version of cmake
+
+
 # v3.1-5
 
 ## Summary
