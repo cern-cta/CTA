@@ -28,12 +28,6 @@ sudo -u $CTAUSER cp tigConf/tigrc $CTAUSERHOME/.tigrc
 echo Installing minimal tools and tape tools
 sudo yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc mariadb-devel yum-plugin-versionlock krb5-workstation wget yum-utils epel-release
 
-echo Installing Oracle instant client
-sudo wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-sudo wget https://yum.oracle.com/public-yum-ol7.repo -O /etc/yum.repos.d/public-yum-ol7.repo
-sudo yum install -y --enablerepo=ol7_oracle_instantclient $(grep 'Requires: oracle' ../../../cta.spec.in | awk '{print $2}' | tr '\n' ' ')
-sudo yum-config-manager --disable ol7_*
-
 echo "Getting CTA sources for $CTAUSER..."
 sudo -u $CTAUSER bash -c 'cd ~ ; git clone https://gitlab.cern.ch/cta/CTA.git; cd CTA ; git submodule update --init --recursive'
 

@@ -23,11 +23,21 @@ for r in `ls -1 ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos
 done
 sudo yum install -y yum-plugin-priorities
 
+sudo wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+sudo tee /etc/yum.repos.d/oracle-instant-client.repo > /dev/null << 'EOF'
+[oracle-instant-client]
+name=Oracle instant client
+baseurl=https://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+gpgcheck=1
+enabled=0
+EOF
+
 echo Adding versionlock for xrootd:
 sudo cp ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/versionlock.list
 
 echo Installing build dependencies
-sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm --nogpgcheck
+sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm --nogpgcheck --enablerepo=oracle-instant-client
 
 echo Installing mhvtl
 sudo yum install -y mhvtl-utils kmod-mhvtl mhvtl-utils --enablerepo=castor
