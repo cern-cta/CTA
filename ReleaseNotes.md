@@ -14,6 +14,7 @@ This release contains some minor improvements.
 ### Modifications
 
 - cta/CTA#890 CTA RPMs should only use the xrootd-client-libs package
+- buildtree installation scripts are made compatible with Centos 7
 
 ### Bug fixes
 
