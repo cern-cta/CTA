@@ -116,6 +116,7 @@ Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: eos-client
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-taped
 CERN Tape Archive:
 The tape server daemon
@@ -148,6 +149,7 @@ Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
+Requires: xrootd-client-libs >= %{xrootdVersion}
 Requires: xrootd-server >= %{xrootdVersion}
 %description -n cta-frontend
 CERN Tape Archive:
@@ -178,6 +180,7 @@ The xroot plugin
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
 Requires: cta-lib-common = %{version}-%{release}
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-cli
 CERN Tape Archive:
 The command line utilities
@@ -194,6 +197,7 @@ Summary: CERN Tape Archive libraries
 Group: Application/CTA
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: protobuf3
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-common
 CERN Tape Archive:
 The shared libraries base
@@ -209,6 +213,7 @@ Requires: cta-lib-common
 Requires: mariadb-libs
 Requires: oracle-instantclient19.3-basic
 Requires: postgresql-libs
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-catalogue
 CERN Tape Archive:
 Shared libraries required to access the CTA catalogue
@@ -224,6 +229,7 @@ Shared libraries required to access the CTA catalogue
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
 Requires: librados2 = %{radosVersion}
+Requires: xrootd-client-libs >= %{xrootdVersion}
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: protobuf3
 Requires: cta-lib-common = %{version}-%{release}
@@ -253,6 +259,7 @@ Requires: cta-lib = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
 Requires: moreutils
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-systemtests
 CERN Tape Archive:
 Unit tests and system tests with virtual tape drives
@@ -296,6 +303,7 @@ Unit tests and system tests with virtual tape drives
 Summary: CERN Tape Archive: command-line tool for testing immutable files
 Group: Application/CTA
 Requires: cta-lib-common = %{version}-%{release}
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-immutable-file-test
 CERN Tape Archive:
 Command-line tool for testing immutable files
@@ -307,6 +315,7 @@ Command-line tool for testing immutable files
 Summary: CERN Tape Archive: object store tools
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-objectstore-tools
 CERN Tape Archive:
 Tools allowing initialization and inspection of the object store.
@@ -326,6 +335,7 @@ Tools allowing initialization and inspection of the object store.
 Summary: Utilities to faciliate working with the CTA catalogue
 Group: Application/CTA
 Requires: cta-lib-catalogue = %{version}-%{release}
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-catalogueutils
 CERN Tape Archive:
 Scripts and utilities to faciliate working with the CTA catalogue
@@ -350,6 +360,7 @@ Summary: Tools for migrating CASTOR to CTA
 Group: Application/CTA
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: cx_Oracle >= 7.1
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-migration-tools
 CERN Tape Archive:
 Tools for migrating the CASTOR catalogue to CTA and injecting CASTOR file and
@@ -414,6 +425,7 @@ The client of the Remote Media Changer Daemon (rmcd)
 Summary: The command-line tool for pre-labelling a CTA tape.
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
+Requires: xrootd-client-libs >= %{xrootdVersion}
 Requires(post): /usr/sbin/setcap
 %description -n cta-tape-label
 CERN Tape Archive:
@@ -468,6 +480,7 @@ collects EOS disk copies that have been safely stored to tape.
 Summary: Collection of utilities deployed in system test client containers.
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
+Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-systemtest-helpers
 Collection of utilities deployed in system test client containers.
 Currently contains a helper for the client-ar script, which should be installed alongside it.
