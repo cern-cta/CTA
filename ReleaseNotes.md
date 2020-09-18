@@ -13,7 +13,7 @@ This release contains some minor improvements.
 
 ### Modifications
 
-- NONE
+- cta/CTA#890 CTA RPMs should only use the xrootd-client-libs package
 
 ### Bug fixes
 
