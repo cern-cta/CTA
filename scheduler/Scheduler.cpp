@@ -981,8 +981,8 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         m = mountInfo->potentialMounts.erase(m);
     } else {
       m++;
-      }
     }
+  }
   
   // With the existing mount list, we can now populate the potential mount list
   // with the per tape pool existing mount statistics.
@@ -1267,7 +1267,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
                 .add("decisionTime", decisionTime)
                 .add("schedulerDbTime", schedulerDbTime)
                 .add("catalogueTime", catalogueTime);
-          lc.log(log::DEBUG, "In Scheduler::getNextMountDryRun(): Found a potential mount (archive)");
+          lc.log(log::INFO, "In Scheduler::getNextMountDryRun(): Found a potential mount (archive)");
           return true;
         }
       }
@@ -1307,7 +1307,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
             .add("decisionTime", decisionTime)
             .add("schedulerDbTime", schedulerDbTime)
             .add("catalogueTime", catalogueTime);
-      lc.log(log::DEBUG, "In Scheduler::getNextMountDryRun(): Found a potential mount (retrieve)");
+      lc.log(log::INFO, "In Scheduler::getNextMountDryRun(): Found a potential mount (retrieve)");
       return true;
     }
   }
@@ -1451,7 +1451,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
                   .add("driveStatusSetTime", driveStatusSetTime)
                   .add("schedulerDbTime", schedulerDbTime)
                   .add("catalogueTime", catalogueTime);
-            lc.log(log::DEBUG, "In Scheduler::getNextMount(): Selected next mount (archive)");
+            lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (archive)");
             return std::unique_ptr<TapeMount> (internalRet.release());
           } catch (cta::exception::Exception & ex) {
             log::ScopedParamContainer params(lc);
@@ -1528,7 +1528,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
               .add("driveStatusSetTime", driveStatusSetTime)
               .add("schedulerDbTime", schedulerDbTime)
               .add("catalogueTime", catalogueTime);
-        lc.log(log::DEBUG, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
+        lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
         return std::unique_ptr<TapeMount> (internalRet.release()); 
       } catch (exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
