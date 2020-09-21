@@ -6,7 +6,7 @@ This release contains some minor improvements.
 
 ### Features
 
-- #881 cta-fst-gcd logs can be now sent to stdout by command line option for container based deployments
+- cta/CTA#881 cta-fst-gcd logs can be now sent to stdout by command line option for container based deployments
 - cta/CTA#885 cta-admin should be able to query by sys.archive.file_id
 - Upgraded EOS to 4.8.15-1
 - Upgrading xrootd from 4.12.3-1 to 4.12.4-1
