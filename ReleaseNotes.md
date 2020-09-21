@@ -15,11 +15,14 @@ This release contains some minor improvements.
 
 - cta/CTA#890 CTA RPMs should only use the xrootd-client-libs package
 - buildtree installation scripts are made compatible with Centos 7
+- cta/CTA#892 Modified the log level of the triggering of Archive and Retrieve mounts
+- cta/CTA#889 It is not possible to retrieve a file that is not active anymore
 
 ### Bug fixes
 
 - cta/CTA#877 ObjectStore.RetrieveQueueAlgorithms unit tests fails or succeeds base on version of cmake
-
+- cta/CTA#888 Garbage collector race condition
+- cta/CTA#891 Corrected Repack Archive subrequest creation time
 
 # v3.1-5
 
