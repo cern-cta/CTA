@@ -1218,7 +1218,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     const cta::objectstore::serializers::ArchiveFile& archiveFile = retrieveRequestPayload.archivefile();
     archiveRequestPayload.set_archivefileid(archiveFile.archivefileid());
     archiveRequestPayload.set_checksumblob(archiveFile.checksumblob());
-    archiveRequestPayload.set_creationtime(archiveFile.creationtime()); //TODO : should the creation time be the same as the archiveFile creation time ?
+    archiveRequestPayload.set_creationtime(::time(nullptr));
     archiveRequestPayload.set_diskfileid(archiveFile.diskfileid());
     archiveRequestPayload.set_diskinstance(archiveFile.diskinstance());
     archiveRequestPayload.set_filesize(archiveFile.filesize());
@@ -1226,7 +1226,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     archiveRequestPayload.set_storageclass(archiveFile.storageclass());
     archiveRequestPayload.set_archiveerrorreporturl("");//No archive error report URL
     archiveRequestPayload.set_archivereporturl("");//No archive report URL
-    archiveRequestPayload.set_reportdecided(false);//TODO : should we put it as false ?
+    archiveRequestPayload.set_reportdecided(false);
     
     // Convert/transfer the repack info.
     archiveRequestPayload.set_isrepack(true);
@@ -1274,10 +1274,10 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
       archiveJob->set_lastmountwithfailure(0);
       archiveJob->set_totalretries(0);
       archiveJob->set_retrieswithinmount(0);
-      archiveJob->set_maxretrieswithinmount(maxRetriesWithinMount); //TODO : should we put the same value as the retrieveJob ?
+      archiveJob->set_maxretrieswithinmount(maxRetriesWithinMount);
       archiveJob->set_totalreportretries(0);
-      archiveJob->set_maxtotalretries(maxTotalRetries); //TODO : should we put the same value as the retrieveJob ?
-      archiveJob->set_maxreportretries(maxReportRetries); //TODO : should we put the same value as the retrieveJob ?
+      archiveJob->set_maxtotalretries(maxTotalRetries);
+      archiveJob->set_maxreportretries(maxReportRetries);
       archiveJob->set_tapepool(repackInfoSerDeser.archiveRouteMap[cntr]);
       archiveJob->set_owner(processAgentAddress);
     }
