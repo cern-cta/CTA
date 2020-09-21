@@ -92,6 +92,10 @@ void GarbageCollector::acquireTargets(log::LogContext & lc) {
       Agent ag(c, m_objectStore);
       try {
         ag.fetchNoLock();
+      } catch(const Backend::NoSuchObject &){
+        //Maybe the agent does has not been fully written in the objectstore backend storage. It will be in the future
+        //so continue
+        continue;
       } catch (...) {
         // The agent could simply be gone... (if not, let the complaint go through)
         if (m_objectStore.exists(c)) throw;
