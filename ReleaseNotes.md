@@ -1,4 +1,4 @@
-# v3.1-6 NEXT RELEASE
+# v3.1-6
 
 ## Summary
 
