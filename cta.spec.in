@@ -488,7 +488,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
-* Mon Aug 21 2020 julien.leduc (at) cern.ch - 3.1-6
+* Mon Sep 21 2020 julien.leduc (at) cern.ch - 3.1-6
 - cta/CTA#881 cta-fst-gcd logs can be now sent to stdout by command line option for container based deployments
 - cta/CTA#885 cta-admin should be able to query by sys.archive.file_id
 - Upstream eos 4.8.15-1
