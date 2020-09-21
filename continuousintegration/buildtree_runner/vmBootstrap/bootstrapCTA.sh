@@ -3,6 +3,9 @@
 set -x
 
 echo Preparing CTA sources...
+cd ~/CTA
+git submodule update --init --recursive
+
 cat > ~/CTA/.git/hooks/post-checkout << EOFGitHook
 #!/bin/sh
 cd `git rev-parse --show-toplevel`

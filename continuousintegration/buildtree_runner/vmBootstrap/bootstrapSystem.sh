@@ -29,6 +29,6 @@ echo Installing minimal tools and tape tools
 sudo yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc mariadb-devel yum-plugin-versionlock krb5-workstation wget yum-utils epel-release
 
 echo "Getting CTA sources for $CTAUSER..."
-sudo -u $CTAUSER bash -c 'cd ~ ; git clone https://gitlab.cern.ch/cta/CTA.git; cd CTA ; git submodule update --init --recursive'
+sudo -u $CTAUSER bash -c 'cd ~ ; git clone https://gitlab.cern.ch/cta/CTA.git'
 
 echo System bootstrap finished!
