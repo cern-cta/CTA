@@ -1,3 +1,13 @@
+# v3.1-7
+
+## Summary
+
+This release contains a correction of a performance issue introduced in the v3.1-6 version
+
+### Bug fixes
+
+- cta/CTA#893 Corrected slowliness of RdbmsCatalogue::getArchiveFileToRetrieveByArchiveFileId()
+
 # v3.1-6
 
 ## Summary
