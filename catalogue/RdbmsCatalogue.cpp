@@ -7710,9 +7710,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.VID = TAPE.VID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND "
-        "TAPE.IS_DISABLED = '0' AND "
-        "TAPE_FILE.SUPERSEDED_BY_VID IS NULL AND "
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ IS NULL "
+        "TAPE.IS_DISABLED = '0' "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql);
@@ -7735,8 +7733,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
       }
 
-      // If there is a tape file
-      if(!rset.columnIsNull("VID")) {
+      // If there is a tape file that is active i.e non superseded by another file, we add it to the archiveFile's list of tape files
+      if(!rset.columnIsNull("VID") && rset.columnIsNull("SSBY_VID") && rset.columnIsNull("SSBY_FSEQ")) {
         // Add the tape file to the archive file's in-memory structure
         common::dataStructures::TapeFile tapeFile;
         tapeFile.vid = rset.columnString("VID");
@@ -7753,6 +7751,11 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         
         archiveFile->tapeFiles.push_back(tapeFile);
       }
+    }
+    
+    //If there are no tape files that belong to the archive file, then return a nullptr.
+    if(archiveFile.get() != nullptr && archiveFile->tapeFiles.empty()){
+      archiveFile.reset(nullptr);
     }
 
     return archiveFile;
