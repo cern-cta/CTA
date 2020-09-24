@@ -31,4 +31,8 @@ sudo yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace s
 echo "Getting CTA sources for $CTAUSER..."
 sudo -u $CTAUSER bash -c 'cd ~ ; git clone https://gitlab.cern.ch/cta/CTA.git'
 
+echo Tuning the system for EOS
+sudo bash -c "echo net.ipv4.tcp_tw_reuse = 1 >> /etc/sysctl.d/00-eos.conf"
+sudo sysctl -p
+
 echo System bootstrap finished!

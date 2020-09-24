@@ -46,6 +46,8 @@ ls -lR /opt/mhvtl
 ################################################################################
 ### Create mhvtl directory
 mkdir -p /opt/mhvtl
+sudo groupadd vtl || true
+sudo adduser vtl -g vtl || true
 chown vtl.vtl /opt/mhvtl
 
 ################################################################################
