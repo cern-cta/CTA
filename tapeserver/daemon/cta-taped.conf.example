@@ -36,3 +36,9 @@
 # a convention of CTA to use log level NOTICE to label user errors.
 #
 # taped LogMask INFO
+#
+# Use Recommended Access Ordering if available
+# taped UseRAO yes
+# These options allow to trigger a software RAO algorithm on LTO tape drives
+# taped RAOLTOAlgorithm sltf
+# taped RAOLTOAlgorithmOptions cost_heuristic_name:cta
