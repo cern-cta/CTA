@@ -42,7 +42,7 @@ std::vector<uint64_t> LinearRAOAlgorithm::performRAO(const std::vector<std::uniq
     return jobs[index1]->selectedTapeFile().fSeq < jobs[index2]->selectedTapeFile().fSeq;
   });
   m_raoTimings.insertAndReset("vectorSortingTime",t);
-  m_raoTimings.insertAndReset("totalTime",totalTimer);
+  m_raoTimings.insertAndReset("RAOAlgorithmTime",totalTimer);
   return raoIndices;
 }
 

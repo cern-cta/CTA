@@ -29,7 +29,7 @@ std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::uniq
   cta::utils::Timer totalTimer;
   std::iota(raoIndices.begin(),raoIndices.end(),0);
   std::random_shuffle(raoIndices.begin(), raoIndices.end());
-  m_raoTimings.insertAndReset("totalTime",totalTimer);
+  m_raoTimings.insertAndReset("RAOAlgorithmTime",totalTimer);
   return raoIndices;
 }
 

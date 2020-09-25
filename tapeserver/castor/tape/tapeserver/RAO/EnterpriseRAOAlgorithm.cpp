@@ -31,7 +31,7 @@ EnterpriseRAOAlgorithm::~EnterpriseRAOAlgorithm() {
 }
 
 std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
-  cta::utils::Timer totalTime;
+  cta::utils::Timer totalTimer;
   std::vector<uint64_t> raoOrder;
   uint64_t njobs = jobs.size();
   uint32_t block_size = c_blockSize;
@@ -69,7 +69,7 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
     raoOrder.push_back(id);
   }
   files.clear();
-  m_raoTimings.insertAndReset("totalTime",totalTime);
+  m_raoTimings.insertAndReset("RAOAlgorithmTime",totalTimer);
   return raoOrder;
 }
 

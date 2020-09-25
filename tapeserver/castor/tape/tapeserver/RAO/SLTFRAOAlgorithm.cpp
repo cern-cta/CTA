@@ -40,7 +40,7 @@ std::vector<uint64_t> SLTFRAOAlgorithm::performRAO(const std::vector<std::unique
   //Perform a Short Locate Time First algorithm on the files
   ret = performSLTF(files);
   m_raoTimings.insertAndReset("performSLTFTime",t);
-  m_raoTimings.insertAndReset("totalTime",totalTimer);
+  m_raoTimings.insertAndReset("RAOAlgorithmTime",totalTimer);
   return ret;
 }
 

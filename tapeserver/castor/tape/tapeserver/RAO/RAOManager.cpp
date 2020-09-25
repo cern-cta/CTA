@@ -24,6 +24,7 @@
 #include "RAOAlgorithmFactoryFactory.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "LinearRAOAlgorithm.hpp"
+#include "common/Timer.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   
@@ -104,6 +105,7 @@ RAOParams RAOManager::getRAOParams() const {
 }
 
 std::vector<uint64_t> RAOManager::queryRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>> & jobs, cta::log::LogContext & lc){
+  cta::utils::Timer totalTimer;
   RAOAlgorithmFactoryFactory raoAlgoFactoryFactory(*this,lc);
   std::unique_ptr<RAOAlgorithmFactory> raoAlgoFactory = raoAlgoFactoryFactory.createAlgorithmFactory();
   std::unique_ptr<RAOAlgorithm> raoAlgo;
@@ -127,7 +129,9 @@ std::vector<uint64_t> RAOManager::queryRAO(const std::vector<std::unique_ptr<cta
   }
   cta::log::ScopedParamContainer spc(lc);
   spc.add("executedRAOAlgorithm",raoAlgo->getName());
-  raoAlgo->getRAOTimings().addToLog(spc);
+  cta::log::TimingList raoTimingList = raoAlgo->getRAOTimings();
+  raoTimingList.insertAndReset("totalTime",totalTimer);
+  raoTimingList.addToLog(spc);
   lc.log(cta::log::INFO, "In RAOManager::queryRAO(), successfully performed RAO.");
   return ret;
 }
