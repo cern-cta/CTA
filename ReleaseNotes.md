@@ -1,3 +1,13 @@
+# v3.1-8
+
+## Summary
+
+This release contains the CTA software Recommended Access Order (RAO) implemented for LTO drives to improve retrieve performances
+
+### Features
+
+- CTA software Recommended Access Order (RAO) implemented for LTO drives
+
 # v3.1-7
 
 ## Summary
