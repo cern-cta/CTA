@@ -320,6 +320,29 @@ void cta_catalogue_CatalogueTest::TearDown() {
 }
 
 //------------------------------------------------------------------------------
+// LogicaLibraryListToMap
+//------------------------------------------------------------------------------
+std::map<std::string, cta::common::dataStructures::LogicalLibrary> cta_catalogue_CatalogueTest::logicalLibraryListToMap(
+  const std::list<cta::common::dataStructures::LogicalLibrary> &listOfLibs) {
+  using namespace cta;
+
+  try {
+    std::map<std::string, cta::common::dataStructures::LogicalLibrary> nameToLib;
+
+    for (auto &lib: listOfLibs) {
+      if(nameToLib.end() != nameToLib.find(lib.name)) {
+        throw exception::Exception(std::string("Duplicate logical library: value=") + lib.name);
+      }
+      nameToLib[lib.name] = lib;
+    }
+
+    return nameToLib;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // tapeListToMap
 //------------------------------------------------------------------------------
 std::map<std::string, cta::common::dataStructures::Tape> cta_catalogue_CatalogueTest::tapeListToMap(
@@ -3313,33 +3336,128 @@ TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_false) {
 
 TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
   using namespace cta;
-      
-  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-      
-  const std::string logicalLibraryName = "logical_library";
-  const std::string comment = "Create logical library";
-  const bool logicalLibraryIsDisabled= false;
-  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
-      
-  const std::list<common::dataStructures::LogicalLibrary> libs =
-    m_catalogue->getLogicalLibraries();
-      
-  ASSERT_EQ(1, libs.size());
-      
-  const common::dataStructures::LogicalLibrary lib = libs.front();
-  ASSERT_EQ(logicalLibraryName, lib.name);
-  ASSERT_EQ(comment, lib.comment);
 
-  const common::dataStructures::EntryLog creationLog = lib.creationLog;
-  ASSERT_EQ(m_admin.username, creationLog.username);
-  ASSERT_EQ(m_admin.host, creationLog.host);
-  
-  const common::dataStructures::EntryLog lastModificationLog =
-    lib.lastModificationLog;
-  ASSERT_EQ(creationLog, lastModificationLog);
+  const bool libNotToDeleteIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::string libNotToDeleteComment = "Create logical library to NOT be deleted";
+      
+  // Create a tape and a logical library that are not the ones to be deleted
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, libNotToDeleteIsDisabled, libNotToDeleteComment);
+  {
+    const auto libs = m_catalogue->getLogicalLibraries();
+    ASSERT_EQ(1, libs.size());
+    const auto lib = libs.front();
+    ASSERT_EQ(m_tape1.logicalLibraryName, lib.name);
+    ASSERT_EQ(libNotToDeleteIsDisabled, lib.isDisabled);
+    ASSERT_EQ(libNotToDeleteComment, lib.comment);
+    const common::dataStructures::EntryLog creationLog = lib.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+    const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
 
-  m_catalogue->deleteLogicalLibrary(logicalLibraryName);
-  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+    const auto &pool = pools.front();
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
+    ASSERT_EQ(m_vo.name, pool.vo.name);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+  }
+  m_catalogue->createTape(m_admin, m_tape1);
+  ASSERT_TRUE(m_catalogue->tapeExists(m_tape1.vid));
+  {
+    const auto tapes = m_catalogue->getTapes();
+    ASSERT_EQ(1, tapes.size());
+
+    const auto tape = tapes.front();
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_vo.name, tape.vo);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const auto creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  // Create the logical library to be deleted
+  const std::string libToDeleteName = "lib_to_delete";
+  const bool libToDeleteIsDisabled = false;
+  const std::string libToDeleteComment = "Create logical library to be deleted";
+  m_catalogue->createLogicalLibrary(m_admin, libToDeleteName, libToDeleteIsDisabled, libToDeleteComment);
+  {
+    const auto libs = m_catalogue->getLogicalLibraries();
+    ASSERT_EQ(2, libs.size());
+    const auto nameToLib = logicalLibraryListToMap(libs);
+    ASSERT_EQ(2, nameToLib.size());
+
+    {
+      const auto nameToLibItor = nameToLib.find(m_tape1.logicalLibraryName);
+      ASSERT_FALSE(nameToLib.end() == nameToLibItor);
+      const auto &lib = nameToLibItor->second;
+      ASSERT_EQ(m_tape1.logicalLibraryName, lib.name);
+      ASSERT_EQ(libNotToDeleteIsDisabled, lib.isDisabled);
+      ASSERT_EQ(libNotToDeleteComment, lib.comment);
+      const common::dataStructures::EntryLog creationLog = lib.creationLog;
+      ASSERT_EQ(m_admin.username, creationLog.username);
+      ASSERT_EQ(m_admin.host, creationLog.host);
+      const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+
+    {
+      const auto nameToLibItor = nameToLib.find(libToDeleteName);
+      ASSERT_FALSE(nameToLib.end() == nameToLibItor);
+      const auto &lib = nameToLibItor->second;
+      ASSERT_EQ(libToDeleteName, lib.name);
+      ASSERT_EQ(libToDeleteIsDisabled, lib.isDisabled);
+      ASSERT_EQ(libToDeleteComment, lib.comment);
+      const common::dataStructures::EntryLog creationLog = lib.creationLog;
+      ASSERT_EQ(m_admin.username, creationLog.username);
+      ASSERT_EQ(m_admin.host, creationLog.host);
+      const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+  }
+
+  m_catalogue->deleteLogicalLibrary(libToDeleteName);
+  {
+    const auto libs = m_catalogue->getLogicalLibraries();
+    ASSERT_EQ(1, libs.size());
+    const auto lib = libs.front();
+    ASSERT_EQ(m_tape1.logicalLibraryName, lib.name);
+    ASSERT_EQ(libNotToDeleteIsDisabled, lib.isDisabled);
+    ASSERT_EQ(libNotToDeleteComment, lib.comment);
+    const common::dataStructures::EntryLog creationLog = lib.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+    const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_existent) {

@@ -54,6 +54,17 @@ protected:
   virtual void TearDown();
 
   /**
+   * Creates a map from logical library name to logical library given the
+   * specified list of logical libraries.
+   *
+   * @param listOfLibs The list of logical libraries from which the map shall
+   * be created.
+   * @return The map from logical library name to logical library.
+   */
+  std::map<std::string, cta::common::dataStructures::LogicalLibrary> logicalLibraryListToMap(
+    const std::list<cta::common::dataStructures::LogicalLibrary> &listOfLibs);
+
+  /**
    * Creates a map from VID to tape given the specified list of tapes.
    *
    * @param listOfTapes The list of tapes from which the map shall be created.

@@ -2803,15 +2803,19 @@ bool RdbmsCatalogue::logicalLibraryExists(rdbms::Conn &conn, const std::string &
 void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
   try {
     const char *const sql =
-      "DELETE "
-      "FROM LOGICAL_LIBRARY "
-      "WHERE "
-        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME_1 AND "
-        "NOT EXISTS (SELECT LOGICAL_LIBRARY_NAME FROM TAPE WHERE LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME_2)";
+      "DELETE FROM LOGICAL_LIBRARY"                                         "\n"
+      "WHERE"                                                               "\n"
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME AND"                  "\n"
+        "NOT EXISTS ("                                                      "\n"
+          "SELECT"                                                          "\n"
+            "TAPE.LOGICAL_LIBRARY_ID"                                       "\n"
+          "FROM"                                                            "\n"
+            "TAPE"                                                          "\n"
+          "WHERE"                                                           "\n"
+            "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID)";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":LOGICAL_LIBRARY_NAME_1", name);
-    stmt.bindString(":LOGICAL_LIBRARY_NAME_2", name);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
     stmt.executeNonQuery();
 
     // The delete statement will effect no rows and will not raise an error if
