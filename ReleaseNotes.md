@@ -17,6 +17,7 @@ This release contains a correction of a performance issue introduced in the v3.1
 
 ### Bug fixes
 
+- cta/CTA#895 [catalogue] RdbmsCatalogue::deleteLogicalLibrary does not delete empty logical library 
 - cta/CTA#893 Corrected slowliness of RdbmsCatalogue::getArchiveFileToRetrieveByArchiveFileId()
 
 # v3.1-6
