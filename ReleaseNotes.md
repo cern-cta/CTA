@@ -9,6 +9,11 @@ This release contains the CTA software Recommended Access Order (RAO) implemente
 - CTA software Recommended Access Order (RAO) implemented for LTO drives
 - Upgraded EOS to 4.8.20-1
 
+### Bug fixes
+
+- cta/CTA#895 [catalogue] RdbmsCatalogue::deleteLogicalLibrary does not delete empty logical library 
+- utils::trimString() now returns an empty string if the string passed in parameter contains only white-space characters
+
 # v3.1-7
 
 ## Summary
@@ -17,7 +22,6 @@ This release contains a correction of a performance issue introduced in the v3.1
 
 ### Bug fixes
 
-- cta/CTA#895 [catalogue] RdbmsCatalogue::deleteLogicalLibrary does not delete empty logical library 
 - cta/CTA#893 Corrected slowliness of RdbmsCatalogue::getArchiveFileToRetrieveByArchiveFileId()
 
 # v3.1-6

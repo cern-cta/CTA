@@ -285,9 +285,12 @@ std::string trimString(const std::string &s) {
   std::string::const_iterator it2;
   size_t endpos = s.find_last_not_of(spaces);
   if (std::string::npos != endpos) {
+    //http://www.cplusplus.com/reference/string/string/string/
+    //The string constructor with iterator does not include the character pointed by the end iterator
     it2 = endpos + 1 + s.begin();
   } else {
-    it2 = s.end();
+    //The string contains only white characters, the trimmed string should be an empty string
+    it2 = s.begin();
   }
 
   return std::string(it1, it2);

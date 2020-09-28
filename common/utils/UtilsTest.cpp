@@ -814,6 +814,21 @@ TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightWhiteSpace) {
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
+TEST_F(cta_UtilsTest, testTrimStringContainingOnlySpace) {
+  using namespace cta;
+  const std::string s("     ");
+  const std::string trimmedString = utils::trimString(s);
+  ASSERT_EQ(std::string(""), trimmedString);
+}
+
+TEST_F(cta_UtilsTest, testTrimStringOneCharacter) {
+  using namespace cta;
+  const std::string s(" a ");
+  const std::string trimmedString = utils::trimString(s);
+  ASSERT_EQ(1,trimmedString.size());
+  ASSERT_EQ(std::string("a"), trimmedString);
+}
+
 TEST_F(cta_UtilsTest, testCopyStringNullDst) {
   using namespace cta;
   char dummy[6] = "Dummy";
