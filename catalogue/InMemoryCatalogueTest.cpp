@@ -38,7 +38,7 @@ TEST_F(cta_catalogue_InMemoryCatalogue, createSameSchemaInTwoSeparateInMemoryDat
 
   log::DummyLogger dummyLog("dummy", "dummy");
   const uint64_t nbConns = 1;
-  const uint64_t nbArchiveFileListingConns = 1;
+  const uint64_t nbArchiveFileListingConns = 0;
 
   // First in-memory database
   {
@@ -56,7 +56,7 @@ TEST_F(cta_catalogue_InMemoryCatalogue, schemaTables) {
 
   log::DummyLogger dummyLog("dummy", "dummy");
   const uint64_t nbConns = 1;
-  const uint64_t nbArchiveFileListingConns = 1;
+  const uint64_t nbArchiveFileListingConns = 0;
 
   catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns);
   const auto tableNameList = inMemoryCatalogue.getTableNames();

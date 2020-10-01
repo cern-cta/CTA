@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/exception/Exception.hpp"
 #include "common/threading/CondVar.hpp"
 #include "common/threading/Mutex.hpp"
 #include "rdbms/ConnAndStmts.hpp"
@@ -40,8 +39,6 @@ class Login;
 class ConnPool {
 public:
 
-  CTA_GENERATE_EXCEPTION_CLASS(MaxNbConnsIsZero);
-
   /**
    * Constructor.
    *
@@ -49,7 +46,6 @@ public:
    * connections.
    * @param maxNbConns The maximum number of database connections within the
    * pool.
-   * @throw MaxNbConnsIsZero if maxNbConns is set to 0.
    */
   ConnPool(const Login &login, const uint64_t maxNbConns);
 

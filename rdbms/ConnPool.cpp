@@ -33,9 +33,7 @@ namespace rdbms {
 ConnPool::ConnPool(const Login &login, const uint64_t maxNbConns):
   m_connFactory(wrapper::ConnFactoryFactory::create(login)),
   m_maxNbConns(maxNbConns),
-  m_nbConnsOnLoan(0) {
-
-  if(0 == m_maxNbConns) throw MaxNbConnsIsZero("Cannot instantiate ConnPool because maxNbConns=0");
+  m_nbConnsOnLoan(0){
 }
 
 //------------------------------------------------------------------------------
