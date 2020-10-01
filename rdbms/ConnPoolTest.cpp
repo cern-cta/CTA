@@ -34,6 +34,14 @@ protected:
   }
 };
 
+TEST_F(cta_rdbms_ConnPoolTest, MaxNbConnsIsZero) {
+  using namespace cta::rdbms;
+
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+  const uint64_t nbConns = 0;
+  ASSERT_THROW(ConnPool pool(login, nbConns), ConnPool::MaxNbConnsIsZero);
+}
+
 TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
   using namespace cta::rdbms;
 
