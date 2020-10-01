@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/exception/Exception.hpp"
 #include "common/threading/CondVar.hpp"
 #include "common/threading/Mutex.hpp"
 #include "rdbms/ConnAndStmts.hpp"
@@ -49,14 +50,20 @@ public:
    */
   ConnPool(const Login &login, const uint64_t maxNbConns);
 
+  CTA_GENERATE_EXCEPTION_CLASS(ConnPoolConfiguredWithZeroConns);
+
   /**
    * Takes a connection from the pool.
    *
    * Please note that this method will block if the pool is empty.  In such a
    * situation this method will unblock when a connection is returned to the
-   * pool.
+   * pool.  There is one exception to this rule.  If the pool was configured
+   * with maxNbConns set to 0 then calling this method with throw a
+   * ConnPoolConfiguredWithZeroConns exception.
    *
    * @return A connection from the pool.
+   * @throw ConnPoolConfiguredWithZeroConns If this pool was configured with
+   * maxNbConns set to 0.
    */
   Conn getConn();
 

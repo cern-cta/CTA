@@ -38,18 +38,28 @@ TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
   using namespace cta::rdbms;
 
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
-  const uint64_t nbConns = 2;
-  ConnPool pool(login, nbConns);
+  const uint64_t maxNbConns = 2;
+  ConnPool pool(login, maxNbConns);
 
   Conn conn = pool.getConn();
+}
+
+TEST_F(cta_rdbms_ConnPoolTest, getPooledConn_maxNbConns_zero) {
+  using namespace cta::rdbms;
+
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+  const uint64_t maxNbConns = 0;
+  ConnPool pool(login, maxNbConns);
+
+  ASSERT_THROW(Conn conn = pool.getConn(), ConnPool::ConnPoolConfiguredWithZeroConns);
 }
 
 TEST_F(cta_rdbms_ConnPoolTest, assignment) {
   using namespace cta::rdbms;
 
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
-  const uint64_t nbConns = 2;
-  ConnPool pool(login, nbConns);
+  const uint64_t maxNbConns = 2;
+  ConnPool pool(login, maxNbConns);
 
   Conn conn = pool.getConn();
 
@@ -62,8 +72,8 @@ TEST_F(cta_rdbms_ConnPoolTest, moveConstructor) {
   using namespace cta::rdbms;
 
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
-  const uint64_t nbConns = 2;
-  ConnPool pool(login, nbConns);
+  const uint64_t maxNbConns = 2;
+  ConnPool pool(login, maxNbConns);
 
   Conn conn = pool.getConn();
 
