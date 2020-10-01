@@ -7,7 +7,7 @@ This release contains the CTA software Recommended Access Order (RAO) implemente
 ### Features
 
 - CTA software Recommended Access Order (RAO) implemented for LTO drives
-- Upgraded EOS to 4.8.20-1
+- Upgraded EOS to 4.8.22-1
 
 ### Bug fixes
 
