@@ -283,28 +283,56 @@ void cta_catalogue_CatalogueTest::SetUp() {
       throw exception::Exception("Found one of more admin users after emptying the database");
     }
 
-    if(!m_catalogue->getMediaTypes().empty()) {
-      throw exception::Exception("Found one of more media types after emptying the database");
-    }
-
-    if(!m_catalogue->getStorageClasses().empty()) {
-      throw exception::Exception("Found one of more storage classes after emptying the database");
-    }
-
-    if(!m_catalogue->getTapePools().empty()) {
-      throw exception::Exception("Found one of more tape pools after emptying the database");
+    if(m_catalogue->getArchiveFilesItor().hasMore()) {
+      throw exception::Exception("Found one of more archive files after emptying the database");
     }
 
     if(!m_catalogue->getArchiveRoutes().empty()) {
       throw exception::Exception("Found one of more archive routes after emptying the database");
     }
 
+    if(m_catalogue->getDeletedArchiveFilesItor().hasMore()) {
+      throw exception::Exception("Found one of more deleted archive files after emptying the database");
+    }
+
+    if(!m_catalogue->getAllDiskSystems().empty()) {
+      throw exception::Exception("Found one of more disk systems after emptying the database");
+    }
+
     if(!m_catalogue->getLogicalLibraries().empty()) {
       throw exception::Exception("Found one of more logical libraries after emptying the database");
     }
 
+    if(!m_catalogue->getMediaTypes().empty()) {
+      throw exception::Exception("Found one of more media types after emptying the database");
+    }
+
+    if(!m_catalogue->getMountPolicies().empty()) {
+      throw exception::Exception("Found one of more mount policies after emptying the database");
+    }
+
+    if(!m_catalogue->getRequesterGroupMountRules().empty()) {
+      throw exception::Exception("Found one of more requester group mount rules after emptying the database");
+    }
+
+    if(!m_catalogue->getRequesterMountRules().empty()) {
+      throw exception::Exception("Found one of more requester mount rules after emptying the database");
+    }
+
+    if(!m_catalogue->getStorageClasses().empty()) {
+      throw exception::Exception("Found one of more storage classes after emptying the database");
+    }
+
     if(!m_catalogue->getTapes().empty()) {
       throw exception::Exception("Found one of more tapes after emptying the database");
+    }
+
+    if(!m_catalogue->getTapePools().empty()) {
+      throw exception::Exception("Found one of more tape pools after emptying the database");
+    }
+
+    if(!m_catalogue->getVirtualOrganizations().empty()) {
+      throw exception::Exception("Found one of more virtual organizations after emptying the database");
     }
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
