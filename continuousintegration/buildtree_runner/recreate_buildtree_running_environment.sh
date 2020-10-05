@@ -5,7 +5,7 @@
 
 # (Re-)create the mhvtl environment
 echo Wiping mhvtl and kubernetes library info...
-systemctl stop mhvtl || true
+systemctl stop mhvtl &> /dev/null || systemctl stop mhvtl.target &> /dev/null
 sleep 2
 rm -rf /etc/mhvtl
 umount /opt/mhvtl || true
@@ -53,7 +53,7 @@ chown vtl.vtl /opt/mhvtl
 ################################################################################
 #### Start mhvtl
 echo Starting mhvtl...
-systemctl start mhvtl
+systemctl start mhvtl &> /dev/null || systemctl start mhvtl.target &> /dev/null
 sleep 2
 
 ################################################################################

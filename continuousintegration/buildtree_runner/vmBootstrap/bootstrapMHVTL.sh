@@ -21,6 +21,7 @@ else
 
   sudo make_vtl_media -C /etc/mhvtl
   sudo systemctl start mhvtl.target
+  sudo systemctl enable mhvtl.target
   echo "Please check the result of 'make install'. If it has failed, reboot and rerun this script"  
 fi
 
