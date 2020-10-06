@@ -34,10 +34,6 @@ namespace {
    * @return The populated ArchiveFile object.
    */
   static common::dataStructures::ArchiveFile populateArchiveFile(const rdbms::Rset &rset) {
-      rset.columnUint64("ARCHIVE_FILE_ID");
-    if(!rset.columnIsNull("VID")) {
-        rset.columnUint64("COPY_NB");
-    }
     common::dataStructures::ArchiveFile archiveFile;
 
     archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
