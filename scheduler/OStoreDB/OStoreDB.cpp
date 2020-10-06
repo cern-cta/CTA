@@ -2651,7 +2651,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
           if (tc.vid == repackInfo.vid) {
             try {
               // Try to select the repack VID from a one-vid list.
-              Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,repackInfo.forceDisabledTape);
+              Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,forceDisabledTape);
               bestVid = repackInfo.vid;
               activeCopyNumber = tc.copyNb;
             } catch (Helpers::NoTapeAvailableForRetrieve &) {}
@@ -2672,10 +2672,10 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
           failedCreationStats.bytes += rsr.archiveFile.fileSize;
           log::ScopedParamContainer params(lc);
           params.add("fileId", rsr.archiveFile.archiveFileID)
-                .add("forceDisabledTape",repackInfo.forceDisabledTape)
+                .add("wasRepackSubmittedWithForceDisabledTape",forceDisabledTape)
                 .add("repackVid", repackInfo.vid);
           lc.log(log::ERR,
-              "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed.");
+              "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed. Maybe the tape to repack is disabled ?");
           continue;
         }
       }
@@ -2692,7 +2692,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
         log::ScopedParamContainer params(lc);
         params.add("fileId", rsr.archiveFile.archiveFileID)
               .add("repackVid", repackInfo.vid)
-              .add("bestVid", bestVid);
+              .add("chosenVid", bestVid);
         lc.log(log::ERR,
             "In OStoreDB::RepackRequest::addSubrequests(): could not find the copyNb for the chosen VID. Subrequest failed.");
         continue;

@@ -274,13 +274,6 @@ public:
   
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
-  const size_t c_defaultMaxNbFilesForRepack = 500;
-  /**
-   * This time is used to limitate the time an expansion of a RepackRequest will take
-   * If the RepackRequest has not finished its expansion before this time limit,
-   * it will be requeued in the RepackQueueToExpand queue.
-   */
-  double m_repackRequestExpansionTimeLimit = 30;
   
   typedef std::pair<std::string, common::dataStructures::MountType> TapePoolMountPair;
   struct MountCounts {
