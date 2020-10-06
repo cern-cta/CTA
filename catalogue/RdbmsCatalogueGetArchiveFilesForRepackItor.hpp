@@ -75,11 +75,6 @@ private:
   log::Logger &m_log;
 
   /**
-   * The database connection pool.
-   */
-  rdbms::ConnPool &m_connPool;
-
-  /**
    * True if the result set is empty.
    */
   bool m_rsetIsEmpty;

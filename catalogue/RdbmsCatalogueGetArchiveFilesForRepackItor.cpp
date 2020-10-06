@@ -80,7 +80,6 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
   const std::string &vid,
   const uint64_t startFSeq):
   m_log(log),
-  m_connPool(connPool),
   m_rsetIsEmpty(true),
   m_hasMoreHasBeenCalled(false),
   m_archiveFileBuilder(log) {
