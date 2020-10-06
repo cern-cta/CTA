@@ -9462,6 +9462,177 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     }
   }
 
+  // Look at all files on tape 1
+  {
+    catalogue::TapeFileSearchCriteria searchCriteria;
+    searchCriteria.vid = tape1.vid;
+    auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
+    std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(archiveFileItor);
+    ASSERT_EQ(nbArchiveFiles, m.size());
+
+    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + i);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_" << i;
+
+      catalogue::TapeFileWritten fileWritten1;
+      fileWritten1.archiveFileId = i;
+      fileWritten1.diskInstance = diskInstance;
+      fileWritten1.diskFileId = diskFileId.str();
+      
+      fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
+      fileWritten1.size = archiveFileSize;
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "1357");
+      fileWritten1.storageClassName = m_storageClassDualCopy.name;
+      fileWritten1.vid = tape1.vid;
+      fileWritten1.fSeq = i;
+      fileWritten1.blockId = i * 100;
+      fileWritten1.copyNb = 1;
+
+      const auto idAndFile = m.find(i);
+      ASSERT_FALSE(m.end() == idAndFile);
+      const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
+      ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
+      ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
+      ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
+      
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
+      ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
+      ASSERT_EQ(fileWritten1.checksumBlob, archiveFile.checksumBlob);
+      ASSERT_EQ(fileWritten1.storageClassName, archiveFile.storageClass);
+      ASSERT_EQ(1, archiveFile.tapeFiles.size());
+
+      // Tape copy 1
+      {
+        const auto it = archiveFile.tapeFiles.find(1);
+        ASSERT_NE(archiveFile.tapeFiles.end(), it);
+        ASSERT_EQ(fileWritten1.vid, it->vid);
+        ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten1.blockId, it->blockId);
+        ASSERT_EQ(fileWritten1.checksumBlob, it->checksumBlob);
+        ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
+      }
+    }
+  }
+
+  // Look at all files on tape 1 with "show superseded" on even though there
+  // aren't any.  This is just check for syntax errors in the underlying
+  // SELECT statement.
+  {
+    catalogue::TapeFileSearchCriteria searchCriteria;
+    searchCriteria.vid = tape1.vid;
+    searchCriteria.showSuperseded = true;
+    auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
+    std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(archiveFileItor);
+    ASSERT_EQ(nbArchiveFiles, m.size());
+
+    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + i);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_" << i;
+
+      catalogue::TapeFileWritten fileWritten1;
+      fileWritten1.archiveFileId = i;
+      fileWritten1.diskInstance = diskInstance;
+      fileWritten1.diskFileId = diskFileId.str();
+      
+      fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
+      fileWritten1.size = archiveFileSize;
+      fileWritten1.checksumBlob.insert(checksum::ADLER32, "1357");
+      fileWritten1.storageClassName = m_storageClassDualCopy.name;
+      fileWritten1.vid = tape1.vid;
+      fileWritten1.fSeq = i;
+      fileWritten1.blockId = i * 100;
+      fileWritten1.copyNb = 1;
+
+      const auto idAndFile = m.find(i);
+      ASSERT_FALSE(m.end() == idAndFile);
+      const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
+      ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
+      ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
+      ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
+      
+      ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
+      ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
+      ASSERT_EQ(fileWritten1.checksumBlob, archiveFile.checksumBlob);
+      ASSERT_EQ(fileWritten1.storageClassName, archiveFile.storageClass);
+      ASSERT_EQ(1, archiveFile.tapeFiles.size());
+
+      // Tape copy 1
+      {
+        const auto it = archiveFile.tapeFiles.find(1);
+        ASSERT_NE(archiveFile.tapeFiles.end(), it);
+        ASSERT_EQ(fileWritten1.vid, it->vid);
+        ASSERT_EQ(fileWritten1.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten1.blockId, it->blockId);
+        ASSERT_EQ(fileWritten1.checksumBlob, it->checksumBlob);
+        ASSERT_EQ(fileWritten1.copyNb, it->copyNb);
+      }
+    }
+  }
+
+  // Look at all files on tape 2
+  {
+    catalogue::TapeFileSearchCriteria searchCriteria;
+    searchCriteria.vid = tape2.vid;
+    auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
+    std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(archiveFileItor);
+    ASSERT_EQ(nbArchiveFiles, m.size());
+
+    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + i);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_" << i;
+
+      catalogue::TapeFileWritten fileWritten2;
+      fileWritten2.archiveFileId = i;
+      fileWritten2.diskInstance = diskInstance;
+      fileWritten2.diskFileId = diskFileId.str();
+      
+      fileWritten2.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten2.diskFileGid = PUBLIC_DISK_GROUP;
+      fileWritten2.size = archiveFileSize;
+      fileWritten2.checksumBlob.insert(checksum::ADLER32, "1357");
+      fileWritten2.storageClassName = m_storageClassDualCopy.name;
+      fileWritten2.vid = tape2.vid;
+      fileWritten2.fSeq = i;
+      fileWritten2.blockId = i * 100;
+      fileWritten2.copyNb = 2;
+
+      const auto idAndFile = m.find(i);
+      ASSERT_FALSE(m.end() == idAndFile);
+      const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
+      ASSERT_EQ(fileWritten2.archiveFileId, archiveFile.archiveFileID);
+      ASSERT_EQ(fileWritten2.diskInstance, archiveFile.diskInstance);
+      ASSERT_EQ(fileWritten2.diskFileId, archiveFile.diskFileId);
+      
+      ASSERT_EQ(fileWritten2.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+      ASSERT_EQ(fileWritten2.diskFileGid, archiveFile.diskFileInfo.gid);
+      ASSERT_EQ(fileWritten2.size, archiveFile.fileSize);
+      ASSERT_EQ(fileWritten2.checksumBlob, archiveFile.checksumBlob);
+      ASSERT_EQ(fileWritten2.storageClassName, archiveFile.storageClass);
+      ASSERT_EQ(1, archiveFile.tapeFiles.size());
+
+      // Tape copy 2
+      {
+        const auto it = archiveFile.tapeFiles.find(2);
+        ASSERT_NE(archiveFile.tapeFiles.end(), it);
+        ASSERT_EQ(fileWritten2.vid, it->vid);
+        ASSERT_EQ(fileWritten2.fSeq, it->fSeq);
+        ASSERT_EQ(fileWritten2.blockId, it->blockId);
+        ASSERT_EQ(fileWritten2.checksumBlob, it->checksumBlob);
+        ASSERT_EQ(fileWritten2.copyNb, it->copyNb);
+      }
+    }
+  }
+
   {
     const uint64_t startFseq = 1;
     auto archiveFileItor = m_catalogue->getArchiveFilesForRepackItor(tape1.vid, startFseq);

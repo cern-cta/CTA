@@ -22,6 +22,7 @@
 #include "catalogue/RdbmsCatalogueGetArchiveFilesItor.hpp"
 #include "catalogue/RdbmsCatalogueGetArchiveFilesForRepackItor.hpp"
 #include "catalogue/RdbmsCatalogueGetDeletedArchiveFilesItor.hpp"
+#include "catalogue/RdbmsCatalogueTapeContentsItor.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/dataStructures/TapeFile.hpp"
@@ -6636,12 +6637,36 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSea
 
   checkTapeFileSearchCriteria(searchCriteria);
 
+  // If this is the listing of the contents of a tape
+  if (!searchCriteria.archiveFileId && !searchCriteria.diskInstance && !searchCriteria.diskFileIds &&
+    searchCriteria.vid) {
+    const bool showSuperseded = searchCriteria.showSuperseded ? searchCriteria.showSuperseded.value() : false;
+    return getTapeContentsItor(searchCriteria.vid.value(), showSuperseded);
+  }
+
   try {
     // Create a connection to populate the temporary table (specialised by database type)
     auto conn = m_archiveFileListingConnPool.getConn();
     const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
     // Pass ownership of the connection to the Iterator object
     auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
+    return ArchiveFileItor(impl);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getTapeContentsItor
+//------------------------------------------------------------------------------
+Catalogue::ArchiveFileItor RdbmsCatalogue::getTapeContentsItor(const std::string &vid, const bool showSuperseded)
+  const {
+  try {
+    // Create a connection to populate the temporary table (specialised by database type)
+    auto impl = new RdbmsCatalogueTapeContentsItor(m_log, m_connPool, vid, showSuperseded);
     return ArchiveFileItor(impl);
   } catch(exception::UserError &) {
     throw;

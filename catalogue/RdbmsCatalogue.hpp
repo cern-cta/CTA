@@ -1926,6 +1926,16 @@ protected:
    */
   void executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &stmt,
     common::dataStructures::VidToTapeMap &vidToTapeMap) const;
+
+  /**
+   * Returns an iterator across the files on the specified tape ordered by
+   * FSEQ.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param showSuperseded Include superseded files in the output?
+   * @return The iterator.
+   */
+  ArchiveFileItor getTapeContentsItor(const std::string &vid, const bool showSuperseded) const;
   
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific
