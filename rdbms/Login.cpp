@@ -115,8 +115,7 @@ Login Login::parseString(const std::string &connectionString) {
     throw exception::Exception("Invalid connection string: Empty string");
   }
   
-  typedef Login::DbTypeAndConnectionDetails DbTypeAndConnectionDetails;
-  const DbTypeAndConnectionDetails typeAndDetails = parseDbTypeAndConnectionDetails(connectionString);
+  const auto typeAndDetails = parseDbTypeAndConnectionDetails(connectionString);
 
   if(typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::in_memory) {
     return parseInMemory(typeAndDetails.connectionDetails);
