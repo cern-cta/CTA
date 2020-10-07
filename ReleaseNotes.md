@@ -11,7 +11,6 @@ This release contains the CTA software Recommended Access Order (RAO) implemente
 
 ### Bug fixes
 
-- cta/CTA#901 cta-admin tapefile ls too slow
 - cta/CTA#895 [catalogue] RdbmsCatalogue::deleteLogicalLibrary does not delete empty logical library 
 - utils::trimString() now returns an empty string if the string passed in parameter contains only white-space characters
 
