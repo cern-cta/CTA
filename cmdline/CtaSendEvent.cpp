@@ -26,6 +26,7 @@
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include "CtaFrontendApi.hpp"
 
+const std::string config_file = "/etc/cta/cta-cli.conf";
 
 // Define XRootD SSI Alert message callback
 namespace XrdSsiPb {
@@ -46,7 +47,7 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 typedef std::map<std::string, std::string> AttrMap;
 
 // Usage exception
-const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event [eos_hostname:port] CLOSEW|PREPARE");
+const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE");
 
 // remove leading spaces and quotes
 void ltrim(std::string &s) {
@@ -101,30 +102,29 @@ void parseFileInfo(std::istream &in, AttrMap &attr, AttrMap &xattr)
  * Fill a Notification message from the command-line parameters and stdin
  *
  * @param[out]   notification    The protobuf to fill
- * @param[in]    argc            The number of command-line arguments
- * @param[in]    argv            The command-line arguments
+ * @param[in]    config          The XrdSsiPb object containing the configuration parameters
+ * @param[in]    wf_command      The workflow command (CLOSEW or PREPARE)
  */
-void fillNotification(cta::eos::Notification &notification, int argc, const char *const *const argv)
+void fillNotification(cta::eos::Notification &notification, const std::string &wf_command)
 {
-  std::string eos_endpoint = "localhost:1095";
+  XrdSsiPb::Config config(config_file, "eos");
 
-  if(argc == 3) {
-    eos_endpoint = argv[1];
-  } else if(argc != 2) {
-    throw Usage;
+  for(auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
+    if(!config.getOptionValueStr(conf_option).first) {
+      throw std::runtime_error(conf_option + " must be specified in " + config_file);
+    }
   }
+  const std::string &eos_instance = config.getOptionValueStr("instance").second;
+  const std::string &eos_endpoint = config.getOptionValueStr("endpoint").first ? config.getOptionValueStr("endpoint").second : "localhost:1095";
+  const std::string &requester_user = config.getOptionValueStr("requester.user").second;
+  const std::string &requester_group = config.getOptionValueStr("requester.group").second;
 
   // Set the event type
-  const std::string wf_command(argv[argc-1]);
-  if(wf_command == "CLOSEW")
-  {
+  if(wf_command == "CLOSEW") {
     notification.mutable_wf()->set_event(cta::eos::Workflow::CLOSEW);
-  }
-  else if(wf_command == "PREPARE")
-  {
+  } else if(wf_command == "PREPARE") {
     notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
-  }
-  else {
+  } else {
     throw Usage;
   }
 
@@ -144,13 +144,13 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
      "&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
 
   // WF
-  notification.mutable_wf()->mutable_instance()->set_name(attr["instance"]);
+  notification.mutable_wf()->mutable_instance()->set_name(eos_instance);
   notification.mutable_wf()->mutable_instance()->set_url(accessUrl);
   notification.mutable_wf()->set_requester_instance("cta-send-event");
 
   // CLI
-  notification.mutable_cli()->mutable_user()->set_username("mdavis");
-  notification.mutable_cli()->mutable_user()->set_groupname("si");
+  notification.mutable_cli()->mutable_user()->set_username(requester_user);
+  notification.mutable_cli()->mutable_user()->set_groupname(requester_group);
 
   // Transport
   if(wf_command == "CLOSEW") {
@@ -188,17 +188,18 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
  */
 int exceptionThrowingMain(int argc, const char *const *const argv)
 {
+  if(argc != 2) {
+    throw Usage;
+  }
+
   // Verify that the Google Protocol Buffer header and linked library versions are compatible
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   cta::xrd::Request request;
   cta::eos::Notification &notification = *(request.mutable_notification());
 
-  // Parse the command line arguments: fill the Notification fields
-  fillNotification(notification, argc, argv);
-
   // Set configuration options
-  XrdSsiPb::Config config("/etc/cta/cta-cli.conf", "cta");
+  XrdSsiPb::Config config(config_file, "cta");
   config.set("resource", "/ctafrontend");
 
   // Allow environment variables to override config file
@@ -210,6 +211,9 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
   }
   // If fine-grained control over log level is required, use XrdSsiPbLogLevel
   config.getEnv("log", "XrdSsiPbLogLevel");
+
+  // Parse the command line arguments: fill the Notification fields
+  fillNotification(notification, argv[1]);
 
   // Obtain a Service Provider
   XrdSsiPbServiceType cta_service(config);
