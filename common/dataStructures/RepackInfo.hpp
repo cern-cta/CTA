@@ -21,6 +21,8 @@
 #include <string>
 #include <list>
 #include "objectstore/RepackQueueType.hpp"
+#include "EntryLog.hpp"
+#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
@@ -67,10 +69,14 @@ struct RepackInfo {
   uint64_t lastExpandedFseq;
   uint64_t userProvidedFiles;
   uint64_t retrievedFiles;
+  uint64_t retrievedBytes;
   uint64_t archivedFiles;
+  uint64_t archivedBytes;
   bool isExpandFinished;
   bool forceDisabledTape;
   bool noRecall;
+  common::dataStructures::EntryLog creationLog;
+  cta::optional<time_t> repackFinishedTime;
   RepackDestinationInfo::List destinationInfos;
 //  std::string tag;
 //  uint64_t totalFiles;

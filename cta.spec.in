@@ -492,6 +492,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 %changelog
 * Fri Sep 25 2020 julien.leduc (at) cern.ch - 3.1-8
 - CTA software Recommended Access Order (RAO) implemented for LTO drives
+- cta-admin repack ls tabular output improvements
 - Upstream EOS 4.8.20-1
 - utils::trimString() now returns an empty string if the string passed in parameter contains only white-space characters
 - cta/CTA#895 [catalogue] RdbmsCatalogue::deleteLogicalLibrary does not delete empty logical library

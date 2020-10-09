@@ -54,6 +54,8 @@ public:
   void setIsComplete(const bool complete);
   void updateRepackDestinationInfos(const common::dataStructures::ArchiveFile & archiveFile, const std::string & destinationVid);
   std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> getRepackDestinationInfos();
+  void setCreationLog(const common::dataStructures::EntryLog & creationLog);
+  common::dataStructures::EntryLog getCreationLog();
   /**
    * Set the flag disabledTape to allow the mounting of a
    * disabled tape for file retrieval

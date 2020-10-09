@@ -35,7 +35,10 @@ namespace cta { namespace xrd {
     XrdSsiStream(XrdSsiStream::isActive),m_scheduler(scheduler), m_vid(vid){
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "RepackLsStream() constructor");
       if(!vid){
-	m_repackList = m_scheduler.getRepacks();
+        m_repackList = m_scheduler.getRepacks();
+        m_repackList.sort([](cta::common::dataStructures::RepackInfo repackInfo1, cta::common::dataStructures::RepackInfo repackInfo2){
+          return repackInfo1.creationLog.time < repackInfo2.creationLog.time;
+        });
       } else {
 	m_repackList.push_back(m_scheduler.getRepack(vid.value()));
       }
@@ -63,21 +66,41 @@ namespace cta { namespace xrd {
 	for(bool is_buffer_full = false; !m_repackList.empty() && !is_buffer_full; m_repackList.pop_front()){
 	  Data record;
 	  auto &repackRequest = m_repackList.front();
+    
+    uint64_t filesLeftToRetrieve = repackRequest.totalFilesToRetrieve - repackRequest.retrievedFiles;
+    uint64_t filesLeftToArchive = repackRequest.totalFilesToArchive - repackRequest.archivedFiles;
+    uint64_t totalFilesToRetrieve = repackRequest.totalFilesToRetrieve;
+    uint64_t totalFilesToArchive = repackRequest.totalFilesToArchive;
+    
 	  auto repackRequestItem = record.mutable_rels_item();
 	  repackRequestItem->set_vid(repackRequest.vid);
 	  repackRequestItem->set_repack_buffer_url(repackRequest.repackBufferBaseURL);
 	  repackRequestItem->set_user_provided_files(repackRequest.userProvidedFiles);
-	  repackRequestItem->set_total_files_to_retrieve(repackRequest.totalFilesToRetrieve);
+	  repackRequestItem->set_total_files_to_retrieve(totalFilesToRetrieve);
 	  repackRequestItem->set_total_bytes_to_retrieve(repackRequest.totalBytesToRetrieve);
-	  repackRequestItem->set_total_files_to_archive(repackRequest.totalFilesToArchive);
+	  repackRequestItem->set_total_files_to_archive(totalFilesToArchive);
 	  repackRequestItem->set_total_bytes_to_archive(repackRequest.totalBytesToArchive);
 	  repackRequestItem->set_retrieved_files(repackRequest.retrievedFiles);
+    repackRequestItem->set_retrieved_bytes(repackRequest.retrievedBytes);
+    repackRequestItem->set_files_left_to_retrieve(filesLeftToRetrieve);
+    repackRequestItem->set_files_left_to_archive(filesLeftToArchive);
 	  repackRequestItem->set_archived_files(repackRequest.archivedFiles);
+    repackRequestItem->set_archived_bytes(repackRequest.archivedBytes);
 	  repackRequestItem->set_failed_to_retrieve_files(repackRequest.failedFilesToRetrieve);
 	  repackRequestItem->set_failed_to_retrieve_bytes(repackRequest.failedBytesToRetrieve);
 	  repackRequestItem->set_failed_to_archive_files(repackRequest.failedFilesToArchive);
 	  repackRequestItem->set_failed_to_archive_bytes(repackRequest.failedBytesToArchive);
+    repackRequestItem->set_total_failed_files(repackRequest.failedFilesToRetrieve + repackRequest.failedFilesToArchive);
 	  repackRequestItem->set_status(toString(repackRequest.status));
+    uint64_t repackTime = time(nullptr) - repackRequest.creationLog.time;
+    if(repackRequest.status == common::dataStructures::RepackInfo::Status::Complete || repackRequest.status == common::dataStructures::RepackInfo::Status::Failed){
+      repackRequestItem->set_repack_finished_time(repackRequest.repackFinishedTime.value());
+      repackTime = repackRequest.repackFinishedTime.value() - repackRequest.creationLog.time;
+    }
+    repackRequestItem->set_repack_time(repackTime);
+    repackRequestItem->mutable_creation_log()->set_username(repackRequest.creationLog.username);
+    repackRequestItem->mutable_creation_log()->set_host(repackRequest.creationLog.host);
+    repackRequestItem->mutable_creation_log()->set_time(repackRequest.creationLog.time);
 	  //Last expanded fSeq is in reality the next FSeq to Expand. So last one is next - 1
 	  repackRequestItem->set_last_expanded_fseq(repackRequest.lastExpandedFseq != 0 ? repackRequest.lastExpandedFseq - 1 : 0);
 	  repackRequestItem->mutable_destination_infos()->Clear();

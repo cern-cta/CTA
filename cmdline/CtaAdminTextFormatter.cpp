@@ -51,6 +51,37 @@ std::string TextFormatter::timeToStr(const time_t &unixtime) {
   return timeStr;
 }
 
+std::string TextFormatter::secondsToDayHoursMinSec(const uint64_t & seconds){
+  uint64_t secondsSave = seconds;
+  int day = secondsSave / (24 * 3600); 
+  
+  secondsSave = secondsSave % (24 * 3600); 
+  int hour = secondsSave / 3600; 
+
+  secondsSave %= 3600; 
+  int minutes = secondsSave / 60 ; 
+
+  secondsSave %= 60; 
+  std::stringstream ss;
+  if(day){
+    ss << day << "d";
+  }
+  if(hour){
+    ss << hour << "h";
+  }
+  if(minutes){
+    ss << minutes << "m";
+  }
+  ss << secondsSave << "s";
+  return ss.str();
+}
+
+std::string TextFormatter::integerToPercentage(const uint64_t & value){
+  std::stringstream ss;
+  ss << value << "%";
+  return ss.str();
+}
+
 
 std::string TextFormatter::dataSizeToStr(uint64_t value) {
   const std::vector<char> suffix = { 'K', 'M', 'G', 'T', 'P', 'E' };
@@ -581,30 +612,32 @@ void TextFormatter::print(const MountPolicyLsItem &mpls_item) {
 void TextFormatter::printRepackLsHeader() {
   push_back("HEADER");
   push_back(
+    "c.time",
+    "repackTime",
+    "c.user",
     "vid",
     "providedFiles",
-    "totalFilesToRetrieve",
-    "totalBytesToRetrieve",
-    "totalFilesToArchive",
-    "totalBytesToArchive",
-    "retrievedFiles",
-    "archivedFiles",
-    "failedToRetrieveFiles",
+    "totalFiles",
+    "totalBytes",
+    "filesToRetrieve",
+    "filesToArchive",
+    "failed",
     "status"
   );
 }
 
 void TextFormatter::print(const RepackLsItem &rels_item) {
-  push_back(
+ push_back(
+   timeToStr(rels_item.creation_log().time()),
+   secondsToDayHoursMinSec(rels_item.repack_time()),
+   rels_item.creation_log().username(),
    rels_item.vid(),
    rels_item.user_provided_files(),
-   rels_item.total_files_to_retrieve(),
-   dataSizeToStr(rels_item.total_bytes_to_retrieve()),
-   rels_item.total_files_to_archive(),
-   dataSizeToStr(rels_item.total_bytes_to_archive()),
-   rels_item.retrieved_files(),
-   rels_item.archived_files(),
-   rels_item.failed_to_retrieve_files(),
+   rels_item.total_files_to_archive(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
+   dataSizeToStr(rels_item.total_bytes_to_archive()), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
+   rels_item.files_left_to_retrieve(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3845829
+   rels_item.files_left_to_archive(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3845829
+   rels_item.total_failed_files(),  //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849927
    rels_item.status()
   );
 }

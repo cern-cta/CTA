@@ -163,6 +163,7 @@ public:
     common::dataStructures::MountPolicy m_mountPolicy;
     bool m_forceDisabledTape;
     bool m_noRecall;
+    common::dataStructures::EntryLog m_creationLog;
   };
   
   /*============ Archive management: tape server side =======================*/

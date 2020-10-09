@@ -722,6 +722,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestPending) {
     repackRequest.setBufferURL("test/buffer/url");
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
     repackRequest.insert();
   }
   {
@@ -803,6 +804,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestToExpand) {
     repackRequest.setBufferURL("test/buffer/url");
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
     repackRequest.insert();
   }
   {
@@ -884,6 +886,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setExpandFinished(false);
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
     repackRequest.insert();
   }
   {
@@ -966,6 +969,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setExpandFinished(true);
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
     repackRequest.insert();
   }
   cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);
@@ -1065,6 +1069,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestStarting) {
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setExpandFinished(true);
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
     repackRequest.insert();
   }
   cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);

@@ -141,7 +141,13 @@ private:
 
   //! Convert UNIX time to string
   static std::string timeToStr(const time_t &unixtime);
-
+  
+  //! Convert the number of seconds given in parameter to a string like 1d2h35m6s
+  static std::string secondsToDayHoursMinSec(const uint64_t & seconds);
+  
+  //! Appends the '%' character to the value passed in parameter
+  static std::string integerToPercentage(const uint64_t & value);
+  
   //! Convert data size in bytes to abbreviated string with appropriate size suffix (K/M/G/T/P/E)
   static std::string dataSizeToStr(uint64_t value);
 

@@ -327,13 +327,15 @@ void Scheduler::checkTapeFullBeforeRepack(std::string vid){
 //------------------------------------------------------------------------------
 void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext & lc) {
   // Check request sanity
+  SchedulerDatabase::QueueRepackRequest repackRequestToQueue = repackRequest;
+  repackRequestToQueue.m_creationLog = common::dataStructures::EntryLog(cliIdentity.username,cliIdentity.host,::time(nullptr));
   std::string vid = repackRequest.m_vid;
   std::string repackBufferURL = repackRequest.m_repackBufferURL;
   if (vid.empty()) throw exception::UserError("Empty VID name.");
   if (repackBufferURL.empty()) throw exception::UserError("Empty buffer URL.");
   utils::Timer t;
   checkTapeFullBeforeRepack(vid);
-  m_db.queueRepack(repackRequest, lc);
+  m_db.queueRepack(repackRequestToQueue, lc);
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);
   log::ScopedParamContainer params(lc);
@@ -342,6 +344,9 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
         .add("forceDisabledTape", repackRequest.m_forceDisabledTape)
         .add("mountPolicy", repackRequest.m_mountPolicy.name)
         .add("noRecall", repackRequest.m_noRecall)
+        .add("creationHostName",repackRequestToQueue.m_creationLog.host)
+        .add("creationUserName",repackRequestToQueue.m_creationLog.username)
+        .add("creationTime",repackRequestToQueue.m_creationLog.time)
         .add("bufferURL", repackRequest.m_repackBufferURL);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");

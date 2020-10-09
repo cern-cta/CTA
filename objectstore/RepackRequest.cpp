@@ -144,12 +144,20 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.failedFilesToRetrieve = m_payload.failedtoretrievefiles();
   ret.failedBytesToRetrieve = m_payload.failedtoretrievebytes();
   ret.archivedFiles = m_payload.archivedfiles();
+  ret.archivedBytes = m_payload.archivedbytes();
   ret.retrievedFiles = m_payload.retrievedfiles();
+  ret.retrievedBytes = m_payload.retrievedbytes();
   ret.lastExpandedFseq = m_payload.lastexpandedfseq();
   ret.userProvidedFiles = m_payload.userprovidedfiles();
   ret.isExpandFinished = m_payload.is_expand_finished();
   ret.forceDisabledTape = m_payload.force_disabled_tape();
   ret.noRecall = m_payload.no_recall();
+  EntryLogSerDeser creationLog;
+  creationLog.deserialize(m_payload.creation_log());
+  ret.creationLog = creationLog;
+  if(m_payload.has_repack_finished_time()){
+    ret.repackFinishedTime = m_payload.repack_finished_time();
+  }
   for(auto & rdi: m_payload.destination_infos()){
     RepackInfo::RepackDestinationInfo rdiToInsert;
     rdiToInsert.vid = rdi.vid();
@@ -265,6 +273,19 @@ std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> RepackReque
   return ret;
 }
 
+void RepackRequest::setCreationLog(const common::dataStructures::EntryLog & creationLog){
+  checkPayloadWritable();
+  cta::objectstore::EntryLogSerDeser creationLogToSet(creationLog);
+  creationLogToSet.serialize(*m_payload.mutable_creation_log());
+}
+
+common::dataStructures::EntryLog RepackRequest::getCreationLog() {
+  checkPayloadReadable();
+  cta::objectstore::EntryLogSerDeser ret;
+  ret.deserialize(m_payload.creation_log());
+  return ret;
+}
+
 void RepackRequest::setForceDisabledTape(const bool disabledTape){
   checkPayloadWritable();
   m_payload.set_force_disabled_tape(disabledTape);
@@ -288,7 +309,6 @@ bool RepackRequest::getNoRecall(){
 void RepackRequest::setStatus(){
   checkPayloadWritable();
   checkPayloadReadable();
-  
   if(m_payload.is_expand_started()){
     //The expansion of the Repack Request have started 
     if(m_payload.is_expand_finished()){
@@ -296,9 +316,11 @@ void RepackRequest::setStatus(){
         //We reached the end
         if (m_payload.failedtoretrievefiles() || m_payload.failedtoarchivefiles()) {
           //At least one retrieve or archive has failed
+          m_payload.set_repack_finished_time(time(nullptr));
           setStatus(common::dataStructures::RepackInfo::Status::Failed);
         } else {
           //No Failure, we are status Complete
+          m_payload.set_repack_finished_time(time(nullptr));
           setStatus(common::dataStructures::RepackInfo::Status::Complete);
         }
         return;

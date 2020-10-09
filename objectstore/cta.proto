@@ -631,6 +631,8 @@ message RepackRequest {
   required bool no_recall = 11566;
   repeated RepackSubRequestPointer subrequests = 11570;
   repeated RepackDestinationInfo destination_infos = 11571;
+  required EntryLog creation_log = 11572;
+  optional uint64 repack_finished_time = 11573;
 }
 
 message RepackRequestIndexPointer {

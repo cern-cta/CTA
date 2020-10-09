@@ -1512,7 +1512,7 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
   bool forceDisabledTape = has_flag(OptionBoolean::DISABLED);
   
   bool noRecall = has_flag(OptionBoolean::NO_RECALL);
-
+  
   // Process each item in the list
   for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
     SchedulerDatabase::QueueRepackRequest repackRequest(*it,bufferURL,type,mountPolicy,forceDisabledTape, noRecall);
