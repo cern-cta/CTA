@@ -320,6 +320,11 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   DiskReportRunner diskReportRunner(*scheduler);
   RepackRequestManager repackRequestManager(*scheduler);
   
+  if(!runRepackRequestManager()){
+    m_processManager.logContext().log(log::INFO, 
+    "In MaintenanceHandler::exceptionThrowingRunChild(): Repack management is disabled. No repack-related operations will run on this tapeserver.");
+  }
+  
   // Run the maintenance in a loop: garbage collector and disk reporter
   try {
     server::SocketPair::pollMap pollList;
@@ -331,7 +336,9 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
           "In MaintenanceHandler::exceptionThrowingRunChild(): About to do a maintenance pass.");
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
-      repackRequestManager.runOnePass(m_processManager.logContext());
+      if(runRepackRequestManager()){
+        repackRequestManager.runOnePass(m_processManager.logContext());
+      }
       try {
         server::SocketPair::poll(pollList, s_pollInterval - t.secs(), server::SocketPair::Side::parent);
         receivedMessage=true;
@@ -389,6 +396,13 @@ MaintenanceHandler::~MaintenanceHandler() {
     ::kill(m_pid, SIGKILL);
     m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::~MaintenanceHandler(): killed leftover subprocess");
   }
+}
+
+//------------------------------------------------------------------------------
+// MaintenanceHandler::runRepackRequestManager
+//------------------------------------------------------------------------------
+bool MaintenanceHandler::runRepackRequestManager() const {
+  return m_tapedConfig.disableRepackManagement.value() == "no";
 }
 
 }}} // namespace cta::tape::daemon

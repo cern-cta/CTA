@@ -119,6 +119,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   // The central storage access configuration
   ret.backendPath.setFromConfigurationFile(cf, generalConfigPath);
   ret.fileCatalogConfigFile.setFromConfigurationFile(cf, generalConfigPath);
+  //Repack management configuration
+  ret.disableRepackManagement.setFromConfigurationFile(cf,generalConfigPath);
   // Extract drive list from tpconfig + parsed config file
   ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
   
@@ -150,6 +152,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   
   ret.backendPath.log(log);
   ret.fileCatalogConfigFile.log(log);
+  
+  ret.disableRepackManagement.log(log);
   
   for (auto & i:ret.driveConfigs) {
     i.second.log(log);

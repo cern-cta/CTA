@@ -136,6 +136,14 @@ struct TapedConfiguration {
   /// The authentication protocol
   cta::SourcedParameter<std::string> authenticationSSSKeytab{
     "environment", "XrdSecSSSKT"};
+    
+  //----------------------------------------------------------------------------
+  // Maintenance process configuration
+  //----------------------------------------------------------------------------
+  /// Usage of RepackRequestManager for repack-related operations
+  cta::SourcedParameter<std::string> disableRepackManagement {
+    "taped","DisableRepackManagement","no","Compile time default"
+  };
   
 private:
   /** A private dummy logger which will simplify the implementation of the 

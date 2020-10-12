@@ -44,6 +44,12 @@ public:
   SubprocessHandler::ProcessingStatus processTimeout() override;
 private:
   void exceptionThrowingRunChild();
+  
+  /**
+   * Returns true if the RepackRequestManager will be ran on this tapeserver,
+   * false otherwise
+   */
+  bool runRepackRequestManager() const;
   /** Reference to the process manager*/
   cta::tape::daemon::ProcessManager & m_processManager;
   /** The parameters */

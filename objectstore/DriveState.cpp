@@ -291,6 +291,7 @@ void DriveState::setConfig(const cta::tape::daemon::TapedConfiguration& tapedCon
   fillConfig(config->fileCatalogConfigFile);
   fillConfig(config->authenticationProtocol);
   fillConfig(config->authenticationSSSKeytab);
+  fillConfig(config->disableRepackManagement);
 }
 
 //------------------------------------------------------------------------------
