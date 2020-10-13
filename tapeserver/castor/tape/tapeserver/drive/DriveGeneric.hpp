@@ -595,7 +595,6 @@ namespace drive {
     virtual compressionStats getCompression();
     virtual void clearCompressionStats();
     virtual std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> getEndOfWrapPositions();
-    virtual SCSI::Structures::RAO::udsLimits getLimitUDS();
   };
 
   class DriveIBM3592 : public DriveGeneric {

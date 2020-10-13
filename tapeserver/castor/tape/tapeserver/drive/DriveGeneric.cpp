@@ -118,10 +118,6 @@ void drive::DriveLTO::clearCompressionStats() {
   SCSI::ExceptionLauncher(sgh, "SCSI error in clearCompressionStats:");
 }
 
-SCSI::Structures::RAO::udsLimits drive::DriveLTO::getLimitUDS() {
-  throw castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException("Drive does not support RAO enterprise.");
-}
-
 /**
  * Information about the drive. The vendor id is used in the user labels of the files.
  * @return    The deviceInfo structure with the information about the drive.
