@@ -42,3 +42,6 @@
 # These options allow to trigger a software RAO algorithm on LTO tape drives
 # taped RAOLTOAlgorithm sltf
 # taped RAOLTOAlgorithmOptions cost_heuristic_name:cta
+#
+# Disable Repack management
+# taped DisableRepackManagement yes
