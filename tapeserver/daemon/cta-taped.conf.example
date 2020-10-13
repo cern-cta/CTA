@@ -45,3 +45,6 @@
 #
 # Disable Repack management
 # taped DisableRepackManagement yes
+#
+# Disable Maintenance process
+# taped DisableMaintenanceProcess yes

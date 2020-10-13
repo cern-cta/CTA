@@ -145,6 +145,11 @@ struct TapedConfiguration {
     "taped","DisableRepackManagement","no","Compile time default"
   };
   
+  /// Usage of MaintenanceProcess for repack-related operations, Garbage collection and disk reporting
+  cta::SourcedParameter<std::string> disableMaintenanceProcess {
+    "taped","DisableMaintenanceProcess","no","Compile time default"
+  };
+  
 private:
   /** A private dummy logger which will simplify the implementation of the 
    * functions (just unconditionally log things). */
