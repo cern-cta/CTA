@@ -125,6 +125,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   BackendVFS be;
   AgentReference agentRef("unitTestGarbageCollector", dl);
   Agent agent(agentRef.getAgentAddress(), be);
+  
   // Create the root entry
   RootEntry re(be);
   re.initialize();
@@ -172,12 +173,23 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   }
   ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
   archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
+  
+  for(auto & ar: archiveRequests){
+    cta::objectstore::ScopedExclusiveLock sel(*ar);
+    ar->fetch();
+    ASSERT_TRUE(ar->getJobOwner(1).find("ArchiveQueueToTransferForUser-Tapepool-unitTestGarbageCollector") != std::string::npos);
+  }
   // Now get the requests back
   ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
   auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
   ASSERT_EQ(poppedJobs.summary.files, 10);
+  for(auto & ar: archiveRequests){
+    cta::objectstore::ScopedExclusiveLock sel(*ar);
+    ar->fetch();
+    ASSERT_EQ(agentRef.getAgentAddress(),ar->getJobOwner(1));
+  }
 }
 
 TEST(ObjectStore, RetrieveQueueAlgorithms) {
@@ -193,8 +205,13 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
 
   // Here we check for the ability to detect dead (but empty agents) and clean them up
   BackendVFS be;
+  //Agent1 for queueing
   AgentReference agentRef("unitTestGarbageCollector", dl);
   Agent agent(agentRef.getAgentAddress(), be);
+  
+  //Agent2 for popping
+  AgentReference agentRef2("Agent2", dl);
+  Agent agent2(agentRef2.getAgentAddress(), be);
   // Create the root entry
   RootEntry re(be);
   re.initialize();
@@ -203,58 +220,55 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   EntryLogSerDeser el("user0", "unittesthost", time(NULL));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef2, el, lc);
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
+  agent2.initialize();
+  agent2.insertAndRegisterSelf(lc);
   std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs;
   ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests;
   fillRetrieveRequests(requests, requestsPtrs, be, agentRef); //memory leak here
-
+  auto a1 = agentRef.getAgentAddress();
+  auto a2 = agentRef2.getAgentAddress();
+    
   {
-    // Second agent to test referenceAndSwitchOwnershipIfNecessary
-    BackendVFS be2;
-    AgentReference agentRef2("Agent 2", dl);
-    Agent agent2(agentRef2.getAgentAddress(), be2);
-    // Create the root entry
-    RootEntry re2(be2);
-    re2.initialize();
-    re2.insert();
-    // Create the agent register
-    EntryLogSerDeser el2("user0", "unittesthost", time(NULL));
-    ScopedExclusiveLock rel2(re2);
-    re2.addOrGetAgentRegisterPointerAndCommit(agentRef2, el2, lc);
-    rel2.release();
-    agent2.initialize();
-    agent2.insertAndRegisterSelf(lc);
     ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests2;
-    std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs2;
-    fillRetrieveRequests(requests2, requestsPtrs2,be2, agentRef2);
 
-    auto a1 = agentRef2.getAgentAddress();
-    auto a2 = agentRef2.getAgentAddress();
-    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> retrieveAlgos2(be2, agentRef2);
-    retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID",
-      a2, a1, requests2, lc);
+    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> queueRetrieveAlgo(be, agentRef2);
+    queueRetrieveAlgo.referenceAndSwitchOwnership("VID",
+      a1, requests, lc);
+    //Test that the owner of these requests is the queue with VID and Agent2
+    for(auto &request: requestsPtrs){
+      cta::objectstore::RetrieveRequest rr(request->getAddressIfSet(),be);
+      cta::objectstore::ScopedExclusiveLock sel(rr);
+      rr.fetch();
+      ASSERT_TRUE(rr.getOwner().find("RetrieveQueueToTransferForUser-VID-Agent2") != std::string::npos);
+    }
   }
-
-  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> retrieveAlgos(be, agentRef);
+  
+  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> popRetrieveAlgos(be, agentRef);
   try {
     ASSERT_EQ(requests.size(), 10);
-
-    retrieveAlgos.referenceAndSwitchOwnership("VID", 
-      agentRef.getAgentAddress(), requests, lc);
 
     // Now get the requests back
     ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria popCriteria;
     popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
     popCriteria.files = 100;
-    auto poppedJobs = retrieveAlgos.popNextBatch("VID", popCriteria, lc);
+    auto poppedJobs = popRetrieveAlgos.popNextBatch("VID", popCriteria, lc);
     ASSERT_EQ(poppedJobs.summary.files, 10);
 
     // Validate that the summary has the same information as the popped elements
     ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSummary s;
     for(auto &e: poppedJobs.elements) {
       s += ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getElementSummary(e);
+    }
+    //Check that the popped jobs owner is now the agent1 and not the queue
+    for(auto & elt: poppedJobs.elements){
+      cta::objectstore::RetrieveRequest rr(elt.retrieveRequest->getAddressIfSet(),be);
+      cta::objectstore::ScopedExclusiveLock sel(rr);
+      rr.fetch();
+      ASSERT_EQ(a1, rr.getOwner());
     }
     ASSERT_EQ(s, poppedJobs.summary);
   } catch (ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::OwnershipSwitchFailure & ex) {

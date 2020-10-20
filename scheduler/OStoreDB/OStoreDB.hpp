@@ -386,7 +386,7 @@ public:
   JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) override;
   
   /* === Repack requests handling =========================================== */
-  void queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext &logContext) override;
+  std::string queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext &logContext) override;
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;

@@ -91,7 +91,8 @@ void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
         endIndex++;
         if (++currentCount >= 25 || ownedObj == ownershipList.end()) {
           log::ScopedParamContainer params(lc);
-          params.add("objects", currentObjs)
+          params.add("agentObject",getAddressIfSet())
+                .add("objects", currentObjs)
                 .add("startIndex", startIndex)
                 .add("endIndex", endIndex - 1)
                 .add("totalObjects", ownershipList.size());
@@ -104,7 +105,7 @@ void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
     }
     // Prepare exception to be thrown.
     std::stringstream exSs;
-    exSs << "In Agent::removeAndUnregisterSelf: agent still owns objects. Here's the first few:";
+    exSs << "In Agent::removeAndUnregisterSelf: agent (agentObject=" << getAddressIfSet() << ") still owns objects. Here's the first few:";
     size_t count=0;
     for(auto i=ownershipList.begin(); i!=ownershipList.end(); i++) {
       exSs << " " << *i;

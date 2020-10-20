@@ -1106,6 +1106,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   cta::catalogue::DummyCatalogue catalogue;
   // Here we check that can successfully call RetrieveRequests's garbage collector
   cta::objectstore::BackendVFS be;
+  std::string backendPath = be.getParams()->getPath();
   // Create the root entry
   cta::objectstore::RootEntry re(be);
   re.initialize();
@@ -1122,7 +1123,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   // continue agent creation.
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   agent.initialize();
-  agent.setTimeout_us(10000);
+  agent.setTimeout_us(100000000);
   agent.insertAndRegisterSelf(lc);
   // Create all agents to be garbage collected
   cta::objectstore::AgentReference agentRefToTransferForUser("ToTransferForUser", dl);

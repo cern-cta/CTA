@@ -93,9 +93,10 @@ namespace cta { namespace xrd {
     repackRequestItem->set_total_failed_files(repackRequest.failedFilesToRetrieve + repackRequest.failedFilesToArchive);
 	  repackRequestItem->set_status(toString(repackRequest.status));
     uint64_t repackTime = time(nullptr) - repackRequest.creationLog.time;
-    if(repackRequest.status == common::dataStructures::RepackInfo::Status::Complete || repackRequest.status == common::dataStructures::RepackInfo::Status::Failed){
-      repackRequestItem->set_repack_finished_time(repackRequest.repackFinishedTime.value());
-      repackTime = repackRequest.repackFinishedTime.value() - repackRequest.creationLog.time;
+      repackRequestItem->set_repack_finished_time(repackRequest.repackFinishedTime);
+    if(repackRequest.repackFinishedTime != 0){
+      //repackFinishedTime != 0: repack is finished
+      repackTime = repackRequest.repackFinishedTime - repackRequest.creationLog.time;
     }
     repackRequestItem->set_repack_time(repackTime);
     repackRequestItem->mutable_creation_log()->set_username(repackRequest.creationLog.username);

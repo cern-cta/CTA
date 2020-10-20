@@ -1218,7 +1218,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     const cta::objectstore::serializers::ArchiveFile& archiveFile = retrieveRequestPayload.archivefile();
     archiveRequestPayload.set_archivefileid(archiveFile.archivefileid());
     archiveRequestPayload.set_checksumblob(archiveFile.checksumblob());
-    archiveRequestPayload.set_creationtime(::time(nullptr));
+    archiveRequestPayload.set_creationtime(archiveFile.creationtime());//This is the ArchiveFile creation time
     archiveRequestPayload.set_diskfileid(archiveFile.diskfileid());
     archiveRequestPayload.set_diskinstance(archiveFile.diskinstance());
     archiveRequestPayload.set_filesize(archiveFile.filesize());
@@ -1255,9 +1255,12 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     const cta::objectstore::serializers::MountPolicy& retrieveRequestMP = retrieveRequestPayload.mountpolicy();
     archiveRequestMP->CopyFrom(retrieveRequestMP);
     
-    //TODO : Should creation log just be initialized or should it be copied from the retrieveRequest ?
+    //Creation log is used by the queueing: job start time = archiveRequest creationLog.time
     cta::objectstore::serializers::EntryLog *archiveRequestCL = archiveRequestPayload.mutable_creationlog();
     archiveRequestCL->CopyFrom(retrieveRequestMP.creationlog());
+    archiveRequestCL->set_host(cta::utils::getShortHostname());
+    //Set the request creation time to now
+    archiveRequestCL->set_time(time(nullptr));
     //Create archive jobs for each copyNb ro rearchive
     RetrieveRequest::RepackInfoSerDeser repackInfoSerDeser;
     repackInfoSerDeser.deserialize(retrieveRequestPayload.repack_info());

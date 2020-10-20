@@ -233,8 +233,8 @@ public:
     m_OStoreDB.deleteFailed(objectId, lc);
   }
 
-  void queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext& lc) override {
-    m_OStoreDB.queueRepack(repackRequest, lc);
+  std::string queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext& lc) override {
+    return m_OStoreDB.queueRepack(repackRequest, lc);
   }
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override {

@@ -45,7 +45,7 @@ void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& qu
     jobsToAdd.push_back({ job.archiveRequest.get() ,job.jobDump.copyNb,job.archiveFile, job.mountPolicy,cta::nullopt });
   }
   try{
-      algo.referenceAndSwitchOwnershipIfNecessary(tapePool,previousOwner,queueAddress,jobsToAdd,lc);
+      algo.referenceAndSwitchOwnership(tapePool,previousOwner,jobsToAdd,lc);
   } catch (typename Algo::OwnershipSwitchFailure &failure){
     for(auto &failedAR: failure.failedElements){
       try{
@@ -167,7 +167,7 @@ void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueA
     jobsToAdd.push_back({job.retrieveRequest.get(),job.jobDump.copyNb,job.fSeq,job.fileSize,job.mountPolicy,job.activityDescription,job.diskSystemName});
   }
   try{
-    algo.referenceAndSwitchOwnershipIfNecessary(vid,previousOwner,queueAddress,jobsToAdd,lc);
+    algo.referenceAndSwitchOwnership(vid,previousOwner,jobsToAdd,lc);
   } catch(typename Algo::OwnershipSwitchFailure &failure){
     for(auto& failedRR: failure.failedElements){
       try {

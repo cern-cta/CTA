@@ -48,6 +48,7 @@
 #include <iostream>
 #include <bits/unique_ptr.h>
 #include "common/utils/utils.hpp"
+#include "objectstore/AgentWrapper.hpp"
 
 namespace cta {  
 using namespace objectstore;
@@ -1700,7 +1701,7 @@ OStoreDB::RetrieveQueueItor_t* OStoreDB::getRetrieveJobItorPtr(const std::string
 //------------------------------------------------------------------------------
 // OStoreDB::queueRepack()
 //------------------------------------------------------------------------------
-void OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest,log::LogContext & lc) {
+std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest,log::LogContext & lc) {
   std::string vid = repackRequest.m_vid;
   common::dataStructures::RepackInfo::Type repackType = repackRequest.m_repackType;
   std::string bufferURL = repackRequest.m_repackBufferURL;
@@ -1729,6 +1730,9 @@ void OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & repackR
   // We're good to go to create the object. We need to own it.
   m_agentReference->addToOwnership(rr->getAddressIfSet(), m_objectStore);
   rr->insert();
+  
+  std::string repackRequestAddress = rr->getAddressIfSet();
+  
   // If latency needs to the improved, the next steps could be deferred like they are for archive and retrieve requests.
   typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending> RQPAlgo;
   {
@@ -1738,6 +1742,7 @@ void OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & repackR
     RQPAlgo rqpAlgo(m_objectStore, *m_agentReference);
     rqpAlgo.referenceAndSwitchOwnership(nullopt, m_agentReference->getAgentAddress(), elements, lc);
   }
+  return repackRequestAddress;
 }
 
 //------------------------------------------------------------------------------
@@ -2021,7 +2026,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> OStoreDB::getNextSuccessfu
     // As we are popping from a single report queue, all requests should concern only one repack request.
     if (repackRequestAddresses.size() != 1) {
       std::stringstream err;
-      err << "In OStoreDB::getNextSuccessfulArchiveRepackReportBatch(): reports for several repack requests in the same queue. ";
+      err << "In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): reports for several repack requests in the same queue. ";
       for (auto & rr: repackRequestAddresses) { err << rr << " "; }
       throw exception::Exception(err.str());
     }
@@ -2827,6 +2832,7 @@ void OStoreDB::RepackRequest::fail() {
   ScopedExclusiveLock rrl(m_repackRequest);
   m_repackRequest.fetch();
   m_repackRequest.setStatus(common::dataStructures::RepackInfo::Status::Failed);
+  m_repackRequest.removeFromOwnerAgentOwnership();
   m_repackRequest.commit();
 }
 
@@ -2899,7 +2905,13 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
         rr.deleteAllSubrequests();
         // And then delete the request
         std::string repackRequestOwner = rr.getOwner();
-        rr.remove();
+        try {
+          //In the case the owner is not a Repack queue,
+          //the owner is an agent. We remove it from its ownership
+          rr.removeFromOwnerAgentOwnership();
+        } catch(const cta::exception::Exception &ex){
+          //The owner is a queue, so continue
+        }
         // We now need to dereference, from a queue if needed and from the index for sure.
         Helpers::removeRepackRequestToIndex(vid, m_objectStore, lc);
         if (repackRequestOwner.size()) {
@@ -2910,14 +2922,20 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
           try {
             rql.lock(rq);
             rq.fetch();
+            std::list<std::string> reqs{rr.getAddressIfSet()};
+            rq.removeRequestsAndCommit(reqs);
           } 
           catch (objectstore::Backend::NoSuchObject &) { return; }
-          catch (objectstore::ObjectOpsBase::WrongType &) { return; }
-          std::list<std::string> reqs{rr.getAddressIfSet()};
-          rq.removeRequestsAndCommit(reqs);
+          catch (objectstore::ObjectOpsBase::WrongType &) { 
+          }
         }
+        //Delete the repack request now
+        rr.remove();
         return;
-      } catch (cta::exception::Exception &) {}
+      } catch (cta::exception::Exception &ex) {
+        lc.log(cta::log::ERR,ex.getMessageValue());
+        return;
+      }
     }
   }
   throw exception::UserError("In OStoreDB::cancelRepack(): No repack request for this VID.");
@@ -5234,11 +5252,14 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
   }
   timingList.insertAndReset("asyncUpdateOrDeleteCompletionTime", t);
   // 3) Just remove all jobs from ownership
+  
   std::list<std::string> jobsToUnown;
-  for (auto sri: m_subrequestList) jobsToUnown.push_back(sri.subrequest->getAddressIfSet());
+  for (auto &sri: m_subrequestList) {
+      jobsToUnown.emplace_back(sri.subrequest->getAddressIfSet());
+  }
   m_oStoreDb.m_agentReference->removeBatchFromOwnership(jobsToUnown, m_oStoreDb.m_objectStore);
-  timingList.insertAndReset("ownershipRemoval", t);
   log::ScopedParamContainer params(lc);
+  timingList.insertAndReset("ownershipRemovalTime", t);
   timingList.addToLog(params);
   params.add("archiveReportType",( newStatus == cta::objectstore::serializers::ArchiveJobStatus::AJS_Complete) ? "ArchiveSuccesses" : "ArchiveFailures");
   lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): reported a batch of jobs.");

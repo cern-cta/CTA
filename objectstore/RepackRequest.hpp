@@ -97,6 +97,12 @@ public:
    * This function implicitly records the information it generates (commit up t the caller);
    */
   SubrequestInfo::set getOrPrepareSubrequestInfo (std::set<uint64_t> fSeqs, AgentReference & agentRef);
+  
+  /**
+   * Remove this request from its owner ownership
+   */
+  void removeFromOwnerAgentOwnership();
+  
 private:
   struct RepackSubRequestPointer {
     std::string address;

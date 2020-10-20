@@ -22,6 +22,7 @@
 #include "RepackQueueAlgorithms.hpp"
 #include "Algorithms.hpp"
 #include "MountPolicySerDeser.hpp"
+#include "AgentWrapper.hpp"
 #include <google/protobuf/util/json_util.h>
 #include <iostream>
 
@@ -81,6 +82,7 @@ void RepackRequest::initialize() {
   m_payload.set_force_disabled_tape(false);
   m_payload.set_no_recall(false);
   m_payload.set_is_complete(false);
+  m_payload.set_repack_finished_time(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -122,6 +124,9 @@ void RepackRequest::setStatus(common::dataStructures::RepackInfo::Status repackS
   checkPayloadWritable();
   // common::dataStructures::RepackInfo::Status and serializers::RepackRequestStatus are defined using the same values,
   // hence the cast.
+  if(repackStatus == common::dataStructures::RepackInfo::Status::Complete || repackStatus == common::dataStructures::RepackInfo::Status::Failed){
+      m_payload.set_repack_finished_time(time(nullptr));
+  }
   m_payload.set_status((serializers::RepackRequestStatus)repackStatus);
 }
 
@@ -155,9 +160,7 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   EntryLogSerDeser creationLog;
   creationLog.deserialize(m_payload.creation_log());
   ret.creationLog = creationLog;
-  if(m_payload.has_repack_finished_time()){
-    ret.repackFinishedTime = m_payload.repack_finished_time();
-  }
+  ret.repackFinishedTime = m_payload.repack_finished_time();
   for(auto & rdi: m_payload.destination_infos()){
     RepackInfo::RepackDestinationInfo rdiToInsert;
     rdiToInsert.vid = rdi.vid();
@@ -323,6 +326,7 @@ void RepackRequest::setStatus(){
           m_payload.set_repack_finished_time(time(nullptr));
           setStatus(common::dataStructures::RepackInfo::Status::Complete);
         }
+        removeFromOwnerAgentOwnership();
         return;
       }
     }
@@ -415,6 +419,14 @@ auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint64_t> fSeqs, AgentRe
     for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
   }
   return ret;
+}
+
+void RepackRequest::removeFromOwnerAgentOwnership(){
+  checkPayloadReadable();
+  checkPayloadWritable();
+  cta::objectstore::Agent ag(getOwner(),m_objectStore);
+  cta::objectstore::AgentWrapper agWrapper(ag);
+  agWrapper.removeFromOwnership(getAddressIfSet(),m_objectStore);
 }
 
 //------------------------------------------------------------------------------

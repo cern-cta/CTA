@@ -335,7 +335,7 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
   if (repackBufferURL.empty()) throw exception::UserError("Empty buffer URL.");
   utils::Timer t;
   checkTapeFullBeforeRepack(vid);
-  m_db.queueRepack(repackRequestToQueue, lc);
+  std::string repackRequestAddress = m_db.queueRepack(repackRequestToQueue, lc);
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);
   log::ScopedParamContainer params(lc);
@@ -347,7 +347,8 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
         .add("creationHostName",repackRequestToQueue.m_creationLog.host)
         .add("creationUserName",repackRequestToQueue.m_creationLog.username)
         .add("creationTime",repackRequestToQueue.m_creationLog.time)
-        .add("bufferURL", repackRequest.m_repackBufferURL);
+        .add("bufferURL", repackRequest.m_repackBufferURL)
+        .add("repackRequestAddress", repackRequestAddress);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
 }

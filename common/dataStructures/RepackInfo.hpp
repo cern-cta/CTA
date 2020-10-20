@@ -76,7 +76,7 @@ struct RepackInfo {
   bool forceDisabledTape;
   bool noRecall;
   common::dataStructures::EntryLog creationLog;
-  cta::optional<time_t> repackFinishedTime;
+  time_t repackFinishedTime = 0;
   RepackDestinationInfo::List destinationInfos;
 //  std::string tag;
 //  uint64_t totalFiles;
