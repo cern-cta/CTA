@@ -1106,7 +1106,6 @@ TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   cta::catalogue::DummyCatalogue catalogue;
   // Here we check that can successfully call RetrieveRequests's garbage collector
   cta::objectstore::BackendVFS be;
-  std::string backendPath = be.getParams()->getPath();
   // Create the root entry
   cta::objectstore::RootEntry re(be);
   re.initialize();
