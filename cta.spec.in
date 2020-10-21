@@ -494,6 +494,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 - CTA software Recommended Access Order (RAO) implemented for LTO drives
 - cta-admin repack ls tabular output improvements
 - Upstream EOS 4.8.24-1
+- Upstream xrootd to 4.12.5-1
 - Repack management execution can be disabled via the cta-taped configuration file
 - Catalogue refactoring
 - utils::trimString() now returns an empty string if the string passed in parameter contains only white-space characters
