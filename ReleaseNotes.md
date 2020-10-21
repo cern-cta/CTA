@@ -7,14 +7,20 @@ This release contains the CTA software Recommended Access Order (RAO) implemente
 ### Features
 
 - CTA software Recommended Access Order (RAO) implemented for LTO drives
-- Upgraded EOS to 4.8.22-1
+- Upgraded EOS to 4.8.24-1
 - cta-admin repack ls tabular output improvements
+- Repack management execution can be disabled via the cta-taped configuration file 
+
+# Modifications
+
+- Catalogue refactoring
 
 ### Bug fixes
 
 - cta/CTA#901 cta-admin tapefile ls too slow
 - cta/CTA#895 [catalogue] RdbmsCatalogue::deleteLogicalLibrary does not delete empty logical library 
 - utils::trimString() now returns an empty string if the string passed in parameter contains only white-space characters
+- Repack request and sub-requests are now unowned from their Agent when completed
 
 # v3.1-7
 
