@@ -112,8 +112,12 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
     pm.addHandler(std::move(dh));
   }
   // Create the garbage collector
-  std::unique_ptr<MaintenanceHandler> gc(new MaintenanceHandler(m_globalConfiguration, pm));
-  pm.addHandler(std::move(gc));
+  if(!isMaintenanceProcessDisabled()){
+    std::unique_ptr<MaintenanceHandler> gc(new MaintenanceHandler(m_globalConfiguration, pm));
+    pm.addHandler(std::move(gc));
+  } else {
+    lc.log(log::INFO,"In TapeDaemon::mainEventLoop, the Maintenance process is disabled from the configuration. Will not run it.");
+  }
   // And run the process manager
   int ret=pm.run();
   {
@@ -155,6 +159,10 @@ void cta::tape::daemon::TapeDaemon::setProcessCapabilities(
       "': " << ne.getMessage().str();
     throw ex;
   }
+}
+
+bool cta::tape::daemon::TapeDaemon::isMaintenanceProcessDisabled() const{
+  return m_globalConfiguration.disableMaintenanceProcess.value() == "yes";
 }
 
 }}} // namespace cta::tape::daemon

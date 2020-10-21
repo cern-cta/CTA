@@ -51,6 +51,9 @@ public:
    * @return The return code of the process. */
   int main();
   
+private:
+  bool isMaintenanceProcessDisabled() const;
+  
 protected:
 
   /** Enumeration of the possible tape-daemon states. */
