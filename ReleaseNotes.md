@@ -11,6 +11,7 @@ This release contains the CTA software Recommended Access Order (RAO) implemente
 - Upgraded xrootd to 4.12.5-1
 - cta-admin repack ls tabular output improvements
 - Repack management execution can be disabled via the cta-taped configuration file 
+- cta/CTA#907 Maintenance process can be disabled via the cta-taped configuration file
 
 # Modifications
 
