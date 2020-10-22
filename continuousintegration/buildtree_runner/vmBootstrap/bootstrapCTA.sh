@@ -29,31 +29,12 @@ mkdir -p ~/CTA-build-srpm
 echo Installing repos
 
 if [[ "$PUBLIC" == false ]] ; then
-  for r in `ls -1 ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo` ; do
-    sudo yum-config-manager --add-repo=$r
-  done
+  sudo yum-config-manager --add-repo=`ls -1 ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo`
 else 
   sudo wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-  sudo tee /etc/yum.repos.d/oracle-instant-client.repo > /dev/null << 'EOF'
-[oracle-instant-client]
-name=Oracle instant client
-baseurl=https://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-gpgcheck=1
-enabled=1
-EOF
-
   sudo wget https://git.ceph.com/release.asc -O /etc/pki/rpm-gpg/RPM-ASC-KEY-ceph
-  sudo tee /etc/yum.repos.d/ceph.repo > /dev/null << 'EOF'
-[ceph]
-name=Ceph
-baseurl=https://download.ceph.com/rpm-nautilus/el7/x86_64/
-gpgkey=file:///etc/pki/rpm-gpg/RPM-ASC-KEY-ceph
-gpgcheck=1
-enabled=1
-EOF
 
-  sudo yum-config-manager --add-repo=`ls -1 ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/eos-*.repo`
+  sudo yum-config-manager --add-repo=`ls -1 ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo`
 fi
 
 sudo yum install -y yum-plugin-priorities
