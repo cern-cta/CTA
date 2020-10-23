@@ -2,7 +2,6 @@ stages:
   - build:srpm
   - build:rpm
   - build:dockerimage
-  - rename:dockerimage
   - test
   - regressions
   - shouldfail
@@ -13,8 +12,6 @@ before_script:
   - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
   - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
   - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
-  - echo "Removing protectbase from all repos (same as Puppet)"
-  - sed -i '/^protect=/d' /etc/yum.repos.d/* 
 
 cta_srpm:
   stage: build:srpm
@@ -209,28 +206,15 @@ ctageneric_docker:
   except:
     - tags
   stage: build:dockerimage
+  image:
+    name: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+    entrypoint: [""]
   retry: 1
-  tags:
-    - docker-image-build
   script:
-    - ""
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $DOCKERFILE --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
   variables:
-    TO: gitlab-registry.cern.ch/cta/ctageneric:${CI_PIPELINE_ID}
-    DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/ci_runner/Dockerfile
-
-ctageneric_docker_rename:
-  except:
-    - tags
-  stage: rename:dockerimage
-  variables:
-    TO: gitlab-registry.cern.ch/cta/ctageneric
-    REPOSITORY: cta/ctageneric
-    GITLAB_HOST: gitlab.cern.ch
-  script:
-    - export OLDTAG=${CI_PIPELINE_ID}
-    - export NEWTAG=${CTA_BUILD_ID}
-    - cd continuousintegration/ci_helpers/
-    - ./rename_tag.sh
+    DOCKERFILE: continuousintegration/docker/ctafrontend/cc7/ci_runner/Dockerfile
 
 archiveretrieve:
   except:
