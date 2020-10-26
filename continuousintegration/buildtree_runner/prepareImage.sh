@@ -1,9 +1,9 @@
 #!/bin/bash -e
 
-PUBLIC=false
-if [[ $1 == "public" ]]; then
-  PUBLIC=true
-  echo Going to install from public repositories
+PUBLIC=true
+if [[ $1 == "cern" ]]; then
+  PUBLIC=false
+  echo Going to install from cern repositories
 fi
 
 echo Creating the docker image...
