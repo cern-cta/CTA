@@ -38,4 +38,13 @@ TEST(SubProcessHelper, basicTests) {
   ASSERT_EQ(127, sp3.exitValue());
   ASSERT_EQ("", sp3.stderr());
 }
+
+TEST(SubProcessHelper, testSubprocessWithStdinInput) {
+  std::string stdinInput = "{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}";
+  cta::threading::SubProcess sp2("tee", std::list<std::string>({"tee"}),stdinInput);
+  sp2.wait();
+  ASSERT_EQ(stdinInput, sp2.stdout());
+  ASSERT_EQ(0, sp2.exitValue());
+  ASSERT_EQ("", sp2.stderr());
+}
 }

@@ -33,7 +33,7 @@ namespace cta { namespace threading {
  */
 class SubProcess {
 public:
-  SubProcess(const std::string & program, const std::list<std::string> &argv);
+  SubProcess(const std::string & program, const std::list<std::string> &argv, const std::string & str = "");
   ~SubProcess();
   void wait(void);
   std::string stdout();

@@ -20,6 +20,7 @@ find_package (binutils REQUIRED)
 find_package (libattr REQUIRED)
 find_package (libcap REQUIRED)
 find_package (libuuid REQUIRED)
+find_package(json-c REQUIRED)
 
 add_subdirectory (exception)
 
@@ -104,6 +105,7 @@ set (COMMON_LIB_SRC_FILES
   exception/TimeOut.cpp
   exception/UserError.cpp
   exception/XrootCl.cpp
+  json/parser/JSONCParser.cpp
   log/DummyLogger.cpp
   log/FileLogger.cpp
   log/LogContext.cpp
@@ -166,6 +168,7 @@ target_link_libraries (ctacommon
   z
   cap
   XrdCl
+  json-c 
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
@@ -200,7 +203,9 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/RegexTest.cpp
   utils/UtilsTest.cpp
   optionalTest.cpp
-  rangeTest.cpp)
+  rangeTest.cpp
+  json/parser/JSONCParserTest.cpp
+)
 
 add_library (ctacommonunittests SHARED
   ${COMMON_UNIT_TESTS_LIB_SRC_FILES})

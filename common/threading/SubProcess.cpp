@@ -63,7 +63,7 @@ private:
 }
 
 namespace cta { namespace threading {
-SubProcess::SubProcess(const std::string & executable, const std::list<std::string>& argv):
+SubProcess::SubProcess(const std::string & executable, const std::list<std::string>& argv, const std::string & stdinInput):
 m_childComplete(false) {
   // Sanity checks
   if (argv.size() < 1)
@@ -74,10 +74,13 @@ m_childComplete(false) {
   const size_t writeSide=1;
   int stdoutPipe[2];
   int stderrPipe[2];
+  int stdinPipe[2];
   cta::exception::Errnum::throwOnNonZero(::pipe2(stdoutPipe, O_NONBLOCK), 
       "In Subprocess::Subprocess failed to create the stdout pipe");
   cta::exception::Errnum::throwOnNonZero(::pipe2(stderrPipe, O_NONBLOCK), 
       "In Subprocess::Subprocess failed to create the stderr pipe");
+  cta::exception::Errnum::throwOnNonZero(::pipe2(stdinPipe,O_NONBLOCK), 
+      "In Subprocess::Subprocess failed to create the stdin pipe");
   // Prepare the actions to be taken on file descriptors
   ScopedPosixSpawnFileActions fileActions;
   // We will be the child process. Close the read sides of the pipes.
@@ -85,16 +88,25 @@ m_childComplete(false) {
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (1)");
   cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stderrPipe[readSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (2)");
-  // Close stdin and rewire the stdout and stderr to the pipes.
+    // We close the write side of the stdinPipe: the child does not write in it
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdinPipe[writeSide]),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (3)");
+  //Rewire the stdout and stderr to the pipes.
   cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions, stdoutPipe[writeSide], STDOUT_FILENO),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_adddup2() (1)");
   cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions, stderrPipe[writeSide], STDERR_FILENO),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_adddup2() (2)");
+  //Rewiring the read side of the stdin pipe to stdin
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_adddup2(fileActions, stdinPipe[readSide], STDIN_FILENO),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_adddup2() (3)");
   // Close the now duplicated pipe file descriptors
   cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdoutPipe[writeSide]),
-      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (3)");
-  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stderrPipe[writeSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (4)");
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stderrPipe[writeSide]),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (5)");
+  cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdinPipe[readSide]),
+      "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (6)");
+  
   // And finally spawn the subprocess
   // Prepare the spawn attributes (we need vfork)
   ScopedPosixSpawnAttr attr;
@@ -114,7 +126,15 @@ m_childComplete(false) {
     int spawnRc=::posix_spawnp(&m_child, executable.c_str(), fileActions, attr, cargv.get(), ::environ);
     cta::exception::Errnum::throwOnReturnedErrno(spawnRc, "In Subprocess::Subprocess failed to posix_spawn()");
   }
-  // We are the parent process. Close the write sides of pipes.
+  // We are the parent process.
+  // close the readSide of stdin pipe as we are going to write to the subprocess stdin
+  //Send input to child stdin
+  //Write data to child stdin
+  ::write(stdinPipe[writeSide],stdinInput.c_str(),stdinInput.size());
+  //Close stdin
+  ::close(stdinPipe[writeSide]);
+  ::close(stdinPipe[readSide]);
+  //Close the write sides of pipes.
   ::close(stdoutPipe[writeSide]);
   ::close(stderrPipe[writeSide]);
   m_stdoutFd = stdoutPipe[readSide];
