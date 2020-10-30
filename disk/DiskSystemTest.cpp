@@ -106,15 +106,15 @@ namespace unitTests {
     
     std::string dstURL = "root://ctaeos.archiveretrieve-1215709git0e38ccd0-xi98.svc.cluster.local//eos/ctaeos/cta/54065a67-a3ea-4a44-b213-6f6a6f4e2cf4?eos.lfn=fxid:7&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=spinners&toto=5";
     
-    ASSERT_EQ(m_diskSystemSpinner.name,allDiskSystem.getDSNAme(dstURL));
+    ASSERT_EQ(m_diskSystemSpinner.name,allDiskSystem.getDSName(dstURL));
     
     dstURL = "root://ctaeos.archiveretrieve-1215709git0e38ccd0-xi98.svc.cluster.local//eos/ctaeos/cta/54065a67-a3ea-4a44-b213-6f6a6f4e2cf4?eos.lfn=fxid:7&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
     
-    ASSERT_EQ(m_diskSystemDefault.name,allDiskSystem.getDSNAme(dstURL));
+    ASSERT_EQ(m_diskSystemDefault.name,allDiskSystem.getDSName(dstURL));
     
     dstURL = "root://ctaeos.archiveretrieve-1215709git0e38ccd0-xi98.svc.cluster.local//eos/ctaeos/cta/54065a67-a3ea-4a44-b213-6f6a6f4e2cf4?eos.lfn=fxid:7&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written";
     
-    ASSERT_THROW(allDiskSystem.getDSNAme(dstURL),std::out_of_range);
+    ASSERT_THROW(allDiskSystem.getDSName(dstURL),std::out_of_range);
   }
   
   TEST_F(DiskSystemTest, fetchDiskSystemFreeSpace) {

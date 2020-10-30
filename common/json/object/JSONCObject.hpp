@@ -16,12 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/Exception.hpp"
+#pragma once
 
-namespace cta { namespace exception {
+#include "JSONObject.hpp"
+#include <json-c/json.h>
+
+namespace cta { namespace utils { namespace json { namespace object { 
+
+class JSONCObject : public JSONObject {
+public:
+  JSONCObject();
+  virtual void setAttributesFromJSON(const std::string & json);
+  virtual std::string getJSON();
+  virtual ~JSONCObject();
+protected:
+  json_object * m_jsonObject = nullptr;
   
-class JSONParserException : public Exception {
-  using Exception::Exception; 
+  void initializeJSONCObject();
+  void destroyJSONCObject();
+  void reinitializeJSONCObject();
+  
+  template<typename T>
+  T jsonGetValue(const std::string & key);
+  
+  template<typename T>
+  void jsonSetValue(const std::string & key, const T & value);
+  
+  json_object * getJSONObject(const std::string & key);
+  
 };
 
-}}
+}}}}

@@ -2595,7 +2595,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
       rr->setSchedulerRequest(schedReq);
       // Add the disk system information if needed.
       try { 
-        auto dsName = diskSystemList.getDSNAme(schedReq.dstURL);
+        auto dsName = diskSystemList.getDSName(schedReq.dstURL);
         rr->setDiskSystemName(dsName); 
       } catch (std::out_of_range &) {}
       // Set the repack info.

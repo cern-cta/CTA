@@ -39,6 +39,7 @@ namespace cta { namespace disk {
  *  interval), and the expected external bandwidth from sources external to CTA.
  */
 CTA_GENERATE_EXCEPTION_CLASS(FetchEosFreeSpaceException);
+CTA_GENERATE_EXCEPTION_CLASS(FetchEosFreeSpaceScriptException);
 
 struct DiskSystem {
   std::string name;
@@ -57,10 +58,15 @@ class DiskSystemList: public std::list<DiskSystem> {
   
 public:
   /** Get the filesystem for a given destination URL */
-  std::string getDSNAme(const std::string &fileURL) const;
+  std::string getDSName(const std::string &fileURL) const;
   
   /** Get the file system parameters from a file system name */
   const DiskSystem & at(const std::string &name) const;
+  
+  /** Get the fetch EOS free space script path */
+  std::string getFetchEosFreeSpaceScript() const;
+  
+  void setFetchEosFreeSpaceScript(const std::string & path);
   
 private:
   struct PointerAndRegex {
@@ -70,6 +76,7 @@ private:
   };
   
   mutable std::list<PointerAndRegex> m_pointersAndRegexes;
+  std::string m_fetchEosFreeSpaceScript;
   
 };
 
@@ -95,6 +102,7 @@ private:
   DiskSystemList &m_systemList;
   uint64_t fetchEosFreeSpace(const std::string & instanceAddress, const std::string & spaceName,log::LogContext & lc);
   uint64_t fetchConstantFreeSpace(const std::string & instanceAddress, log::LogContext & lc);
+  uint64_t fetchEosFreeSpaceWithScript(const std::string & scriptPath, const std::string & jsonInput, log::LogContext &lc);
 };
 
 }} // namespace cta::common

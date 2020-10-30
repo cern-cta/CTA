@@ -132,6 +132,11 @@ struct DataTransferConfig {
    * The path to the operator provided encyption control script (or empty string)
    */
   std::string externalEncryptionKeyScript;
+  
+  /**
+   * The path to the operator provided EOS free space fetch script (or empty string)
+   */
+  std::string fetchEosFreeSpaceScript;
 
   /**
    * Constructor that sets all integer member-variables to 0 and all string

@@ -28,6 +28,7 @@ add_library(ctadisk SHARED
   DiskFile.cpp
   RadosStriperPool.cpp
   DiskSystem.cpp
+  JSONDiskSystem.cpp
 )
 
 target_link_libraries (ctadisk XrdCl cryptopp radosstriper)

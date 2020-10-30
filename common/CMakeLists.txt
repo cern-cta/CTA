@@ -105,7 +105,8 @@ set (COMMON_LIB_SRC_FILES
   exception/TimeOut.cpp
   exception/UserError.cpp
   exception/XrootCl.cpp
-  json/parser/JSONCParser.cpp
+  json/object/JSONObject.cpp
+  json/object/JSONCObject.cpp
   log/DummyLogger.cpp
   log/FileLogger.cpp
   log/LogContext.cpp
@@ -204,7 +205,8 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/UtilsTest.cpp
   optionalTest.cpp
   rangeTest.cpp
-  json/parser/JSONCParserTest.cpp
+  json/test/JSONCTestObject.cpp
+  json/test/JSONCObjectTest.cpp
 )
 
 add_library (ctacommonunittests SHARED

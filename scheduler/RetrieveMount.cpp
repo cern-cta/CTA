@@ -143,6 +143,7 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
   // Get the current file systems list from the catalogue
   disk::DiskSystemList diskSystemList;
   diskSystemList = m_catalogue.getAllDiskSystems();
+  diskSystemList.setFetchEosFreeSpaceScript(m_fetchEosFreeSpaceScript);
   // TODO: the diskSystemFreeSpaceList could be made a member of the retrieve mount and cache the fetched values, limiting the re-querying
   // of the disk systems free space.
   disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList (diskSystemList);
@@ -328,6 +329,13 @@ void cta::RetrieveMount::setTapeMounted(cta::log::LogContext& logContext) const 
 //------------------------------------------------------------------------------
 bool cta::RetrieveMount::bothSidesComplete() {
   return !(m_diskRunning || m_tapeRunning);
+}
+
+//------------------------------------------------------------------------------
+// setEosFreeSpaceScriptName()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::setFetchEosFreeSpaceScript(const std::string& name){
+  m_fetchEosFreeSpaceScript = name;
 }
 
 //------------------------------------------------------------------------------

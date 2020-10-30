@@ -16,15 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once 
+#pragma once
 
 #include <string>
 
 namespace cta { namespace utils { namespace json { namespace object { 
-  
-struct SchedulerHints {
-  int test;
-  std::string test2;
+
+class JSONObject {
+public:
+  virtual std::string getJSON() = 0;
+  virtual void setAttributesFromJSON(const std::string & json) = 0;
+  virtual ~JSONObject();
+private:
+
 };
- 
+
 }}}}

@@ -20,7 +20,7 @@
 
 #include <string>
 
-namespace cta { namespace utils { namespace json { namespace object { 
+namespace unitTests {
 
   struct TestObject {
     uint64_t integer_number;
@@ -28,4 +28,4 @@ namespace cta { namespace utils { namespace json { namespace object {
     double double_number;
   };
   
-}}}}
+}

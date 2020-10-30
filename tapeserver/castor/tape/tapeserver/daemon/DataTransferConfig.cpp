@@ -39,5 +39,6 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
   nbDiskThreads(0),
   useLbp(false),
   useRAO(false),
-  externalEncryptionKeyScript("") {}
+  externalEncryptionKeyScript(""),
+  fetchEosFreeSpaceScript(""){}
 

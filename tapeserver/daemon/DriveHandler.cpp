@@ -1078,6 +1078,7 @@ int DriveHandler::runChild() {
     dataTransferConfig.useRAO = m_tapedConfig.useRAO.value() == "yes" ? true : false;
     dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.raoLtoAlgorithm.value();
     dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.raoLtoOptions.value();
+    dataTransferConfig.fetchEosFreeSpaceScript = m_tapedConfig.fetchEosFreeSpaceScript.value();
     dataTransferConfig.xrootPrivateKey = "";
     
     // Before launching, and if this is the first session since daemon start, we will

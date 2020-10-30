@@ -293,6 +293,7 @@ void DriveState::setConfig(const cta::tape::daemon::TapedConfiguration& tapedCon
   fillConfig(config->authenticationSSSKeytab);
   fillConfig(config->disableRepackManagement);
   fillConfig(config->disableMaintenanceProcess);
+  fillConfig(config->fetchEosFreeSpaceScript);
 }
 
 //------------------------------------------------------------------------------

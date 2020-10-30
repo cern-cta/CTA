@@ -229,6 +229,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A NULL pointer is returned on failure
+  retrieveMount->setFetchEosFreeSpaceScript(m_castorConf.fetchEosFreeSpaceScript);
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig,lc,retrieveMount));
   if(!drive.get()) return MARK_DRIVE_AS_DOWN;    
   // We can now start instantiating all the components of the data path

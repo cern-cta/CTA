@@ -199,6 +199,8 @@ namespace cta {
      */
     disk::DiskReporter * createDiskReporter(std::string & URL);
     
+    void setFetchEosFreeSpaceScript(const std::string & name);
+    
     /**
      * Destructor.
      */
@@ -238,6 +240,12 @@ namespace cta {
      * A pointer to the file catalogue.
      */
     cta::catalogue::Catalogue &m_catalogue;
+    
+    /**
+     * The name of the script that will be executed
+     * to get the EOS free space 
+     */
+    std::string m_fetchEosFreeSpaceScript;
     
   }; // class RetrieveMount
 

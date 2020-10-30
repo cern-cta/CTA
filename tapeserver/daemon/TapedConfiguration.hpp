@@ -103,6 +103,12 @@ struct TapedConfiguration {
     "taped", "RAOLTOAlgorithmOptions","","Compile time default"
   };
   //----------------------------------------------------------------------------
+  // Fetch EOS Free space operator's script
+  //----------------------------------------------------------------------------
+  cta::SourcedParameter<std::string> fetchEosFreeSpaceScript {
+    "taped", "FetchEosFreeSpaceScript","", "Compile time default"
+  };
+  //----------------------------------------------------------------------------
   // Watchdog: parameters for timeouts in various situations.
   //----------------------------------------------------------------------------
   /// Maximum time allowed to complete a single mount scheduling.

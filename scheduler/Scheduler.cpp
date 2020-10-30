@@ -199,7 +199,7 @@ std::string Scheduler::queueRetrieve(
   // Determine disk system for this request, if any.
   optional<std::string> diskSystemName;
   try {
-    diskSystemName = diskSystemList.getDSNAme(request.dstURL);
+    diskSystemName = diskSystemList.getDSName(request.dstURL);
   } catch (std::out_of_range&) {}
   auto requestInfo = m_db.queueRetrieve(request, queueCriteria, diskSystemName, lc);
   auto schedulerDbTime = t.secs();

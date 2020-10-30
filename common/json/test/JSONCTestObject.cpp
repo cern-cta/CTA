@@ -16,38 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
 
-#include <string>
-#include <json-c/json.h>
-#include <memory>
+#include "JSONCTestObject.hpp"
 
-namespace cta { namespace utils { namespace json { namespace parser {
-  
-class JSONCParser {
-public:
-  JSONCParser();
-  
-  void setJSONToBeParsed(const std::string & json);
-  
-  std::string getJSON() const;
-  
-  template<typename T>
-  void generateJSONFromObject(const T & value);
-  
-  template<typename T>
-  T getObjectFromJSON();
-  
-  virtual ~JSONCParser();
-private:
-  json_object * m_jsonObject = nullptr;
-  
-  template<typename T>
-  T getValue(const std::string & key);
-  
-  json_object * getJSONObject(const std::string & key);
-};
+namespace unitTests {
 
+JSONCTestObject::JSONCTestObject():JSONCObject(), TestObject()  {
+  
+}
 
-}}}}
+void JSONCTestObject::setAttributesFromJSON(const std::string & json){
+  JSONCObject::setAttributesFromJSON(json);
+  double_number = jsonGetValue<double>("double_number");
+  integer_number = jsonGetValue<uint64_t>("integer_number");
+  str = jsonGetValue<std::string>("str");
+}
 
+std::string JSONCTestObject::getJSON() {
+  reinitializeJSONCObject();
+  jsonSetValue("integer_number",integer_number);
+  jsonSetValue("str",str);
+  jsonSetValue("double_number",double_number);
+  return JSONCObject::getJSON();
+}
+
+JSONCTestObject::~JSONCTestObject() {
+}
+
+}
