@@ -23,6 +23,8 @@
 #include "common/threading/SubProcess.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
+#include "JSONFreeSpace.hpp"
+#include "common/json/object/JSONObjectException.hpp"
 
 namespace cta {
 namespace disk {
@@ -65,6 +67,9 @@ void DiskSystemList::setFetchEosFreeSpaceScript(const std::string& path){
   m_fetchEosFreeSpaceScript = path;
 }
 
+//------------------------------------------------------------------------------
+// DiskSystemList::getFetchEosFreeSpaceScript()
+//------------------------------------------------------------------------------
 std::string DiskSystemList::getFetchEosFreeSpaceScript() const{
   return m_fetchEosFreeSpaceScript;
 }
@@ -86,16 +91,24 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       auto & currentDiskSystem = m_systemList.at(ds);
       regexResult = eosDiskSystem.exec(currentDiskSystem.freeSpaceQueryURL);
       if (regexResult.size()) {
+        //Script, then EOS free space query
+        if(!m_systemList.getFetchEosFreeSpaceScript().empty()){
+          //Script is provided
           try {
-            //TODO:  TO BE CONTINUED
-          cta::disk::JSONDiskSystem jsoncDiskSystem(currentDiskSystem);
-          freeSpace = fetchEosFreeSpaceWithScript(m_systemList.getFetchEosFreeSpaceScript(),jsoncDiskSystem.getJSON(),lc);
-        } catch(const cta::disk::FetchEosFreeSpaceScriptException &ex){
-          
+            cta::disk::JSONDiskSystem jsoncDiskSystem(currentDiskSystem);
+            freeSpace = fetchEosFreeSpaceWithScript(m_systemList.getFetchEosFreeSpaceScript(),jsoncDiskSystem.getJSON(),lc);
+            goto found;
+          } catch(const cta::disk::FetchEosFreeSpaceScriptException &ex){
+            cta::log::ScopedParamContainer spc(lc);
+            spc.add("exceptionMsg",ex.getMessageValue());
+            std::string errorMsg = "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(), unable to get the EOS free space with the script " 
+                    + m_systemList.getFetchEosFreeSpaceScript() + ". Will run eos space ls -m to fetch the free space for backpressure";
+            lc.log(cta::log::INFO,errorMsg);
+          }
         }
         freeSpace = fetchEosFreeSpace(regexResult.at(1), regexResult.at(2), lc);
         goto found;
-      }
+      } 
       regexResult = constantFreeSpaceDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
       if (regexResult.size()) {
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
@@ -173,9 +186,8 @@ uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& inst
 // DiskSystemFreeSpaceList::fetchEosFreeSpaceWithScript()
 //------------------------------------------------------------------------------
 uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpaceWithScript(const std::string& scriptPath, const std::string& jsonInput, log::LogContext& lc){
-  //TODO A CONTINUER
   cta::threading::SubProcess sp(scriptPath,{scriptPath},jsonInput);
-   sp.wait();
+  sp.wait();
   try {
     std::string errMsg = "In DiskSystemFreeSpaceList::fetchEosFreeSpaceWithScript(), failed to call \"" + scriptPath;
     exception::Errnum::throwOnNonZero(sp.exitValue(),errMsg);
@@ -189,10 +201,21 @@ uint64_t DiskSystemFreeSpaceList::fetchEosFreeSpaceWithScript(const std::string&
     ex.getMessage() << utils::toString(sp.killSignal());
     throw cta::disk::FetchEosFreeSpaceScriptException(ex.getMessage().str());
   }
-  // Look for the result line for default space.
+  //Get the JSON result from stdout and return the free space
+  JSONFreeSpace jsonFreeSpace;
   std::istringstream spStdoutIss(sp.stdout());
-  lc.log(log::CRIT,spStdoutIss.str());
-  throw cta::disk::FetchEosFreeSpaceScriptException("Test backpressure with script");
+  std::string stdoutScript = spStdoutIss.str();
+  try {
+    jsonFreeSpace.buildFromJSON(stdoutScript);
+    std::string logMessage = "In DiskSystemFreeSpaceList::fetchEosFreeSpaceWithScript(), freeSpace returned from the script is: " + std::to_string(jsonFreeSpace.m_freeSpace); 
+    lc.log(log::DEBUG,logMessage);
+    return jsonFreeSpace.m_freeSpace;
+  } catch(const cta::exception::JSONObjectException &ex){
+    std::string errMsg = "In DiskSystemFreeSpaceList::fetchEosFreeSpaceWithScript(): the json received from the script "+ scriptPath + 
+            " json=" + stdoutScript + " could not be used to get the FreeSpace, the json to receive from the script should have the following format: " +
+            jsonFreeSpace.getExpectedJSONToBuildObject() + ".";
+    throw cta::disk::FetchEosFreeSpaceScriptException(errMsg);
+  }
 }
 
 }} // namespace cta::disk

@@ -19,24 +19,21 @@
 #pragma once
 
 #include "common/json/object/JSONCObject.hpp"
-#include "TestObject.hpp"
 
-using namespace cta::utils::json;
-
-namespace unitTests {
-
+namespace cta { namespace disk {
+  
 /**
- * This class is only use to unit test the JSONCObject class
+ * This class allows  JSON-represent a FreeSpace object that is only a uint64_t value
+ * {"freeSpace",42}
  */
-class JSONCTestObject : public object::JSONCObject, public TestObject {
+class JSONFreeSpace: public cta::utils::json::object::JSONCObject {
 public:
-  JSONCTestObject();
+  JSONFreeSpace();
   void buildFromJSON(const std::string & json) override;
-  std::string getExpectedJSONToBuildObject() const override;
   std::string getJSON() override;
-  virtual ~JSONCTestObject();
-private:
-
+  std::string getExpectedJSONToBuildObject() const override;
+  virtual ~JSONFreeSpace();
+  uint64_t m_freeSpace = 0;
 };
 
-}
+}}

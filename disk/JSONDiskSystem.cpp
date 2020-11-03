@@ -34,8 +34,8 @@ JSONDiskSystem::JSONDiskSystem(const DiskSystem& diskSystem):JSONCObject(){
   }
 }
 
-void JSONDiskSystem::setAttributesFromJSON(const std::string& json) {
-  JSONCObject::setAttributesFromJSON(json);
+void JSONDiskSystem::buildFromJSON(const std::string& json) {
+  JSONCObject::buildFromJSON(json);
   name = jsonGetValue<std::string>("name");
   fileRegexp = jsonGetValue<std::string>("fileRegexp");
   freeSpaceQueryURL = jsonGetValue<std::string>("freeSpaceQueryURL");

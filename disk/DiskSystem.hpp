@@ -63,9 +63,10 @@ public:
   /** Get the file system parameters from a file system name */
   const DiskSystem & at(const std::string &name) const;
   
-  /** Get the fetch EOS free space script path */
+  /** Get the fetch EOS free space script path. This script will be used by the backpressure */
   std::string getFetchEosFreeSpaceScript() const;
   
+  /** Sets the fetch EOS free space script path. This script will be used by the backpressure */
   void setFetchEosFreeSpaceScript(const std::string & path);
   
 private:

@@ -16,27 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "JSONFreeSpace.hpp"
 
-#include "common/json/object/JSONCObject.hpp"
-#include "TestObject.hpp"
+namespace cta { namespace disk {
 
-using namespace cta::utils::json;
-
-namespace unitTests {
-
-/**
- * This class is only use to unit test the JSONCObject class
- */
-class JSONCTestObject : public object::JSONCObject, public TestObject {
-public:
-  JSONCTestObject();
-  void buildFromJSON(const std::string & json) override;
-  std::string getExpectedJSONToBuildObject() const override;
-  std::string getJSON() override;
-  virtual ~JSONCTestObject();
-private:
-
-};
-
+JSONFreeSpace::JSONFreeSpace(): JSONCObject() {
 }
+
+void JSONFreeSpace::buildFromJSON(const std::string& json) {
+  JSONCObject::buildFromJSON(json);
+  m_freeSpace = jsonGetValue<uint64_t>("freeSpace");
+}
+
+std::string JSONFreeSpace::getJSON(){
+  reinitializeJSONCObject();
+  jsonSetValue("freeSpace",m_freeSpace);
+  return JSONCObject::getJSON();
+}
+
+std::string JSONFreeSpace::getExpectedJSONToBuildObject() const {
+  return "{\"freeSpace\":42}";
+}
+
+JSONFreeSpace::~JSONFreeSpace() {
+}
+
+}}

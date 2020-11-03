@@ -26,12 +26,16 @@ JSONCObject::JSONCObject():JSONObject() {
   initializeJSONCObject();
 }
 
-void JSONCObject::setAttributesFromJSON(const std::string& json){
+void JSONCObject::buildFromJSON(const std::string& json){
   //DO JSON_C deinitialization
   if(m_jsonObject != nullptr){
     destroyJSONCObject();
   }
   m_jsonObject = json_tokener_parse(json.c_str());
+}
+
+std::string JSONCObject::getExpectedJSONToBuildObject() const {
+  return "{}";
 }
 
 std::string JSONCObject::getJSON() {

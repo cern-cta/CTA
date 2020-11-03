@@ -36,7 +36,7 @@ TEST(JSONCObjectTest, testJSONGenerationFromObject) {
 TEST(JSONCObjectTest, testObjectGenerationFromJSON){
   std::string json = "{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}";
   JSONCTestObject to;
-  to.setAttributesFromJSON(json);
+  to.buildFromJSON(json);
   ASSERT_EQ(42,to.integer_number);
   ASSERT_EQ("forty two",to.str);
   ASSERT_EQ(42.000000,to.double_number);
@@ -49,7 +49,7 @@ TEST(JSONCObjectTest, testJSONCParserGetJSONShouldReturnDefaultValues){
 
 TEST(JSONCObjectTest, testJSONCParserSetJSONToBeParsedWrongJSONFormat){
   JSONCTestObject to;
-  ASSERT_THROW(to.setAttributesFromJSON("WRONG_JSON_STRING"),cta::exception::JSONObjectException);
+  ASSERT_THROW(to.buildFromJSON("WRONG_JSON_STRING"),cta::exception::JSONObjectException);
 }
 
 }
