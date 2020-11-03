@@ -276,7 +276,7 @@ void RecallTaskInjector::WorkerThread::run()
     } catch (castor::tape::SCSI::Exception& e) {
       cta::log::ScopedParamContainer spc(m_parent.m_lc);
       spc.add("exceptionMessage",e.getMessageValue());
-      m_parent.m_lc.log(cta::log::ERR, "Error while fetching the limitUDS for RAO enterprise drive. Will run a CTA RAO.");
+      m_parent.m_lc.log(cta::log::INFO, "Error while fetching the limitUDS for RAO enterprise drive. Will run a CTA RAO.");
     } catch(const castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException &ex){
       m_parent.m_lc.log(cta::log::INFO, "The drive does not support RAO Enterprise, will run a CTA RAO.");
     }
