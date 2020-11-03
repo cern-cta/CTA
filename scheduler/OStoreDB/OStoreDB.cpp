@@ -458,7 +458,9 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
-    logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched a retrieve queue.");
+    if(queueLockTime > 1 || queueFetchTime > 1){
+      logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): fetched a retrieve queue and that lasted more than 1 second.");
+    }
   }
   // Collect information about the existing and next mounts
   // If a next mount exists the drive "counts double", but the corresponding drive
