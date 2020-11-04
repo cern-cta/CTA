@@ -493,6 +493,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 * Wed Nov 04 2020 julien.leduc (at) cern.ch - 3.1-9
 - Upstream EOS 4.8.26-1
 - cta/CTA#907 For backpressure, the EOS free space can be fetched by calling an external script
+- cta/CTA#917 Corrected the bug in the cta-admin showqueues command in the case ArchiveForUser and ArchiveForRepack exist for the same tapepool
 * Fri Oct 22 2020 julien.leduc (at) cern.ch - 3.1-8
 - CTA software Recommended Access Order (RAO) implemented for LTO drives
 - cta-admin repack ls tabular output improvements

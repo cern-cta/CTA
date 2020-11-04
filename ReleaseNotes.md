@@ -9,6 +9,10 @@ This release contains an improvement allowing to fetch the EOS free space via an
 - Upgraded EOS to 4.8.26-1
 - cta/CTA#907 For backpressure, the EOS free space can be fetched by calling an external script
 
+### Bug fixes
+
+- cta/CTA#917 Corrected the bug in the cta-admin showqueues command in the case ArchiveForUser and ArchiveForRepack exist for the same tapepool
+
 # v3.1-8
 
 ## Summary

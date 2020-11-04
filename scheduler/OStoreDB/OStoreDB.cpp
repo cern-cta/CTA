@@ -249,7 +249,9 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
-    logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive for user queue.");
+    if(queueLockTime > 1 || queueFetchTime > 1) {
+      logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): fetched an archive for user queue and that lasted more than 1 second.");
+    }
   }
   // Walk the archive queues for REPACK for statistics
   for (auto & aqp: re.dumpArchiveQueues(JobQueueType::JobsToTransferForRepack)) {
@@ -308,7 +310,9 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
-    logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive for repack queue.");
+    if(queueLockTime > 1 || queueFetchTime > 1) {
+      logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): fetched an archive for repack queue and that lasted more than 1 second.");
+    }
   }
   // Walk the retrieve queues for statistics
   for (auto & rqp: re.dumpRetrieveQueues(JobQueueType::JobsToTransferForUser)) {
