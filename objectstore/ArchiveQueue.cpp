@@ -70,7 +70,6 @@ void ArchiveQueue::initialize(const std::string& name) {
 void ArchiveQueue::commit() {
   if (!checkMapsAndShardsCoherency()) {
     rebuild();
-    m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount()+1);
   }
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>::commit();
 }
@@ -197,8 +196,54 @@ void ArchiveQueue::rebuild() {
   m_payload.set_archivejobscount(totalJobs);
   m_payload.set_archivejobstotalsize(totalBytes);
   m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
+  m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount()+1);
   // We went through all the shard, re-updated the summaries, removed references to
   // gone shards. Done.
+}
+
+void ArchiveQueue::recomputeOldestJobCreationTime(){
+  checkPayloadWritable();
+  
+  std::list<ArchiveQueueShard> shards;
+  std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
+  
+  for (auto & sa: m_payload.archivequeueshards()) {
+    shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
+    shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
+  }
+  
+  auto s = shards.begin();
+  auto sf = shardsFetchers.begin();
+  time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
+  while (s != shards.end()) {
+    // Each shard could be gone
+    try {
+      (*sf)->wait();
+    } catch (Backend::NoSuchObject & ex) {
+      // Remove the shard from the list
+      auto aqs = m_payload.mutable_archivequeueshards()->begin();
+      while (aqs != m_payload.mutable_archivequeueshards()->end()) {
+        if (aqs->address() == s->getAddressIfSet()) {
+          aqs = m_payload.mutable_archivequeueshards()->erase(aqs);
+        } else {
+          aqs++;
+        }
+      }
+      goto nextShard;
+    }
+    {
+      // The shard is still around, let's compute its oldest job
+      for (auto & j: s->dumpJobs()) {
+        if (j.startTime < oldestJobCreationTime) oldestJobCreationTime = j.startTime;
+      }
+    }
+    nextShard:;
+    s++;
+    sf++;
+  }
+  if(oldestJobCreationTime != std::numeric_limits<time_t>::max()){
+    m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
+  }
 }
 
 
@@ -514,6 +559,7 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
       }
     ); // end of remove_if
     // And commit the queue (once per shard should not hurt performance).
+    recomputeOldestJobCreationTime();
     commit();
   }
 }

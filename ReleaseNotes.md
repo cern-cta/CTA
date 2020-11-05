@@ -12,6 +12,7 @@ This release contains an improvement allowing to fetch the EOS free space via an
 ### Bug fixes
 
 - cta/CTA#917 Corrected the bug in the cta-admin showqueues command in the case ArchiveForUser and ArchiveForRepack exist for the same tapepool
+- cta/CTA#919 Archive queue oldestjobcreationtime is now updated at each pop from the ArchiveQueue
 
 # v3.1-8
 

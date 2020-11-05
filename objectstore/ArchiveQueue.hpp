@@ -61,6 +61,9 @@ private:
   // Rebuild from shards if something goes wrong.
   void rebuild();
   
+  // Recompute oldest job creation time
+  void recomputeOldestJobCreationTime();
+  
 public:
   // Set/get tape pool
   void setTapePool(const std::string & name);
