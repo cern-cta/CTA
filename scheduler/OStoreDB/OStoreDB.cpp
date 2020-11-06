@@ -4370,6 +4370,13 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
               .add("timeForSelection",requestTimings.getTimeForSelection())
               .add("timeForCompletion", requestTimings.getTimeForCompletion());
         lc.log(log::INFO, "Retrieve job successfully deleted");
+      } catch(const Backend::NoSuchObject & ex) {
+        log::ScopedParamContainer params(lc);
+        params.add("fileId", osdbJob->archiveFile.archiveFileID)
+              .add("requestObject", osdbJob->m_retrieveRequest.getAddressIfSet())
+              .add("exceptionMessage", ex.getMessageValue());
+        lc.log(log::WARNING, 
+            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async deletion failed because the object does not exist anymore. ");
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", osdbJob->archiveFile.archiveFileID)
