@@ -414,8 +414,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processScheduling(serializers:
           .add("PreviousType", session::toString(m_sessionType))
           .add("NewState", session::toString((SessionState)message.sessionstate()))
           .add("NewType", session::toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::WARNING,
-        "In DriveHandler::processScheduling(): unexpected previous state/type.");
+    m_processManager.logContext().log(log::DEBUG,
+        "WARNING: In DriveHandler::processScheduling(): unexpected previous state/type.");
   } else if (m_sessionState != SessionState::Scheduling) {
     // If we see a session state change, it's worth logging (at least in debug mode)
     params.add("PreviousState", session::toString(m_sessionState))
@@ -684,7 +684,7 @@ void DriveHandler::processBytes(serializers::WatchdogMessage& message) {
             .add("PreviousDiskBytesMoved", m_totalDiskBytesMoved)
             .add("NewTapeBytesMoved", message.totaltapebytesmoved())
             .add("NewDiskBytesMoved", message.totaldiskbytesmoved());
-      m_processManager.logContext().log(log::WARNING, "In DriveHandler::processRunning(): total bytes moved going backwards");
+      m_processManager.logContext().log(log::DEBUG, "WARNING: In DriveHandler::processRunning(): total bytes moved going backwards");
     }
     m_totalTapeBytesMoved=message.totaltapebytesmoved();
     m_totalDiskBytesMoved=message.totaldiskbytesmoved();
