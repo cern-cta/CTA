@@ -771,10 +771,12 @@ void XRootdDirectory::rmdir() {
 bool XRootdDirectory::exist() {
   XrdCl::StatInfo *statInfo;
   XrdCl::XRootDStatus statStatus = m_xrootFileSystem.Stat(m_truncatedDirectoryURL,statInfo,c_xrootTimeout);
-  cta::exception::XrootCl::throwOnError(statStatus,"In XRootdDirectory::exist() : failed to stat the directory at "+m_URL);
   if(statStatus.errNo == XErrorCode::kXR_NotFound){
     return false;
   }
+  //If the EOS instance does not exist, we don't want to return false, we want to throw an exception.
+  cta::exception::XrootCl::throwOnError(statStatus,"In XRootdDirectory::exist() : failed to stat the directory at "+m_URL);
+  //No exception, return true
   return true;
 }
 

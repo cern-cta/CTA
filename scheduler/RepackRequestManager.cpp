@@ -43,10 +43,14 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
         try{
           m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
         } catch (const ExpandRepackRequestException& ex){
-          lc.log(log::ERR,ex.what());
+          log::ScopedParamContainer spc(lc);
+          spc.add("vid",repackRequest->getRepackInfo().vid);
+          lc.log(log::ERR,ex.getMessageValue());
           repackRequest->fail();
         } catch (const cta::exception::Exception &e){
-          lc.log(log::ERR,e.what());
+          log::ScopedParamContainer spc(lc);
+          spc.add("vid",repackRequest->getRepackInfo().vid);
+          lc.log(log::ERR,e.getMessageValue());
           repackRequest->fail();
           throw(e);
         }
