@@ -306,7 +306,7 @@ private:
   
   cta::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
   
-  void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer);
+  void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext & lc);
   
   uint64_t getNbFilesAlreadyArchived(const common::dataStructures::ArchiveFile& archiveFile);
   

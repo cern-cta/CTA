@@ -490,6 +490,8 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Wed Nov 18 2020 julien.leduc (at) cern.ch - 3.1-10
+- cta/CTA#837 Repack now fails if the repack buffer VID directory cannot be created during expansion
 * Wed Nov 04 2020 julien.leduc (at) cern.ch - 3.1-9
 - Upstream EOS 4.8.26-1
 - cta/CTA#907 For backpressure, the EOS free space can be fetched by calling an external script

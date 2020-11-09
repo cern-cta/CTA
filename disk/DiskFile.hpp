@@ -230,6 +230,10 @@ namespace cta {
      * Remove the directory located at this->m_URL 
      */
     virtual void rmdir() = 0;
+    
+    std::string getURL() {
+      return m_URL;
+    }
 
     virtual ~Directory() throw() {}
   protected:

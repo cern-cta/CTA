@@ -1,3 +1,13 @@
+# v3.1-10
+
+## Summary
+
+### Features
+
+### Bug fixes
+
+cta/CTA#837 Repack now fails if the repack buffer VID directory cannot be created during expansion
+
 # v3.1-9
 
 ## Summary

@@ -461,27 +461,20 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     //We only create the folder if there are some files to Repack
     cta::disk::DirectoryFactory dirFactory;
     dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
-    if(dir->exist()){
-      //Repack tape repair workflow
-      try{
+    try {  
+      if(dir->exist()){
+        //Repack tape repair workflow
         filesInDirectory = dir->getFilesName();
-      } catch (const cta::exception::XrootCl &ex) {
-        log::ScopedParamContainer spc(lc);
-        spc.add("vid",repackInfo.vid);
-        spc.add("errorMessage",ex.getMessageValue());
-        lc.log(log::WARNING,"In Scheduler::expandRepackRequest(), received XRootdException while listing files in the buffer");
-      }
-    } else {
-      if(repackInfo.noRecall){
-        //The buffer directory should be created if the --no-recall flag has been passed
-        //So we throw an exception 
-        throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): the flag --no-recall is set but no buffer directory has been created.");
-      }
-      try {
+      } else {
+        if(repackInfo.noRecall){
+          //The buffer directory should be created if the --no-recall flag has been passed
+          //So we throw an exception 
+          throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): the flag --no-recall is set but no buffer directory has been created.");
+        }
         dir->mkdir();
-      } catch (const cta::exception::XrootCl &ex){
-        throw ExpandRepackRequestException(ex.getMessageValue());
       }
+    } catch (const cta::exception::XrootCl &ex) {
+      throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): errors while doing some checks on the repack buffer. ExceptionMsg = " + ex.getMessageValue());
     }
   }
   
@@ -580,7 +573,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
             }
           }
           if(retrieveSubRequest.copyNbsToRearchive.size() < filesToArchive){
-            deleteRepackBuffer(std::move(dir));
+            deleteRepackBuffer(std::move(dir),lc);
             throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): Missing archive routes for the creation of the new copies of the files");
           }
         } else {
@@ -592,7 +585,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         }
       } else {
         //No storage class have been found for the current tapefile throw an exception
-        deleteRepackBuffer(std::move(dir));
+        deleteRepackBuffer(std::move(dir),lc);
         throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): No storage class have been found for the file to add copies");
       }
     }
@@ -642,7 +635,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // value in case of crash.
     nbRetrieveSubrequestsQueued = repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq, maxAddedFSeq, totalStatsFile, diskSystemList, lc);
   } catch(const cta::ExpandRepackRequestException& e){
-    deleteRepackBuffer(std::move(dir));
+    deleteRepackBuffer(std::move(dir),lc);
     throw e;
   }
   timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
@@ -654,7 +647,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
   if(archiveFilesFromCatalogue.empty() && totalStatsFile.totalFilesToArchive == 0 && (totalStatsFile.totalFilesToRetrieve == 0 || nbRetrieveSubrequestsQueued == 0)){
     //If no files have been retrieve, the repack buffer will have to be deleted
     //TODO : in case of Repack tape repair, we should not try to delete the buffer
-    deleteRepackBuffer(std::move(dir));      
+    deleteRepackBuffer(std::move(dir),lc);      
   }
   repackRequest->m_dbReq->expandDone();
   lc.log(log::INFO,"In Scheduler::expandRepackRequest(), repack request expanded");
@@ -1096,9 +1089,15 @@ cta::optional<common::dataStructures::LogicalLibrary> Scheduler::getLogicalLibra
   return ret;
 }
 
-void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer) {
-  if(repackBuffer != nullptr && repackBuffer->exist()){
-    repackBuffer->rmdir();
+void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext & lc) {
+  try{
+    if(repackBuffer != nullptr && repackBuffer->exist()){
+      repackBuffer->rmdir();
+    }
+  } catch (const cta::exception::XrootCl & ex) {
+    log::ScopedParamContainer spc(lc);
+    spc.add("exceptionMsg",ex.getMessageValue());
+    lc.log(log::ERR,"In Scheduler::deleteRepackBuffer() unable to delete the directory located in " + repackBuffer->getURL());
   }
 }
 
