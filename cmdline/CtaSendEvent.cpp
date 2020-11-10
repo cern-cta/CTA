@@ -137,9 +137,6 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
   std::string reportUrl = "eosQuery://" + eos_endpoint + "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] +
      "&mgm.logid=cta&mgm.event=sync::archived&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=" +
      xattrs["sys.archive.file_id"];
-  std::string errorReportUrl = "eosQuery://" + eos_endpoint + "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] +
-     "&mgm.logid=cta&mgm.event=sync::archive_failed&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=" +
-     xattrs["sys.archive.file_id"] + "&mgm.errmsg=";
   std::string destUrl = "root://" + eos_endpoint + "/" + attr["path"] + "?eos.lfn=fxid:" + attr["fxid"] +
      "&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
 
@@ -155,10 +152,20 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
   // Transport
   if(wf_command == "CLOSEW") {
     notification.mutable_transport()->set_report_url(reportUrl);
+    notification.mutable_transport()->set_error_report_url("eosQuery://" + eos_endpoint +
+      "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] + "&mgm.logid=cta" +
+      "&mgm.event=sync::archive_failed" +
+      "&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0" +
+      "&cta_archive_file_id=" + xattrs["sys.archive.file_id"] +
+      "&mgm.errmsg=");
   } else if(wf_command == "PREPARE") {
     notification.mutable_transport()->set_dst_url(destUrl);
+    notification.mutable_transport()->set_error_report_url("eosQuery://" + eos_endpoint +
+      "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] + "&mgm.logid=cta" +
+      "&mgm.event=sync::retrieve_failed" +
+      "&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0" +
+      "&mgm.errmsg=");
   }
-  notification.mutable_transport()->set_error_report_url(errorReportUrl);
 
   // File
   notification.mutable_file()->set_fid(std::strtoul(attr["id"].c_str(), nullptr, 0));
