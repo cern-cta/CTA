@@ -101,7 +101,8 @@ void MigrationReportPacker::reportFlush(drive::compressionStats compressStats, c
   params.add("type", "ReportFlush");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFlush(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportFlush(compressStats));
+  std::unique_ptr<Report> rep(new ReportFlush(compressStats));
+  m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportTapeFull
@@ -111,7 +112,8 @@ void MigrationReportPacker::reportTapeFull(cta::log::LogContext & lc){
   params.add("type", "ReportTapeFull");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportTapeFull(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportTapeFull());
+  std::unique_ptr<Report> rep(new ReportTapeFull());
+  m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSession
@@ -121,7 +123,8 @@ void MigrationReportPacker::reportEndOfSession(cta::log::LogContext & lc) {
   params.add("type", "ReportEndofSession");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSession(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportEndofSession());
+  std::unique_ptr<Report> rep(new ReportEndofSession());
+  m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
@@ -131,7 +134,8 @@ void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int err
   params.add("type", "ReportEndofSessionWithErrors");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportEndofSessionWithErrors(msg,errorCode));
+  std::unique_ptr<Report> rep(new ReportEndofSessionWithErrors(msg,errorCode));
+  m_fifo.push(rep.release());
 }
 
 //------------------------------------------------------------------------------
@@ -142,7 +146,8 @@ void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext & lc){
   params.add("type", "ReportTestGoingToEnd");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportTestGoingToEnd(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportTestGoingToEnd());
+  std::unique_ptr<Report> rep(new ReportTestGoingToEnd());
+  m_fifo.push(rep.release());
 }
 
 //------------------------------------------------------------------------------
