@@ -30,7 +30,7 @@ QueueAndMountSummary &QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndM
     const common::dataStructures::VidToTapeMap &vid_to_tapeinfo)
 {
   for (auto & summary: summaryList) {
-    if((summary.tapePool == tapePool && summary.mountType == mountType) || (summary.vid == vid && mountType == MountType::Retrieve)) {
+    if((summary.tapePool == tapePool && summary.mountType == mountType && (getMountBasicType(mountType) == MountType::ArchiveAllTypes)) || (summary.vid == vid && mountType == MountType::Retrieve)) {
       return summary;
     }
   }

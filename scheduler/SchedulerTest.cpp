@@ -5151,6 +5151,175 @@ TEST_P(SchedulerTest, retrieveMountPolicyInFlightChangeScheduleMount)
   
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
 }
+
+TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
+{
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("getQueuesAndMountSummariesTestAgent", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  
+  //Create two tapes
+  const std::string comment = "Tape comment";
+  bool notDisabled = false;
+  bool notFull = false;
+  bool notReadOnly = false;
+  catalogue::CreateTapeAttributes tape;
+  tape.vid = s_vid;
+  tape.mediaType = s_mediaType;
+  tape.vendor = s_vendor;
+  tape.logicalLibraryName = s_libraryName;
+  tape.tapePoolName = s_tapePoolName;
+  tape.full = notFull;
+  tape.disabled = notDisabled;
+  tape.readOnly = notReadOnly;
+  tape.comment = comment;
+  catalogue.createTape(s_adminOnAdminHost, tape);
+  
+  std::string vid2 = s_vid + "2";
+  tape.vid = vid2;
+  catalogue.createTape(s_adminOnAdminHost,tape);
+  
+  //Create a RetrieveQueue with the vid s_vid
+  std::string retrieveQueueAddress;
+  cta::objectstore::RootEntry re(backend);
+  {
+    cta::objectstore::ScopedExclusiveLock sel(re);
+    re.fetch();
+    retrieveQueueAddress = re.addOrGetRetrieveQueueAndCommit(s_vid,agentReference,JobQueueType::JobsToTransferForUser);
+  }
+  
+  //Create a RetrieveJob and put it in the queue s_vid
+  cta::objectstore::RetrieveQueue::JobToAdd retrieveJobToAdd;
+  retrieveJobToAdd.copyNb = 1;
+  retrieveJobToAdd.fSeq = 1;
+  retrieveJobToAdd.fileSize = 1;
+  retrieveJobToAdd.startTime = time(nullptr);
+  retrieveJobToAdd.retrieveRequestAddress = "";
+  
+  cta::objectstore::RetrieveQueue retrieveQueue1(retrieveQueueAddress,backend);
+  {
+    cta::objectstore::ScopedExclusiveLock sel(retrieveQueue1);
+    retrieveQueue1.fetch();
+    std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd({retrieveJobToAdd});
+    retrieveQueue1.addJobsAndCommit(jobsToAdd,agentReference,lc);
+  }
+  
+  //Create a second retrieve queue that will hold a job for the tape vid2
+  std::string retrieveQueue2Address;
+  {
+    cta::objectstore::ScopedExclusiveLock sel(re);
+    re.fetch();
+    retrieveQueue2Address = re.addOrGetRetrieveQueueAndCommit(vid2,agentReference,JobQueueType::JobsToTransferForUser);
+  }
+  cta::objectstore::RetrieveQueue retrieveQueue2(retrieveQueue2Address,backend);
+  {
+    cta::objectstore::ScopedExclusiveLock sel(retrieveQueue2);
+    retrieveQueue2.fetch();
+    std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd({retrieveJobToAdd});
+    retrieveQueue2.addJobsAndCommit(jobsToAdd,agentReference,lc);
+  }
+  
+  //Create an ArchiveForUser queue and put one file on it
+  std::string archiveForUserQueueAddress;
+  {
+    cta::objectstore::ScopedExclusiveLock sel(re);
+    re.fetch();
+    archiveForUserQueueAddress = re.addOrGetArchiveQueueAndCommit(s_tapePoolName,agentReference,JobQueueType::JobsToTransferForUser);
+  }
+  
+  cta::objectstore::ArchiveQueue::JobToAdd archiveJobToAdd;
+  archiveJobToAdd.archiveFileId = 1;
+  archiveJobToAdd.fileSize = 2;
+  archiveJobToAdd.startTime = time(nullptr);
+  
+  cta::objectstore::ArchiveQueue aq(archiveForUserQueueAddress,backend);
+  {
+    cta::objectstore::ScopedExclusiveLock sel(aq);
+    aq.fetch();
+    std::list<cta::objectstore::ArchiveQueue::JobToAdd> jobsToAdd({archiveJobToAdd});
+    aq.addJobsAndCommit(jobsToAdd,agentReference,lc);
+  }
+  
+  // Create an ArchiveForRepack queue and put one file on it
+  
+  std::string archiveForRepackQueueAddress;
+  {
+    cta::objectstore::ScopedExclusiveLock sel(re);
+    re.fetch();
+    archiveForRepackQueueAddress = re.addOrGetArchiveQueueAndCommit(s_tapePoolName,agentReference,JobQueueType::JobsToTransferForRepack);
+  }
+  
+  cta::objectstore::ArchiveQueue::JobToAdd repackArchiveJob;
+  repackArchiveJob.archiveFileId = 2;
+  repackArchiveJob.fileSize = 3;
+  repackArchiveJob.startTime = time(nullptr);
+  
+  cta::objectstore::ArchiveQueue repackArchiveQueue(archiveForRepackQueueAddress,backend);
+  {
+    cta::objectstore::ScopedExclusiveLock sel(repackArchiveQueue);
+    repackArchiveQueue.fetch();
+    std::list<cta::objectstore::ArchiveQueue::JobToAdd> jobsToAdd({repackArchiveJob});
+    repackArchiveQueue.addJobsAndCommit(jobsToAdd,agentReference,lc);
+  }
+  
+  auto queuesAndMountSummaries = scheduler.getQueuesAndMountSummaries(lc);
+  
+  ASSERT_EQ(4,queuesAndMountSummaries.size());
+  std::string vid = tape.vid;
+  
+  //Test the QueueAndMountSummary of the first Retrieve Queue s_vid
+  auto res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [vid](const cta::common::dataStructures::QueueAndMountSummary & qams){
+    return qams.mountType == cta::common::dataStructures::MountType::Retrieve && qams.vid == vid; 
+  });
+  ASSERT_EQ(tape.vid,res->vid);
+  ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,res->mountType);
+  
+  vid = vid2;
+  //Test the QueueAndMountSummary of the first Retrieve Queue vid2
+  res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [vid](const cta::common::dataStructures::QueueAndMountSummary & qams){
+    return qams.mountType == cta::common::dataStructures::MountType::Retrieve && qams.vid == vid; 
+  });
+  ASSERT_EQ(vid,res->vid);
+  ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,res->mountType);
+  
+  //Test the ArchiveForUser QueueAndMountSummary
+  std::string tapePool = s_tapePoolName;
+  res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [tapePool](const cta::common::dataStructures::QueueAndMountSummary & qams){
+    return qams.mountType == cta::common::dataStructures::MountType::ArchiveForUser && qams.tapePool == tapePool; 
+  });
+  ASSERT_EQ(tapePool,res->tapePool);
+  ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser,res->mountType);
+  
+  //Test the ArchiveForRepack QueueAndMountSummary
+  res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [tapePool](const cta::common::dataStructures::QueueAndMountSummary & qams){
+    return qams.mountType == cta::common::dataStructures::MountType::ArchiveForRepack && qams.tapePool == tapePool; 
+  });
+  ASSERT_EQ(tapePool, res->tapePool);
+  ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack,res->mountType);
+}
   
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
