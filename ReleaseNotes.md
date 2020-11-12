@@ -2,11 +2,13 @@
 
 ## Summary
 
-### Features
+This version contains different bug fixes
 
 ### Bug fixes
 
 cta/CTA#837 Repack now fails if the repack buffer VID directory cannot be created during expansion
+cta/CTA#920 Archive and Retrieve error report URL correction on the cta-send-event cmdline tool
+cta/CTA#923 Corrected the cta-admin showqueues command to display all the retrieve queues of tapes that are on the same tapepool
 
 # v3.1-9
 
