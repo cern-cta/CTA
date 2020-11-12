@@ -1650,6 +1650,20 @@ protected:
    * the catalogue.
    */
   virtual uint64_t getNextTapePoolId(rdbms::Conn &conn) = 0;
+  
+  /**
+   * Returns a unique file recycle log ID that can be used by a new entry of file recycle log within
+   * the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique file recycle log ID that can be used by a new entry of file recycle log within
+   * the catalogue.
+   */
+  virtual uint64_t getNextFileRecyleLogId(rdbms::Conn & conn) = 0;
 
   /**
    * Returns a cached version of the mapping from tape copy to tape pool for the

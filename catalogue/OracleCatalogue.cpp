@@ -330,6 +330,31 @@ uint64_t OracleCatalogue::getNextTapePoolId(rdbms::Conn &conn) {
 }
 
 //------------------------------------------------------------------------------
+// getNextFileRecyleLogId
+//------------------------------------------------------------------------------
+uint64_t OracleCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn) {
+  try {
+    const char *const sql =
+      "SELECT "
+        "FILE_RECYCLE_LOG_ID_SEQ.NEXTVAL AS FILE_RECYCLE_LOG_ID "
+      "FROM "
+        "DUAL";
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    if (!rset.next()) {
+      throw exception::Exception(std::string("Result set is unexpectedly empty"));
+    }
+
+    return rset.columnUint64("FILE_RECYCLE_LOG_ID");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // selectTapeForUpdateAndGetLastFSeq
 //------------------------------------------------------------------------------
 uint64_t OracleCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn,
@@ -555,10 +580,28 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       auto stmt = conn.createStmt(sql);
       stmt.executeNonQuery();
     }
+    
+    insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn, fileEvents);
 
     {
-      const char *const sql =
-        "MERGE INTO"                                                                      "\n"
+      //DELETE the TAPE_FILEs that come from a tape to repack
+      /*const char *const sql = 
+      "DELETE FROM TAPE_FILE WHERE (ARCHIVE_FILE_ID, COPY_NB, VID) IN "
+      "("
+        "SELECT "
+          "TF.ARCHIVE_FILE_ID,"
+          "TF.COPY_NB,"
+          "TF.VID " 
+          // Using MAX(FSEQ) to cover the same tape copy being written more than
+          // once.  The last one written supersedes the previous ones.
+        "FROM "
+         "TAPE_FILE TF JOIN " 
+          "TEMP_TAPE_FILE_INSERTION_BATCH TTFIB "
+          "ON TF.ARCHIVE_FILE_ID = TTFIB.ARCHIVE_FILE_ID AND TF.COPY_NB = TTFIB.COPY_NB "
+        "WHERE "
+          "TF.VID != TTFIB.VID "
+      ")";*/
+        const char * const sql = "MERGE INTO"                                             "\n"
           "TAPE_FILE"                                                                     "\n"
         "USING("                                                                          "\n"
           "SELECT"                                                                        "\n"
@@ -746,6 +789,10 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
   }
 }
 
+void OracleCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn, const std::set<TapeFileWritten>& events) {
+//TODO: A CONTINUER
+}
+
 //------------------------------------------------------------------------------
 // selectArchiveFileSizeAndChecksum
 //------------------------------------------------------------------------------
@@ -819,9 +866,7 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -875,11 +920,6 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
         tapeFile.copyNb = selectRset.columnUint8("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        if (!selectRset.columnIsNull("SSBY_VID")) {
-          tapeFile.supersededByVid = selectRset.columnString("SSBY_VID");
-          tapeFile.supersededByFSeq = selectRset.columnUint64("SSBY_FSEQ");
-        }
-        
         archiveFile->tapeFiles.push_back(tapeFile);
       }
     }
@@ -916,9 +956,7 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
           << " creationTime: " << it->creationTime
           << " fileSize: " << it->fileSize
           << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
-          << " copyNb: " << static_cast<int>(it->copyNb) //this shouldn't be here: repeated field
-          << " supersededByVid: " << it->supersededByVid
-          << " supersededByFSeq: " << it->supersededByFSeq;
+          << " copyNb: " << static_cast<int>(it->copyNb); //this shouldn't be here: repeated field
         spc.add("TAPE FILE", tapeCopyLogStream.str());
       }
       lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
@@ -986,9 +1024,7 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
         << " creationTime: " << it->creationTime
         << " fileSize: " << it->fileSize
         << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
-        << " copyNb: " << static_cast<int>(it->copyNb) //this shouldn't be here: repeated field
-        << " supersededByVid: " << it->supersededByVid
-        << " supersededByFSeq: " << it->supersededByFSeq;
+        << " copyNb: " << static_cast<int>(it->copyNb); //this shouldn't be here: repeated field
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");

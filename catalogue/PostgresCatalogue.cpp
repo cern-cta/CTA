@@ -307,6 +307,27 @@ uint64_t PostgresCatalogue::getNextTapePoolId(rdbms::Conn &conn) {
 }
 
 //------------------------------------------------------------------------------
+// getNextFileRecyleLogId
+//------------------------------------------------------------------------------
+uint64_t PostgresCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn) {
+  try {
+    const char *const sql =
+      "select NEXTVAL('FILE_RECYCLE_LOG_ID_SEQ') AS FILE_RECYCLE_LOG_ID";
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    if(!rset.next()) {
+      throw exception::Exception("Result set is unexpectedly empty");
+    }
+    return rset.columnUint64("FILE_RECYCLE_LOG_ID");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // selectTapeForUpdateAndGetNextFSeq
 //------------------------------------------------------------------------------
 uint64_t PostgresCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
@@ -753,9 +774,7 @@ void PostgresCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::strin
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -807,10 +826,6 @@ void PostgresCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::strin
         tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
         tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        if (!selectRset.columnIsNull("SSBY_VID")) {
-          tapeFile.supersededByVid = selectRset.columnString("SSBY_VID");
-          tapeFile.supersededByFSeq = selectRset.columnUint64("SSBY_FSEQ");
-        }
 
         archiveFile->tapeFiles.push_back(tapeFile);
       }
@@ -848,10 +863,7 @@ void PostgresCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::strin
           << " creationTime: " << it->creationTime
           << " fileSize: " << it->fileSize
           << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
-          << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
-          << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
-          << " supersededByVid: " << it->supersededByVid
-          << " supersededByFSeq: " << it->supersededByFSeq;
+          << " copyNb: " << it->copyNb;
         spc.add("TAPE FILE", tapeCopyLogStream.str());
       }
       lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
@@ -920,9 +932,7 @@ void PostgresCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::strin
         << " creationTime: " << it->creationTime
         << " fileSize: " << it->fileSize
         << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
-        << " copyNb: " << static_cast<int>(it->copyNb) //this shouldn't be here: repeated field
-        << " supersededByVid: " << it->supersededByVid
-        << " supersededByFSeq: " << it->supersededByFSeq;
+        << " copyNb: " << static_cast<int>(it->copyNb); //this shouldn't be here: repeated field
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");

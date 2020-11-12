@@ -6828,8 +6828,6 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ,"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "ARCHIVE_FILE "
@@ -6876,10 +6874,6 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
       tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
-      if (!rset.columnIsNull("SSBY_VID")) {
-        tapeFile.supersededByVid = rset.columnString("SSBY_VID");
-        tapeFile.supersededByFSeq = rset.columnUint64("SSBY_VID");
-      }
 
       archiveFile.tapeFiles.push_back(tapeFile);
 
@@ -7056,9 +7050,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -7100,10 +7092,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        if (!rset.columnIsNull("SSBY_VID")) {
-          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
-          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
-        }
 
         archiveFile->tapeFiles.push_back(tapeFile);
       }
@@ -7885,9 +7873,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -7922,7 +7908,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
       }
 
       // If there is a tape file that is active i.e non superseded by another file, we add it to the archiveFile's list of tape files
-      if(!rset.columnIsNull("VID") && rset.columnIsNull("SSBY_VID") && rset.columnIsNull("SSBY_FSEQ")) {
+      if(!rset.columnIsNull("VID")) {
         // Add the tape file to the archive file's in-memory structure
         common::dataStructures::TapeFile tapeFile;
         tapeFile.vid = rset.columnString("VID");
@@ -7932,10 +7918,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        if (!rset.columnIsNull("SSBY_VID")) {
-          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
-          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
-        }
         
         archiveFile->tapeFiles.push_back(tapeFile);
       }
@@ -8033,9 +8015,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -8079,10 +8059,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        if (!rset.columnIsNull("SSBY_VID")) {
-          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
-          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
-        }
         
         archiveFile->tapeFiles.push_back(tapeFile);
       }
@@ -8123,9 +8099,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
         "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SSBY_VID,"
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SSBY_FSEQ "
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
       "INNER JOIN STORAGE_CLASS ON "
@@ -8172,10 +8146,6 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        if (!rset.columnIsNull("SSBY_VID")) {
-          tapeFile.supersededByVid = rset.columnString("SSBY_VID");
-          tapeFile.supersededByFSeq = rset.columnUint64("SSBY_FSEQ");
-        }
         
         archiveFile->tapeFiles.push_back(tapeFile);
       }
@@ -8535,9 +8505,7 @@ void RdbmsCatalogue::moveArchiveFileToRecycleBin(const common::dataStructures::D
         << " fSeq: " << it->fSeq
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
-        << " fileSize: " << it->fileSize
-        << " supersededByVid: " << it->supersededByVid
-        << " supersededByFSeq: " << it->supersededByFSeq;
+        << " fileSize: " << it->fileSize;
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::WARNING, "Failed to move archive file to recycle-bin.");
@@ -8573,9 +8541,7 @@ void RdbmsCatalogue::moveArchiveFileToRecycleBin(const common::dataStructures::D
         << " fSeq: " << it->fSeq
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
-        << " fileSize: " << it->fileSize
-        << " supersededByVid: " << it->supersededByVid
-        << " supersededByFSeq: " << it->supersededByFSeq;
+        << " fileSize: " << it->fileSize;
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     tl.addToLog(spc);

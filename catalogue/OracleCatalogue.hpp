@@ -149,6 +149,21 @@ public:
    * the catalogue.
    */
   uint64_t getNextTapePoolId(rdbms::Conn &conn) override;
+  
+  /**
+   * Returns a unique file recycle log ID that can be used by a new entry of file recycle log within
+   * the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique file recycle log ID that can be used by a new entry of file recycle log within
+   * the catalogue.
+   */
+  uint64_t getNextFileRecyleLogId(rdbms::Conn & conn) override;
+  
 
   /**
    * Notifies the catalogue that the specified files have been written to tape.
@@ -207,6 +222,18 @@ private:
    * @param events The tape file written events.
    */
   void idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const std::set<TapeFileWritten> &events);
+  
+  /**
+   * In the case we insert a TAPE_FILE that already has a copy on the catalogue (same copyNb),
+   * the previous TAPE_FILE will go to the FILE_RECYCLE_LOG table.
+   * 
+   * This case happens always during the repacking of a tape: the new TAPE_FILE created 
+   * will replace the old one, the old one will then be moved to the FILE_RECYCLE_LOG table
+   * 
+   * @param conn The database connection.
+   * @param events The tape file written events.
+   */
+  void insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn & conn, const std::set<TapeFileWritten> & events);
 
    /**
    * Copy the archiveFile and the associated tape files from the ARCHIVE_FILE and TAPE_FILE tables to the recycle-bin tables

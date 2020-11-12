@@ -57,10 +57,6 @@ namespace {
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
       tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
-      if(!rset.columnIsNull("SUPERSEDED_BY_VID") && !rset.columnIsNull("SUPERSEDED_BY_FSEQ")){
-        tapeFile.supersededByVid = rset.columnString("SUPERSEDED_BY_VID");
-        tapeFile.supersededByFSeq = rset.columnUint64("SUPERSEDED_BY_FSEQ");
-      }
       archiveFile.tapeFiles.push_back(tapeFile);
     }
 

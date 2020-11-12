@@ -352,7 +352,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         for (auto & j: rr->dumpJobs()) {
           if(j.status==RetrieveJobStatus::RJS_ToTransfer) {
             for (auto &tf: rr->getArchiveFile().tapeFiles) {
-              if ((tf.copyNb == j.copyNb) && (tf.supersededByVid.empty()))
+              if (tf.copyNb == j.copyNb)
                 candidateVids.insert(tf.vid);
             }
           }

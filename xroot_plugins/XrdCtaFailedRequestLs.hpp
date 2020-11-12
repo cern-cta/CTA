@@ -189,8 +189,6 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
     if(tf.vid == vid) {
       record.mutable_frls_item()->mutable_tf()->set_f_seq(tf.fSeq);
       record.mutable_frls_item()->mutable_tf()->set_block_id(tf.blockId);
-      record.mutable_frls_item()->mutable_tf()->set_superseded_by_vid(tf.supersededByVid);
-      record.mutable_frls_item()->mutable_tf()->set_superseded_by_f_seq(tf.supersededByFSeq);
       break;
     }
   }

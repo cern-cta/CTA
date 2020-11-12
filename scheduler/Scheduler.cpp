@@ -538,14 +538,12 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
         // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
         // restart of expansion.
-        if(tc.supersededByVid.empty()){
-          //We want to Archive the "active" copies on the tape, thus the copies that are not superseded by another
-          //we want to Retrieve the "active" fSeq
-          totalStatsFile.totalFilesToArchive += 1;
-          totalStatsFile.totalBytesToArchive += retrieveSubRequest.archiveFile.fileSize;
-          retrieveSubRequest.copyNbsToRearchive.insert(tc.copyNb);
-          retrieveSubRequest.fSeq = tc.fSeq;
-        }
+        //We want to Archive the "active" copies on the tape, thus the copies that are not superseded by another
+        //we want to Retrieve the "active" fSeq
+        totalStatsFile.totalFilesToArchive += 1;
+        totalStatsFile.totalBytesToArchive += retrieveSubRequest.archiveFile.fileSize;
+        retrieveSubRequest.copyNbsToRearchive.insert(tc.copyNb);
+        retrieveSubRequest.fSeq = tc.fSeq;
       }
     }
 
@@ -1114,14 +1112,7 @@ void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackB
 }
 
 uint64_t Scheduler::getNbFilesAlreadyArchived(const common::dataStructures::ArchiveFile& archiveFile) {
-  uint64_t nbFilesAlreadyArchived = 0;
-  for(auto &tf: archiveFile.tapeFiles){
-    if(tf.supersededByVid == ""){
-      //We only want the "active" copies of the archive file
-      nbFilesAlreadyArchived++;
-    }
-  }
-  return nbFilesAlreadyArchived;
+  return archiveFile.tapeFiles.size();
 }
 
 

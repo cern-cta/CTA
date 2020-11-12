@@ -56,14 +56,6 @@ namespace {
       tapeFile.copyNb = rset.columnUint64("COPY_NB");
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
       tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
-      cta::optional<std::string> supersededByVid = rset.columnOptionalString("SUPERSEDED_BY_VID");
-      if(supersededByVid){
-        tapeFile.supersededByVid = supersededByVid.value();
-      }
-      cta::optional<uint64_t> supersededByFSeq = rset.columnOptionalUint64("SUPERSEDED_BY_FSEQ");
-      if(supersededByFSeq){
-        tapeFile.supersededByFSeq = supersededByFSeq.value();
-      }
       archiveFile.tapeFiles.push_back(tapeFile);
     }
 

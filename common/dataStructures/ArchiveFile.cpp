@@ -61,7 +61,7 @@ bool ArchiveFile::operator!=(const ArchiveFile &rhs) const {
 // ArchiveFile::TapeFilesList::at()
 //------------------------------------------------------------------------------
 TapeFile& ArchiveFile::TapeFilesList::at(uint8_t copyNb) {
-  auto ret = std::find_if(begin(), end(), [=](TapeFile& tf){ return tf.isActiveCopyNb(copyNb);});
+  auto ret = std::find_if(begin(), end(), [=](TapeFile& tf){ return tf.matchesCopyNb(copyNb);});
   if (ret == end()) throw cta::exception::Exception("In ArchiveFile::TapeFilesList::at(): not found.");
   return *ret;
 }
@@ -70,7 +70,7 @@ TapeFile& ArchiveFile::TapeFilesList::at(uint8_t copyNb) {
 // ArchiveFile::TapeFilesList::at() const
 //------------------------------------------------------------------------------
 const TapeFile& ArchiveFile::TapeFilesList::at(uint8_t copyNb) const {
-  auto ret = std::find_if(cbegin(), cend(), [=](const TapeFile& tf){ return tf.isActiveCopyNb(copyNb);});
+  auto ret = std::find_if(cbegin(), cend(), [=](const TapeFile& tf){ return tf.matchesCopyNb(copyNb);});
   if (ret == end()) throw cta::exception::Exception("In ArchiveFile::TapeFilesList::at(): not found.");
   return *ret;
 }
@@ -79,14 +79,14 @@ const TapeFile& ArchiveFile::TapeFilesList::at(uint8_t copyNb) const {
 // ArchiveFile::TapeFilesList::find() 
 //------------------------------------------------------------------------------
 ArchiveFile::TapeFilesList::iterator ArchiveFile::TapeFilesList::find(uint8_t copyNb) {
-  return std::find_if(begin(), end(), [=](TapeFile& tf){ return tf.isActiveCopyNb(copyNb);});
+  return std::find_if(begin(), end(), [=](TapeFile& tf){ return tf.matchesCopyNb(copyNb);});
 }
 
 //------------------------------------------------------------------------------
 // ArchiveFile::TapeFilesList::find() const
 //------------------------------------------------------------------------------
 ArchiveFile::TapeFilesList::const_iterator ArchiveFile::TapeFilesList::find(uint8_t copyNb) const {
-  return std::find_if(cbegin(), cend(), [=](const TapeFile& tf){ return tf.isActiveCopyNb(copyNb);});
+  return std::find_if(cbegin(), cend(), [=](const TapeFile& tf){ return tf.matchesCopyNb(copyNb);});
 }
 
 //------------------------------------------------------------------------------

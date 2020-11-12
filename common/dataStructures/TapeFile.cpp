@@ -54,10 +54,10 @@ bool TapeFile::operator!=(const TapeFile &rhs) const {
 }
 
 //------------------------------------------------------------------------------
-// TapeFile::isActiveCopyNb
+// TapeFile::matchesCopyNb
 //------------------------------------------------------------------------------
-bool TapeFile::isActiveCopyNb(uint8_t cnb) const {
-  return (cnb == copyNb) && supersededByVid.empty();
+bool TapeFile::matchesCopyNb(uint8_t cnb) const {
+  return (cnb == copyNb);
 }
 
 //------------------------------------------------------------------------------
@@ -70,10 +70,6 @@ std::ostream &operator<<(std::ostream &os, const TapeFile &obj) {
      << " fileSize=" << obj.fileSize
      << " copyNb=" << static_cast<int>(obj.copyNb)
      << " creationTime=" << obj.creationTime;
-   if (obj.supersededByVid.size()) {
-     os << " supersededByVid=" << obj.supersededByVid
-        << " supersededByFSeq=" << obj.supersededByFSeq;
-   }
   os << ")";
   return os;
 }

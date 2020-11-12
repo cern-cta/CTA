@@ -100,9 +100,7 @@ void SqliteCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
           << " creationTime: " << it->creationTime
           << " fileSize: " << it->fileSize
           << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
-          << " copyNb: " << it->copyNb //this shouldn't be here: repeated field
-          << " supersededByVid: " << it->supersededByVid
-          << " supersededByFSeq: " << it->supersededByFSeq;
+          << " copyNb: " << it->copyNb; //this shouldn't be here: repeated field
         spc.add("TAPE FILE", tapeCopyLogStream.str());
       }
       lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
@@ -180,9 +178,7 @@ void SqliteCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
         << " creationTime: " << it->creationTime
         << " fileSize: " << it->fileSize
         << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
-        << " copyNb: " << static_cast<int>(it->copyNb) //this shouldn't be here: repeated field
-        << " supersededByVid: " << it->supersededByVid
-        << " supersededByFSeq: " << it->supersededByFSeq;
+        << " copyNb: " << static_cast<int>(it->copyNb); //this shouldn't be here: repeated field
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");
@@ -392,6 +388,36 @@ uint64_t SqliteCatalogue::getNextTapePoolId(rdbms::Conn &conn) {
     conn.executeNonQuery("DELETE FROM TAPE_POOL_ID");
 
     return tapePoolId;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getNextFileRecyleLogId
+//------------------------------------------------------------------------------
+uint64_t SqliteCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn) {
+  try {
+    conn.executeNonQuery("INSERT INTO FILE_RECYCLE_LOG_ID VALUES(NULL)");
+    uint64_t fileRecycleLogId = 0;
+    {
+      const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery();
+      if(!rset.next()) {
+        throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
+      }
+      fileRecycleLogId = rset.columnUint64("ID");
+      if(rset.next()) {
+        throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
+      }
+    }
+    conn.executeNonQuery("DELETE FROM FILE_RECYCLE_LOG_ID");
+
+    return fileRecycleLogId;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

@@ -149,6 +149,20 @@ protected:
    * the catalogue.
    */
   uint64_t getNextTapePoolId(rdbms::Conn &conn) override;
+  
+  /**
+   * Returns a unique file recycle log ID that can be used by a new entry of file recycle log within
+   * the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique file recycle log ID that can be used by a new entry of file recycle log within
+   * the catalogue.
+   */
+  uint64_t getNextFileRecyleLogId(rdbms::Conn & conn) override;
 
   /**
    * Notifies the catalogue that the specified files have been written to tape.

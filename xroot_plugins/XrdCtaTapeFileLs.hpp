@@ -150,8 +150,6 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       tf->set_copy_nb(jt->copyNb);
       tf->set_block_id(jt->blockId);
       tf->set_f_seq(jt->fSeq);
-      tf->set_superseded_by_f_seq(jt->supersededByFSeq);
-      tf->set_superseded_by_vid(jt->supersededByVid);
 
       // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
       // enough data to send to the client. The actual buffer size is double the block size,
