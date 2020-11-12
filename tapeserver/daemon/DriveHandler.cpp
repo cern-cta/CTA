@@ -448,8 +448,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processChecking(serializers::W
           .add("PreviousType", session::toString(m_sessionType))
           .add("NewState", session::toString((SessionState)message.sessionstate()))
           .add("NewType", session::toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::WARNING,
-        "In DriveHandler::processChecking(): unexpected previous state/type.");
+    m_processManager.logContext().log(log::DEBUG,
+        "WARNING: In DriveHandler::processChecking(): unexpected previous state/type.");
   } else if (m_sessionState != SessionState::Checking) {
     // If we see a session state change, it's worth logging (at least in debug mode)
     params.add("PreviousState", session::toString(m_sessionState))
@@ -484,8 +484,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::W
           .add("PreviousType", session::toString(m_sessionType))
           .add("NewState", session::toString((SessionState)message.sessionstate()))
           .add("NewType", session::toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::WARNING,
-        "In DriveHandler::processMounting(): unexpected previous state/type.");
+    m_processManager.logContext().log(log::DEBUG,
+        "WARNING: In DriveHandler::processMounting(): unexpected previous state/type.");
   } else if (m_sessionState != SessionState::Checking) {
     // If we see a session state change, it's worth logging (at least in debug mode)
     params.add("PreviousState", session::toString(m_sessionState))
@@ -523,8 +523,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
           .add("PreviousType", session::toString(m_sessionType))
           .add("NewState", session::toString((SessionState)message.sessionstate()))
           .add("NewType", session::toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::WARNING,
-        "In DriveHandler::processMounting(): unexpected previous state/type.");
+    m_processManager.logContext().log(log::DEBUG,
+        "WARNING: In DriveHandler::processMounting(): unexpected previous state/type.");
   } else if (m_sessionState != SessionState::Checking) {
     // If we see a session state change, it's worth logging (at least in debug mode)
     params.add("PreviousState", session::toString(m_sessionState))
@@ -571,8 +571,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processUnmounting(serializers:
           .add("PreviousType", session::toString(m_sessionType))
           .add("NewState", session::toString((SessionState)message.sessionstate()))
           .add("NewType", session::toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::WARNING,
-        "In DriveHandler::processUnmounting(): unexpected previous state/type.");
+    m_processManager.logContext().log(log::DEBUG,
+        "WARNING: In DriveHandler::processUnmounting(): unexpected previous state/type.");
   }
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
@@ -597,8 +597,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processDrainingToDisk(serializ
           .add("PreviousType", session::toString(m_sessionType))
           .add("NewState", session::toString((SessionState)message.sessionstate()))
           .add("NewType", session::toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::WARNING,
-        "In DriveHandler::processDrainingToDisk(): unexpected previous state/type.");
+    m_processManager.logContext().log(log::DEBUG,
+        "WARNING: In DriveHandler::processDrainingToDisk(): unexpected previous state/type.");
   }
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
@@ -623,8 +623,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processShutingDown(serializers
           .add("PreviousType", session::toString(m_sessionType))
           .add("NewState", session::toString((SessionState)message.sessionstate()))
           .add("NewType", session::toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::WARNING,
-        "In DriveHandler::processShutingDown(): unexpected previous state/type.");
+    m_processManager.logContext().log(log::DEBUG,
+        "WARNING: In DriveHandler::processShutingDown(): unexpected previous state/type.");
   }
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();

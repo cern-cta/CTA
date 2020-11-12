@@ -4,6 +4,10 @@
 
 This version contains different bug fixes
 
+### Features
+
+Unuseful WARNING logs are now DEBUG logs
+
 ### Bug fixes
 
 cta/CTA#837 Repack now fails if the repack buffer VID directory cannot be created during expansion

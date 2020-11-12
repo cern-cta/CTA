@@ -207,7 +207,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       params.add("queueObject", aqp.address)
             .add("tapePool", aqp.tapePool)
             .add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for user. Skipping it.");
+      logContext.log(log::DEBUG, "WARNING: In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for user. Skipping it.");
       continue;
     }
     // If there are files queued, we create an entry for this tape pool in the
@@ -269,7 +269,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       params.add("queueObject", aqp.address)
             .add("tapePool", aqp.tapePool)
             .add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for repack. Skipping it.");
+      logContext.log(log::DEBUG, "WARNING: In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for repack. Skipping it.");
       continue;
     }
     // If there are files queued, we create an entry for this tape pool in the
@@ -331,7 +331,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       params.add("queueObject", rqp.address)
             .add("tapeVid", rqp.vid)
             .add("exceptionMessage", ex.getMessageValue());
-      lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch a retrieve queue. Skipping it.");
+      lc.log(log::DEBUG, "WARNING: In OStoreDB::fetchMountInfo(): failed to lock/fetch a retrieve queue. Skipping it.");
       continue;
     }
     // If there are files queued, we create an entry for this retrieve queue in the
@@ -1011,7 +1011,7 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getArchiveJobsFailedSummary(log::
       log::ScopedParamContainer params (logContext);
       params.add("queueObject", aj.address)
             .add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::WARNING, "In OStoreDB::getArchiveJobsFailedSummary(): failed to lock/fetch an archive queue.");
+      logContext.log(log::DEBUG, "WARNING: In OStoreDB::getArchiveJobsFailedSummary(): failed to lock/fetch an archive queue.");
       continue;
     }
     auto summary = aq.getCandidateSummary();
@@ -3001,7 +3001,7 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getRetrieveJobsFailedSummary(log:
       log::ScopedParamContainer params (logContext);
       params.add("queueObject", rj.address)
             .add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::WARNING, "In OStoreDB::getRetrieveJobsFailedSummary(): failed to lock/fetch a retrieve queue.");
+      logContext.log(log::DEBUG, "WARNING: In OStoreDB::getRetrieveJobsFailedSummary(): failed to lock/fetch a retrieve queue.");
       continue;
     }
     auto summary = rq.getCandidateSummary();
