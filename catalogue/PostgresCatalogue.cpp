@@ -30,6 +30,7 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 #include "common/log/TimingList.hpp"
+#include "InsertFileRecycleLog.hpp"
 #include <algorithm>
 
 namespace cta {
@@ -503,25 +504,8 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
       "-- :CREATION_TIME,"                                                           "\n"
       "-- :ARCHIVE_FILE_ID"                                                          "\n"
     "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"             "\n"
-      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n"
-    "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                             "\n"
-      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;" "\n"
-    "DO $$ "                                                                         "\n"
-      "DECLARE"                                                                      "\n"
-        "TF RECORD;"                                                                 "\n"
-      "BEGIN"                                                                        "\n"
-        "FOR TF IN SELECT * FROM TEMP_TAPE_FILE_INSERTION_BATCH LOOP"                "\n"
-          "UPDATE TAPE_FILE SET"                                                     "\n"
-            "SUPERSEDED_BY_VID=TF.VID,"  /*VID of the new file*/                     "\n"
-            "SUPERSEDED_BY_FSEQ=TF.FSEQ" /*FSEQ of the new file*/                    "\n"
-          "WHERE"                                                                    "\n"
-            "TAPE_FILE.ARCHIVE_FILE_ID= TF.ARCHIVE_FILE_ID AND"                      "\n"
-            "TAPE_FILE.COPY_NB= TF.COPY_NB AND"                                      "\n"
-            "(TAPE_FILE.VID <> TF.VID OR TAPE_FILE.FSEQ <> TF.FSEQ);"                "\n"
-        "END LOOP;"                                                                  "\n"
-      "END"                                                                          "\n"
-    "$$;"                                                                            "\n"
-    "COMMIT;";
+      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n";
+    
     auto stmt = conn.createStmt(sql);
     rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
     postgresStmt.setColumn(tapeFileBatch.vid);
@@ -533,7 +517,11 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     postgresStmt.setColumn(tapeFileBatch.archiveFileId);
     
     postgresStmt.executeCopyInsert(tapeFileBatch.nbRows);
+    
+    insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
+    
     autoRollback.cancel();
+    conn.commit();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -659,6 +647,119 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
 
   } catch(exception::UserError &) {
     throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+std::list<cta::catalogue::InsertFileRecycleLog> PostgresCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn){
+  std::list<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
+  try {
+    //Get the TAPE_FILE entry to put on the file recycle log
+    {
+      const char *const sql =
+        "SELECT "
+          "TAPE_FILE.VID AS VID,"
+          "TAPE_FILE.FSEQ AS FSEQ,"
+          "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+          "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
+          "TAPE_FILE.COPY_NB AS COPY_NB,"
+          "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
+          "TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
+        "FROM "
+          "TAPE_FILE "
+        "JOIN "
+          "TEMP_TAPE_FILE_INSERTION_BATCH "
+        "ON "
+          "TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB "
+        "WHERE "
+          "TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID";
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery();
+      while(rset.next()){
+        cta::catalogue::InsertFileRecycleLog fileRecycleLog;
+        fileRecycleLog.vid = rset.columnString("VID");
+        fileRecycleLog.fseq = rset.columnUint64("FSEQ");
+        fileRecycleLog.blockId = rset.columnUint64("BLOCK_ID");
+        fileRecycleLog.logicalSizeInBytes = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+        fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
+        fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
+        fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
+        fileRecycleLog.reasonLog = "Repacked from VID " + fileRecycleLog.vid;
+        fileRecycleLog.recycleLogTime = time(nullptr);
+        fileRecycleLogsToInsert.push_back(fileRecycleLog);
+      }
+    }
+    {
+      for(auto & fileRecycleLog: fileRecycleLogsToInsert){
+        const char *const sql = 
+        "INSERT INTO FILE_RECYCLE_LOG("
+          "FILE_RECYCLE_LOG_ID,"
+          "VID,"
+          "FSEQ,"
+          "BLOCK_ID,"
+          "LOGICAL_SIZE_IN_BYTES,"
+          "COPY_NB,"
+          "TAPE_FILE_CREATION_TIME,"
+          "ARCHIVE_FILE_ID,"
+          "DISK_INSTANCE_NAME,"
+          "DISK_FILE_ID,"
+          "DISK_FILE_ID_WHEN_DELETED,"
+          "DISK_FILE_UID,"
+          "DISK_FILE_GID,"
+          "SIZE_IN_BYTES,"
+          "CHECKSUM_BLOB,"
+          "CHECKSUM_ADLER32,"
+          "STORAGE_CLASS_ID,"
+          "ARCHIVE_FILE_CREATION_TIME,"
+          "RECONCILIATION_TIME,"
+          "COLLOCATION_HINT,"
+          "REASON_LOG,"
+          "RECYCLE_LOG_TIME"
+        ") SELECT "
+          "NEXTVAL('FILE_RECYCLE_LOG_ID') AS FILE_RECYCLE_LOG_ID,"
+          ":VID,"
+          ":FSEQ,"
+          ":BLOCK_ID,"
+          ":LOGICAL_SIZE_IN_BYTES,"
+          ":COPY_NB,"
+          ":TAPE_FILE_CREATION_TIME,"
+          ":ARCHIVE_FILE_ID,"
+          "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+          "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+          "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID_2,"
+          "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
+          "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
+          "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+          "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
+          "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
+          "ARCHIVE_FILE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
+          "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+          "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+          "ARCHIVE_FILE.COLLOCATION_HINT AS COLLOCATION_HINT,"
+          ":REASON_LOG,"
+          ":RECYCLE_LOG_TIME "
+        "FROM "
+          "DUAL,"
+          "ARCHIVE_FILE "
+        "WHERE "
+          "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID_2";
+        auto stmt = conn.createStmt(sql);
+        stmt.bindString(":VID",fileRecycleLog.vid);
+        stmt.bindUint64(":FSEQ",fileRecycleLog.fseq);
+        stmt.bindUint64(":BLOCK_ID",fileRecycleLog.blockId);
+        stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES",fileRecycleLog.logicalSizeInBytes);
+        stmt.bindUint8(":COPY_NB",fileRecycleLog.copyNb);
+        stmt.bindUint64(":TAPE_FILE_CREATION_TIME",fileRecycleLog.tapeFileCreationTime);
+        stmt.bindUint64(":ARCHIVE_FILE_ID",fileRecycleLog.archiveFileId);
+        stmt.bindString(":REASON_LOG",fileRecycleLog.reasonLog);
+        stmt.bindUint64(":RECYCLE_LOG_TIME",fileRecycleLog.recycleLogTime);
+        stmt.bindUint64(":ARCHIVE_FILE_ID_2",fileRecycleLog.archiveFileId);
+        stmt.executeNonQuery();
+      }
+    }
+    return fileRecycleLogsToInsert;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;

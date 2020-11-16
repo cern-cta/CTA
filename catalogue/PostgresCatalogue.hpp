@@ -20,6 +20,7 @@
 
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "rdbms/Conn.hpp"
+#include "InsertFileRecycleLog.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -230,6 +231,18 @@ private:
    */
   void idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const std::set<TapeFileWritten> &events) const;
 
+  /**
+   * In the case we insert a TAPE_FILE that already has a copy on the catalogue (same copyNb),
+   * this TAPE_FILE will go to the FILE_RECYCLE_LOG table.
+   * 
+   * This case happens always during the repacking of a tape: the new TAPE_FILE created 
+   * will replace the old one, the old one will then be moved to the FILE_RECYCLE_LOG table
+   * 
+   * @param conn The database connection.
+   * @returns the list of inserted fileRecycleLog
+   */
+  std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn & conn);
+  
   /**
    * The size and checksum of a file.
    */

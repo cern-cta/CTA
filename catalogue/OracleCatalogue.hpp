@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/InsertFileRecycleLog.hpp"
 #include "rdbms/Conn.hpp"
 
 namespace cta {
@@ -225,15 +226,15 @@ private:
   
   /**
    * In the case we insert a TAPE_FILE that already has a copy on the catalogue (same copyNb),
-   * the previous TAPE_FILE will go to the FILE_RECYCLE_LOG table.
+   * this TAPE_FILE will go to the FILE_RECYCLE_LOG table.
    * 
    * This case happens always during the repacking of a tape: the new TAPE_FILE created 
    * will replace the old one, the old one will then be moved to the FILE_RECYCLE_LOG table
    * 
    * @param conn The database connection.
-   * @param events The tape file written events.
+   * @returns the list of inserted fileRecycleLog
    */
-  void insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn & conn, const std::set<TapeFileWritten> & events);
+  std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn & conn);
 
    /**
    * Copy the archiveFile and the associated tape files from the ARCHIVE_FILE and TAPE_FILE tables to the recycle-bin tables
