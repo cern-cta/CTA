@@ -504,7 +504,9 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
       "-- :CREATION_TIME,"                                                           "\n"
       "-- :ARCHIVE_FILE_ID"                                                          "\n"
     "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"             "\n"
-      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)"                                     "\n";
+      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID) "                                    "\n"
+    "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                             "\n"
+      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;" "\n";
     
     auto stmt = conn.createStmt(sql);
     rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
@@ -518,7 +520,16 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     
     postgresStmt.executeCopyInsert(tapeFileBatch.nbRows);
     
-    insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
+    auto recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
+    
+    for(auto & recycledFile: recycledFiles){
+      const char * const deleteTapeFileSql = 
+      "DELETE FROM TAPE_FILE WHERE TAPE_FILE.VID = :VID AND TAPE_FILE.FSEQ = :FSEQ";
+      auto deleteTapeFileStmt = conn.createStmt(deleteTapeFileSql);
+      deleteTapeFileStmt.bindString(":VID",recycledFile.vid);
+      deleteTapeFileStmt.bindUint64(":FSEQ",recycledFile.fseq);
+      deleteTapeFileStmt.executeNonQuery();
+    }
     
     autoRollback.cancel();
     conn.commit();
@@ -718,7 +729,7 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresCatalogue::insertOldCopi
           "REASON_LOG,"
           "RECYCLE_LOG_TIME"
         ") SELECT "
-          "NEXTVAL('FILE_RECYCLE_LOG_ID') AS FILE_RECYCLE_LOG_ID,"
+          "nextval('FILE_RECYCLE_LOG_ID_SEQ'),"
           ":VID,"
           ":FSEQ,"
           ":BLOCK_ID,"
@@ -726,22 +737,21 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresCatalogue::insertOldCopi
           ":COPY_NB,"
           ":TAPE_FILE_CREATION_TIME,"
           ":ARCHIVE_FILE_ID,"
-          "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-          "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-          "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID_2,"
-          "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
-          "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
-          "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-          "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-          "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
-          "ARCHIVE_FILE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
-          "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-          "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-          "ARCHIVE_FILE.COLLOCATION_HINT AS COLLOCATION_HINT,"
+          "ARCHIVE_FILE.DISK_INSTANCE_NAME,"
+          "ARCHIVE_FILE.DISK_FILE_ID,"
+          "ARCHIVE_FILE.DISK_FILE_ID,"
+          "ARCHIVE_FILE.DISK_FILE_UID,"
+          "ARCHIVE_FILE.DISK_FILE_GID,"
+          "ARCHIVE_FILE.SIZE_IN_BYTES,"
+          "ARCHIVE_FILE.CHECKSUM_BLOB,"
+          "ARCHIVE_FILE.CHECKSUM_ADLER32,"
+          "ARCHIVE_FILE.STORAGE_CLASS_ID,"
+          "ARCHIVE_FILE.CREATION_TIME,"
+          "ARCHIVE_FILE.RECONCILIATION_TIME,"
+          "ARCHIVE_FILE.COLLOCATION_HINT,"
           ":REASON_LOG,"
           ":RECYCLE_LOG_TIME "
         "FROM "
-          "DUAL,"
           "ARCHIVE_FILE "
         "WHERE "
           "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID_2";
