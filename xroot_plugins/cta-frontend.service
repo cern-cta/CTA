@@ -3,6 +3,7 @@ Description=CTA frontend plugin for the XRoot deamon
 After=network-online.target
 
 [Service]
+EnvironmentFile=-/etc/sysconfig/cta-frontend
 ExecStart=/usr/bin/xrootd -l /var/log/cta-frontend-xrootd.log -c /etc/cta/cta-frontend-xrootd.conf -k fifo -n cta
 User=cta
 Type=simple

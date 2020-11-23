@@ -1,0 +1,2 @@
+# This is to improve SSI parrallel event treatment 
+XRD_PARALLELEVTLOOP=10
