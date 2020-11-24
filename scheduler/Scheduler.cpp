@@ -932,12 +932,19 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     }
   }
   
+  //Distinct mount summary to store, per mount type (ArchiveForUser, ArchiveForRepack and Retrieve)
+  //the total mounts
+  //It will be used to decide whether we will use the mountPolicy's ArchiveMinRequest age
+  //or not (issue https://gitlab.cern.ch/cta/operations/-/issues/150)
+  ExistingMountSummary existingMountsDistinctType;
+  
   // With the existing mount list, we can now populate the potential mount list
   // with the per tape pool existing mount statistics.
   for (auto & em: mountInfo->existingOrNextMounts) {
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
     if (em.driveName!=driveName) {
       existingMountsSummary[TapePoolMountPair(em.tapePool, common::dataStructures::getMountBasicType(em.type))].totalMounts++;
+      existingMountsDistinctType[TapePoolMountPair(em.tapePool, em.type)].totalMounts++;
       if (em.activity)
         existingMountsSummary[TapePoolMountPair(em.tapePool, common::dataStructures::getMountBasicType(em.type))]
           .activityMounts[em.activity.value()].value++;
@@ -959,11 +966,16 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
     // Get summary data
     uint32_t existingMounts = 0;
+    uint32_t nbExistingMountsDistinctTypes = 0;
     uint32_t activityMounts = 0;
     bool sleepingMount = false;
     try {
       existingMounts = existingMountsSummary
           .at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type)))
+             .totalMounts;
+    } catch (std::out_of_range &) {}
+    try {
+      nbExistingMountsDistinctTypes = existingMountsDistinctType.at(TapePoolMountPair(m->tapePool, m->type))
              .totalMounts;
     } catch (std::out_of_range &) {}
     if (m->activityNameAndWeightedMountCount) {
@@ -974,7 +986,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       } catch (std::out_of_range &) {}
     }
     uint32_t effectiveExistingMounts = 0;
-    if (common::dataStructures::getMountBasicType(m->type) == common::dataStructures::MountType::ArchiveAllTypes) effectiveExistingMounts = existingMounts;
+    if (common::dataStructures::getMountBasicType(m->type) == common::dataStructures::MountType::ArchiveAllTypes) effectiveExistingMounts = nbExistingMountsDistinctTypes;
     bool mountPassesACriteria = false;
     uint64_t minBytesToWarrantAMount = m_minBytesToWarrantAMount;
     uint64_t minFilesToWarrantAMount = m_minFilesToWarrantAMount;
