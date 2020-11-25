@@ -975,6 +975,8 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
              .totalMounts;
     } catch (std::out_of_range &) {}
     try {
+      //The number of existing mounts with ArchiveAllTypes split into ArchiveForUser and ArchiveForRepack to 
+      //take into consideration the mount policy's Archive min request age (issue https://gitlab.cern.ch/cta/operations/-/issues/150)
       nbExistingMountsDistinctTypes = existingMountsDistinctType.at(TapePoolMountPair(m->tapePool, m->type))
              .totalMounts;
     } catch (std::out_of_range &) {}
@@ -986,7 +988,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       } catch (std::out_of_range &) {}
     }
     uint32_t effectiveExistingMounts = 0;
-    if (common::dataStructures::getMountBasicType(m->type) == common::dataStructures::MountType::ArchiveAllTypes) effectiveExistingMounts = nbExistingMountsDistinctTypes;
+    if (common::dataStructures::getMountBasicType(m->type) == common::dataStructures::MountType::ArchiveAllTypes) effectiveExistingMounts = existingMounts;
     bool mountPassesACriteria = false;
     uint64_t minBytesToWarrantAMount = m_minBytesToWarrantAMount;
     uint64_t minFilesToWarrantAMount = m_minFilesToWarrantAMount;
@@ -998,7 +1000,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       mountPassesACriteria = true;
     if (m->filesQueued / (1 + effectiveExistingMounts) >= minFilesToWarrantAMount)
       mountPassesACriteria = true;
-    if (!effectiveExistingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minRequestAge))
+    if (!nbExistingMountsDistinctTypes && ((time(NULL) - m->oldestJobStartTime) > m->minRequestAge))
       mountPassesACriteria = true;
     if (m->sleepingMount) {
       sleepingMount = true;

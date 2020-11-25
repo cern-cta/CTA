@@ -5405,7 +5405,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   jobDump.tapePool = s_tapePoolName;
   mountPolicy.maxDrivesAllowed = 3;
   mountPolicy.archiveMinRequestAge = 0;
-  cta::objectstore::ArchiveQueue::JobToAdd archiveJobToAdd{jobDump,"",1,2,mountPolicy,time(nullptr)};
+  cta::objectstore::ArchiveQueue::JobToAdd archiveJobToAdd{jobDump,"",1,2,mountPolicy,1};
   cta::objectstore::ArchiveQueue aq(archiveForUserQueueAddress,backend);
   {
     cta::objectstore::ScopedExclusiveLock sel(aq);
@@ -5413,8 +5413,6 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     std::list<cta::objectstore::ArchiveQueue::JobToAdd> jobsToAdd({archiveJobToAdd});
     aq.addJobsAndCommit(jobsToAdd,agentReference,lc);
   }
-  
-  ::sleep(1);
   
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,tapeDrive1,lc));
   
@@ -5432,7 +5430,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   }
   
   jobDump.status = cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransferForRepack;
-  cta::objectstore::ArchiveQueue::JobToAdd archiveRepackJobToAdd{jobDump,"",2,2,mountPolicy,time(nullptr)};
+  cta::objectstore::ArchiveQueue::JobToAdd archiveRepackJobToAdd{jobDump,"",2,2,mountPolicy,1};
   
   cta::objectstore::ArchiveQueue aqRepack(archiveForRepackQueueAddress,backend);
   {
@@ -5441,8 +5439,6 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     std::list<cta::objectstore::ArchiveQueue::JobToAdd> jobsToAdd({archiveRepackJobToAdd});
     aqRepack.addJobsAndCommit(jobsToAdd,agentReference,lc);
   }
-  
-  ::sleep(1);
   
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,tapeDrive2,lc));
   
