@@ -932,21 +932,14 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     }
   }
   
-  //Distinct mount summary to store, per mount type (ArchiveForUser, ArchiveForRepack and Retrieve)
-  //the total mounts
-  //It will be used to decide whether we will use the mountPolicy's ArchiveMinRequest age
-  //or not (issue https://gitlab.cern.ch/cta/operations/-/issues/150)
-  ExistingMountSummary existingMountsDistinctType;
-  
   // With the existing mount list, we can now populate the potential mount list
   // with the per tape pool existing mount statistics.
   for (auto & em: mountInfo->existingOrNextMounts) {
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
     if (em.driveName!=driveName) {
-      existingMountsSummary[TapePoolMountPair(em.tapePool, common::dataStructures::getMountBasicType(em.type))].totalMounts++;
-      existingMountsDistinctType[TapePoolMountPair(em.tapePool, em.type)].totalMounts++;
+      existingMountsSummary[TapePoolMountPair(em.tapePool, em.type)].totalMounts++;
       if (em.activity)
-        existingMountsSummary[TapePoolMountPair(em.tapePool, common::dataStructures::getMountBasicType(em.type))]
+        existingMountsSummary[TapePoolMountPair(em.tapePool, em.type)]
           .activityMounts[em.activity.value()].value++;
       if (em.vid.size()) {
         tapesInUse.insert(em.vid);
@@ -966,24 +959,17 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
     // Get summary data
     uint32_t existingMounts = 0;
-    uint32_t nbExistingMountsDistinctTypes = 0;
     uint32_t activityMounts = 0;
     bool sleepingMount = false;
     try {
       existingMounts = existingMountsSummary
-          .at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type)))
-             .totalMounts;
-    } catch (std::out_of_range &) {}
-    try {
-      //The number of existing mounts with ArchiveAllTypes split into ArchiveForUser and ArchiveForRepack to 
-      //take into consideration the mount policy's Archive min request age (issue https://gitlab.cern.ch/cta/operations/-/issues/150)
-      nbExistingMountsDistinctTypes = existingMountsDistinctType.at(TapePoolMountPair(m->tapePool, m->type))
+          .at(TapePoolMountPair(m->tapePool, m->type))
              .totalMounts;
     } catch (std::out_of_range &) {}
     if (m->activityNameAndWeightedMountCount) {
       try {
         activityMounts = existingMountsSummary
-          .at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type)))
+          .at(TapePoolMountPair(m->tapePool, m->type))
              .activityMounts.at(m->activityNameAndWeightedMountCount.value().activity).value;
       } catch (std::out_of_range &) {}
     }
@@ -1000,7 +986,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       mountPassesACriteria = true;
     if (m->filesQueued / (1 + effectiveExistingMounts) >= minFilesToWarrantAMount)
       mountPassesACriteria = true;
-    if (!nbExistingMountsDistinctTypes && ((time(NULL) - m->oldestJobStartTime) > m->minRequestAge))
+    if (!effectiveExistingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minRequestAge))
       mountPassesACriteria = true;
     if (m->sleepingMount) {
       sleepingMount = true;
@@ -1215,7 +1201,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
           catalogueTime = getTapeInfoTime + getTapeForWriteTime;
           uint32_t existingMounts = 0;
           try {
-            existingMounts=existingMountsSummary.at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type))).totalMounts;
+            existingMounts=existingMountsSummary.at(TapePoolMountPair(m->tapePool, m->type)).totalMounts;
           } catch (...) {}
           log::ScopedParamContainer params(lc);
           params.add("tapePool", m->tapePool)
@@ -1391,7 +1377,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
             log::ScopedParamContainer params(lc);
             uint32_t existingMounts = 0;
             try {
-              existingMounts=existingMountsSummary.at(TapePoolMountPair(m->tapePool, common::dataStructures::getMountBasicType(m->type))).totalMounts;
+              existingMounts=existingMountsSummary.at(TapePoolMountPair(m->tapePool, m->type)).totalMounts;
             } catch (...) {}
             schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
             catalogueTime = getTapeInfoTime + getTapeForWriteTime;
