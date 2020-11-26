@@ -73,9 +73,6 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
       case Request::kAdmincmd: {
         
          // Check that the user is authorized
-         if(!(m_protocol == Protocol::KRB5 || m_protocol == Protocol::SSS)) {
-            throw cta::exception::UserError("[ERROR] Admin commands must be authenticated using Kerberos 5 or SSS");
-         }
          m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
          
          cta::utils::Timer t;
