@@ -7783,7 +7783,10 @@ void RdbmsCatalogue::insertTapeFile(
       const char *const sql = 
       "DELETE FROM "
         "TAPE_FILE "
-      "WHERE COPY_NB=:COPY_NB AND (VID<>:VID OR TAPE_FILE.FSEQ<>:FSEQ) AND TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID";
+      "WHERE "
+        "COPY_NB=:COPY_NB AND "
+        "(VID<>:VID OR TAPE_FILE.FSEQ<>:FSEQ) AND "
+        "TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID";
       auto stmt = conn.createStmt(sql);
       stmt.bindUint8(":COPY_NB",tapeFile.copyNb);
       stmt.bindString(":VID",tapeFile.vid);
