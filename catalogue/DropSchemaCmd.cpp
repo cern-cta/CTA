@@ -148,6 +148,8 @@ void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
       "DATABASECHANGELOG", /* Liquibase specific table */
       "TAPE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE_RECYCLE_BIN",
+      "FILE_RECYCLE_LOG",
+      "FILE_RECYCLE_LOG_ID",
       "ARCHIVE_FILE",
       "ARCHIVE_FILE_ID",
       "TAPE",
@@ -208,6 +210,7 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "ARCHIVE_FILE",
       "TAPE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE_RECYCLE_BIN",
+      "FILE_RECYCLE_LOG",
       "TAPE",
       "MEDIA_TYPE",
       "TEMP_TAPE_FILE_BATCH",
@@ -239,7 +242,8 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "MEDIA_TYPE_ID_SEQ",
       "STORAGE_CLASS_ID_SEQ",
       "TAPE_POOL_ID_SEQ",
-      "VIRTUAL_ORGANIZATION_ID_SEQ"
+      "VIRTUAL_ORGANIZATION_ID_SEQ",
+      "FILE_RECYCLE_LOG_ID_SEQ"
     };
     dropDatabaseSequences(conn, sequencesToDrop);
   } catch(exception::Exception &ex) {
@@ -263,6 +267,7 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "ARCHIVE_FILE",
       "TAPE_FILE_RECYCLE_BIN",
       "ARCHIVE_FILE_RECYCLE_BIN",
+      "FILE_RECYCLE_LOG",
       "TAPE",
       "MEDIA_TYPE",
       "REQUESTER_MOUNT_RULE",
@@ -288,7 +293,8 @@ void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
       "MEDIA_TYPE_ID_SEQ",
       "STORAGE_CLASS_ID_SEQ",
       "TAPE_POOL_ID_SEQ",
-      "VIRTUAL_ORGANIZATION_ID_SEQ"
+      "VIRTUAL_ORGANIZATION_ID_SEQ",
+      "FILE_RECYCLE_LOG_ID_SEQ"
     };
     dropDatabaseSequences(conn, sequencesToDrop);
   } catch(exception::Exception &ex) {
