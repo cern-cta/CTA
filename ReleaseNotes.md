@@ -1,3 +1,18 @@
+# v3.1-11
+
+### Features
+
+- cta/CTA#932 Add environment file for cta-frontend service: frontend configured to use 10 XRootD polling threads by default
+- cta/CTA#292 Allow non interactive usages of cta-admin with sss authentication
+- Upgraded EOS to 4.8.29-1
+   - cta/operations#155 Fix for conversion issues
+   - cta/operations#154 Improve sys.retrieve.req_id to allow to cancel retrieves on a running instance: adding epoch timestamp in ids
+   - EOS-4505 Separate archive and retrieve ACLs in EOS: only needs p ACL for prepare
+
+### Bug fixes
+
+- cta/operations#150 high priority Archive job not scheduled when Repack is running: fixed
+
 # v3.1-10
 
 ## Summary
