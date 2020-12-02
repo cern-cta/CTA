@@ -16,32 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "FileRecycleLog.hpp"
 
-#include <string>
+namespace cta{
+namespace common{
+namespace dataStructures{
 
-#include "TapeItemWritten.hpp"
-#include "TapeFileWritten.hpp"
 
-namespace cta { namespace catalogue {
-
-  class InsertFileRecycleLog {
-  public:
-    std::string vid;
-    uint64_t fseq;
-    uint64_t blockId;
-    uint64_t logicalSizeInBytes;
-    uint8_t copyNb;
-    time_t tapeFileCreationTime;
-    uint64_t archiveFileId;
-    std::string diskFilePath;
-    std::string reasonLog;
-    time_t recycleLogTime;
-    
-    static std::string getRepackReasonLog(){
-      return "REPACK";
-    }
-  };
-  
-}}
-
+}}}

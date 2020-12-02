@@ -524,8 +524,26 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getDeletedArchiveFilesItor();}, m_maxTriesToConnect);
   }
   
+  FileRecycleLogItor getFileRecycleLogItor() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getFileRecycleLogItor();}, m_maxTriesToConnect);
+  }
+  
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc){
     return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteFileFromRecycleBin(archiveFileId,lc);},m_maxTriesToConnect);
+  }
+  
+  /**
+   * Deletes all the log entries corresponding to the vid passed in parameter.
+   * 
+   * Please note that this method is idempotent.  If there are no recycle log
+   * entries associated to the vid passed in parameter, the method will return
+   * without any error.
+   * 
+   * @param vid, the vid of the files to be deleted
+   * @param lc, the logContext
+   */
+  void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc){
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteFilesFromRecycleLog(vid,lc);},m_maxTriesToConnect); 
   }
 
   std::list<common::dataStructures::ArchiveFile> getFilesForRepack(const std::string &vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override {

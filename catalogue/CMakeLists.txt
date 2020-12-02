@@ -53,6 +53,7 @@ set (CATALOGUE_LIB_SRC_FILES
   RdbmsCatalogueGetArchiveFilesItor.cpp
   RdbmsCatalogueGetDeletedArchiveFilesItor.cpp
   RdbmsCatalogueTapeContentsItor.cpp
+  RdbmsCatalogueGetFileRecycleLogItor.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
   SchemaVersion.cpp

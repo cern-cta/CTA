@@ -502,11 +502,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
       "-- :LOGICAL_SIZE_IN_BYTES,"                                                   "\n"
       "-- :COPY_NB,"                                                                 "\n"
       "-- :CREATION_TIME,"                                                           "\n"
-      "-- :ARCHIVE_FILE_ID"                                                          "\n"
-    "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"             "\n"
-      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID) "                                    "\n"
-    "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                             "\n"
-      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;" "\n";
+      "-- :ARCHIVE_FILE_ID;"                                                         "\n";
     
     auto stmt = conn.createStmt(sql);
     rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
@@ -521,6 +517,16 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     postgresStmt.executeCopyInsert(tapeFileBatch.nbRows);
     
     auto recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
+    
+    {
+      //Insert the tapefiles from the TEMP_TAPE_FILE_INSERTION_BATCH
+      const char * const insertTapeFileSql = 
+      "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"            "\n"
+      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID) "                                     "\n"
+      "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                            "\n"
+      "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;"  "\n";
+      conn.executeNonQuery(insertTapeFileSql);
+    }
     
     for(auto & recycledFile: recycledFiles){
       const char * const deleteTapeFileSql = 
@@ -685,7 +691,7 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresCatalogue::insertOldCopi
         "ON "
           "TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB "
         "WHERE "
-          "TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID";
+          "TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID OR TAPE_FILE.FSEQ != TEMP_TAPE_FILE_INSERTION_BATCH.FSEQ";
       auto stmt = conn.createStmt(sql);
       auto rset = stmt.executeQuery();
       while(rset.next()){
@@ -697,7 +703,7 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresCatalogue::insertOldCopi
         fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
         fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
-        fileRecycleLog.reasonLog = "Repacked from VID " + fileRecycleLog.vid;
+        fileRecycleLog.reasonLog = InsertFileRecycleLog::getRepackReasonLog();
         fileRecycleLog.recycleLogTime = time(nullptr);
         fileRecycleLogsToInsert.push_back(fileRecycleLog);
       }

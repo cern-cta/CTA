@@ -51,6 +51,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/DriveState.cpp
   dataStructures/DriveStatus.cpp
   dataStructures/EntryLog.cpp
+  dataStructures/FileRecycleLog.cpp
   dataStructures/FrontendReturnCode.cpp
   dataStructures/LifecycleTimings.cpp
   dataStructures/ListStorageClassRequest.cpp

@@ -572,6 +572,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       fileSizeAndChecksum.checksumBlob.validate(event.checksumBlob);
     }
 
+    std::list<InsertFileRecycleLog> recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
+        
     {
       const char *const sql =
         "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"              "\n"
@@ -581,8 +583,6 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       auto stmt = conn.createStmt(sql);
       stmt.executeNonQuery();
     }
-    
-    std::list<InsertFileRecycleLog> recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
     
     for(auto & recycledFile: recycledFiles){
       const char *const sql =
@@ -782,7 +782,7 @@ std::list<cta::catalogue::InsertFileRecycleLog> OracleCatalogue::insertOldCopies
         "ON "
           "TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB "
         "WHERE "
-          "TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID";
+          "TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID OR TAPE_FILE.FSEQ != TEMP_TAPE_FILE_INSERTION_BATCH.FSEQ";
       auto stmt = conn.createStmt(sql);
       auto rset = stmt.executeQuery();
       while(rset.next()){
@@ -794,7 +794,7 @@ std::list<cta::catalogue::InsertFileRecycleLog> OracleCatalogue::insertOldCopies
         fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
         fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
-        fileRecycleLog.reasonLog = "Repacked from VID " + fileRecycleLog.vid;
+        fileRecycleLog.reasonLog = InsertFileRecycleLog::getRepackReasonLog();
         fileRecycleLog.recycleLogTime = time(nullptr);
         fileRecycleLogsToInsert.push_back(fileRecycleLog);
       }

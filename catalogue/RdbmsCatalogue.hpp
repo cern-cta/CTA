@@ -24,6 +24,7 @@
 #include "common/threading/Mutex.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
+#include "InsertFileRecycleLog.hpp"
 
 #include <memory>
 
@@ -851,6 +852,8 @@ public:
    * @return The deleted archive files ordered by archive file ID.
    */
   DeletedArchiveFileItor getDeletedArchiveFilesItor() const override;
+  
+  FileRecycleLogItor getFileRecycleLogItor() const override;
   
   /**
    * Returns the specified files in tape file sequence order.
@@ -1912,6 +1915,18 @@ protected:
   void deleteFilesFromRecycleBin(rdbms::Conn & conn,const std::string & vid, log::LogContext & lc);
   
   /**
+   * Deletes all the log entries corresponding to the vid passed in parameter.
+   * 
+   * Please note that this method is idempotent.  If there are no recycle log
+   * entries associated to the vid passed in parameter, the method will return
+   * without any error.
+   * 
+   * @param vid, the vid of the files to be deleted
+   * @param lc, the logContext
+   */
+  void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc);
+  
+  /**
    * Delete the TapeFiles and the ArchiveFile from the recycle-bin in one transaction
    * @param conn the database connection
    * @param archiveFileId the archiveFileId of the file to delete from the recycle-bin
@@ -1931,6 +1946,18 @@ protected:
    * @param archiveFileId the archiveFileId of the archive file to delete
    */
   void deleteArchiveFileFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId);
+  
+  /**
+   * In the case we insert a TAPE_FILE that already has a copy on the catalogue (same copyNb),
+   * this TAPE_FILE will go to the FILE_RECYCLE_LOG table.
+   * 
+   * This case happens always during the repacking of a tape: the new TAPE_FILE created 
+   * will replace the old one, the old one will then be moved to the FILE_RECYCLE_LOG table
+   * 
+   * @param conn The database connection.
+   * @returns the list of inserted fileRecycleLog
+   */
+  std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn & conn,const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId);
 
   /**
    * Generates the SELECT statement required to search for tapes using 100 tape

@@ -41,6 +41,7 @@
 #include "common/dataStructures/DeletedArchiveFile.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
+#include "common/dataStructures/FileRecycleLog.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/ListStorageClassRequest.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
@@ -869,6 +870,15 @@ public:
    * @return The deleted archive files ordered by archive file ID.
    */
   virtual DeletedArchiveFileItor getDeletedArchiveFilesItor() const = 0;
+  
+  typedef CatalogueItor<common::dataStructures::FileRecycleLog> FileRecycleLogItor;
+  
+  /**
+   * Returns all the currently deleted files by looking at the FILE_RECYCLE_LOG table
+   *
+   * @return The deleted archive files ordered by archive file ID.
+   */
+  virtual FileRecycleLogItor getFileRecycleLogItor() const = 0;
 
   /**
    * Returns the specified files in tape file sequence order.
@@ -1034,6 +1044,18 @@ public:
    * @param lc The log context.
    */
   virtual void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) = 0;
+  
+  /**
+   * Deletes all the log entries corresponding to the vid passed in parameter.
+   * 
+   * Please note that this method is idempotent.  If there are no recycle log
+   * entries associated to the vid passed in parameter, the method will return
+   * without any error.
+   * 
+   * @param vid, the vid of the files to be deleted
+   * @param lc, the logContext
+   */
+  virtual void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc) = 0;
 
 }; // class Catalogue
 
