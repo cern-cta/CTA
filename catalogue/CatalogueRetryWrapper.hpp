@@ -598,9 +598,9 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->updateDiskFileId(archiveFileId, diskInstance, diskFileId);}, m_maxTriesToConnect);
   }
   
-  void moveArchiveFileToRecycleBin(const common::dataStructures::DeleteArchiveRequest &request, 
+  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request, 
   log::LogContext & lc) override {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->moveArchiveFileToRecycleBin(request,lc);},m_maxTriesToConnect);
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->moveArchiveFileToRecycleLog(request,lc);},m_maxTriesToConnect);
   }
 
 protected:

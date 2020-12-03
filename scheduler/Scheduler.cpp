@@ -272,7 +272,7 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
     m_db.cancelArchive(request,lc);
   }
   tl.insertAndReset("schedulerDbTime",t);
-  m_catalogue.moveArchiveFileToRecycleBin(request,lc);
+  m_catalogue.moveArchiveFileToRecycleLog(request,lc);
   tl.insertAndReset("catalogueTime",t);
   log::ScopedParamContainer spc(lc);
   tl.addToLog(spc);

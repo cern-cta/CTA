@@ -1024,12 +1024,13 @@ public:
     const std::string &diskFileId) = 0;
   
   /**
-   * Insert the tape files and ArchiveFiles entries in the recycle-bin and delete
-   * them from the TAPE_FILE and ARCHIVE_FILE  tables
+   * Insert the ArchiveFile and all its tape files in the FILE_RECYCLE_LOG table.
+   * There will be one entry on the FILE_RECYCLE_LOG table per deleted tape file
+   * 
    * @param request the DeleteRequest object that holds information about the file to delete.
    * @param lc the logContext
    */
-  virtual void moveArchiveFileToRecycleBin(const common::dataStructures::DeleteArchiveRequest &request, 
+  virtual void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request, 
   log::LogContext & lc) = 0;
   
    /**

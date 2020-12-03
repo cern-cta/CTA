@@ -729,14 +729,14 @@ void MysqlCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &
 //------------------------------------------------------------------------------
 // copyArchiveFileToRecycleBinAndDelete
 //------------------------------------------------------------------------------
-void MysqlCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc){
+void MysqlCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc){
   try {
     utils::Timer t;
     log::TimingList tl;
     //We currently do an INSERT INTO and a DELETE FROM
     //in a single transaction
     conn.executeNonQuery("START TRANSACTION");
-    copyArchiveFileToRecycleBin(conn,request);
+    copyArchiveFileToFileRecycleLog(conn,request);
     tl.insertAndReset("insertToRecycleBinTime",t);
     setTapeDirty(conn,request.archiveFileID);
     tl.insertAndReset("setTapeDirtyTime",t);

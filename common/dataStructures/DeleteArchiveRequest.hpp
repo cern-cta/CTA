@@ -25,6 +25,7 @@
 
 #include "common/optional.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
+#include "ArchiveFile.hpp"
 
 namespace cta {
 namespace common {
@@ -49,6 +50,8 @@ struct DeleteArchiveRequest {
   std::string diskFileId;
   std::string diskInstance;
   time_t recycleTime;
+  //In the case the ArchiveFile does not exist yet, it will not be set
+  cta::optional<ArchiveFile> archiveFile;
 
 }; // struct DeleteArchiveRequest
 

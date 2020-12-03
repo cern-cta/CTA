@@ -593,7 +593,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       
       auto stmt = conn.createStmt(sql);
       stmt.bindString(":VID",recycledFile.vid);
-      stmt.bindUint64(":FSEQ",recycledFile.fseq);
+      stmt.bindUint64(":FSEQ",recycledFile.fSeq);
       stmt.executeNonQuery();
     } 
     
@@ -788,7 +788,7 @@ std::list<cta::catalogue::InsertFileRecycleLog> OracleCatalogue::insertOldCopies
       while(rset.next()){
         cta::catalogue::InsertFileRecycleLog fileRecycleLog;
         fileRecycleLog.vid = rset.columnString("VID");
-        fileRecycleLog.fseq = rset.columnUint64("FSEQ");
+        fileRecycleLog.fSeq = rset.columnUint64("FSEQ");
         fileRecycleLog.blockId = rset.columnUint64("BLOCK_ID");
         fileRecycleLog.logicalSizeInBytes = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
@@ -801,70 +801,7 @@ std::list<cta::catalogue::InsertFileRecycleLog> OracleCatalogue::insertOldCopies
     }
     {
       for(auto & fileRecycleLog: fileRecycleLogsToInsert){
-        const char *const sql = 
-        "INSERT INTO FILE_RECYCLE_LOG("
-          "FILE_RECYCLE_LOG_ID,"
-          "VID,"
-          "FSEQ,"
-          "BLOCK_ID,"
-          "LOGICAL_SIZE_IN_BYTES,"
-          "COPY_NB,"
-          "TAPE_FILE_CREATION_TIME,"
-          "ARCHIVE_FILE_ID,"
-          "DISK_INSTANCE_NAME,"
-          "DISK_FILE_ID,"
-          "DISK_FILE_ID_WHEN_DELETED,"
-          "DISK_FILE_UID,"
-          "DISK_FILE_GID,"
-          "SIZE_IN_BYTES,"
-          "CHECKSUM_BLOB,"
-          "CHECKSUM_ADLER32,"
-          "STORAGE_CLASS_ID,"
-          "ARCHIVE_FILE_CREATION_TIME,"
-          "RECONCILIATION_TIME,"
-          "COLLOCATION_HINT,"
-          "REASON_LOG,"
-          "RECYCLE_LOG_TIME"
-        ") SELECT "
-          "FILE_RECYCLE_LOG_ID_SEQ.NEXTVAL,"
-          ":VID,"
-          ":FSEQ,"
-          ":BLOCK_ID,"
-          ":LOGICAL_SIZE_IN_BYTES,"
-          ":COPY_NB,"
-          ":TAPE_FILE_CREATION_TIME,"
-          ":ARCHIVE_FILE_ID,"
-          "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-          "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-          "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID_2,"
-          "ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,"
-          "ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,"
-          "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-          "ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,"
-          "ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,"
-          "ARCHIVE_FILE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
-          "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-          "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-          "ARCHIVE_FILE.COLLOCATION_HINT AS COLLOCATION_HINT,"
-          ":REASON_LOG,"
-          ":RECYCLE_LOG_TIME "
-        "FROM "
-          "DUAL,"
-          "ARCHIVE_FILE "
-        "WHERE "
-          "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID_2";
-        auto stmt = conn.createStmt(sql);
-        stmt.bindString(":VID",fileRecycleLog.vid);
-        stmt.bindUint64(":FSEQ",fileRecycleLog.fseq);
-        stmt.bindUint64(":BLOCK_ID",fileRecycleLog.blockId);
-        stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES",fileRecycleLog.logicalSizeInBytes);
-        stmt.bindUint8(":COPY_NB",fileRecycleLog.copyNb);
-        stmt.bindUint64(":TAPE_FILE_CREATION_TIME",fileRecycleLog.tapeFileCreationTime);
-        stmt.bindUint64(":ARCHIVE_FILE_ID",fileRecycleLog.archiveFileId);
-        stmt.bindString(":REASON_LOG",fileRecycleLog.reasonLog);
-        stmt.bindUint64(":RECYCLE_LOG_TIME",fileRecycleLog.recycleLogTime);
-        stmt.bindUint64(":ARCHIVE_FILE_ID_2",fileRecycleLog.archiveFileId);
-        stmt.executeNonQuery();
+        insertFileInFileRecycleLog(conn,fileRecycleLog);
       }
     }
     return fileRecycleLogsToInsert;
@@ -1123,14 +1060,14 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
 //------------------------------------------------------------------------------
 // copyArchiveFileToRecycleBinAndDelete
 //------------------------------------------------------------------------------
-void OracleCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc){
+void OracleCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc){
   try {
     utils::Timer t;
     log::TimingList tl;
     //We currently do an INSERT INTO, update and two DELETE FROM
     //in a single transaction
     conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-    copyArchiveFileToRecycleBin(conn,request);
+    copyArchiveFileToFileRecycleLog(conn,request);
     tl.insertAndReset("insertToRecycleBinTime",t);
     setTapeDirty(conn,request.archiveFileID);
     tl.insertAndReset("setTapeDirtyTime",t);

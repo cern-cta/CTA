@@ -709,14 +709,23 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
 
    // Delete the file from the catalogue or from the objectstore if archive request is created
    cta::utils::Timer t;
+   cta::log::TimingList tl;
+   try { 
+     request.archiveFile = m_catalogue.getArchiveFileById(request.archiveFileID);
+     tl.insertAndReset("catalogueGetArchiveFileByIdTime",t);
+   } catch (cta::exception::Exception &ex){
+    log::ScopedParamContainer spc(m_lc);
+    spc.add("fileId", request.archiveFileID);
+    m_lc.log(log::WARNING, "Ignoring request to delete archive file because it does not exist in the catalogue");
+   }
    m_scheduler.deleteArchive(m_cliIdentity.username, request, m_lc);
-
+   tl.insertAndReset("schedulerTime",t);
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", request.archiveFileID)
          .add("address", (request.address ? request.address.value() : "null"))
-         .add("filePath",request.diskFilePath)
-         .add("schedulerTime", t.secs());
+         .add("filePath",request.diskFilePath);
+   tl.addToLog(params);
    m_lc.log(cta::log::INFO, "In RequestMessage::processDELETE(): archive file deleted.");
 
    // Set response type

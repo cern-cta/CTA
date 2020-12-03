@@ -592,14 +592,14 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten
 //------------------------------------------------------------------------------
 // copyArchiveFileToRecycleBinAndDelete
 //------------------------------------------------------------------------------
-void SqliteCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
+void SqliteCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
   try {
     utils::Timer t;
     log::TimingList tl;
     //We currently do an INSERT INTO and a DELETE FROM
     //in a single transaction
     conn.executeNonQuery("BEGIN TRANSACTION");
-    copyArchiveFileToRecycleBin(conn,request);
+    copyArchiveFileToFileRecycleLog(conn,request);
     tl.insertAndReset("insertToRecycleBinTime",t);
     setTapeDirty(conn,request.archiveFileID);
     tl.insertAndReset("setTapeDirtyTime",t);

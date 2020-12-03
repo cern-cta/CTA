@@ -9168,6 +9168,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   file2Written.copyNb               = 1;
   file2Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file2WrittenSet);
+  
+  ASSERT_TRUE(m_catalogue->getFileRecycleLogItor().hasMore());
 
   const std::string mountPolicyName = "mount_policy";
   const uint64_t archivePriority = 1;
@@ -15721,13 +15723,14 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
     req.diskFileId = tapeItem->diskFileId;
     req.diskFilePath = tapeItem->diskFilePath;
     req.diskInstance = tapeItem->diskInstance;
-    ASSERT_NO_THROW(m_catalogue->moveArchiveFileToRecycleBin(req,dummyLc));
+    req.archiveFile = m_catalogue->getArchiveFileById(tapeItem->archiveFileId);
+    ASSERT_NO_THROW(m_catalogue->moveArchiveFileToRecycleLog(req,dummyLc));
   }
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   
-  std::vector<common::dataStructures::DeletedArchiveFile> deletedArchiveFiles;
+  std::vector<common::dataStructures::FileRecycleLog> deletedArchiveFiles;
   {
-    auto itor = m_catalogue->getDeletedArchiveFilesItor();
+    auto itor = m_catalogue->getFileRecycleLogItor();
     while(itor.hasMore()){
       deletedArchiveFiles.push_back(itor.next());
     }
@@ -15747,40 +15750,36 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
     std::ostringstream diskFilePath;
     diskFilePath << "/test/file"<<i;
     
-    ASSERT_EQ(i,deletedArchiveFile.archiveFileID);
-    ASSERT_EQ(diskInstance,deletedArchiveFile.diskInstance);
+    ASSERT_EQ(i,deletedArchiveFile.archiveFileId);
+    ASSERT_EQ(diskInstance,deletedArchiveFile.diskInstanceName);
     ASSERT_EQ(diskFileId.str(),deletedArchiveFile.diskFileId);
     ASSERT_EQ(diskFilePath.str(),deletedArchiveFile.diskFilePath);
-    ASSERT_EQ(PUBLIC_DISK_USER,deletedArchiveFile.diskFileInfo.owner_uid);
-    ASSERT_EQ(PUBLIC_DISK_GROUP,deletedArchiveFile.diskFileInfo.gid);
-    ASSERT_EQ(archiveFileSize,deletedArchiveFile.fileSize);
+    ASSERT_EQ(PUBLIC_DISK_USER,deletedArchiveFile.diskFileUid);
+    ASSERT_EQ(PUBLIC_DISK_GROUP,deletedArchiveFile.diskFileGid);
+    ASSERT_EQ(archiveFileSize,deletedArchiveFile.sizeInBytes);
     ASSERT_EQ(cta::checksum::ChecksumBlob(checksum::ADLER32, "1357"),deletedArchiveFile.checksumBlob);
-    ASSERT_EQ(m_storageClassSingleCopy.name, deletedArchiveFile.storageClass);
+    ASSERT_EQ(m_storageClassSingleCopy.name, deletedArchiveFile.storageClassName);
     ASSERT_EQ(diskFileId.str(),deletedArchiveFile.diskFileIdWhenDeleted);
     
-    auto tapeFile = deletedArchiveFile.tapeFiles.at(1);
-    ASSERT_EQ(tape1.vid, tapeFile.vid);
-    ASSERT_EQ(i,tapeFile.fSeq);
-    ASSERT_EQ(i * 100,tapeFile.blockId);
-    ASSERT_EQ(1, tapeFile.copyNb);
-    ASSERT_EQ(archiveFileSize,tapeFile.fileSize);
+    ASSERT_EQ(tape1.vid, deletedArchiveFile.vid);
+    ASSERT_EQ(i,deletedArchiveFile.fSeq);
+    ASSERT_EQ(i * 100,deletedArchiveFile.blockId);
+    ASSERT_EQ(1, deletedArchiveFile.copyNb);
+    ASSERT_EQ(archiveFileSize,deletedArchiveFile.logicalSizeInBytes);
   }
   
   //Let's try the deletion of the files from the recycle-bin.
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
-    m_catalogue->deleteFileFromRecycleBin(i,dummyLc);
+    m_catalogue->deleteFilesFromRecycleLog(tape1.vid,dummyLc);
   }
   
   {
-    auto itor = m_catalogue->getDeletedArchiveFilesItor();
+    auto itor = m_catalogue->getFileRecycleLogItor();
     ASSERT_FALSE(itor.hasMore());
   }
-  //Delete an archive file from the recycle-bin should be idempotent
-  ASSERT_NO_THROW(m_catalogue->deleteFileFromRecycleBin(12532,dummyLc));
-  
 }
 
-TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
+TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleLog) {
   using namespace cta;
 
   const bool logicalLibraryIsDisabled= false;
@@ -15851,27 +15850,27 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleBin) {
     req.diskFileId = tapeItem->diskFileId;
     req.diskFilePath = tapeItem->diskFilePath;
     req.diskInstance = tapeItem->diskInstance;
-    ASSERT_NO_THROW(m_catalogue->moveArchiveFileToRecycleBin(req,dummyLc));
+    req.archiveFile = m_catalogue->getArchiveFileById(tapeItem->archiveFileId);
+    ASSERT_NO_THROW(m_catalogue->moveArchiveFileToRecycleLog(req,dummyLc));
   }
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
-  
-  std::vector<common::dataStructures::DeletedArchiveFile> deletedArchiveFiles;
+  std::vector<common::dataStructures::FileRecycleLog> deletedArchiveFiles;
   {
-    auto itor = m_catalogue->getDeletedArchiveFilesItor();
+    auto itor = m_catalogue->getFileRecycleLogItor();
     while(itor.hasMore()){
       deletedArchiveFiles.push_back(itor.next());
     }
   }
   
-  //And test that these files are there.
-  //Run the unit test for all the databases
+  //And test that these files are in the recycle log
   ASSERT_EQ(nbArchiveFiles,deletedArchiveFiles.size());
   
+  ASSERT_TRUE(m_catalogue->getFileRecycleLogItor().hasMore());
   //Reclaim the tape
   m_catalogue->setTapeFull(m_admin, tape1.vid, true);
   m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc);
   {
-    auto itor = m_catalogue->getDeletedArchiveFilesItor();
+    auto itor = m_catalogue->getFileRecycleLogItor();
     ASSERT_FALSE(itor.hasMore());
   }
 }

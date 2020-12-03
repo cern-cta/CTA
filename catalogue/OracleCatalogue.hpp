@@ -237,13 +237,13 @@ private:
   std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn & conn);
 
    /**
-   * Copy the archiveFile and the associated tape files from the ARCHIVE_FILE and TAPE_FILE tables to the recycle-bin tables
+   * Copy the archiveFile and the associated tape files from the ARCHIVE_FILE and TAPE_FILE tables to the FILE_RECYCLE_LOG table
    * and deletes the ARCHIVE_FILE and TAPE_FILE entries.
    * @param conn the database connection
-   * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
+   * @param request the request that contains the necessary informations to identify the archiveFile to copy to the FILE_RECYCLE_LOG table
    * @param lc the log context
    */
-  void copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) override;
+  void copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) override;
   
    /**
    * Delete the TapeFiles and the ArchiveFile from the recycle-bin in one transaction

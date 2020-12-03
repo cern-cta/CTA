@@ -538,14 +538,6 @@ public:
   void checkTapeForLabel(const std::string &vid) override;
   
   /**
-   * Returns the number of non superseded files contained in the tape identified by its vid
-   * @param conn the database connection
-   * @param vid the vid in which we will count non superseded files
-   * @return the number of non superseded files on the vid
-   */
-  uint64_t getNbNonSupersededFilesOnTape(rdbms::Conn &conn, const std::string &vid) const;
-  
-  /**
    * Returns the number of any files contained in the tape identified by its vid
    * @param vid the vid in which we will count non superseded files
    * @return the number of files on the tape
@@ -1854,29 +1846,37 @@ protected:
     const std::string &diskFileId) override;
 
    /**
-   * Insert the tape files and ArchiveFiles entries in the recycle-bin and delete
-   * them from the TAPE_FILE and ARCHIVE_FILE  tables
+   * Insert the ArchiveFile and all its tape files in the FILE_RECYCLE_LOG table.
+   * There will be one entry on the FILE_RECYCLE_LOG table per deleted tape file
+   * 
    * @param request the DeleteRequest object that holds information about the file to delete.
    * @param lc the logContext
    */
-  void moveArchiveFileToRecycleBin(const common::dataStructures::DeleteArchiveRequest &request, 
+  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request, 
   log::LogContext & lc) override;
   
   /**
-   * Copy the archiveFile and the associated tape files from the ARCHIVE_FILE and TAPE_FILE tables to the recycle-bin tables
+   * Copy the archiveFile and the associated tape files from the ARCHIVE_FILE and TAPE_FILE tables to the FILE_RECYCLE_LOG table
    * and deletes the ARCHIVE_FILE and TAPE_FILE entries.
    * @param conn the database connection
-   * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
+   * @param request the request that contains the necessary informations to identify the archiveFile to copy to the FILE_RECYCLE_LOG table
    * @param lc the log context
    */
-  virtual void copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn,const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) = 0;
+  virtual void copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn,const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) = 0;
   
   /**
    * Copies the ARCHIVE_FILE and TAPE_FILE entries to the recycle-bin tables 
    * @param conn the database connection
    * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
    */
-  void copyArchiveFileToRecycleBin(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
+  void copyArchiveFileToFileRecycleLog(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
+  
+  /**
+   * Insert the file in the FILE_RECYCLE_LOG table
+   * @param conn the database connection
+   * @param fileRecycleLog the file to insert into the FILE_RECYCLE_LOG table
+   */
+  void insertFileToRecycleLog(rdbms::Conn & conn, const InsertFileRecycleLog & fileRecycleLog);
   
   /**
    * Deletes the ArchiveFile from the ARCHIVE_FILE table
@@ -1926,6 +1926,19 @@ protected:
    */
   void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc);
   
+   /**
+   * Deletes all the log entries corresponding to the vid passed in parameter.
+   * 
+   * Please note that this method is idempotent.  If there are no recycle log
+   * entries associated to the vid passed in parameter, the method will return
+   * without any error.
+   * 
+    *@param conn, the database connection
+   * @param vid, the vid of the files to be deleted
+   * @param lc, the logContext
+   */
+  void deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::string & vid, log::LogContext & lc);
+  
   /**
    * Delete the TapeFiles and the ArchiveFile from the recycle-bin in one transaction
    * @param conn the database connection
@@ -1959,6 +1972,13 @@ protected:
    */
   std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn & conn,const common::dataStructures::TapeFile &tapeFile, const uint64_t archiveFileId);
 
+  /**
+   * Insert the file passed in parameter in the FILE_RECYCLE_LOG table
+   * @param conn the database connection
+   * @param fileRecycleLog the file to insert on the FILE_RECYCLE_LOG table
+   */
+  void insertFileInFileRecycleLog(rdbms::Conn & conn, const InsertFileRecycleLog & fileRecycleLog);
+  
   /**
    * Generates the SELECT statement required to search for tapes using 100 tape
    * VIDs.  Each tape VID is represented in the SQL by a bind parameter with the

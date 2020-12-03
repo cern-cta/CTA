@@ -533,7 +533,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
       "DELETE FROM TAPE_FILE WHERE TAPE_FILE.VID = :VID AND TAPE_FILE.FSEQ = :FSEQ";
       auto deleteTapeFileStmt = conn.createStmt(deleteTapeFileSql);
       deleteTapeFileStmt.bindString(":VID",recycledFile.vid);
-      deleteTapeFileStmt.bindUint64(":FSEQ",recycledFile.fseq);
+      deleteTapeFileStmt.bindUint64(":FSEQ",recycledFile.fSeq);
       deleteTapeFileStmt.executeNonQuery();
     }
     
@@ -697,7 +697,7 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresCatalogue::insertOldCopi
       while(rset.next()){
         cta::catalogue::InsertFileRecycleLog fileRecycleLog;
         fileRecycleLog.vid = rset.columnString("VID");
-        fileRecycleLog.fseq = rset.columnUint64("FSEQ");
+        fileRecycleLog.fSeq = rset.columnUint64("FSEQ");
         fileRecycleLog.blockId = rset.columnUint64("BLOCK_ID");
         fileRecycleLog.logicalSizeInBytes = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
@@ -710,72 +710,10 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresCatalogue::insertOldCopi
     }
     {
       for(auto & fileRecycleLog: fileRecycleLogsToInsert){
-        const char *const sql = 
-        "INSERT INTO FILE_RECYCLE_LOG("
-          "FILE_RECYCLE_LOG_ID,"
-          "VID,"
-          "FSEQ,"
-          "BLOCK_ID,"
-          "LOGICAL_SIZE_IN_BYTES,"
-          "COPY_NB,"
-          "TAPE_FILE_CREATION_TIME,"
-          "ARCHIVE_FILE_ID,"
-          "DISK_INSTANCE_NAME,"
-          "DISK_FILE_ID,"
-          "DISK_FILE_ID_WHEN_DELETED,"
-          "DISK_FILE_UID,"
-          "DISK_FILE_GID,"
-          "SIZE_IN_BYTES,"
-          "CHECKSUM_BLOB,"
-          "CHECKSUM_ADLER32,"
-          "STORAGE_CLASS_ID,"
-          "ARCHIVE_FILE_CREATION_TIME,"
-          "RECONCILIATION_TIME,"
-          "COLLOCATION_HINT,"
-          "REASON_LOG,"
-          "RECYCLE_LOG_TIME"
-        ") SELECT "
-          "nextval('FILE_RECYCLE_LOG_ID_SEQ'),"
-          ":VID,"
-          ":FSEQ,"
-          ":BLOCK_ID,"
-          ":LOGICAL_SIZE_IN_BYTES,"
-          ":COPY_NB,"
-          ":TAPE_FILE_CREATION_TIME,"
-          ":ARCHIVE_FILE_ID,"
-          "ARCHIVE_FILE.DISK_INSTANCE_NAME,"
-          "ARCHIVE_FILE.DISK_FILE_ID,"
-          "ARCHIVE_FILE.DISK_FILE_ID,"
-          "ARCHIVE_FILE.DISK_FILE_UID,"
-          "ARCHIVE_FILE.DISK_FILE_GID,"
-          "ARCHIVE_FILE.SIZE_IN_BYTES,"
-          "ARCHIVE_FILE.CHECKSUM_BLOB,"
-          "ARCHIVE_FILE.CHECKSUM_ADLER32,"
-          "ARCHIVE_FILE.STORAGE_CLASS_ID,"
-          "ARCHIVE_FILE.CREATION_TIME,"
-          "ARCHIVE_FILE.RECONCILIATION_TIME,"
-          "ARCHIVE_FILE.COLLOCATION_HINT,"
-          ":REASON_LOG,"
-          ":RECYCLE_LOG_TIME "
-        "FROM "
-          "ARCHIVE_FILE "
-        "WHERE "
-          "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID_2";
-        auto stmt = conn.createStmt(sql);
-        stmt.bindString(":VID",fileRecycleLog.vid);
-        stmt.bindUint64(":FSEQ",fileRecycleLog.fseq);
-        stmt.bindUint64(":BLOCK_ID",fileRecycleLog.blockId);
-        stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES",fileRecycleLog.logicalSizeInBytes);
-        stmt.bindUint8(":COPY_NB",fileRecycleLog.copyNb);
-        stmt.bindUint64(":TAPE_FILE_CREATION_TIME",fileRecycleLog.tapeFileCreationTime);
-        stmt.bindUint64(":ARCHIVE_FILE_ID",fileRecycleLog.archiveFileId);
-        stmt.bindString(":REASON_LOG",fileRecycleLog.reasonLog);
-        stmt.bindUint64(":RECYCLE_LOG_TIME",fileRecycleLog.recycleLogTime);
-        stmt.bindUint64(":ARCHIVE_FILE_ID_2",fileRecycleLog.archiveFileId);
-        stmt.executeNonQuery();
+        insertFileInFileRecycleLog(conn,fileRecycleLog);
       }
+      return fileRecycleLogsToInsert;
     }
-    return fileRecycleLogsToInsert;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -1080,14 +1018,14 @@ void PostgresCatalogue::beginCreateTemporarySetDeferred(rdbms::Conn &conn) const
 //------------------------------------------------------------------------------
 // copyArchiveFileToRecycleBinAndDelete
 //------------------------------------------------------------------------------
-void PostgresCatalogue::copyArchiveFileToRecycleBinAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
+void PostgresCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
   try {
     utils::Timer t;
     log::TimingList tl;
     //We currently do an INSERT INTO and a DELETE FROM
     //in a single transaction
     conn.executeNonQuery("BEGIN");
-    copyArchiveFileToRecycleBin(conn,request);
+    copyArchiveFileToFileRecycleLog(conn,request);
     tl.insertAndReset("insertToRecycleBinTime",t);
     setTapeDirty(conn,request.archiveFileID);
     tl.insertAndReset("setTapeDirtyTime",t);
