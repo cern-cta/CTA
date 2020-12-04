@@ -491,6 +491,8 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Fri Dec 04 2020 julien.leduc (at) cern.ch - 3.1-12
+- Upgraded EOS to 4.8.30-1
 * Wed Dec 02 2020 julien.leduc (at) cern.ch - 3.1-11
 - cta/CTA#932 Add environment file for cta-frontend service: frontend configured to use 10 XRootD polling threads by default
 - cta/CTA#292 Allow non interactive usages of cta-admin with sss authentication

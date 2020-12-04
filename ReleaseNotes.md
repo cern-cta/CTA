@@ -1,3 +1,9 @@
+# v3.1-12
+
+### Features
+
+- Upgraded EOS to 4.8.30-1
+
 # v3.1-11
 
 ### Features
