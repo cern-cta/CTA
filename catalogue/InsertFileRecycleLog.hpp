@@ -43,7 +43,7 @@ namespace cta { namespace catalogue {
     }
     
     static std::string getDeletionReasonLog(const std::string & deleterName, const std::string & diskInstanceName){
-      return "File deleted by " + deleterName + "from the " + diskInstanceName + "instance";
+      return "File deleted by " + deleterName + " from the " + diskInstanceName + " instance";
     }
   };
   

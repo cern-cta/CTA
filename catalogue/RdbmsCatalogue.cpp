@@ -21,7 +21,6 @@
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "catalogue/RdbmsCatalogueGetArchiveFilesItor.hpp"
 #include "catalogue/RdbmsCatalogueGetArchiveFilesForRepackItor.hpp"
-#include "catalogue/RdbmsCatalogueGetDeletedArchiveFilesItor.hpp"
 #include "catalogue/RdbmsCatalogueTapeContentsItor.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
@@ -3952,9 +3951,7 @@ uint64_t RdbmsCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::string& 
 void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) const {
   try {
     const char * const sql = 
-    "DELETE FROM TAPE_FILE WHERE VID = :VID "
-    "AND SUPERSEDED_BY_VID IS NOT NULL "
-    "AND SUPERSEDED_BY_FSEQ IS NOT NULL";
+    "DELETE FROM TAPE_FILE WHERE VID = :VID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.executeNonQuery();
@@ -6726,8 +6723,7 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSea
   // If this is the listing of the contents of a tape
   if (!searchCriteria.archiveFileId && !searchCriteria.diskInstance && !searchCriteria.diskFileIds &&
     searchCriteria.vid) {
-    const bool showSuperseded = searchCriteria.showSuperseded ? searchCriteria.showSuperseded.value() : false;
-    return getTapeContentsItor(searchCriteria.vid.value(), showSuperseded);
+    return getTapeContentsItor(searchCriteria.vid.value());
   }
 
   try {
@@ -6748,28 +6744,12 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSea
 //------------------------------------------------------------------------------
 // getTapeContentsItor
 //------------------------------------------------------------------------------
-Catalogue::ArchiveFileItor RdbmsCatalogue::getTapeContentsItor(const std::string &vid, const bool showSuperseded)
+Catalogue::ArchiveFileItor RdbmsCatalogue::getTapeContentsItor(const std::string &vid)
   const {
   try {
     // Create a connection to populate the temporary table (specialised by database type)
-    auto impl = new RdbmsCatalogueTapeContentsItor(m_log, m_connPool, vid, showSuperseded);
+    auto impl = new RdbmsCatalogueTapeContentsItor(m_log, m_connPool, vid);
     return ArchiveFileItor(impl);
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// getDeletedArchiveFilesItor
-//------------------------------------------------------------------------------
-Catalogue::DeletedArchiveFileItor RdbmsCatalogue::getDeletedArchiveFilesItor() const {
-
-  try {
-    auto impl = new RdbmsCatalogueGetDeletedArchiveFilesItor(m_log, m_archiveFileListingConnPool);
-    return DeletedArchiveFileItor(impl);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -6830,8 +6810,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "WHERE "
         "TAPE_FILE.VID = :VID AND "
-        "TAPE_FILE.FSEQ >= :START_FSEQ AND "
-        "TAPE_FILE.SUPERSEDED_BY_VID IS NULL "
+        "TAPE_FILE.FSEQ >= :START_FSEQ "
        "ORDER BY FSEQ";
 
     auto conn = m_connPool.getConn();
@@ -6922,13 +6901,11 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
 
-    const bool hideSuperseded = searchCriteria.showSuperseded ? !*searchCriteria.showSuperseded : false;
     const bool thereIsAtLeastOneSearchCriteria =
       searchCriteria.archiveFileId  ||
       searchCriteria.diskInstance   ||
       searchCriteria.vid            ||
-      searchCriteria.diskFileIds    ||
-      hideSuperseded;
+      searchCriteria.diskFileIds;
 
     if(thereIsAtLeastOneSearchCriteria) {
       sql += " WHERE ";
@@ -6955,11 +6932,6 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
 
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
-      addedAWhereConstraint = true;
-    }
-    if(hideSuperseded) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE_FILE.SUPERSEDED_BY_VID IS NULL";
       addedAWhereConstraint = true;
     }
 

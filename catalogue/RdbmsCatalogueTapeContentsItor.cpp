@@ -68,8 +68,7 @@ namespace {
 RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(
   log::Logger &log,
   rdbms::ConnPool &connPool,
-  const std::string &vid,
-  const bool showSuperseded) :
+  const std::string &vid) :
   m_log(log),
   m_vid(vid),
   m_rsetIsEmpty(true),
@@ -97,8 +96,6 @@ RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(
         "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"      "\n"
         "TAPE_FILE.COPY_NB AS COPY_NB,"                                  "\n"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"            "\n"
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID,"              "\n"
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SUPERSEDED_BY_FSEQ,"            "\n"
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME"                     "\n"
       "FROM"                                                             "\n"
         "ARCHIVE_FILE"                                                   "\n"
@@ -112,10 +109,6 @@ RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID"                     "\n"
       "WHERE"                                                            "\n"
         "TAPE_FILE.VID = :VID"                                           "\n";
-
-    if (!showSuperseded) {
-      sql += "AND TAPE_FILE.SUPERSEDED_BY_VID IS NULL" "\n";
-    }
 
     sql += "ORDER BY FSEQ";
 

@@ -99,8 +99,6 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
         "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
-        "TAPE_FILE.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID, "
-        "TAPE_FILE.SUPERSEDED_BY_FSEQ AS SUPERSEDED_BY_FSEQ, "
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "ARCHIVE_FILE "
@@ -113,13 +111,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       "INNER JOIN TAPE_POOL ON "
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID";
 
-    const bool hideSuperseded = searchCriteria.showSuperseded ? !*searchCriteria.showSuperseded : false;
     const bool thereIsAtLeastOneSearchCriteria =
       searchCriteria.archiveFileId  ||
       searchCriteria.diskInstance   ||
       searchCriteria.vid            ||
-      searchCriteria.diskFileIds    ||
-      hideSuperseded;
+      searchCriteria.diskFileIds;
 
     if(thereIsAtLeastOneSearchCriteria) {
     sql += " WHERE ";
@@ -144,11 +140,6 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     if(searchCriteria.diskFileIds) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
-      addedAWhereConstraint = true;
-    }
-    if(hideSuperseded) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += "TAPE_FILE.SUPERSEDED_BY_VID IS NULL";
       addedAWhereConstraint = true;
     }
 

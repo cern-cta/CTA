@@ -95,8 +95,6 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
         "TAPE_COPY.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_COPY.COPY_NB AS COPY_NB,"
         "TAPE_COPY.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
-        "TAPE_COPY.SUPERSEDED_BY_VID AS SUPERSEDED_BY_VID, "
-        "TAPE_COPY.SUPERSEDED_BY_FSEQ AS SUPERSEDED_BY_FSEQ, "
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "TAPE_FILE REPACK_TAPE "
@@ -114,10 +112,6 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
         "REPACK_TAPE.VID = :VID "
       "AND "
         "REPACK_TAPE.FSEQ >= :START_FSEQ "
-     "AND "
-        "REPACK_TAPE.SUPERSEDED_BY_VID IS NULL "
-      "AND "
-        "REPACK_TAPE.SUPERSEDED_BY_FSEQ IS NULL "
       "ORDER BY REPACK_TAPE.FSEQ";
 
     m_conn = connPool.getConn();

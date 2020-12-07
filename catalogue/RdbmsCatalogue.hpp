@@ -838,13 +838,10 @@ public:
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
-   * Returns all the currently deleted archive files.  Please note that the list
-   * of archive files is ordered by archive file ID.
+   * Returns all the currently deleted files by looking at the FILE_RECYCLE_LOG table
    *
    * @return The deleted archive files ordered by archive file ID.
    */
-  DeletedArchiveFileItor getDeletedArchiveFilesItor() const override;
-  
   FileRecycleLogItor getFileRecycleLogItor() const override;
   
   /**
@@ -2018,10 +2015,9 @@ protected:
    * FSEQ.
    *
    * @param vid The volume identifier of the tape.
-   * @param showSuperseded Include superseded files in the output?
    * @return The iterator.
    */
-  ArchiveFileItor getTapeContentsItor(const std::string &vid, const bool showSuperseded) const;
+  ArchiveFileItor getTapeContentsItor(const std::string &vid) const;
   
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific

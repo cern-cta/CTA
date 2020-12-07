@@ -520,10 +520,6 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
   }
   
-  DeletedArchiveFileItor getDeletedArchiveFilesItor() const override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getDeletedArchiveFilesItor();}, m_maxTriesToConnect);
-  }
-  
   FileRecycleLogItor getFileRecycleLogItor() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getFileRecycleLogItor();}, m_maxTriesToConnect);
   }

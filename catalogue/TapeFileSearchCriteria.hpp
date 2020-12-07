@@ -55,11 +55,6 @@ struct TapeFileSearchCriteria {
    * conversion into decimal is done in the cta-admin client, ready to be built into a SQL query string.
    */
   optional<std::vector<std::string>> diskFileIds;
-
-  /**
-   * Include superseded files in the output?
-   */
-  optional<bool> showSuperseded;
 }; // struct TapeFileSearchCriteria
 
 } // namespace catalogue

@@ -217,18 +217,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
         m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(archiveFile.diskInstance, archiveFile.archiveFileID, dummyLc);
       }
     }
-    {
-      //Delete all the entries from the recycle bin
-      auto itor = m_catalogue->getDeletedArchiveFilesItor();
-      std::list<common::dataStructures::DeletedArchiveFile> deletedArchiveFiles;
-      while(itor.hasMore()){
-        deletedArchiveFiles.push_back(itor.next());
-      }
-      
-      for(const auto &deletedArchiveFile: deletedArchiveFiles){
-        m_catalogue->deleteFileFromRecycleBin(deletedArchiveFile.archiveFileID,dummyLc);
-      }
-    }
+    
     {
       //Delete all the entries from the recycle log table
       auto itor = m_catalogue->getFileRecycleLogItor();
@@ -297,9 +286,9 @@ void cta_catalogue_CatalogueTest::SetUp() {
     if(!m_catalogue->getArchiveRoutes().empty()) {
       throw exception::Exception("Found one of more archive routes after emptying the database");
     }
-
-    if(m_catalogue->getDeletedArchiveFilesItor().hasMore()) {
-      throw exception::Exception("Found one of more deleted archive files after emptying the database");
+    
+    if(m_catalogue->getFileRecycleLogItor().hasMore()){
+      throw exception::Exception("Found one or more files in the file recycle log after emptying the database");
     }
 
     if(!m_catalogue->getAllDiskSystems().empty()) {
@@ -9739,7 +9728,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.vid = tape1.vid;
-    searchCriteria.showSuperseded = true;
     auto archiveFileItor = m_catalogue->getArchiveFilesItor(searchCriteria);
     std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());

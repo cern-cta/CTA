@@ -46,8 +46,7 @@ public:
   RdbmsCatalogueTapeContentsItor(
     log::Logger &log,
     rdbms::ConnPool &connPool,
-    const std::string &vid,
-    const bool showSuperseded);
+    const std::string &vid);
 
   /**
    * Destructor.

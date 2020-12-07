@@ -80,8 +80,6 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   // Get the search criteria from the optional options
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
 
-  searchCriteria.showSuperseded = requestMsg.has_flag(OptionBoolean::SHOW_SUPERSEDED);
-
   searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
   // Disk file IDs can be a list or a single ID
   auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);

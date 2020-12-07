@@ -863,13 +863,6 @@ public:
 
   typedef CatalogueItor<common::dataStructures::DeletedArchiveFile> DeletedArchiveFileItor;
 
-  /**
-   * Returns all the currently deleted archive files.  Please note that the list
-   * of archive files is ordered by archive file ID.
-   *
-   * @return The deleted archive files ordered by archive file ID.
-   */
-  virtual DeletedArchiveFileItor getDeletedArchiveFilesItor() const = 0;
   
   typedef CatalogueItor<common::dataStructures::FileRecycleLog> FileRecycleLogItor;
   
