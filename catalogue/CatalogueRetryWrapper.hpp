@@ -316,8 +316,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapesByVid(vids);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::VidToTapeMap getAllTapes() const override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getAllTapes();}, m_maxTriesToConnect);
+  std::map<std::string, std::string> getVidToLogicalLibrary() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getVidToLogicalLibrary();}, m_maxTriesToConnect);
   }
 
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, cta::log::LogContext & lc) override {

@@ -12960,13 +12960,13 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_350_tapes) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getAllTapes_no_tapes) {
+TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_no_tapes) {
   using namespace cta;
 
-  ASSERT_TRUE(m_catalogue->getAllTapes().empty());
+  ASSERT_TRUE(m_catalogue->getVidToLogicalLibrary().empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
+TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_many_tapes) {
   using namespace cta;
 
   const bool logicalLibraryIsDisabled= false;
@@ -12991,31 +12991,17 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
     m_catalogue->createTape(m_admin, tape);
   }
 
-  const auto vidToTapeMap = m_catalogue->getAllTapes();
-  ASSERT_EQ(nbTapes, vidToTapeMap.size());
+  const auto vidToLogicalLibrary = m_catalogue->getVidToLogicalLibrary();
+  ASSERT_EQ(nbTapes, vidToLogicalLibrary.size());
 
   for(uint32_t i = 0; i < nbTapes; i++) {
     std::ostringstream vid;
     vid << "V" << std::setfill('0') << std::setw(5) << i;
     const std::string tapeComment = "Create tape " + vid.str();
 
-    const auto tapeItor = vidToTapeMap.find(vid.str());
-    ASSERT_NE(vidToTapeMap.end(), tapeItor);
-
-    ASSERT_EQ(vid.str(), tapeItor->second.vid);
-    ASSERT_EQ(m_tape1.mediaType, tapeItor->second.mediaType);
-    ASSERT_EQ(m_tape1.vendor, tapeItor->second.vendor);
-    ASSERT_EQ(m_tape1.logicalLibraryName, tapeItor->second.logicalLibraryName);
-    ASSERT_EQ(m_tape1.tapePoolName, tapeItor->second.tapePoolName);
-    ASSERT_EQ(m_vo.name, tapeItor->second.vo);
-    ASSERT_EQ(m_mediaType.capacityInBytes, tapeItor->second.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tapeItor->second.disabled);
-    ASSERT_EQ(m_tape1.full, tapeItor->second.full);
-    ASSERT_EQ(m_tape1.readOnly, tapeItor->second.readOnly);
-    ASSERT_FALSE(tapeItor->second.isFromCastor);
-    ASSERT_EQ(0, tapeItor->second.readMountCount);
-    ASSERT_EQ(0, tapeItor->second.writeMountCount);
-    ASSERT_EQ(m_tape1.comment, tapeItor->second.comment);
+    const auto tapeItor = vidToLogicalLibrary.find(vid.str());
+    ASSERT_NE(vidToLogicalLibrary.end(), tapeItor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tapeItor->second);
   }
 }
 

@@ -554,11 +554,11 @@ public:
   virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const = 0;
 
   /**
-   * Returns all the tapes within the CTA catalogue.
+   * Returns map from VID to logical library name.
    *
-   * @return Map from tape volume identifier to tape.
+   * @return map from VID to logical library name.
    */
-  virtual common::dataStructures::VidToTapeMap getAllTapes() const = 0;
+  virtual std::map<std::string, std::string> getVidToLogicalLibrary() const = 0;
 
   /**
    * Reclaims the specified tape.

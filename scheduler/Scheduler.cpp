@@ -1566,7 +1566,7 @@ std::list<SchedulingInfos> Scheduler::getSchedulingInformations(log::LogContext&
 std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
   std::list<common::dataStructures::QueueAndMountSummary> ret;
   // Obtain a map of vids to tape info from the catalogue
-  auto vid_to_tapeinfo = m_catalogue.getAllTapes();
+  auto vid_to_tapeinfo = m_catalogue.getVidToLogicalLibrary();
 
   // Extract relevant information from the object store.
   utils::Timer t;

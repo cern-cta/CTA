@@ -27,7 +27,7 @@ namespace dataStructures {
 
 QueueAndMountSummary &QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
     MountType mountType, const std::string &tapePool, const std::string &vid,
-    const common::dataStructures::VidToTapeMap &vid_to_tapeinfo)
+    const std::map<std::string, std::string> &vid_to_logical_library)
 {
   for (auto & summary: summaryList) {
     if((summary.tapePool == tapePool && summary.mountType == mountType && (getMountBasicType(mountType) == MountType::ArchiveAllTypes)) || (summary.vid == vid && mountType == MountType::Retrieve)) {
@@ -43,7 +43,7 @@ QueueAndMountSummary &QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndM
       summaryList.back().logicalLibrary="-";
     } else {
       summaryList.back().vid=vid;
-      summaryList.back().logicalLibrary=vid_to_tapeinfo.at(vid).logicalLibraryName;
+      summaryList.back().logicalLibrary=vid_to_logical_library.at(vid);
     }
     return summaryList.back();
   }

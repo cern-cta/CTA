@@ -61,7 +61,7 @@ struct QueueAndMountSummary {
   
   static QueueAndMountSummary &getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
     MountType mountType, const std::string &tapePool, const std::string &vid,
-    const common::dataStructures::VidToTapeMap &vid_to_tapeinfo);
+    const std::map<std::string, std::string> &vid_to_logical_library);
 };
 
 }}} //namespace cta::common::dataStructures
