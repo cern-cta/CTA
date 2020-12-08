@@ -228,6 +228,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapePools();}, m_maxTriesToConnect);
   }
 
+  cta::optional<TapePool> getTapePool(const std::string &tapePoolName) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapePool(tapePoolName);}, m_maxTriesToConnect);
+  }
+
   void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapePoolVo(admin, name, vo);}, m_maxTriesToConnect);
   }

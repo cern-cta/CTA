@@ -2072,6 +2072,103 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
 }
 
 //------------------------------------------------------------------------------
+// getTapePool
+//------------------------------------------------------------------------------
+cta::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
+        "TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
+        "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
+        "TAPE_POOL.SUPPLY AS SUPPLY,"
+
+        "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.DATA_IN_BYTES = 0 THEN 1 ELSE 0 END), 0) AS NB_EMPTY_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.IS_DISABLED <> '0' THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.IS_FULL <> '0' THEN 1 ELSE 0 END), 0) AS NB_FULL_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.IS_READ_ONLY <> '0' THEN 1 ELSE 0 END), 0) AS NB_READ_ONLY_TAPES,"
+        "COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
+        "COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
+        "COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,"
+
+        "TAPE_POOL.USER_COMMENT AS USER_COMMENT,"
+
+        "TAPE_POOL.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "TAPE_POOL.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "TAPE_POOL.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "TAPE_POOL.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "TAPE_POOL.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "TAPE_POOL "
+      "INNER JOIN VIRTUAL_ORGANIZATION ON "
+        "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
+      "LEFT OUTER JOIN TAPE ON "
+        "TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID "
+      "LEFT OUTER JOIN MEDIA_TYPE ON "
+        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
+      "GROUP BY "
+        "TAPE_POOL.TAPE_POOL_NAME,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,"
+        "TAPE_POOL.NB_PARTIAL_TAPES,"
+        "TAPE_POOL.IS_ENCRYPTED,"
+        "TAPE_POOL.SUPPLY,"
+        "TAPE_POOL.USER_COMMENT,"
+        "TAPE_POOL.CREATION_LOG_USER_NAME,"
+        "TAPE_POOL.CREATION_LOG_HOST_NAME,"
+        "TAPE_POOL.CREATION_LOG_TIME,"
+        "TAPE_POOL.LAST_UPDATE_USER_NAME,"
+        "TAPE_POOL.LAST_UPDATE_HOST_NAME,"
+        "TAPE_POOL.LAST_UPDATE_TIME "
+      "HAVING "
+        "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME "
+      "ORDER BY "
+        "TAPE_POOL_NAME";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
+    auto rset = stmt.executeQuery();
+
+    if (!rset.next()) {
+      return cta::nullopt;
+    }
+
+    TapePool pool;
+    pool.name = rset.columnString("TAPE_POOL_NAME");
+    pool.vo.name = rset.columnString("VO");
+    pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
+    pool.encryption = rset.columnBool("IS_ENCRYPTED");
+    pool.supply = rset.columnOptionalString("SUPPLY");
+    pool.nbTapes = rset.columnUint64("NB_TAPES");
+    pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
+    pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
+    pool.nbFullTapes = rset.columnUint64("NB_FULL_TAPES");
+    pool.nbReadOnlyTapes = rset.columnUint64("NB_READ_ONLY_TAPES");
+    pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+    pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
+    pool.nbPhysicalFiles = rset.columnUint64("NB_PHYSICAL_FILES");
+    pool.comment = rset.columnString("USER_COMMENT");
+    pool.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    pool.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    pool.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+    pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+    return pool;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // modifyTapePoolVO
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin,

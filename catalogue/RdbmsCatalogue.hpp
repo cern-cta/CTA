@@ -395,6 +395,13 @@ public:
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override;
   void deleteTapePool(const std::string &name) override;
   std::list<TapePool> getTapePools() const override;
+
+  /**
+   * @return The tape pool with the specified name.
+   * @param tapePoolName The name of the tape pool.
+   */
+  cta::optional<TapePool> getTapePool(const std::string &tapePoolName) const override;
+
   void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) override;
   void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) override;
   void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;

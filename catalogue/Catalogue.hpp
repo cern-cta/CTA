@@ -453,6 +453,13 @@ public:
   virtual void deleteTapePool(const std::string &name) = 0;
 
   virtual std::list<TapePool> getTapePools() const = 0;
+
+  /**
+   * @return The tape pool with the specified name.
+   * @param tapePoolName The name of the tape pool.
+   */
+  virtual cta::optional<TapePool> getTapePool(const std::string &tapePoolName) const = 0;
+
   virtual void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) = 0;
   virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) = 0;
   virtual void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;

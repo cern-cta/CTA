@@ -1769,6 +1769,18 @@ TEST_P(cta_catalogue_CatalogueTest, getMediaTypeByVid) {
   ASSERT_EQ(m_mediaType.secondaryDensityCode, tapeMediaType.secondaryDensityCode);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getTapePool_non_existent) {
+  using namespace cta;
+      
+  const std::string tapePoolName = "non_existent_tape_pool";
+
+  ASSERT_FALSE(m_catalogue->tapePoolExists(tapePoolName));
+
+  const auto pool = m_catalogue->getTapePool(tapePoolName);
+
+  ASSERT_FALSE((bool)pool);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   using namespace cta;
       
@@ -1784,32 +1796,58 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
   ASSERT_TRUE(m_catalogue->tapePoolExists(tapePoolName));
-      
-  const auto pools = m_catalogue->getTapePools();
-      
-  ASSERT_EQ(1, pools.size());
-      
-  const auto &pool = pools.front();
-  ASSERT_EQ(tapePoolName, pool.name);
-  ASSERT_EQ(m_vo.name, pool.vo.name);
-  ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
-  ASSERT_EQ(isEncrypted, pool.encryption);
-  ASSERT_TRUE((bool)pool.supply);
-  ASSERT_EQ(supply.value(), pool.supply.value());
-  ASSERT_EQ(supply, pool.supply);
-  ASSERT_EQ(0, pool.nbTapes);
-  ASSERT_EQ(0, pool.capacityBytes);
-  ASSERT_EQ(0, pool.dataBytes);
-  ASSERT_EQ(0, pool.nbPhysicalFiles);
-  ASSERT_EQ(comment, pool.comment);
 
-  const common::dataStructures::EntryLog creationLog = pool.creationLog;
-  ASSERT_EQ(m_admin.username, creationLog.username);
-  ASSERT_EQ(m_admin.host, creationLog.host);
+  {
+    const auto pools = m_catalogue->getTapePools();
+      
+    ASSERT_EQ(1, pools.size());
+      
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_vo.name, pool.vo.name);
+    ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(isEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_EQ(supply.value(), pool.supply.value());
+    ASSERT_EQ(supply, pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(comment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
   
-  const common::dataStructures::EntryLog lastModificationLog =
-    pool.lastModificationLog;
-  ASSERT_EQ(creationLog, lastModificationLog);
+    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+  {
+    const auto pool = m_catalogue->getTapePool(tapePoolName);
+
+    ASSERT_TRUE((bool)pool);
+
+    ASSERT_EQ(tapePoolName, pool->name);
+    ASSERT_EQ(m_vo.name, pool->vo.name);
+    ASSERT_EQ(nbPartialTapes, pool->nbPartialTapes);
+    ASSERT_EQ(isEncrypted, pool->encryption);
+    ASSERT_TRUE((bool)pool->supply);
+    ASSERT_EQ(supply.value(), pool->supply.value());
+    ASSERT_EQ(supply, pool->supply);
+    ASSERT_EQ(0, pool->nbTapes);
+    ASSERT_EQ(0, pool->capacityBytes);
+    ASSERT_EQ(0, pool->dataBytes);
+    ASSERT_EQ(0, pool->nbPhysicalFiles);
+    ASSERT_EQ(comment, pool->comment);
+
+    const common::dataStructures::EntryLog creationLog = pool->creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = pool->lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool_null_supply) {
@@ -9986,8 +10024,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
-  // I AM HERE
-  // tape1.vid
+
   m_catalogue->setTapeDisabled(m_admin, tape1.vid, true);
 
   {
