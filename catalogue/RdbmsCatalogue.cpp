@@ -3362,18 +3362,20 @@ void RdbmsCatalogue::deleteTape(const std::string &vid) {
         "TAPE "
       "WHERE "
         "VID = :DELETE_VID AND "
-        "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID)";
+        "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID) AND "
+        "NOT EXISTS (SELECT VID FROM FILE_RECYCLE_LOG WHERE VID = :SELECT_VID2)";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(delete_sql);
     stmt.bindString(":DELETE_VID", vid);
     stmt.bindString(":SELECT_VID", vid);
+    stmt.bindString(":SELECT_VID2", vid);
     stmt.executeNonQuery();
 
     // The delete statement will effect no rows and will not raise an error if
-    // either the tape does not exist or if it still has tape files
+    // either the tape does not exist or if it still has tape files or files in the recycle log
     if(0 == stmt.getNbAffectedRows()) {
       if(tapeExists(conn, vid)) {
-        throw UserSpecifiedANonEmptyTape(std::string("Cannot delete tape ") + vid + " because it contains one or more files");
+        throw UserSpecifiedANonEmptyTape(std::string("Cannot delete tape ") + vid + " because either it contains one or more files or the files that were in it are in the file recycle log.");
       } else {
         throw UserSpecifiedANonExistentTape(std::string("Cannot delete tape ") + vid + " because it does not exist");
       }

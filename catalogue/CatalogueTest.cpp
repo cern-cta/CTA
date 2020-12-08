@@ -4621,14 +4621,16 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   }
 
   const uint64_t fileSize = 1234 * 1000000000UL;
+  const uint64_t archiveFileId = 1234;
+  const std::string diskFileId = "5678";
   {
     auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
     auto & file1Written = *file1WrittenUP;
     std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
     file1WrittenSet.insert(file1WrittenUP.release());
-    file1Written.archiveFileId        = 1234;
+    file1Written.archiveFileId        = archiveFileId;
     file1Written.diskInstance         = diskInstance;
-    file1Written.diskFileId           = "5678";
+    file1Written.diskFileId           = diskFileId;
     file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
     file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
@@ -4767,6 +4769,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
 TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   using namespace cta;
 
+  log::LogContext dummyLc(m_dummyLog);
+  
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -4869,6 +4873,29 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
 
   ASSERT_THROW(m_catalogue->deleteTape(m_tape1.vid), catalogue::UserSpecifiedANonEmptyTape);
   ASSERT_FALSE(m_catalogue->getTapes().empty());
+  
+  //Put the files on the tape on the recycle log
+  cta::common::dataStructures::DeleteArchiveRequest deletedArchiveReq;
+  deletedArchiveReq.archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+  deletedArchiveReq.diskInstance = diskInstance;
+  deletedArchiveReq.archiveFileID = archiveFileId;
+  deletedArchiveReq.diskFileId = diskFileId;
+  deletedArchiveReq.recycleTime = time(nullptr);
+  deletedArchiveReq.requester = cta::common::dataStructures::RequesterIdentity(m_admin.username,"group");
+  deletedArchiveReq.diskFilePath = "/path/";
+  m_catalogue->moveArchiveFileToRecycleLog(deletedArchiveReq,dummyLc);
+  
+  //The ArchiveFilesItor should not have any file in it
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  //The tape should not be deleted
+  ASSERT_THROW(m_catalogue->deleteTape(m_tape1.vid), catalogue::UserSpecifiedANonEmptyTape);
+  ASSERT_FALSE(m_catalogue->getTapes().empty());
+  m_catalogue->setTapeFull(m_admin,m_tape1.vid,true);
+  //Reclaim it to delete the files from the recycle log
+  m_catalogue->reclaimTape(m_admin,m_tape1.vid,dummyLc);
+  //Deletion should be successful
+  ASSERT_NO_THROW(m_catalogue->deleteTape(m_tape1.vid));
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteTape_non_existent) {
