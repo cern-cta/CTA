@@ -81,6 +81,26 @@ struct TapePool {
   uint64_t nbTapes;
 
   /**
+   * The total number of empty tapes in the pool.
+   */
+  uint64_t nbEmptyTapes;
+
+  /**
+   * The total number of disabled tapes in the pool.
+   */
+  uint64_t nbDisabledTapes;
+
+  /**
+   * The total number of full tapes in the pool.
+   */
+  uint64_t nbFullTapes;
+
+  /**
+   * The total number of read-only tapes in the pool.
+   */
+  uint64_t nbReadOnlyTapes;
+
+  /**
    * The total capacity of all the tapes in the pool in bytes.
    */
   uint64_t capacityBytes;

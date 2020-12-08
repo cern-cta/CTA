@@ -9156,6 +9156,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(1, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
@@ -9176,6 +9180,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(1, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
@@ -9289,6 +9297,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(0, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -9348,6 +9360,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(0, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -9949,6 +9965,153 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(0, summary.totalBytes);
     ASSERT_EQ(0, summary.totalFiles);
+  }
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(2, pools.size());
+
+    const auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+
+    ASSERT_EQ(tapePoolName1, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(0, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
+  }
+  // I AM HERE
+  // tape1.vid
+  m_catalogue->setTapeDisabled(m_admin, tape1.vid, true);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(2, pools.size());
+
+    const auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+    ASSERT_EQ(tapePoolName1, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(0, pool.nbEmptyTapes);
+    ASSERT_EQ(1, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
+  }
+
+  m_catalogue->setTapeDisabled(m_admin, tape1.vid, false);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(2, pools.size());
+
+    const auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+    ASSERT_EQ(tapePoolName1, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(0, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
+  }
+
+  m_catalogue->setTapeFull(m_admin, tape1.vid, true);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(2, pools.size());
+
+    const auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+    ASSERT_EQ(tapePoolName1, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(0, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(1, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
+  }
+
+  m_catalogue->setTapeFull(m_admin, tape1.vid, false);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(2, pools.size());
+
+    const auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+    ASSERT_EQ(tapePoolName1, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(0, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
+  }
+
+  m_catalogue->setTapeReadOnly(m_admin, tape1.vid, true);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(2, pools.size());
+
+    const auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+    ASSERT_EQ(tapePoolName1, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(0, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(1, pool.nbReadOnlyTapes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
+  }
+
+  m_catalogue->setTapeReadOnly(m_admin, tape1.vid, false);
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(2, pools.size());
+
+    const auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+    ASSERT_EQ(tapePoolName1, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(0, pool.nbEmptyTapes);
+    ASSERT_EQ(0, pool.nbDisabledTapes);
+    ASSERT_EQ(0, pool.nbFullTapes);
+    ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 }
 

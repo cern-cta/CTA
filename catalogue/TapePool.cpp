@@ -29,6 +29,10 @@ TapePool::TapePool():
   nbPartialTapes(0),
   encryption(false),
   nbTapes(0),
+  nbEmptyTapes(0),
+  nbDisabledTapes(0),
+  nbFullTapes(0),
+  nbReadOnlyTapes(0),
   capacityBytes(0),
   dataBytes(0),
   nbPhysicalFiles(0) {
@@ -57,6 +61,10 @@ std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
      << " nbPartialTapes=" << obj.nbPartialTapes
      << " encryption=" << obj.encryption
      << " nbTapes=" << obj.nbTapes
+     << " nbEmptyTapes=" << obj.nbEmptyTapes
+     << " nbDisabledTapes=" << obj.nbDisabledTapes
+     << " nbFullTapes=" << obj.nbFullTapes
+     << " nbReadOnlyTapes=" << obj.nbReadOnlyTapes
      << " capacityBytes=" << obj.capacityBytes
      << " dataBytes=" << obj.dataBytes
      << " creationLog=" << obj.creationLog
