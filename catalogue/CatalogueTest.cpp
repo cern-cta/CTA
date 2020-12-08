@@ -11417,6 +11417,94 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_file_recycle_log_deleteStorageClass) {
+  using namespace cta;
+
+  log::LogContext dummyLc(m_dummyLog);
+  
+  const std::string diskInstance = "disk_instance";
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    ASSERT_EQ(1, tapes.size());
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = diskInstance;
+  file1Written.diskFileId           = "5678";
+  
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
+  file1Written.size                 = archiveFileSize;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
+  file1Written.vid                  = m_tape1.vid;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = file1Written.vid;
+    std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(1, tapes.size());
+    const common::dataStructures::Tape &tape = tapes.front();
+    ASSERT_EQ(1, tape.lastFSeq);
+  }
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    cta::common::dataStructures::DeleteArchiveRequest deletedArchiveReq;
+    deletedArchiveReq.archiveFile = archiveFile;
+    deletedArchiveReq.diskInstance = diskInstance;
+    deletedArchiveReq.archiveFileID = archiveFileId;
+    deletedArchiveReq.diskFileId = file1Written.diskFileId;
+    deletedArchiveReq.recycleTime = time(nullptr);
+    deletedArchiveReq.requester = cta::common::dataStructures::RequesterIdentity(m_admin.username,"group");
+    deletedArchiveReq.diskFilePath = "/path/";
+    m_catalogue->moveArchiveFileToRecycleLog(deletedArchiveReq,dummyLc);
+  }
+
+  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name), catalogue::UserSpecifiedStorageClassUsedByFileRecycleLogs);
+  ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name), exception::UserError);
+  
+  {
+    //reclaim the tape to delete the files from the recycle log and delete the storage class
+    m_catalogue->setTapeFull(m_admin,m_tape1.vid,true);
+    m_catalogue->reclaimTape(m_admin,m_tape1.vid,dummyLc);
+  }
+  
+  ASSERT_NO_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name));
+}
+
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_copies) {
   using namespace cta;
 
@@ -15668,7 +15756,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleBin) {
+TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
   using namespace cta;
 
   const bool logicalLibraryIsDisabled= false;

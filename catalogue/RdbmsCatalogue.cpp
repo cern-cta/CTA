@@ -669,6 +669,11 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &storageClassName) {
       throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The ") + storageClassName +
         " storage class is being used by one or more archive files");
     }
+    
+    if(storageClassIsUsedByFileRecyleLogs(conn,storageClassName)){
+      throw UserSpecifiedStorageClassUsedByFileRecycleLogs(std::string("The ") + storageClassName +
+        " storage class is being used by one or more file in the recycle logs");
+    }
 
     const char *const sql =
       "DELETE FROM "
@@ -762,6 +767,34 @@ bool RdbmsCatalogue::storageClassIsUsedByArchiveFiles(rdbms::Conn &conn, const s
         "STORAGE_CLASS "
       "ON "
         "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
+      "WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// storageClassIsUsedByFileRecyleLogs
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::storageClassIsUsedByFileRecyleLogs(rdbms::Conn &conn, const std::string &storageClassName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME "
+      "FROM "
+        "FILE_RECYCLE_LOG "
+      "INNER JOIN "
+        "STORAGE_CLASS "
+      "ON "
+        "FILE_RECYCLE_LOG.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "WHERE "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql);

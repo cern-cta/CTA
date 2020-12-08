@@ -1782,6 +1782,15 @@ protected:
   bool storageClassIsUsedByArchiveFiles(rdbms::Conn &conn, const std::string &storageClassName) const;
   
   /**
+   * Returns true if the specified storage class is currently being used by one
+   * or more files in the recycle log.
+   *
+   * @param conn The database connection.
+   * @param storageClassName The name of the storage class.
+   */
+  bool storageClassIsUsedByFileRecyleLogs(rdbms::Conn & conn, const std::string & storageClassName) const;
+  
+  /**
    * Returns true if the specified Virtual Organization is currently being used by one
    * or more StorageClasses
    *
