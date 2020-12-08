@@ -496,11 +496,12 @@ public:
   common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const override;
 
   /**
-   * Returns map from VID to logical library name.
+   * Returns map from VID to logical library name for specified set of VIDs.
    *
+   * @param vids The tape volume identifiers (VIDs).
    * @return map from VID to logical library name.
    */
-  std::map<std::string, std::string> getVidToLogicalLibrary() const override;
+  std::map<std::string, std::string> getVidToLogicalLibrary(const std::set<std::string> &vids) const override;
 
   /**
    * Reclaims the specified tape.
@@ -1926,6 +1927,23 @@ protected:
    */
   void executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &stmt,
     common::dataStructures::VidToTapeMap &vidToTapeMap) const;
+
+  /**
+   * Generates the SELECT statement required to search for VID to logical
+   * library name mappings using 100 tape VIDs.  Each tape VID is represented in
+   * the SQL by a bind parameter with the  naming convention of ":VN" where N is
+   * an integer from 1 to 100 with no padding.
+   */
+  std::string getSelectVidToLogicalLibraryBy100Sql() const;
+
+  /**
+   * Executes the specified "getVidToLogicalLibraryBy100" statement and collects the
+   * results into the specified vidToLogicalLibrary map.
+   * @param stmt the "getVidToLogicalLibraryBy100" statement.
+   * @param vidLogicalLibrary the map from VID to logical library name.
+   */
+  void executeGetVidToLogicalLibraryBy100StmtAndCollectResults(rdbms::Stmt &stmt,
+    std::map<std::string, std::string> &vidToLogicalLibrary) const;
 
   /**
    * Returns an iterator across the files on the specified tape ordered by

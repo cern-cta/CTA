@@ -3609,7 +3609,7 @@ std::string RdbmsCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.IS_DISABLED AS IS_DISABLED,"
       "TAPE.IS_FULL AS IS_FULL,"
       "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
-      "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"    
+      "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
       "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
       "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -3619,7 +3619,7 @@ std::string RdbmsCatalogue::getSelectTapesBy100VidsSql() const {
 
       "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
       "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
-            
+
       "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
       "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
@@ -3698,23 +3698,60 @@ void RdbmsCatalogue::executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &
 //------------------------------------------------------------------------------
 // getVidToLogicalLibrary
 //------------------------------------------------------------------------------
-std::map<std::string, std::string> RdbmsCatalogue::getVidToLogicalLibrary() const {
+std::map<std::string, std::string> RdbmsCatalogue::getVidToLogicalLibrary(const std::set<std::string> &vids) const {
   try {
     std::map<std::string, std::string> vidToLogicalLibrary;
-    std::string sql =
-      "SELECT"                                                         "\n"
-        "TAPE.VID AS VID,"                                             "\n"
-        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME" "\n"
-      "FROM"                                                           "\n"
-        "TAPE"                                                         "\n"
-      "INNER JOIN LOGICAL_LIBRARY ON"                                  "\n"
-        "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID";
+
+    if(vids.empty()) return vidToLogicalLibrary;
+
+    static const std::string sql = getSelectVidToLogicalLibraryBy100Sql();
 
     auto conn = m_connPool.getConn();
+
     auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    while (rset.next()) {
-      vidToLogicalLibrary[rset.columnString("VID")] = rset.columnString("LOGICAL_LIBRARY_NAME");
+    uint64_t vidNb = 1;
+
+    for(const auto &vid: vids) {
+      // Bind the current tape VID
+      std::ostringstream paramName;
+      paramName << ":V" << vidNb;
+      stmt.bindString(paramName.str(), vid);
+
+      // If the 100th tape VID has not yet been reached
+      if(100 > vidNb) {
+        vidNb++;
+      } else { // The 100th VID has been reached
+        vidNb = 1;
+
+        // Execute the query and collect the results
+        executeGetVidToLogicalLibraryBy100StmtAndCollectResults(stmt, vidToLogicalLibrary);
+
+        // Create a new statement
+        stmt = conn.createStmt(sql);
+      }
+    }
+
+    // If there is a statement under construction
+    if(1 != vidNb) {
+      // Bind the remaining parameters with last tape VID.  This has no effect
+      // on the search results but makes the statement valid.
+      const std::string &lastVid = *vids.rbegin();
+      while(100 >= vidNb) {
+        std::ostringstream paramName;
+        paramName << ":V" << vidNb;
+        stmt.bindString(paramName.str(), lastVid);
+        vidNb++;
+      }
+
+      // Execute the query and collect the results
+      executeGetVidToLogicalLibraryBy100StmtAndCollectResults(stmt, vidToLogicalLibrary);
+    }
+
+    if(vids.size() != vidToLogicalLibrary.size()) {
+      exception::Exception ex;
+      ex.getMessage() << "Not all tapes were found: expected=" << vids.size() << " actual=" <<
+        vidToLogicalLibrary.size();
+      throw ex;
     }
 
     return vidToLogicalLibrary;
@@ -3723,6 +3760,43 @@ std::map<std::string, std::string> RdbmsCatalogue::getVidToLogicalLibrary() cons
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getSelectVidToLogicalLibraryBy100Sql
+//------------------------------------------------------------------------------
+std::string RdbmsCatalogue::getSelectVidToLogicalLibraryBy100Sql() const {
+  std::stringstream sql;
+
+  sql <<
+    "SELECT"                                                         "\n"
+      "TAPE.VID AS VID,"                                             "\n"
+      "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME" "\n"
+    "FROM"                                                           "\n"
+      "TAPE"                                                         "\n"
+    "INNER JOIN LOGICAL_LIBRARY ON"                                  "\n"
+      "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID" "\n"
+    "WHERE"                                                          "\n"
+      "VID IN (:V1";
+
+  for(uint32_t i=2; i<=100; i++) {
+    sql << ",:V" << i;
+  }
+
+  sql << ")";
+
+  return sql.str();
+}
+
+//------------------------------------------------------------------------------
+// executeGetVidToLogicalLibraryBy100StmtAndCollectResults
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::executeGetVidToLogicalLibraryBy100StmtAndCollectResults(rdbms::Stmt &stmt,
+std::map<std::string, std::string> &vidToLogicalLibrary) const {
+  auto rset = stmt.executeQuery();
+  while (rset.next()) {
+    vidToLogicalLibrary[rset.columnString("VID")] = rset.columnString("LOGICAL_LIBRARY_NAME");
   }
 }
 

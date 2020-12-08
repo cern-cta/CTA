@@ -12960,13 +12960,14 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_350_tapes) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_no_tapes) {
+TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_no_vids) {
   using namespace cta;
 
-  ASSERT_TRUE(m_catalogue->getVidToLogicalLibrary().empty());
+  std::set<std::string> vids;
+  ASSERT_TRUE(m_catalogue->getVidToLogicalLibrary(vids).empty());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_many_tapes) {
+TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_1_tape) {
   using namespace cta;
 
   const bool logicalLibraryIsDisabled= false;
@@ -12979,7 +12980,8 @@ TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_many_tapes) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  const uint32_t nbTapes = 10;
+  const uint32_t nbTapes = 1;
+  std::set<std::string> allVids;
 
   for(uint32_t i = 0; i < nbTapes; i++) {
     std::ostringstream vid;
@@ -12989,9 +12991,10 @@ TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_many_tapes) {
     auto tape = m_tape1;
     tape.vid = vid.str();
     m_catalogue->createTape(m_admin, tape);
+    allVids.insert(vid.str());
   }
 
-  const auto vidToLogicalLibrary = m_catalogue->getVidToLogicalLibrary();
+  const auto vidToLogicalLibrary = m_catalogue->getVidToLogicalLibrary(allVids);
   ASSERT_EQ(nbTapes, vidToLogicalLibrary.size());
 
   for(uint32_t i = 0; i < nbTapes; i++) {
@@ -12999,9 +13002,52 @@ TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_many_tapes) {
     vid << "V" << std::setfill('0') << std::setw(5) << i;
     const std::string tapeComment = "Create tape " + vid.str();
 
-    const auto tapeItor = vidToLogicalLibrary.find(vid.str());
-    ASSERT_NE(vidToLogicalLibrary.end(), tapeItor);
-    ASSERT_EQ(m_tape1.logicalLibraryName, tapeItor->second);
+    const auto itor = vidToLogicalLibrary.find(vid.str());
+    ASSERT_NE(vidToLogicalLibrary.end(), itor);
+
+    ASSERT_EQ(m_tape1.logicalLibraryName, itor->second);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_310_tapes) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  const uint32_t nbTapes = 310;
+  std::set<std::string> allVids;
+
+  for(uint32_t i = 0; i < nbTapes; i++) {
+    std::ostringstream vid;
+    vid << "V" << std::setfill('0') << std::setw(5) << i;
+    const std::string tapeComment = "Create tape " + vid.str();
+
+    auto tape = m_tape1;
+    tape.vid = vid.str();
+    m_catalogue->createTape(m_admin, tape);
+    allVids.insert(vid.str());
+  }
+
+  const auto vidToLogicalLibrary = m_catalogue->getVidToLogicalLibrary(allVids);
+  ASSERT_EQ(nbTapes, vidToLogicalLibrary.size());
+
+  for(uint32_t i = 0; i < nbTapes; i++) {
+    std::ostringstream vid;
+    vid << "V" << std::setfill('0') << std::setw(5) << i;
+    const std::string tapeComment = "Create tape " + vid.str();
+
+    const auto itor = vidToLogicalLibrary.find(vid.str());
+    ASSERT_NE(vidToLogicalLibrary.end(), itor);
+
+    ASSERT_EQ(m_tape1.logicalLibraryName, itor->second);
   }
 }
 

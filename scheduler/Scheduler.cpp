@@ -1565,15 +1565,28 @@ std::list<SchedulingInfos> Scheduler::getSchedulingInformations(log::LogContext&
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
   std::list<common::dataStructures::QueueAndMountSummary> ret;
-  utils::Timer t;
-  // Obtain a map of vids to tape info from the catalogue
-  const auto vid_to_logical_library = m_catalogue.getVidToLogicalLibrary();
-  const auto catalogueVidToLogicalLibraryTime = t.secs(utils::Timer::resetCounter);
 
   // Extract relevant information from the object store.
+  utils::Timer t;
   auto mountDecisionInfo=m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES,lc);
   auto schedulerDbTime = t.secs(utils::Timer::resetCounter);
   auto & mdi __attribute__((unused)) = *mountDecisionInfo;
+
+  std::set<std::string> tapesWithAQueue;
+  for (const auto & pm: mountDecisionInfo->potentialMounts) {
+    if(!pm.vid.empty()) {
+      tapesWithAQueue.emplace(pm.vid);
+    }
+  }
+  for (const auto & em: mountDecisionInfo->existingOrNextMounts) {
+    if (!em.vid.empty()) {
+      tapesWithAQueue.emplace(em.vid);
+    }
+  }
+
+  // Obtain a map of vids to tape info from the catalogue
+  const auto vid_to_logical_library = m_catalogue.getVidToLogicalLibrary(tapesWithAQueue);
+  const auto catalogueVidToLogicalLibraryTime = t.secs(utils::Timer::resetCounter);
 
   for (auto & pm: mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.
