@@ -1567,8 +1567,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   std::list<common::dataStructures::QueueAndMountSummary> ret;
   utils::Timer t;
   // Obtain a map of vids to tape info from the catalogue
-  auto vid_to_tapeinfo = m_catalogue.getVidToLogicalLibrary();
-  auto catalogueVidToLogicalLibraryTime = t.secs(utils::Timer::resetCounter);
+  const auto vid_to_logical_library = m_catalogue.getVidToLogicalLibrary();
+  const auto catalogueVidToLogicalLibraryTime = t.secs(utils::Timer::resetCounter);
 
   // Extract relevant information from the object store.
   auto mountDecisionInfo=m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES,lc);
@@ -1577,7 +1577,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
 
   for (auto & pm: mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.
-    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid, vid_to_tapeinfo);
+    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid, vid_to_logical_library);
     switch (pm.type) {
     case common::dataStructures::MountType::ArchiveForUser:
     case common::dataStructures::MountType::ArchiveForRepack:
@@ -1609,7 +1609,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     }
   }
   for (auto & em: mountDecisionInfo->existingOrNextMounts) {
-    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid, vid_to_tapeinfo);
+    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid, vid_to_logical_library);
     switch (em.type) {
     case common::dataStructures::MountType::ArchiveForUser:
     case common::dataStructures::MountType::ArchiveForRepack:
