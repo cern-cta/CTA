@@ -1565,11 +1565,12 @@ std::list<SchedulingInfos> Scheduler::getSchedulingInformations(log::LogContext&
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
   std::list<common::dataStructures::QueueAndMountSummary> ret;
+  utils::Timer t;
   // Obtain a map of vids to tape info from the catalogue
   auto vid_to_tapeinfo = m_catalogue.getVidToLogicalLibrary();
+  auto catalogueVidToLogicalLibraryTime = t.secs(utils::Timer::resetCounter);
 
   // Extract relevant information from the object store.
-  utils::Timer t;
   auto mountDecisionInfo=m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES,lc);
   auto schedulerDbTime = t.secs(utils::Timer::resetCounter);
   auto & mdi __attribute__((unused)) = *mountDecisionInfo;
@@ -1667,7 +1668,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   }
   auto respondPreparationTime = t.secs();
   log::ScopedParamContainer spc(lc);
-  spc.add("schedulerDbTime", schedulerDbTime)
+  spc.add("catalogueVidToLogicalLibraryTime", catalogueVidToLogicalLibraryTime)
+     .add("schedulerDbTime", schedulerDbTime)
      .add("respondPreparationTime", respondPreparationTime);
   lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success."); 
   return ret;
