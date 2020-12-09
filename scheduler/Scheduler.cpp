@@ -1644,17 +1644,20 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   for (auto & mountOrQueue: ret) {
     if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType || common::dataStructures::MountType::ArchiveForRepack==mountOrQueue.mountType) {
       const auto tapePool = m_catalogue.getTapePool(mountOrQueue.tapePool);
-      mountOrQueue.tapesCapacity = tapePool->capacityBytes;
-      mountOrQueue.filesOnTapes = tapePool->nbPhysicalFiles;
-      mountOrQueue.dataOnTapes = tapePool->dataBytes;
-      mountOrQueue.emptyTapes = tapePool->nbEmptyTapes;
-      mountOrQueue.disabledTapes = tapePool->nbDisabledTapes;
-      mountOrQueue.fullTapes = tapePool->nbFullTapes;
-      mountOrQueue.readOnlyTapes = tapePool->nbReadOnlyTapes;
-      // Please note that archived and exported tapes are NOT taken into account
-      // for the moment because they are not currently supported
-      const auto nbNonWritableTape = tapePool->nbDisabledTapes + tapePool->nbFullTapes + tapePool->nbReadOnlyTapes;
-      mountOrQueue.writableTapes = (tapePool->nbTapes >= nbNonWritableTape) ? tapePool->nbTapes - nbNonWritableTape : 0;
+      if (tapePool) {
+        mountOrQueue.tapesCapacity = tapePool->capacityBytes;
+        mountOrQueue.filesOnTapes = tapePool->nbPhysicalFiles;
+        mountOrQueue.dataOnTapes = tapePool->dataBytes;
+        mountOrQueue.emptyTapes = tapePool->nbEmptyTapes;
+        mountOrQueue.disabledTapes = tapePool->nbDisabledTapes;
+        mountOrQueue.fullTapes = tapePool->nbFullTapes;
+        mountOrQueue.readOnlyTapes = tapePool->nbReadOnlyTapes;
+        // Please note that archived and exported tapes are NOT taken into account
+        // for the moment because they are not currently supported
+        const auto nbNonWritableTape = tapePool->nbDisabledTapes + tapePool->nbFullTapes + tapePool->nbReadOnlyTapes;
+        mountOrQueue.writableTapes =
+          (tapePool->nbTapes >= nbNonWritableTape) ? tapePool->nbTapes - nbNonWritableTape : 0;
+      }
     } else if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
       // Get info for this tape.
       cta::catalogue::TapeSearchCriteria tsc;
