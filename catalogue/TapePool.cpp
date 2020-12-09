@@ -33,6 +33,7 @@ TapePool::TapePool():
   nbDisabledTapes(0),
   nbFullTapes(0),
   nbReadOnlyTapes(0),
+  nbWritableTapes(0),
   capacityBytes(0),
   dataBytes(0),
   nbPhysicalFiles(0) {

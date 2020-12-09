@@ -1916,6 +1916,154 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_vo_does_not_exist) {
     exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
+    ASSERT_EQ(m_vo.name, pool.vo.name);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+  }
+
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  auto tape_disabled_01 = m_tape1;
+  tape_disabled_01.vid = "D000001";
+  tape_disabled_01.disabled = true;
+  m_catalogue->createTape(m_admin, tape_disabled_01);
+
+  auto tape_disabled_02 = m_tape1;
+  tape_disabled_02.vid = "D000002";
+  tape_disabled_02.disabled = true;
+  m_catalogue->createTape(m_admin, tape_disabled_02);
+
+  auto tape_full_01 = m_tape1;
+  tape_full_01.vid = "F000001";
+  tape_full_01.full = true;
+  m_catalogue->createTape(m_admin, tape_full_01);
+
+  auto tape_full_02 = m_tape1;
+  tape_full_02.vid = "F000002";
+  tape_full_02.full = true;
+  m_catalogue->createTape(m_admin, tape_full_02);
+
+  auto tape_full_03 = m_tape1;
+  tape_full_03.vid = "F000003";
+  tape_full_03.full = true;
+  m_catalogue->createTape(m_admin, tape_full_03);
+
+  auto tape_readOnly_01 = m_tape1;
+  tape_readOnly_01.vid = "RO00001";
+  tape_readOnly_01.readOnly = true;
+  m_catalogue->createTape(m_admin, tape_readOnly_01);
+
+  auto tape_readOnly_02 = m_tape1;
+  tape_readOnly_02.vid = "RO00002";
+  tape_readOnly_02.readOnly = true;
+  m_catalogue->createTape(m_admin, tape_readOnly_02);
+
+  auto tape_readOnly_03 = m_tape1;
+  tape_readOnly_03.vid = "RO00003";
+  tape_readOnly_03.readOnly = true;
+  m_catalogue->createTape(m_admin, tape_readOnly_03);
+
+  auto tape_readOnly_04 = m_tape1;
+  tape_readOnly_04.vid = "RO00004";
+  tape_readOnly_04.readOnly = true;
+  m_catalogue->createTape(m_admin, tape_readOnly_04);
+
+  auto tape_disabled_full_readOnly_01 = m_tape1;
+  tape_disabled_full_readOnly_01.vid = "DFRO001";
+  tape_disabled_full_readOnly_01.disabled = true;
+  tape_disabled_full_readOnly_01.full = true;
+  tape_disabled_full_readOnly_01.readOnly = true;
+  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_01);
+
+  auto tape_disabled_full_readOnly_02 = m_tape1;
+  tape_disabled_full_readOnly_02.vid = "DFRO002";
+  tape_disabled_full_readOnly_02.disabled = true;
+  tape_disabled_full_readOnly_02.full = true;
+  tape_disabled_full_readOnly_02.readOnly = true;
+  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_02);
+
+  auto tape_disabled_full_readOnly_03 = m_tape1;
+  tape_disabled_full_readOnly_03.vid = "DFRO003";
+  tape_disabled_full_readOnly_03.disabled = true;
+  tape_disabled_full_readOnly_03.full = true;
+  tape_disabled_full_readOnly_03.readOnly = true;
+  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_03);
+
+  auto tape_disabled_full_readOnly_04 = m_tape1;
+  tape_disabled_full_readOnly_04.vid = "DFRO004";
+  tape_disabled_full_readOnly_04.disabled = true;
+  tape_disabled_full_readOnly_04.full = true;
+  tape_disabled_full_readOnly_04.readOnly = true;
+  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_04);
+
+  auto tape_disabled_full_readOnly_05 = m_tape1;
+  tape_disabled_full_readOnly_05.vid = "DFRO005";
+  tape_disabled_full_readOnly_05.disabled = true;
+  tape_disabled_full_readOnly_05.full = true;
+  tape_disabled_full_readOnly_05.readOnly = true;
+  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_05);
+
+  const auto tapes = m_catalogue->getTapes();
+
+  ASSERT_EQ(15, tapes.size());
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
+    ASSERT_EQ(m_vo.name, pool.vo.name);
+    ASSERT_EQ(15, pool.nbTapes);
+    ASSERT_EQ(15, pool.nbEmptyTapes);
+    ASSERT_EQ(7, pool.nbDisabledTapes);
+    ASSERT_EQ(8, pool.nbFullTapes);
+    ASSERT_EQ(9, pool.nbReadOnlyTapes);
+    ASSERT_EQ(1, pool.nbWritableTapes);
+    ASSERT_EQ(15 * m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+  }
+
+  {
+    const auto pool = m_catalogue->getTapePool(m_tape1.tapePoolName);
+    ASSERT_TRUE((bool)pool);
+
+    ASSERT_EQ(m_tape1.tapePoolName, pool->name);
+    ASSERT_EQ(m_vo.name, pool->vo.name);
+    ASSERT_EQ(15, pool->nbTapes);
+    ASSERT_EQ(15, pool->nbEmptyTapes);
+    ASSERT_EQ(7, pool->nbDisabledTapes);
+    ASSERT_EQ(8, pool->nbFullTapes);
+    ASSERT_EQ(9, pool->nbReadOnlyTapes);
+    ASSERT_EQ(1, pool->nbWritableTapes);
+    ASSERT_EQ(15 * m_mediaType.capacityInBytes, pool->capacityBytes);
+    ASSERT_EQ(0, pool->dataBytes);
+    ASSERT_EQ(0, pool->nbPhysicalFiles);
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   using namespace cta;
 
@@ -9198,6 +9346,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(1, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
@@ -9222,6 +9371,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(1, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
@@ -9339,6 +9489,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(1, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -9402,6 +9553,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(1, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -10020,6 +10172,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(1, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -10041,6 +10194,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(1, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(0, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -10062,6 +10216,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(1, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -10083,6 +10238,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(1, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(0, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -10104,6 +10260,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(1, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -10125,6 +10282,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(1, pool.nbReadOnlyTapes);
+    ASSERT_EQ(0, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
@@ -10146,6 +10304,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbDisabledTapes);
     ASSERT_EQ(0, pool.nbFullTapes);
     ASSERT_EQ(0, pool.nbReadOnlyTapes);
+    ASSERT_EQ(1, pool.nbWritableTapes);
     ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);

@@ -101,6 +101,11 @@ struct TapePool {
   uint64_t nbReadOnlyTapes;
 
   /**
+   * The total number of writable tapes in the pool.
+   */
+  uint64_t nbWritableTapes;
+
+  /**
    * The total capacity of all the tapes in the pool in bytes.
    */
   uint64_t capacityBytes;

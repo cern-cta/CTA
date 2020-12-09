@@ -1652,11 +1652,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         mountOrQueue.disabledTapes = tapePool->nbDisabledTapes;
         mountOrQueue.fullTapes = tapePool->nbFullTapes;
         mountOrQueue.readOnlyTapes = tapePool->nbReadOnlyTapes;
-        // Please note that archived and exported tapes are NOT taken into account
-        // for the moment because they are not currently supported
-        const auto nbNonWritableTape = tapePool->nbDisabledTapes + tapePool->nbFullTapes + tapePool->nbReadOnlyTapes;
-        mountOrQueue.writableTapes =
-          (tapePool->nbTapes >= nbNonWritableTape) ? tapePool->nbTapes - nbNonWritableTape : 0;
+        mountOrQueue.writableTapes = tapePool->nbWritableTapes;
       }
     } else if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
       // Get info for this tape.

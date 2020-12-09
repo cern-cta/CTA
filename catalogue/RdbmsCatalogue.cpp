@@ -1995,6 +1995,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "COALESCE(SUM(CASE WHEN TAPE.IS_DISABLED <> '0' THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,"
         "COALESCE(SUM(CASE WHEN TAPE.IS_FULL <> '0' THEN 1 ELSE 0 END), 0) AS NB_FULL_TAPES,"
         "COALESCE(SUM(CASE WHEN TAPE.IS_READ_ONLY <> '0' THEN 1 ELSE 0 END), 0) AS NB_READ_ONLY_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.IS_DISABLED = '0' AND TAPE.IS_FULL = '0' AND TAPE.IS_READ_ONLY = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,"
         "COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
         "COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
         "COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,"
@@ -2048,6 +2049,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
       pool.nbFullTapes = rset.columnUint64("NB_FULL_TAPES");
       pool.nbReadOnlyTapes = rset.columnUint64("NB_READ_ONLY_TAPES");
+      pool.nbWritableTapes = rset.columnUint64("NB_WRITABLE_TAPES");
       pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
       pool.nbPhysicalFiles = rset.columnUint64("NB_PHYSICAL_FILES");
@@ -2089,6 +2091,7 @@ cta::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolN
         "COALESCE(SUM(CASE WHEN TAPE.IS_DISABLED <> '0' THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,"
         "COALESCE(SUM(CASE WHEN TAPE.IS_FULL <> '0' THEN 1 ELSE 0 END), 0) AS NB_FULL_TAPES,"
         "COALESCE(SUM(CASE WHEN TAPE.IS_READ_ONLY <> '0' THEN 1 ELSE 0 END), 0) AS NB_READ_ONLY_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.IS_DISABLED = '0' AND TAPE.IS_FULL = '0' AND TAPE.IS_READ_ONLY = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,"
         "COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
         "COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
         "COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,"
@@ -2148,6 +2151,7 @@ cta::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolN
     pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
     pool.nbFullTapes = rset.columnUint64("NB_FULL_TAPES");
     pool.nbReadOnlyTapes = rset.columnUint64("NB_READ_ONLY_TAPES");
+    pool.nbWritableTapes = rset.columnUint64("NB_WRITABLE_TAPES");
     pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
     pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
     pool.nbPhysicalFiles = rset.columnUint64("NB_PHYSICAL_FILES");
