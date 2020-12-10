@@ -146,8 +146,8 @@ repackJustMove() {
     exit 1
   fi
 
-  echo "Reclaiming tape ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
+  echo "NOT Reclaiming tape ${VID_TO_REPACK}"
+  #kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
   echo 
   echo "*****************************************************"
   echo "STEP $1. Testing Repack \"Just move\" workflow TEST OK"
@@ -569,12 +569,12 @@ repackTapeRepairNoRecall() {
 }
 
 #Execution of each tests
-roundTripRepack 1
-repackDisableTape 2
+#roundTripRepack 1
+#repackDisableTape 2
 archiveFiles 1152 15
 repackJustMove 3
-repackTapeRepair 4
-repackJustAddCopies 5
-repackCancellation 6
-# repackMoveAndAddCopies 7
-repackTapeRepairNoRecall 7
+#repackTapeRepair 4
+#repackJustAddCopies 5
+#repackCancellation 6
+## repackMoveAndAddCopies 7
+#repackTapeRepairNoRecall 7

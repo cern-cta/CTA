@@ -15822,6 +15822,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
   for(auto & tapeItemWritten: tapeFilesWrittenCopy1){
     cta::catalogue::TapeFileWritten * tapeItem = static_cast<cta::catalogue::TapeFileWritten *>(tapeItemWritten.get());
     cta::common::dataStructures::DeleteArchiveRequest req;
+    req.requester.name = m_admin.username;
     req.archiveFileID = tapeItem->archiveFileId;
     req.diskFileId = tapeItem->diskFileId;
     req.diskFilePath = tapeItem->diskFilePath;
@@ -15863,7 +15864,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
     ASSERT_EQ(cta::checksum::ChecksumBlob(checksum::ADLER32, "1357"),deletedArchiveFile.checksumBlob);
     ASSERT_EQ(m_storageClassSingleCopy.name, deletedArchiveFile.storageClassName);
     ASSERT_EQ(diskFileId.str(),deletedArchiveFile.diskFileIdWhenDeleted);
-    
+    ASSERT_EQ(cta::catalogue::InsertFileRecycleLog::getDeletionReasonLog(m_admin.username,diskInstance),deletedArchiveFile.reasonLog);
     ASSERT_EQ(tape1.vid, deletedArchiveFile.vid);
     ASSERT_EQ(i,deletedArchiveFile.fSeq);
     ASSERT_EQ(i * 100,deletedArchiveFile.blockId);
@@ -15983,6 +15984,17 @@ TEST_P(cta_catalogue_CatalogueTest, emptyFileRecycleLogItorTest) {
   auto itor = m_catalogue->getFileRecycleLogItor();
   ASSERT_FALSE(itor.hasMore());
   ASSERT_THROW(itor.next(),cta::exception::Exception);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getFileRecycleLogItorVidNotExists) {
+  using namespace cta;
+  auto itor = m_catalogue->getFileRecycleLogItor();
+  ASSERT_FALSE(m_catalogue->getFileRecycleLogItor().hasMore());
+  
+  catalogue::RecycleTapeFileSearchCriteria criteria;
+  criteria.vid = "NOT_EXISTS";
+  
+  ASSERT_THROW(m_catalogue->getFileRecycleLogItor(criteria),exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeingSuperseded) {
@@ -16105,9 +16117,40 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
       ASSERT_EQ(fileRecycleLog.storageClassName,fileWrittenPtr->storageClassName);
       ASSERT_EQ(fileRecycleLog.reconciliationTime,fileRecycleLog.archiveFileCreationTime);
       ASSERT_EQ(cta::nullopt, fileRecycleLog.collocationHint);
-      ASSERT_EQ(cta::nullopt, fileRecycleLog.diskFilePath);\
+      ASSERT_EQ(cta::nullopt, fileRecycleLog.diskFilePath);
       ASSERT_EQ(cta::catalogue::InsertFileRecycleLog::getRepackReasonLog(),fileRecycleLog.reasonLog);
     }
+  }
+  {
+    //Check the vid search criteria
+    catalogue::RecycleTapeFileSearchCriteria criteria;
+    criteria.vid = tape1.vid;
+    auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
+    int nbFileRecycleLogs = 0;
+    while(fileRecycleLogItor.hasMore()){
+      nbFileRecycleLogs++;
+      fileRecycleLogItor.next();
+    }
+    ASSERT_EQ(nbArchiveFiles,nbFileRecycleLogs);
+  }
+  {
+    //Check the diskFileId search criteria
+    std::string diskFileId = "12345678";
+    catalogue::RecycleTapeFileSearchCriteria criteria;
+    criteria.diskFileId = diskFileId;
+    auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
+    ASSERT_TRUE(fileRecycleLogItor.hasMore());
+    auto fileRecycleLog = fileRecycleLogItor.next();
+    ASSERT_EQ(diskFileId,fileRecycleLog.diskFileId);
+    ASSERT_FALSE(fileRecycleLogItor.hasMore());
+  }
+  {
+    //Check the non existing diskFileId search criteria
+    std::string diskFileId = "DOES_NOT_EXIST";
+    catalogue::RecycleTapeFileSearchCriteria criteria;
+    criteria.diskFileId = diskFileId;
+    auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
+    ASSERT_FALSE(fileRecycleLogItor.hasMore());
   }
 }
 

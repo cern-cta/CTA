@@ -68,6 +68,7 @@ public:
   void printVersionHeader();
   void printMediaTypeLsHeader();
   void printSchedulingInfosLsHeader();
+  void printRecycleTapeFileLsHeader();
    
   // Output records
   void print(const AdminLsItem &adls_item);
@@ -93,6 +94,7 @@ public:
   void print(const VirtualOrganizationLsItem &vols_item);
   void print(const VersionItem & version_item);
   void print(const MediaTypeLsItem &mtls_item);
+  void print(const RecycleTapeFileLsItem & rtfls_item);
   
 
 private:

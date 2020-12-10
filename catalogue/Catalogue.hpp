@@ -70,6 +70,7 @@
 #include "common/log/Logger.hpp"
 #include "common/optional.hpp"
 #include "disk/DiskSystem.hpp"
+#include "RecyleTapeFileSearchCriteria.hpp"
 
 #include <list>
 #include <map>
@@ -872,7 +873,7 @@ public:
    *
    * @return The deleted archive files ordered by archive file ID.
    */
-  virtual FileRecycleLogItor getFileRecycleLogItor() const = 0;
+  virtual FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria = RecycleTapeFileSearchCriteria()) const = 0;
 
   /**
    * Returns the specified files in tape file sequence order.

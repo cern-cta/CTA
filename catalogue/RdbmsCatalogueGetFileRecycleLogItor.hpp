@@ -32,7 +32,7 @@ public:
    * @param log Object representing the API to the CTA logging system.
    * @param connPool The database connection pool.
    */
-  RdbmsCatalogueGetFileRecycleLogItor(log::Logger &log, rdbms::ConnPool &connPool);
+  RdbmsCatalogueGetFileRecycleLogItor(log::Logger &log, rdbms::ConnPool &connPool, const RecycleTapeFileSearchCriteria & searchCriteria);
 
   /**
    * Destructor.
@@ -59,6 +59,11 @@ private:
    * The database connection pool.
    */
   rdbms::ConnPool &m_connPool;
+  
+  /**
+   * The search criteria to be used when listing recycled tape files.
+   */
+  RecycleTapeFileSearchCriteria m_searchCriteria;
 
 
   /**

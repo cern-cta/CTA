@@ -28,9 +28,11 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
   log::Logger &log,
-  rdbms::ConnPool &connPool):
+  rdbms::ConnPool &connPool,
+  const RecycleTapeFileSearchCriteria & searchCriteria):
   m_log(log),
   m_connPool(connPool),
+  m_searchCriteria(searchCriteria),
   m_rsetIsEmpty(true),
   m_hasMoreHasBeenCalled(false) {
   try {
@@ -61,11 +63,47 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       "FROM "
         "FILE_RECYCLE_LOG "
       "JOIN "
-        "STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID "
-      "ORDER BY FILE_RECYCLE_LOG.ARCHIVE_FILE_ID, FILE_RECYCLE_LOG.COPY_NB";
+        "STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID";
 
+    const bool thereIsAtLeastOneSearchCriteria =
+      searchCriteria.vid            ||
+      searchCriteria.diskFileId;
+
+    if(thereIsAtLeastOneSearchCriteria) {
+      sql += " WHERE ";
+    }
+    
+    bool addedAWhereConstraint = false;
+    
+    if(searchCriteria.vid) {
+      sql += "FILE_RECYCLE_LOG.VID = :VID";
+      addedAWhereConstraint = true;
+    }
+    
+    if(searchCriteria.diskFileId){
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "FILE_RECYCLE_LOG.DISK_FILE_ID = :DISK_FILE_ID";
+      addedAWhereConstraint = true;
+    }
+    
+    // Order by FSEQ if we are listing the contents of a tape, else order by archive file ID
+    if(searchCriteria.vid) {
+      sql += " ORDER BY FILE_RECYCLE_LOG.FSEQ";
+    } else {
+      sql += " ORDER BY FILE_RECYCLE_LOG.ARCHIVE_FILE_ID, FILE_RECYCLE_LOG.COPY_NB";
+    }
+    
     m_conn = connPool.getConn();
     m_stmt = m_conn.createStmt(sql);
+    
+    if(searchCriteria.vid){
+      m_stmt.bindString(":VID", searchCriteria.vid.value());
+    }
+    
+    if(searchCriteria.diskFileId){
+      m_stmt.bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
+    }
+    
     m_rset = m_stmt.executeQuery();
 
     m_rsetIsEmpty = !m_rset.next();

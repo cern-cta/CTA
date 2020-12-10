@@ -6793,9 +6793,22 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getTapeContentsItor(const std::string
   }
 }
 
-Catalogue::FileRecycleLogItor RdbmsCatalogue::getFileRecycleLogItor() const {
+//------------------------------------------------------------------------------
+// checkRecycleTapeFileSearchCriteria
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::checkRecycleTapeFileSearchCriteria(const RecycleTapeFileSearchCriteria & searchCriteria) const {
+  if(searchCriteria.vid) {
+    auto conn = m_connPool.getConn();
+    if(!tapeExists(conn, searchCriteria.vid.value())) {
+      throw exception::UserError(std::string("Tape ") + searchCriteria.vid.value() + " does not exist");
+    }
+  }
+}
+
+Catalogue::FileRecycleLogItor RdbmsCatalogue::getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const {
   try {
-    auto impl = new RdbmsCatalogueGetFileRecycleLogItor(m_log, m_archiveFileListingConnPool);
+    checkRecycleTapeFileSearchCriteria(searchCriteria);
+    auto impl = new RdbmsCatalogueGetFileRecycleLogItor(m_log, m_archiveFileListingConnPool, searchCriteria);
     return FileRecycleLogItor(impl);
   } catch(exception::UserError &) {
     throw;

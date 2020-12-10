@@ -1047,4 +1047,61 @@ void TextFormatter::printSchedulingInfosLsHeader(){
   push_back("No tabular output available for this command, please use the --json flag.");
 }
 
+void TextFormatter::printRecycleTapeFileLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "archive id",
+    "copy no",
+    "vid",
+    "fseq",
+    "block id",
+    "instance",
+    "disk fxid",
+    "size",
+    "checksum type",
+    "checksum value",
+    "storage class",
+    "owner",
+    "group",
+    "deletion time",
+    "path when deleted",
+    "reason"
+  );
+}
+
+void TextFormatter::print(const RecycleTapeFileLsItem & rtfls_item){
+  // Files can have multiple checksums of different types. The tabular output will
+  // display only the first checksum; the JSON output will list all checksums.
+  std::string checksumType("NONE");
+  std::string checksumValue;
+
+  if(!rtfls_item.checksum().empty()) {
+    const google::protobuf::EnumDescriptor *descriptor = cta::common::ChecksumBlob::Checksum::Type_descriptor();
+    checksumType  = descriptor->FindValueByNumber(rtfls_item.checksum().begin()->type())->name();
+    checksumValue = rtfls_item.checksum().begin()->value();
+  }
+  auto fid = strtol(rtfls_item.disk_file_id().c_str(), nullptr, 10);
+  std::stringstream fxid;
+  fxid << std::hex << fid;
+  
+  push_back(
+    rtfls_item.archive_file_id(),
+    rtfls_item.copy_nb(),
+    rtfls_item.vid(),
+    rtfls_item.fseq(),
+    rtfls_item.block_id(),
+    rtfls_item.disk_instance(),
+    fxid.str(),
+    dataSizeToStr(rtfls_item.size_in_bytes()),
+    checksumType,
+    checksumValue,
+    rtfls_item.storage_class(),
+    rtfls_item.disk_file_uid(),
+    rtfls_item.disk_file_gid(),
+    timeToStr(rtfls_item.recycle_log_time()),
+    rtfls_item.disk_file_path(),
+    rtfls_item.reason_log()
+  );
+}
+
 }}

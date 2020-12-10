@@ -42,6 +42,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaVirtualOrganizationLs.hpp"
 #include "XrdCtaVersion.hpp"
 #include "XrdCtaSchedulingInfosLs.hpp"
+#include "XrdCtaRecycleTapeFileLs.hpp"
 
 #include <limits>
 #include <sstream>
@@ -292,6 +293,8 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
              break;
            case cmd_pair(AdminCmd::CMD_SCHEDULINGINFOS, AdminCmd::SUBCMD_LS):
              processSchedulingInfos_Ls(response,stream);
+           case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS):
+             processRecycleTapeFile_Ls(response,stream);
              break;
             default:
                throw PbException("Admin command pair <" +
@@ -2150,8 +2153,16 @@ void RequestMessage::processSchedulingInfos_Ls(cta::xrd::Response &response, Xrd
   
   stream = new SchedulingInfosLsStream(*this,m_catalogue,m_scheduler,m_lc);
   
-  //TODO TO BE CHANGED
   response.set_show_header(HeaderType::SCHEDULINGINFOS_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processRecycleTapeFile_Ls(cta::xrd::Response &response, XrdSsiStream * & stream) {
+  using namespace cta::admin;
+  
+  stream = new RecycleTapeFileLsStream(*this,m_catalogue,m_scheduler);
+  
+  response.set_show_header(HeaderType::RECYLETAPEFILE_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

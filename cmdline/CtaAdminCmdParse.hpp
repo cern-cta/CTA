@@ -217,6 +217,8 @@ const cmdLookup_t cmdLookup = {
    { "v",                       AdminCmd::CMD_VERSION},
    { "schedulinginfo",          AdminCmd::CMD_SCHEDULINGINFOS},
    { "si",                      AdminCmd::CMD_SCHEDULINGINFOS},
+   { "recycletf",               AdminCmd::CMD_RECYCLETAPEFILE},
+   { "rtf",                     AdminCmd::CMD_RECYCLETAPEFILE},
 };
 
 
@@ -395,6 +397,9 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_VIRTUALORGANIZATION,  { "virtualorganization",   "vo",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_VERSION,              { "version",               "v",  { } }},
    { AdminCmd::CMD_SCHEDULINGINFOS,      { "schedulinginfo",        "si",  { "ls" } }},
+   { AdminCmd::CMD_RECYCLETAPEFILE,      { "recycletf",        "rtf",  { "ls" },
+                            "  Tape files in the recycle log can be listed by VID or by EOS disk file ID.\n"
+                            "  Disk file IDs should be provided in hexadecimal (fxid).\n\n" }},
 };
 
 
@@ -596,6 +601,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { }},
    {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
    {{ AdminCmd::CMD_SCHEDULINGINFOS,      AdminCmd::SUBCMD_LS   }, { }},
+   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS }, { opt_vid.optional(), opt_fid.optional() }},
 };
 
 

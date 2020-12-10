@@ -838,11 +838,20 @@ public:
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
+   * Throws a UserError exception if the specified searchCriteria is not valid
+   * due to a user error.
+   *
+   * @param searchCriteria The search criteria.
+   */
+  void checkRecycleTapeFileSearchCriteria(const RecycleTapeFileSearchCriteria & searchCriteria) const;
+  
+  /**
    * Returns all the currently deleted files by looking at the FILE_RECYCLE_LOG table
    *
+   * @param searchCriteria The search criteria
    * @return The deleted archive files ordered by archive file ID.
    */
-  FileRecycleLogItor getFileRecycleLogItor() const override;
+  FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const override;
   
   /**
    * Returns the specified files in tape file sequence order.

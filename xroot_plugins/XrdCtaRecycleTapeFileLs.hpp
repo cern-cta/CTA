@@ -1,0 +1,138 @@
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2019  CERN
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "catalogue/Catalogue.hpp"
+
+namespace cta { namespace xrd {
+
+/*!
+ * Stream object which implements "recycletf ls" command
+ */
+class RecycleTapeFileLsStream: public XrdCtaStream{
+public:
+  /*!
+   * Constructor
+   *
+   * @param[in]    requestMsg    RequestMessage containing command-line arguments
+   * @param[in]    catalogue     CTA Catalogue
+   * @param[in]    scheduler     CTA Scheduler
+   */
+  RecycleTapeFileLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+
+private:
+  /*!
+   * Can we close the stream?
+   */
+  virtual bool isDone() const {
+    return !m_fileRecycleLogItor.hasMore();
+  }
+
+  /*!
+   * Fill the buffer
+   */
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+
+  cta::catalogue::Catalogue::FileRecycleLogItor m_fileRecycleLogItor;     //!< List of recycle tape files from the catalogue
+
+  static constexpr const char* const LOG_SUFFIX  = "RecycleTapeFileLsStream";    //!< Identifier for log messages
+};
+
+
+RecycleTapeFileLsStream::RecycleTapeFileLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+  XrdCtaStream(catalogue, scheduler)
+{
+  using namespace cta::admin;
+
+  bool has_any = false;
+  
+  cta::catalogue::RecycleTapeFileSearchCriteria searchCriteria;
+  
+  searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
+  
+  auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);
+  
+  if(diskFileId){
+    // single option on the command line we need to do the conversion ourselves.
+    auto fid = strtol(diskFileId->c_str(), nullptr, 16);
+    if(fid < 1 || fid == LONG_MAX) {
+       throw cta::exception::UserError(*diskFileId + " is not a valid file ID");
+    }
+    searchCriteria.diskFileId = std::to_string(fid);
+  }
+  if(!has_any){
+    throw cta::exception::UserError("Must specify at least one search option");
+  }
+  
+  m_fileRecycleLogItor = catalogue.getFileRecycleLogItor(searchCriteria);
+          
+  XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "RecycleTapeFileLsStream() constructor");
+}
+
+int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
+  for(bool is_buffer_full = false; m_fileRecycleLogItor.hasMore() && !is_buffer_full; ) {
+    const common::dataStructures::FileRecycleLog fileRecycleLog = m_fileRecycleLogItor.next();
+    
+    Data record;
+    
+    auto recycleLogToReturn = record.mutable_rtfls_item();
+    recycleLogToReturn->set_vid(fileRecycleLog.vid);
+    recycleLogToReturn->set_fseq(fileRecycleLog.fSeq);
+    recycleLogToReturn->set_block_id(fileRecycleLog.blockId);
+    recycleLogToReturn->set_logical_size_in_bytes(fileRecycleLog.logicalSizeInBytes);
+    recycleLogToReturn->set_copy_nb(fileRecycleLog.copyNb);
+    recycleLogToReturn->set_tape_file_creation_time(fileRecycleLog.tapeFileCreationTime);
+    recycleLogToReturn->set_archive_file_id(fileRecycleLog.archiveFileId);
+    recycleLogToReturn->set_disk_instance(fileRecycleLog.diskInstanceName);
+    recycleLogToReturn->set_disk_file_id(fileRecycleLog.diskFileId);
+    recycleLogToReturn->set_disk_file_id_when_deleted(fileRecycleLog.diskFileIdWhenDeleted);
+    recycleLogToReturn->set_disk_file_uid(fileRecycleLog.diskFileUid);
+    recycleLogToReturn->set_disk_file_gid(fileRecycleLog.diskFileGid);
+    recycleLogToReturn->set_size_in_bytes(fileRecycleLog.sizeInBytes);
+    
+    // Checksum
+    common::ChecksumBlob csb;
+    checksum::ChecksumBlobToProtobuf(fileRecycleLog.checksumBlob, csb);
+    for(auto csb_it = csb.cs().begin(); csb_it != csb.cs().end(); ++csb_it) {
+      auto cs_ptr = recycleLogToReturn->add_checksum();
+      cs_ptr->set_type(csb_it->type());
+      cs_ptr->set_value(checksum::ChecksumBlob::ByteArrayToHex(csb_it->value()));
+    }
+    recycleLogToReturn->set_storage_class(fileRecycleLog.storageClassName);
+    recycleLogToReturn->set_archive_file_creation_time(fileRecycleLog.archiveFileCreationTime);
+    recycleLogToReturn->set_reconciliation_time(fileRecycleLog.reconciliationTime);
+    if(fileRecycleLog.collocationHint){
+      recycleLogToReturn->set_collocation_hint(fileRecycleLog.collocationHint.value());
+    }
+    if(fileRecycleLog.diskFilePath){
+      recycleLogToReturn->set_disk_file_path(fileRecycleLog.diskFilePath.value());
+    }
+    recycleLogToReturn->set_reason_log(fileRecycleLog.reasonLog);
+    recycleLogToReturn->set_recycle_log_time(fileRecycleLog.recycleLogTime);
+    // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
+    // enough data to send to the client. The actual buffer size is double the block size,
+    // so we can keep writing a few additional records after is_buffer_full is true. These
+    // will be sent on the next iteration. If we exceed the hard limit of double the block
+    // size, Push() will throw an exception.
+    is_buffer_full = streambuf->Push(record);
+  }
+  return streambuf->Size();
+}
+
+}} // namespace cta::xrd

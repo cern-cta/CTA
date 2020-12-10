@@ -239,6 +239,7 @@ private:
   admincmdstream_t processVirtualOrganization_Ls;
   admincmdstream_t processVersion;
   admincmdstream_t processSchedulingInfos_Ls;
+  admincmdstream_t processRecycleTapeFile_Ls;
 
   /*!
    * Log an admin command
