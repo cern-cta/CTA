@@ -1,3 +1,13 @@
+# v3.1-13
+
+## Summary
+
+### Features
+
+### Bug fixes
+
+- cta/CTA#941 Slow `cta-admin sq` even when there is very little activity
+
 # v3.1-12
 
 ### Features
