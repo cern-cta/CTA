@@ -1640,10 +1640,14 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     }
   }
   mountDecisionInfo.reset();
+  double catalogueGetTapePoolTotalTime = 0.0;
+  double catalogueGetTapesTotalTime = 0.0;
   // Add the tape information where useful (archive queues).
   for (auto & mountOrQueue: ret) {
     if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType || common::dataStructures::MountType::ArchiveForRepack==mountOrQueue.mountType) {
+      utils::Timer catalogueGetTapePoolTimer;
       const auto tapePool = m_catalogue.getTapePool(mountOrQueue.tapePool);
+      catalogueGetTapePoolTotalTime += catalogueGetTapePoolTimer.secs();
       if (tapePool) {
         mountOrQueue.tapesCapacity = tapePool->capacityBytes;
         mountOrQueue.filesOnTapes = tapePool->nbPhysicalFiles;
@@ -1658,7 +1662,9 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       // Get info for this tape.
       cta::catalogue::TapeSearchCriteria tsc;
       tsc.vid = mountOrQueue.vid;
+      utils::Timer catalogueGetTapesTimer;
       auto tapes=m_catalogue.getTapes(tsc);
+      catalogueGetTapesTotalTime += catalogueGetTapesTimer.secs();
       if (tapes.size() != 1) {
         throw cta::exception::Exception("In Scheduler::getQueuesAndMountSummaries(): got unexpected number of tapes from catalogue for a retrieve.");
       }
@@ -1679,6 +1685,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   log::ScopedParamContainer spc(lc);
   spc.add("catalogueVidToLogicalLibraryTime", catalogueVidToLogicalLibraryTime)
      .add("schedulerDbTime", schedulerDbTime)
+     .add("catalogueGetTapePoolTotalTime", catalogueGetTapePoolTotalTime)
+     .add("catalogueGetTapesTotalTime", catalogueGetTapesTotalTime)
      .add("respondPreparationTime", respondPreparationTime);
   lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success."); 
   return ret;
