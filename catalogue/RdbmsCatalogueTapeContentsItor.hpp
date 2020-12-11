@@ -41,7 +41,6 @@ public:
    * @param log Object representing the API to the CTA logging system.
    * @param connPool The database connection pool.
    * @param vid The volume identifier of the tape.
-   * @param showSuperseded Include superseded files in the output?
    */
   RdbmsCatalogueTapeContentsItor(
     log::Logger &log,

@@ -858,8 +858,6 @@ void TextFormatter::printTapeFileLsHeader() {
     "owner",
     "group",
     "creation time",
-    "ss vid", // superseded
-    "ss fseq",
     "path"
   );
 }
@@ -894,8 +892,6 @@ void TextFormatter::print(const TapeFileLsItem &tfls_item) {
     tfls_item.df().owner_id().uid(),
     tfls_item.df().owner_id().gid(),
     timeToStr(tfls_item.af().creation_time()),
-    tfls_item.tf().superseded_by_vid(),
-    tfls_item.tf().superseded_by_f_seq(),
     tfls_item.df().path()
   );
 }

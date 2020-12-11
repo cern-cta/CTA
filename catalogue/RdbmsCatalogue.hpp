@@ -539,7 +539,7 @@ public:
   
   /**
    * Returns the number of any files contained in the tape identified by its vid
-   * @param vid the vid in which we will count non superseded files
+   * @param vid the vid in which we will count the number of files
    * @return the number of files on the tape
    */
   uint64_t getNbFilesOnTape(const std::string &vid) const override;
@@ -547,7 +547,7 @@ public:
   /**
    * Returns the number of any files contained in the tape identified by its vid
    * @param conn the database connection
-   * @param vid the vid in which we will count non superseded files
+   * @param vid the vid in which we will count the number of files
    * @return the number of files on the tape
    */
   uint64_t getNbFilesOnTape(rdbms::Conn &conn, const std::string &vid) const;

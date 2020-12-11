@@ -7913,7 +7913,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
       }
 
-      // If there is a tape file that is active i.e non superseded by another file, we add it to the archiveFile's list of tape files
+      // If there is a tape file we add it to the archiveFile's list of tape files
       if(!rset.columnIsNull("VID")) {
         // Add the tape file to the archive file's in-memory structure
         common::dataStructures::TapeFile tapeFile;

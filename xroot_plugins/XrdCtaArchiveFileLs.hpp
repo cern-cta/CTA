@@ -131,8 +131,6 @@ int ArchiveFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       tf->set_vid(jt->vid);
       tf->set_f_seq(jt->fSeq);
       tf->set_block_id(jt->blockId);
-      tf->set_superseded_by_vid(jt->supersededByVid);
-      tf->set_superseded_by_f_seq(jt->supersededByFSeq);
       record.mutable_afls_item()->set_copy_nb(jt->copyNb);
 
       // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.

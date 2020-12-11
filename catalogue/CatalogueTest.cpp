@@ -9164,7 +9164,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   file1Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file1WrittenSet);
 
-  //Create a superseded file
+  //Create a superseder file
   auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
   auto & file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
@@ -9749,9 +9749,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     }
   }
 
-  // Look at all files on tape 1 with "show superseded" on even though there
-  // aren't any.  This is just check for syntax errors in the underlying
-  // SELECT statement.
+  // Look at all files on tape 1
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.vid = tape1.vid;

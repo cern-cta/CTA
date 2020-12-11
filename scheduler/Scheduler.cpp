@@ -538,8 +538,6 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
         // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
         // restart of expansion.
-        //We want to Archive the "active" copies on the tape, thus the copies that are not superseded by another
-        //we want to Retrieve the "active" fSeq
         totalStatsFile.totalFilesToArchive += 1;
         totalStatsFile.totalBytesToArchive += retrieveSubRequest.archiveFile.fileSize;
         retrieveSubRequest.copyNbsToRearchive.insert(tc.copyNb);

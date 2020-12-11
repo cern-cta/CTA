@@ -262,7 +262,6 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
    { "--lookupnamespace",       OptionBoolean::LOOKUP_NAMESPACE },
    { "--summary",               OptionBoolean::SUMMARY },
-   { "--showsuperseded",        OptionBoolean::SHOW_SUPERSEDED },
    { "--no-recall",             OptionBoolean::NO_RECALL }
 };
 
@@ -471,7 +470,6 @@ const Option opt_refresh_interval     { Option::OPT_UINT, "--refreshinterval",  
 const Option opt_targeted_free_space  { Option::OPT_UINT, "--targetedfreespace",     "-f",   " <targeted_free_space>" };
 const Option opt_sleep_time           { Option::OPT_UINT, "--sleeptime",             "-s",   " <sleep time in s>" };
 const Option opt_reason               { Option::OPT_STR,  "--reason",                "-r",   " <reason_status_change>" };
-const Option opt_show_superseded      { Option::OPT_FLAG, "--showsuperseded",        "-s",   "" };
 const Option opt_no_recall            { Option::OPT_FLAG, "--no-recall",             "-nr",  "" };
 const Option opt_object_id            { Option::OPT_STR,  "--objectid",              "-o",   " <objectId>" };
 
@@ -573,7 +571,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),
-        opt_show_superseded.optional(), opt_lookupns.optional(), opt_archivefileid.optional() }},
+        opt_lookupns.optional(), opt_archivefileid.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},
