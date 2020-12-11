@@ -1567,9 +1567,9 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   std::list<common::dataStructures::QueueAndMountSummary> ret;
 
   // Extract relevant information from the object store.
-  utils::Timer t;
+  utils::Timer schedulerDbTimer;
   auto mountDecisionInfo=m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES,lc);
-  auto schedulerDbTime = t.secs(utils::Timer::resetCounter);
+  const auto schedulerDbTime = schedulerDbTimer.secs();
   auto & mdi __attribute__((unused)) = *mountDecisionInfo;
 
   std::set<std::string> tapesWithAQueue;
@@ -1585,8 +1585,9 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   }
 
   // Obtain a map of vids to tape info from the catalogue
+  utils::Timer catalogueVidToLogicalLibraryTimer;
   const auto vid_to_logical_library = m_catalogue.getVidToLogicalLibrary(tapesWithAQueue);
-  const auto catalogueVidToLogicalLibraryTime = t.secs(utils::Timer::resetCounter);
+  const auto catalogueVidToLogicalLibraryTime = catalogueVidToLogicalLibraryTimer.secs();
 
   for (auto & pm: mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.
@@ -1681,13 +1682,11 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       mountOrQueue.tapePool = t.tapePoolName;
     }
   }
-  auto respondPreparationTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("catalogueVidToLogicalLibraryTime", catalogueVidToLogicalLibraryTime)
      .add("schedulerDbTime", schedulerDbTime)
      .add("catalogueGetTapePoolTotalTime", catalogueGetTapePoolTotalTime)
-     .add("catalogueGetTapesTotalTime", catalogueGetTapesTotalTime)
-     .add("respondPreparationTime", respondPreparationTime);
+     .add("catalogueGetTapesTotalTime", catalogueGetTapesTotalTime);
   lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success."); 
   return ret;
 }
