@@ -38,7 +38,6 @@
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
-#include "common/dataStructures/DeletedArchiveFile.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
@@ -862,8 +861,6 @@ public:
    */
   virtual ArchiveFileItor getArchiveFilesItor(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
-
-  typedef CatalogueItor<common::dataStructures::DeletedArchiveFile> DeletedArchiveFileItor;
 
   
   typedef CatalogueItor<common::dataStructures::FileRecycleLog> FileRecycleLogItor;
