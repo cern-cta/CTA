@@ -38,15 +38,14 @@ kubectl -n ${NAMESPACE} cp client_prepare_file.sh client:/root/client_prepare_fi
 archiveFiles() {
   NB_FILES=$1
   FILE_SIZE_KB=$2
+  echo "Launching client_ar.sh on client pod"
+  echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
+  echo " Archiving files: xrdcp as user1"
   kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -A || exit 1
 }
 
 echo
-echo "Launching client_ar.sh on client pod"
-echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
-echo " Archiving files: xrdcp as user1"
 kubectl -n ${NAMESPACE} cp client_ar.sh client:/root/client_ar.sh
-archiveFiles 1 15
 
 REPACK_BUFFER_URL=/eos/ctaeos/repack
 echo "Creating the repack buffer URL directory (${REPACK_BUFFER_URL})"
@@ -569,6 +568,7 @@ repackTapeRepairNoRecall() {
 }
 
 #Execution of each tests
+archiveFiles 1 15
 roundTripRepack 1
 repackDisableTape 2
 archiveFiles 1152 15

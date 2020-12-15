@@ -209,6 +209,19 @@ then
   { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
 fi
 
+amountArchivedFiles=`admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .archivedFiles"`
+amountRecyleTapeFiles=`admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length"`
+
+echo "Amount of archived files = $amountArchivedFiles"
+echo "Amount of recycled tape files = $amountRecyleTapeFiles"
+if [[ $amountArchivedFiles -eq $amountRecyleTapeFiles ]]
+then
+  echo "The amount of archived files is equal to the amount of recycled tape files. Test OK"
+else
+  echo "The amount of archived files is not equal to the amount of recycled tape files. Test FAILED"
+  exit 1
+fi
+
 echo
 echo "Repack request on VID ${VID_TO_REPACK} succeeded."
 echo
