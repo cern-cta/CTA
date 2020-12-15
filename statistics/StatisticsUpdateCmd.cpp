@@ -75,7 +75,7 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
                                                                                               "NB_COPY_NB_GT_1",
                                                                                               "COPY_NB_GT_1_IN_BYTES"
                                                                                       });
-  result += catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"VID","ARCHIVE_FILE_ID","FSEQ","COPY_NB","SUPERSEDED_BY_VID","SUPERSEDED_BY_FSEQ"});
+  result += catalogueChecker->checkTableContainsColumns("TAPE_FILE",{"VID","ARCHIVE_FILE_ID","FSEQ","COPY_NB"});
   result += catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE",{"ARCHIVE_FILE_ID","SIZE_IN_BYTES"});
   
   if(result.getStatus() == SchemaCheckerResult::FAILED){
