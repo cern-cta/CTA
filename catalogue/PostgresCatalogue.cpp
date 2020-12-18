@@ -680,7 +680,6 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresCatalogue::insertOldCopi
           "TAPE_FILE.VID AS VID,"
           "TAPE_FILE.FSEQ AS FSEQ,"
           "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-          "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
           "TAPE_FILE.COPY_NB AS COPY_NB,"
           "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
           "TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
@@ -699,7 +698,6 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresCatalogue::insertOldCopi
         fileRecycleLog.vid = rset.columnString("VID");
         fileRecycleLog.fSeq = rset.columnUint64("FSEQ");
         fileRecycleLog.blockId = rset.columnUint64("BLOCK_ID");
-        fileRecycleLog.logicalSizeInBytes = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
         fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");

@@ -30,7 +30,12 @@ struct  FileRecycleLog {
   std::string vid;
   uint64_t fSeq;
   uint64_t blockId;
-  uint64_t logicalSizeInBytes;
+  /**
+   * The TAPE_FILE.LOGICAL_SIZE_IN_BYTES column contains the same information as the ARCHIVE_FILE.
+   * https://gitlab.cern.ch/cta/CTA/-/issues/412
+   * Therefore, we don't have to save it in the FileRecycleLog
+   */
+  /*uint64_t logicalSizeInBytes;*/
   uint8_t copyNb;
   time_t tapeFileCreationTime;
   uint64_t archiveFileId;

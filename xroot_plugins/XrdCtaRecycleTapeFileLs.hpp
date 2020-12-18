@@ -95,7 +95,6 @@ int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
     recycleLogToReturn->set_vid(fileRecycleLog.vid);
     recycleLogToReturn->set_fseq(fileRecycleLog.fSeq);
     recycleLogToReturn->set_block_id(fileRecycleLog.blockId);
-    recycleLogToReturn->set_logical_size_in_bytes(fileRecycleLog.logicalSizeInBytes);
     recycleLogToReturn->set_copy_nb(fileRecycleLog.copyNb);
     recycleLogToReturn->set_tape_file_creation_time(fileRecycleLog.tapeFileCreationTime);
     recycleLogToReturn->set_archive_file_id(fileRecycleLog.archiveFileId);

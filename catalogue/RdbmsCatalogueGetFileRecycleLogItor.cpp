@@ -41,7 +41,6 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
         "FILE_RECYCLE_LOG.VID AS VID,"
         "FILE_RECYCLE_LOG.FSEQ AS FSEQ,"
         "FILE_RECYCLE_LOG.BLOCK_ID AS BLOCK_ID,"
-        "FILE_RECYCLE_LOG.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "FILE_RECYCLE_LOG.COPY_NB AS COPY_NB,"
         "FILE_RECYCLE_LOG.TAPE_FILE_CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "FILE_RECYCLE_LOG.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
@@ -174,7 +173,6 @@ common::dataStructures::FileRecycleLog RdbmsCatalogueGetFileRecycleLogItor::popu
   fileRecycleLog.vid = m_rset.columnString("VID");
   fileRecycleLog.fSeq = m_rset.columnUint64("FSEQ");
   fileRecycleLog.blockId = m_rset.columnUint64("BLOCK_ID");
-  fileRecycleLog.logicalSizeInBytes = m_rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
   fileRecycleLog.copyNb = m_rset.columnUint8("COPY_NB");
   fileRecycleLog.tapeFileCreationTime = m_rset.columnUint64("TAPE_FILE_CREATION_TIME");
   fileRecycleLog.archiveFileId = m_rset.columnUint64("ARCHIVE_FILE_ID");

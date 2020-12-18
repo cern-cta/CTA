@@ -15867,7 +15867,6 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
     ASSERT_EQ(i,deletedArchiveFile.fSeq);
     ASSERT_EQ(i * 100,deletedArchiveFile.blockId);
     ASSERT_EQ(1, deletedArchiveFile.copyNb);
-    ASSERT_EQ(archiveFileSize,deletedArchiveFile.logicalSizeInBytes);
   }
   
   //Let's try the deletion of the files from the recycle-bin.
@@ -16102,7 +16101,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
       ASSERT_EQ(fileRecycleLog.vid,tape1.vid);
       ASSERT_EQ(fileRecycleLog.fSeq,fileWrittenPtr->fSeq);
       ASSERT_EQ(fileRecycleLog.blockId,fileWrittenPtr->blockId);
-      ASSERT_EQ(fileRecycleLog.logicalSizeInBytes,fileWrittenPtr->size);
       ASSERT_EQ(fileRecycleLog.copyNb,fileWrittenPtr->copyNb);
       ASSERT_EQ(fileRecycleLog.archiveFileId,fileWrittenPtr->archiveFileId);
       ASSERT_EQ(fileRecycleLog.diskInstanceName,fileWrittenPtr->diskInstance);

@@ -30,7 +30,6 @@ namespace cta { namespace catalogue {
     std::string vid;
     uint64_t fSeq;
     uint64_t blockId;
-    uint64_t logicalSizeInBytes;
     uint8_t copyNb;
     time_t tapeFileCreationTime;
     uint64_t archiveFileId;

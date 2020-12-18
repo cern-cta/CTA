@@ -8571,7 +8571,6 @@ void RdbmsCatalogue::copyArchiveFileToFileRecycleLog(rdbms::Conn & conn, const c
       fileRecycleLog.vid = tapeFile.vid;
       fileRecycleLog.fSeq = tapeFile.fSeq;
       fileRecycleLog.blockId = tapeFile.blockId;
-      fileRecycleLog.logicalSizeInBytes = tapeFile.fileSize;
       fileRecycleLog.copyNb = tapeFile.copyNb;
       fileRecycleLog.tapeFileCreationTime = tapeFile.creationTime;
       fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
@@ -8599,7 +8598,6 @@ void RdbmsCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn, const InsertF
       "VID,"
       "FSEQ,"
       "BLOCK_ID,"
-      "LOGICAL_SIZE_IN_BYTES,"
       "COPY_NB,"
       "TAPE_FILE_CREATION_TIME,"
       "ARCHIVE_FILE_ID,"
@@ -8623,7 +8621,6 @@ void RdbmsCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn, const InsertF
       ":VID,"
       ":FSEQ,"
       ":BLOCK_ID,"
-      ":LOGICAL_SIZE_IN_BYTES,"
       ":COPY_NB,"
       ":TAPE_FILE_CREATION_TIME,"
       ":ARCHIVE_FILE_ID,"
@@ -8651,7 +8648,6 @@ void RdbmsCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn, const InsertF
     stmt.bindString(":VID",fileRecycleLog.vid);
     stmt.bindUint64(":FSEQ",fileRecycleLog.fSeq);
     stmt.bindUint64(":BLOCK_ID",fileRecycleLog.blockId);
-    stmt.bindUint64(":LOGICAL_SIZE_IN_BYTES",fileRecycleLog.logicalSizeInBytes);
     stmt.bindUint8(":COPY_NB",fileRecycleLog.copyNb);
     stmt.bindUint64(":TAPE_FILE_CREATION_TIME",fileRecycleLog.tapeFileCreationTime);
     stmt.bindString(":DISK_FILE_PATH",fileRecycleLog.diskFilePath);
@@ -8777,7 +8773,6 @@ std::list<InsertFileRecycleLog> RdbmsCatalogue::insertOldCopiesOfFilesIfAnyOnFil
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
         "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,"
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,"
         "TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
@@ -8798,7 +8793,6 @@ std::list<InsertFileRecycleLog> RdbmsCatalogue::insertOldCopiesOfFilesIfAnyOnFil
         fileRecycleLog.vid = rset.columnString("VID");
         fileRecycleLog.fSeq = rset.columnUint64("FSEQ");
         fileRecycleLog.blockId = rset.columnUint64("BLOCK_ID");
-        fileRecycleLog.logicalSizeInBytes = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
         fileRecycleLog.copyNb = rset.columnUint8("COPY_NB");
         fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
