@@ -37,19 +37,24 @@
 
 
 /**
+ * A queue to delete should be defined by its vid/tapepool + its type
+ */
+typedef std::pair<std::string,cta::objectstore::JobQueueType> QueueIdQueueType;
+
+/**
  * Get the missing Retrieve queues from the RootEntry
  * @param re the RootEntry that is considered already locked and fetched
  * @param backend the objectstore backend
- * @return the list of the addresses of the missing Retrieve queues
+ * @return the list of the vid-queueType of the missing Retrieve queues
  */
-std::list<std::string> getAllMissingRetrieveQueues(cta::objectstore::RootEntry & re, cta::objectstore::Backend & backend){
-  std::list<std::string> missingRetrieveQueues;
+std::list<QueueIdQueueType> getAllMissingRetrieveQueues(cta::objectstore::RootEntry & re, cta::objectstore::Backend & backend){
+  std::list<QueueIdQueueType> missingRetrieveQueues;
   for(auto queueType: cta::objectstore::AllJobQueueTypes){
     std::list<cta::objectstore::RootEntry::RetrieveQueueDump> retrieveQueues = re.dumpRetrieveQueues(queueType);
     for (auto & rq: retrieveQueues){
       if (!backend.exists(rq.address)) {
-        missingRetrieveQueues.emplace_back(rq.vid);
-        std::cout << "The retrieve queue for vid " << rq.vid << " at address " << rq.address
+        missingRetrieveQueues.emplace_back(std::make_pair(rq.vid,queueType));
+        std::cout << "The retrieve queue " << cta::objectstore::toString(queueType) << " for vid " << rq.vid << " at address " << rq.address
               << " is missing and will be dereferenced." << std::endl;
       }
     }
@@ -61,16 +66,16 @@ std::list<std::string> getAllMissingRetrieveQueues(cta::objectstore::RootEntry &
  * Get the missing Archive queues from the RootEntry
  * @param re the RootEntry that is considered already locked and fetched
  * @param backend the objectstore backend
- * @return the list of the addresses of the missing Archive queues
+ * @return the list of the tapepool-queueType of the missing Archive queues
  */
-std::list<std::string> getAllMissingArchiveQueues(cta::objectstore::RootEntry & re, cta::objectstore::Backend & backend){
-  std::list<std::string> missingArchiveQueues;
+std::list<QueueIdQueueType> getAllMissingArchiveQueues(cta::objectstore::RootEntry & re, cta::objectstore::Backend & backend){
+  std::list<QueueIdQueueType> missingArchiveQueues;
   for(auto queueType: cta::objectstore::AllJobQueueTypes){
     std::list<cta::objectstore::RootEntry::ArchiveQueueDump> archiveQueues = re.dumpArchiveQueues(queueType);
     for (auto & aq: archiveQueues){
       if (!backend.exists(aq.address)) {
-        missingArchiveQueues.emplace_back(aq.tapePool);
-        std::cout << "The archive queue for tape pool " << aq.tapePool << " at address " << aq.address
+        missingArchiveQueues.emplace_back(std::make_pair(aq.tapePool,queueType));
+        std::cout << "The archive queue " << cta::objectstore::toString(queueType) << " for tape pool " << aq.tapePool << " at address " << aq.address
               << " is missing and will be dereferenced." << std::endl;
       }
     }
@@ -101,17 +106,17 @@ int main(int argc, char ** argv) {
     cta::objectstore::RootEntry re(*be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::list<std::string> missingArchiveQueues, missingRetrieveQueues;
+    std::list<QueueIdQueueType> missingArchiveQueues, missingRetrieveQueues;
     missingArchiveQueues = getAllMissingArchiveQueues(re,*be);
     missingRetrieveQueues = getAllMissingRetrieveQueues(re,*be);
     // Actually do the job
-    for (auto & tp: missingArchiveQueues) {
-      re.removeMissingArchiveQueueReference(tp, cta::objectstore::JobQueueType::JobsToTransferForUser);
-      std::cout << "Archive queue for tape pool " << tp << " dereferenced." << std::endl;
+    for (auto & arQueue: missingArchiveQueues) {
+      re.removeMissingArchiveQueueReference(arQueue.first, arQueue.second);
+      std::cout << "Archive queue for tape pool " << arQueue.first << " dereferenced." << std::endl;
     }
-    for (auto & vid: missingRetrieveQueues) {
-      re.removeMissingRetrieveQueueReference(vid, cta::objectstore::JobQueueType::JobsToTransferForUser);
-      std::cout << "Retrieve queue for vid " << vid << " dereferenced." << std::endl;
+    for (auto & reQueue: missingRetrieveQueues) {
+      re.removeMissingRetrieveQueueReference(reQueue.first, reQueue.second);
+      std::cout << "Retrieve queue for vid " << reQueue.first << " dereferenced." << std::endl;
     }
     if (missingArchiveQueues.size() || missingRetrieveQueues.size()) {
       re.commit();
