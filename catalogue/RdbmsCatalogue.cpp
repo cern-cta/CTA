@@ -4421,6 +4421,58 @@ void RdbmsCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::S
 }
 
 //------------------------------------------------------------------------------
+// modifyTapeState
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapeState(const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason, const std::string & stateModifiedBy){
+  try {  
+    using namespace common::dataStructures;
+    const time_t now = time(nullptr);
+    
+    std::string stateStr;
+    try {
+      stateStr = Tape::STATE_TO_STRING_MAP.at(state);
+    } catch(std::out_of_range & ex){
+      std::string errorMsg = "The state provided in parameter (" + std::to_string(state) + ") is not known or has not been initialized";
+      throw cta::exception::Exception(errorMsg);
+    }
+    
+    //Check the reason is set for all the status except the ACTIVE one, this is the only status that allows the reason to be set to null.
+    if(state != Tape::State::ACTIVE){
+      if(!stateReason){
+        throw exception::UserError(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided."); 
+      }
+    }
+    
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "TAPE_STATE = :TAPE_STATE,"
+        "STATE_REASON = :STATE_REASON,"
+        "STATE_UPDATE_TIME = :STATE_UPDATE_TIME,"
+        "STATE_MODIFIED_BY = :STATE_MODIFIED_BY "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    
+    stmt.bindString(":TAPE_STATE", stateStr);
+    stmt.bindString(":STATE_REASON", stateReason);
+    stmt.bindUint64(":STATE_UPDATE_TIME", now);
+    stmt.bindString(":STATE_MODIFIED_BY",stateModifiedBy);
+    stmt.executeNonQuery();
+
+    if (0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify the state of the tape ") + vid + " because it does not exist");
+    }
+
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // tapeMountedForArchive
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {

@@ -38,6 +38,18 @@ Tape::Tape():
   readOnly(false)
   {}
 
+const std::map<Tape::State,std::string> Tape::STATE_TO_STRING_MAP = {
+  {Tape::State::ACTIVE,"ACTIVE"},
+  {Tape::State::BROKEN,"BROKEN"},
+  {Tape::State::DISABLED,"DISABLED"}
+};
+
+const std::map<std::string,Tape::State> Tape::STRING_TO_STATE_MAP = {
+  {"ACTIVE",Tape::State::ACTIVE},
+  {"BROKEN",Tape::State::BROKEN},
+  {"DISABLED",Tape::State::DISABLED}
+};
+
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
@@ -88,7 +100,7 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
      << " lastWriteLog=" << obj.lastWriteLog
      << " lastReadLog=" << obj.lastReadLog << ")";
   return os;
-      }
+}
 
 } // namespace dataStructures
 } // namespace common

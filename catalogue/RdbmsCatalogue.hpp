@@ -578,7 +578,8 @@ public:
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override;
   void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) override;
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) override;
-
+  void modifyTapeState(const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason, const std::string & stateModifiedBy) override;
+  
   /**
    * Sets the full status of the specified tape.
    *

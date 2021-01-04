@@ -36,6 +36,15 @@ namespace dataStructures {
  */
 struct Tape {
 
+  enum State {
+    ACTIVE,
+    BROKEN,
+    DISABLED
+  };
+  
+  static const std::map<State,std::string> STATE_TO_STRING_MAP;
+  static const std::map<std::string,State> STRING_TO_STATE_MAP;
+  
   Tape();
 
   bool operator==(const Tape &rhs) const;
@@ -75,6 +84,11 @@ struct Tape {
   optional<TapeLog> labelLog;
   optional<TapeLog> lastWriteLog;
   optional<TapeLog> lastReadLog;
+  
+  State state;
+  optional<std::string> stateReason;
+  std::string stateModifiedBy;
+  time_t stateModifiedTime;
   
 }; // struct Tape
 
