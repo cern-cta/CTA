@@ -239,6 +239,21 @@ public:
     return *ptr;
   }
   
+  cta::catalogue::CreateTapeAttributes getDefaultTape(){
+    cta::catalogue::CreateTapeAttributes tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.full = false;
+    tape.disabled = false;
+    tape.readOnly = false;
+    tape.state = cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(cta::common::dataStructures::Tape::ACTIVE);
+    tape.comment = "Comment";
+    return tape;
+  }
+  
   void setupDefaultCatalogue() {
     using namespace cta;
     auto & catalogue=getCatalogue();
@@ -427,22 +442,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -624,22 +626,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -830,22 +819,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -1031,22 +1007,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -1229,22 +1192,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -1429,22 +1379,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -1632,22 +1569,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -1794,22 +1718,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -1966,22 +1877,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -2126,22 +2024,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -2301,21 +2186,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
   const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -2443,7 +2316,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
-  std::string vid = s_vid;
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
@@ -2474,22 +2346,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 

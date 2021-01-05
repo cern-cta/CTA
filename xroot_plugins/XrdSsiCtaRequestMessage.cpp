@@ -1745,6 +1745,7 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    tape.disabled = disabled;
    tape.readOnly = readOnly;
    tape.comment = comment ? comment.value() : "";
+   tape.state = tape.state = common::dataStructures::Tape::STATE_TO_STRING_MAP.at(common::dataStructures::Tape::ACTIVE);
    m_catalogue.createTape(m_cliIdentity, tape);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

@@ -26,6 +26,7 @@
 #include <map>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace cta {
 namespace common {
@@ -37,9 +38,9 @@ namespace dataStructures {
 struct Tape {
 
   enum State {
-    ACTIVE,
-    BROKEN,
-    DISABLED
+    ACTIVE = 1,
+    BROKEN = 2,
+    DISABLED = 3
   };
   
   static const std::map<State,std::string> STATE_TO_STRING_MAP;

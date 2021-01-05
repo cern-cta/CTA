@@ -3187,6 +3187,23 @@ void RdbmsCatalogue::createTape(
     if(tapePoolName.empty()) {
       throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape because the tape pool name is an empty string");
     }
+    
+    common::dataStructures::Tape::State tapeState;
+    
+    if(cta::utils::trimString(tape.state).empty()){
+      throw UserSpecifiedAnEmptyStringTapeState("Cannot create tape because no state has been specified");
+    }
+    try {
+      tapeState = common::dataStructures::Tape::STRING_TO_STATE_MAP.at(tape.state);
+    } catch(std::out_of_range &) {
+      throw UserSpecifiedANonExistentTapeState(std::string("Cannot create tape because the state specified " + tape.state + " does not exist."));
+    }
+    
+    if(tapeState != common::dataStructures::Tape::ACTIVE){
+      if(!tape.stateReason){
+        throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive("Cannot create tape because no reason has been provided for the state " + tape.state);
+      }
+    }
 
     auto conn = m_connPool.getConn();
     if(tapeExists(conn, vid)) {
@@ -3225,6 +3242,11 @@ void RdbmsCatalogue::createTape(
         "IS_FROM_CASTOR,"          "\n"
 
         "USER_COMMENT,"            "\n"
+    
+        "TAPE_STATE,"              "\n"
+        "STATE_REASON,"            "\n"
+        "STATE_UPDATE_TIME,"       "\n"
+        "STATE_MODIFIED_BY,"       "\n"
 
         "CREATION_LOG_USER_NAME,"  "\n"
         "CREATION_LOG_HOST_NAME,"  "\n"
@@ -3247,6 +3269,11 @@ void RdbmsCatalogue::createTape(
         ":IS_FROM_CASTOR,"         "\n"
 
         ":USER_COMMENT,"           "\n"
+    
+        ":TAPE_STATE,"             "\n"
+        ":STATE_REASON,"           "\n"
+        ":STATE_UPDATE_TIME,"      "\n"
+        ":STATE_MODIFIED_BY,"       "\n"
 
         ":CREATION_LOG_USER_NAME," "\n"
         ":CREATION_LOG_HOST_NAME," "\n"
@@ -3271,6 +3298,12 @@ void RdbmsCatalogue::createTape(
     stmt.bindBool(":IS_FROM_CASTOR", isFromCastor);
 
     stmt.bindString(":USER_COMMENT", tapeComment);
+    
+    std::string stateModifiedBy = admin.username + "@" + admin.host;
+    stmt.bindString(":TAPE_STATE",tape.state);
+    stmt.bindString(":STATE_REASON",tape.stateReason);
+    stmt.bindUint64(":STATE_UPDATE_TIME",now);
+    stmt.bindString(":STATE_MODIFIED_BY", stateModifiedBy);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -3294,6 +3327,10 @@ void RdbmsCatalogue::createTape(
        .add("isReadOnly", readOnly ? 1 : 0)
        .add("isFromCastor", isFromCastor ? 1 : 0)
        .add("userComment", tape.comment ? tape.comment.value() : "")
+       .add("tapeState",tape.state)
+       .add("stateReason",tape.stateReason ? tape.stateReason.value() : "")
+       .add("stateUpdateTime",now)
+       .add("stateModifiedBy",stateModifiedBy)
        .add("creationLogUserName", admin.username)
        .add("creationLogHostName", admin.host)
        .add("creationLogTime", now);
@@ -3483,6 +3520,11 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
         "TAPE.USER_COMMENT AS USER_COMMENT,"
+            
+        "TAPE.TAPE_STATE AS TAPE_STATE,"
+        "TAPE.STATE_REASON AS TAPE_REASON,"
+        "TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,"
+        "TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,"
 
         "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"

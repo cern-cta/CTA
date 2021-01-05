@@ -239,6 +239,23 @@ public:
     catalogue.createMediaType(s_adminOnAdminHost,mediaType);
   }
 
+  cta::catalogue::CreateTapeAttributes getDefaultTape() {
+    using namespace cta;
+
+    catalogue::CreateTapeAttributes tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.full = false;
+    tape.disabled = false;
+    tape.readOnly = false;
+    tape.state = common::dataStructures::Tape::STATE_TO_STRING_MAP.at(common::dataStructures::Tape::ACTIVE);
+    tape.comment = "Comment";
+
+    return tape;
+  }
 private:
 
   // Prevent copying
@@ -468,22 +485,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -684,22 +688,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -946,22 +937,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -1202,22 +1180,9 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -1345,20 +1310,10 @@ TEST_P(SchedulerTest, repack) {
   cliId.host = "host";
   cliId.username = s_userName;
   std::string tape1 = "Tape";
-  
-  const bool notReadOnly = false; 
 
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = tape1;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = false;
-    tape.disabled = false;
-    tape.readOnly = false;
-    tape.comment = "Comment";
     catalogue.createTape(cliId, tape);
   }
   
@@ -1386,16 +1341,10 @@ TEST_P(SchedulerTest, repack) {
   // Recreate a repack and get it moved to ToExpand
   std::string tape2 = "Tape2";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
+    catalogue.createTape(s_adminOnAdminHost, tape);
     tape.vid = tape2;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
     tape.full = true;
-    tape.disabled = false;
-    tape.readOnly = notReadOnly;
-    tape.comment = "Comment";
     catalogue.createTape(cliId, tape);
   }
   qrr.m_vid = tape2;
@@ -1436,19 +1385,10 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   cliId.host = "host";
   cliId.username = s_userName;
   std::string tape1 = "Tape";
-  const bool notReadOnly = false;
-
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = tape1;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
     tape.full = true;
-    tape.disabled = false;
-    tape.readOnly = notReadOnly;
-    tape.comment = "Comment";
     catalogue.createTape(cliId, tape);
   }
 
@@ -1460,16 +1400,9 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   std::string tape2 = "Tape2";
 
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = tape2;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
     tape.full = true;
-    tape.disabled = false;
-    tape.readOnly = notReadOnly;
-    tape.comment = "Comment";
     catalogue.createTape(cliId, tape);
   }
 
@@ -1530,10 +1463,6 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
  
   
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -1554,16 +1483,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     std::string vid = ossVid.str();
     allVid.push_back(vid);
 
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -1860,10 +1782,6 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -1877,16 +1795,10 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   std::string vid = ossVid.str();
 
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -2107,10 +2019,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -2124,16 +2032,9 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   std::string vid = ossVid.str();
 
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -2141,16 +2042,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   std::string vidDestination = "vidDestination";
 
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vidDestination;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = false;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -2380,10 +2273,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -2397,32 +2286,17 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   std::string vid = ossVid.str();
 
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a repack destination tape
   std::string vidDestinationRepack = "vidDestinationRepack";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vidDestinationRepack;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = false;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -2701,10 +2575,6 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const bool disabledValue = true;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -2718,16 +2588,10 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   std::string vid = ossVid.str();
 
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    tape.full = true;
+    tape.disabled = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -2842,10 +2706,6 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -2859,16 +2719,9 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   std::string vid = ossVid.str();
 
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -2997,10 +2850,6 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -3014,16 +2863,9 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
   std::string vid = ossVid.str();
 
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -3189,24 +3031,13 @@ TEST_P(SchedulerTest, archiveReportMultipleAndQueueRetrievesWithActivities) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
   const std::string driveName = "tape_drive";
   for (auto i:fileRange) {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid + std::to_string(i);
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
+    std::string vid = s_vid + std::to_string(i);
+    tape.vid = vid;
     catalogue.createTape(s_adminOnAdminHost, tape);
-    catalogue.tapeLabelled(s_vid + std::to_string(i), "tape_drive");    
+    catalogue.tapeLabelled(vid, "tape_drive");    
   }
 
 
@@ -3388,10 +3219,6 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -3403,16 +3230,9 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   //Create the source tape
   std::string vid = "vidSource";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -3438,31 +3258,17 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   //Create two other destinationTape
   std::string vidDestination1 = "vidDestination1";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vidDestination1;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = tapepool2Name;
-    tape.full = false;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
   std::string vidDestination2 = "vidDestination2";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vidDestination2;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = tapepool3Name;
-    tape.full = false;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -3663,10 +3469,6 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   agent.setTimeout_us(100);
   agent.insertAndRegisterSelf(lc);
   
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -3678,16 +3480,9 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   //Create the source tape
   std::string vid = "vidSource";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -3713,46 +3508,25 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   //Create two other destinationTape and one for the move workflow
   std::string vidDestination1 = "vidDestination1";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vidDestination1;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = tapepool2Name;
-    tape.full = false;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
   std::string vidDestination2 = "vidDestination2";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vidDestination2;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = tapepool3Name;
     tape.full = false;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
   std::string vidMove = "vidMove";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vidMove;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = false;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue; 
-    tape.comment = comment;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -3972,10 +3746,6 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
   
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -3988,31 +3758,16 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   //Create a repack destination tape
   std::string vidDestination = "vidDestination";
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = vidDestination;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = false;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -4236,16 +3991,7 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     libraryIsDisabled, libraryComment);
 
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = false;
-    tape.disabled = false;
-    tape.readOnly = false;
-    tape.comment = "Comment";
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -4350,11 +4096,6 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   std::string agentReferenceName = "expandRepackRequestTest";
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
  
-  
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -4364,16 +4105,8 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    auto tape = getDefaultTape();
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -4499,22 +4232,9 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -4757,11 +4477,6 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   std::string agentReferenceName = "expandRepackRequestTest";
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
  
-  
-  const bool disabledValue = false;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -4771,16 +4486,8 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    auto tape = getDefaultTape();
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -4865,11 +4572,6 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   std::string agentReferenceName = "expandRepackRequestTest";
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
  
-  
-  const bool disabledValue = true;
-  const bool fullValue = true;
-  const bool readOnlyValue = false;
-  const std::string comment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
@@ -4879,16 +4581,8 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = fullValue;
-    tape.disabled = disabledValue;
-    tape.readOnly = readOnlyValue;
-    tape.comment = comment;
+    auto tape = getDefaultTape();
+    tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -4993,20 +4687,7 @@ TEST_P(SchedulerTest, archiveMountPolicyInFlightChangeScheduleMount){
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
     
-  const std::string comment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
-  catalogue::CreateTapeAttributes tape;
-  tape.vid = s_vid;
-  tape.mediaType = s_mediaType;
-  tape.vendor = s_vendor;
-  tape.logicalLibraryName = s_libraryName;
-  tape.tapePoolName = s_tapePoolName;
-  tape.full = notFull;
-  tape.disabled = notDisabled;
-  tape.readOnly = notReadOnly;
-  tape.comment = comment;
+  auto tape = getDefaultTape();
   catalogue.createTape(s_adminOnAdminHost, tape);
 
   const std::string driveName = "tape_drive";
@@ -5069,20 +4750,7 @@ TEST_P(SchedulerTest, retrieveMountPolicyInFlightChangeScheduleMount)
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
   
-  const std::string comment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
-  catalogue::CreateTapeAttributes tape;
-  tape.vid = s_vid;
-  tape.mediaType = s_mediaType;
-  tape.vendor = s_vendor;
-  tape.logicalLibraryName = s_libraryName;
-  tape.tapePoolName = s_tapePoolName;
-  tape.full = notFull;
-  tape.disabled = notDisabled;
-  tape.readOnly = notReadOnly;
-  tape.comment = comment;
+  auto tape = getDefaultTape();
   catalogue.createTape(s_adminOnAdminHost, tape);
   
   //Create a storage class in the catalogue
@@ -5182,20 +4850,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
   
   //Create two tapes
-  const std::string comment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
-  catalogue::CreateTapeAttributes tape;
-  tape.vid = s_vid;
-  tape.mediaType = s_mediaType;
-  tape.vendor = s_vendor;
-  tape.logicalLibraryName = s_libraryName;
-  tape.tapePoolName = s_tapePoolName;
-  tape.full = notFull;
-  tape.disabled = notDisabled;
-  tape.readOnly = notReadOnly;
-  tape.comment = comment;
+  auto tape = getDefaultTape();
   catalogue.createTape(s_adminOnAdminHost, tape);
   
   std::string vid2 = s_vid + "2";
@@ -5358,30 +5013,13 @@ using namespace cta;
 
   //Create two tapes (ArchiveForRepack and ArchiveForUser)
   {
-    catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = false;
-    tape.disabled = false;
-    tape.readOnly = false;
-    tape.comment = "Comment";
+    auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
     
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = s_vid+"_1";
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = false;
-    tape.disabled = false;
-    tape.readOnly = false;
-    tape.comment = "Comment";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
@@ -5498,16 +5136,8 @@ using namespace cta;
   //Now let's create another tape, and try to schedule another mount with another drive
   //No ArchiveMount should be triggered
   {
-    catalogue::CreateTapeAttributes tape;
+    auto tape = getDefaultTape();
     tape.vid = s_vid+"_2";
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = false;
-    tape.disabled = false;
-    tape.readOnly = false;
-    tape.comment = "Comment";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));

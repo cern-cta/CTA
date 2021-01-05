@@ -157,6 +157,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       tape.disabled = disabledValue;
       tape.readOnly = readOnlyValue;
       tape.comment = createTapeComment;
+      tape.state = cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(cta::common::dataStructures::Tape::ACTIVE);
       m_catalogue->createTape(admin, tape);
     }
 
@@ -322,6 +323,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       tape.disabled = disabledValue;
       tape.readOnly = readOnlyValue;
       tape.comment = createTapeComment;
+      tape.state = cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(cta::common::dataStructures::Tape::ACTIVE);
       m_catalogue->createTape(admin, tape);
     }
 

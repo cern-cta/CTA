@@ -118,6 +118,9 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByArchiveFiles);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByArchiveRoutes);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByFileRecycleLogs);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedTapePoolUsedInAnArchiveRoute);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapeState);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringTapeState);
 
 /**
  * Abstract class defining the interface to the CTA catalogue responsible for
@@ -608,6 +611,13 @@ public:
   virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) = 0;
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) = 0;
   virtual void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) = 0;
+  /**
+   * Modify the state of the specified tape
+   * @param vid the VID of the tape to change the state
+   * @param state the new state
+   * @param stateReason the reason why the state changes, if the state is ACTIVE and the stateReason is nullopt, the state will be reset to null
+   * @param stateModifiedBy who modified the state of the tape (operator, tapeserver...)
+   */
   virtual void modifyTapeState(const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason, const std::string & stateModifiedBy) = 0;
   /**
    * Sets the full status of the specified tape.
