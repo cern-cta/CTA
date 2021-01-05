@@ -79,7 +79,7 @@ struct CreateTapeAttributes {
   /**
    * State of the tape
    */
-  std::string state;
+  cta::common::dataStructures::Tape::State state;
   
   /**
    * Optional reason for the state 

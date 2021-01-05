@@ -249,7 +249,7 @@ public:
     tape.full = false;
     tape.disabled = false;
     tape.readOnly = false;
-    tape.state = cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(cta::common::dataStructures::Tape::ACTIVE);
+    tape.state = cta::common::dataStructures::Tape::ACTIVE;
     tape.comment = "Comment";
     return tape;
   }

@@ -128,7 +128,7 @@ namespace {
     tape.full = false;
     tape.disabled = false;
     tape.readOnly = false;
-    tape.state = common::dataStructures::Tape::STATE_TO_STRING_MAP.at(common::dataStructures::Tape::ACTIVE);
+    tape.state = common::dataStructures::Tape::ACTIVE;
     tape.comment = "Creation of tape one";
 
     return tape;
@@ -4256,9 +4256,18 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_NoStateProvided) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  auto tape = m_tape1;
-  tape.state = "";
-  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedAnEmptyStringTapeState);  
+  catalogue::CreateTapeAttributes tape;
+  tape.vid = "VIDONE";
+  tape.mediaType = getMediaType().name;
+  tape.vendor = "vendor";
+  tape.logicalLibraryName = "logical_library";
+  tape.tapePoolName = "tape_pool";
+  tape.full = false;
+  tape.disabled = false;
+  tape.readOnly = false;
+  tape.comment = "Creation of tape one";
+  
+  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedANonExistentTapeState);  
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_StateDoesNotExist) {
@@ -4276,7 +4285,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_StateDoesNotExist) {
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   auto tape = m_tape1;
-  tape.state = "DOES_NOT_EXIST";
+  tape.state = (cta::common::dataStructures::Tape::State)42;
   ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedANonExistentTapeState);  
 }
 
@@ -4295,10 +4304,10 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_StateNotActiveWithoutReasonShould
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   auto tape = m_tape1;
-  tape.state = cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(cta::common::dataStructures::Tape::DISABLED);
+  tape.state = cta::common::dataStructures::Tape::DISABLED;
   ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);  
   
-  tape.state = cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(cta::common::dataStructures::Tape::BROKEN);
+  tape.state = cta::common::dataStructures::Tape::BROKEN;
   ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);  
   
   tape.stateReason = "Tape broken";

@@ -3188,18 +3188,18 @@ void RdbmsCatalogue::createTape(
       throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape because the tape pool name is an empty string");
     }
     
-    common::dataStructures::Tape::State tapeState;
-    
-    if(cta::utils::trimString(tape.state).empty()){
-      throw UserSpecifiedAnEmptyStringTapeState("Cannot create tape because no state has been specified");
-    }
+    std::string tapeState;
     try {
-      tapeState = common::dataStructures::Tape::STRING_TO_STATE_MAP.at(tape.state);
+      tapeState = common::dataStructures::Tape::STATE_TO_STRING_MAP.at(tape.state);
     } catch(std::out_of_range &) {
-      throw UserSpecifiedANonExistentTapeState(std::string("Cannot create tape because the state specified " + tape.state + " does not exist."));
+      std::string errorMsg = "Cannot create tape because the state specified does not exist. Possible values for state are:";
+      for(const auto &kv: common::dataStructures::Tape::STRING_TO_STATE_MAP){
+        errorMsg += " " + kv.first;
+      }
+      throw UserSpecifiedANonExistentTapeState(std::string(errorMsg));
     }
     
-    if(tapeState != common::dataStructures::Tape::ACTIVE){
+    if(tape.state != common::dataStructures::Tape::ACTIVE){
       if(!tape.stateReason){
         throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive("Cannot create tape because no reason has been provided for the state " + tape.state);
       }
@@ -3300,7 +3300,7 @@ void RdbmsCatalogue::createTape(
     stmt.bindString(":USER_COMMENT", tapeComment);
     
     std::string stateModifiedBy = admin.username + "@" + admin.host;
-    stmt.bindString(":TAPE_STATE",tape.state);
+    stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(tape.state));
     stmt.bindString(":STATE_REASON",tape.stateReason);
     stmt.bindUint64(":STATE_UPDATE_TIME",now);
     stmt.bindString(":STATE_MODIFIED_BY", stateModifiedBy);
@@ -3327,7 +3327,7 @@ void RdbmsCatalogue::createTape(
        .add("isReadOnly", readOnly ? 1 : 0)
        .add("isFromCastor", isFromCastor ? 1 : 0)
        .add("userComment", tape.comment ? tape.comment.value() : "")
-       .add("tapeState",tape.state)
+       .add("tapeState",cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(tape.state))
        .add("stateReason",tape.stateReason ? tape.stateReason.value() : "")
        .add("stateUpdateTime",now)
        .add("stateModifiedBy",stateModifiedBy)

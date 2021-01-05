@@ -120,7 +120,6 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByFileRecycleLogs
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedTapePoolUsedInAnArchiveRoute);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapeState);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
-CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringTapeState);
 
 /**
  * Abstract class defining the interface to the CTA catalogue responsible for

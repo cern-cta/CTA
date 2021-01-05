@@ -251,7 +251,7 @@ public:
     tape.full = false;
     tape.disabled = false;
     tape.readOnly = false;
-    tape.state = common::dataStructures::Tape::STATE_TO_STRING_MAP.at(common::dataStructures::Tape::ACTIVE);
+    tape.state = common::dataStructures::Tape::ACTIVE;
     tape.comment = "Comment";
 
     return tape;
