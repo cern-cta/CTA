@@ -4470,18 +4470,26 @@ void RdbmsCatalogue::modifyTapeState(const std::string &vid, const common::dataS
     using namespace common::dataStructures;
     const time_t now = time(nullptr);
     
+    cta::optional<std::string> stateReasonCopy = stateReason;
+    
     std::string stateStr;
     try {
       stateStr = Tape::STATE_TO_STRING_MAP.at(state);
     } catch(std::out_of_range & ex){
-      std::string errorMsg = "The state provided in parameter (" + std::to_string(state) + ") is not known or has not been initialized";
-      throw cta::exception::Exception(errorMsg);
+      std::string errorMsg = "The state provided in parameter (" + std::to_string(state) + ") is not known or has not been initialized existing states are:";
+      for(const auto & kv: Tape::STRING_TO_STATE_MAP){
+        errorMsg += " " + kv.first;
+      }
+      throw UserSpecifiedANonExistentTapeState(errorMsg);
     }
     
     //Check the reason is set for all the status except the ACTIVE one, this is the only status that allows the reason to be set to null.
-    if(state != Tape::State::ACTIVE){
-      if(!stateReason){
-        throw exception::UserError(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided."); 
+    if(!stateReason || (stateReason && cta::utils::trimString(stateReason.value()).empty())){
+      if(state != Tape::State::ACTIVE){
+        throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided."); 
+      } else {
+        //State is active, but no reason provided: we will reset the field so we assign nullopt to the state reason
+        stateReasonCopy = cta::nullopt;
       }
     }
     
@@ -4497,13 +4505,14 @@ void RdbmsCatalogue::modifyTapeState(const std::string &vid, const common::dataS
     auto stmt = conn.createStmt(sql);
     
     stmt.bindString(":TAPE_STATE", stateStr);
-    stmt.bindString(":STATE_REASON", stateReason);
+    stmt.bindString(":STATE_REASON", stateReasonCopy);
     stmt.bindUint64(":STATE_UPDATE_TIME", now);
     stmt.bindString(":STATE_MODIFIED_BY",stateModifiedBy);
+    stmt.bindString(":VID",vid);
     stmt.executeNonQuery();
 
     if (0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify the state of the tape ") + vid + " because it does not exist");
+      throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid + " because it does not exist");
     }
 
   } catch(exception::UserError &) {

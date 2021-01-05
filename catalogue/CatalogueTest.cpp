@@ -5482,6 +5482,101 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_nonExistentTape)
   ASSERT_THROW(m_catalogue->modifyTapeEncryptionKeyName(m_admin, m_tape1.vid, encryptionKeyName), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentTape) {
+  using namespace cta;
+
+  common::dataStructures::Tape::State state = common::dataStructures::Tape::State::ACTIVE;
+  ASSERT_THROW(m_catalogue->modifyTapeState("DOES_NOT_EXIST",state,cta::nullopt,m_admin.username),cta::catalogue::UserSpecifiedANonExistentTape);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonInitializedState) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  common::dataStructures::Tape::State state;
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_tape1.vid,state,cta::nullopt,m_admin.username),cta::catalogue::UserSpecifiedANonExistentTapeState);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  std::string reason = "";
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_tape1.vid,common::dataStructures::Tape::State::BROKEN,reason,m_admin.username),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+  
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_tape1.vid,common::dataStructures::Tape::State::DISABLED,cta::nullopt,m_admin.username),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  std::string reason = "tape broken";
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_tape1.vid,common::dataStructures::Tape::State::BROKEN,reason,m_admin.username));
+  
+  //TODO: Get the tape back to see if the state has been changed with the reason
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeStateResetReasonWhenBackToActiveState) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  std::string reason = "Broken tape";
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_tape1.vid,common::dataStructures::Tape::State::BROKEN,reason,m_admin.username));
+  
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_tape1.vid,common::dataStructures::Tape::State::ACTIVE,cta::nullopt,m_admin.username));
+  
+  //TODO: Get the tape back to see if the state has been changed with the reason reset to null
+}
+
 TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   using namespace cta;
 
