@@ -91,6 +91,12 @@ struct TapeSearchCriteria {
    * List of disk file IDs to search for.
    */
   optional<std::vector<std::string>> diskFileIds;
+  
+  /**
+   * The state of the tapes to look for
+   */
+  optional<common::dataStructures::Tape::State> state;
+  
 }; // struct TapeSearchCriteria
 
 } // namespace catalogue

@@ -19,6 +19,7 @@
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta {
 namespace common {
@@ -50,6 +51,16 @@ const std::map<std::string,Tape::State> Tape::STRING_TO_STATE_MAP = {
   {"DISABLED",Tape::State::DISABLED}
 };
 
+std::string Tape::getAllPossibleStates(){
+  std::string ret;
+  for(auto &kv: STRING_TO_STATE_MAP){
+    ret += kv.first + " ";
+  }
+  if(ret.size())
+    ret = ret.substr(0,ret.size() - 1);
+  return ret;
+}
+
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
@@ -78,6 +89,33 @@ bool Tape::operator==(const Tape &rhs) const {
 bool Tape::operator!=(const Tape &rhs) const {
   return !operator==(rhs);
 }
+
+void Tape::setState(const std::string& state) {
+  this->state = Tape::stringToState(state);
+}
+
+std::string Tape::getStateStr() const {
+  return Tape::stateToString(state);
+}
+
+std::string Tape::stateToString(const Tape::State & state) {
+  try {
+    return Tape::STATE_TO_STRING_MAP.at(state);
+  } catch (std::out_of_range &ex){
+    throw cta::exception::Exception(std::string("In Tape::stateToString(): The state given (") + std::to_string(state) + ") does not exist.");
+  }
+}
+
+Tape::State Tape::stringToState(const std::string& state) {
+  try {
+    std::string stateCopy = state;
+    cta::utils::toUpper(stateCopy);
+    return Tape::STRING_TO_STATE_MAP.at(state);
+  } catch(std::out_of_range &ex){
+    throw cta::exception::Exception(std::string("In Tape::stringToState(): The state given (") + state + ") does not exist. Possible values are " + Tape::getAllPossibleStates());
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // operator<<

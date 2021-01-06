@@ -46,11 +46,33 @@ struct Tape {
   static const std::map<State,std::string> STATE_TO_STRING_MAP;
   static const std::map<std::string,State> STRING_TO_STATE_MAP;
   
+  static std::string getAllPossibleStates();
+  
   Tape();
 
   bool operator==(const Tape &rhs) const;
 
   bool operator!=(const Tape &rhs) const;
+  
+  void setState(const std::string & state);
+  
+  std::string getStateStr() const;
+  
+  /**
+   * Return the string representation of the tape State passed in parameter
+   * @param state the state to return the string representation
+   * @return the string representation of the state passed in parameter
+   * @throws cta::exception::Exception if the state passed in parameter does not exist
+   */
+  static std::string stateToString(const State &state);
+  
+  /**
+   * Return the state value according to the state passed in parameter (not case sensitive)
+   * @param state the string that identifies the state enum value to return
+   * @return the state corresponding to the State enum value
+   * @throws cta::exception::Exception if the state passed in parameter does not match any existing State enum value
+   */
+  static State stringToState(const std::string & state);
 
   std::string vid;
   std::string mediaType;
@@ -89,7 +111,7 @@ struct Tape {
   State state;
   optional<std::string> stateReason;
   std::string stateModifiedBy;
-  time_t stateModifiedTime;
+  time_t stateUpdateTime;
   
 }; // struct Tape
 

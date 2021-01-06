@@ -3166,6 +3166,7 @@ void RdbmsCatalogue::createTape(
     bool readOnly = tape.readOnly;
     // Translate an empty comment string to a NULL database value
     const optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? nullopt : tape.comment;
+    const optional<std::string> stateReason = tape.stateReason && tape.stateReason->empty() ? nullopt : tape.stateReason;
     
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
@@ -3190,18 +3191,15 @@ void RdbmsCatalogue::createTape(
     
     std::string tapeState;
     try {
-      tapeState = common::dataStructures::Tape::STATE_TO_STRING_MAP.at(tape.state);
-    } catch(std::out_of_range &) {
-      std::string errorMsg = "Cannot create tape because the state specified does not exist. Possible values for state are:";
-      for(const auto &kv: common::dataStructures::Tape::STRING_TO_STATE_MAP){
-        errorMsg += " " + kv.first;
-      }
-      throw UserSpecifiedANonExistentTapeState(std::string(errorMsg));
+      tapeState = common::dataStructures::Tape::stateToString(tape.state);
+    } catch(cta::exception::Exception &ex) {
+      std::string errorMsg = "Cannot create tape because the state specified does not exist. Possible values for state are: " + common::dataStructures::Tape::getAllPossibleStates();
+      throw UserSpecifiedANonExistentTapeState(errorMsg);
     }
     
     if(tape.state != common::dataStructures::Tape::ACTIVE){
-      if(!tape.stateReason){
-        throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive("Cannot create tape because no reason has been provided for the state " + tape.state);
+      if(!stateReason){
+        throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive("Cannot create tape because no reason has been provided for the state " + tapeState);
       }
     }
 
@@ -3300,7 +3298,7 @@ void RdbmsCatalogue::createTape(
     stmt.bindString(":USER_COMMENT", tapeComment);
     
     std::string stateModifiedBy = admin.username + "@" + admin.host;
-    stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(tape.state));
+    stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(tape.state));
     stmt.bindString(":STATE_REASON",tape.stateReason);
     stmt.bindUint64(":STATE_UPDATE_TIME",now);
     stmt.bindString(":STATE_MODIFIED_BY", stateModifiedBy);
@@ -3327,7 +3325,7 @@ void RdbmsCatalogue::createTape(
        .add("isReadOnly", readOnly ? 1 : 0)
        .add("isFromCastor", isFromCastor ? 1 : 0)
        .add("userComment", tape.comment ? tape.comment.value() : "")
-       .add("tapeState",cta::common::dataStructures::Tape::STATE_TO_STRING_MAP.at(tape.state))
+       .add("tapeState",cta::common::dataStructures::Tape::stateToString(tape.state))
        .add("stateReason",tape.stateReason ? tape.stateReason.value() : "")
        .add("stateUpdateTime",now)
        .add("stateModifiedBy",stateModifiedBy)
@@ -3522,7 +3520,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.USER_COMMENT AS USER_COMMENT,"
             
         "TAPE.TAPE_STATE AS TAPE_STATE,"
-        "TAPE.STATE_REASON AS TAPE_REASON,"
+        "TAPE.STATE_REASON AS STATE_REASON,"
         "TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,"
         "TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,"
 
@@ -3554,7 +3552,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.disabled ||
        searchCriteria.full ||
        searchCriteria.readOnly ||
-       searchCriteria.diskFileIds) {
+       searchCriteria.diskFileIds ||
+       searchCriteria.state) {
       sql += " WHERE";
     }
 
@@ -3623,6 +3622,12 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       addedAWhereConstraint = true;
     }
 
+    if(searchCriteria.state) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE.TAPE_STATE = :TAPE_STATE";
+      addedAWhereConstraint = true;
+    }
+    
     sql += " ORDER BY TAPE.VID";
 
     auto stmt = conn.createStmt(sql);
@@ -3637,6 +3642,11 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.disabled) stmt.bindBool(":IS_DISABLED", searchCriteria.disabled.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
     if(searchCriteria.readOnly) stmt.bindBool(":IS_READ_ONLY", searchCriteria.readOnly.value());
+    try{
+      if(searchCriteria.state) stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(searchCriteria.state.value()));
+    } catch(cta::exception::Exception &ex){
+      throw cta::exception::UserError(std::string("The state provided does not exist. Possible values are: ") + cta::common::dataStructures::Tape::getAllPossibleStates());
+    }
 
     // Disk file ID lookup requires multiple queries
     std::vector<std::string>::const_iterator diskFileId_it;
@@ -3683,6 +3693,12 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 
         auto optionalComment = rset.columnOptionalString("USER_COMMENT");
         tape.comment = optionalComment ? optionalComment.value() : "";
+        
+        tape.setState(rset.columnString("TAPE_STATE"));
+        tape.stateReason = rset.columnOptionalString("STATE_REASON");
+        tape.stateUpdateTime = rset.columnUint64("STATE_UPDATE_TIME");
+        tape.stateModifiedBy = rset.columnString("STATE_MODIFIED_BY");
+        
         tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
         tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
         tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
@@ -3810,6 +3826,11 @@ std::string RdbmsCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
       "TAPE.USER_COMMENT AS USER_COMMENT,"
+          
+      "TAPE.TAPE_STATE AS TAPE_STATE,"
+      "TAPE.STATE_REASON AS STATE_REASON,"
+      "TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,"
+      "TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,"
 
       "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
       "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
@@ -3870,6 +3891,12 @@ void RdbmsCatalogue::executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &
     tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
     auto optionalComment = rset.columnOptionalString("USER_COMMENT");
     tape.comment = optionalComment ? optionalComment.value() : "";
+    
+    tape.setState(rset.columnString("TAPE_STATE"));
+    tape.stateReason = rset.columnOptionalString("STATE_REASON");
+    tape.stateUpdateTime = rset.columnUint64("STATE_UPDATE_TIME");
+    tape.stateModifiedBy = rset.columnString("STATE_MODIFIED_BY");
+    
     tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
     tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
     tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
@@ -4470,26 +4497,20 @@ void RdbmsCatalogue::modifyTapeState(const std::string &vid, const common::dataS
     using namespace common::dataStructures;
     const time_t now = time(nullptr);
     
-    cta::optional<std::string> stateReasonCopy = stateReason;
+    const optional<std::string> stateReasonCopy = stateReason && stateReason->empty() ? nullopt : stateReason;
     
     std::string stateStr;
     try {
-      stateStr = Tape::STATE_TO_STRING_MAP.at(state);
-    } catch(std::out_of_range & ex){
-      std::string errorMsg = "The state provided in parameter (" + std::to_string(state) + ") is not known or has not been initialized existing states are:";
-      for(const auto & kv: Tape::STRING_TO_STATE_MAP){
-        errorMsg += " " + kv.first;
-      }
+      stateStr = cta::common::dataStructures::Tape::stateToString(state);
+    } catch(cta::exception::Exception & ex){
+      std::string errorMsg = "The state provided in parameter (" + std::to_string(state) + ") is not known or has not been initialized existing states are:" + common::dataStructures::Tape::getAllPossibleStates();
       throw UserSpecifiedANonExistentTapeState(errorMsg);
     }
     
-    //Check the reason is set for all the status except the ACTIVE one, this is the only status that allows the reason to be set to null.
-    if(!stateReason || (stateReason && cta::utils::trimString(stateReason.value()).empty())){
-      if(state != Tape::State::ACTIVE){
+    //Check the reason is set for all the status except the ACTIVE one, this is the only state that allows the reason to be set to null.
+    if(state != Tape::State::ACTIVE){
+      if(!stateReasonCopy){
         throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided."); 
-      } else {
-        //State is active, but no reason provided: we will reset the field so we assign nullopt to the state reason
-        stateReasonCopy = cta::nullopt;
       }
     }
     
