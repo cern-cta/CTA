@@ -271,7 +271,7 @@ void TextFormatter::print(const DriveLsItem &drls_item)
     (drls_item.time_since_last_update() > DRIVE_TIMEOUT ? " [STALE]" : "");
 
   //If there is a reason, we only want to display the beginning
-  std::string reason = cta::utils::postEllipsis(drls_item.reason(),NB_CHAR_REASON_DRIVE);
+  std::string reason = cta::utils::postEllipsis(drls_item.reason(),NB_CHAR_REASON);
   
   push_back(
     drls_item.logical_library(),
@@ -789,6 +789,8 @@ void TextFormatter::printTapeLsHeader() {
     "disabled",
     "rdonly",
     "from castor",
+    "state",
+    "state reason",
     "label drive",
     "label time",
     "last w drive",
@@ -808,6 +810,7 @@ void TextFormatter::printTapeLsHeader() {
 }
 
 void TextFormatter::print(const TapeLsItem &tals_item) {
+  std::string state_reason = cta::utils::postEllipsis(tals_item.state_reason(),NB_CHAR_REASON);
   push_back(
     tals_item.vid(),
     tals_item.media_type(),
@@ -823,6 +826,8 @@ void TextFormatter::print(const TapeLsItem &tals_item) {
     tals_item.disabled(),
     tals_item.rdonly(),
     tals_item.from_castor(),
+    tals_item.state(),
+    state_reason,
     tals_item.has_label_log()        ? tals_item.label_log().drive()                  : "",
     tals_item.has_label_log()        ? timeToStr(tals_item.label_log().time())        : "",
     tals_item.has_last_written_log() ? tals_item.last_written_log().drive()           : "",

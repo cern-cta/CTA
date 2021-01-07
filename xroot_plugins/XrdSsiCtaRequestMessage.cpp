@@ -1733,7 +1733,9 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    auto &disabled       = getRequired(OptionBoolean::DISABLED);
    auto &full           = getRequired(OptionBoolean::FULL);
    auto &readOnly       = getRequired(OptionBoolean::READ_ONLY);
-   auto  comment        = getOptional(OptionString::COMMENT);
+   auto state           = getOptional(OptionString::STATE);
+   auto stateReason     = getOptional(OptionString::REASON);
+   auto comment         = getOptional(OptionString::COMMENT);
 
    cta::catalogue::CreateTapeAttributes tape;
    tape.vid = vid;
@@ -1745,7 +1747,14 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    tape.disabled = disabled;
    tape.readOnly = readOnly;
    tape.comment = comment ? comment.value() : "";
-   tape.state = common::dataStructures::Tape::ACTIVE;
+   if(!state){
+     //By default, the state of the tape will be ACTIVE
+     tape.state = common::dataStructures::Tape::ACTIVE;
+   } else {
+     //State has been provided by the user, assign it. Will throw an exception if the state provided does not exist.
+     tape.state = common::dataStructures::Tape::stringToState(state.value());
+   }
+   tape.stateReason = stateReason;
    m_catalogue.createTape(m_cliIdentity, tape);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1767,6 +1776,8 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    auto  disabled          = getOptional(OptionBoolean::DISABLED);
    auto  full              = getOptional(OptionBoolean::FULL);
    auto  readOnly          = getOptional(OptionBoolean::READ_ONLY);
+   auto  state             = getOptional(OptionString::STATE);
+   auto  stateReason       = getOptional(OptionString::REASON);
 
    if(mediaType) {
       m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
@@ -1798,6 +1809,10 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    }
    if(readOnly) {
       m_catalogue.setTapeReadOnly(m_cliIdentity, vid, readOnly.value());
+   }
+   if(state){
+     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value());
+     m_catalogue.modifyTapeState(vid,stateEnumValue,stateReason,m_cliIdentity.username+"@"+m_cliIdentity.host);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

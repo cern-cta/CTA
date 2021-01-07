@@ -3166,7 +3166,7 @@ void RdbmsCatalogue::createTape(
     bool readOnly = tape.readOnly;
     // Translate an empty comment string to a NULL database value
     const optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? nullopt : tape.comment;
-    const optional<std::string> stateReason = tape.stateReason && tape.stateReason->empty() ? nullopt : tape.stateReason;
+    const optional<std::string> stateReason = tape.stateReason && cta::utils::trimString(tape.stateReason.value()).empty() ? nullopt : tape.stateReason;
     
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
@@ -4497,7 +4497,7 @@ void RdbmsCatalogue::modifyTapeState(const std::string &vid, const common::dataS
     using namespace common::dataStructures;
     const time_t now = time(nullptr);
     
-    const optional<std::string> stateReasonCopy = stateReason && stateReason->empty() ? nullopt : stateReason;
+    const optional<std::string> stateReasonCopy = stateReason && cta::utils::trimString(stateReason.value()).empty() ? nullopt : stateReason;
     
     std::string stateStr;
     try {

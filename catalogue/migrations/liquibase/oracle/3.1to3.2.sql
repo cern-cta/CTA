@@ -61,14 +61,15 @@ CREATE TABLE FILE_RECYCLE_LOG(
 CREATE INDEX FILE_RECYCLE_LOG_DFI_IDX ON FILE_RECYCLE_LOG(DISK_FILE_ID);
 --rollback DROP INDEX FILE_RECYCLE_LOG_DFI_IDX;
 
---changeset ccaffy:5 failOnError:true dbms:oracle
+--changeset ccaffy:5 failOnError:true dbms:oracle runAlways:true
 --preconditions onFail:HALT onError:HALT
---precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
+--precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
 INSERT INTO FILE_RECYCLE_LOG (
   FILE_RECYCLE_LOG_ID,
   VID,
   FSEQ,
   COPY_NB,
+  BLOCK_ID,
   TAPE_FILE_CREATION_TIME,
   ARCHIVE_FILE_ID,
   DISK_INSTANCE_NAME,
@@ -112,14 +113,16 @@ INSERT INTO FILE_RECYCLE_LOG (
     ARCHIVE_FILE ON TAPE_FILE.ARCHIVE_FILE_ID = ARCHIVE_FILE.ARCHIVE_FILE_ID
   WHERE TAPE_FILE.SUPERSEDED_BY_VID IS NOT NULL;
 
---changeset ccaffy:6 failOnError:true dbms:oracle
+--changeset ccaffy:6 failOnError:true dbms:oracle runAlways:true
+--labels: delete_repacked_files
 --preconditions onFail:HALT onError:HALT
---precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
+--precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
 DELETE FROM TAPE_FILE WHERE SUPERSEDED_BY_VID IS NOT NULL;
 
---changeset ccaffy:7 failOnError:true dbms:oracle
+--changeset ccaffy:7 failOnError:true dbms:oracle runAlways:true
+--labels: move_deleted_files_to_recycle_log
 --preconditions onFail:HALT onError:HALT
---precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
+--precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
 INSERT INTO FILE_RECYCLE_LOG (
   FILE_RECYCLE_LOG_ID,
   VID,
@@ -170,14 +173,16 @@ INSERT INTO FILE_RECYCLE_LOG (
     TAPE_FILE_RECYCLE_BIN JOIN
     ARCHIVE_FILE_RECYCLE_BIN ON TAPE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID = ARCHIVE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID;
 
---changeset ccaffy:8 failOnError:true dbms:oracle
+--changeset ccaffy:8 failOnError:true dbms:oracle runAlways:true
+--labels: delete_files_from_tape_file_recycle_bin
 --preconditions onFail:HALT onError:HALT
---precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
+--precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
 DELETE FROM TAPE_FILE_RECYCLE_BIN;
 
---changeset ccaffy:9 failOnError:true dbms:oracle
+--changeset ccaffy:9 failOnError:true dbms:oracle runAlways:true
+--labels: delete_files_from_archive_file_recycle_bin
 --preconditions onFail:HALT onError:HALT
---precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
+--precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
 DELETE FROM ARCHIVE_FILE_RECYCLE_BIN;
 
 --changeset ccaffy:10 failOnError:true dbms:oracle

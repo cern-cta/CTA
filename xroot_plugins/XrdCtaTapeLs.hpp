@@ -81,7 +81,10 @@ TapeLsStream::TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Cat
   searchCriteria.mediaType       = requestMsg.getOptional(OptionString::MEDIA_TYPE,      &has_any);
   searchCriteria.vendor          = requestMsg.getOptional(OptionString::VENDOR,          &has_any);
   searchCriteria.diskFileIds     = requestMsg.getOptional(OptionStrList::FILE_ID,        &has_any);
-
+  auto stateOpt                  = requestMsg.getOptional(OptionString::STATE,           &has_any);
+  if(stateOpt){
+    searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value());
+  }
   if(!(requestMsg.has_flag(OptionBoolean::ALL) || has_any)) {
     throw cta::exception::UserError("Must specify at least one search option, or --all");
   } else if(requestMsg.has_flag(OptionBoolean::ALL) && has_any) {
@@ -141,6 +144,11 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     lastModificationLog->set_host(tape.lastModificationLog.host);
     lastModificationLog->set_time(tape.lastModificationLog.time);
     tape_item->set_comment(tape.comment);
+    
+    tape_item->set_state(tape.getStateStr());
+    tape_item->set_state_reason(tape.stateReason ? tape.stateReason.value() : "");
+    tape_item->set_state_update_time(tape.stateUpdateTime);
+    tape_item->set_state_modified_by(tape.stateModifiedBy);
     
     is_buffer_full = streambuf->Push(record);
   }

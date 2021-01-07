@@ -102,17 +102,17 @@ std::string Tape::stateToString(const Tape::State & state) {
   try {
     return Tape::STATE_TO_STRING_MAP.at(state);
   } catch (std::out_of_range &ex){
-    throw cta::exception::Exception(std::string("In Tape::stateToString(): The state given (") + std::to_string(state) + ") does not exist.");
+    throw cta::exception::Exception(std::string("The state given (") + std::to_string(state) + ") does not exist.");
   }
 }
 
 Tape::State Tape::stringToState(const std::string& state) {
+  std::string stateUpperCase = state;
+  cta::utils::toUpper(stateUpperCase);
   try {
-    std::string stateCopy = state;
-    cta::utils::toUpper(stateCopy);
-    return Tape::STRING_TO_STATE_MAP.at(state);
+    return Tape::STRING_TO_STATE_MAP.at(stateUpperCase);
   } catch(std::out_of_range &ex){
-    throw cta::exception::Exception(std::string("In Tape::stringToState(): The state given (") + state + ") does not exist. Possible values are " + Tape::getAllPossibleStates());
+    throw cta::exception::Exception(std::string("The state given (") + stateUpperCase + ") does not exist. Possible values are " + Tape::getAllPossibleStates());
   }
 }
 
