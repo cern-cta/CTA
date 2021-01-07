@@ -4,9 +4,14 @@
 
 ### Features
 
+- Upgraded EOS to 4.8.34-1
+- Upgraded xrootd to 4.12.6-1
+
 ### Bug fixes
 
 - cta/CTA#941 Slow `cta-admin sq` even when there is very little activity
+- cta/CTA#951 Improve the performance of RdbmsCatalogueTapeContentsItor
+- cta/CTA#939 cta-objectstore-dereference-removed-queue removes all kind of manually deleted queues from the RootEntry
 
 # v3.1-12
 

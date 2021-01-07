@@ -491,6 +491,12 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Thu Jan 07 2021 julien.leduc (at) cern.ch - 3.1-13
+- Upgraded EOS to 4.8.34-1
+- Upgraded xrootd to 4.12.6-1
+- cta/CTA#941 Slow `cta-admin sq` even when there is very little activity
+- cta/CTA#951 Improve the performance of RdbmsCatalogueTapeContentsItor
+- cta/CTA#939 cta-objectstore-dereference-removed-queue removes all kind of manually deleted queues from the RootEntry
 * Fri Dec 04 2020 julien.leduc (at) cern.ch - 3.1-12
 - Upgraded EOS to 4.8.30-1
 * Wed Dec 02 2020 julien.leduc (at) cern.ch - 3.1-11
