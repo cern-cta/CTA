@@ -197,13 +197,42 @@ ALTER TABLE TAPE ADD (
 --precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
 CREATE INDEX TAPE_STATE_IDX ON TAPE(TAPE_STATE);
 
---changeset ccaffy:13 failOnError:true dbms:oracle
+--changeset ccaffy:13 failOnError:true dbms:oracle runAlways:true
+--preconditions onFail:HALT onError:HALT
+--precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
+UPDATE TAPE 
+SET TAPE_STATE='ACTIVE',
+STATE_UPDATE_TIME=(cast (systimestamp at time zone 'UTC' as date) - date '1970-01-01') * 86400,
+STATE_MODIFIED_BY='Migration from CTA 3.1 to 4.0'
+WHERE TAPE.IS_DISABLED = '0' AND (TAPE.TAPE_STATE IS NULL OR TAPE.TAPE_STATE <> 'ACTIVE');
+
+--changeset ccaffy:14 failOnError:true dbms:oracle runAlways:true
+--preconditions onFail:HALT onError:HALT
+--precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
+UPDATE TAPE
+SET TAPE_STATE='DISABLED',
+STATE_REASON=TAPE.USER_COMMENT,
+STATE_UPDATE_TIME=(cast (systimestamp at time zone 'UTC' as date) - date '1970-01-01') * 86400,
+STATE_MODIFIED_BY='Migration from CTA 3.1 to 4.0'
+WHERE TAPE.IS_DISABLED = '1' AND (TAPE.TAPE_STATE IS NULL OR TAPE.TAPE_STATE != 'DISABLED') AND TAPE.USER_COMMENT NOT LIKE '%- BROKEN -%';
+
+--changeset ccaffy:15 failOnError:true dbms:oracle runAlways:true
+--preconditions onFail:HALT onError:HALT
+--precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
+UPDATE TAPE
+SET TAPE_STATE='BROKEN',
+STATE_REASON=TAPE.USER_COMMENT,
+STATE_UPDATE_TIME=(cast (systimestamp at time zone 'UTC' as date) - date '1970-01-01') * 86400,
+STATE_MODIFIED_BY='Migration from CTA 3.1 to 4.0'
+WHERE TAPE.IS_DISABLED = '1' AND (TAPE.TAPE_STATE IS NULL OR TAPE.TAPE_STATE != 'BROKEN') AND TAPE.USER_COMMENT LIKE '%- BROKEN -%';
+
+--changeset ccaffy:16 failOnError:true dbms:oracle
 --preconditions onFail:HALT onError:HALT
 --precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
 ALTER TABLE TAPE DROP COLUMN IS_ARCHIVED;
 ALTER TABLE TAPE DROP COLUMN IS_EXPORTED;
 
---changeset ccaffy:14 failOnError:true dbms:oracle
+--changeset ccaffy:17 failOnError:true dbms:oracle
 --preconditions onFail:HALT onError:HALT
 --precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
 UPDATE CTA_CATALOGUE SET STATUS='PRODUCTION';
