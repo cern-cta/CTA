@@ -114,13 +114,11 @@ INSERT INTO FILE_RECYCLE_LOG (
   WHERE TAPE_FILE.SUPERSEDED_BY_VID IS NOT NULL;
 
 --changeset ccaffy:6 failOnError:true dbms:oracle runAlways:true
---labels: delete_repacked_files
 --preconditions onFail:HALT onError:HALT
 --precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
 DELETE FROM TAPE_FILE WHERE SUPERSEDED_BY_VID IS NOT NULL;
 
 --changeset ccaffy:7 failOnError:true dbms:oracle runAlways:true
---labels: move_deleted_files_to_recycle_log
 --preconditions onFail:HALT onError:HALT
 --precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
 INSERT INTO FILE_RECYCLE_LOG (
@@ -174,18 +172,22 @@ INSERT INTO FILE_RECYCLE_LOG (
     ARCHIVE_FILE_RECYCLE_BIN ON TAPE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID = ARCHIVE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID;
 
 --changeset ccaffy:8 failOnError:true dbms:oracle runAlways:true
---labels: delete_files_from_tape_file_recycle_bin
 --preconditions onFail:HALT onError:HALT
 --precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
 DELETE FROM TAPE_FILE_RECYCLE_BIN;
 
 --changeset ccaffy:9 failOnError:true dbms:oracle runAlways:true
---labels: delete_files_from_archive_file_recycle_bin
 --preconditions onFail:HALT onError:HALT
 --precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
 DELETE FROM ARCHIVE_FILE_RECYCLE_BIN;
 
 --changeset ccaffy:10 failOnError:true dbms:oracle
+--preconditions onFail:HALT onError:HALT
+--precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
+ALTER TABLE TAPE DROP COLUMN IS_ARCHIVED;
+ALTER TABLE TAPE DROP COLUMN IS_EXPORTED;
+
+--changeset ccaffy:11 failOnError:true dbms:oracle
 --preconditions onFail:HALT onError:HALT
 --precondition-sql-check expectedResult:"3.1" SELECT CONCAT(CONCAT(CAST(SCHEMA_VERSION_MAJOR as VARCHAR(10)),'.'), CAST(SCHEMA_VERSION_MINOR AS VARCHAR(10))) AS CATALOGUE_VERSION FROM CTA_CATALOGUE;
 UPDATE CTA_CATALOGUE SET STATUS='PRODUCTION';
