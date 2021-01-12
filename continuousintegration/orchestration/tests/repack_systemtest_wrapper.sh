@@ -104,8 +104,8 @@ repackDisableTape() {
 
   if [ "$VID_TO_REPACK" != "null" ]
   then
-    echo "Marking the tape ${VID_TO_REPACK} as disabled"
-    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --disabled true --vid ${VID_TO_REPACK}
+    echo "Marking the tape ${VID_TO_REPACK} as DISABLED"
+    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --state DISABLED --reason "Repack disabled tape test" --vid ${VID_TO_REPACK}
     echo "Waiting 20 seconds so that the RetrieveQueueStatisticsCache is flushed"
     sleep 20
     echo "Launching the repack request test on VID ${VID_TO_REPACK}"
