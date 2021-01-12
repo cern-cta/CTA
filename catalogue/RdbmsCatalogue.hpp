@@ -578,8 +578,8 @@ public:
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override;
   void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) override;
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) override;
-  void modifyTapeState(const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason, const std::string & stateModifiedBy) override;
-  
+  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason) override;
+  static std::string generateTapeStateModifiedBy(const common::dataStructures::SecurityIdentity & admin);
   /**
    * Sets the full status of the specified tape.
    *
@@ -620,7 +620,7 @@ public:
    */
   void setTapeIsFromCastorInUnitTests(const std::string &vid) override;
   
-  void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) override;
+  void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) override;
   void setTapeDirty(const std::string & vid) override;
   void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,  const cta::optional<std::string> &comment) override;
 

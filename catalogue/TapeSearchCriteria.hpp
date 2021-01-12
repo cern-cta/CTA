@@ -73,11 +73,6 @@ struct TapeSearchCriteria {
   optional<uint64_t> capacityInBytes;
 
   /**
-   * Set to true if searching for disabled tapes.
-   */
-  optional<bool> disabled;
-
-  /**
    * Set to true if searching for full tapes.
    */
   optional<bool> full;

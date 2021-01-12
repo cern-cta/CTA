@@ -3161,7 +3161,6 @@ void RdbmsCatalogue::createTape(
     std::string vendor = tape.vendor;
     std::string logicalLibraryName = tape.logicalLibraryName;
     std::string tapePoolName = tape.tapePoolName;
-    bool disabled = tape.disabled;
     bool full = tape.full;
     bool readOnly = tape.readOnly;
     // Translate an empty comment string to a NULL database value
@@ -3234,7 +3233,6 @@ void RdbmsCatalogue::createTape(
         "TAPE_POOL_ID,"            "\n"
         "DATA_IN_BYTES,"           "\n"
         "LAST_FSEQ,"               "\n"
-        "IS_DISABLED,"             "\n"
         "IS_FULL,"                 "\n"
         "IS_READ_ONLY,"            "\n"
         "IS_FROM_CASTOR,"          "\n"
@@ -3261,7 +3259,6 @@ void RdbmsCatalogue::createTape(
         ":TAPE_POOL_ID,"           "\n"
         ":DATA_IN_BYTES,"          "\n"
         ":LAST_FSEQ,"              "\n"
-        ":IS_DISABLED,"            "\n"
         ":IS_FULL,"                "\n"
         ":IS_READ_ONLY,"           "\n"
         ":IS_FROM_CASTOR,"         "\n"
@@ -3290,16 +3287,15 @@ void RdbmsCatalogue::createTape(
     stmt.bindUint64(":TAPE_POOL_ID", tapePoolId.value());
     stmt.bindUint64(":DATA_IN_BYTES", 0);
     stmt.bindUint64(":LAST_FSEQ", 0);
-    stmt.bindBool(":IS_DISABLED", disabled);
     stmt.bindBool(":IS_FULL", full);
     stmt.bindBool(":IS_READ_ONLY", readOnly);
     stmt.bindBool(":IS_FROM_CASTOR", isFromCastor);
 
     stmt.bindString(":USER_COMMENT", tapeComment);
     
-    std::string stateModifiedBy = admin.username + "@" + admin.host;
+    std::string stateModifiedBy = RdbmsCatalogue::generateTapeStateModifiedBy(admin);
     stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(tape.state));
-    stmt.bindString(":STATE_REASON",tape.stateReason);
+    stmt.bindString(":STATE_REASON",stateReason);
     stmt.bindUint64(":STATE_UPDATE_TIME",now);
     stmt.bindString(":STATE_MODIFIED_BY", stateModifiedBy);
 
@@ -3320,13 +3316,12 @@ void RdbmsCatalogue::createTape(
        .add("vendor", vendor)
        .add("logicalLibraryName", logicalLibraryName)
        .add("tapePoolName", tapePoolName)
-       .add("isDisabled", disabled ? 1 : 0)
        .add("isFull", full ? 1 : 0)
        .add("isReadOnly", readOnly ? 1 : 0)
        .add("isFromCastor", isFromCastor ? 1 : 0)
        .add("userComment", tape.comment ? tape.comment.value() : "")
        .add("tapeState",cta::common::dataStructures::Tape::stateToString(tape.state))
-       .add("stateReason",tape.stateReason ? tape.stateReason.value() : "")
+       .add("stateReason",stateReason ? stateReason.value() : "")
        .add("stateUpdateTime",now)
        .add("stateModifiedBy",stateModifiedBy)
        .add("creationLogUserName", admin.username)
@@ -3500,7 +3495,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.NB_MASTER_FILES AS NB_MASTER_FILES,"
         "TAPE.MASTER_DATA_IN_BYTES AS MASTER_DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
-        "TAPE.IS_DISABLED AS IS_DISABLED,"
         "TAPE.IS_FULL AS IS_FULL,"
         "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
         "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
@@ -3549,7 +3543,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.tapePool ||
        searchCriteria.vo ||
        searchCriteria.capacityInBytes ||
-       searchCriteria.disabled ||
        searchCriteria.full ||
        searchCriteria.readOnly ||
        searchCriteria.diskFileIds ||
@@ -3593,11 +3586,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " MEDIA_TYPE.CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
       addedAWhereConstraint = true;
     }
-    if(searchCriteria.disabled) {
-      if(addedAWhereConstraint) sql += " AND ";
-      sql += " TAPE.IS_DISABLED = :IS_DISABLED";
-      addedAWhereConstraint = true;
-    }
     if(searchCriteria.full) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " TAPE.IS_FULL = :IS_FULL";
@@ -3639,7 +3627,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.tapePool) stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     if(searchCriteria.vo) stmt.bindString(":VO", searchCriteria.vo.value());
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
-    if(searchCriteria.disabled) stmt.bindBool(":IS_DISABLED", searchCriteria.disabled.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
     if(searchCriteria.readOnly) stmt.bindBool(":IS_READ_ONLY", searchCriteria.readOnly.value());
     try{
@@ -3679,7 +3666,6 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         tape.nbMasterFiles = rset.columnUint64("NB_MASTER_FILES");
         tape.masterDataInBytes = rset.columnUint64("MASTER_DATA_IN_BYTES");
         tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
-        tape.disabled = rset.columnBool("IS_DISABLED");
         tape.full = rset.columnBool("IS_FULL");
         tape.readOnly = rset.columnBool("IS_READ_ONLY");
         tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
@@ -3808,7 +3794,6 @@ std::string RdbmsCatalogue::getSelectTapesBy100VidsSql() const {
       "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
       "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
       "TAPE.LAST_FSEQ AS LAST_FSEQ,"
-      "TAPE.IS_DISABLED AS IS_DISABLED,"
       "TAPE.IS_FULL AS IS_FULL,"
       "TAPE.IS_READ_ONLY AS IS_READ_ONLY,"
       "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
@@ -3880,7 +3865,6 @@ void RdbmsCatalogue::executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &
     tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
     tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
-    tape.disabled = rset.columnBool("IS_DISABLED");
     tape.full = rset.columnBool("IS_FULL");
     tape.readOnly = rset.columnBool("IS_READ_ONLY");
     tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
@@ -4492,7 +4476,7 @@ void RdbmsCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::S
 //------------------------------------------------------------------------------
 // modifyTapeState
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeState(const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason, const std::string & stateModifiedBy){
+void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason){
   try {  
     using namespace common::dataStructures;
     const time_t now = time(nullptr);
@@ -4528,7 +4512,7 @@ void RdbmsCatalogue::modifyTapeState(const std::string &vid, const common::dataS
     stmt.bindString(":TAPE_STATE", stateStr);
     stmt.bindString(":STATE_REASON", stateReasonCopy);
     stmt.bindUint64(":STATE_UPDATE_TIME", now);
-    stmt.bindString(":STATE_MODIFIED_BY",stateModifiedBy);
+    stmt.bindString(":STATE_MODIFIED_BY",generateTapeStateModifiedBy(admin));
     stmt.bindString(":VID",vid);
     stmt.executeNonQuery();
 
@@ -4542,6 +4526,10 @@ void RdbmsCatalogue::modifyTapeState(const std::string &vid, const common::dataS
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+}
+
+std::string RdbmsCatalogue::generateTapeStateModifiedBy(const common::dataStructures::SecurityIdentity & admin){
+  return admin.username + "@" + admin.host;
 }
 
 //------------------------------------------------------------------------------
@@ -4812,38 +4800,10 @@ void RdbmsCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) {
 // setTapeDisabled
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const bool disabledValue) {
+  const std::string &vid, const std::string & reason) {
+  
   try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE TAPE SET "
-        "IS_DISABLED = :IS_DISABLED,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "VID = :VID";
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindBool(":IS_DISABLED", disabledValue);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":VID", vid);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
-    }
-
-    log::LogContext lc(m_log);
-    log::ScopedParamContainer spc(lc);
-    spc.add("vid", vid)
-       .add("isDisabled", disabledValue ? 1 : 0)
-       .add("lastUpdateUserName", admin.username)
-       .add("lastUpdateHostName", admin.host)
-       .add("lastUpdateTime", now);
-    lc.log(log::INFO, "Catalogue - user modified tape - isDisabled");
+    modifyTapeState(admin,vid,common::dataStructures::Tape::DISABLED,reason);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7770,7 +7730,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
       "WHERE "
 //      "TAPE.LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
 //      "TAPE.LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
-        "TAPE.IS_DISABLED = '0' AND "
+        "TAPE.TAPE_STATE = :TAPE_STATE AND "
         "TAPE.IS_FULL = '0' AND "
         "TAPE.IS_READ_ONLY = '0' AND "
         "TAPE.IS_FROM_CASTOR = '0' AND "
@@ -7780,6 +7740,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+    stmt.bindString(":TAPE_STATE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       TapeForWriting tape;
@@ -8014,7 +7975,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.VID = TAPE.VID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND "
-        "TAPE.IS_DISABLED = '0' "
+        "TAPE.TAPE_STATE = 'ACTIVE' "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql);
@@ -8241,12 +8202,13 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
       "WHERE "
         "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID AND "
-        "TAPE.IS_DISABLED = '0' "
+        "TAPE.TAPE_STATE = :TAPE_STATE "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":DISK_FILE_ID", diskFileId);
+    stmt.bindString(":TAPE_STATE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
     auto rset = stmt.executeQuery();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset.next()) {

@@ -157,13 +157,12 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         cta::log::Param("exceptionMsg", currentExceptionMsg)};
       m_log(cta::log::ERR,"In CleanerSession::exceptionThrowingExecute(), failed to clean the Drive with a tape mounted. Disabling the tape.",params);
       cta::common::dataStructures::SecurityIdentity admin;
-      admin.username = c_defaultUserNameUpdate;
-      admin.host = tapeDrive + "@" + hostname;
+      admin.username = c_defaultUserNameUpdate + " " + tapeDrive;
+      admin.host = hostname;
       
       try{
-        m_catalogue.setTapeDisabled(admin, m_vid, true);
-        std::string comment = cta::utils::getCurrentLocalTime("%F %T") + ":" + currentExceptionMsg;  
-        m_catalogue.modifyTapeComment(admin,m_vid,comment);
+        std::string disabledReason = cta::utils::getCurrentLocalTime("%F %T") + ":" + currentExceptionMsg; 
+        m_catalogue.setTapeDisabled(admin, m_vid, disabledReason);
       } catch(cta::exception::Exception &ex) {
         cta::log::Param param("exceptionMsg",ex.getMessageValue());
         params.push_back(param);

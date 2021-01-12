@@ -129,7 +129,7 @@ public:
   void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity& admin, const std::string& name, const uint64_t nbCopies) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyTapeComment(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const cta::optional<std::string> &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& encryptionKeyName) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  void modifyTapeState(const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason, const std::string & stateModifiedBy) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& mediaType) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyTapeVendor(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& vendor) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& logicalLibraryName) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -150,7 +150,7 @@ public:
   void reclaimTape(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, cta::log::LogContext & lc) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void checkTapeForLabel(const std::string& vid) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   uint64_t getNbFilesOnTape(const std::string& vid) const  override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  void setTapeDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool disabledValue) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  void setTapeDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string & reason) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeFull(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool fullValue) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeDirty(const std::string & vid) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeReadOnly(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool readOnlyValue) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -169,11 +169,11 @@ public:
   // Special functions for unit tests.
   void addEnabledTape(const std::string & vid) {
     threading::MutexLocker lm(m_tapeEnablingMutex);
-    m_tapeEnabling[vid]=true;
+    m_tapeEnabling[vid]=common::dataStructures::Tape::ACTIVE;
   }
   void addDisabledTape(const std::string & vid) {
     threading::MutexLocker lm(m_tapeEnablingMutex);
-    m_tapeEnabling[vid]=false;
+    m_tapeEnabling[vid]=common::dataStructures::Tape::DISABLED;
   }
   common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string>& vids) const {
     // Minimal implementation of VidToMap for retrieve request unit tests. We just support
@@ -183,9 +183,9 @@ public:
     common::dataStructures::VidToTapeMap ret;
     for (const auto & v: vids) {
       try {
-        ret[v].disabled = !m_tapeEnabling.at(v);
+        ret[v].state = m_tapeEnabling.at(v);
       } catch (std::out_of_range &) {
-        ret[v].disabled = false;
+        ret[v].state = common::dataStructures::Tape::ACTIVE;
       }
     }
     return ret;
@@ -235,7 +235,7 @@ public:
   }
 private:
   mutable threading::Mutex m_tapeEnablingMutex;
-  std::map<std::string, bool> m_tapeEnabling;
+  std::map<std::string, common::dataStructures::Tape::State> m_tapeEnabling;
 };
 
 }} // namespace cta::catalogue.

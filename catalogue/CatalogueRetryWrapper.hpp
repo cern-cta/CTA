@@ -356,8 +356,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeEncryptionKeyName(admin, vid, encryptionKeyName);}, m_maxTriesToConnect);
   }
   
-  void modifyTapeState(const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason, const std::string & stateModifiedBy) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeState(vid, state, stateReason, stateModifiedBy);}, m_maxTriesToConnect);
+  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeState(admin,vid, state, stateReason);}, m_maxTriesToConnect);
   }
 
   void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) override {
@@ -376,8 +376,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeIsFromCastorInUnitTests(vid);}, m_maxTriesToConnect);
   }
   
-  void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeDisabled(admin, vid, disabledValue);}, m_maxTriesToConnect);
+  void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeDisabled(admin, vid, reason);}, m_maxTriesToConnect);
   }
   
   void setTapeDirty(const std::string & vid) override {

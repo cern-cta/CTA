@@ -61,10 +61,6 @@ struct CreateTapeAttributes {
    */
   bool full;
 
-  /**
-   * True if the tape is disabled.
-   */
-  bool disabled;
 
   /**
    * True if the tape is read-only.
@@ -93,7 +89,6 @@ struct CreateTapeAttributes {
    */
   CreateTapeAttributes():
     full(false),
-    disabled(false),
     readOnly(false) {
   }
 }; // struct CreateTapeAttributes

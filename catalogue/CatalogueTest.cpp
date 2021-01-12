@@ -29,6 +29,7 @@
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 #include "rdbms/Conn.hpp"
 #include "InsertFileRecycleLog.hpp"
+#include "RdbmsCatalogue.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -126,7 +127,6 @@ namespace {
     tape.logicalLibraryName = "logical_library";
     tape.tapePoolName = "tape_pool";
     tape.full = false;
-    tape.disabled = false;
     tape.readOnly = false;
     tape.state = common::dataStructures::Tape::ACTIVE;
     tape.comment = "Creation of tape one";
@@ -2142,7 +2142,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.state,tape.state);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -3598,7 +3598,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.state,tape.state);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -3707,7 +3707,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
   ASSERT_EQ(m_vo.name, tape.vo);
   ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-  ASSERT_EQ(m_tape1.disabled, tape.disabled);
+  ASSERT_EQ(m_tape1.state,tape.state);
   ASSERT_EQ(m_tape1.full, tape.full);
   ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
   ASSERT_FALSE(tape.isFromCastor);
@@ -3929,7 +3929,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.state,tape.state);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -4154,7 +4154,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
+    ASSERT_EQ(m_tape1.state,tape.state);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -4357,7 +4357,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
+      ASSERT_EQ(m_tape1.state,tape.state);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -4414,6 +4414,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   {
     catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.diskFileIds = std::vector<std::string>();
+    ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
+  }
+  
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.state = (cta::common::dataStructures::Tape::State)42;
     ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
   }
 
@@ -4490,12 +4496,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.disabled = m_tape1.disabled;
+    searchCriteria.state = m_tape1.state;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
-    ASSERT_EQ(m_tape1.disabled, vidToTape.begin()->second.disabled);
+    ASSERT_EQ(m_tape1.state, vidToTape.begin()->second.state);
   }
 
   {
@@ -4530,7 +4536,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     searchCriteria.logicalLibrary = m_tape1.logicalLibraryName;
     searchCriteria.tapePool = m_tape1.tapePoolName;
     searchCriteria.capacityInBytes = m_mediaType.capacityInBytes;
-    searchCriteria.disabled = m_tape1.disabled;
+    searchCriteria.state = m_tape1.state;
     searchCriteria.full = m_tape1.full;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
@@ -4540,7 +4546,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     ASSERT_EQ(m_tape1.logicalLibraryName, vidToTape.begin()->second.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, vidToTape.begin()->second.tapePoolName);
     ASSERT_EQ(m_mediaType.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, vidToTape.begin()->second.disabled);
+    ASSERT_EQ(m_tape1.state, vidToTape.begin()->second.state);
     ASSERT_EQ(m_tape1.full, vidToTape.begin()->second.full);
   }
 
@@ -4570,7 +4576,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -4635,7 +4640,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -4733,7 +4737,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(m_tape2.disabled == tape.disabled);
+    ASSERT_TRUE(m_tape2.state == tape.state);
     ASSERT_TRUE(m_tape2.full == tape.full);
     ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -4791,7 +4795,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
   ASSERT_EQ(m_vo.name, tape.vo);
   ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-  ASSERT_EQ(m_tape1.disabled, tape.disabled);
   ASSERT_EQ(m_tape1.full, tape.full);
   ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
   ASSERT_FALSE(tape.isFromCastor);
@@ -4845,7 +4848,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(0, tape.dataOnTapeInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -4899,7 +4901,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(fileSize, tape.dataOnTapeInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -4983,7 +4984,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5014,7 +5014,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5061,7 +5060,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5093,7 +5091,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5140,7 +5137,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5172,7 +5168,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5228,7 +5223,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5260,7 +5254,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(anotherTapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5319,7 +5312,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5353,7 +5345,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(modifiedEncryptionKeyName, tape.encryptionKeyName);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5397,7 +5388,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5431,7 +5421,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_FALSE((bool)tape.encryptionKeyName);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5458,7 +5447,13 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentTape) {
   using namespace cta;
 
   common::dataStructures::Tape::State state = common::dataStructures::Tape::State::ACTIVE;
-  ASSERT_THROW(m_catalogue->modifyTapeState("DOES_NOT_EXIST",state,cta::nullopt,m_admin.username),cta::catalogue::UserSpecifiedANonExistentTape);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,"DOES_NOT_EXIST",state,cta::nullopt),cta::catalogue::UserSpecifiedANonExistentTape);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled_nonExistentTape) {
+  using namespace cta;
+
+  ASSERT_THROW(m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, "Test"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentState) {
@@ -5478,7 +5473,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentState) {
   m_catalogue->createTape(m_admin, m_tape1);
 
   common::dataStructures::Tape::State state = (common::dataStructures::Tape::State)42;
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_tape1.vid,state,cta::nullopt,m_admin.username),cta::catalogue::UserSpecifiedANonExistentTapeState);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin, m_tape1.vid,state,cta::nullopt),cta::catalogue::UserSpecifiedANonExistentTapeState);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
@@ -5498,9 +5493,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
   m_catalogue->createTape(m_admin, m_tape1);
 
   std::string reason = "";
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_tape1.vid,common::dataStructures::Tape::State::BROKEN,reason,m_admin.username),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::BROKEN,reason),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
   
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_tape1.vid,common::dataStructures::Tape::State::DISABLED,cta::nullopt,m_admin.username),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::DISABLED,cta::nullopt),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
@@ -5522,7 +5517,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
   std::string reason = "tape broken";
   
   std::string vid = m_tape1.vid;
-  ASSERT_NO_THROW(m_catalogue->modifyTapeState(vid,common::dataStructures::Tape::State::BROKEN,reason,m_admin.username));
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,reason));
   
   {
     //catalogue getTapesByVid test
@@ -5531,7 +5526,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
     ASSERT_EQ(vid,tape.vid);
     ASSERT_EQ(common::dataStructures::Tape::BROKEN,tape.state);
     ASSERT_EQ(reason,tape.stateReason);
-    ASSERT_EQ(m_admin.username,tape.stateModifiedBy);
+    ASSERT_EQ(catalogue::RdbmsCatalogue::generateTapeStateModifiedBy(m_admin),tape.stateModifiedBy);
     ASSERT_NE(0,tape.stateUpdateTime);
   }
   
@@ -5544,7 +5539,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
     ASSERT_EQ(vid,tape.vid);
     ASSERT_EQ(common::dataStructures::Tape::BROKEN,tape.state);
     ASSERT_EQ(reason,tape.stateReason);
-    ASSERT_EQ(m_admin.username,tape.stateModifiedBy);
+    ASSERT_EQ(catalogue::RdbmsCatalogue::generateTapeStateModifiedBy(m_admin),tape.stateModifiedBy);
     ASSERT_NE(0,tape.stateUpdateTime);
   }
   
@@ -5554,7 +5549,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
     ASSERT_EQ(vid,tape.vid);
     ASSERT_EQ(common::dataStructures::Tape::BROKEN,tape.state);
     ASSERT_EQ(reason,tape.stateReason);
-    ASSERT_EQ(m_admin.username,tape.stateModifiedBy);
+    ASSERT_EQ(catalogue::RdbmsCatalogue::generateTapeStateModifiedBy(m_admin),tape.stateModifiedBy);
     ASSERT_NE(0,tape.stateUpdateTime);
   }
 }
@@ -5578,9 +5573,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeStateResetReasonWhenBackToActiveSt
   std::string vid = m_tape1.vid;
 
   std::string reason = "Broken tape";
-  ASSERT_NO_THROW(m_catalogue->modifyTapeState(vid,common::dataStructures::Tape::State::BROKEN,reason,m_admin.username));
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,reason));
   
-  ASSERT_NO_THROW(m_catalogue->modifyTapeState(vid,common::dataStructures::Tape::State::ACTIVE,cta::nullopt,m_admin.username));
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::ACTIVE,cta::nullopt));
   
   {
     auto vidToTapeMap = m_catalogue->getTapesByVid({vid});
@@ -5588,7 +5583,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeStateResetReasonWhenBackToActiveSt
     ASSERT_EQ(vid,tape.vid);
     ASSERT_EQ(common::dataStructures::Tape::ACTIVE,tape.state);
     ASSERT_FALSE(tape.stateReason);
-    ASSERT_EQ(m_admin.username,tape.stateModifiedBy);
+    ASSERT_EQ(catalogue::RdbmsCatalogue::generateTapeStateModifiedBy(m_admin),tape.stateModifiedBy);
     ASSERT_NE(0,tape.stateUpdateTime);
   }
 }
@@ -5627,7 +5622,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesSearchCriteriaByState) {
   }
   
   std::string reason = "Broken tape";
-  ASSERT_NO_THROW(m_catalogue->modifyTapeState(vidTape1,common::dataStructures::Tape::State::BROKEN,reason,m_admin.username));
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vidTape1,common::dataStructures::Tape::State::BROKEN,reason));
   
   {
     cta::catalogue::TapeSearchCriteria criteria;
@@ -5679,7 +5674,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5712,7 +5706,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5765,7 +5758,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5800,7 +5792,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5834,7 +5825,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5889,7 +5879,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5924,7 +5913,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -5958,7 +5946,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6013,7 +6000,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6045,7 +6031,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_TRUE(tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6095,7 +6080,6 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6127,7 +6111,6 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_TRUE(tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6177,7 +6160,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6209,7 +6191,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_TRUE(tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6238,7 +6219,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnly) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_FALSE(tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6288,7 +6268,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6320,7 +6299,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_TRUE(tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6339,82 +6317,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeReadOnlyOnError_nonExistentTape) {
   using namespace cta;
 
   ASSERT_THROW(m_catalogue->setTapeReadOnlyOnError(m_tape1.vid), exception::Exception);
-}
-
-TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
-  using namespace cta;
-
-  const bool logicalLibraryIsDisabled= false;
-  const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
-
-  m_catalogue->createMediaType(m_admin, m_mediaType);
-  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-
-  m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-
-  m_catalogue->createTape(m_admin, m_tape1);
-
-  {
-    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
-
-    ASSERT_EQ(1, tapes.size());
-
-    const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(m_tape1.vid, tape.vid);
-    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
-    ASSERT_EQ(m_tape1.vendor, tape.vendor);
-    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(m_vo.name, tape.vo);
-    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
-    ASSERT_EQ(m_tape1.full, tape.full);
-    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
-    ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(m_tape1.comment, tape.comment);
-    ASSERT_FALSE(tape.labelLog);
-    ASSERT_FALSE(tape.lastReadLog);
-    ASSERT_FALSE(tape.lastWriteLog);
-
-    const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-
-  m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, true);
-
-  {
-    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
-
-    ASSERT_EQ(1, tapes.size());
-
-    const common::dataStructures::Tape tape = tapes.front();
-    ASSERT_EQ(m_tape1.vid, tape.vid);
-    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
-    ASSERT_EQ(m_tape1.vendor, tape.vendor);
-    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
-    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(m_vo.name, tape.vo);
-    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(tape.disabled);
-    ASSERT_FALSE(tape.full);
-    ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
-    ASSERT_FALSE(tape.isFromCastor);
-    ASSERT_EQ(m_tape1.comment, tape.comment);
-    ASSERT_FALSE(tape.labelLog);
-    ASSERT_FALSE(tape.lastReadLog);
-    ASSERT_FALSE(tape.lastWriteLog);
-
-    const common::dataStructures::EntryLog creationLog = tape.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
@@ -6446,7 +6348,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -6478,7 +6379,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_TRUE(tape.isFromCastor);
@@ -6508,7 +6408,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_TRUE(tape.isFromCastor);
@@ -6527,12 +6426,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastor_nonExistentTape) {
   using namespace cta;
 
   ASSERT_THROW(m_catalogue->setTapeIsFromCastorInUnitTests(m_tape1.vid), exception::Exception);
-}
-
-TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled_nonExistentTape) {
-  using namespace cta;
-
-  ASSERT_THROW(m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, true), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
@@ -6644,8 +6537,8 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_disabled_tape) {
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   auto tape = m_tape1;
-  tape.disabled = true;
-
+  tape.state = common::dataStructures::Tape::DISABLED;
+  tape.stateReason = "test";
   m_catalogue->createTape(m_admin, tape);
 
   m_catalogue->tapeLabelled(m_tape1.vid, "tape_drive");
@@ -8872,7 +8765,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -8900,7 +8792,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape2.disabled, tape.disabled);
     ASSERT_EQ(m_tape2.full, tape.full);
     ASSERT_EQ(m_tape2.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -9084,6 +8975,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
+  std::string disabledReason = "disabledReason";
+  
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -9105,7 +8998,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -9133,7 +9025,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape2.disabled, tape.disabled);
     ASSERT_EQ(m_tape2.full, tape.full);
     ASSERT_EQ(m_tape2.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -9327,7 +9218,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, true);
+  m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, disabledReason);
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
@@ -9348,7 +9239,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, m_tape2.vid, true);
+  m_catalogue->setTapeDisabled(m_admin, m_tape2.vid, disabledReason);
 
   ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
     exception::UserError);
@@ -9475,7 +9366,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
     ASSERT_EQ(file2Written.copyNb, tapeFile1.copyNb);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, m_tape2.vid, true);
+  std::string disabledReason = "disabled reason";
+  m_catalogue->setTapeDisabled(m_admin, m_tape2.vid, disabledReason);
 
   ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
     exception::UserError);
@@ -9660,7 +9552,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(tapePoolName1, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(tape1.disabled == tape.disabled);
       ASSERT_TRUE(tape1.full == tape.full);
       ASSERT_TRUE(tape1.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -9689,7 +9580,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(tape2.disabled == tape.disabled);
       ASSERT_TRUE(tape2.full == tape.full);
       ASSERT_TRUE(tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -10827,7 +10717,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(tapePoolName1, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(tape1.disabled == tape.disabled);
       ASSERT_TRUE(tape1.full == tape.full);
       ASSERT_TRUE(tape1.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -10854,7 +10743,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(tapePoolName2, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(tape2.disabled == tape.disabled);
       ASSERT_TRUE(tape2.full == tape.full);
       ASSERT_TRUE(tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -11450,7 +11338,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -11568,7 +11455,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -11777,7 +11663,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -11806,7 +11691,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -11989,7 +11873,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12015,7 +11898,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12189,7 +12071,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12364,7 +12245,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12500,7 +12380,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12528,7 +12407,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12664,7 +12542,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12692,7 +12569,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12828,7 +12704,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12855,7 +12730,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.disabled == tape.disabled);
       ASSERT_TRUE(m_tape2.full == tape.full);
       ASSERT_TRUE(m_tape2.readOnly == tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -12991,7 +12865,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -13019,7 +12892,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape2.disabled, tape.disabled);
       ASSERT_EQ(m_tape2.full, tape.full);
       ASSERT_EQ(m_tape2.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -13278,7 +13150,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -13304,7 +13175,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape2.disabled, tape.disabled);
       ASSERT_EQ(m_tape2.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);
@@ -13595,7 +13465,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_1_tape) {
     ASSERT_EQ(m_tape1.tapePoolName, tapeItor->second.tapePoolName);
     ASSERT_EQ(m_vo.name, tapeItor->second.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tapeItor->second.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tapeItor->second.disabled);
+    ASSERT_EQ(m_tape1.state, tapeItor->second.state);
     ASSERT_EQ(m_tape1.full, tapeItor->second.full);
     ASSERT_EQ(m_tape1.readOnly, tapeItor->second.readOnly);
     ASSERT_FALSE(tapeItor->second.isFromCastor);
@@ -13650,7 +13520,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_350_tapes) {
     ASSERT_EQ(m_tape1.tapePoolName, tapeItor->second.tapePoolName);
     ASSERT_EQ(m_vo.name, tapeItor->second.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tapeItor->second.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tapeItor->second.disabled);
+    ASSERT_EQ(m_tape1.state, tapeItor->second.state);
     ASSERT_EQ(m_tape1.full, tapeItor->second.full);
     ASSERT_EQ(m_tape1.readOnly, tapeItor->second.readOnly);
     ASSERT_FALSE(tapeItor->second.isFromCastor);
@@ -14698,7 +14568,6 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -14749,7 +14618,6 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -14851,7 +14719,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -14902,7 +14769,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15005,7 +14871,6 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15130,7 +14995,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15165,7 +15029,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_FALSE(tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15212,7 +15075,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15265,7 +15127,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15350,7 +15211,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15387,7 +15247,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15423,7 +15282,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15472,7 +15330,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15558,7 +15415,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.disabled, tape.disabled);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
     ASSERT_FALSE(tape.isFromCastor);
@@ -15883,7 +15739,6 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
       ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.disabled, tape.disabled);
       ASSERT_EQ(m_tape1.full, tape.full);
       ASSERT_EQ(m_tape1.readOnly, tape.readOnly);
       ASSERT_FALSE(tape.isFromCastor);

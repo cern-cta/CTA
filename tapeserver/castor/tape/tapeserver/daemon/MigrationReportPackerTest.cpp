@@ -131,7 +131,6 @@ const uint32_t TEST_GROUP_2 = 9754;
     const bool logicalLibraryIsDisabled = false;
     const std::string tapePoolName = "tape_pool_name";
     const cta::optional<std::string> supply("value for the supply pool mechanism");
-    const bool disabledValue = true;
     const bool fullValue = false;
     const bool readOnlyValue = false;
     const std::string createTapeComment = "Create tape";
@@ -154,10 +153,10 @@ const uint32_t TEST_GROUP_2 = 9754;
       tape.logicalLibraryName = logicalLibraryName;
       tape.tapePoolName = tapePoolName;
       tape.full = fullValue;
-      tape.disabled = disabledValue;
       tape.readOnly = readOnlyValue;
       tape.comment = createTapeComment;
-      tape.state = cta::common::dataStructures::Tape::ACTIVE;
+      tape.state = cta::common::dataStructures::Tape::DISABLED;
+      tape.stateReason = "Test";
       m_catalogue->createTape(admin, tape);
     }
 
@@ -296,7 +295,6 @@ const uint32_t TEST_GROUP_2 = 9754;
     const uint64_t nbPartialTapes = 2;
     const bool isEncrypted = true;
     const cta::optional<std::string> supply("value for the supply pool mechanism");
-    const bool disabledValue = true;
     const bool fullValue = false;
     const bool readOnlyValue = false;
     const std::string createTapeComment = "Create tape";
@@ -320,10 +318,10 @@ const uint32_t TEST_GROUP_2 = 9754;
       tape.logicalLibraryName = logicalLibraryName;
       tape.tapePoolName = tapePoolName;
       tape.full = fullValue;
-      tape.disabled = disabledValue;
       tape.readOnly = readOnlyValue;
       tape.comment = createTapeComment;
-      tape.state = cta::common::dataStructures::Tape::ACTIVE;
+      tape.state = cta::common::dataStructures::Tape::DISABLED;
+      tape.stateReason = "test";
       m_catalogue->createTape(admin, tape);
     }
 

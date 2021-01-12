@@ -113,6 +113,8 @@ struct Tape {
   std::string stateModifiedBy;
   time_t stateUpdateTime;
   
+  bool isDisabled() const;
+  
 }; // struct Tape
 
 std::ostream &operator<<(std::ostream &os, const Tape &obj);

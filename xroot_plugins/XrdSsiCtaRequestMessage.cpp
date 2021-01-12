@@ -1730,7 +1730,6 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    auto &vendor         = getRequired(OptionString::VENDOR);
    auto &logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
    auto &tapepool       = getRequired(OptionString::TAPE_POOL);
-   auto &disabled       = getRequired(OptionBoolean::DISABLED);
    auto &full           = getRequired(OptionBoolean::FULL);
    auto &readOnly       = getRequired(OptionBoolean::READ_ONLY);
    auto state           = getOptional(OptionString::STATE);
@@ -1744,7 +1743,6 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    tape.logicalLibraryName = logicallibrary;
    tape.tapePoolName = tapepool;
    tape.full = full;
-   tape.disabled = disabled;
    tape.readOnly = readOnly;
    tape.comment = comment ? comment.value() : "";
    if(!state){
@@ -1801,9 +1799,6 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    if(encryptionkeyName) {
       m_catalogue.modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
    }
-   if(disabled) {
-      m_catalogue.setTapeDisabled(m_cliIdentity, vid, disabled.value());
-   }
    if(full) {
       m_catalogue.setTapeFull(m_cliIdentity, vid, full.value());
    }
@@ -1812,7 +1807,7 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    }
    if(state){
      auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value());
-     m_catalogue.modifyTapeState(vid,stateEnumValue,stateReason,m_cliIdentity.username+"@"+m_cliIdentity.host);
+     m_catalogue.modifyTapeState(m_cliIdentity,vid,stateEnumValue,stateReason);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

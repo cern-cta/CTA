@@ -247,7 +247,6 @@ public:
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
     tape.full = false;
-    tape.disabled = false;
     tape.readOnly = false;
     tape.state = cta::common::dataStructures::Tape::ACTIVE;
     tape.comment = "Comment";

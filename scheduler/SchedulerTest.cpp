@@ -249,7 +249,6 @@ public:
     tape.logicalLibraryName = s_libraryName;
     tape.tapePoolName = s_tapePoolName;
     tape.full = false;
-    tape.disabled = false;
     tape.readOnly = false;
     tape.state = common::dataStructures::Tape::ACTIVE;
     tape.comment = "Comment";
@@ -2591,7 +2590,8 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
-    tape.disabled = true;
+    tape.state = common::dataStructures::Tape::DISABLED;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -2781,19 +2781,21 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
   //disabled the tape
-  catalogue.setTapeDisabled(admin,vid,true);
+  
+  std::string disabledReason = "Disabled reason";
+  catalogue.setTapeDisabled(admin,vid,disabledReason);
   
   //No mount should be returned by getNextMount
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, "drive0", lc));
   
   //enable the tape
-  catalogue.setTapeDisabled(admin,vid, false);
+  catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
   
   //A mount should be returned by getNextMount
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
   
   //disable the tape
-  catalogue.setTapeDisabled(admin,vid, true);
+  catalogue.setTapeDisabled(admin,vid,disabledReason);
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
   
   //Queue a Repack Request with --disabledtape flag set to force Retrieve Mount for disabled tape
@@ -2927,7 +2929,8 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
   //disabled the tape
-  catalogue.setTapeDisabled(admin,vid,true);
+  std::string disabledReason = "reason";
+  catalogue.setTapeDisabled(admin,vid,disabledReason);
   
   //No mount should be returned by getNextMount
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, "drive0", lc));

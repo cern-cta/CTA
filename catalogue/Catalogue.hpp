@@ -612,12 +612,12 @@ public:
   virtual void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) = 0;
   /**
    * Modify the state of the specified tape
+   * @param admin, the person or the system who modified the state of the tape
    * @param vid the VID of the tape to change the state
    * @param state the new state
    * @param stateReason the reason why the state changes, if the state is ACTIVE and the stateReason is nullopt, the state will be reset to null
-   * @param stateModifiedBy who modified the state of the tape (operator, tapeserver...)
    */
-  virtual void modifyTapeState(const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason, const std::string & stateModifiedBy) = 0;
+  virtual void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason) = 0;
   /**
    * Sets the full status of the specified tape.
    *
@@ -658,7 +658,7 @@ public:
    */
   virtual void setTapeIsFromCastorInUnitTests(const std::string &vid) = 0;
 
-  virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool disabledValue) = 0;
+  virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) = 0;
   
   virtual void setTapeDirty(const std::string & vid) = 0;
   

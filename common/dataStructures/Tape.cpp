@@ -35,8 +35,8 @@ Tape::Tape():
   nbMasterFiles(0),
   masterDataInBytes(0),
   full(false),
-  disabled(false),
-  readOnly(false)
+  readOnly(false),
+  state(Tape::State::ACTIVE)
   {}
 
 const std::map<Tape::State,std::string> Tape::STATE_TO_STRING_MAP = {
@@ -73,7 +73,7 @@ bool Tape::operator==(const Tape &rhs) const {
       && dataOnTapeInBytes==rhs.dataOnTapeInBytes
       && encryptionKeyName==rhs.encryptionKeyName
       && full==rhs.full
-      && disabled==rhs.disabled
+      && state==rhs.state
       && readOnly==rhs.readOnly
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
@@ -116,11 +116,20 @@ Tape::State Tape::stringToState(const std::string& state) {
   }
 }
 
+bool Tape::isDisabled() const {
+  return state == Tape::State::DISABLED;
+}
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const Tape &obj) {
+  std::string stateStr = "UNKNOWN";
+  try {
+    stateStr = Tape::stateToString(obj.state);
+  } catch(const cta::exception::Exception &ex){
+    //Do nothing
+  }
   os << "(vid=" << obj.vid
      << " lastFSeq=" << obj.lastFSeq
      << " logicalLibraryName=" << obj.logicalLibraryName
@@ -129,11 +138,14 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
      << " dataOnTapeInBytes=" << obj.dataOnTapeInBytes
      << " encryptionKeyName=" << (obj.encryptionKeyName ? obj.encryptionKeyName.value() : "null")
      << " full=" << obj.full
-     << " disabled=" << obj.disabled
      << " readOnly=" << obj.readOnly    
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment
+     << " state=" << stateStr
+     << " stateReason=" << (obj.stateReason ? obj.stateReason.value() : "null")
+     << " stateUpdateTime=" << obj.stateUpdateTime
+     << " stateModifiedBy=" << obj.stateModifiedBy
      << " labelLog=" << obj.labelLog
      << " lastWriteLog=" << obj.lastWriteLog
      << " lastReadLog=" << obj.lastReadLog << ")";

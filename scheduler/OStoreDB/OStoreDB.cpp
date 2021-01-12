@@ -339,15 +339,21 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto rqSummary = rqueue.getJobsSummary();
     bool isPotentialMount = false;
     auto vidToTapeMap = m_catalogue.getTapesByVid({rqp.vid});
-    if(vidToTapeMap.at(rqp.vid).disabled){
-      //Check if there are Repack Retrieve requests with forceDisabledTape flag in the queue
+    common::dataStructures::Tape::State tapeState = vidToTapeMap.at(rqp.vid).state;
+    bool tapeIsDisabled = tapeState == common::dataStructures::Tape::DISABLED;
+    bool tapeIsBroken = tapeState == common::dataStructures::Tape::BROKEN;
+    if(tapeIsDisabled || tapeIsBroken){
+      //In the case there are Repack Retrieve Requests with the force disabled flag set
+      //on it, we will trigger a mount.
+      //In the case there are only deleted Retrieve Request on a DISABLED or BROKEN tape
+      //we want to trigger a mount to flush the queue.
       auto retrieveQueueJobs = rqueue.dumpJobs();
       uint64_t nbJobsNotExistInQueue = 0;
       for(auto &job: retrieveQueueJobs){
         cta::objectstore::RetrieveRequest rr(job.address,this->m_objectStore);
         try{
           rr.fetchNoLock();
-          if(rr.getRepackInfo().forceDisabledTape){
+          if(tapeIsDisabled && rr.getRepackInfo().forceDisabledTape){
             //At least one Retrieve job is a Repack Retrieve job with the tape disabled flag,
             //we have a potential mount.
             isPotentialMount = true;
@@ -360,13 +366,13 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         }
       }
       if(!isPotentialMount && nbJobsNotExistInQueue == retrieveQueueJobs.size()){
-        //The tape is disabled, there are only jobs that have been deleted, it is a potential mount as we want to flush the queue.
-        //If there is at least one job that is in the queue, and is not a repack with the --disabledtape flag,
-        //the jobs have to stay in the queue as long as the tape is disabled.
+        //The tape is disabled or broken, there are only jobs that have been deleted, it is a potential mount as we want to flush the queue.
         isPotentialMount = true;
       }
     } else {
-      isPotentialMount = true;
+      //A BROKEN tape cannot be a potential mount, only ACTIVE tape
+      if(tapeState == common::dataStructures::Tape::ACTIVE)
+        isPotentialMount = true;
     }
     if (rqSummary.jobs && (isPotentialMount || purpose == SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES)) {
       //Getting the default mountPolicies parameters from the queue summary

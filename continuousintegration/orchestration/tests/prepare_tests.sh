@@ -162,7 +162,6 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
       --tapepool ctasystest                                                \
       --comment "ctasystest"                                               \
       --vid ${VID}                                                         \
-      --disabled false                                                     \
       --full false                                                         \
       --readonly false                                                     \
       --comment "ctasystest"

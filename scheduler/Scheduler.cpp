@@ -1676,10 +1676,10 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       mountOrQueue.dataOnTapes += t.dataOnTapeInBytes;
       if (!t.dataOnTapeInBytes)
         mountOrQueue.emptyTapes++;
-      if (t.disabled) mountOrQueue.disabledTapes++;
+      if (t.isDisabled()) mountOrQueue.disabledTapes++;
       if (t.full) mountOrQueue.fullTapes++;
       if (t.readOnly) mountOrQueue.readOnlyTapes++;
-      if (!t.full && !t.disabled && !t.readOnly) mountOrQueue.writableTapes++;
+      if (!t.full && !t.isDisabled() && !t.readOnly) mountOrQueue.writableTapes++;
       mountOrQueue.tapePool = t.tapePoolName;
     }
   }

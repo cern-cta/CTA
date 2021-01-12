@@ -384,8 +384,8 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         grqsmLock.unlock();
         updateFuture.wait();
         grqsmLock.lock();
-        if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape)) {
-          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape)");
+        if(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE || (g_retrieveQueueStatistics.at(v).tapeStatus.isDisabled() && forceDisabledTape)) {
+          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE || (g_retrieveQueueStatistics.at(v).tapeStatus.isDisabled() && forceDisabledTape)");
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         }
       } else {
@@ -400,7 +400,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"Cache is not updated, timeSinceLastUpdate ("+std::to_string(timeSinceLastUpdate)+
         ") <= c_retrieveQueueCacheMaxAge ("+std::to_string(c_retrieveQueueCacheMaxAge)+")");
         // We're lucky: cache hit (and not stale)
-        if (!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape))
+        if (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE || (g_retrieveQueueStatistics.at(v).tapeStatus.isDisabled() && forceDisabledTape))
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
       }
     } catch (std::out_of_range &) {
@@ -441,7 +441,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       // Signal to potential waiters
       updatePromise.set_value();
       // Update our own candidate list if needed.
-      if(!g_retrieveQueueStatistics.at(v).tapeStatus.disabled || (g_retrieveQueueStatistics.at(v).tapeStatus.disabled && forceDisabledTape)) {
+      if (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE || (g_retrieveQueueStatistics.at(v).tapeStatus.isDisabled() && forceDisabledTape)) {
         candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
       }
     }
@@ -477,7 +477,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
   // We will not update the status of the tape if we already cached it (caller did not check),
   // We will also not update the update time, to force an update after a while.
   // If we update the entry while another thread is updating it, this is harmless (cache users will
-  // anyway wait, and just not profit from our update.
+  // anyway wait, and just not profit from our update.  
   threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
   try {
     g_retrieveQueueStatistics.at(vid).stats.filesQueued=files;
@@ -490,7 +490,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
     g_retrieveQueueStatistics[vid].stats.filesQueued=files;
     g_retrieveQueueStatistics[vid].stats.currentPriority=priority;
     g_retrieveQueueStatistics[vid].stats.vid=vid;
-    g_retrieveQueueStatistics[vid].tapeStatus.disabled=false;
+    g_retrieveQueueStatistics[vid].tapeStatus.state = common::dataStructures::Tape::ACTIVE;
     g_retrieveQueueStatistics[vid].tapeStatus.full=false;
     g_retrieveQueueStatistics[vid].updating = false;
     g_retrieveQueueStatistics[vid].updateTime = time(nullptr);
@@ -730,7 +730,7 @@ void Helpers::logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQue
     std::string date=std::ctime(&end_time);
     date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
     logFile << date << " pid=" << ::getpid() << " tid=" << syscall(SYS_gettid) << " message=" << message << " entryCreation="<< entryCreation <<" vid=" 
-            << tapeStatistic.tapeStatus.vid << " disabled=" << tapeStatistic.tapeStatus.disabled << " filesQueued=" << tapeStatistic.stats.filesQueued <<  std::endl;
+            << tapeStatistic.tapeStatus.vid << " state=" << common::dataStructures::Tape::stateToString(tapeStatistic.tapeStatus.state) << " filesQueued=" << tapeStatistic.stats.filesQueued <<  std::endl;
   #endif //HELPERS_CACHE_UPDATE_LOGGING
 }
 
