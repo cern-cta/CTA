@@ -717,7 +717,7 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
           }
         }
       } else { // Repack case, the report policy is different (report all jobs). So we just change the job's status.
-        for (auto j: *payload.mutable_jobs()) {
+        for (auto & j: *payload.mutable_jobs()) {
           if (j.copynb() == copyNumber) {
             ArchiveRequest::RepackInfoSerDeser serDeser;
             serDeser.deserialize(payload.repack_info());
