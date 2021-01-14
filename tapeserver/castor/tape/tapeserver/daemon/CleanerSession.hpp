@@ -131,7 +131,7 @@ namespace daemon {
      * The maximum number of seconds to wait for
      * the media to be ready for operations inside the drive.
      */
-    const uint32_t m_waitMediaInDriveTimeout;
+    const uint32_t m_tapeLoadTimeout;
 
     /** 
      * Encryption helper object 

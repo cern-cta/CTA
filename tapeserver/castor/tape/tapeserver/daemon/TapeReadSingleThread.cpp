@@ -38,9 +38,10 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   const bool useLbp,
   const bool useRAO,
   const std::string & externalEncryptionKeyScript,
-  const cta::RetrieveMount& retrieveMount) :
+  const cta::RetrieveMount& retrieveMount,
+  const uint32_t tapeLoadTimeout) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
-    capUtils, lc, externalEncryptionKeyScript),
+    capUtils, lc, externalEncryptionKeyScript,tapeLoadTimeout),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),
   m_rrp(rrp),
@@ -91,9 +92,9 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // drive, which is a fine situation (so timeout exceptions are discarded).
     // Other exception, where we failed to access the drive somehow are at passed
     // through.
-    const uint32_t waitMediaInDriveTimeout = 60;
+    const uint32_t tapeLoadTimeout = m_this.m_tapeLoadTimeout;
     try {
-      m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
+      m_this.m_drive.waitUntilReady(tapeLoadTimeout);
     } catch (cta::exception::TimeOut &) {}
     if (!m_this.m_drive.hasTapeInPlace()) {
       m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");

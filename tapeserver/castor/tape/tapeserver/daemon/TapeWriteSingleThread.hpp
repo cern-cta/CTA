@@ -58,6 +58,7 @@ public:
    * @param filesBeforeFlush  how many file written before flushing on tape
    * @param bytesBeforeFlush how many bytes written before flushing on tape
    * @param lastFseq the last fSeq 
+   * @param tapeLoadTimeout the timeout after which we consider the tape mount to be failed
    */
   TapeWriteSingleThread(
     castor::tape::tapeserver::drive::DriveInterface & drive, 
@@ -70,7 +71,8 @@ public:
     cta::server::ProcessCap &capUtils,
     uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush, const bool useLbp,
     const std::string & externalEncryptionKeyScript,
-    const cta::ArchiveMount & archiveMount);
+    const cta::ArchiveMount & archiveMount,
+    const uint64_t tapeLoadTimeout);
   
   /**
    * 

@@ -104,9 +104,10 @@ namespace unitTests
       cta::mediachanger::MediaChangerFacade & mc,
       tapeserver::daemon::TapeServerReporter & tsr,
       const tapeserver::daemon::VolumeInfo& volInfo, 
-      cta::server::ProcessCap& cap,
+      cta::server::ProcessCap& cap, 
+      const uint32_t tapeLoadTimeout,
       cta::log::LogContext & lc):
-    TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc, ""){}
+    TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc, "", tapeLoadTimeout){}
 
     ~FakeSingleTapeReadThread(){
       const unsigned int size= m_tasks.size();
@@ -166,7 +167,7 @@ namespace unitTests
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
     castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess, cta::tape::daemon::TpconfigLine(), "0.0.0.0", volume, lc);
     cta::server::ProcessCapDummy cap;
-    FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, lc);
+    FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, 60, lc);
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, lc);
 
     bool noFilesToRecall;
@@ -229,7 +230,7 @@ namespace unitTests
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
     cta::server::ProcessCapDummy cap;
     castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess, cta::tape::daemon::TpconfigLine(), "0.0.0.0", volume, lc);  
-    FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, lc);
+    FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, 60, lc);
 
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
 

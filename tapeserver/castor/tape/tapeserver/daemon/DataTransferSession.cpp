@@ -250,7 +250,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     
     TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
         m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc,rrp,
-        m_castorConf.useLbp, m_castorConf.useRAO, m_castorConf.externalEncryptionKeyScript,*retrieveMount);
+        m_castorConf.useLbp, m_castorConf.useRAO, m_castorConf.externalEncryptionKeyScript,*retrieveMount, m_castorConf.tapeLoadTimeout);
     DiskWriteThreadPool dwtp(m_castorConf.nbDiskThreads,
         rrp,
         rwd,
@@ -374,7 +374,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         m_castorConf.maxBytesBeforeFlush,
         m_castorConf.useLbp,
         m_castorConf.externalEncryptionKeyScript,
-        *archiveMount);
+        *archiveMount,
+        m_castorConf.tapeLoadTimeout);
  
     DiskReadThreadPool drtp(m_castorConf.nbDiskThreads,
         m_castorConf.bulkRequestMigrationMaxFiles,

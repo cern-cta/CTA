@@ -125,6 +125,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.disableMaintenanceProcess.setFromConfigurationFile(cf,generalConfigPath);
   // Fetch EOS Free space script configuration
   ret.fetchEosFreeSpaceScript.setFromConfigurationFile(cf,generalConfigPath);
+  // Timeout for tape load action
+  ret.tapeLoadTimeout.setFromConfigurationFile(cf,generalConfigPath);
   // Extract drive list from tpconfig + parsed config file
   ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
   
@@ -160,6 +162,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.disableRepackManagement.log(log);
   ret.disableMaintenanceProcess.log(log);
   ret.fetchEosFreeSpaceScript.log(log);
+  
+  ret.tapeLoadTimeout.log(log);
   
   for (auto & i:ret.driveConfigs) {
     i.second.log(log);

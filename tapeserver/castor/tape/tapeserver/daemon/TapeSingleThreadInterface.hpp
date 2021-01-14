@@ -94,6 +94,9 @@ protected:
 
   /** Encryption helper object */
   EncryptionControl m_encryptionControl;
+  
+  /** Tape load timeout after which the mount is considered failed. */
+  uint32_t m_tapeLoadTimeout;
  
   /**
    * Try to mount the tape for read-only access, get an exception if it fails 
@@ -144,14 +147,14 @@ protected:
    * After mounting the tape, the drive will say it has no tape inside,
    * because there was no tape the first time it was opened... 
    * That function will wait a certain amount of time for the drive 
-   * to tell us he acknowledge it has indeed a tap (get an ex exception in 
+   * to tell us he acknowledge it has indeed a tape (get an ex exception in 
    * case of timeout)
    */
   void waitForDrive(){
     try{
       cta::utils::Timer timer;
-      // wait 60s for drive to be ready (the mount call is synchronous, so this just the load operation.
-      m_drive.waitUntilReady(60);
+      // wait tapeLoadTimeout seconds for drive to be ready (the mount call is synchronous, so this just the load operation.
+      m_drive.waitUntilReady(m_tapeLoadTimeout);
       cta::log::LogContext::ScopedParam sp0(m_logContext, cta::log::Param("loadTime", timer.secs()));
     }catch(const cta::exception::Exception& e){
       cta::log::LogContext::ScopedParam sp01(m_logContext, cta::log::Param("exceptionMessage", e.getMessageValue()));
@@ -284,16 +287,17 @@ public:
    * @param volInfo All we need to know about the tape we are manipulating 
    * @param capUtils
    * @param lc lc The log context, later on copied
+   * @param tapeLoadTimeout the timeout after which the mount of the tape is considered failed
    */
   TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface & drive,
     cta::mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
     const VolumeInfo& volInfo,
     cta::server::ProcessCap &capUtils,cta::log::LogContext & lc,          
-    const std::string & externalEncryptionKeyScript):m_capUtils(capUtils),
+    const std::string & externalEncryptionKeyScript, const uint32_t tapeLoadTimeout):m_capUtils(capUtils),
     m_drive(drive), m_mc(mc), m_initialProcess(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardwareStatus(Session::MARK_DRIVE_AS_UP),
-    m_encryptionControl(externalEncryptionKeyScript) {}
+    m_encryptionControl(externalEncryptionKeyScript),m_tapeLoadTimeout(tapeLoadTimeout) {}
 }; // class TapeSingleThreadInterface
 
 } // namespace daemon

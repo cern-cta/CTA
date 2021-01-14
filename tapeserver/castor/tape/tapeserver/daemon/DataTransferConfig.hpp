@@ -137,6 +137,11 @@ struct DataTransferConfig {
    * The path to the operator provided EOS free space fetch script (or empty string)
    */
   std::string fetchEosFreeSpaceScript;
+  
+  /**
+   * The timeout after which the mount of a tape is considered failed
+   */
+  uint32_t tapeLoadTimeout;
 
   /**
    * Constructor that sets all integer member-variables to 0 and all string

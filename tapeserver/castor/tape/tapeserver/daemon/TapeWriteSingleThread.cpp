@@ -38,9 +38,10 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         cta::server::ProcessCap &capUtils,
         uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush,
         const bool useLbp, const std::string & externalEncryptionKeyScript,
-        const cta::ArchiveMount & archiveMount):
+        const cta::ArchiveMount & archiveMount,
+        const uint64_t tapeLoadTimeout):
         TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo, 
-          capUtils, lc, externalEncryptionKeyScript),
+          capUtils, lc, externalEncryptionKeyScript,tapeLoadTimeout),
         m_filesBeforeFlush(filesBeforeFlush),
         m_bytesBeforeFlush(bytesBeforeFlush),
         m_drive(drive),
@@ -82,7 +83,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     // First check that a tape is actually present in the drive. We can get here
     // after failing to mount (library error) in which case there is nothing to
     // do (and trying to unmount will only lead to a failure.)
-    const uint32_t waitMediaInDriveTimeout = 60;
+    const uint32_t waitMediaInDriveTimeout = m_this.m_tapeLoadTimeout;
     try {
       m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
     } catch (cta::exception::TimeOut &) {}

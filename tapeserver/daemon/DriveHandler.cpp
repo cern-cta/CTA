@@ -1059,7 +1059,7 @@ int DriveHandler::runChild() {
       sWrapper,
       m_previousVid,
       true,
-      60,
+      m_tapedConfig.tapeLoadTimeout.value(),
       "",
       *m_catalogue,
       scheduler);
@@ -1095,6 +1095,7 @@ int DriveHandler::runChild() {
     dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.raoLtoAlgorithm.value();
     dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.raoLtoOptions.value();
     dataTransferConfig.fetchEosFreeSpaceScript = m_tapedConfig.fetchEosFreeSpaceScript.value();
+    dataTransferConfig.tapeLoadTimeout = m_tapedConfig.tapeLoadTimeout.value();
     dataTransferConfig.xrootPrivateKey = "";
     
     // Before launching, and if this is the first session since daemon start, we will
@@ -1245,7 +1246,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
         sWrapper,
         m_sessionVid,
         true,
-        60,
+        m_tapedConfig.tapeLoadTimeout.value(),
         "",
         *m_catalogue,
         *scheduler

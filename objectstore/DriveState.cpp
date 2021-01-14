@@ -210,6 +210,11 @@ void DriveState::setConfigValue<std::string>(cta::objectstore::serializers::Driv
 }
 
 template<>
+void DriveState::setConfigValue<uint32_t>(cta::objectstore::serializers::DriveConfig * item,const uint32_t & value){
+  item->set_value(std::to_string(value));
+}
+
+template<>
 void DriveState::setConfigValue<uint64_t>(cta::objectstore::serializers::DriveConfig * item,const uint64_t & value){
   item->set_value(std::to_string(value));
 }
@@ -247,6 +252,12 @@ void DriveState::fillConfig<cta::tape::daemon::FetchReportOrFlushLimits>(cta::So
   auto itemBytes = createAndInitDriveConfig(sourcedParameter);
   itemBytes->set_key(key.append("Bytes"));
   setConfigValue(itemBytes,sourcedParameter.value().maxBytes);
+}
+
+template<>
+void DriveState::fillConfig<uint32_t>(cta::SourcedParameter<uint32_t>& sourcedParameter){
+  auto item = createAndInitDriveConfig(sourcedParameter);
+  setConfigValue(item,sourcedParameter.value());
 }
 
 template<>
@@ -294,6 +305,7 @@ void DriveState::setConfig(const cta::tape::daemon::TapedConfiguration& tapedCon
   fillConfig(config->disableRepackManagement);
   fillConfig(config->disableMaintenanceProcess);
   fillConfig(config->fetchEosFreeSpaceScript);
+  fillConfig(config->tapeLoadTimeout);
 }
 
 //------------------------------------------------------------------------------

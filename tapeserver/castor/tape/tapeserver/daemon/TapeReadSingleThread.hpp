@@ -69,7 +69,8 @@ public:
           const bool useLbp,
           const bool useRAO,
           const std::string & externalEncryptionKeyScript,
-          const cta::RetrieveMount &retrieveMount);
+          const cta::RetrieveMount &retrieveMount,
+          const uint32_t tapeLoadTimeout);
    
   /**
    * Set the task injector. Has to be done that way (and not in the constructor)

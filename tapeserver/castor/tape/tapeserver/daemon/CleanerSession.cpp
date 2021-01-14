@@ -47,7 +47,7 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   m_sysWrapper(sysWrapper),
   m_vid(vid),
   m_waitMediaInDrive(waitMediaInDrive),
-  m_waitMediaInDriveTimeout(waitMediaInDriveTimeout),
+  m_tapeLoadTimeout(waitMediaInDriveTimeout),
   m_encryptionControl(externalEncryptionKeyScript),
   m_catalogue(catalogue),
   m_scheduler(scheduler)
@@ -288,11 +288,11 @@ void castor::tape::tapeserver::daemon::CleanerSession::waitUntilMediaIsReady(
   params.push_back(cta::log::Param("tapeVid", m_vid));
   params.push_back(cta::log::Param("tapeDrive", m_driveConfig.unitName));
   params.push_back(cta::log::Param("waitMediaInDriveTimeout",
-    m_waitMediaInDriveTimeout));
+    m_tapeLoadTimeout));
 
   try {
     m_log(cta::log::INFO, "Cleaner waiting for drive to be ready", params);
-    drive.waitUntilReady(m_waitMediaInDriveTimeout);
+    drive.waitUntilReady(m_tapeLoadTimeout);
     m_log(cta::log::INFO, "Cleaner detected drive is ready", params);
   } catch (cta::exception::Exception &ex) {
     params.push_back(cta::log::Param("message", ex.getMessage().str()));

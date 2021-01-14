@@ -156,6 +156,13 @@ struct TapedConfiguration {
     "taped","DisableMaintenanceProcess","no","Compile time default"
   };
   
+  //----------------------------------------------------------------------------
+  // Tape load actions
+  //----------------------------------------------------------------------------
+  cta::SourcedParameter<uint32_t> tapeLoadTimeout {
+    "taped", "TapeLoadTimeout",60,"Compile time default"
+  };
+  
 private:
   /** A private dummy logger which will simplify the implementation of the 
    * functions (just unconditionally log things). */
