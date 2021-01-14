@@ -705,6 +705,8 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
     log::LogContext& lc, cta::catalogue::Catalogue& catalogue) {
   //Let's requeue the RepackRequest if its status is ToExpand or Pending
   agentReference.addToOwnership(this->getAddressIfSet(), m_objectStore);
+  //The owner of this RepackRequest is the agentReference
+  setOwner(agentReference.getAgentAddress());
   cta::utils::Timer t;
   RepackQueue rq(m_objectStore);
   ScopedExclusiveLock rql;
@@ -712,6 +714,7 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
     Helpers::getLockedAndFetchedRepackQueue(rq, rql, agentReference, this->getInfo().getQueueType(), lc);
   } catch(const cta::exception::Exception &e){
     lc.log(log::INFO,"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : "+e.getMessage().str());
+    commit();
     return;
   }
   double queueLockFetchTime = t.secs(utils::Timer::resetCounter);
@@ -732,6 +735,7 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
   } catch(const cta::exception::Exception &e){
     lc.log(log::INFO,"In RepackRequest::garbageCollect() failed to requeue the RepackRequest. Leaving it as it is.");
   }
+  commit();
 }
 
 //------------------------------------------------------------------------------

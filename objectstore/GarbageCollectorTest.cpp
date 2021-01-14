@@ -946,6 +946,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
+  std::string repackRequestAddress;
   {
     // Create an agent to be garbage collected
     cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
@@ -959,9 +960,9 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     re.fetch();
 
     //Create the RepackRequest
-    std::string repackRequestAddr = agentReferenceRepackRequest.nextId("RepackRequest");
-    agentReferenceRepackRequest.addToOwnership(repackRequestAddr, be);
-    cta::objectstore::RepackRequest repackRequest(repackRequestAddr,be);
+    repackRequestAddress = agentReferenceRepackRequest.nextId("RepackRequest");
+    agentReferenceRepackRequest.addToOwnership(repackRequestAddress, be);
+    cta::objectstore::RepackRequest repackRequest(repackRequestAddress,be);
     repackRequest.initialize();
     repackRequest.setStatus(cta::common::dataStructures::RepackInfo::Status::Running);
     repackRequest.setVid("VIDTest");
@@ -974,12 +975,14 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
   }
   cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);
   cta::log::LogContext lc2(strLogger);
+  std::string agentGarbageCollectingRepackRequestAddress;
   {
     // Now we garbage collect the RepackRequest
     
     // Create the garbage collector and run it once.
     cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", strLogger);
-    cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+    agentGarbageCollectingRepackRequestAddress = gcAgentRef.getAgentAddress();
+    cta::objectstore::Agent gcAgent(agentGarbageCollectingRepackRequestAddress, be);
     gcAgent.initialize();
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc2);
@@ -989,7 +992,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     }
   }
   {
-    //The request should not be requeued in the ToExpand as it has finished to expand
+    //The request should not be requeued in the ToExpand queue as it has finished to expand and is running
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
@@ -1000,7 +1003,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     ASSERT_EQ(0,rq.getRequestsSummary().requests);
   }
   {
-    //The request should not be requeued in the ToExpand as it has not finished to expand
+    //The request should not be requeued in the Pending queue as it is running
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
@@ -1009,6 +1012,12 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
     ASSERT_EQ(0,rq.getRequestsSummary().requests);
+  }
+  {
+    //Check that the owner of the repack request has been updated and is equal to the garbageCollector's agent
+    cta::objectstore::RepackRequest repackRequest(repackRequestAddress,be);
+    repackRequest.fetchNoLock();
+    ASSERT_EQ(agentGarbageCollectingRepackRequestAddress,repackRequest.getOwner());
   }
   //Check the logs contains the failed to requeue message
   std::string logToCheck = strLogger.getLog();
