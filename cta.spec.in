@@ -492,6 +492,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 
 %changelog
 * Thu Jan 07 2021 julien.leduc (at) cern.ch - 3.1-14
+- cta/CTA#954 The drive is put down if the CleanerSession fails to eject the tape from it after a shutdown
 - cta/CTA#957 The state of the successful Archive for repack jobs is now changed before being queued for reporting
 - cta/CTA#958 The RepackRequest garbage collection now changes the owner of the garbage collected RepackRequest.
 * Thu Jan 07 2021 julien.leduc (at) cern.ch - 3.1-13

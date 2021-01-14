@@ -2,6 +2,10 @@
 
 ## Summary
 
+### Features
+
+- cta/CTA#954 The drive is put down if the CleanerSession fails to eject the tape from it after a shutdown
+
 ### Bug fixes
 
 - cta/CTA#957 The state of the successful Archive for repack jobs is now changed before being queued for reporting
