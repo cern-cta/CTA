@@ -1,3 +1,11 @@
+# v3.1-14
+
+## Summary
+
+### Bug fixes
+
+- cta/CTA#957 The state of the successful Archive for repack jobs is now changed before being queued for reporting
+
 # v3.1-13
 
 ## Summary

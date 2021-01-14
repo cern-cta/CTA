@@ -491,6 +491,8 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Thu Jan 07 2021 julien.leduc (at) cern.ch - 3.1-14
+- cta/CTA#957 The state of the successful Archive for repack jobs is now changed before being queued for reporting
 * Thu Jan 07 2021 julien.leduc (at) cern.ch - 3.1-13
 - Upgraded EOS to 4.8.34-1
 - Upgraded xrootd to 4.12.6-1
