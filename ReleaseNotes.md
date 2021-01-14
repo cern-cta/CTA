@@ -5,6 +5,7 @@
 ### Bug fixes
 
 - cta/CTA#957 The state of the successful Archive for repack jobs is now changed before being queued for reporting
+- cta/CTA#958 The RepackRequest garbage collection now changes the owner of the RepackRequest
 
 # v3.1-13
 
