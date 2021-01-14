@@ -56,6 +56,7 @@
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
 #include "tests/TempFile.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
+#include "CleanerSession.hpp"
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -2587,6 +2588,119 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+}
+
+TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
+  // 0) Prepare the logger for everyone
+  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::LogContext logContext(logger);
+  
+  setupDefaultCatalogue();
+  // 1) prepare the fake scheduler
+  // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
+
+  // 3) Prepare the necessary environment (logger, plus system wrapper), 
+  castor::tape::System::mockWrapper mockSys;
+  mockSys.delegateToFake();
+  mockSys.disableGMockCallsCounting();
+  mockSys.fake.setupForVirtualDriveSLC6();
+  
+  // 4) Create the scheduler
+  auto & catalogue = getCatalogue();
+  auto & scheduler = getScheduler();
+  
+  // Always use the same requester
+  const cta::common::dataStructures::SecurityIdentity requester("user", "group");
+  
+  // List to remember the path of each remote file so that the existance of the
+  // files can be tested for at the end of the test
+  std::list<std::string> remoteFilePaths;
+  
+  // 5) Create the environment for the migration to happen (library + tape) 
+    const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, libraryComment);
+  {
+    auto libraries = catalogue.getLogicalLibraries();
+    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(s_libraryName, libraries.front().name);
+    ASSERT_EQ(libraryComment, libraries.front().comment);
+  }
+  const std::string tapeComment = "Tape comment";
+  bool notDisabled = false;
+  bool notFull = false;
+  bool notReadOnly = false;
+
+  {
+    cta::catalogue::CreateTapeAttributes tape;
+    tape.vid = s_vid;
+    tape.mediaType = s_mediaType;
+    tape.vendor = s_vendor;
+    tape.logicalLibraryName = s_libraryName;
+    tape.tapePoolName = s_tapePoolName;
+    tape.full = notFull;
+    tape.disabled = notDisabled;
+    tape.readOnly = notReadOnly;
+    tape.comment = tapeComment;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
+  // Create the mount criteria
+  catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
+  catalogue.createRequesterMountRule(requester, "immediateMount", s_diskInstance, requester.username, "Rule comment");
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete
+  const uint64_t tapeSize = 5000;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize,
+        castor::tape::tapeserver::drive::FakeDrive::OnFlush);
+  
+  // Report the drive's existence and put it up in the drive register.
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName=driveConfig.unitName;
+  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
+  driveInfo.host=="host";
+  // We need to create the drive in the registry before being able to put it up.
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = true;
+  driveState.forceDown = false;
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  
+  // Create cleaner session
+  DataTransferConfig castorConf;
+  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.nbBufs = 10;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxFiles = 1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxFiles = 1000;
+  castorConf.nbDiskThreads = 1;
+  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::server::ProcessCapDummy capUtils;
+  castor::messages::TapeserverProxyDummy initialProcess;
+  CleanerSession cleanerSession(
+    capUtils,
+    mc,
+    logger,
+    driveConfig,
+    mockSys,
+    s_vid,
+    false,
+    0,
+    "",
+    catalogue,
+    scheduler
+  );
+  auto endOfSessionAction = cleanerSession.execute();
+  //the tape has not been labeled so the cleanerSession should have failed and put the drive down.
+  cta::common::dataStructures::DesiredDriveState newDriveState = scheduler.getDesiredDriveState(driveConfig.unitName,logContext);
+  ASSERT_FALSE(newDriveState.up);
+  ASSERT_EQ(castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN,endOfSessionAction);
 }
 
 #undef TEST_MOCK_DB

@@ -26,6 +26,7 @@
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "scheduler/Scheduler.hpp"
 #include <memory>
 
 namespace cta { namespace tape { namespace  daemon {

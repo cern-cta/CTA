@@ -38,7 +38,8 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   const bool waitMediaInDrive,
   const uint32_t waitMediaInDriveTimeout,
   const std::string & externalEncryptionKeyScript,
-  cta::catalogue::Catalogue & catalogue):
+  cta::catalogue::Catalogue & catalogue,
+  cta::Scheduler & scheduler):
   m_capUtils(capUtils),
   m_mc(mc),
   m_log(log),
@@ -48,7 +49,8 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   m_waitMediaInDrive(waitMediaInDrive),
   m_waitMediaInDriveTimeout(waitMediaInDriveTimeout),
   m_encryptionControl(externalEncryptionKeyScript),
-  m_catalogue(catalogue)
+  m_catalogue(catalogue),
+  m_scheduler(scheduler)
   {}
 
 //------------------------------------------------------------------------------
@@ -68,13 +70,47 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     errorMessage = "Caught an unknown exception";
   }
 
-  // Reaching this point means the cleaner failed and an exception was thrown
+  //Reaching this point means the cleaner failed and an exception was thrown
   std::list<cta::log::Param> params = {
     cta::log::Param("tapeVid", m_vid),
     cta::log::Param("tapeDrive", m_driveConfig.unitName),
     cta::log::Param("message", errorMessage)};
-  m_log(cta::log::ERR, "Cleaner failed", params);
+  m_log(cta::log::ERR, "Cleaner failed. Putting the drive down.", params);
+  
+  //Putting the drive down  
+  try {
+    setDriveDownAfterCleanerFailed(std::string("Cleaner failed. ") + errorMessage);
+  } catch(const cta::exception::Exception &ex) {
+    std::list<cta::log::Param> params = {
+    cta::log::Param("tapeVid", m_vid),
+    cta::log::Param("tapeDrive", m_driveConfig.unitName),
+    cta::log::Param("message", ex.getMessageValue())};
+    m_log(cta::log::ERR, "Cleaner failed. Failed to put the drive down", params);
+  }
+  
   return MARK_DRIVE_AS_DOWN;
+}
+
+void castor::tape::tapeserver::daemon::CleanerSession::setDriveDownAfterCleanerFailed(const std::string & errorMsg) {
+  
+  std::string logicalLibrary =  m_driveConfig.logicalLibrary;
+  std::string hostname=cta::utils::getShortHostname();
+  std::string driveName = m_driveConfig.unitName;
+  
+  cta::common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = driveName;
+  driveInfo.logicalLibrary = logicalLibrary;
+  driveInfo.host = hostname;
+  
+  cta::log::LogContext lc(m_log);
+  
+  m_scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+  cta::common::dataStructures::SecurityIdentity cliId;
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = false;
+  driveState.forceDown = false;
+  driveState.setReasonFromLogMsg(cta::log::ERR,errorMsg);
+  m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, driveState, lc);
 }
 
 //------------------------------------------------------------------------------

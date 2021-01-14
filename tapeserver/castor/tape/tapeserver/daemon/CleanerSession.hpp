@@ -34,6 +34,7 @@
 #include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "scheduler/Scheduler.hpp"
 
 #include <memory>
 
@@ -75,7 +76,8 @@ namespace daemon {
       const bool waitMediaInDrive,
       const uint32_t waitMediaInDriveTimeout,
       const std::string & externalEncryptionKeyScript,
-      cta::catalogue::Catalogue & catalogue);
+      cta::catalogue::Catalogue & catalogue,
+      cta::Scheduler & scheduler);
 
     /** 
      * Execute the session and return the type of action to be performed
@@ -140,6 +142,11 @@ namespace daemon {
      * CTA catalogue
      */
     cta::catalogue::Catalogue & m_catalogue;
+    
+    /**
+     * CTA scheduler
+     */
+    cta::Scheduler & m_scheduler;
     
     /**
      * Variable used to log UPDATE_USER_NAME in the DB
@@ -231,6 +238,11 @@ namespace daemon {
      * @param vid The volume identifier of the tape to be dismounted.
      */
     void dismountTape(const std::string &vid);
+    
+    /**
+     * Put the drive down in case the Cleaner has failed
+     */
+    void setDriveDownAfterCleanerFailed(const std::string & errorMsg);
     
   }; // class CleanerSession
 

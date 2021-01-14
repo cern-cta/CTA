@@ -1035,6 +1035,21 @@ int DriveHandler::runChild() {
 //      sleep(1);
 //      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
 //    }
+    try {
+      scheduler.ping(lc);
+    } catch (const cta::catalogue::WrongSchemaVersionException &ex) {
+      log::ScopedParamContainer param (lc);
+      param.add("errorMessage", ex.getMessageValue());
+      lc.log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: catalogue MAJOR version mismatch. Reporting fatal error.");
+      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+    } catch (cta::exception::Exception &ex) {
+      log::ScopedParamContainer param (lc);
+      param.add("errorMessage", ex.getMessageValue());
+      lc.log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: failed to ping central storage before session. Reporting fatal error.");
+      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+    }
 
     castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
       capUtils,
@@ -1046,7 +1061,8 @@ int DriveHandler::runChild() {
       true,
       60,
       "",
-      *m_catalogue);
+      *m_catalogue,
+      scheduler);
     return cleanerSession.execute();
   } else {
     // The next session will be a normal session (no crash with a mounted tape before).
@@ -1157,29 +1173,68 @@ int DriveHandler::runChild() {
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   // TODO: improve in the future (preempt the child process)
-  log::ScopedParamContainer params(m_processManager.logContext());
+  auto &lc = m_processManager.logContext();
+  log::ScopedParamContainer params(lc);
   params.add("tapeDrive", m_configLine.unitName);
-  m_processManager.logContext().log(log::INFO, "In DriveHandler::shutdown(): simply killing the process.");
+  lc.log(log::INFO, "In DriveHandler::shutdown(): simply killing the process.");
   kill();
 
   std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting,
     SessionState::Running, SessionState::Unmounting };
   if ( statesRequiringCleaner.count(m_sessionState)) {
     if (!m_sessionVid.size()) {
-      m_processManager.logContext().log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do not nothing.");
+      lc.log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do nothing.");
     } else {
       log::ScopedParamContainer params(m_processManager.logContext());
       params.add("tapeVid", m_sessionVid)
             .add("tapeDrive", m_configLine.unitName)
             .add("sessionState", session::toString(m_sessionState))
             .add("sessionType", session::toString(m_sessionType));
-      m_processManager.logContext().log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
+      lc.log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
       // Capabilities management.
       cta::server::ProcessCap capUtils;
       // Mounting management.
       if(!m_catalogue)
         m_catalogue = createCatalogue("DriveHandler::shutdown()");
       
+      //Create the scheduler
+      
+      //Create the backend
+      std::unique_ptr<cta::objectstore::Backend> backend;
+      try {
+        backend.reset(cta::objectstore::BackendFactory::createBackend(m_tapedConfig.backendPath.value(), lc.logger()).release());
+      } catch (cta::exception::Exception &ex) {
+        log::ScopedParamContainer param (lc);
+        param.add("errorMessage", ex.getMessageValue());
+        lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to connect to objectstore.");
+        goto exitShutdown;
+      }
+      // If the backend is a VFS, make sure we don't delete it on exit.
+      // If not, nevermind.
+      try {
+        dynamic_cast<cta::objectstore::BackendVFS &>(*backend).noDeleteOnExit();
+      } catch (std::bad_cast &){}
+      // Create the agent entry in the object store. This could fail (even before ping, so
+      // handle failure like a ping failure).
+      std::unique_ptr<cta::objectstore::BackendPopulator> backendPopulator;
+      std::unique_ptr<cta::OStoreDBWithAgent> osdb;
+      try {
+        std::string processName="DriveHandlerShutdown-";
+        processName+=m_configLine.unitName;
+        log::ScopedParamContainer params(lc);
+        params.add("processName", processName);
+        lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create agent entry. Enabling leaving non-empty agent behind.");
+        backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName, lc));
+      } catch(cta::exception::Exception &ex) {
+        log::ScopedParamContainer param(lc);
+        param.add("errorMessage", ex.getMessageValue());
+        lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to instantiate agent entry. Reporting fatal error.");
+        goto exitShutdown;
+      }
+      osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *m_catalogue, lc.logger()));
+      lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler.");
+      std::unique_ptr<cta::Scheduler> scheduler(new Scheduler(*m_catalogue, *osdb, 0,0));
+
       cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
       castor::tape::System::realWrapper sWrapper;
       castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
@@ -1192,18 +1247,21 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
         true,
         60,
         "",
-        *m_catalogue);
+        *m_catalogue,
+        *scheduler
+      );
       cleanerSession.execute();
     }
   }
 
-  m_sessionState = SessionState::Shutdown;
-  m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
-  m_processingStatus.forkRequested = false;
-  m_processingStatus.killRequested = false;
-  m_processingStatus.shutdownComplete = true;
-  m_processingStatus.sigChild = false;
-  return m_processingStatus;
+  exitShutdown:
+    m_sessionState = SessionState::Shutdown;
+    m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
+    m_processingStatus.forkRequested = false;
+    m_processingStatus.killRequested = false;
+    m_processingStatus.shutdownComplete = true;
+    m_processingStatus.sigChild = false;
+    return m_processingStatus;
 }
 
 std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string & methodCaller){
