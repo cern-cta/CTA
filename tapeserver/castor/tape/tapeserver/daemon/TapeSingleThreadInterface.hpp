@@ -151,14 +151,16 @@ protected:
    * case of timeout)
    */
   void waitForDrive(){
+    cta::utils::Timer tapeLoadTime;
     try{
-      cta::utils::Timer timer;
       // wait tapeLoadTimeout seconds for drive to be ready (the mount call is synchronous, so this just the load operation.
       m_drive.waitUntilReady(m_tapeLoadTimeout);
-      cta::log::LogContext::ScopedParam sp0(m_logContext, cta::log::Param("loadTime", timer.secs()));
     }catch(const cta::exception::Exception& e){
-      cta::log::LogContext::ScopedParam sp01(m_logContext, cta::log::Param("exceptionMessage", e.getMessageValue()));
-      m_logContext.log(cta::log::INFO, "Got timeout or error while waiting for drive to be ready.");
+      cta::log::ScopedParamContainer spc(m_logContext);
+      spc.add("exceptionMessage",e.getMessageValue())
+         .add("configuredTapeLoadTimeout",m_tapeLoadTimeout)
+         .add("tapeLoadTime",tapeLoadTime.secs());
+      m_logContext.log(cta::log::ERR, "Got timeout or error while waiting for drive to be ready.");
       throw;
     }
   }

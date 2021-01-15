@@ -253,13 +253,16 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       m_logContext.log(cta::log::INFO, "Tape session started");
       mountTapeReadOnly();
       currentErrorToCount = "Error_tapeLoad";
+      cta::utils::Timer tapeLoadTimer;
       waitForDrive();
+      double tapeLoadTime = tapeLoadTimer.secs();
       currentErrorToCount = "Error_checkingTapeAlert";
       logTapeAlerts();
       m_stats.mountTime += timer.secs(cta::utils::Timer::resetCounter);
       {
         cta::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("mountTime", m_stats.mountTime);
+        scoped.add("tapeLoadTime",tapeLoadTime);
         m_logContext.log(cta::log::INFO, "Tape mounted and drive ready");
       }
       m_retrieveMount.setTapeMounted(m_logContext);

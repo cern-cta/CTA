@@ -327,7 +327,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_logContext.log(cta::log::INFO, "Tape session started");
       mountTapeReadWrite();
       currentErrorToCount = "Error_tapeLoad";
+      cta::utils::Timer tapeLoadTimer;
       waitForDrive();
+      double tapeLoadTime = tapeLoadTimer.secs();
       currentErrorToCount = "Error_checkingTapeAlert";
       if(logAndCheckTapeAlertsForWrite()) {
         throw cta::exception::Exception("Aborting migration session in"
@@ -341,6 +343,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       {
         cta::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("mountTime", m_stats.mountTime);
+        scoped.add("tapeLoadTime",tapeLoadTime);
         m_logContext.log(cta::log::INFO, "Tape mounted and drive ready");
       }
       m_archiveMount.setTapeMounted(m_logContext);

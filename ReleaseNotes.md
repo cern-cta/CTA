@@ -4,7 +4,9 @@
 
 ### Features
 
+- Upgraded EOS to 4.8.35-1
 - cta/CTA#954 The drive is put down if the CleanerSession fails to eject the tape from it after a shutdown
+- cta/CTA#945 The timeout for tape load action is now configurable
 
 ### Bug fixes
 
