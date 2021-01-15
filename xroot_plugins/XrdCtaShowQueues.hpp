@@ -110,7 +110,6 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     sq_item->set_full_tapes(sq.fullTapes);
     sq_item->set_empty_tapes(sq.emptyTapes);
     sq_item->set_disabled_tapes(sq.disabledTapes);
-    sq_item->set_rdonly_tapes(sq.readOnlyTapes);
     sq_item->set_writable_tapes(sq.writableTapes);
     if (sq.sleepForSpaceInfo) {
       sq_item->set_sleeping_for_space(true);

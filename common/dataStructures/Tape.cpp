@@ -35,7 +35,6 @@ Tape::Tape():
   nbMasterFiles(0),
   masterDataInBytes(0),
   full(false),
-  readOnly(false),
   state(Tape::State::ACTIVE)
   {}
 
@@ -74,7 +73,6 @@ bool Tape::operator==(const Tape &rhs) const {
       && encryptionKeyName==rhs.encryptionKeyName
       && full==rhs.full
       && state==rhs.state
-      && readOnly==rhs.readOnly
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
       && comment==rhs.comment
@@ -137,8 +135,7 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
      << " capacityInBytes=" << obj.capacityInBytes
      << " dataOnTapeInBytes=" << obj.dataOnTapeInBytes
      << " encryptionKeyName=" << (obj.encryptionKeyName ? obj.encryptionKeyName.value() : "null")
-     << " full=" << obj.full
-     << " readOnly=" << obj.readOnly    
+     << " full=" << obj.full 
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment

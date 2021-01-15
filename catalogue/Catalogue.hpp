@@ -631,26 +631,6 @@ public:
   virtual void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) = 0;
   
   /**
-   * Sets the read-only status of the specified tape.
-   *
-   * Please note that this method is to be called by the CTA front-end in
-   * response to a command from the CTA command-line interface (CLI).
-   *
-   * @param admin The administrator.
-   * @param vid The volume identifier of the tape to be marked as read-only.
-   * @param readOnlyValue Set to true if the tape is read-only.
-   */
-  virtual void setTapeReadOnly(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool readOnlyValue) = 0;
-  
-  /**
-   * This method notifies the CTA catalogue to set the specified tape read-only
-   * in case of a problem.
-   *
-   * @param vid The volume identifier of the tape.
-   */
-  virtual void setTapeReadOnlyOnError(const std::string &vid) = 0;
-  
-  /**
    * This method notifies the CTA catalogue to set the specified tape is from CASTOR.
    * This method only for unitTests and MUST never be called in CTA!!! 
    *

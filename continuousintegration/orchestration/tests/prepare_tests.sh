@@ -163,7 +163,6 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
       --comment "ctasystest"                                               \
       --vid ${VID}                                                         \
       --full false                                                         \
-      --readonly false                                                     \
       --comment "ctasystest"
   done
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add   \

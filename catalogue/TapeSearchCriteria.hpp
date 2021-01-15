@@ -76,11 +76,6 @@ struct TapeSearchCriteria {
    * Set to true if searching for full tapes.
    */
   optional<bool> full;
-  
-  /**
-   * Set to true if searching for read-only tapes.
-   */
-  optional<bool> readOnly;
 
   /**
    * List of disk file IDs to search for.

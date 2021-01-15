@@ -363,14 +363,6 @@ public:
   void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeFull(admin, vid, fullValue);}, m_maxTriesToConnect);
   }
-  
-  void setTapeReadOnly(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool readOnlyValue) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeReadOnly(admin, vid, readOnlyValue);}, m_maxTriesToConnect);
-  }
-  
-  void setTapeReadOnlyOnError(const std::string &vid) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeReadOnlyOnError(vid);}, m_maxTriesToConnect);
-  }
 
   void setTapeIsFromCastorInUnitTests(const std::string &vid) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeIsFromCastorInUnitTests(vid);}, m_maxTriesToConnect);

@@ -254,7 +254,6 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--encrypted",             OptionBoolean::ENCRYPTED },
    { "--force",                 OptionBoolean::FORCE },
    { "--full",                  OptionBoolean::FULL },
-   { "--readonly",              OptionBoolean::READ_ONLY },
 
    // hasOption options
    { "--disabledtape",          OptionBoolean::DISABLED },
@@ -465,7 +464,6 @@ const Option opt_vid                  { Option::OPT_STR,  "--vid",              
 const Option opt_vo                   { Option::OPT_STR,  "--vo",                    "--vo", " <vo>" };
 const Option opt_vidfile              { Option::OPT_STR_LIST, "--vidfile",           "-f",   " <filename>" };
 const Option opt_full                 { Option::OPT_BOOL, "--full",                  "-f",   " <\"true\" or \"false\">" };
-const Option opt_readonly             { Option::OPT_BOOL, "--readonly",              "-r",   " <\"true\" or \"false\">" };
 const Option opt_disabled_tape        { Option::OPT_FLAG, "--disabledtape",          "-d",   "" };
 const Option opt_disksystem           { Option::OPT_STR,  "--disksystem",            "-n",   " <disk_system_name>" };
 const Option opt_file_regexp          { Option::OPT_STR,  "--fileregexp",            "-r",   " <file_regexp>" };
@@ -560,18 +558,18 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_ADD   },
-      { opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full, opt_readonly, 
+      { opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full, 
         opt_state.optional(), opt_reason.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_CH    },
       { opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
         opt_tapepool.optional(), opt_encryptionkeyname.optional(),
-        opt_full.optional(), opt_readonly.optional(), opt_state.optional(), opt_reason.optional(), opt_comment.optional() }},
+        opt_full.optional(), opt_state.optional(), opt_reason.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RECLAIM }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(),
         opt_logicallibrary.optional(), opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(),
-        opt_full.optional(), opt_readonly.optional(), opt_fidfile.optional(), opt_all.optional(), opt_state.optional() }},
+        opt_full.optional(), opt_fidfile.optional(), opt_all.optional(), opt_state.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
       { opt_vid, opt_force.optional() }},
    /*----------------------------------------------------------------------------------------------------*/

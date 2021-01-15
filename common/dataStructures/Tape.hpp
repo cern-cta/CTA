@@ -96,7 +96,6 @@ struct Tape {
 
   bool full;
   bool disabled;
-  bool readOnly;
   bool isFromCastor;
   bool dirty;
   uint64_t readMountCount;

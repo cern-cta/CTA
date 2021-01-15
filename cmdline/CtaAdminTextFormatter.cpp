@@ -697,7 +697,6 @@ void TextFormatter::printShowQueuesHeader() {
     "full tapes",
     "empty tapes",
     "disabled tapes",
-    "rdonly tapes",
     "writable tapes"
   );
 }
@@ -736,7 +735,6 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
     sq_item.full_tapes(),
     sq_item.empty_tapes(),
     sq_item.disabled_tapes(),
-    sq_item.rdonly_tapes(),
     sq_item.writable_tapes()
   );
 }
@@ -786,8 +784,6 @@ void TextFormatter::printTapeLsHeader() {
     "occupancy",
     "last fseq",
     "full",
-    "disabled",
-    "rdonly",
     "from castor",
     "state",
     "state reason",
@@ -823,8 +819,6 @@ void TextFormatter::print(const TapeLsItem &tals_item) {
     dataSizeToStr(tals_item.occupancy()),
     tals_item.last_fseq(),
     tals_item.full(),
-    tals_item.disabled(),
-    tals_item.rdonly(),
     tals_item.from_castor(),
     tals_item.state(),
     state_reason,

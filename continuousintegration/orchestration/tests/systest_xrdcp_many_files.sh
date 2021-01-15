@@ -76,9 +76,7 @@ for ((i=0; i<${#TAPES[@]}; i++)); do
     --capacity 1000000000                                           \
     --comment "ctasystest"                                          \
     --vid ${VID}                                                    \
-    --disabled false                                                \
     --full false                                                    \
-    --readonly false                                                  \
     --comment "ctasystest"
 done
 

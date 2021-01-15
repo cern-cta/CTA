@@ -1731,7 +1731,6 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    auto &logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
    auto &tapepool       = getRequired(OptionString::TAPE_POOL);
    auto &full           = getRequired(OptionBoolean::FULL);
-   auto &readOnly       = getRequired(OptionBoolean::READ_ONLY);
    auto state           = getOptional(OptionString::STATE);
    auto stateReason     = getOptional(OptionString::REASON);
    auto comment         = getOptional(OptionString::COMMENT);
@@ -1743,7 +1742,6 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
    tape.logicalLibraryName = logicallibrary;
    tape.tapePoolName = tapepool;
    tape.full = full;
-   tape.readOnly = readOnly;
    tape.comment = comment ? comment.value() : "";
    if(!state){
      //By default, the state of the tape will be ACTIVE
@@ -1771,9 +1769,7 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    auto  tapepool          = getOptional(OptionString::TAPE_POOL);
    auto  comment           = getOptional(OptionString::COMMENT);
    auto  encryptionkeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
-   auto  disabled          = getOptional(OptionBoolean::DISABLED);
    auto  full              = getOptional(OptionBoolean::FULL);
-   auto  readOnly          = getOptional(OptionBoolean::READ_ONLY);
    auto  state             = getOptional(OptionString::STATE);
    auto  stateReason       = getOptional(OptionString::REASON);
 
@@ -1801,9 +1797,6 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    }
    if(full) {
       m_catalogue.setTapeFull(m_cliIdentity, vid, full.value());
-   }
-   if(readOnly) {
-      m_catalogue.setTapeReadOnly(m_cliIdentity, vid, readOnly.value());
    }
    if(state){
      auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value());

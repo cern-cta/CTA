@@ -70,7 +70,6 @@ TapeLsStream::TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Cat
 
   // Get the search criteria from the optional options
 
-  searchCriteria.readOnly        = requestMsg.getOptional(OptionBoolean::READ_ONLY,      &has_any);
   searchCriteria.full            = requestMsg.getOptional(OptionBoolean::FULL,           &has_any);
   searchCriteria.capacityInBytes = requestMsg.getOptional(OptionUInt64::CAPACITY,        &has_any);
   searchCriteria.logicalLibrary  = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
@@ -111,7 +110,6 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tape_item->set_occupancy(tape.dataOnTapeInBytes);
     tape_item->set_last_fseq(tape.lastFSeq);
     tape_item->set_full(tape.full);
-    tape_item->set_rdonly(tape.readOnly);
     tape_item->set_from_castor(tape.isFromCastor);
     tape_item->set_read_mount_count(tape.readMountCount);
     tape_item->set_write_mount_count(tape.writeMountCount);

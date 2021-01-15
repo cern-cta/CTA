@@ -61,12 +61,6 @@ struct CreateTapeAttributes {
    */
   bool full;
 
-
-  /**
-   * True if the tape is read-only.
-   */
-  bool readOnly;
-
   /**
    * Optional comment about the tape.
    */
@@ -88,8 +82,7 @@ struct CreateTapeAttributes {
    * Sets the value of all boolean member-variables to false.
    */
   CreateTapeAttributes():
-    full(false),
-    readOnly(false) {
+    full(false) {
   }
 }; // struct CreateTapeAttributes
 
