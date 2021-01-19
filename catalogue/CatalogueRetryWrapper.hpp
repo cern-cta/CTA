@@ -396,8 +396,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyRequesterGroupMountRuleComment(admin, instanceName, requesterGroupName, comment);}, m_maxTriesToConnect);
   }
 
-  void createMountPolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t archivePriority, const uint64_t minArchiveRequestAge, const uint64_t retrievePriority, const uint64_t minRetrieveRequestAge, const uint64_t maxDrivesAllowed, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->createMountPolicy(admin, name, archivePriority, minArchiveRequestAge, retrievePriority, minRetrieveRequestAge, maxDrivesAllowed, comment);}, m_maxTriesToConnect);
+  void createMountPolicy(const common::dataStructures::SecurityIdentity &admin, const CreateMountPolicyAttributes & mountPolicy) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createMountPolicy(admin, mountPolicy);}, m_maxTriesToConnect);
   }
 
   std::list<common::dataStructures::MountPolicy> getMountPolicies() const override {

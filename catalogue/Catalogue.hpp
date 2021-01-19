@@ -70,6 +70,7 @@
 #include "common/optional.hpp"
 #include "disk/DiskSystem.hpp"
 #include "RecyleTapeFileSearchCriteria.hpp"
+#include "CreateMountPolicyAttributes.hpp"
 
 #include <list>
 #include <map>
@@ -656,15 +657,7 @@ public:
   virtual void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) = 0;
   virtual void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) = 0;
 
-   virtual void createMountPolicy(
-    const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, 
-    const uint64_t archivePriority, 
-    const uint64_t minArchiveRequestAge, 
-    const uint64_t retrievePriority, 
-    const uint64_t minRetrieveRequestAge, 
-    const uint64_t maxDrivesAllowed, 
-    const std::string &comment) = 0;
+   virtual void createMountPolicy(const common::dataStructures::SecurityIdentity &admin, const CreateMountPolicyAttributes & mountPolicy) = 0;
 
   /**
    * Returns the list of all existing mount policies.

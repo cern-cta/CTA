@@ -252,29 +252,52 @@ public:
     return tape;
   }
   
+  cta::catalogue::CreateMountPolicyAttributes getDefaultMountPolicy() {
+    cta::catalogue::CreateMountPolicyAttributes mountPolicy;
+    mountPolicy.name = "mount_group";
+    mountPolicy.archivePriority = 1;
+    mountPolicy.minArchiveRequestAge = 2;
+    mountPolicy.retrievePriority = 3;
+    mountPolicy.minRetrieveRequestAge = 4;
+    mountPolicy.maxDrivesAllowed = 5;
+    mountPolicy.maxDrivesAllowedPerVo = 6;
+    mountPolicy.comment = "create mount group";
+    return mountPolicy; 
+  }
+  
+  cta::catalogue::CreateMountPolicyAttributes getImmediateMountMountPolicy() {
+    cta::catalogue::CreateMountPolicyAttributes mountPolicy;
+    mountPolicy.name = "immediateMount";
+    mountPolicy.archivePriority = 1000;
+    mountPolicy.minArchiveRequestAge = 0;
+    mountPolicy.retrievePriority = 1000;
+    mountPolicy.minRetrieveRequestAge = 0;
+    mountPolicy.maxDrivesAllowed = 1;
+    mountPolicy.maxDrivesAllowedPerVo = 1;
+    mountPolicy.comment = "Immediate mount";
+    return mountPolicy; 
+  }
+  
   void setupDefaultCatalogue() {
     using namespace cta;
     auto & catalogue=getCatalogue();
 
-    const std::string mountPolicyName = "mount_group";
-    const uint64_t archivePriority = 1;
-    const uint64_t minArchiveRequestAge = 2;
-    const uint64_t retrievePriority = 3;
-    const uint64_t minRetrieveRequestAge = 4;
-    const uint64_t maxDrivesAllowed = 5;
+    auto mountPolicy = getDefaultMountPolicy();
+    
+    const std::string mountPolicyName = mountPolicy.name;
+    const uint64_t archivePriority = mountPolicy.archivePriority;
+    const uint64_t minArchiveRequestAge = mountPolicy.minArchiveRequestAge;
+    const uint64_t retrievePriority = mountPolicy.retrievePriority;
+    const uint64_t minRetrieveRequestAge = mountPolicy.minRetrieveRequestAge;
+    const uint64_t maxDrivesAllowed = mountPolicy.maxDrivesAllowed;
+    const uint64_t maxDrivesAllowedPerVo = mountPolicy.maxDrivesAllowedPerVo;
     const std::string mountPolicyComment = "create mount group";
 
     ASSERT_TRUE(catalogue.getMountPolicies().empty());
 
     catalogue.createMountPolicy(
       s_adminOnAdminHost,
-      mountPolicyName,
-      archivePriority,
-      minArchiveRequestAge,
-      retrievePriority,
-      minRetrieveRequestAge,
-      maxDrivesAllowed,
-      mountPolicyComment);
+      mountPolicy);
 
     const std::list<common::dataStructures::MountPolicy> groups = catalogue.getMountPolicies();
     ASSERT_EQ(1, groups.size());
@@ -285,6 +308,7 @@ public:
     ASSERT_EQ(retrievePriority, group.retrievePriority);
     ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
     ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
+    ASSERT_EQ(maxDrivesAllowedPerVo,group.maxDrivesAllowedPerVo);
     ASSERT_EQ(mountPolicyComment, group.comment);
 
     const std::string ruleComment = "create requester mount-rule";
@@ -1882,8 +1906,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   }
 
   // Create the mount criteria
-  catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
-  catalogue.createRequesterMountRule(requester, "immediateMount", s_diskInstance, requester.username, "Rule comment");
+  auto mountPolicy = getImmediateMountMountPolicy();
+  catalogue.createMountPolicy(requester, mountPolicy);
+  std::string mountPolicyName = mountPolicy.name;
+  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -2029,8 +2055,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   }
 
   // Create the mount criteria
-  catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
-  catalogue.createRequesterMountRule(requester, "immediateMount", s_diskInstance, requester.username, "Rule comment");
+  auto mountPolicy = getImmediateMountMountPolicy();
+  catalogue.createMountPolicy(requester, mountPolicy);
+  std::string mountPolicyName = mountPolicy.name;
+  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -2190,9 +2218,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   
-  // Create the mount criteria
-  catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
-  catalogue.createRequesterMountRule(requester, "immediateMount", s_diskInstance, requester.username, "Rule comment");
+  auto mountPolicy = getImmediateMountMountPolicy();
+  catalogue.createMountPolicy(requester, mountPolicy);
+  std::string mountPolicyName = mountPolicy.name;
+  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -2351,8 +2380,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   }
 
   // Create the mount criteria
-  catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
-  catalogue.createRequesterMountRule(requester, "immediateMount", s_diskInstance, requester.username, "Rule comment");
+  auto mountPolicy = getImmediateMountMountPolicy();
+  catalogue.createMountPolicy(requester, mountPolicy);
+  std::string mountPolicyName = mountPolicy.name;
+  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,

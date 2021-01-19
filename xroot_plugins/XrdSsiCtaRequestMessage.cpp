@@ -1392,10 +1392,20 @@ void RequestMessage::processMountPolicy_Add(cta::xrd::Response &response)
    auto &minretrieverequestage = getRequired(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
    auto &maxdrivesallowed      = getRequired(OptionUInt64::MAX_DRIVES_ALLOWED);
    auto &comment               = getRequired(OptionString::COMMENT);
+   
+   cta::catalogue::CreateMountPolicyAttributes mountPolicy;
+   mountPolicy.name = group;
+   mountPolicy.archivePriority = archivepriority;
+   mountPolicy.minArchiveRequestAge = minarchiverequestage;
+   mountPolicy.retrievePriority = retrievepriority;
+   mountPolicy.minRetrieveRequestAge = minretrieverequestage;
+   mountPolicy.maxDrivesAllowed = maxdrivesallowed;
+   //TODO: Add the OptionUint64::MAX_DRIVES_ALLOWED_PER_VO
+   mountPolicy.maxDrivesAllowedPerVo = maxdrivesallowed;
+   mountPolicy.comment = comment;
 
-   m_catalogue.createMountPolicy(m_cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority,
-                                 minretrieverequestage, maxdrivesallowed, comment);
-
+   m_catalogue.createMountPolicy(m_cliIdentity, mountPolicy);
+      
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

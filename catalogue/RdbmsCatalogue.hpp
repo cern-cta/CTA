@@ -609,15 +609,7 @@ public:
   void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) override;
   void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) override;
 
-  void createMountPolicy(
-    const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name,
-    const uint64_t archivePriority,
-    const uint64_t minArchiveRequestAge,
-    const uint64_t retrievePriority,
-    const uint64_t minRetrieveRequestAge,
-    const uint64_t maxDrivesAllowed,
-    const std::string &comment) override;
+  void createMountPolicy(const common::dataStructures::SecurityIdentity &admin, const CreateMountPolicyAttributes & mountPolicy) override;
 
   /**
    * Returns the list of all existing mount policies.
