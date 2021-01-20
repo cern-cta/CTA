@@ -6677,6 +6677,43 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyMaxDrivesAllowed_nonExisten
   ASSERT_THROW(m_catalogue->modifyMountPolicyMaxDrivesAllowed(m_admin, name, maxDrivesAllowed), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyMaxDrivesAllowedPerVo) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
+
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+
+  const uint64_t modifiedMaxDrivesAllowedPerVo = mountPolicyToAdd.maxDrivesAllowedPerVo + 10;
+  m_catalogue->modifyMountPolicyMaxDrivesAllowedPerVo(m_admin, mountPolicyName, modifiedMaxDrivesAllowedPerVo);
+
+  {
+    const std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue->getMountPolicies();
+    ASSERT_EQ(1, mountPolicies.size());
+
+    const common::dataStructures::MountPolicy mountPolicy = mountPolicies.front();
+
+    ASSERT_EQ(modifiedMaxDrivesAllowedPerVo, mountPolicy.maxDrivesAllowedPerVo);
+
+    const common::dataStructures::EntryLog modificationLog = mountPolicy.lastModificationLog;
+    ASSERT_EQ(m_admin.username, modificationLog.username);
+    ASSERT_EQ(m_admin.host, modificationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyMaxDrivesAllowedPerVo_nonExistentMountPolicy) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
+
+  const std::string name = "mount_policy";
+  const uint64_t maxDrivesAllowedPerVo = 2;
+
+  ASSERT_THROW(m_catalogue->modifyMountPolicyMaxDrivesAllowedPerVo(m_admin, name, maxDrivesAllowedPerVo), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyComment) {
   using namespace cta;
 
@@ -12666,7 +12703,6 @@ TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_1_tape) {
     const auto itor = vidToLogicalLibrary.find(vid.str());
     ASSERT_NE(vidToLogicalLibrary.end(), itor);
 
-<<<<<<< HEAD
     ASSERT_EQ(m_tape1.logicalLibraryName, itor->second);
   }
 }
@@ -12710,23 +12746,9 @@ TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_310_tapes) {
     ASSERT_NE(vidToLogicalLibrary.end(), itor);
 
     ASSERT_EQ(m_tape1.logicalLibraryName, itor->second);
-=======
-    ASSERT_EQ(vid.str(), tapeItor->second.vid);
-    ASSERT_EQ(m_tape1.mediaType, tapeItor->second.mediaType);
-    ASSERT_EQ(m_tape1.vendor, tapeItor->second.vendor);
-    ASSERT_EQ(m_tape1.logicalLibraryName, tapeItor->second.logicalLibraryName);
-    ASSERT_EQ(m_tape1.tapePoolName, tapeItor->second.tapePoolName);
-    ASSERT_EQ(m_vo.name, tapeItor->second.vo);
-    ASSERT_EQ(m_mediaType.capacityInBytes, tapeItor->second.capacityInBytes);
-    ASSERT_EQ(m_tape1.full, tapeItor->second.full);
-    
-    ASSERT_FALSE(tapeItor->second.isFromCastor);
-    ASSERT_EQ(0, tapeItor->second.readMountCount);
-    ASSERT_EQ(0, tapeItor->second.writeMountCount);
-    ASSERT_EQ(m_tape1.comment, tapeItor->second.comment);
->>>>>>> [tape-lifecycle] Removed the tape readonly concept
   }
 }
+
 
 TEST_P(cta_catalogue_CatalogueTest, getAllDiskSystems_no_systems) {
   using namespace cta;

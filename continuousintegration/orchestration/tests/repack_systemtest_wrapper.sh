@@ -122,6 +122,9 @@ repackDisableTape() {
   echo "Reclaiming tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
+  echo "Changing the state of tape ${VID_TO_REPACK} to ACTIVE"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${VID_TO_REPACK} --state ACTIVE
+
   echo
   echo "*************************************************************"
   echo "STEP $1. Launching a Repack Request on a disabled tape TEST OK"
