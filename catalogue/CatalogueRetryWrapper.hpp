@@ -455,10 +455,6 @@ public:
   void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t maxDrivesAllowed) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMountPolicyMaxDrivesAllowed(admin, name, maxDrivesAllowed);}, m_maxTriesToConnect);
   }
-  
-  void modifyMountPolicyMaxDrivesAllowedPerVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t maxDrivesAllowedPerVo) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMountPolicyMaxDrivesAllowedPerVo(admin, name, maxDrivesAllowedPerVo);}, m_maxTriesToConnect);
-  }
 
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMountPolicyComment(admin, name, comment);}, m_maxTriesToConnect);

@@ -182,7 +182,6 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --retrievepriority 1                                              \
     --minretrieverequestage 1                                         \
     --maxdrivesallowed 1                                              \
-    --maxdrivesallowedpervo 1                                         \
     --comment "ctasystest"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin requestermountrule add \
      --instance ${EOSINSTANCE}                                        \

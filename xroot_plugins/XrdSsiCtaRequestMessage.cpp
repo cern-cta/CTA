@@ -1391,7 +1391,6 @@ void RequestMessage::processMountPolicy_Add(cta::xrd::Response &response)
    auto &retrievepriority      = getRequired(OptionUInt64::RETRIEVE_PRIORITY);
    auto &minretrieverequestage = getRequired(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
    auto &maxdrivesallowed      = getRequired(OptionUInt64::MAX_DRIVES_ALLOWED);
-   auto &maxdrivesallowedpervo = getRequired(OptionUInt64::MAX_DRIVES_ALLOWED_PER_VO);
    auto &comment               = getRequired(OptionString::COMMENT);
    
    cta::catalogue::CreateMountPolicyAttributes mountPolicy;
@@ -1401,7 +1400,8 @@ void RequestMessage::processMountPolicy_Add(cta::xrd::Response &response)
    mountPolicy.retrievePriority = retrievepriority;
    mountPolicy.minRetrieveRequestAge = minretrieverequestage;
    mountPolicy.maxDrivesAllowed = maxdrivesallowed;
-   mountPolicy.maxDrivesAllowedPerVo = maxdrivesallowedpervo;
+   //TODO: Add the OptionUint64::MAX_DRIVES_ALLOWED_PER_VO
+   mountPolicy.maxDrivesAllowedPerVo = maxdrivesallowed;
    mountPolicy.comment = comment;
 
    m_catalogue.createMountPolicy(m_cliIdentity, mountPolicy);
@@ -1421,7 +1421,6 @@ void RequestMessage::processMountPolicy_Ch(cta::xrd::Response &response)
    auto  retrievepriority      = getOptional(OptionUInt64::RETRIEVE_PRIORITY);
    auto  minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
    auto  maxdrivesallowed      = getOptional(OptionUInt64::MAX_DRIVES_ALLOWED);
-   auto  maxdrivesallowedpervo = getOptional(OptionUInt64::MAX_DRIVES_ALLOWED_PER_VO);
    auto  comment               = getOptional(OptionString::COMMENT);
 
    if(archivepriority) {
@@ -1438,9 +1437,6 @@ void RequestMessage::processMountPolicy_Ch(cta::xrd::Response &response)
    }
    if(maxdrivesallowed) {
       m_catalogue.modifyMountPolicyMaxDrivesAllowed(m_cliIdentity, group, maxdrivesallowed.value());
-   }
-   if(maxdrivesallowedpervo){
-     m_catalogue.modifyMountPolicyMaxDrivesAllowedPerVo(m_cliIdentity, group, maxdrivesallowedpervo.value());
    }
    if(comment) {
       m_catalogue.modifyMountPolicyComment(m_cliIdentity, group, comment.value());

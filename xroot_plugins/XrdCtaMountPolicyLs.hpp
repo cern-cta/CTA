@@ -79,7 +79,6 @@ int MountPolicyLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     mp_item->set_retrieve_priority(mp.retrievePriority);
     mp_item->set_retrieve_min_request_age(mp.retrieveMinRequestAge);
     mp_item->set_max_drives_allowed(mp.maxDrivesAllowed);
-    mp_item->set_max_drives_allowed_per_vo(mp.maxDrivesAllowedPerVo);
     mp_item->mutable_creation_log()->set_username(mp.creationLog.username);
     mp_item->mutable_creation_log()->set_host(mp.creationLog.host);
     mp_item->mutable_creation_log()->set_time(mp.creationLog.time);

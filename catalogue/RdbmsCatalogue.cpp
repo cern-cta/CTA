@@ -5302,7 +5302,6 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupM
         "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
         "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
-        "MOUNT_POLICY.MAX_DRIVES_ALLOWED_PER_VO AS MAX_DRIVES_ALLOWED_PER_VO,"
 
         "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
 
@@ -5338,7 +5337,6 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupM
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
       policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
-      policy.maxDrivesAllowedPerVo = rset.columnUint64("MAX_DRIVES_ALLOWED_PER_VO");
 
       policy.comment = rset.columnString("USER_COMMENT");
       policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -5533,7 +5531,6 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountP
         "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
         "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
-        "MOUNT_POLICY.MAX_DRIVES_ALLOWED_PER_VO AS MAX_DRIVES_ALLOWED_PER_VO,"
 
         "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
 
@@ -5569,8 +5566,7 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountP
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
       policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
-      policy.maxDrivesAllowedPerVo = rset.columnUint64("MAX_DRIVES_ALLOWED_PER_VO");
-      
+
       policy.comment = rset.columnString("USER_COMMENT");
 
       policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -5775,7 +5771,7 @@ void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructur
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
   } catch(exception::UserError &) {
     throw;
@@ -5814,7 +5810,7 @@ void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStr
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
   } catch(exception::UserError &) {
     throw;
@@ -5853,7 +5849,7 @@ void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructu
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
   } catch(exception::UserError &) {
     throw;
@@ -5892,7 +5888,7 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
   } catch(exception::UserError &) {
     throw;
@@ -5931,7 +5927,7 @@ void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructu
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
   } catch(exception::UserError &) {
     throw;
@@ -5944,46 +5940,6 @@ void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructu
   m_userMountPolicyCache.invalidate();
   m_allMountPoliciesCache.invalidate();
 }
-
-//------------------------------------------------------------------------------
-// modifyMountPolicyMaxDrivesAllowedPerVo
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowedPerVo(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t maxDrivesAllowedPerVo) {
-  try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE MOUNT_POLICY SET "
-        "MAX_DRIVES_ALLOWED_PER_VO = :MAX_DRIVES_ALLOWED_PER_VO,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":MAX_DRIVES_ALLOWED_PER_VO", maxDrivesAllowedPerVo);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":MOUNT_POLICY_NAME", name);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because it does not exist");
-    }
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-
-  m_groupMountPolicyCache.invalidate();
-  m_userMountPolicyCache.invalidate();
-  m_allMountPoliciesCache.invalidate();
-}
-
 
 //------------------------------------------------------------------------------
 // modifyMountPolicyComment
@@ -6010,7 +5966,7 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because it does not exist");
+      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
   } catch(exception::UserError &) {
     throw;
@@ -7507,7 +7463,6 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
         "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
         "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
         "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
-        "MOUNT_POLICY.MAX_DRIVES_ALLOWED_PER_VO AS MAX_DRIVES_ALLOWED_PER_VO,"
         "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
         "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
@@ -7535,7 +7490,6 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
         "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
         "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
         "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
-        "MOUNT_POLICY.MAX_DRIVES_ALLOWED_PER_VO AS MAX_DRIVES_ALLOWED_PER_VO,"
         "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
         "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
@@ -7570,7 +7524,6 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
       policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
       policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
-      policy.maxDrivesAllowedPerVo = rset.columnUint64("MAX_DRIVES_ALLOWED_PER_VO");
       policy.comment = rset.columnString("USER_COMMENT");
       policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       policy.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
