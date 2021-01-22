@@ -2532,28 +2532,17 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-  const std::string tapeComment = "Tape comment";
-  bool notDisabled = false;
-  bool notFull = false;
-  bool notReadOnly = false;
 
   {
-    cta::catalogue::CreateTapeAttributes tape;
-    tape.vid = s_vid;
-    tape.mediaType = s_mediaType;
-    tape.vendor = s_vendor;
-    tape.logicalLibraryName = s_libraryName;
-    tape.tapePoolName = s_tapePoolName;
-    tape.full = notFull;
-    tape.disabled = notDisabled;
-    tape.readOnly = notReadOnly;
-    tape.comment = tapeComment;
+    cta::catalogue::CreateTapeAttributes tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
   // Create the mount criteria
-  catalogue.createMountPolicy(requester, "immediateMount", 1000, 0, 1000, 0, 1, "Policy comment");
-  catalogue.createRequesterMountRule(requester, "immediateMount", s_diskInstance, requester.username, "Rule comment");
+  auto mountPolicy = getImmediateMountMountPolicy();                                                                                                                  
+  catalogue.createMountPolicy(requester, mountPolicy);                                                                                                                
+  std::string mountPolicyName = mountPolicy.name;                                                                                                                     
+  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,

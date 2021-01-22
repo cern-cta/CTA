@@ -2025,10 +2025,9 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
 
         "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
         "COALESCE(SUM(CASE WHEN TAPE.DATA_IN_BYTES = 0 THEN 1 ELSE 0 END), 0) AS NB_EMPTY_TAPES,"
-        "COALESCE(SUM(CASE WHEN TAPE.IS_DISABLED <> '0' THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_DISABLED THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,"
         "COALESCE(SUM(CASE WHEN TAPE.IS_FULL <> '0' THEN 1 ELSE 0 END), 0) AS NB_FULL_TAPES,"
-        "COALESCE(SUM(CASE WHEN TAPE.IS_READ_ONLY <> '0' THEN 1 ELSE 0 END), 0) AS NB_READ_ONLY_TAPES,"
-        "COALESCE(SUM(CASE WHEN TAPE.IS_DISABLED = '0' AND TAPE.IS_FULL = '0' AND TAPE.IS_READ_ONLY = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_ACTIVE AND TAPE.IS_FULL = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,"
         "COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
         "COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
         "COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,"
@@ -2068,6 +2067,8 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
 
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
+    stmt.bindString(":STATE_DISABLED",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
+    stmt.bindString(":STATE_ACTIVE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       TapePool pool;
@@ -2081,7 +2082,6 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
       pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
       pool.nbFullTapes = rset.columnUint64("NB_FULL_TAPES");
-      pool.nbReadOnlyTapes = rset.columnUint64("NB_READ_ONLY_TAPES");
       pool.nbWritableTapes = rset.columnUint64("NB_WRITABLE_TAPES");
       pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
@@ -2121,10 +2121,9 @@ cta::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolN
 
         "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
         "COALESCE(SUM(CASE WHEN TAPE.DATA_IN_BYTES = 0 THEN 1 ELSE 0 END), 0) AS NB_EMPTY_TAPES,"
-        "COALESCE(SUM(CASE WHEN TAPE.IS_DISABLED <> '0' THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_DISABLED THEN 1 ELSE 0 END), 0) AS NB_DISABLED_TAPES,"
         "COALESCE(SUM(CASE WHEN TAPE.IS_FULL <> '0' THEN 1 ELSE 0 END), 0) AS NB_FULL_TAPES,"
-        "COALESCE(SUM(CASE WHEN TAPE.IS_READ_ONLY <> '0' THEN 1 ELSE 0 END), 0) AS NB_READ_ONLY_TAPES,"
-        "COALESCE(SUM(CASE WHEN TAPE.IS_DISABLED = '0' AND TAPE.IS_FULL = '0' AND TAPE.IS_READ_ONLY = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,"
+        "COALESCE(SUM(CASE WHEN TAPE.TAPE_STATE = :STATE_ACTIVE AND TAPE.IS_FULL = '0' THEN 1 ELSE 0 END), 0) AS NB_WRITABLE_TAPES,"
         "COALESCE(SUM(MEDIA_TYPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
         "COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
         "COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,"
@@ -2167,6 +2166,9 @@ cta::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolN
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
+    stmt.bindString(":STATE_DISABLED",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
+    stmt.bindString(":STATE_ACTIVE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
+    
     auto rset = stmt.executeQuery();
 
     if (!rset.next()) {
@@ -2183,7 +2185,6 @@ cta::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolN
     pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
     pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
     pool.nbFullTapes = rset.columnUint64("NB_FULL_TAPES");
-    pool.nbReadOnlyTapes = rset.columnUint64("NB_READ_ONLY_TAPES");
     pool.nbWritableTapes = rset.columnUint64("NB_WRITABLE_TAPES");
     pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
     pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
@@ -5705,7 +5706,8 @@ try {
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
       policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
-
+      policy.maxDrivesAllowedPerVo = rset.columnUint64("MAX_DRIVES_ALLOWED_PER_VO");
+      
       policy.comment = rset.columnString("USER_COMMENT");
 
       policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");

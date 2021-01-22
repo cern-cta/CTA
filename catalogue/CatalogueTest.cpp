@@ -1952,19 +1952,31 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
+  
+  cta::catalogue::TapeSearchCriteria criteria;
+  criteria.vid = m_tape1.vid;
+  ASSERT_EQ(0,m_catalogue->getTapes(criteria).size());
 
   m_catalogue->createTape(m_admin, m_tape1);
 
   auto tape_disabled_01 = m_tape1;
   tape_disabled_01.vid = "D000001";
-  tape_disabled_01.disabled = true;
+  tape_disabled_01.state = common::dataStructures::Tape::DISABLED;
+  tape_disabled_01.stateReason = "unit Test";
   m_catalogue->createTape(m_admin, tape_disabled_01);
 
   auto tape_disabled_02 = m_tape1;
   tape_disabled_02.vid = "D000002";
-  tape_disabled_02.disabled = true;
+  tape_disabled_02.state = common::dataStructures::Tape::DISABLED;
+  tape_disabled_02.stateReason = "unit Test";
   m_catalogue->createTape(m_admin, tape_disabled_02);
 
+  auto tape_broken_01 = m_tape1;
+  tape_broken_01.vid = "B000002";
+  tape_broken_01.state = common::dataStructures::Tape::BROKEN;
+  tape_broken_01.stateReason = "unit Test";
+  m_catalogue->createTape(m_admin, tape_broken_01);
+  
   auto tape_full_01 = m_tape1;
   tape_full_01.vid = "F000001";
   tape_full_01.full = true;
@@ -1980,64 +1992,30 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
   tape_full_03.full = true;
   m_catalogue->createTape(m_admin, tape_full_03);
 
-  auto tape_readOnly_01 = m_tape1;
-  tape_readOnly_01.vid = "RO00001";
-  tape_readOnly_01.readOnly = true;
-  m_catalogue->createTape(m_admin, tape_readOnly_01);
+  auto tape_broken_full_01 = m_tape1;
+  tape_broken_full_01.vid = "BFO001";
+  tape_broken_full_01.state = common::dataStructures::Tape::BROKEN;
+  tape_broken_full_01.stateReason = "unit Test";
+  tape_broken_full_01.full = true;
+  m_catalogue->createTape(m_admin, tape_broken_full_01);
 
-  auto tape_readOnly_02 = m_tape1;
-  tape_readOnly_02.vid = "RO00002";
-  tape_readOnly_02.readOnly = true;
-  m_catalogue->createTape(m_admin, tape_readOnly_02);
+  auto tape_disabled_full_01 = m_tape1;
+  tape_disabled_full_01.vid = "DFO001";
+  tape_disabled_full_01.state = common::dataStructures::Tape::DISABLED;
+  tape_disabled_full_01.stateReason = "unit Test";
+  tape_disabled_full_01.full = true;
+  m_catalogue->createTape(m_admin, tape_disabled_full_01);
 
-  auto tape_readOnly_03 = m_tape1;
-  tape_readOnly_03.vid = "RO00003";
-  tape_readOnly_03.readOnly = true;
-  m_catalogue->createTape(m_admin, tape_readOnly_03);
-
-  auto tape_readOnly_04 = m_tape1;
-  tape_readOnly_04.vid = "RO00004";
-  tape_readOnly_04.readOnly = true;
-  m_catalogue->createTape(m_admin, tape_readOnly_04);
-
-  auto tape_disabled_full_readOnly_01 = m_tape1;
-  tape_disabled_full_readOnly_01.vid = "DFRO001";
-  tape_disabled_full_readOnly_01.disabled = true;
-  tape_disabled_full_readOnly_01.full = true;
-  tape_disabled_full_readOnly_01.readOnly = true;
-  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_01);
-
-  auto tape_disabled_full_readOnly_02 = m_tape1;
-  tape_disabled_full_readOnly_02.vid = "DFRO002";
-  tape_disabled_full_readOnly_02.disabled = true;
-  tape_disabled_full_readOnly_02.full = true;
-  tape_disabled_full_readOnly_02.readOnly = true;
-  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_02);
-
-  auto tape_disabled_full_readOnly_03 = m_tape1;
-  tape_disabled_full_readOnly_03.vid = "DFRO003";
-  tape_disabled_full_readOnly_03.disabled = true;
-  tape_disabled_full_readOnly_03.full = true;
-  tape_disabled_full_readOnly_03.readOnly = true;
-  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_03);
-
-  auto tape_disabled_full_readOnly_04 = m_tape1;
-  tape_disabled_full_readOnly_04.vid = "DFRO004";
-  tape_disabled_full_readOnly_04.disabled = true;
-  tape_disabled_full_readOnly_04.full = true;
-  tape_disabled_full_readOnly_04.readOnly = true;
-  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_04);
-
-  auto tape_disabled_full_readOnly_05 = m_tape1;
-  tape_disabled_full_readOnly_05.vid = "DFRO005";
-  tape_disabled_full_readOnly_05.disabled = true;
-  tape_disabled_full_readOnly_05.full = true;
-  tape_disabled_full_readOnly_05.readOnly = true;
-  m_catalogue->createTape(m_admin, tape_disabled_full_readOnly_05);
+  auto tape_disabled_full_02 = m_tape1;
+  tape_disabled_full_02.vid = "DFO002";
+  tape_disabled_full_02.full = true;
+  tape_disabled_full_02.state = common::dataStructures::Tape::DISABLED;
+  tape_disabled_full_02.stateReason = "unit Test";
+  m_catalogue->createTape(m_admin, tape_disabled_full_02);
 
   const auto tapes = m_catalogue->getTapes();
 
-  ASSERT_EQ(15, tapes.size());
+  ASSERT_EQ(10, tapes.size());
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2046,13 +2024,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
     const auto &pool = pools.front();
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
-    ASSERT_EQ(15, pool.nbTapes);
-    ASSERT_EQ(15, pool.nbEmptyTapes);
-    ASSERT_EQ(7, pool.nbDisabledTapes);
-    ASSERT_EQ(8, pool.nbFullTapes);
-    ASSERT_EQ(9, pool.nbReadOnlyTapes);
+    ASSERT_EQ(10, pool.nbTapes);
+    ASSERT_EQ(10, pool.nbEmptyTapes);
+    ASSERT_EQ(4, pool.nbDisabledTapes);
+    ASSERT_EQ(6, pool.nbFullTapes);
     ASSERT_EQ(1, pool.nbWritableTapes);
-    ASSERT_EQ(15 * m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(10 * m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -2063,13 +2040,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
 
     ASSERT_EQ(m_tape1.tapePoolName, pool->name);
     ASSERT_EQ(m_vo.name, pool->vo.name);
-    ASSERT_EQ(15, pool->nbTapes);
-    ASSERT_EQ(15, pool->nbEmptyTapes);
-    ASSERT_EQ(7, pool->nbDisabledTapes);
-    ASSERT_EQ(8, pool->nbFullTapes);
-    ASSERT_EQ(9, pool->nbReadOnlyTapes);
+    ASSERT_EQ(10, pool->nbTapes);
+    ASSERT_EQ(10, pool->nbEmptyTapes);
+    ASSERT_EQ(4, pool->nbDisabledTapes);
+    ASSERT_EQ(6, pool->nbFullTapes);
     ASSERT_EQ(1, pool->nbWritableTapes);
-    ASSERT_EQ(15 * m_mediaType.capacityInBytes, pool->capacityBytes);
+    ASSERT_EQ(10 * m_mediaType.capacityInBytes, pool->capacityBytes);
     ASSERT_EQ(0, pool->dataBytes);
     ASSERT_EQ(0, pool->nbPhysicalFiles);
   }
@@ -4879,14 +4855,16 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   }
 
   const uint64_t fileSize = 1234 * 1000000000UL;
+  const uint64_t archiveFileId = 1234;
+  const std::string diskFileId = "5678";
   {
     auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
     auto & file1Written = *file1WrittenUP;
     std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
     file1WrittenSet.insert(file1WrittenUP.release());
-    file1Written.archiveFileId        = 1234;
+    file1Written.archiveFileId        = archiveFileId;
     file1Written.diskInstance         = diskInstance;
-    file1Written.diskFileId           = "5678";
+    file1Written.diskFileId           = diskFileId;
     file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
     file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
     file1Written.size                 = fileSize;
@@ -5557,8 +5535,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
   }
   
   {
-    auto tapes = m_catalogue->getAllTapes();
-    auto tape = tapes.at(vid);
+    auto vidToTapeMap = m_catalogue->getTapesByVid({vid});
+    auto tape = vidToTapeMap.at(vid);
     ASSERT_EQ(vid,tape.vid);
     ASSERT_EQ(common::dataStructures::Tape::BROKEN,tape.state);
     ASSERT_EQ(reason,tape.stateReason);
@@ -9422,7 +9400,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, tape1.vid, true);
+  m_catalogue->setTapeDisabled(m_admin, tape1.vid, "unit Test");
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -9444,7 +9422,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, tape1.vid, false);
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::ACTIVE,cta::nullopt);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -9489,50 +9467,6 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   }
 
   m_catalogue->setTapeFull(m_admin, tape1.vid, false);
-
-  {
-    const auto pools = m_catalogue->getTapePools();
-    ASSERT_EQ(2, pools.size());
-
-    const auto tapePoolMap = tapePoolListToMap(pools);
-    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
-    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
-    ASSERT_EQ(tapePoolName1, pool.name);
-    ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(0, pool.nbEmptyTapes);
-    ASSERT_EQ(0, pool.nbDisabledTapes);
-    ASSERT_EQ(0, pool.nbFullTapes);
-    ASSERT_EQ(0, pool.nbReadOnlyTapes);
-    ASSERT_EQ(1, pool.nbWritableTapes);
-    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
-    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
-  }
-
-  m_catalogue->setTapeReadOnly(m_admin, tape1.vid, true);
-
-  {
-    const auto pools = m_catalogue->getTapePools();
-    ASSERT_EQ(2, pools.size());
-
-    const auto tapePoolMap = tapePoolListToMap(pools);
-    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
-    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
-    ASSERT_EQ(tapePoolName1, pool.name);
-    ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(0, pool.nbEmptyTapes);
-    ASSERT_EQ(0, pool.nbDisabledTapes);
-    ASSERT_EQ(0, pool.nbFullTapes);
-    ASSERT_EQ(1, pool.nbReadOnlyTapes);
-    ASSERT_EQ(0, pool.nbWritableTapes);
-    ASSERT_EQ(m_mediaType.capacityInBytes, pool.capacityBytes);
-    ASSERT_EQ(nbArchiveFiles * archiveFileSize, pool.dataBytes);
-    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
-  }
-
-  m_catalogue->setTapeReadOnly(m_admin, tape1.vid, false);
 
   {
     const auto pools = m_catalogue->getTapePools();

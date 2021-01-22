@@ -1657,7 +1657,6 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         mountOrQueue.emptyTapes = tapePool->nbEmptyTapes;
         mountOrQueue.disabledTapes = tapePool->nbDisabledTapes;
         mountOrQueue.fullTapes = tapePool->nbFullTapes;
-        mountOrQueue.readOnlyTapes = tapePool->nbReadOnlyTapes;
         mountOrQueue.writableTapes = tapePool->nbWritableTapes;
       }
     } else if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
