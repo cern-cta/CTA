@@ -4952,7 +4952,6 @@ void RdbmsCatalogue::createMountPolicy(const common::dataStructures::SecurityIde
         "RETRIEVE_MIN_REQUEST_AGE,"
 
         "MAX_DRIVES_ALLOWED,"
-        "MAX_DRIVES_ALLOWED_PER_VO,"
 
         "USER_COMMENT,"
 
@@ -4973,7 +4972,6 @@ void RdbmsCatalogue::createMountPolicy(const common::dataStructures::SecurityIde
         ":RETRIEVE_MIN_REQUEST_AGE,"
 
         ":MAX_DRIVES_ALLOWED,"
-        ":MAX_DRIVES_ALLOWED_PER_VO,"
 
         ":USER_COMMENT,"
 
@@ -4995,7 +4993,6 @@ void RdbmsCatalogue::createMountPolicy(const common::dataStructures::SecurityIde
     stmt.bindUint64(":RETRIEVE_MIN_REQUEST_AGE", mountPolicy.minRetrieveRequestAge);
 
     stmt.bindUint64(":MAX_DRIVES_ALLOWED", mountPolicy.maxDrivesAllowed);
-    stmt.bindUint64(":MAX_DRIVES_ALLOWED_PER_VO",mountPolicy.maxDrivesAllowedPerVo);
     
     stmt.bindString(":USER_COMMENT", mountPolicy.comment);
 
@@ -5677,7 +5674,6 @@ try {
         "RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
         "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
-        "MAX_DRIVES_ALLOWED_PER_VO AS MAX_DRIVES_ALLOWED_PER_VO,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
@@ -5706,7 +5702,6 @@ try {
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
       policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
-      policy.maxDrivesAllowedPerVo = rset.columnUint64("MAX_DRIVES_ALLOWED_PER_VO");
       
       policy.comment = rset.columnString("USER_COMMENT");
 

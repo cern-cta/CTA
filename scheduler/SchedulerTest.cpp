@@ -168,7 +168,6 @@ public:
     const uint64_t retrievePriority = s_retrievePriority;
     const uint64_t minRetrieveRequestAge = s_minRetrieveRequestAge;
     const uint64_t maxDrivesAllowed = s_maxDrivesAllowed;
-    const uint64_t maxDrivesAllowedPerVo = s_maxDrivesAllowedPerVo;
     const std::string mountPolicyComment = "create mount group";
     
     catalogue::CreateMountPolicyAttributes mountPolicy;
@@ -178,7 +177,6 @@ public:
     mountPolicy.retrievePriority = retrievePriority;
     mountPolicy.minRetrieveRequestAge = minRetrieveRequestAge;
     mountPolicy.maxDrivesAllowed = maxDrivesAllowed;
-    mountPolicy.maxDrivesAllowedPerVo = maxDrivesAllowedPerVo;
     mountPolicy.comment = mountPolicyComment;
 
     ASSERT_TRUE(catalogue.getMountPolicies().empty());
@@ -294,7 +292,6 @@ protected:
   const uint64_t s_retrievePriority = 3;
   const uint64_t s_minRetrieveRequestAge = 4; 
   const uint64_t s_maxDrivesAllowed = 50;
-  const uint64_t s_maxDrivesAllowedPerVo = 50;
   const uint64_t s_mediaTypeCapacityInBytes = 10;
   const std::string s_vo = "vo";
   //TempFile m_tempSqliteFile;

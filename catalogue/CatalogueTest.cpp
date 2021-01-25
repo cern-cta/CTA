@@ -151,7 +151,6 @@ namespace {
     mountPolicy.retrievePriority = 3;
     mountPolicy.minRetrieveRequestAge = 4;
     mountPolicy.maxDrivesAllowed = 5;
-    mountPolicy.maxDrivesAllowedPerVo = 6;
     mountPolicy.comment = "Create mount policy";
     return mountPolicy;
   }
@@ -6422,8 +6421,6 @@ TEST_P(cta_catalogue_CatalogueTest, createMountPolicy) {
   ASSERT_EQ(mountPolicyToAdd.minRetrieveRequestAge, mountPolicy.retrieveMinRequestAge);
 
   ASSERT_EQ(mountPolicyToAdd.maxDrivesAllowed, mountPolicy.maxDrivesAllowed);
-  
-  ASSERT_EQ(mountPolicyToAdd.maxDrivesAllowedPerVo,mountPolicy.maxDrivesAllowedPerVo);
 
   ASSERT_EQ(mountPolicyToAdd.comment, mountPolicy.comment);
 

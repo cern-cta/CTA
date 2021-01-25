@@ -260,7 +260,6 @@ public:
     mountPolicy.retrievePriority = 3;
     mountPolicy.minRetrieveRequestAge = 4;
     mountPolicy.maxDrivesAllowed = 5;
-    mountPolicy.maxDrivesAllowedPerVo = 6;
     mountPolicy.comment = "create mount group";
     return mountPolicy; 
   }
@@ -273,7 +272,6 @@ public:
     mountPolicy.retrievePriority = 1000;
     mountPolicy.minRetrieveRequestAge = 0;
     mountPolicy.maxDrivesAllowed = 1;
-    mountPolicy.maxDrivesAllowedPerVo = 1;
     mountPolicy.comment = "Immediate mount";
     return mountPolicy; 
   }
@@ -290,7 +288,6 @@ public:
     const uint64_t retrievePriority = mountPolicy.retrievePriority;
     const uint64_t minRetrieveRequestAge = mountPolicy.minRetrieveRequestAge;
     const uint64_t maxDrivesAllowed = mountPolicy.maxDrivesAllowed;
-    const uint64_t maxDrivesAllowedPerVo = mountPolicy.maxDrivesAllowedPerVo;
     const std::string mountPolicyComment = "create mount group";
 
     ASSERT_TRUE(catalogue.getMountPolicies().empty());
@@ -308,7 +305,6 @@ public:
     ASSERT_EQ(retrievePriority, group.retrievePriority);
     ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
     ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
-    ASSERT_EQ(maxDrivesAllowedPerVo,group.maxDrivesAllowedPerVo);
     ASSERT_EQ(mountPolicyComment, group.comment);
 
     const std::string ruleComment = "create requester mount-rule";

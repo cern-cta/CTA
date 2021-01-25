@@ -33,13 +33,12 @@ MountPolicy::MountPolicy():
   archiveMinRequestAge(0),
   retrievePriority(0),
   retrieveMinRequestAge(0),
-  maxDrivesAllowed(0),
-  maxDrivesAllowedPerVo(0){}
+  maxDrivesAllowed(0){}
 
 MountPolicy::MountPolicy(const std::string name, const uint64_t archivePriority,const uint64_t archiveMinRequestAge, const uint64_t retrievePriority, 
-        const uint64_t retrieveMinRequestAge, const uint64_t maxDrivesAllowed, const uint64_t maxDrivesAllowedPerVo):
+        const uint64_t retrieveMinRequestAge, const uint64_t maxDrivesAllowed):
         name(name), archivePriority(archivePriority), archiveMinRequestAge(archiveMinRequestAge), retrievePriority(retrievePriority), 
-        retrieveMinRequestAge(retrieveMinRequestAge), maxDrivesAllowed(maxDrivesAllowed), maxDrivesAllowedPerVo(maxDrivesAllowedPerVo) {}
+        retrieveMinRequestAge(retrieveMinRequestAge), maxDrivesAllowed(maxDrivesAllowed) {}
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
@@ -50,7 +49,6 @@ bool MountPolicy::operator==(const MountPolicy &rhs) const {
       && retrievePriority==rhs.retrievePriority
       && retrieveMinRequestAge==rhs.retrieveMinRequestAge
       && maxDrivesAllowed==rhs.maxDrivesAllowed
-      && maxDrivesAllowedPerVo==rhs.maxDrivesAllowedPerVo
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
       && comment==rhs.comment;
@@ -71,7 +69,6 @@ MountPolicy MountPolicy::operator=(const MountPolicy& other){
     this->creationLog = other.creationLog;
     this->lastModificationLog = other.lastModificationLog;
     this->maxDrivesAllowed = other.maxDrivesAllowed;
-    this->maxDrivesAllowedPerVo = other.maxDrivesAllowedPerVo;
     this->name = other.name;
     this->retrieveMinRequestAge = other.retrieveMinRequestAge;
     this->retrievePriority = other.retrievePriority;
@@ -88,14 +85,13 @@ std::ostream &operator<<(std::ostream &os, const MountPolicy &obj) {
      << " retrieve_priority=" << obj.retrievePriority
      << " retrieve_minRequestAge=" << obj.retrieveMinRequestAge
      << " maxDrivesAllowed=" << obj.maxDrivesAllowed
-     << " maxDrivesAllowedPerVo=" << obj.maxDrivesAllowedPerVo
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment << ")";
   return os;
 }
 
-MountPolicy MountPolicy::s_defaultMountPolicyForRepack("default_mount_policy_repack",1,1,1,1,1,1);
+MountPolicy MountPolicy::s_defaultMountPolicyForRepack("default_mount_policy_repack",1,1,1,1,1);
 
 } // namespace dataStructures
 } // namespace common
