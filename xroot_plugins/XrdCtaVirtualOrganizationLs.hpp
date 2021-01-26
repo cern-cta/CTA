@@ -76,6 +76,8 @@ int VirtualOrganizationLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *strea
     auto  vo_item = record.mutable_vols_item();
 
     vo_item->set_name(vo.name);
+    vo_item->set_read_max_drives(vo.readMaxDrives);
+    vo_item->set_write_max_drives(vo.writeMaxDrives);
     vo_item->mutable_creation_log()->set_username(vo.creationLog.username);
     vo_item->mutable_creation_log()->set_host(vo.creationLog.host);
     vo_item->mutable_creation_log()->set_time(vo.creationLog.time);

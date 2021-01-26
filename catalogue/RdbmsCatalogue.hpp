@@ -249,17 +249,17 @@ public:
    * Modifies the max number of allocated drives for read for the specified Virtual Organization
    * 
    * @param voName the VO name
-   * @param maxDrivesAllowedForRead the new max number of allocated drives for read for the specified Virtual Organization
+   * @param readMaxDrives the new max number of allocated drives for read for the specified Virtual Organization
    */
-  void modifyVirtualOrganizationMaxDrivesAllowedForRead(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForRead) override;
+  void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives) override;
   
   /**
    * Modifies the max number of allocated drives for write for the specified Virtual Organization
    * 
    * @param voName the VO name
-   * @param maxDrivesAllowedForRead the new max number of allocated drives for write for the specified Virtual Organization
+   * @param writeMaxDrives the new max number of allocated drives for write for the specified Virtual Organization
    */
-  void modifyVirtualOrganizationMaxDrivesAllowedForWrite(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForWrite) override;
+  void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) override;
   /**
    * Modifies the comment of the specified Virtual Organization
    *

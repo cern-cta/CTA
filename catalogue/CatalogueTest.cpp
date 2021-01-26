@@ -75,8 +75,8 @@ namespace {
     common::dataStructures::VirtualOrganization vo;
     vo.name = "vo";
     vo.comment = "Creation of virtual organization vo";
-    vo.maxDrivesAllowedForRead = 1;
-    vo.maxDrivesAllowedForWrite = 1;
+    vo.readMaxDrives = 1;
+    vo.writeMaxDrives = 1;
     return vo;
   }
 
@@ -14648,8 +14648,8 @@ TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {
   
   auto &voRetrieved = vos.front();
   ASSERT_EQ(vo.name,voRetrieved.name);
-  ASSERT_EQ(vo.maxDrivesAllowedForRead,voRetrieved.maxDrivesAllowedForRead);
-  ASSERT_EQ(vo.maxDrivesAllowedForWrite,voRetrieved.maxDrivesAllowedForWrite);
+  ASSERT_EQ(vo.readMaxDrives,voRetrieved.readMaxDrives);
+  ASSERT_EQ(vo.writeMaxDrives,voRetrieved.writeMaxDrives);
   ASSERT_EQ(vo.comment,voRetrieved.comment);
   ASSERT_EQ(m_admin.host,voRetrieved.creationLog.host);
   ASSERT_EQ(m_admin.username,voRetrieved.creationLog.username);
@@ -14728,14 +14728,14 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxDrivesAllowedFor
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   uint64_t newMaxDrivesAllowedForRead = 42;
-  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForRead(m_admin,vo.name,newMaxDrivesAllowedForRead));
+  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationReadMaxDrives(m_admin,vo.name,newMaxDrivesAllowedForRead));
   
   auto vos = m_catalogue->getVirtualOrganizations();
   auto &frontVo = vos.front();
   
-  ASSERT_EQ(newMaxDrivesAllowedForRead,frontVo.maxDrivesAllowedForRead);
+  ASSERT_EQ(newMaxDrivesAllowedForRead,frontVo.readMaxDrives);
   
-  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForRead(m_admin,"DOES not exists",newMaxDrivesAllowedForRead),cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationReadMaxDrives(m_admin,"DOES not exists",newMaxDrivesAllowedForRead),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxDrivesAllowedForWrite) {
@@ -14746,14 +14746,14 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxDrivesAllowedFor
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
   uint64_t newMaxDrivesAllowedForWrite = 42;
-  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForWrite(m_admin,vo.name,newMaxDrivesAllowedForWrite));
+  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,vo.name,newMaxDrivesAllowedForWrite));
   
   auto vos = m_catalogue->getVirtualOrganizations();
   auto &frontVo = vos.front();
   
-  ASSERT_EQ(newMaxDrivesAllowedForWrite,frontVo.maxDrivesAllowedForWrite);
+  ASSERT_EQ(newMaxDrivesAllowedForWrite,frontVo.writeMaxDrives);
   
-  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForWrite(m_admin,"DOES not exists",newMaxDrivesAllowedForWrite),cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,"DOES not exists",newMaxDrivesAllowedForWrite),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {

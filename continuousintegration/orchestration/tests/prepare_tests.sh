@@ -108,6 +108,8 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
 
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add  \
     --vo vo                                                                          \
+    --readmaxdrives 1                                                                \
+    --writemaxdrives 1                                                               \
     --comment "vo"                                                                   
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add       \
     --name ctasystest                                                 \

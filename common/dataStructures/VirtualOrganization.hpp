@@ -35,13 +35,13 @@ struct VirtualOrganization {
    */
   std::string comment;
   /**
-   * Max number of drives allocated for writing per VO
-   */
-  uint64_t maxDrivesAllowedForWrite;
-  /**
    * Maximum number of drives allocated for reading per VO
    */
-  uint64_t maxDrivesAllowedForRead;
+  uint64_t readMaxDrives;
+  /**
+   * Max number of drives allocated for writing per VO
+   */
+  uint64_t writeMaxDrives;
   /**
    * The creation log.
    */

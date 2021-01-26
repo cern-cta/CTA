@@ -132,12 +132,12 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationName(admin,currentVoName,newVoName);}, m_maxTriesToConnect);
   }
   
-  void modifyVirtualOrganizationMaxDrivesAllowedForRead(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForRead) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForRead(admin,voName,maxDrivesAllowedForRead);}, m_maxTriesToConnect);
+  void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForRead) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationReadMaxDrives(admin,voName,maxDrivesAllowedForRead);}, m_maxTriesToConnect);
   }
   
-  void modifyVirtualOrganizationMaxDrivesAllowedForWrite(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForWrite) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForWrite(admin,voName,maxDrivesAllowedForWrite);}, m_maxTriesToConnect);
+  void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForWrite) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationWriteMaxDrives(admin,voName,maxDrivesAllowedForWrite);}, m_maxTriesToConnect);
   }
   
   

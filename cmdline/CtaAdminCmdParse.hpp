@@ -290,6 +290,8 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--refreshinterval",       OptionUInt64::REFRESH_INTERVAL },
    { "--targetedfreespace",     OptionUInt64::TARGETED_FREE_SPACE },
    { "--sleeptime",             OptionUInt64::SLEEP_TIME },
+   { "--readmaxdrives",         OptionUInt64::READ_MAX_DRIVES },
+   { "--writemaxdrives",        OptionUInt64::WRITE_MAX_DRIVES },
 };
 
 
@@ -396,7 +398,15 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 			    "   If the targeted free space is reach, the queue will sleep during this amount of seconds."
 			    "\n\n"
 					 }},
-   { AdminCmd::CMD_VIRTUALORGANIZATION,  { "virtualorganization",   "vo",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_VIRTUALORGANIZATION,  { "virtualorganization",   "vo",  { "add", "ch", "rm", "ls" }, 
+                                           "\n  This command allows to manage virtual organizations.\n"
+                                           "  Add a virtual organization by using the \"add\" subcommand:\n"
+                                           "   * Specify the name (--vo) of the virtual organization. It must be unique.\n"
+                                           "   * Specify the maximum number of drives the virtual organization is allowed to use for writing with the --writemaxdrives parameter\n"
+                                           "   * Specify the maximum number of drives the virtual organization is allowed to use for reading with the --readmaxdrives parameter\n"
+                                           "   * Specify the comment (--comment) associated to the virtual organization"
+                                           "\n\n"
+                                         }},
    { AdminCmd::CMD_VERSION,              { "version",               "v",  { } }},
    { AdminCmd::CMD_SCHEDULINGINFOS,      { "schedulinginfo",        "si",  { "ls" } }},
    { AdminCmd::CMD_RECYCLETAPEFILE,      { "recycletf",        "rtf",  { "ls" },
@@ -474,6 +484,8 @@ const Option opt_sleep_time           { Option::OPT_UINT, "--sleeptime",        
 const Option opt_reason               { Option::OPT_STR,  "--reason",                "-r",   " <reason_status_change>" };
 const Option opt_no_recall            { Option::OPT_FLAG, "--no-recall",             "-nr",  "" };
 const Option opt_object_id            { Option::OPT_STR,  "--objectid",              "-o",   " <objectId>" };
+const Option opt_read_max_drives      { Option::OPT_UINT,  "--readmaxdrives",        "-rmd", " <read_max_drives>" };
+const Option opt_write_max_drives     { Option::OPT_UINT,  "--writemaxdrives",       "-wmd", " <write_max_drives>" };
 
 const Option opt_state                { Option::OPT_STR,  "--state",                 "-s",   std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) +"\"" + " or \"" + Tape::stateToString(Tape::DISABLED) + "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\">" };
 
@@ -594,9 +606,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_RM    }, { opt_disksystem }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_LS    }, { }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
-      { opt_vo, opt_comment }},
+      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },
-      { opt_vo, opt_comment }},
+      { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_RM   },
       { opt_vo }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },

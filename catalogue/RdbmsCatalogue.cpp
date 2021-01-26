@@ -326,8 +326,8 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
         "VIRTUAL_ORGANIZATION_ID,"
         "VIRTUAL_ORGANIZATION_NAME,"
         
-        "MAX_DRIVES_ALLOWED_FOR_READ,"
-        "MAX_DRIVES_ALLOWED_FOR_WRITE,"
+        "READ_MAX_DRIVES,"
+        "WRITE_MAX_DRIVES,"
 
         "USER_COMMENT,"
 
@@ -341,8 +341,8 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
       "VALUES("
         ":VIRTUAL_ORGANIZATION_ID,"
         ":VIRTUAL_ORGANIZATION_NAME,"
-        ":MAX_DRIVES_ALLOWED_FOR_READ,"
-        ":MAX_DRIVES_ALLOWED_FOR_WRITE,"
+        ":READ_MAX_DRIVES,"
+        ":WRITE_MAX_DRIVES,"
 
         ":USER_COMMENT,"
 
@@ -358,8 +358,8 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
     stmt.bindUint64(":VIRTUAL_ORGANIZATION_ID", virtualOrganizationId);
     stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", vo.name);
     
-    stmt.bindUint64(":MAX_DRIVES_ALLOWED_FOR_READ",vo.maxDrivesAllowedForRead);
-    stmt.bindUint64(":MAX_DRIVES_ALLOWED_FOR_WRITE",vo.maxDrivesAllowedForWrite);
+    stmt.bindUint64(":READ_MAX_DRIVES",vo.readMaxDrives);
+    stmt.bindUint64(":WRITE_MAX_DRIVES",vo.writeMaxDrives);
 
     stmt.bindString(":USER_COMMENT", vo.comment);
     
@@ -430,8 +430,8 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtua
       "SELECT "
         "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
 
-        "MAX_DRIVES_ALLOWED_FOR_READ AS MAX_DRIVES_ALLOWED_FOR_READ,"
-        "MAX_DRIVES_ALLOWED_FOR_WRITE AS MAX_DRIVES_ALLOWED_FOR_WRITE,"
+        "READ_MAX_DRIVES AS READ_MAX_DRIVES,"
+        "WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
@@ -454,8 +454,8 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtua
 
       virtualOrganization.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
 
-      virtualOrganization.maxDrivesAllowedForRead = rset.columnUint64("MAX_DRIVES_ALLOWED_FOR_READ");
-      virtualOrganization.maxDrivesAllowedForWrite = rset.columnUint64("MAX_DRIVES_ALLOWED_FOR_WRITE");
+      virtualOrganization.readMaxDrives = rset.columnUint64("READ_MAX_DRIVES");
+      virtualOrganization.writeMaxDrives = rset.columnUint64("WRITE_MAX_DRIVES");
       virtualOrganization.comment = rset.columnString("USER_COMMENT");
       virtualOrganization.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       virtualOrganization.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -516,12 +516,12 @@ void RdbmsCatalogue::modifyVirtualOrganizationName(const common::dataStructures:
   }
 }
 
-void RdbmsCatalogue::modifyVirtualOrganizationMaxDrivesAllowedForRead(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForRead){
+void RdbmsCatalogue::modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForRead){
   try {
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE VIRTUAL_ORGANIZATION SET "
-        "MAX_DRIVES_ALLOWED_FOR_READ = :MAX_DRIVES_ALLOWED_FOR_READ,"
+        "READ_MAX_DRIVES = :READ_MAX_DRIVES,"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
@@ -530,7 +530,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationMaxDrivesAllowedForRead(const comm
     auto conn = m_connPool.getConn();
    
     auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":MAX_DRIVES_ALLOWED_FOR_READ", maxDrivesAllowedForRead);
+    stmt.bindUint64(":READ_MAX_DRIVES", maxDrivesAllowedForRead);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -549,12 +549,12 @@ void RdbmsCatalogue::modifyVirtualOrganizationMaxDrivesAllowedForRead(const comm
   }
 }
 
-void RdbmsCatalogue::modifyVirtualOrganizationMaxDrivesAllowedForWrite(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForWrite){
+void RdbmsCatalogue::modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForWrite){
   try {
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE VIRTUAL_ORGANIZATION SET "
-        "MAX_DRIVES_ALLOWED_FOR_WRITE = :MAX_DRIVES_ALLOWED_FOR_WRITE,"
+        "WRITE_MAX_DRIVES = :WRITE_MAX_DRIVES,"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
@@ -563,7 +563,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationMaxDrivesAllowedForWrite(const com
     auto conn = m_connPool.getConn();
    
     auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":MAX_DRIVES_ALLOWED_FOR_WRITE", maxDrivesAllowedForWrite);
+    stmt.bindUint64(":WRITE_MAX_DRIVES", maxDrivesAllowedForWrite);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

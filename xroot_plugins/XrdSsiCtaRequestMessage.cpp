@@ -2039,10 +2039,14 @@ void RequestMessage::processVirtualOrganization_Add(cta::xrd::Response &response
   using namespace cta::admin;
 
   const auto &name = getRequired(OptionString::VO);
+  const auto &readMaxDrives = getRequired(OptionUInt64::READ_MAX_DRIVES);
+  const auto &writeMaxDrives = getRequired(OptionUInt64::WRITE_MAX_DRIVES);
   const auto &comment = getRequired(OptionString::COMMENT);
   
   cta::common::dataStructures::VirtualOrganization vo;
   vo.name = name;
+  vo.readMaxDrives = readMaxDrives;
+  vo.writeMaxDrives = writeMaxDrives;
   vo.comment = comment;
   
   m_catalogue.createVirtualOrganization(m_cliIdentity,vo);
@@ -2054,9 +2058,18 @@ void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response)
   using namespace cta::admin;
 
   const auto &name = getRequired(OptionString::VO);
-  const auto &comment = getRequired(OptionString::COMMENT);
+  const auto readMaxDrives = getOptional(OptionUInt64::READ_MAX_DRIVES);
+  const auto writeMaxDrives = getOptional(OptionUInt64::WRITE_MAX_DRIVES);
+  const auto comment = getOptional(OptionString::COMMENT);
   
-  m_catalogue.modifyVirtualOrganizationComment(m_cliIdentity,name,comment);
+  if(comment)
+    m_catalogue.modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
+  
+  if(readMaxDrives)
+    m_catalogue.modifyVirtualOrganizationReadMaxDrives(m_cliIdentity,name,readMaxDrives.value());
+  
+  if(writeMaxDrives)
+    m_catalogue.modifyVirtualOrganizationWriteMaxDrives(m_cliIdentity,name,writeMaxDrives.value());
   
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

@@ -991,6 +991,8 @@ void TextFormatter::printVirtualOrganizationLsHeader(){
   push_back("HEADER");
   push_back(
     "name",
+    "read max drives",
+    "write max drives",
     "c.user",
     "c.host",
     "c.time",
@@ -1004,6 +1006,8 @@ void TextFormatter::printVirtualOrganizationLsHeader(){
 void TextFormatter::print(const VirtualOrganizationLsItem& vols_item){
   push_back(
     vols_item.name(),
+    vols_item.read_max_drives(),
+    vols_item.write_max_drives(),
     vols_item.creation_log().username(),
     vols_item.creation_log().host(),
     timeToStr(vols_item.creation_log().time()),
