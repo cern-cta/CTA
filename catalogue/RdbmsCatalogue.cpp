@@ -325,6 +325,9 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
     "INSERT INTO VIRTUAL_ORGANIZATION("
         "VIRTUAL_ORGANIZATION_ID,"
         "VIRTUAL_ORGANIZATION_NAME,"
+        
+        "MAX_DRIVES_ALLOWED_FOR_READ,"
+        "MAX_DRIVES_ALLOWED_FOR_WRITE,"
 
         "USER_COMMENT,"
 
@@ -338,6 +341,8 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
       "VALUES("
         ":VIRTUAL_ORGANIZATION_ID,"
         ":VIRTUAL_ORGANIZATION_NAME,"
+        ":MAX_DRIVES_ALLOWED_FOR_READ,"
+        ":MAX_DRIVES_ALLOWED_FOR_WRITE,"
 
         ":USER_COMMENT,"
 
@@ -352,9 +357,12 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
     
     stmt.bindUint64(":VIRTUAL_ORGANIZATION_ID", virtualOrganizationId);
     stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", vo.name);
+    
+    stmt.bindUint64(":MAX_DRIVES_ALLOWED_FOR_READ",vo.maxDrivesAllowedForRead);
+    stmt.bindUint64(":MAX_DRIVES_ALLOWED_FOR_WRITE",vo.maxDrivesAllowedForWrite);
 
     stmt.bindString(":USER_COMMENT", vo.comment);
-
+    
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt.bindUint64(":CREATION_LOG_TIME", now);
@@ -422,6 +430,9 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtua
       "SELECT "
         "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
 
+        "MAX_DRIVES_ALLOWED_FOR_READ AS MAX_DRIVES_ALLOWED_FOR_READ,"
+        "MAX_DRIVES_ALLOWED_FOR_WRITE AS MAX_DRIVES_ALLOWED_FOR_WRITE,"
+
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
@@ -443,6 +454,8 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtua
 
       virtualOrganization.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
 
+      virtualOrganization.maxDrivesAllowedForRead = rset.columnUint64("MAX_DRIVES_ALLOWED_FOR_READ");
+      virtualOrganization.maxDrivesAllowedForWrite = rset.columnUint64("MAX_DRIVES_ALLOWED_FOR_WRITE");
       virtualOrganization.comment = rset.columnString("USER_COMMENT");
       virtualOrganization.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       virtualOrganization.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -493,6 +506,72 @@ void RdbmsCatalogue::modifyVirtualOrganizationName(const common::dataStructures:
 
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify virtual organization : ") + currentVoName +
+        " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::modifyVirtualOrganizationMaxDrivesAllowedForRead(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForRead){
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE VIRTUAL_ORGANIZATION SET "
+        "MAX_DRIVES_ALLOWED_FOR_READ = :MAX_DRIVES_ALLOWED_FOR_READ,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    auto conn = m_connPool.getConn();
+   
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":MAX_DRIVES_ALLOWED_FOR_READ", maxDrivesAllowedForRead);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
+        " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::modifyVirtualOrganizationMaxDrivesAllowedForWrite(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForWrite){
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE VIRTUAL_ORGANIZATION SET "
+        "MAX_DRIVES_ALLOWED_FOR_WRITE = :MAX_DRIVES_ALLOWED_FOR_WRITE,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    auto conn = m_connPool.getConn();
+   
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":MAX_DRIVES_ALLOWED_FOR_WRITE", maxDrivesAllowedForWrite);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
         " because it does not exist");
     }
   } catch(exception::UserError &) {

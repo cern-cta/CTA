@@ -75,6 +75,8 @@ namespace {
     common::dataStructures::VirtualOrganization vo;
     vo.name = "vo";
     vo.comment = "Creation of virtual organization vo";
+    vo.maxDrivesAllowedForRead = 1;
+    vo.maxDrivesAllowedForWrite = 1;
     return vo;
   }
 
@@ -14558,9 +14560,7 @@ TEST_P(cta_catalogue_CatalogueTest, getSchemaVersion) {
 TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganization) {
   using namespace cta;
 
-  common::dataStructures::VirtualOrganization vo;
-  vo.name = "VO";
-  vo.comment = "Comment";
+  common::dataStructures::VirtualOrganization vo = getVo();
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 }
@@ -14568,9 +14568,7 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganization) {
 TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationAlreadyExists) {
   using namespace cta;
 
-  common::dataStructures::VirtualOrganization vo;
-  vo.name = "VO";
-  vo.comment = "Comment";
+  common::dataStructures::VirtualOrganization vo = getVo();
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
@@ -14579,8 +14577,8 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationAlreadyExists) {
 TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyComment) {
   using namespace cta;
 
-  common::dataStructures::VirtualOrganization vo;
-  vo.name = "VO";
+  common::dataStructures::VirtualOrganization vo = getVo();
+  vo.comment = "";
   
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
 }
@@ -14588,7 +14586,9 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyComment) {
 TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyName) {
   using namespace cta;
 
-  common::dataStructures::VirtualOrganization vo;
+  common::dataStructures::VirtualOrganization vo = getVo();
+  
+  vo.name = "";
   vo.comment = "comment";
   
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
@@ -14597,9 +14597,7 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyName) {
 TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganization) {
   using namespace cta;
 
-  common::dataStructures::VirtualOrganization vo;
-  vo.name = "vo";
-  vo.comment = "comment";
+  common::dataStructures::VirtualOrganization vo = getVo();
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
@@ -14623,9 +14621,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByTapePool) {
 TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationNameDoesNotExist) {
   using namespace cta;
 
-  common::dataStructures::VirtualOrganization vo;
-  vo.name = "vo";
-  vo.comment = "comment";
+  common::dataStructures::VirtualOrganization vo = getVo();
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
@@ -14643,9 +14639,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByStorageClass)
 TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {
   using namespace cta;
 
-  common::dataStructures::VirtualOrganization vo;
-  vo.name = "vo";
-  vo.comment = "comment";
+  common::dataStructures::VirtualOrganization vo = getVo();
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
@@ -14654,6 +14648,8 @@ TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {
   
   auto &voRetrieved = vos.front();
   ASSERT_EQ(vo.name,voRetrieved.name);
+  ASSERT_EQ(vo.maxDrivesAllowedForRead,voRetrieved.maxDrivesAllowedForRead);
+  ASSERT_EQ(vo.maxDrivesAllowedForWrite,voRetrieved.maxDrivesAllowedForWrite);
   ASSERT_EQ(vo.comment,voRetrieved.comment);
   ASSERT_EQ(m_admin.host,voRetrieved.creationLog.host);
   ASSERT_EQ(m_admin.username,voRetrieved.creationLog.username);
@@ -14666,12 +14662,10 @@ TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {
   ASSERT_EQ(0,vos.size());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganization) {
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationName) {
   using namespace cta;
 
-  common::dataStructures::VirtualOrganization vo;
-  vo.name = "vo";
-  vo.comment = "comment";
+  common::dataStructures::VirtualOrganization vo = getVo();
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
@@ -14685,7 +14679,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganization) {
   ASSERT_EQ(newVoName,voFront.name);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationDoesNotExists) {
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationNameVoDoesNotExists) {
   using namespace cta;
   
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationName(m_admin,"DOES_NOT_EXIST","NEW_NAME"),cta::exception::UserError);
@@ -14694,27 +14688,23 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationDoesNotExists) {
 TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationNameThatAlreadyExists) {
   using namespace cta;
   
-  std::string voName = "vo";
-  std::string vo2Name = "vo2";
+  common::dataStructures::VirtualOrganization vo = getVo();
   
-  common::dataStructures::VirtualOrganization vo;
-  vo.name = voName;
-  vo.comment = "comment";
+  std::string vo2Name = "vo2";
+  std::string vo1Name = vo.name;
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
   vo.name = vo2Name;
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
-  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationName(m_admin,voName,vo2Name),cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationName(m_admin,vo1Name,vo2Name),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationComment) {
   using namespace cta;
   
-  common::dataStructures::VirtualOrganization vo;
-  vo.name = "vo";
-  vo.comment = "comment";
+  common::dataStructures::VirtualOrganization vo = getVo();
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
@@ -14728,6 +14718,42 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationComment) {
   ASSERT_EQ(newComment,frontVo.comment);
   
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationComment(m_admin,"DOES not exists","COMMENT_DOES_NOT_EXIST"),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxDrivesAllowedForRead) {
+  using namespace cta;
+  
+  common::dataStructures::VirtualOrganization vo = getVo();
+  
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+
+  uint64_t newMaxDrivesAllowedForRead = 42;
+  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForRead(m_admin,vo.name,newMaxDrivesAllowedForRead));
+  
+  auto vos = m_catalogue->getVirtualOrganizations();
+  auto &frontVo = vos.front();
+  
+  ASSERT_EQ(newMaxDrivesAllowedForRead,frontVo.maxDrivesAllowedForRead);
+  
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForRead(m_admin,"DOES not exists",newMaxDrivesAllowedForRead),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxDrivesAllowedForWrite) {
+  using namespace cta;
+  
+  common::dataStructures::VirtualOrganization vo = getVo();
+  
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+  
+  uint64_t newMaxDrivesAllowedForWrite = 42;
+  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForWrite(m_admin,vo.name,newMaxDrivesAllowedForWrite));
+  
+  auto vos = m_catalogue->getVirtualOrganizations();
+  auto &frontVo = vos.front();
+  
+  ASSERT_EQ(newMaxDrivesAllowedForWrite,frontVo.maxDrivesAllowedForWrite);
+  
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationMaxDrivesAllowedForWrite(m_admin,"DOES not exists",newMaxDrivesAllowedForWrite),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
