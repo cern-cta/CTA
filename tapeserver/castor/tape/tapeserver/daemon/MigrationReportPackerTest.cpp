@@ -70,6 +70,15 @@ const uint32_t TEST_GROUP_2 = 9754;
       mediaType.comment = "comment";
       m_catalogue->createMediaType(admin,mediaType);
     }
+    
+    cta::common::dataStructures::VirtualOrganization getDefaultVo(){
+      cta::common::dataStructures::VirtualOrganization vo;
+      vo.name = "vo";
+      vo.readMaxDrives = 1;
+      vo.writeMaxDrives = 1;
+      vo.comment = "comment";
+      return vo;
+    }
 
     void TearDown() {
       m_catalogue.reset();
@@ -133,9 +142,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     const cta::optional<std::string> supply("value for the supply pool mechanism");
     const bool fullValue = false;
     const std::string createTapeComment = "Create tape";
-    cta::common::dataStructures::VirtualOrganization vo;
-    vo.name = "vo";
-    vo.comment = "comment";
+    cta::common::dataStructures::VirtualOrganization vo = getDefaultVo();
     
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
     m_catalogue->createVirtualOrganization(admin,vo);
@@ -297,9 +304,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     const std::string createTapeComment = "Create tape";
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
 
-    cta::common::dataStructures::VirtualOrganization vo;
-    vo.name = "vo";
-    vo.comment = "comment";
+    cta::common::dataStructures::VirtualOrganization vo = getDefaultVo();
     
     m_catalogue->createVirtualOrganization(admin,vo);
     

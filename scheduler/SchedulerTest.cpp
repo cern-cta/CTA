@@ -214,6 +214,8 @@ public:
     cta::common::dataStructures::VirtualOrganization vo;
     vo.name = s_vo;
     vo.comment = "comment";
+    vo.writeMaxDrives = 1;
+    vo.readMaxDrives = 1;
     m_catalogue->createVirtualOrganization(s_adminOnAdminHost,vo);
     
     common::dataStructures::StorageClass storageClass;

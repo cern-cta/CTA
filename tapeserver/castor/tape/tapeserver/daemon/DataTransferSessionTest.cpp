@@ -276,6 +276,15 @@ public:
     return mountPolicy; 
   }
   
+  cta::common::dataStructures::VirtualOrganization getDefaultVirtualOrganization() {
+    cta::common::dataStructures::VirtualOrganization vo;
+    vo.name = "vo";
+    vo.readMaxDrives = 1;
+    vo.writeMaxDrives = 1;
+    vo.comment = "comment";
+    return vo;
+  }
+  
   void setupDefaultCatalogue() {
     using namespace cta;
     auto & catalogue=getCatalogue();
@@ -322,9 +331,7 @@ public:
     ASSERT_EQ(s_adminOnAdminHost.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
-    cta::common::dataStructures::VirtualOrganization vo;
-    vo.name = "vo";
-    vo.comment = "comment";
+    cta::common::dataStructures::VirtualOrganization vo = getDefaultVirtualOrganization();
     catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
     
     common::dataStructures::StorageClass storageClass;
