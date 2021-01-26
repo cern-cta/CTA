@@ -511,6 +511,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
       rReq.diskFileInfo.path = "path/to/file";
+      rReq.isVerifyOnly = false;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -918,6 +919,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.isVerifyOnly = false;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
 
@@ -1119,6 +1121,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.isVerifyOnly = false;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -1316,6 +1319,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.isVerifyOnly = false;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -1515,6 +1519,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
+      rReq.isVerifyOnly = false;
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }

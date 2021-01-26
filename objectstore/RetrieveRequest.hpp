@@ -268,6 +268,7 @@ public:
   void setReportedTime(const uint64_t reportedTime);
   void setActiveCopyNumber(uint32_t activeCopyNb);
   uint32_t getActiveCopyNumber();
+  void setIsVerifyOnly(bool isVerifyOnly) { m_payload.set_isverifyonly(isVerifyOnly); }
   // ===========================================================================
   std::list<JobDump> dumpJobs();
   std::string dump();

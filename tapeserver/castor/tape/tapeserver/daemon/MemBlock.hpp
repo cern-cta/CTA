@@ -46,14 +46,21 @@ class MemBlock {
     
     struct Cancelled_t{}; 
     static Cancelled_t Cancelled;
-    
+
+    struct VerifyOnly_t{};
+    static VerifyOnly_t VerifyOnly;
+
     /** Flag indicating to the receiver that the file read failed */
     bool m_failed;
     
     /** Flag indicating that the transfer was cancelled, usually due to a 
      previous failure. */
     bool m_cancelled;
-    
+
+    /** Flag indicating that the transfer is verify only, no disk file
+     should be written. */
+    bool m_verifyonly;
+
     /**
      * in case of error, the error message 
      */
@@ -65,16 +72,19 @@ class MemBlock {
     int m_errorCode;
     
     AlterationContext(const std::string& msg,int errorCode,Failed_t):
-    m_failed(true),m_cancelled(false),m_errorMsg(msg),m_errorCode(errorCode){}
+    m_failed(true),m_cancelled(false),m_verifyonly(false),m_errorMsg(msg),m_errorCode(errorCode){}
     
     AlterationContext(Cancelled_t):
-    m_failed(false),m_cancelled(true),m_errorMsg(""),m_errorCode(0){}
+    m_failed(false),m_cancelled(true),m_verifyonly(false),m_errorMsg(""),m_errorCode(0){}
+    
+    AlterationContext(VerifyOnly_t):
+    m_failed(false),m_cancelled(false),m_verifyonly(true),m_errorMsg(""),m_errorCode(0){}
   };
   
   std::unique_ptr<AlterationContext> m_context;
 public:
   /**
-   * COnstrucor 
+   * Constructor 
    * @param id the block ID for its whole life
    * @param capacity the capacity (in byte) of the embed payload 
    */
@@ -128,6 +138,14 @@ public:
   }
     
   /**
+   * Return true if the block has been marked as verify only
+   * @return 
+   */
+  bool isVerifyOnly() const {
+    return m_context.get() && m_context->m_verifyonly;
+  }
+    
+  /**
    * Mark this block as failed ie 
    * m_failed is true, m_fileBlock and m_tapeFileBlock are set at -1
    * Other members do not change
@@ -148,6 +166,13 @@ public:
     m_context.reset(new AlterationContext(AlterationContext::Cancelled));
     m_fileBlock = -1;
     m_tapeFileBlock = -1;
+  }
+  /**
+   * Mark the block as verify only: no disk file will be written but the
+   * file should otherwise be processed normally
+   */
+  void markAsVerifyOnly(){
+    m_context.reset(new AlterationContext(AlterationContext::VerifyOnly));
   }
   /**
    * Reset all the members.

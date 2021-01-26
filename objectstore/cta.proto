@@ -397,6 +397,7 @@ message SchedulerRetrieveRequest {
   required DiskFileInfo diskfileinfo = 9103;
   required EntryLog entrylog = 9106;
   required string retrieveerrorreporturl = 9110;
+  required bool isverifyonly = 9111;
 }
 
 message RetrieveJob {
@@ -456,6 +457,7 @@ message RetrieveRequest {
   optional RetrieveRequestRepackInfo repack_info = 9158;
   optional LifecycleTimings lifecycle_timings = 9159;
   optional string disk_system_name = 9161;
+  required bool isverifyonly = 9162;
 }
 
 message ValueCountPair {

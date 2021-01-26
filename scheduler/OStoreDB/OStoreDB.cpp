@@ -1284,6 +1284,7 @@ SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::data
   rReq->setRetrieveFileQueueCriteria(criteria);
   rReq->setActivityIfNeeded(rqst, criteria);
   rReq->setCreationTime(rqst.creationLog.time);
+  rReq->setIsVerifyOnly(rqst.isVerifyOnly);
   if (diskSystemName) rReq->setDiskSystemName(diskSystemName.value());
   // Find the job corresponding to the vid (and check we indeed have one).
   auto jobs = rReq->getJobs();

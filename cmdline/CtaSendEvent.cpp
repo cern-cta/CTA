@@ -25,6 +25,7 @@
 
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include "CtaFrontendApi.hpp"
+#include "version.h"
 
 const std::string config_file = "/etc/cta/cta-cli.conf";
 
@@ -204,6 +205,10 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
   cta::xrd::Request request;
   cta::eos::Notification &notification = *(request.mutable_notification());
+
+  // Set client version
+  request.set_client_cta_version(CTA_VERSION);
+  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
 
   // Set configuration options
   XrdSsiPb::Config config(config_file, "cta");

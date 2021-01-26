@@ -61,6 +61,7 @@ void RetrieveRequest::initialize() {
   m_payload.set_failurereportlog("");
   m_payload.set_failurereporturl("");
   m_payload.set_isrepack(false);
+  m_payload.set_isverifyonly(false);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -373,9 +374,13 @@ auto RetrieveRequest::addTransferFailure(uint32_t copyNumber, uint64_t mountId, 
       j.set_totalretries(j.totalretries() + 1);
       *j.mutable_failurelogs()->Add() = failureReason;
     }
+    if(m_payload.isverifyonly()) {
+      // Don't retry verification jobs, they should fail immediately
+      return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
+    }
     if(j.totalretries() < j.maxtotalretries()) {
       EnqueueingNextStep ret;
-        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransfer;
+      ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransfer;
       if(j.retrieswithinmount() < j.maxretrieswithinmount())
         // Job can try again within this mount
         ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransferForUser;
@@ -474,6 +479,7 @@ void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::Ret
   sr->set_archivefileid(retrieveRequest.archiveFileID);
   sr->set_dsturl(retrieveRequest.dstURL);
   sr->set_retrieveerrorreporturl(retrieveRequest.errorReportURL);
+  sr->set_isverifyonly(retrieveRequest.isVerifyOnly);
   DiskFileInfoSerDeser dfisd(retrieveRequest.diskFileInfo);
   dfisd.serialize(*sr->mutable_diskfileinfo());
   objectstore::EntryLogSerDeser el(retrieveRequest.creationLog);
@@ -494,6 +500,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   ret.creationLog = el;
   ret.dstURL = m_payload.schedulerrequest().dsturl();
   ret.errorReportURL = m_payload.schedulerrequest().retrieveerrorreporturl();
+  ret.isVerifyOnly = m_payload.schedulerrequest().isverifyonly();
   objectstore::DiskFileInfoSerDeser dfisd;
   dfisd.deserialize(m_payload.schedulerrequest().diskfileinfo());
   ret.diskFileInfo = dfisd;
@@ -950,6 +957,7 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
             retRef.m_retrieveRequest.diskFileInfo = dfi;
             retRef.m_retrieveRequest.dstURL = payload.schedulerrequest().dsturl();
             retRef.m_retrieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
+            retRef.m_retrieveRequest.isVerifyOnly = payload.schedulerrequest().isverifyonly();
             retRef.m_retrieveRequest.requester.name = payload.schedulerrequest().requester().name();
             retRef.m_retrieveRequest.requester.group = payload.schedulerrequest().requester().group();
             objectstore::ArchiveFileSerDeser af;

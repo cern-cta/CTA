@@ -196,7 +196,18 @@ std::string Scheduler::queueRetrieve(
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
   auto diskSystemList = m_catalogue.getAllDiskSystems();
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
-  // Determine disk system for this request, if any.
+  // By default, the scheduler makes its decision based on all available vids. But if a vid is specified in the protobuf,
+  // ignore all the others.
+  if(request.vid) {
+    queueCriteria.archiveFile.tapeFiles.removeAllVidsExcept(*request.vid);
+    if(queueCriteria.archiveFile.tapeFiles.empty()) {
+      exception::UserError ex;
+      ex.getMessage() << "VID " << *request.vid << " does not contain a tape copy of file with archive file ID " << request.archiveFileID;
+      throw ex;
+    }
+  }
+
+  // Determine disk system for this request, if any
   optional<std::string> diskSystemName;
   try {
     diskSystemName = diskSystemList.getDSName(request.dstURL);
@@ -232,6 +243,7 @@ std::string Scheduler::queueRetrieve(
     spc.add(tc.str(), tf);
   }
   spc.add("selectedVid", requestInfo.selectedVid)
+     .add("verifyOnly", request.isVerifyOnly)
      .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime)
      .add("policyName", queueCriteria.mountPolicy.name)

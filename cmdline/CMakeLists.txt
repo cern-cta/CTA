@@ -44,6 +44,14 @@ target_link_libraries(cta-send-event ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils
 set_property (TARGET cta-send-event APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 #
+# verify-file <archiveFileId> <vid>
+# recalls a file from tape without writing a disk copy
+#
+add_executable(cta-verify-file CtaVerifyFile.cpp)
+target_link_libraries(cta-verify-file ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
+set_property (TARGET cta-verify-file APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+
+#
 # cta-wfe-test archive|retrieve|delete <options> allows testing of the SSI WorkFlow Engine hooks
 # without invoking EOS.
 #

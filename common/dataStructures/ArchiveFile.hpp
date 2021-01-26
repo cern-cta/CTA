@@ -68,6 +68,7 @@ struct ArchiveFile {
     const TapeFile & at(uint8_t copyNb) const;
     TapeFilesList::iterator find(uint8_t copyNb);
     TapeFilesList::const_iterator find(uint8_t copyNb) const;
+    void removeAllVidsExcept(const std::string &vid);
   };
   TapeFilesList tapeFiles;
   time_t creationTime;

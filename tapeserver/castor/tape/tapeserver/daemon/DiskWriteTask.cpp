@@ -60,6 +60,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
   std::string currentErrorToCount = "";
+  bool isVerifyOnly(false);
   try{
     currentErrorToCount = "";
     // Placeholder for the disk file. We will open it only
@@ -72,7 +73,11 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
       if(MemBlock* const mb = m_fifo.pop()) {
         m_stats.waitDataTime+=localTime.secs(cta::utils::Timer::resetCounter);
         AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);
-        if(mb->isCanceled()) {
+        if(mb->isVerifyOnly()) {
+          // For verifyOnly, there is no disk file to write. Ignore the memory block and continue.
+          isVerifyOnly = true;
+          continue;
+        } else if(mb->isCanceled()) {
           // If the tape side got canceled, we report nothing and count
           // it as a success.
           lc.log(cta::log::DEBUG, "File transfer canceled");
@@ -109,8 +114,11 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
         currentErrorToCount = "";
        
         blockId++;
-      } //end if block non NULL
-      else { 
+        //end if block non NULL
+      } else if(isVerifyOnly) {
+        // No file to close, we are done
+        break;
+      } else {
         //close has to be explicit, because it may throw. 
         //A close is done  in WriteFile's destructor, but it may lead to some 
         //silent data loss
@@ -136,10 +144,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
     m_stats.waitReportingTime+=localTime.secs(cta::utils::Timer::resetCounter);
     m_stats.transferTime = transferTime.secs();
     m_stats.totalTime = totalTime.secs();
-    logWithStat(cta::log::INFO, "File successfully transfered to disk",lc);
-    watchdog.deleteParameter("stillOpenFileForThread"+
-      std::to_string((long long)threadID));
-    
+    logWithStat(cta::log::INFO, isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk", lc);
+    watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long)threadID));
     //everything went well, return true
     return true;
   } //end of try
@@ -164,7 +170,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
     m_stats.waitReportingTime+=localTime.secs(cta::utils::Timer::resetCounter);
     cta::log::ScopedParamContainer params(lc);
     params.add("errorMessage", e.getMessageValue());
-    logWithStat(cta::log::ERR, "File writing to disk failed.", lc);
+    logWithStat(cta::log::ERR, isVerifyOnly ? "File verification failed" : "File writing to disk failed", lc);
     lc.logBacktrace(cta::log::ERR, e.backtrace());
     reporter.reportFailedJob(std::move(m_retrieveJob), e);
 

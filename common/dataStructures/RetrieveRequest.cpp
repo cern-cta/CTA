@@ -28,7 +28,7 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RetrieveRequest::RetrieveRequest(): archiveFileID(0) {}
+RetrieveRequest::RetrieveRequest(): archiveFileID(0), isVerifyOnly(false) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -38,7 +38,9 @@ bool RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
       && archiveFileID==rhs.archiveFileID
       && dstURL==rhs.dstURL
       && diskFileInfo==rhs.diskFileInfo
-      && creationLog==rhs.creationLog;
+      && creationLog==rhs.creationLog
+      && isVerifyOnly==rhs.isVerifyOnly
+      && vid==rhs.vid;
 }
 
 //------------------------------------------------------------------------------
@@ -56,7 +58,10 @@ std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj) {
      << " archiveFileID=" << obj.archiveFileID
      << " dstURL=" << obj.dstURL
      << " diskFileInfo=" << obj.diskFileInfo
-     << " creationLog=" << obj.creationLog <<")";
+     << " creationLog=" << obj.creationLog
+     << " isVerifyOnly=" << obj.isVerifyOnly;
+  if(obj.vid) os << " vid=" << *(obj.vid);
+  os << ")";
   return os;
 }
 

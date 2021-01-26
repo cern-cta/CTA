@@ -44,7 +44,7 @@ namespace daemon {
 class TapeReadTask {
 public:
   /**
-   * COnstructor
+   * Constructor
    * @param ftr The file being recalled. We acquire the ownership on the pointer
    * @param destination the task that will consume the memory blocks
    * @param mm The memory manager to get free block
@@ -65,15 +65,17 @@ public:
     TapeSessionStats & stats, cta::utils::Timer & timer) {
 
     using cta::log::Param;
-    
-    bool isRepack = m_retrieveJob->m_dbJob->isRepack;
+
+    const bool isRepack = m_retrieveJob->m_dbJob->isRepack;
+    const bool isVerifyOnly = m_retrieveJob->retrieveRequest.isVerifyOnly;
     // Set the common context for all the coming logs (file info)
     cta::log::ScopedParamContainer params(lc);
     params.add("fileId", m_retrieveJob->archiveFile.archiveFileID)
           .add("BlockId", m_retrieveJob->selectedTapeFile().blockId)
           .add("fSeq", m_retrieveJob->selectedTapeFile().fSeq)
           .add("dstURL", m_retrieveJob->retrieveRequest.dstURL)
-          .add("isRepack",isRepack);
+          .add("isRepack", isRepack)
+          .add("isVerifyOnly", isVerifyOnly);
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
@@ -106,6 +108,8 @@ public:
       watchdog.notifyBeginNewJob(m_retrieveJob->archiveFile.archiveFileID, m_retrieveJob->selectedTapeFile().fSeq);
       localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       currentErrorToCount = "Error_tapeReadData";
+      auto checksum_adler32 = Payload::zeroAdler32();
+      cta::checksum::ChecksumBlob tapeReadChecksum;
       while (stillReading) {
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();
@@ -123,6 +127,11 @@ public:
           // end of file. append() also protects against reading too big tape blocks.
           while (mb->m_payload.append(*rf)) {
             tapeBlock++;
+            if(isVerifyOnly) {
+              // Normally, the checksum is calculated in DiskWriteTask::execute(). In verification-only mode, there is no
+              // write to disk. As we need to validate the checksum, we calculate it here.
+              checksum_adler32 = mb->m_payload.adler32(checksum_adler32);
+            }
           }
         } catch (const cta::exception::EndOfFile&) {
           // append() signaled the end of the file.
@@ -133,15 +142,25 @@ public:
         localStats.dataVolume += blockSize;
 	if(isRepack){
 	  localStats.repackBytesCount += blockSize;
+        } else if(isVerifyOnly) {
+          localStats.verifiedBytesCount += blockSize;
 	} else {
 	  localStats.userBytesCount += blockSize;
 	}
+        if(isVerifyOnly) {
+          // Don't write the file to disk
+          mb->markAsVerifyOnly();
+        }
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
         mb=NULL;
         watchdog.notify(blockSize);
         localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       } //end of while(stillReading)
+      if(isVerifyOnly) {
+        tapeReadChecksum.insert(cta::checksum::ADLER32, checksum_adler32);
+        m_retrieveJob->archiveFile.checksumBlob.validate(tapeReadChecksum);
+      }
       //  we have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(NULL);
       // Log the successful transfer
@@ -152,6 +171,8 @@ public:
       localStats.filesCount++;
       if(isRepack){
 	localStats.repackFilesCount++;
+      } else if(isVerifyOnly) {
+        localStats.verifiedFilesCount++;
       } else {
 	localStats.userFilesCount++;
       }
@@ -172,7 +193,13 @@ public:
 	    .add("repackFilesCount",localStats.repackFilesCount)
 	    .add("repackBytesCount",localStats.repackBytesCount)
 	    .add("userFilesCount",localStats.userFilesCount)
-	    .add("userBytesCount",localStats.userBytesCount);
+	    .add("userBytesCount",localStats.userBytesCount)
+	    .add("verifiedFilesCount",localStats.verifiedFilesCount)
+	    .add("verifiedBytesCount",localStats.verifiedBytesCount);
+      if(isVerifyOnly) {
+        params.add("checksumType", "ADLER32")
+              .add("checksumValue", cta::checksum::ChecksumBlob::ByteArrayToHex(tapeReadChecksum.at(cta::checksum::ADLER32)));
+      }
       lc.log(cta::log::INFO, "File successfully read from tape");
       // Add the local counts to the session's
       stats.add(localStats);
@@ -189,7 +216,7 @@ public:
       { 
         cta::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
         cta::log::LogContext::ScopedParam sp1(lc, Param("ErrorMessage", ex.getMessageValue()));
-        lc.log(cta::log::ERR, "Error reading a file in TapeReadFileTask (backtrace follows)");
+        lc.log(cta::log::ERR, "Error reading a file in TapeReadFileTask");
       }
       {
         cta::log::LogContext lc2(lc.logger());

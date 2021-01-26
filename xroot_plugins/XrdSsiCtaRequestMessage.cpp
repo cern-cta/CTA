@@ -561,6 +561,12 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    request.creationLog.host       = m_cliIdentity.host;
    request.creationLog.username   = m_cliIdentity.username;
    request.creationLog.time       = time(nullptr);
+   request.isVerifyOnly           = notification.wf().verify_only();
+
+   // Vid is for tape verification use case (for dual-copy files) so normally is not specified
+   if(!notification.wf().vid().empty()) {
+     request.vid = notification.wf().vid();
+   }
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t

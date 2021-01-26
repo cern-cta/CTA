@@ -98,11 +98,17 @@ namespace daemon {
     /** Count of files coming from user retrieve request transfered in the session.*/
     uint64_t userFilesCount;
     
+    /** Count of files coming from verify-only retrieve requests in the session.*/
+    uint64_t verifiedFilesCount;
+    
     /** Count of bytes coming from repack retrieve request transfered in the session.*/
     uint64_t repackBytesCount;
     
     /** Count of bytes coming from user retrieve request transfered in the session.*/
     uint64_t userBytesCount;
+    
+    /** Count of bytes coming from verify-only retrieve requests in the session.*/
+    uint64_t verifiedBytesCount;
     
     static const uint64_t headerVolumePerFile = 3*80;
     static const uint64_t trailerVolumePerFile = 3*80;
@@ -113,7 +119,8 @@ namespace daemon {
     encryptionControlTime(0.0), waitDataTime(0.0), waitFreeMemoryTime(0.0),
     waitInstructionsTime(0.0), waitReportingTime(0.0), totalTime(0.0),
     deliveryTime(0.0), dataVolume(0), headerVolume(0), filesCount(0), repackFilesCount(0), 
-    userFilesCount(0), repackBytesCount(0), userBytesCount(0) {}
+    userFilesCount(0), verifiedFilesCount(0), repackBytesCount(0), userBytesCount(0),
+    verifiedBytesCount(0) {}
     
     /** Accumulate contents of another stats block */
     void add(const TapeSessionStats& other) {
@@ -136,8 +143,10 @@ namespace daemon {
       filesCount += other.filesCount;
       repackFilesCount += other.repackFilesCount;
       userFilesCount += other.userFilesCount;
+      verifiedFilesCount += other.verifiedFilesCount;
       repackBytesCount += other.repackBytesCount;
       userBytesCount += other.userBytesCount;
+      verifiedBytesCount += other.verifiedBytesCount;
     }
   };
   

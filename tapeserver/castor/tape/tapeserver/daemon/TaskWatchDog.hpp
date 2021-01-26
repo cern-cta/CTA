@@ -211,8 +211,10 @@ protected:
       if(m_mount.getMountType() == cta::common::dataStructures::MountType::Retrieve){
 	paramList.push_back(Param("repackFilesCount",m_stats.repackFilesCount));
 	paramList.push_back(Param("userFilesCount",m_stats.userFilesCount));
+	paramList.push_back(Param("verifiedFilesCount",m_stats.verifiedFilesCount));
 	paramList.push_back(Param("repackBytesCount",m_stats.repackBytesCount));
 	paramList.push_back(Param("userBytesCount",m_stats.userBytesCount));
+	paramList.push_back(Param("verifiedBytesCount",m_stats.verifiedBytesCount));
       }
       // Ship the logs to the initial process
       m_initialProcess.addLogParams(m_driveUnitName, paramList);

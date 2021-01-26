@@ -58,6 +58,9 @@ struct RetrieveRequest {
   std::string errorReportURL;
   DiskFileInfo diskFileInfo;
   EntryLog creationLog;
+  bool isVerifyOnly;    // request to retrieve file from tape but do not write a disk copy
+  optional<std::string> vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
+
   LifecycleTimings lifecycleTimings;
   optional<std::string> activity;
 

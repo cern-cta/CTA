@@ -89,7 +89,12 @@ ArchiveFile::TapeFilesList::const_iterator ArchiveFile::TapeFilesList::find(uint
   return std::find_if(cbegin(), cend(), [=](const TapeFile& tf){ return tf.isActiveCopyNb(copyNb);});
 }
 
-
+//------------------------------------------------------------------------------
+// ArchiveFile::TapeFilesList::removeAllVidsExcept()
+//------------------------------------------------------------------------------
+void ArchiveFile::TapeFilesList::removeAllVidsExcept(const std::string &vid) {
+  remove_if([=](TapeFile& tf){ return tf.vid != vid; });
+}
 
 
 
