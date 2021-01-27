@@ -276,6 +276,8 @@ public:
 private:
   
   typedef std::pair<std::string, common::dataStructures::MountType> TapePoolMountPair;
+  typedef std::pair<std::string, common::dataStructures::MountType> VirtualOrganizationMountPair;
+  
   struct MountCounts {
     uint32_t totalMounts = 0;
     struct AutoZeroUint32_t {
@@ -283,7 +285,8 @@ private:
     };
     std::map<std::string, AutoZeroUint32_t> activityMounts;
   };
-  typedef std::map<TapePoolMountPair, MountCounts> ExistingMountSummary;
+  typedef std::map<TapePoolMountPair, MountCounts> ExistingMountSummaryPerTapepool;
+  typedef std::map<VirtualOrganizationMountPair, MountCounts> ExistingMountSummaryPerVo;
   
   const std::set<std::string> c_mandatoryEnvironmentVariables = {"XrdSecPROTOCOL", "XrdSecSSSKT"};
   
@@ -293,7 +296,7 @@ private:
    */
   void sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> &mountInfo, 
     const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer, 
-    ExistingMountSummary & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
+    ExistingMountSummaryPerTapepool & existingMountsSummaryPerTapepool, ExistingMountSummaryPerVo & existingMountSummaryPerVo, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
   
   /**
