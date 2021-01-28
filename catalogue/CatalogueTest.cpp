@@ -14756,6 +14756,24 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxDrivesAllowedFor
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,"DOES not exists",newMaxDrivesAllowedForWrite),cta::exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizationOfTapepool) {
+  using namespace cta;
+  
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  
+  common::dataStructures::VirtualOrganization vo = getVo();
+  
+  m_catalogue->createVirtualOrganization(m_admin,vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  
+  cta::common::dataStructures::VirtualOrganization voFromTapepool = m_catalogue->getVirtualOrganizationOfTapepool(m_tape1.tapePoolName);
+  ASSERT_EQ(vo,voFromTapepool);
+  
+  ASSERT_THROW(m_catalogue->getVirtualOrganizationOfTapepool("DOES_NOT_EXIST"),cta::exception::Exception);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   using namespace cta;
 

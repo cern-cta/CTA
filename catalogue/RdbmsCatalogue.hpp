@@ -238,6 +238,28 @@ public:
   std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override;
   
   /**
+   * Get the virtual organization corresponding to the tapepool passed in parameter
+   * @param tapepoolName the name of the tapepool which we want the virtual organization
+   * @return the VirtualOrganization associated to the tapepool passed in parameter
+   */
+  common::dataStructures::VirtualOrganization getVirtualOrganizationOfTapepool(const std::string & tapepoolName) const override;
+  
+  /**
+   * Get the virtual organization corresponding to the tapepool passed in parameter
+   * @param conn the database connection
+   * @param tapepoolName the name of the tapepool which we want the virtual organization
+   * @return the VirtualOrganization associated to the tapepool passed in parameter
+   */
+  common::dataStructures::VirtualOrganization getVirtualOrganizationOfTapepool(rdbms::Conn & conn, const std::string & tapepoolName) const;
+  
+  /**
+   * Get, from the cache, the virtual organization corresponding to the tapepool passed in parameter
+   * @param tapepoolName the name of the tapepool which we want the virtual organization
+   * @return the VirtualOrganization associated to the tapepool passed in parameter
+   */
+  common::dataStructures::VirtualOrganization getCachedVirtualOrganizationOfTapepool(const std::string & tapepoolName) const override;
+  
+  /**
    * Modifies the name of the specified Virtual Organization.
    *
    * @param currentVoName The current name of the Virtual Organization.
@@ -2045,6 +2067,11 @@ protected:
    * Cached versions of all mount policies
    */
   mutable TimeBasedCache<std::string, std::list<common::dataStructures::MountPolicy>> m_allMountPoliciesCache;
+  
+  /**
+   * Cached versions of virtual organization for specific tapepools
+   */
+  mutable TimeBasedCache<std::string, common::dataStructures::VirtualOrganization> m_tapepoolVirtualOrganizationCache;
 
   /**
    * Cached versions of the expected number of archive routes for specific

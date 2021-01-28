@@ -60,6 +60,7 @@ RdbmsCatalogue::RdbmsCatalogue(
   m_groupMountPolicyCache(10),
   m_userMountPolicyCache(10),
   m_allMountPoliciesCache(60),
+  m_tapepoolVirtualOrganizationCache(120),
   m_expectedNbArchiveRoutesCache(10),
   m_isAdminCache(10),
   m_activitiesFairShareWeights(10) {}
@@ -373,6 +374,8 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
 
     stmt.executeNonQuery();
     
+    m_tapepoolVirtualOrganizationCache.invalidate();
+    
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -412,6 +415,7 @@ void RdbmsCatalogue::deleteVirtualOrganization(const std::string &voName){
       throw exception::UserError(std::string("Cannot delete Virtual Organization : ") +
         voName + " because it does not exist");
     }
+    m_tapepoolVirtualOrganizationCache.invalidate();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -477,6 +481,97 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtua
 }
 
 //------------------------------------------------------------------------------
+// getVirtualOrganizationOfTapepool
+//------------------------------------------------------------------------------
+common::dataStructures::VirtualOrganization RdbmsCatalogue::getVirtualOrganizationOfTapepool(const std::string & tapepoolName) const {
+  try {
+    auto conn = m_connPool.getConn();
+    return getVirtualOrganizationOfTapepool(conn,tapepoolName);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getVirtualOrganizationOfTapepool
+//------------------------------------------------------------------------------
+common::dataStructures::VirtualOrganization RdbmsCatalogue::getVirtualOrganizationOfTapepool(rdbms::Conn & conn, const std::string & tapepoolName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
+
+        "VIRTUAL_ORGANIZATION.READ_MAX_DRIVES AS READ_MAX_DRIVES,"
+        "VIRTUAL_ORGANIZATION.WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
+
+        "VIRTUAL_ORGANIZATION.USER_COMMENT AS USER_COMMENT,"
+
+        "VIRTUAL_ORGANIZATION.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "VIRTUAL_ORGANIZATION.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "VIRTUAL_ORGANIZATION.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "VIRTUAL_ORGANIZATION.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "VIRTUAL_ORGANIZATION.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "VIRTUAL_ORGANIZATION.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "TAPE_POOL "
+      "INNER JOIN "
+        "VIRTUAL_ORGANIZATION "
+      "ON "
+        "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
+      "WHERE "
+        "TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":TAPE_POOL_NAME",tapepoolName);
+    auto rset = stmt.executeQuery();
+    if(!rset.next()){
+      throw exception::UserError(std::string("In RdbmsCatalogue::getVirtualOrganizationsOfTapepool() unable to find the Virtual Organization of the tapepool ") + tapepoolName + ".");
+    }
+    common::dataStructures::VirtualOrganization virtualOrganization;
+
+    virtualOrganization.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
+    virtualOrganization.readMaxDrives = rset.columnUint64("READ_MAX_DRIVES");
+    virtualOrganization.writeMaxDrives = rset.columnUint64("WRITE_MAX_DRIVES");
+    virtualOrganization.comment = rset.columnString("USER_COMMENT");
+    virtualOrganization.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    virtualOrganization.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    virtualOrganization.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+    virtualOrganization.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    virtualOrganization.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    virtualOrganization.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+    return virtualOrganization;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getCachedVirtualOrganizationOfTapepool
+//------------------------------------------------------------------------------
+common::dataStructures::VirtualOrganization RdbmsCatalogue::getCachedVirtualOrganizationOfTapepool(const std::string & tapepoolName) const {
+  try {
+    auto getNonCachedValue = [&] {
+      auto conn = m_connPool.getConn();
+      return getVirtualOrganizationOfTapepool(conn,tapepoolName);
+    };
+    return m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName,getNonCachedValue);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // modifyVirtualOrganizationName
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity& admin, const std::string& currentVoName, const std::string& newVoName) {
@@ -508,6 +603,9 @@ void RdbmsCatalogue::modifyVirtualOrganizationName(const common::dataStructures:
       throw exception::UserError(std::string("Cannot modify virtual organization : ") + currentVoName +
         " because it does not exist");
     }
+    
+    m_tapepoolVirtualOrganizationCache.invalidate();
+    
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -541,6 +639,9 @@ void RdbmsCatalogue::modifyVirtualOrganizationReadMaxDrives(const common::dataSt
       throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
         " because it does not exist");
     }
+    
+    m_tapepoolVirtualOrganizationCache.invalidate();
+    
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -574,6 +675,9 @@ void RdbmsCatalogue::modifyVirtualOrganizationWriteMaxDrives(const common::dataS
       throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
         " because it does not exist");
     }
+    
+    m_tapepoolVirtualOrganizationCache.invalidate();
+    
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2077,6 +2181,9 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
       if(0 == stmt.getNbAffectedRows()) {
         throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
       }
+      
+      m_tapepoolVirtualOrganizationCache.invalidate();
+      
     } else {
       throw UserSpecifiedAnEmptyTapePool(std::string("Cannot delete tape-pool ") + name + " because it is not empty");
     }
@@ -2326,6 +2433,8 @@ void RdbmsCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIden
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
     }
+    //The VO of this tapepool has changed, invalidate the tapepool-VO cache
+    m_tapepoolVirtualOrganizationCache.invalidate();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2534,6 +2643,9 @@ void RdbmsCatalogue::modifyTapePoolName(const common::dataStructures::SecurityId
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape pool ") + currentName + " because it does not exist");
     }
+    
+    m_tapepoolVirtualOrganizationCache.invalidate();
+    
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

@@ -605,9 +605,6 @@ public:
     
     uint64_t priority;            /**< The priority for the mount, defined as the highest 
                                    * priority of all queued jobs */
-    uint64_t maxDrivesAllowed;    /**< The maximum number of drives allowed for this 
-                                   * tape pool, defined as the highest value amongst 
-                                   * jobs */
     time_t minRequestAge;         /**< The maximum amount of time to wait before 
                                    * forcing a mount in the absence of enough data. 
                                    * Defined as the smallest value amongst jobs.*/

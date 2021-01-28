@@ -127,6 +127,14 @@ public:
   std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getVirtualOrganizations();}, m_maxTriesToConnect);
   }
+
+  common::dataStructures::VirtualOrganization getVirtualOrganizationOfTapepool(const std::string & tapepoolName) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getVirtualOrganizationOfTapepool(tapepoolName);}, m_maxTriesToConnect);
+  }
+  
+  common::dataStructures::VirtualOrganization getCachedVirtualOrganizationOfTapepool(const std::string & tapepoolName) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getCachedVirtualOrganizationOfTapepool(tapepoolName);}, m_maxTriesToConnect);
+  }
   
   void modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName, const std::string &newVoName) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationName(admin,currentVoName,newVoName);}, m_maxTriesToConnect);

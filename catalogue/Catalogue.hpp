@@ -290,6 +290,20 @@ public:
   virtual std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const = 0;
   
   /**
+   * Get the virtual organization corresponding to the tapepool passed in parameter
+   * @param tapepoolName the name of the tapepool which we want the virtual organization
+   * @return the VirtualOrganization associated to the tapepool passed in parameter
+   */
+  virtual common::dataStructures::VirtualOrganization getVirtualOrganizationOfTapepool(const std::string & tapepoolName) const = 0;
+  
+  /**
+   * Get, from the cache, the virtual organization corresponding to the tapepool passed in parameter
+   * @param tapepoolName the name of the tapepool which we want the virtual organization
+   * @return the VirtualOrganization associated to the tapepool passed in parameter
+   */
+  virtual common::dataStructures::VirtualOrganization getCachedVirtualOrganizationOfTapepool(const std::string & tapepoolName) const = 0;
+  
+  /**
    * Modifies the name of the specified Virtual Organization.
    *
    * @param currentVoName The current name of the Virtual Organization.

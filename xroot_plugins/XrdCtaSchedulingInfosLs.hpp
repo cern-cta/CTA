@@ -88,7 +88,6 @@ int SchedulingInfosLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
       potentialMountToAdd->set_tape_capacity_in_bytes(potentialMount.capacityInBytes);
       potentialMountToAdd->set_mount_policy_priority(potentialMount.priority);
       potentialMountToAdd->set_mount_policy_min_request_age(potentialMount.minRequestAge);
-      potentialMountToAdd->set_mount_policy_max_drives_allowed(potentialMount.maxDrivesAllowed);
       potentialMountToAdd->set_files_queued(potentialMount.filesQueued);
       potentialMountToAdd->set_bytes_queued(potentialMount.bytesQueued);
       potentialMountToAdd->set_oldest_job_start_time(potentialMount.oldestJobStartTime);

@@ -223,7 +223,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       m.oldestJobStartTime = aqueueJobsSummary.oldestJobStartTime;
       //By default, we get the mountPolicies from the objectstore's queue counters
       m.priority = aqueueJobsSummary.priority;
-      m.maxDrivesAllowed = aqueueJobsSummary.maxDrivesAllowed;
       m.minRequestAge = aqueueJobsSummary.minArchiveRequestAge;
       //If there are mount policies in the Catalogue
       if(mountPolicies.size()) {
@@ -233,7 +232,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         if(mountPoliciesInQueueList.size()){
           auto mountPolicyToUse = createBestArchiveMountPolicy(mountPoliciesInQueueList);
           m.priority = mountPolicyToUse.archivePriority;
-          m.maxDrivesAllowed = mountPolicyToUse.maxDrivesAllowed;
           m.minRequestAge = mountPolicyToUse.archiveMinRequestAge;
         }
       }
@@ -284,7 +282,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       m.filesQueued = aqueueRepackJobsSummary.jobs;      
       m.oldestJobStartTime = aqueueRepackJobsSummary.oldestJobStartTime;
       m.priority = aqueueRepackJobsSummary.priority;
-      m.maxDrivesAllowed = aqueueRepackJobsSummary.maxDrivesAllowed;
       m.minRequestAge = aqueueRepackJobsSummary.minArchiveRequestAge;
       //If there are mount policies in the Catalogue
       if(mountPolicies.size()) {
@@ -294,7 +291,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         if(mountPoliciesInQueueList.size()){
           auto mountPolicyToUse = createBestArchiveMountPolicy(mountPoliciesInQueueList);
           m.priority = mountPolicyToUse.archivePriority;
-          m.maxDrivesAllowed = mountPolicyToUse.maxDrivesAllowed;
           m.minRequestAge = mountPolicyToUse.archiveMinRequestAge;
         }
       }
@@ -376,7 +372,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
     if (rqSummary.jobs && (isPotentialMount || purpose == SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES)) {
       //Getting the default mountPolicies parameters from the queue summary
-      uint64_t maxDrivesAllowed = rqSummary.maxDrivesAllowed;
       uint64_t minRetrieveRequestAge = rqSummary.minRetrieveRequestAge;
       uint64_t priority = rqSummary.priority;
       //Try to get the last values of the mountPolicies from the ones in the Catalogue
@@ -387,7 +382,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
           common::dataStructures::MountPolicy mountPolicyToUse = createBestRetrieveMountPolicy(mountPoliciesInQueueList);
           priority = mountPolicyToUse.retrievePriority;
-          maxDrivesAllowed = mountPolicyToUse.maxDrivesAllowed;
           minRetrieveRequestAge = mountPolicyToUse.retrieveMinRequestAge;
         }
       }
@@ -406,7 +400,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.filesQueued = rqSummary.jobs;
           m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
           m.priority = priority;
-          m.maxDrivesAllowed = maxDrivesAllowed;
           m.minRequestAge = minRetrieveRequestAge;
           m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
           m.tapePool = "";       // The tape pool is not know and will be determined by the caller.
@@ -439,7 +432,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         m.filesQueued = rqSummary.jobs;      
         m.oldestJobStartTime = rqSummary.oldestJobStartTime;
         m.priority = priority;
-        m.maxDrivesAllowed = maxDrivesAllowed;
         m.minRequestAge = minRetrieveRequestAge;
         m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
         m.tapePool = "";       // The tape pool is not know and will be determined by the caller.

@@ -296,7 +296,7 @@ private:
    */
   void sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> &mountInfo, 
     const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer, 
-    ExistingMountSummaryPerTapepool & existingMountsSummaryPerTapepool, ExistingMountSummaryPerVo & existingMountSummaryPerVo, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
+    ExistingMountSummaryPerTapepool & existingMountsDistinctTypeSummaryPerTapepool, ExistingMountSummaryPerVo & existingMountBasicTypeSummaryPerVo, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
   
   /**
