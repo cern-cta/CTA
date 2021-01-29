@@ -5431,10 +5431,10 @@ using namespace cta;
   
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
   
+  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
+  
   //The archiveMinRequestAge should have 1 second to trigger a mount
   ::sleep(1);
-  
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
   
@@ -5489,10 +5489,10 @@ using namespace cta;
   //mount should not be triggered
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
   
+  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
+  
   //Sleeping one second to trigger a mount
   ::sleep(1);
-  
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
   
