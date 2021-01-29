@@ -166,7 +166,6 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       afqc.mountPolicy.archiveMinRequestAge = 0;
       afqc.mountPolicy.retrievePriority = 1;
       afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.maxDrivesAllowed = 10;
       afqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
       afqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       afqc.mountPolicy.comment = "comment";
@@ -246,7 +245,6 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       afqc.mountPolicy.archiveMinRequestAge = 0;
       afqc.mountPolicy.retrievePriority = 1;
       afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.maxDrivesAllowed = 10;
       afqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
       afqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       afqc.mountPolicy.comment = "comment";
@@ -343,7 +341,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
       rfqc.mountPolicy.archiveMinRequestAge = 0;
       rfqc.mountPolicy.retrievePriority = 1;
       rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.maxDrivesAllowed = 10;
       rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.comment = "comment";
@@ -430,7 +427,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       rfqc.mountPolicy.archiveMinRequestAge = 0;
       rfqc.mountPolicy.retrievePriority = 1;
       rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.maxDrivesAllowed = 10;
       rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.comment = "comment";
@@ -531,7 +527,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       rfqc.mountPolicy.archiveMinRequestAge = 0;
       rfqc.mountPolicy.retrievePriority = 1;
       rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.maxDrivesAllowed = 10;
       rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.comment = "comment";

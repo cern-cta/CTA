@@ -1390,7 +1390,6 @@ void RequestMessage::processMountPolicy_Add(cta::xrd::Response &response)
    auto &minarchiverequestage  = getRequired(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
    auto &retrievepriority      = getRequired(OptionUInt64::RETRIEVE_PRIORITY);
    auto &minretrieverequestage = getRequired(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
-   auto &maxdrivesallowed      = getRequired(OptionUInt64::MAX_DRIVES_ALLOWED);
    auto &comment               = getRequired(OptionString::COMMENT);
    
    cta::catalogue::CreateMountPolicyAttributes mountPolicy;
@@ -1399,7 +1398,6 @@ void RequestMessage::processMountPolicy_Add(cta::xrd::Response &response)
    mountPolicy.minArchiveRequestAge = minarchiverequestage;
    mountPolicy.retrievePriority = retrievepriority;
    mountPolicy.minRetrieveRequestAge = minretrieverequestage;
-   mountPolicy.maxDrivesAllowed = maxdrivesallowed;
    mountPolicy.comment = comment;
 
    m_catalogue.createMountPolicy(m_cliIdentity, mountPolicy);
@@ -1418,7 +1416,6 @@ void RequestMessage::processMountPolicy_Ch(cta::xrd::Response &response)
    auto  minarchiverequestage  = getOptional(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
    auto  retrievepriority      = getOptional(OptionUInt64::RETRIEVE_PRIORITY);
    auto  minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
-   auto  maxdrivesallowed      = getOptional(OptionUInt64::MAX_DRIVES_ALLOWED);
    auto  comment               = getOptional(OptionString::COMMENT);
 
    if(archivepriority) {
@@ -1432,9 +1429,6 @@ void RequestMessage::processMountPolicy_Ch(cta::xrd::Response &response)
    }
    if(minretrieverequestage) {
       m_catalogue.modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group, minretrieverequestage.value());
-   }
-   if(maxdrivesallowed) {
-      m_catalogue.modifyMountPolicyMaxDrivesAllowed(m_cliIdentity, group, maxdrivesallowed.value());
    }
    if(comment) {
       m_catalogue.modifyMountPolicyComment(m_cliIdentity, group, comment.value());

@@ -614,7 +614,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationName(const common::dataStructures:
   }
 }
 
-void RdbmsCatalogue::modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForRead){
+void RdbmsCatalogue::modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives){
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -628,7 +628,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationReadMaxDrives(const common::dataSt
     auto conn = m_connPool.getConn();
    
     auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":READ_MAX_DRIVES", maxDrivesAllowedForRead);
+    stmt.bindUint64(":READ_MAX_DRIVES", readMaxDrives);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -650,7 +650,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationReadMaxDrives(const common::dataSt
   }
 }
 
-void RdbmsCatalogue::modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForWrite){
+void RdbmsCatalogue::modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives){
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -664,7 +664,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationWriteMaxDrives(const common::dataS
     auto conn = m_connPool.getConn();
    
     auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":WRITE_MAX_DRIVES", maxDrivesAllowedForWrite);
+    stmt.bindUint64(":WRITE_MAX_DRIVES", writeMaxDrives);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -5142,8 +5142,6 @@ void RdbmsCatalogue::createMountPolicy(const common::dataStructures::SecurityIde
         "RETRIEVE_PRIORITY,"
         "RETRIEVE_MIN_REQUEST_AGE,"
 
-        "MAX_DRIVES_ALLOWED,"
-
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
@@ -5161,8 +5159,6 @@ void RdbmsCatalogue::createMountPolicy(const common::dataStructures::SecurityIde
 
         ":RETRIEVE_PRIORITY,"
         ":RETRIEVE_MIN_REQUEST_AGE,"
-
-        ":MAX_DRIVES_ALLOWED,"
 
         ":USER_COMMENT,"
 
@@ -5182,8 +5178,6 @@ void RdbmsCatalogue::createMountPolicy(const common::dataStructures::SecurityIde
 
     stmt.bindUint64(":RETRIEVE_PRIORITY", mountPolicy.retrievePriority);
     stmt.bindUint64(":RETRIEVE_MIN_REQUEST_AGE", mountPolicy.minRetrieveRequestAge);
-
-    stmt.bindUint64(":MAX_DRIVES_ALLOWED", mountPolicy.maxDrivesAllowed);
     
     stmt.bindString(":USER_COMMENT", mountPolicy.comment);
 
@@ -5490,8 +5484,6 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupM
         "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
         "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
-        "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
-
         "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
 
         "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
@@ -5524,8 +5516,6 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupM
 
       policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
-
-      policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
 
       policy.comment = rset.columnString("USER_COMMENT");
       policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -5719,8 +5709,6 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountP
         "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
         "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
-        "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
-
         "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
 
         "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
@@ -5753,8 +5741,6 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountP
 
       policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
-
-      policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
 
       policy.comment = rset.columnString("USER_COMMENT");
 
@@ -5864,8 +5850,6 @@ try {
         "RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
         "RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
 
-        "MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
-
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
@@ -5891,8 +5875,6 @@ try {
 
       policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
-
-      policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
       
       policy.comment = rset.columnString("USER_COMMENT");
 
@@ -6069,45 +6051,6 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":RETRIEVE_MIN_REQUEST_AGE", minRetrieveRequestAge);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":MOUNT_POLICY_NAME", name);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
-    }
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-
-  m_groupMountPolicyCache.invalidate();
-  m_userMountPolicyCache.invalidate();
-  m_allMountPoliciesCache.invalidate();
-}
-
-//------------------------------------------------------------------------------
-// modifyMountPolicyMaxDrivesAllowed
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t maxDrivesAllowed) {
-  try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE MOUNT_POLICY SET "
-        "MAX_DRIVES_ALLOWED = :MAX_DRIVES_ALLOWED,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":MAX_DRIVES_ALLOWED", maxDrivesAllowed);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -7650,7 +7593,6 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
         "MOUNT_POLICY.ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
         "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
         "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
-        "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
         "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
         "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
@@ -7677,7 +7619,6 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
         "MOUNT_POLICY.ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
         "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
         "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
-        "MOUNT_POLICY.MAX_DRIVES_ALLOWED AS MAX_DRIVES_ALLOWED,"
         "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
         "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
@@ -7711,7 +7652,6 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
       policy.archiveMinRequestAge = rset.columnUint64("ARCHIVE_MIN_REQUEST_AGE");
       policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
-      policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
       policy.comment = rset.columnString("USER_COMMENT");
       policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       policy.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");

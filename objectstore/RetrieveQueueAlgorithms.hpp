@@ -31,7 +31,7 @@ struct ContainerTraits<RetrieveQueue,C>
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
     ContainerSummary(const RetrieveQueue::JobsSummary &c) : 
       RetrieveQueue::JobsSummary({c.jobs,c.bytes,c.oldestJobStartTime,c.priority,
-          c.minRetrieveRequestAge,c.maxDrivesAllowed,c.mountPolicyCountMap,c.activityCounts,nullopt}) {}
+          c.minRetrieveRequestAge,c.mountPolicyCountMap,c.activityCounts,nullopt}) {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
   

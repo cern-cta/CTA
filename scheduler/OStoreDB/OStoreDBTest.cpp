@@ -134,7 +134,6 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
     afqc.mountPolicy.retrieveMinRequestAge = 1;
     afqc.mountPolicy.retrievePriority = 1;
     afqc.mountPolicy.retrieveMinRequestAge = 1;
-    afqc.mountPolicy.maxDrivesAllowed = 1;
     osdbi.queueArchive("testInstance", ar, afqc, lc);
     osdbi.waitSubthreadsComplete();
   }

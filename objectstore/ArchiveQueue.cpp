@@ -90,12 +90,10 @@ bool ArchiveQueue::checkMapsAndShardsCoherency() {
       totalJobs != jobsExpectedFromShardsPointers)
     return false;
   // Check that we have coherent queue summaries
-  ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
   ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
-  if (maxDriveAllowedMap.total() != m_payload.archivejobscount() || 
-      priorityMap.total() != m_payload.archivejobscount() ||
+  if (priorityMap.total() != m_payload.archivejobscount() ||
       minArchiveRequestAgeMap.total() != m_payload.archivejobscount() ||
       mountPolicyNameMap.total() != m_payload.archivejobscount()
     )
@@ -116,8 +114,6 @@ void ArchiveQueue::rebuild() {
   std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
   
   // Get the summaries structures ready
-  ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-  maxDriveAllowedMap.clear();
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   priorityMap.clear();
   ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
@@ -158,7 +154,6 @@ void ArchiveQueue::rebuild() {
         size += j.size;
         priorityMap.incCount(j.priority);
         minArchiveRequestAgeMap.incCount(j.minArchiveRequestAge);
-        maxDriveAllowedMap.incCount(j.maxDrivesAllowed);
         mountPolicyNameMap.incCount(j.mountPolicyName);
         if (j.startTime < oldestJobCreationTime) oldestJobCreationTime = j.startTime;
       }
@@ -380,13 +375,11 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
     {
       // As the queue could be rebuilt on each shard round, we get access to the 
       // value maps here
-      ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
       ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
       ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
       ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
       while (nextJob != jobsToAdd.end() && aqsp->shardjobscount() < c_maxShardSize) {
         // Update stats and global counters.
-        maxDriveAllowedMap.incCount(nextJob->policy.maxDrivesAllowed);
         priorityMap.incCount(nextJob->policy.archivePriority);
         minArchiveRequestAgeMap.incCount(nextJob->policy.archiveMinRequestAge);
         mountPolicyNameMap.incCount(nextJob->policy.name);
@@ -425,8 +418,6 @@ auto ArchiveQueue::getJobsSummary() -> JobsSummary {
   ret.bytes = m_payload.archivejobstotalsize();
   ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
   if (ret.jobs) {
-    ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-    ret.maxDrivesAllowed = maxDriveAllowedMap.maxValue();
     ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
     ret.priority = priorityMap.maxValue();
     ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
@@ -434,7 +425,6 @@ auto ArchiveQueue::getJobsSummary() -> JobsSummary {
     ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
     ret.mountPolicyCountMap = mountPolicyNameMap.getMap();
   } else {
-    ret.maxDrivesAllowed = 0;
     ret.priority = 0;
     ret.minArchiveRequestAge = 0;
   }
@@ -494,7 +484,6 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
 
 void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove) {
   checkPayloadWritable();
-  ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
   ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
@@ -521,7 +510,6 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
     // We still need to update the tracking queue side.
     // Update stats and remove the jobs from the todo list.
     for (auto & j: removalResult.removedJobs) {
-      maxDriveAllowedMap.decCount(j.maxDrivesAllowed);
       priorityMap.decCount(j.priority);
       minArchiveRequestAgeMap.decCount(j.minArchiveRequestAge);
       mountPolicyNameMap.decCount(j.mountPolicyName);

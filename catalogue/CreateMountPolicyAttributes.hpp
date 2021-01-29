@@ -32,7 +32,6 @@ namespace catalogue {
     uint64_t minArchiveRequestAge;
     uint64_t retrievePriority;
     uint64_t minRetrieveRequestAge;
-    uint64_t maxDrivesAllowed;
     std::string comment;
   };
   

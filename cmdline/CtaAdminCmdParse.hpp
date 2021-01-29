@@ -277,7 +277,6 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--capacity",              OptionUInt64::CAPACITY },
    { "--copynb",                OptionUInt64::COPY_NUMBER },
    { "--id",                    OptionUInt64::ARCHIVE_FILE_ID },
-   { "--maxdrivesallowed",      OptionUInt64::MAX_DRIVES_ALLOWED },
    { "--maxlpos",               OptionUInt64::MAX_LPOS },
    { "--minarchiverequestage",  OptionUInt64::MIN_ARCHIVE_REQUEST_AGE },
    { "--minlpos",               OptionUInt64::MIN_LPOS },
@@ -446,7 +445,6 @@ const Option opt_log                  { Option::OPT_FLAG, "--log",              
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>", "--logicallibrary" };
 const Option opt_lookupns             { Option::OPT_FLAG, "--lookupnamespace",       "-l",   "" };
-const Option opt_maxdrivesallowed     { Option::OPT_UINT, "--maxdrivesallowed",      "-d",   " <max_drives_allowed>" };
 const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "-maxl", " <maximum_longitudinal_position>" };
 const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type_name>" };
 const Option opt_mediatype_alias      { Option::OPT_STR,  "--name",                  "-n",   " <media_type_name>", "--mediatype" };
@@ -539,10 +537,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_ADD   },
       { opt_mountpolicy_alias, opt_archivepriority, opt_minarchiverequestage, opt_retrievepriority,
-        opt_minretrieverequestage, opt_maxdrivesallowed, opt_comment }},
+        opt_minretrieverequestage, opt_comment }},
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_CH    },
       { opt_mountpolicy_alias, opt_archivepriority.optional(), opt_minarchiverequestage.optional(),
-        opt_retrievepriority.optional(), opt_minretrieverequestage.optional(), opt_maxdrivesallowed.optional(),
+        opt_retrievepriority.optional(), opt_minretrieverequestage.optional(),
         opt_comment.optional() }},
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_RM    }, { opt_mountpolicy_alias }},
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { }},

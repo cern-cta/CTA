@@ -167,7 +167,6 @@ public:
     const uint64_t minArchiveRequestAge = s_minArchiveRequestAge;
     const uint64_t retrievePriority = s_retrievePriority;
     const uint64_t minRetrieveRequestAge = s_minRetrieveRequestAge;
-    const uint64_t maxDrivesAllowed = s_maxDrivesAllowed;
     const std::string mountPolicyComment = "create mount group";
     
     catalogue::CreateMountPolicyAttributes mountPolicy;
@@ -176,7 +175,6 @@ public:
     mountPolicy.minArchiveRequestAge = minArchiveRequestAge;
     mountPolicy.retrievePriority = retrievePriority;
     mountPolicy.minRetrieveRequestAge = minRetrieveRequestAge;
-    mountPolicy.maxDrivesAllowed = maxDrivesAllowed;
     mountPolicy.comment = mountPolicyComment;
 
     ASSERT_TRUE(catalogue.getMountPolicies().empty());
@@ -193,7 +191,6 @@ public:
     ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
     ASSERT_EQ(retrievePriority, group.retrievePriority);
     ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
-    ASSERT_EQ(maxDrivesAllowed, group.maxDrivesAllowed);
     ASSERT_EQ(mountPolicyComment, group.comment);
 
     const std::string ruleComment = "create requester mount-rule";
@@ -293,7 +290,6 @@ protected:
   const uint64_t s_minArchiveRequestAge = 2; 
   const uint64_t s_retrievePriority = 3;
   const uint64_t s_minRetrieveRequestAge = 4; 
-  const uint64_t s_maxDrivesAllowed = 50;
   const uint64_t s_mediaTypeCapacityInBytes = 10;
   const std::string s_vo = "vo";
   //TempFile m_tempSqliteFile;
@@ -4023,7 +4019,6 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     ar->setJobStatus(1, serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
     cta::common::dataStructures::MountPolicy mp;
     mp.archiveMinRequestAge = 250000;
-    mp.maxDrivesAllowed = 1;
     ar->setMountPolicy(mp);
     ar->setArchiveReportURL("");
     ar->setArchiveErrorReportURL("");
@@ -4058,7 +4053,6 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     ar->setJobStatus(1, serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
     cta::common::dataStructures::MountPolicy mp;
     mp.archiveMinRequestAge = 250000;
-    mp.maxDrivesAllowed = 1;
     ar->setMountPolicy(mp);
     ar->setArchiveReportURL("");
     ar->setArchiveErrorReportURL("");
@@ -4849,10 +4843,10 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     bool nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
-    //nextMount should be false as the maxDrivesAllowed is 0
+    //nextMount should be false as the VO write max drives is 0
     ASSERT_FALSE(nextMount);
     catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
-    //Reset the maxDrivesAllowed to a positive number should give a new mount
+    //Reset the VO write max drives to a positive number should give a new mount
     nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
     ASSERT_TRUE(nextMount);
   }

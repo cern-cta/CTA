@@ -68,7 +68,6 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     jta.copyNb = 1;
     jta.fSeq = i;
     jta.fileSize = 1000;
-    jta.policy.maxDrivesAllowed = 10;
     jta.policy.retrieveMinRequestAge = 10;
     jta.policy.retrievePriority = 1;
     jta.startTime = ::time(nullptr);
@@ -169,7 +168,6 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
     jta.copyNb = 1;
     jta.fSeq = i;
     jta.fileSize = 1000;
-    jta.policy.maxDrivesAllowed = 10;
     jta.policy.retrieveMinRequestAge = 10;
     jta.policy.retrievePriority = 1;
     jta.startTime = ::time(nullptr);

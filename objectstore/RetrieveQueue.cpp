@@ -69,12 +69,10 @@ bool RetrieveQueue::checkMapsAndShardsCoherency() {
       totalJobs != jobsExpectedFromShardsPointers)
     return false;
   // Check that we have coherent queue summaries
-  ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
   ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
-  if (maxDriveAllowedMap.total() != m_payload.retrievejobscount() || 
-      priorityMap.total() != m_payload.retrievejobscount() ||
+  if (priorityMap.total() != m_payload.retrievejobscount() ||
       minRetrieveRequestAgeMap.total() != m_payload.retrievejobscount() || 
       mountPolicyNameMap.total() != m_payload.retrievejobscount()
     )
@@ -95,8 +93,6 @@ void RetrieveQueue::rebuild() {
   std::list<std::unique_ptr<RetrieveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
   
   // Get the summaries structures ready
-  ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-  maxDriveAllowedMap.clear();
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   priorityMap.clear();
   ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
@@ -139,7 +135,6 @@ void RetrieveQueue::rebuild() {
         size += j.size;
         priorityMap.incCount(j.priority);
         minRetrieveRequestAgeMap.incCount(j.minRetrieveRequestAge);
-        maxDriveAllowedMap.incCount(j.maxDrivesAllowed);
         mountPolicyNameMap.incCount(j.mountPolicyName);
         if (j.startTime < oldestJobCreationTime) oldestJobCreationTime = j.startTime;
         if (j.fSeq < minFseq) minFseq = j.fSeq;
@@ -304,7 +299,6 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
   checkPayloadWritable();
   if (jobsToAdd.empty()) return;
   // Keep track of the mounting criteria
-  ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
   ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
@@ -481,7 +475,6 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
       jtas.insert(j);
       addedJobs++;
       addedBytes+=j.fileSize;
-      maxDriveAllowedMap.incCount(j.policy.maxDrivesAllowed);
       priorityMap.incCount(j.policy.retrievePriority);
       minRetrieveRequestAgeMap.incCount(j.policy.retrieveMinRequestAge);
       mountPolicyNameMap.incCount(j.policy.name);
@@ -588,8 +581,6 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
   ret.jobs = m_payload.retrievejobscount();
   ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
   if (ret.jobs) {
-    ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-    ret.maxDrivesAllowed = maxDriveAllowedMap.maxValue();
     ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
     ret.priority = priorityMap.maxValue();
     ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
@@ -608,7 +599,6 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
       ret.sleepInfo = si;
     }
   } else {
-    ret.maxDrivesAllowed = 0;
     ret.priority = 0;
     ret.minRetrieveRequestAge = 0;
   }
@@ -683,7 +673,6 @@ auto RetrieveQueue::getCandidateSummary() -> CandidateJobList {
 
 void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove) {
   checkPayloadWritable();
-  ValueCountMapUint64 maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
   ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
@@ -713,7 +702,6 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
     bool needToRebuild = false;
     time_t oldestJobCreationTime = m_payload.oldestjobcreationtime();
     for (auto & j: removalResult.removedJobs) {
-      maxDriveAllowedMap.decCount(j.maxDrivesAllowed);
       priorityMap.decCount(j.priority);
       minRetrieveRequestAgeMap.decCount(j.minRetrieveRequestAge);
       mountPolicyNameMap.decCount(j.mountPolicyName);

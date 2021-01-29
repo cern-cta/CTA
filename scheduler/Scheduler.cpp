@@ -161,7 +161,6 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, con
   spc.add("policyName", catalogueInfo.mountPolicy.name)
      .add("policyArchiveMinAge", catalogueInfo.mountPolicy.archiveMinRequestAge)
      .add("policyArchivePriority", catalogueInfo.mountPolicy.archivePriority)
-     .add("policyMaxDrives", catalogueInfo.mountPolicy.maxDrivesAllowed)
      .add("diskFilePath", request.diskFileInfo.path)
      .add("diskFileOwnerUid", request.diskFileInfo.owner_uid)
      .add("diskFileGid", request.diskFileInfo.gid)
@@ -247,7 +246,6 @@ std::string Scheduler::queueRetrieve(
      .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime)
      .add("policyName", queueCriteria.mountPolicy.name)
-     .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
      .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
      .add("policyPriority", queueCriteria.mountPolicy.retrievePriority)
      .add("retrieveRequestId", requestInfo.requestId);

@@ -50,7 +50,6 @@ public:
     uint32_t copyNb;
     uint64_t priority;
     uint64_t minRetrieveRequestAge;
-    uint64_t maxDrivesAllowed;
     time_t startTime;
     uint64_t fSeq;
     std::string mountPolicyName;

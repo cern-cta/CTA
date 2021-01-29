@@ -97,7 +97,6 @@ auto ArchiveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) -
           ret.removedJobs.emplace_back(JobInfo());
           ret.removedJobs.back().address = j.address();
           ret.removedJobs.back().copyNb = j.copynb();
-          ret.removedJobs.back().maxDrivesAllowed = j.maxdrivesallowed();
           ret.removedJobs.back().minArchiveRequestAge = j.minarchiverequestage();
           ret.removedJobs.back().priority = j.priority();
           ret.removedJobs.back().size = j.size();
@@ -137,7 +136,7 @@ auto ArchiveQueueShard::dumpJobs() -> std::list<JobInfo> {
   std::list<JobInfo> ret;
   for (auto &j: m_payload.archivejobs()) {
     ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
-        j.minarchiverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(),j.mountpolicyname()});
+        j.minarchiverequestage(), (time_t)j.starttime(),j.mountpolicyname()});
   }
   return ret;
 }
@@ -157,7 +156,6 @@ uint64_t ArchiveQueueShard::addJob(ArchiveQueue::JobToAdd& jobToAdd) {
   j->set_size(jobToAdd.fileSize);
   j->set_fileid(jobToAdd.archiveFileId);
   j->set_copynb(jobToAdd.job.copyNb);
-  j->set_maxdrivesallowed(jobToAdd.policy.maxDrivesAllowed);
   j->set_priority(jobToAdd.policy.archivePriority);
   j->set_minarchiverequestage(jobToAdd.policy.archiveMinRequestAge);
   j->set_starttime(jobToAdd.startTime);

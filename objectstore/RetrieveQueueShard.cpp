@@ -107,7 +107,6 @@ auto RetrieveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) 
           ret.removedJobs.back().address = j.address();
           ret.removedJobs.back().fSeq = j.fseq();
           ret.removedJobs.back().copyNb = j.copynb();
-          ret.removedJobs.back().maxDrivesAllowed = j.maxdrivesallowed();
           ret.removedJobs.back().minRetrieveRequestAge = j.minretrieverequestage();
           ret.removedJobs.back().priority = j.priority();
           ret.removedJobs.back().mountPolicyName = j.mountpolicyname();
@@ -151,7 +150,7 @@ auto RetrieveQueueShard::dumpJobs() -> std::list<JobInfo> {
   std::list<JobInfo> ret;
   for (auto &j: m_payload.retrievejobs()) {
     ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
-        j.minretrieverequestage(), j.maxdrivesallowed(), (time_t)j.starttime(), j.fseq(), j.mountpolicyname(), nullopt, nullopt});
+        j.minretrieverequestage(), (time_t)j.starttime(), j.fseq(), j.mountpolicyname(), nullopt, nullopt});
     if (j.has_activity()) {
       ret.back().activityDescription = RetrieveQueue::JobDump::ActivityDescription{ j.disk_instance_name(), j.activity() };
     }
@@ -171,7 +170,6 @@ std::list<RetrieveQueue::JobToAdd> RetrieveQueueShard::dumpJobsToAdd() {
     ret.back().fSeq = j.fseq();
     ret.back().fileSize = j.size();
     ret.back().policy.retrieveMinRequestAge = j.minretrieverequestage();
-    ret.back().policy.maxDrivesAllowed = j.maxdrivesallowed();
     ret.back().policy.retrievePriority = j.priority();
     ret.back().policy.name = j.mountpolicyname();
     ret.back().startTime = j.starttime();
@@ -279,7 +277,6 @@ void RetrieveQueueShard::addJob(const RetrieveQueue::JobToAdd& jobToAdd) {
   j->set_copynb(jobToAdd.copyNb);
   j->set_fseq(jobToAdd.fSeq);
   j->set_starttime(jobToAdd.startTime);
-  j->set_maxdrivesallowed(jobToAdd.policy.maxDrivesAllowed);
   j->set_priority(jobToAdd.policy.retrievePriority);
   j->set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
   j->set_mountpolicyname(jobToAdd.policy.name);
@@ -317,7 +314,6 @@ void RetrieveQueueShard::addJobsThroughCopy(JobsToAddSet& jobsToAdd) {
     rjp.set_copynb(jobToAdd.copyNb);
     rjp.set_fseq(jobToAdd.fSeq);
     rjp.set_starttime(jobToAdd.startTime);
-    rjp.set_maxdrivesallowed(jobToAdd.policy.maxDrivesAllowed);
     rjp.set_priority(jobToAdd.policy.retrievePriority);
     rjp.set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
     rjp.set_mountpolicyname(jobToAdd.policy.name);

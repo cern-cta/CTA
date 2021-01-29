@@ -47,7 +47,6 @@ struct MountPolicy {
   uint64_t archiveMinRequestAge;
   uint64_t retrievePriority;
   uint64_t retrieveMinRequestAge;
-  uint64_t maxDrivesAllowed;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
@@ -56,7 +55,7 @@ struct MountPolicy {
   static struct MountPolicy s_defaultMountPolicyForRepack;
   
 private:
-  MountPolicy(const std::string name,const uint64_t archivePriority,const uint64_t archiveMinRequestAge, const uint64_t retrievePriority, const uint64_t retrieveMinRequestAge, const uint64_t maxDrivesAllowed);
+  MountPolicy(const std::string name,const uint64_t archivePriority,const uint64_t archiveMinRequestAge, const uint64_t retrievePriority, const uint64_t retrieveMinRequestAge);
 
 }; // struct MountPolicy
 

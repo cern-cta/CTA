@@ -548,9 +548,6 @@ common::dataStructures::MountPolicy OStoreDB::createBestArchiveMountPolicy(const
     if(mp1.archiveMinRequestAge < mp2.archiveMinRequestAge){
       mp.archiveMinRequestAge = mp1.archiveMinRequestAge;
     }
-    if(mp1.maxDrivesAllowed > mp2.maxDrivesAllowed){
-      mp.maxDrivesAllowed = mp1.maxDrivesAllowed;
-    }
     return mp;
   });
   return bestMountPolicy;
@@ -572,9 +569,6 @@ common::dataStructures::MountPolicy OStoreDB::createBestRetrieveMountPolicy(cons
     }
     if(mp1.retrieveMinRequestAge < mp2.retrieveMinRequestAge){
       mp.retrieveMinRequestAge = mp1.retrieveMinRequestAge;
-    }
-    if(mp1.maxDrivesAllowed > mp2.maxDrivesAllowed){
-      mp.maxDrivesAllowed = mp1.maxDrivesAllowed;
     }
     return mp;
   });

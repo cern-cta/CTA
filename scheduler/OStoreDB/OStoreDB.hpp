@@ -161,7 +161,7 @@ private:
   
   /**
    * Return the best archive mount policy from the mountPolicies passed in parameter
-   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the priority, maxDrivesAllowed, minArchiveRequestAge attributes of the queue
+   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the priority, minArchiveRequestAge attributes of the queue
    * @param mountPolicies the list of mount policies in order to create the best one.
    * @return the best archive mount policy to use
    */
@@ -169,7 +169,7 @@ private:
   
   /**
    * Return the best retrieve mount policy from the mountPolicies passed in parameter
-   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the priority, maxDrivesAllowed, minArchiveRequestAge attributes of the queue 
+   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the priority, minArchiveRequestAge attributes of the queue 
    * @param mountPolicies the list of mount policies in order to create the best one.
    * @return the best retrieve mount policy to use
    */

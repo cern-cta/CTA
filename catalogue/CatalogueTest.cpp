@@ -152,7 +152,6 @@ namespace {
     mountPolicy.minArchiveRequestAge = 2;
     mountPolicy.retrievePriority = 3;
     mountPolicy.minRetrieveRequestAge = 4;
-    mountPolicy.maxDrivesAllowed = 5;
     mountPolicy.comment = "Create mount policy";
     return mountPolicy;
   }
@@ -6422,8 +6421,6 @@ TEST_P(cta_catalogue_CatalogueTest, createMountPolicy) {
   ASSERT_EQ(mountPolicyToAdd.retrievePriority, mountPolicy.retrievePriority);
   ASSERT_EQ(mountPolicyToAdd.minRetrieveRequestAge, mountPolicy.retrieveMinRequestAge);
 
-  ASSERT_EQ(mountPolicyToAdd.maxDrivesAllowed, mountPolicy.maxDrivesAllowed);
-
   ASSERT_EQ(mountPolicyToAdd.comment, mountPolicy.comment);
 
   const common::dataStructures::EntryLog creationLog = mountPolicy.creationLog;
@@ -6615,43 +6612,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyRetrieveMinRequestAge_nonEx
   const uint64_t minRetrieveRequestAge = 2;
 
   ASSERT_THROW(m_catalogue->modifyMountPolicyRetrieveMinRequestAge(m_admin, name, minRetrieveRequestAge), exception::UserError);
-}
-
-TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyMaxDrivesAllowed) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
-
-  auto mountPolicyToAdd = getMountPolicy1();
-  std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
-  const uint64_t modifiedMaxDrivesAllowed = mountPolicyToAdd.maxDrivesAllowed + 10;
-  m_catalogue->modifyMountPolicyMaxDrivesAllowed(m_admin, mountPolicyName, modifiedMaxDrivesAllowed);
-
-  {
-    const std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue->getMountPolicies();
-    ASSERT_EQ(1, mountPolicies.size());
-
-    const common::dataStructures::MountPolicy mountPolicy = mountPolicies.front();
-
-    ASSERT_EQ(modifiedMaxDrivesAllowed, mountPolicy.maxDrivesAllowed);
-
-    const common::dataStructures::EntryLog modificationLog = mountPolicy.lastModificationLog;
-    ASSERT_EQ(m_admin.username, modificationLog.username);
-    ASSERT_EQ(m_admin.host, modificationLog.host);
-  }
-}
-
-TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyMaxDrivesAllowed_nonExistentMountPolicy) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
-
-  const std::string name = "mount_policy";
-  const uint64_t maxDrivesAllowed = 2;
-
-  ASSERT_THROW(m_catalogue->modifyMountPolicyMaxDrivesAllowed(m_admin, name, maxDrivesAllowed), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyComment) {
@@ -8014,7 +7974,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   uint64_t minArchiveRequestAge = mountPolicyToAdd.minArchiveRequestAge;
-  uint64_t maxDrivesAllowed = mountPolicyToAdd.maxDrivesAllowed;
   uint64_t archivePriority = mountPolicyToAdd.archivePriority;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
 
@@ -8046,7 +8005,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
   ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
-  ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 
   // Check that the diskInstanceName mismatch detection works
   ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
@@ -8241,7 +8199,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   uint64_t minArchiveRequestAge = mountPolicyToAdd.minArchiveRequestAge;
-  uint64_t maxDrivesAllowed = mountPolicyToAdd.maxDrivesAllowed;
   uint64_t archivePriority = mountPolicyToAdd.archivePriority;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
 
@@ -8274,7 +8231,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
-    ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 
     ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
 
@@ -8304,7 +8260,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
-    ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 
     ASSERT_EQ(1, queueCriteria.archiveFile.tapeFiles.size());
 
@@ -8400,7 +8355,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   uint64_t minArchiveRequestAge = mountPolicyToAdd.minArchiveRequestAge;
-  uint64_t maxDrivesAllowed = mountPolicyToAdd.maxDrivesAllowed;
   uint64_t archivePriority = mountPolicyToAdd.archivePriority;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
 
@@ -8420,7 +8374,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
-    ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 
     ASSERT_EQ(1, queueCriteria.archiveFile.tapeFiles.size());
 
@@ -14720,40 +14673,40 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationComment) {
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationComment(m_admin,"DOES not exists","COMMENT_DOES_NOT_EXIST"),cta::exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxDrivesAllowedForRead) {
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationReadMaxDrives) {
   using namespace cta;
   
   common::dataStructures::VirtualOrganization vo = getVo();
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
-  uint64_t newMaxDrivesAllowedForRead = 42;
-  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationReadMaxDrives(m_admin,vo.name,newMaxDrivesAllowedForRead));
+  uint64_t readMaxDrives = 42;
+  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationReadMaxDrives(m_admin,vo.name,readMaxDrives));
   
   auto vos = m_catalogue->getVirtualOrganizations();
   auto &frontVo = vos.front();
   
-  ASSERT_EQ(newMaxDrivesAllowedForRead,frontVo.readMaxDrives);
+  ASSERT_EQ(readMaxDrives,frontVo.readMaxDrives);
   
-  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationReadMaxDrives(m_admin,"DOES not exists",newMaxDrivesAllowedForRead),cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationReadMaxDrives(m_admin,"DOES not exists",readMaxDrives),cta::exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxDrivesAllowedForWrite) {
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationWriteMaxDrives) {
   using namespace cta;
   
   common::dataStructures::VirtualOrganization vo = getVo();
   
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   
-  uint64_t newMaxDrivesAllowedForWrite = 42;
-  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,vo.name,newMaxDrivesAllowedForWrite));
+  uint64_t writeMaxDrives = 42;
+  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,vo.name,writeMaxDrives));
   
   auto vos = m_catalogue->getVirtualOrganizations();
   auto &frontVo = vos.front();
   
-  ASSERT_EQ(newMaxDrivesAllowedForWrite,frontVo.writeMaxDrives);
+  ASSERT_EQ(writeMaxDrives,frontVo.writeMaxDrives);
   
-  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,"DOES not exists",newMaxDrivesAllowedForWrite),cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,"DOES not exists",writeMaxDrives),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizationOfTapepool) {

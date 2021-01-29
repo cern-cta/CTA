@@ -394,7 +394,6 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       cta::common::dataStructures::MountPolicy policy;
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
-      policy.maxDrivesAllowed = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(NULL)});
       aq.addJobsAndCommit(jta, agentRef, lc);
@@ -415,7 +414,6 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       cta::common::dataStructures::MountPolicy policy;
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
-      policy.maxDrivesAllowed = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL)});
       aq.addJobsAndCommit(jta, agentRef, lc);
@@ -582,7 +580,6 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     rqc.mountPolicy.archivePriority = 1;
     rqc.mountPolicy.creationLog.time = time(nullptr);
     rqc.mountPolicy.lastModificationLog.time = time(nullptr);
-    rqc.mountPolicy.maxDrivesAllowed = 1;
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     rr.setRetrieveFileQueueCriteria(rqc);
@@ -1170,7 +1167,6 @@ TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   rqc.mountPolicy.archivePriority = 1;
   rqc.mountPolicy.creationLog.time = time(nullptr);
   rqc.mountPolicy.lastModificationLog.time = time(nullptr);
-  rqc.mountPolicy.maxDrivesAllowed = 1;
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
@@ -1639,7 +1635,6 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape){
   rqc.mountPolicy.archivePriority = 1;
   rqc.mountPolicy.creationLog.time = time(nullptr);
   rqc.mountPolicy.lastModificationLog.time = time(nullptr);
-  rqc.mountPolicy.maxDrivesAllowed = 1;
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);

@@ -90,7 +90,6 @@ void fillRetrieveRequests(
     rqc.mountPolicy.archivePriority = 1;
     rqc.mountPolicy.creationLog.time = time(nullptr);
     rqc.mountPolicy.lastModificationLog.time = time(nullptr);
-    rqc.mountPolicy.maxDrivesAllowed = 1;
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     requestPtrs.emplace_back(new cta::objectstore::RetrieveRequest(rrAddr, be));

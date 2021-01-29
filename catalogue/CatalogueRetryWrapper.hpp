@@ -140,12 +140,12 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationName(admin,currentVoName,newVoName);}, m_maxTriesToConnect);
   }
   
-  void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForRead) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationReadMaxDrives(admin,voName,maxDrivesAllowedForRead);}, m_maxTriesToConnect);
+  void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationReadMaxDrives(admin,voName,readMaxDrives);}, m_maxTriesToConnect);
   }
   
-  void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxDrivesAllowedForWrite) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationWriteMaxDrives(admin,voName,maxDrivesAllowedForWrite);}, m_maxTriesToConnect);
+  void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationWriteMaxDrives(admin,voName,writeMaxDrives);}, m_maxTriesToConnect);
   }
   
   
@@ -468,10 +468,6 @@ public:
 
   void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minRetrieveRequestAge) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMountPolicyRetrieveMinRequestAge(admin, name, minRetrieveRequestAge);}, m_maxTriesToConnect);
-  }
-
-  void modifyMountPolicyMaxDrivesAllowed(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t maxDrivesAllowed) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMountPolicyMaxDrivesAllowed(admin, name, maxDrivesAllowed);}, m_maxTriesToConnect);
   }
 
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {

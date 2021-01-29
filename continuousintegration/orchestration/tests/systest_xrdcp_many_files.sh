@@ -97,7 +97,6 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta mountpolicy add    \
   --minarchiverequestage 1                                          \
   --retrievepriority 1                                              \
   --minretrieverequestage 1                                         \
-  --maxdrivesallowed 1                                              \
   --comment "ctasystest"
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta requestermountrule add \
    --instance ${EOSINSTANCE}                                        \

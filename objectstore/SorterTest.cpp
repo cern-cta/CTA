@@ -259,7 +259,6 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   rqc.mountPolicy.archivePriority = 1;
   rqc.mountPolicy.creationLog.time = time(nullptr);
   rqc.mountPolicy.lastModificationLog.time = time(nullptr);
-  rqc.mountPolicy.maxDrivesAllowed = 1;
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
@@ -459,7 +458,6 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   rqc.mountPolicy.archivePriority = 1;
   rqc.mountPolicy.creationLog.time = time(nullptr);
   rqc.mountPolicy.lastModificationLog.time = time(nullptr);
-  rqc.mountPolicy.maxDrivesAllowed = 1;
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
@@ -501,7 +499,6 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   rqc2.mountPolicy.archivePriority = 1;
   rqc2.mountPolicy.creationLog.time = time(nullptr);
   rqc2.mountPolicy.lastModificationLog.time = time(nullptr);
-  rqc2.mountPolicy.maxDrivesAllowed = 1;
   rqc2.mountPolicy.retrieveMinRequestAge = 1;
   rqc2.mountPolicy.retrievePriority = 1;
   rr2.setRetrieveFileQueueCriteria(rqc2);
@@ -907,7 +904,6 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   rqc.mountPolicy.archivePriority = 1;
   rqc.mountPolicy.creationLog.time = time(nullptr);
   rqc.mountPolicy.lastModificationLog.time = time(nullptr);
-  rqc.mountPolicy.maxDrivesAllowed = 1;
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);

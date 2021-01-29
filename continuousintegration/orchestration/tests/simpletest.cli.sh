@@ -12,7 +12,7 @@ cta storageclass add --instance root --name ctaStorageClass --copynb 1 --comment
 
 cta archiveroute add --instance root --storageclass ctaStorageClass --copynb 1 --tapepool ctasystest --comment "ctasystest"
 
-cta mountpolicy add --name ctasystest --archivepriority 1 --minarchiverequestage 1 --retrievepriority 1 --minretrieverequestage 1 --maxdrivesallowed 1 --comment "ctasystest"
+cta mountpolicy add --name ctasystest --archivepriority 1 --minarchiverequestage 1 --retrievepriority 1 --minretrieverequestage 1 --comment "ctasystest"
 
 cta requestermountrule add --instance root --name root --mountpolicy ctasystest --comment "ctasystest"
 

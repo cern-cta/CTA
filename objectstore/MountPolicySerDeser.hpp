@@ -42,7 +42,6 @@ public:
     osmp.set_archiveminrequestage(archiveMinRequestAge);
     osmp.set_retrievepriority(retrievePriority);
     osmp.set_retieveminrequestage(retrieveMinRequestAge);
-    osmp.set_maxdrivesallowed(maxDrivesAllowed);
     EntryLogSerDeser(creationLog).serialize(*osmp.mutable_creationlog());
     EntryLogSerDeser(lastModificationLog).serialize(*osmp.mutable_lastmodificationlog());
     osmp.set_comment(comment);
@@ -53,7 +52,6 @@ public:
     archiveMinRequestAge=osmp.archiveminrequestage();
     retrievePriority=osmp.retrievepriority();
     retrieveMinRequestAge=osmp.retieveminrequestage();
-    maxDrivesAllowed=osmp.maxdrivesallowed();
     EntryLogSerDeser el;
     el.deserialize(osmp.creationlog());
     creationLog=el;
