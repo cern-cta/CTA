@@ -4278,6 +4278,7 @@ void RdbmsCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStru
         "NB_COPY_NB_GT_1 = 0,"
         "COPY_NB_GT_1_IN_BYTES = 0,"
         "IS_FULL = '0',"
+        "IS_FROM_CASTOR = '0',"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME,"
