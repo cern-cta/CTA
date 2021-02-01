@@ -5105,8 +5105,8 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   catalogue.modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   
-  //Wait 1 second to be sure the minRequestAge will not prevent a mount
-  ::sleep(1);
+  //Wait 2 second to be sure the minRequestAge will not prevent a mount
+  ::sleep(2);
   
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
   
@@ -5433,8 +5433,8 @@ using namespace cta;
   
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   
-  //The archiveMinRequestAge should have 1 second to trigger a mount
-  ::sleep(1);
+  //The archiveMinRequestAge should have 2 second to trigger a mount
+  ::sleep(2);
   
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
   
@@ -5491,8 +5491,8 @@ using namespace cta;
   
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   
-  //Sleeping one second to trigger a mount
-  ::sleep(1);
+  //Sleeping two seconds to trigger a mount
+  ::sleep(2);
   
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
   
