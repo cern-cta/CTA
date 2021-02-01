@@ -33,6 +33,9 @@ namespace dataStructures {
 struct QueueAndMountSummary {
   MountType mountType=MountType::NoMount;
   std::string tapePool;
+  std::string vo;
+  uint64_t readMaxDrives;
+  uint64_t writeMaxDrives;
   std::string vid;
   std::string logicalLibrary;
   uint64_t filesQueued=0;

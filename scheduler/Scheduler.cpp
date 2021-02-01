@@ -1713,13 +1713,20 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   mountDecisionInfo.reset();
   double catalogueGetTapePoolTotalTime = 0.0;
   double catalogueGetTapesTotalTime = 0.0;
-  // Add the tape information where useful (archive queues).
+  double catalogueGetVoTotalTime = 0.0;
+  // Add the tape and VO information where useful (archive queues).
   for (auto & mountOrQueue: ret) {
     if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType || common::dataStructures::MountType::ArchiveForRepack==mountOrQueue.mountType) {
       utils::Timer catalogueGetTapePoolTimer;
       const auto tapePool = m_catalogue.getTapePool(mountOrQueue.tapePool);
       catalogueGetTapePoolTotalTime += catalogueGetTapePoolTimer.secs();
       if (tapePool) {
+        utils::Timer catalogueGetVoTimer;
+        const auto vo = m_catalogue.getCachedVirtualOrganizationOfTapepool(tapePool->name);
+        catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
+        mountOrQueue.vo = vo.name;
+        mountOrQueue.readMaxDrives = vo.readMaxDrives;
+        mountOrQueue.writeMaxDrives = vo.writeMaxDrives;
         mountOrQueue.tapesCapacity = tapePool->capacityBytes;
         mountOrQueue.filesOnTapes = tapePool->nbPhysicalFiles;
         mountOrQueue.dataOnTapes = tapePool->dataBytes;
@@ -1739,6 +1746,12 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         throw cta::exception::Exception("In Scheduler::getQueuesAndMountSummaries(): got unexpected number of tapes from catalogue for a retrieve.");
       }
       auto &t=tapes.front();
+      utils::Timer catalogueGetVoTimer;
+      const auto vo = m_catalogue.getCachedVirtualOrganizationOfTapepool(t.tapePoolName);
+      catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
+      mountOrQueue.vo = vo.name;
+      mountOrQueue.readMaxDrives = vo.readMaxDrives;
+      mountOrQueue.writeMaxDrives = vo.writeMaxDrives;
       mountOrQueue.tapesCapacity += t.capacityInBytes;
       mountOrQueue.filesOnTapes += t.lastFSeq;
       mountOrQueue.dataOnTapes += t.dataOnTapeInBytes;
@@ -1754,6 +1767,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   spc.add("catalogueVidToLogicalLibraryTime", catalogueVidToLogicalLibraryTime)
      .add("schedulerDbTime", schedulerDbTime)
      .add("catalogueGetTapePoolTotalTime", catalogueGetTapePoolTotalTime)
+     .add("catalogueGetVoTotalTime",catalogueGetVoTotalTime)
      .add("catalogueGetTapesTotalTime", catalogueGetTapesTotalTime);
   lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success."); 
   return ret;

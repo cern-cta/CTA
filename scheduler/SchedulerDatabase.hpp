@@ -686,6 +686,7 @@ public:
     std::string driveName;
     cta::common::dataStructures::MountType type;
     std::string tapePool;
+    std::string vo;
     std::string vid;
     bool currentMount; ///< True if the mount is current (othermise, it's a next mount).
     uint64_t bytesTransferred;
@@ -809,6 +810,7 @@ public:
    * @param latestBandwidth (optional, required by some statuses).
    * @param vid (optional, required by some statuses).
    * @param tapepool (optional, required by some statuses).
+   * @param vo (virtual organization, optional, required by some statuses).
    */
   virtual void reportDriveStatus (const common::dataStructures::DriveInfo & driveInfo,
     cta::common::dataStructures::MountType mountType,
@@ -820,7 +822,8 @@ public:
     uint64_t filesTransfered = std::numeric_limits<uint64_t>::max(),
     double latestBandwidth = std::numeric_limits<double>::max(),
     const std::string & vid = "",
-    const std::string & tapepool = "") = 0;
+    const std::string & tapepool = "",
+    const std::string & vo = "") = 0;
   
   virtual void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) = 0;
   

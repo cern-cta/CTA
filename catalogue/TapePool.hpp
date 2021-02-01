@@ -125,7 +125,7 @@ struct TapePool {
    * number of physical files stored in the tape pool containing that tape.
    */
   uint64_t nbPhysicalFiles;
-
+  
   /**
    * Optional value used by the tape pool supply mechanism.
    */

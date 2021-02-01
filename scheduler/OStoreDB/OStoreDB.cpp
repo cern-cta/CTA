@@ -489,6 +489,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.push_back(ExistingMount());
       tmdi.existingOrNextMounts.back().type = d.mountType;
       tmdi.existingOrNextMounts.back().tapePool = d.currentTapePool;
+      tmdi.existingOrNextMounts.back().vo = d.currentVo;
       tmdi.existingOrNextMounts.back().driveName = d.driveName;
       tmdi.existingOrNextMounts.back().vid = d.currentVid;
       tmdi.existingOrNextMounts.back().currentMount = true;
@@ -502,6 +503,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.push_back(ExistingMount());
       tmdi.existingOrNextMounts.back().type = d.nextMountType;
       tmdi.existingOrNextMounts.back().tapePool = d.nextTapepool;
+      tmdi.existingOrNextMounts.back().vo = d.nextVo;
       tmdi.existingOrNextMounts.back().driveName = d.driveName;
       tmdi.existingOrNextMounts.back().vid = d.nextVid;
       tmdi.existingOrNextMounts.back().currentMount = false;
@@ -3131,7 +3133,7 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
   cta::common::dataStructures::MountType mountType, common::dataStructures::DriveStatus status,
   time_t reportTime, log::LogContext & lc, uint64_t mountSessionId, uint64_t byteTransferred,
   uint64_t filesTransferred, double latestBandwidth, const std::string& vid, 
-  const std::string& tapepool) {
+  const std::string& tapepool, const std::string & vo) {
   using common::dataStructures::DriveStatus;
   // Wrap all the parameters together for easier manipulation by sub-functions
   ReportDriveStatusInputs inputs;
@@ -3144,6 +3146,7 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
   inputs.status = status;
   inputs.vid = vid;
   inputs.tapepool = tapepool;
+  inputs.vo = vo;
   updateDriveStatus(driveInfo, inputs, lc);
 }
 
@@ -3338,6 +3341,7 @@ void OStoreDB::setDriveDown(common::dataStructures::DriveState & driveState,
   driveState.desiredDriveState.forceDown=false;
   driveState.currentVid="";
   driveState.currentTapePool="";
+  driveState.currentVo = "";
   driveState.currentActivityAndWeight = nullopt;
   driveState.desiredDriveState.reason = inputs.reason;
 }
@@ -3379,6 +3383,7 @@ void OStoreDB::setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveS
   driveState.driveStatus=targetStatus;
   driveState.currentVid="";
   driveState.currentTapePool="";
+  driveState.currentVo = "";
   driveState.currentActivityAndWeight = nullopt;
 }
 
@@ -3413,6 +3418,7 @@ void OStoreDB::setDriveProbing(common::dataStructures::DriveState & driveState,
   driveState.driveStatus=inputs.status;
   driveState.currentVid="";
   driveState.currentTapePool="";
+  driveState.currentVo = "";
   driveState.currentActivityAndWeight = nullopt;
 }
 
@@ -3447,6 +3453,7 @@ void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
   driveState.driveStatus=common::dataStructures::DriveStatus::Starting;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentVo=inputs.vo;
   if (inputs.activityAndWeigh) {
     common::dataStructures::DriveState::ActivityAndWeight aaw;
     aaw.activity = inputs.activityAndWeigh.value().activity;
@@ -3486,6 +3493,7 @@ void OStoreDB::setDriveMounting(common::dataStructures::DriveState & driveState,
   driveState.driveStatus=common::dataStructures::DriveStatus::Mounting;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
@@ -3520,6 +3528,7 @@ void OStoreDB::setDriveTransferring(common::dataStructures::DriveState & driveSt
   driveState.driveStatus=common::dataStructures::DriveStatus::Transferring;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
@@ -3552,6 +3561,7 @@ void OStoreDB::setDriveUnloading(common::dataStructures::DriveState & driveState
   driveState.driveStatus=common::dataStructures::DriveStatus::Unloading;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
@@ -3584,6 +3594,7 @@ void OStoreDB::setDriveUnmounting(common::dataStructures::DriveState & driveStat
   driveState.driveStatus=common::dataStructures::DriveStatus::Unmounting;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
@@ -3616,6 +3627,7 @@ void OStoreDB::setDriveDrainingToDisk(common::dataStructures::DriveState & drive
   driveState.driveStatus=common::dataStructures::DriveStatus::DrainingToDisk;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
+  driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
@@ -3649,6 +3661,7 @@ void OStoreDB::setDriveCleaningUp(common::dataStructures::DriveState & driveStat
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
   driveState.currentActivityAndWeight = nullopt;
+  driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
@@ -3682,6 +3695,7 @@ void OStoreDB::setDriveShutdown(common::dataStructures::DriveState & driveState,
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
   driveState.currentActivityAndWeight = nullopt;
+  driveState.currentVo = inputs.vo;
 }
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
@@ -3749,6 +3763,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     inputs.status = common::dataStructures::DriveStatus::Starting;
     inputs.vid = tape.vid;
     inputs.tapepool = tape.tapePool;
+    inputs.vo = am.mountInfo.vo;
     log::LogContext lc(m_oStoreDB.m_logger);
     m_oStoreDB.updateDriveStatus(driveInfo, inputs, lc);
   }
@@ -3823,6 +3838,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
     inputs.status = common::dataStructures::DriveStatus::Starting;
     inputs.vid = rm.mountInfo.vid;
     inputs.tapepool = rm.mountInfo.tapePool;
+    inputs.vo = rm.mountInfo.vo;
     inputs.activityAndWeigh = activityAndWeight;
     log::LogContext lc(m_oStoreDB.m_logger);
     m_oStoreDB.updateDriveStatus(driveInfo, inputs, lc);
@@ -3934,6 +3950,7 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   inputs.status = common::dataStructures::DriveStatus::Up;
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
+  inputs.vo = mountInfo.vo;
   log::LogContext lc(m_oStoreDB.m_logger);
   m_oStoreDB.updateDriveStatus(driveInfo, inputs, lc);
 }
@@ -4229,6 +4246,7 @@ void OStoreDB::RetrieveMount::complete(time_t completionTime) {
   inputs.status = common::dataStructures::DriveStatus::Up;
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
+  inputs.vo = mountInfo.vo;
   log::LogContext lc(m_oStoreDB.m_logger);
   m_oStoreDB.updateDriveStatus(driveInfo, inputs, lc);
 }
@@ -4250,6 +4268,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   inputs.status = status;
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
+  inputs.vo = mountInfo.vo;
   inputs.reason = reason;
   // TODO: statistics!
   inputs.byteTransferred = 0;
@@ -4459,6 +4478,7 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   inputs.status = status;
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
+  inputs.vo = mountInfo.vo;
   inputs.reason = reason;
   // TODO: statistics!
   inputs.byteTransferred = 0;

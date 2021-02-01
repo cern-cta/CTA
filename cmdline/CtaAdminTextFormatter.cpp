@@ -225,6 +225,7 @@ void TextFormatter::printDriveLsHeader() {
     "since",
     "vid",
     "tapepool",
+    "vo",
     "files",
     "data",
     "MB/s",
@@ -283,6 +284,7 @@ void TextFormatter::print(const DriveLsItem &drls_item)
     driveStatusSince,
     drls_item.vid(),
     drls_item.tapepool(),
+    drls_item.vo(),
     filesTransferredInSession,
     bytesTransferredInSession,
     latestBandwidth,
@@ -676,6 +678,7 @@ void TextFormatter::printShowQueuesHeader() {
   push_back(
     "type",
     "tapepool",
+    "vo",
     "logical library",
     "vid",
     "files queued",
@@ -683,7 +686,8 @@ void TextFormatter::printShowQueuesHeader() {
     "oldest age",
     "priority",
     "min age",
-    "max drives",
+    "read max drives",
+    "write max drives",
     "cur. mounts",
     "cur. files",
     "cur. data",
@@ -702,18 +706,21 @@ void TextFormatter::printShowQueuesHeader() {
 void TextFormatter::print(const ShowQueuesItem &sq_item) {
   std::string priority;
   std::string minAge;
-  std::string maxDrivesAllowed;
+  std::string readMaxDrives;
+  std::string writeMaxDrives;
 
   if(sq_item.mount_type() == ARCHIVE_FOR_USER || sq_item.mount_type() == ARCHIVE_FOR_REPACK || 
      sq_item.mount_type() == RETRIEVE) {
     priority         = std::to_string(sq_item.priority());
     minAge           = std::to_string(sq_item.min_age());
-    maxDrivesAllowed = std::to_string(sq_item.max_drives());
+    readMaxDrives = std::to_string(sq_item.read_max_drives());
+    writeMaxDrives = std::to_string(sq_item.write_max_drives());
   }
 
   push_back(
     toString(ProtobufToMountType(sq_item.mount_type())),
     sq_item.tapepool(),
+    sq_item.vo(),
     sq_item.logical_library(),
     sq_item.vid(),
     sq_item.queued_files(),
@@ -721,7 +728,8 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
     sq_item.oldest_age(),
     priority,
     minAge,
-    maxDrivesAllowed,
+    readMaxDrives,
+    writeMaxDrives,
     sq_item.cur_mounts(),
     sq_item.cur_files(),
     dataSizeToStr(sq_item.cur_bytes()),

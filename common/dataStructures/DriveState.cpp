@@ -52,6 +52,7 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && desiredDriveState==rhs.desiredDriveState
       && currentVid==rhs.currentVid
       && currentTapePool==rhs.currentTapePool
+      && currentVo == rhs.currentVo
       && currentPriority == rhs.currentPriority
       && bool(currentActivityAndWeight) == bool(rhs.currentActivityAndWeight)
       && (currentActivityAndWeight? (
@@ -62,6 +63,7 @@ bool DriveState::operator==(const DriveState &rhs) const {
          ): true)
       && nextMountType == rhs.nextMountType
       && nextTapepool == rhs.nextTapepool
+      && nextVo == rhs.nextVo
       && nextVid == rhs.nextVid
       && bool(nextActivityAndWeight) == bool(rhs.nextActivityAndWeight)
       && (nextActivityAndWeight? (
@@ -108,6 +110,7 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " desiredState=" << obj.desiredDriveState
      << " currentVid=" << obj.currentVid
      << " currentTapePool=" << obj.currentTapePool
+     << " currentVo=" << obj.currentVo
      << " currentPriority=" << obj.currentPriority
      << " currentActivity=";
   if (obj.currentActivityAndWeight) {
@@ -119,6 +122,7 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
   os << " nextMountType=" << obj.nextMountType
      << " nextVid=" << obj.nextVid
      << " nextTapePool=" << obj.nextTapepool
+     << " nextVo=" << obj.nextVo
      << " currentNext=";
   if (obj.nextActivityAndWeight) {
     os << "(" << obj.nextActivityAndWeight.value().activity

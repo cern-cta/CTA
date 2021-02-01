@@ -275,9 +275,9 @@ public:
 
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType, 
     common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext& lc, uint64_t mountSessionId, 
-    uint64_t byteTransfered, uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool) override {
+    uint64_t byteTransfered, uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool, const std::string & vo) override {
     m_OStoreDB.reportDriveStatus(driveInfo, mountType, status, reportTime, lc, mountSessionId, byteTransfered, filesTransfered,
-       latestBandwidth, vid, tapepool);
+       latestBandwidth, vid, tapepool,vo);
   }
   
   void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override {

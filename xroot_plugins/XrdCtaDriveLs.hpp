@@ -115,6 +115,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_drive_status(DriveStatusToProtobuf(dr.driveStatus));
     dr_item->set_vid(dr.currentVid);
     dr_item->set_tapepool(dr.currentTapePool);
+    dr_item->set_vo(dr.currentVo);
     dr_item->set_files_transferred_in_session(dr.filesTransferredInSession);
     dr_item->set_bytes_transferred_in_session(dr.bytesTransferredInSession);
     dr_item->set_latest_bandwidth(dr.latestBandwidth);

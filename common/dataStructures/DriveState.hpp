@@ -73,6 +73,7 @@ struct DriveState {
   DesiredDriveState desiredDriveState;
   std::string currentVid;
   std::string currentTapePool;
+  std::string currentVo;
   uint64_t currentPriority = 0;
   struct ActivityAndWeight {
     std::string activity;
@@ -82,6 +83,7 @@ struct DriveState {
   MountType nextMountType = MountType::NoMount;
   std::string nextVid;
   std::string nextTapepool;
+  std::string nextVo;
   uint64_t nextPriority = 0;
   optional<ActivityAndWeight> nextActivityAndWeight;
   std::vector<DriveConfigItem> driveConfigItems;

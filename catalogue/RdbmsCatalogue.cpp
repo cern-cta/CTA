@@ -60,7 +60,7 @@ RdbmsCatalogue::RdbmsCatalogue(
   m_groupMountPolicyCache(10),
   m_userMountPolicyCache(10),
   m_allMountPoliciesCache(60),
-  m_tapepoolVirtualOrganizationCache(120),
+  m_tapepoolVirtualOrganizationCache(60),
   m_expectedNbArchiveRoutesCache(10),
   m_isAdminCache(10),
   m_activitiesFairShareWeights(10) {}

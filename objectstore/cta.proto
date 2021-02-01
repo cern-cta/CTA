@@ -266,6 +266,8 @@ message DriveState {
   repeated DriveConfig drive_config = 5038;
   optional string reason = 5039;
   optional string comment = 5040;
+  optional string current_vo = 5041;
+  optional string next_vo = 5042;
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 

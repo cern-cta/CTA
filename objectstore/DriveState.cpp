@@ -108,6 +108,7 @@ cta::common::dataStructures::DriveState DriveState::getState() {
   ret.desiredDriveState.forceDown = m_payload.desiredforcedown();
   ret.currentVid                  = m_payload.currentvid();
   ret.currentTapePool             = m_payload.currenttapepool();
+  ret.currentVo                   = m_payload.current_vo();
   ret.currentPriority             = m_payload.current_priority();
   ret.ctaVersion                  = m_payload.cta_version();
   if(m_payload.has_reason()){
@@ -129,6 +130,8 @@ cta::common::dataStructures::DriveState DriveState::getState() {
     ret.nextMountType = (common::dataStructures::MountType) m_payload.nextmounttype();
   if (m_payload.has_nexttapepool())
     ret.nextTapepool = m_payload.nexttapepool();
+  if(m_payload.has_next_vo())
+    ret.nextVo = m_payload.next_vo();
   if (m_payload.has_nextvid())
     ret.nextVid = m_payload.nextvid();
   if (m_payload.has_next_priority())
@@ -170,6 +173,7 @@ void DriveState::setState(cta::common::dataStructures::DriveState& state) {
   m_payload.set_desiredforcedown(desiredDriveState.forceDown);
   m_payload.set_currentvid(state.currentVid);
   m_payload.set_currenttapepool(state.currentTapePool);
+  m_payload.set_current_vo(state.currentVo);
   m_payload.set_current_priority(state.currentPriority);
   cta::optional<std::string> reason = desiredDriveState.reason;
   cta::optional<std::string> comment = desiredDriveState.comment;
@@ -193,6 +197,7 @@ void DriveState::setState(cta::common::dataStructures::DriveState& state) {
   }
   m_payload.set_nextvid(state.nextVid);
   m_payload.set_nexttapepool(state.nextTapepool);
+  m_payload.set_next_vo(state.nextVo);
   m_payload.set_next_priority(state.nextPriority);
   m_payload.set_nextmounttype((uint32_t)state.nextMountType);
   if (state.nextActivityAndWeight) {

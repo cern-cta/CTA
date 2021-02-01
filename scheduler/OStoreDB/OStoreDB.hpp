@@ -585,7 +585,7 @@ public:
   
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType, 
     common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext & lc, uint64_t mountSessionId, uint64_t byteTransfered, 
-    uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool) override;
+    uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool, const std::string & vo) override;
   
   void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override;
   
@@ -610,6 +610,7 @@ private:
     double latestBandwidth;
     std::string vid;
     std::string tapepool;
+    std::string vo;
     optional<common::dataStructures::DriveState::ActivityAndWeight> activityAndWeigh;
     optional<std::string> reason;
   };
