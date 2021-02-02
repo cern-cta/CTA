@@ -5106,7 +5106,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   catalogue.modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   
   //Wait 2 second to be sure the minRequestAge will not prevent a mount
-  ::sleep(2);
+  ::sleep(1);
   
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
   
@@ -5353,7 +5353,6 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   auto &schedulerDB = getSchedulerDB();
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
-#define STDOUT_LOGGING
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
 #else
@@ -5425,7 +5424,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     ar->insert();
   }
   
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,10);
+  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,100);
   
   sorter.flushAll(lc);
   
@@ -5433,8 +5432,8 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   
-  //The archiveMinRequestAge should have 2 second to trigger a mount
-  ::sleep(2);
+  //The archiveMinRequestAge should have 1 second to trigger a mount
+  ::sleep(1);
   
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
   
@@ -5485,14 +5484,14 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   
   sorter.flushAll(lc);
   
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,10);
+  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,100);
   //mount should not be triggered
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
   
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   
-  //Sleeping two seconds to trigger a mount
-  ::sleep(2);
+  //Sleeping one seconds to trigger a mount
+  ::sleep(1);
   
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
   
