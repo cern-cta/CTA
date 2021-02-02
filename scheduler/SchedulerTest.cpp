@@ -5346,14 +5346,14 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
 //This test tests what is described in the use case ticket 
 // high priority Archive job not scheduled when Repack is running : https://gitlab.cern.ch/cta/operations/-/issues/150
 TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldReturnBothMountsArchiveMinRequestAge){
-using namespace cta;
+  using namespace cta;
   using namespace cta::objectstore;
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
   auto &schedulerDB = getSchedulerDB();
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
-
+#define STDOUT_LOGGING
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
 #else
