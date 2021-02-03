@@ -491,6 +491,14 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Wed Feb 03 2021 julien.leduc (at) cern.ch - 3.2-1
+- Upgraded EOS to 4.8.37-1
+- cta/CTA#922 The superseded concept has been removed and replaced by a new recycle bin
+- cta/CTA#943 A new tape lifecycle logic has been implemented
+- cta/CTA#948 The max drives allowed for reading and writing are now set per virtual organization and not per mount policy anymore
+- cta/CTA#952 Reclaiming a tape resets the IS_FROM_CASTOR flag to 0
+- cta/CTA#951 The query used by RdbmsCatalogueTapeContentsItor has been put back to the state it was in v3.1-13
+- cta/CTA#883 Tape verification tool
 * Thu Jan 07 2021 julien.leduc (at) cern.ch - 3.1-14
 - Upgraded EOS to 4.8.35-1
 - cta/CTA#954 The drive is put down if the CleanerSession fails to eject the tape from it after a shutdown

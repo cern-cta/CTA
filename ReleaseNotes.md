@@ -1,3 +1,21 @@
+# v3.2-1
+
+## Summary
+
+This version is a transition version between CTA v3.1-14 and CTA v4.0. The functionalities of the v4.0 are implemented, 
+but at the database level, the columns to be deleted have been put as NULLABLE and the NOT NULL columns to be added as NULLABLE.
+The xrootd-ssi-protobuf-interface is not up-to-date with the CTA v4.0: deprecated fields have not been removed.
+
+### Features
+
+- Upgraded EOS to 4.8.37-1
+- cta/CTA#922 The superseded concept has been removed and replaced by a new recycle bin
+- cta/CTA#943 A new tape lifecycle logic has been implemented
+- cta/CTA#948 The max drives allowed for reading and writing are now set per virtual organization and not per mount policy anymore
+- cta/CTA#952 Reclaiming a tape resets the IS_FROM_CASTOR flag to 0
+- cta/CTA#951 The query used by RdbmsCatalogueTapeContentsItor has been put back to the state it was in v3.1-13
+- cta/CTA#883 Tape verification tool
+
 # v3.1-14
 
 ## Summary
