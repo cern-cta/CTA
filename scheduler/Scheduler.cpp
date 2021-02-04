@@ -1700,8 +1700,6 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     case common::dataStructures::MountType::Retrieve:
       if (em.currentMount) 
         summary.currentMounts++;
-      else
-        summary.nextMounts++;
       summary.currentBytes += em.bytesTransferred;
       summary.currentFiles += em.filesTransferred;
       summary.latestBandwidth += em.latestBandwidth;
@@ -1730,8 +1728,6 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         mountOrQueue.tapesCapacity = tapePool->capacityBytes;
         mountOrQueue.filesOnTapes = tapePool->nbPhysicalFiles;
         mountOrQueue.dataOnTapes = tapePool->dataBytes;
-        mountOrQueue.emptyTapes = tapePool->nbEmptyTapes;
-        mountOrQueue.disabledTapes = tapePool->nbDisabledTapes;
         mountOrQueue.fullTapes = tapePool->nbFullTapes;
         mountOrQueue.writableTapes = tapePool->nbWritableTapes;
       }
@@ -1755,9 +1751,6 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       mountOrQueue.tapesCapacity += t.capacityInBytes;
       mountOrQueue.filesOnTapes += t.lastFSeq;
       mountOrQueue.dataOnTapes += t.dataOnTapeInBytes;
-      if (!t.dataOnTapeInBytes)
-        mountOrQueue.emptyTapes++;
-      if (t.isDisabled()) mountOrQueue.disabledTapes++;
       if (t.full) mountOrQueue.fullTapes++;
       if (!t.full && !t.isDisabled()) mountOrQueue.writableTapes++;
       mountOrQueue.tapePool = t.tapePoolName;

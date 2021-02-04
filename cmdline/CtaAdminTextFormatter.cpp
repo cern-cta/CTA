@@ -692,13 +692,10 @@ void TextFormatter::printShowQueuesHeader() {
     "cur. files",
     "cur. data",
     "MB/s",
-    "next mounts",
     "tapes capacity",
     "files on tapes",
     "data on tapes",
     "full tapes",
-    "empty tapes",
-    "disabled tapes",
     "writable tapes"
   );
 }
@@ -734,13 +731,10 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
     sq_item.cur_files(),
     dataSizeToStr(sq_item.cur_bytes()),
     sq_item.bytes_per_second() / 1000000,
-    sq_item.next_mounts(),
     dataSizeToStr(sq_item.tapes_capacity()),
     sq_item.tapes_files(),
     dataSizeToStr(sq_item.tapes_bytes()),
     sq_item.full_tapes(),
-    sq_item.empty_tapes(),
-    sq_item.disabled_tapes(),
     sq_item.writable_tapes()
   );
 }
