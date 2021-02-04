@@ -504,23 +504,31 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    request.creationLog.username   = m_cliIdentity.username;
    request.creationLog.time       = time(nullptr);
 
+   cta::log::ScopedParamContainer params(m_lc);
+   params.add("requesterInstance", notification.wf().requester_instance());
+   std::string logMessage = "In RequestMessage::processCLOSEW(): ";
+
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
    const auto archiveFileIdItor = notification.file().xattr().find("sys.archive.file_id");
    if(notification.file().xattr().end() == archiveFileIdItor) {
+     logMessage += "sys.archive.file_id is not present in extended attributes";
+     m_lc.log(cta::log::INFO, logMessage);
      throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    uint64_t archiveFileId = 0;
    if((archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
    {
+      params.add("sys.archive.file_id", archiveFileIdStr);
+      logMessage += "sys.archive.file_id is not a positive integer";
+      m_lc.log(cta::log::INFO, logMessage);
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
+   params.add("fileId", archiveFileId);
 
    cta::utils::Timer t;
 
-   cta::log::ScopedParamContainer params(m_lc);
-   std::string logMessage = "In RequestMessage::processCLOSEW(): ";
    if(request.fileSize > 0) {
      // Queue the request
      std::string archiveRequestAddr = m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
@@ -535,8 +543,6 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    }
 
    // Create a log entry
-   params.add("fileId", archiveFileId);
-   params.add("requesterInstance", notification.wf().requester_instance());
    m_lc.log(cta::log::INFO, logMessage);
 
    // Set response type

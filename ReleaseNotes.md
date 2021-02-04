@@ -1,3 +1,5 @@
+- cta/CTA#964 Adds failure log messages to processCLOSEW in CTA Frontend
+
 # v3.2-1
 
 ## Summary
