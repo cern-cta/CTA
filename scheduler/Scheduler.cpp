@@ -1700,6 +1700,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     case common::dataStructures::MountType::Retrieve:
       if (em.currentMount) 
         summary.currentMounts++;
+      /*else
+        summary.nextMounts++;*/
       summary.currentBytes += em.bytesTransferred;
       summary.currentFiles += em.filesTransferred;
       summary.latestBandwidth += em.latestBandwidth;
