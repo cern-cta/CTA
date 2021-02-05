@@ -34,8 +34,8 @@ struct QueueAndMountSummary {
   MountType mountType=MountType::NoMount;
   std::string tapePool;
   std::string vo;
-  uint64_t readMaxDrives;
-  uint64_t writeMaxDrives;
+  uint64_t readMaxDrives=0;
+  uint64_t writeMaxDrives=0;
   std::string vid;
   std::string logicalLibrary;
   uint64_t filesQueued=0;

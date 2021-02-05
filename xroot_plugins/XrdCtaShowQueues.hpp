@@ -81,14 +81,10 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       case common::dataStructures::MountType::ArchiveForUser:
         sq_item->set_priority(sq.mountPolicy.archivePriority);
         sq_item->set_min_age(sq.mountPolicy.archiveMinRequestAge);
-        //TODO: max drives per VO
-        sq_item->set_max_drives(0);
         break;
       case common::dataStructures::MountType::Retrieve:
         sq_item->set_priority(sq.mountPolicy.retrievePriority);
         sq_item->set_min_age(sq.mountPolicy.retrieveMinRequestAge);
-        //TODO: max drives per VO
-        sq_item->set_max_drives(0);
         break;
       default:
         break;

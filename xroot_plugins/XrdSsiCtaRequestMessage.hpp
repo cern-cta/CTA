@@ -223,8 +223,6 @@ private:
   admincmdstream_t processDrive_Ls;
   admincmdstream_t processFailedRequest_Ls;
   admincmdstream_t processGroupMountRule_Ls;
-  admincmdstream_t processListPendingArchives;
-  admincmdstream_t processListPendingRetrieves;
   admincmdstream_t processLogicalLibrary_Ls;
   admincmdstream_t processMediaType_Ls;
   admincmdstream_t processMountPolicy_Ls;

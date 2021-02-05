@@ -27,7 +27,6 @@ using XrdSsiPb::PbException;
 #include "XrdCtaDriveLs.hpp"
 #include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaGroupMountRuleLs.hpp"
-#include "XrdCtaListPendingQueue.hpp"
 #include "XrdCtaLogicalLibraryLs.hpp"
 #include "XrdCtaMountPolicyLs.hpp"
 #include "XrdCtaMediaTypeLs.hpp"
@@ -100,11 +99,6 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS):
                processAdmin_Ls(response, stream);
                break;
-#if 0
-            case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_LS):
-               processArchiveFile_Ls(response, stream);
-               break;
-#endif
             case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD):
                processArchiveRoute_Add(response);
                break;
@@ -123,9 +117,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN):
                processDrive_Down(response);
                break;
-           case cmd_pair(AdminCmd::CMD_DRIVE,AdminCmd::SUBCMD_CH):
-             processDrive_Ch(response);
-             break;
+            case cmd_pair(AdminCmd::CMD_DRIVE,AdminCmd::SUBCMD_CH):
+               processDrive_Ch(response);
+               break;
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS):
                processDrive_Ls(response, stream);
                break;
@@ -149,12 +143,6 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS):
                processGroupMountRule_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_LISTPENDINGARCHIVES, AdminCmd::SUBCMD_NONE):
-               processListPendingArchives(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE):
-               processListPendingRetrieves(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD):
                processLogicalLibrary_Add(response);
@@ -871,26 +859,6 @@ void RequestMessage::processAdmin_Ls(cta::xrd::Response &response, XrdSsiStream*
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
-
-
-#if 0
-void RequestMessage::processArchiveFile_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
-{
-  using namespace cta::admin;
-
-  // Create a XrdSsi stream object to return the results
-  stream = new ArchiveFileLsStream(*this, m_catalogue, m_scheduler);
-
-  // Set correct column headers
-  response.set_show_header(has_flag(OptionBoolean::SUMMARY) ? HeaderType::ARCHIVEFILE_LS_SUMMARY
-                                                            : HeaderType::ARCHIVEFILE_LS);
-
-  response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-#endif
-
-
-
 void RequestMessage::processArchiveRoute_Add(cta::xrd::Response &response)
 {
    using namespace cta::admin;
@@ -1157,40 +1125,6 @@ void RequestMessage::processGroupMountRule_Ls(cta::xrd::Response &response, XrdS
   response.set_show_header(HeaderType::GROUPMOUNTRULE_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
-
-
-
-void RequestMessage::processListPendingArchives(cta::xrd::Response &response, XrdSsiStream* &stream)
-{
-  using namespace cta::admin;
-
-  // Create a XrdSsi stream object to return the results
-  stream = new ListPendingQueueStream<OStoreDB::ArchiveQueueItor_t>(*this, m_catalogue, m_scheduler, m_scheddb);
-
-  // Display the correct column headers
-  response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGARCHIVES
-                                                             : HeaderType::LISTPENDINGARCHIVES_SUMMARY);
-
-  response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-
-
-
-void RequestMessage::processListPendingRetrieves(cta::xrd::Response &response, XrdSsiStream* &stream)
-{
-  using namespace cta::admin;
-
-  // Create a XrdSsi stream object to return the results
-  stream = new ListPendingQueueStream<OStoreDB::RetrieveQueueItor_t>(*this, m_catalogue, m_scheduler, m_scheddb);
-
-  // Display correct column headers
-  response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGRETRIEVES
-                                                             : HeaderType::LISTPENDINGRETRIEVES_SUMMARY);
-
-  response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-
-
 
 void RequestMessage::processLogicalLibrary_Add(cta::xrd::Response &response)
 {
