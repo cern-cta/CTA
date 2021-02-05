@@ -174,12 +174,12 @@ INSERT INTO FILE_RECYCLE_LOG (
 --changeset ccaffy:8 failOnError:true dbms:oracle runAlways:true
 --preconditions onFail:HALT onError:HALT
 --precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
-DELETE FROM TAPE_FILE_RECYCLE_BIN;
+TRUNCATE TABLE TAPE_FILE_RECYCLE_BIN;
 
 --changeset ccaffy:9 failOnError:true dbms:oracle runAlways:true
 --preconditions onFail:HALT onError:HALT
 --precondition-sql-check expectedResult:"1" SELECT COUNT(*) FROM CTA_CATALOGUE WHERE SCHEMA_VERSION_MAJOR = 3 AND (SCHEMA_VERSION_MINOR = 1 OR SCHEMA_VERSION_MINOR = 2);
-DELETE FROM ARCHIVE_FILE_RECYCLE_BIN;
+TRUNCATE TABLE ARCHIVE_FILE_RECYCLE_BIN;
 
 --changeset ccaffy:11 failOnError:true dbms:oracle
 --preconditions onFail:HALT onError:HALT
