@@ -300,12 +300,13 @@ private:
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
   
   /**
-   * Checks wether the tape is full before repacking
+   * Checks wether the tape can be repacked of not.
+   * A tape can be repacked if it exists, it is full, not BROKEN and not DISABLED unless there the --disabledtape flag has been provided by the user.
    * @param vid the vid of the tape to check
-   * @throws a UserError exception if the vid does not exist or if
-   * the tape is not full
+   * @param repackRequest the associated repackRequest to check the tape can be repacked
+   * @throws a UserError exception if the tape cannot be repacked
    */
-  void checkTapeFullBeforeRepack(std::string vid);
+  void checkTapeCanBeRepacked(const std::string & vid, const SchedulerDatabase::QueueRepackRequest & repackRequest);
   
   cta::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
   

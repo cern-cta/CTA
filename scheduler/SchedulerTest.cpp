@@ -2642,9 +2642,10 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   //one retrieve request
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
+    bool forceDisableTape = false;
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
-    scheduler.queueRepack(admin,qrr,lc);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,forceDisableTape,s_defaultRepackNoRecall);
+    ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     log::TimingList tl;
@@ -2654,31 +2655,87 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
-    scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
-    scheduler.waitSchedulerDbSubthreadsComplete();
-    
-    ASSERT_EQ(vid,repackRequestToExpand->getRepackInfo().vid);
-    repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
     ASSERT_EQ(nullptr,repackRequestToExpand);
   }
+  //Queue the repack request with the force disabled tape flag
   {
-    //Check that no mount exist because the tape is disabled
-    std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
-    ASSERT_EQ(nullptr, mount.get());
-    
-    //Check that the repack request is failed with 10 failed to retrieve and 0 failed archive files (as they have not been created, these archive jobs are not failed)
-    objectstore::RootEntry re(schedulerDB.getBackend());
-    re.fetchNoLock();
-    objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
-    ri.fetchNoLock();
-    
-    objectstore::RepackRequest rr(ri.getRepackRequestAddress(vid),schedulerDB.getBackend());
-    rr.fetchNoLock();
-    
-    ASSERT_EQ(10,rr.getStats().at(objectstore::RepackRequest::StatsType::RetrieveFailure).files);
-    ASSERT_EQ(0,rr.getStats().at(objectstore::RepackRequest::StatsType::ArchiveFailure).files);
-    ASSERT_EQ(common::dataStructures::RepackInfo::Status::Failed,rr.getInfo().status);
+    bool forceDisableTape = true;
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,forceDisableTape,s_defaultRepackNoRecall);
+    ASSERT_NO_THROW(scheduler.queueRepack(admin,qrr,lc));
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    log::TimingList tl;
+    utils::Timer t;
+
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    ASSERT_NE(nullptr,repackRequestToExpand);
+  }
+}
+
+TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+  
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  
+  std::ostringstream ossVid;
+  ossVid << s_vid << "_" << 1;
+  std::string vid = ossVid.str();
+
+  {
+    auto tape = getDefaultTape();
+    tape.vid = vid;
+    tape.full = true;
+    tape.state = common::dataStructures::Tape::BROKEN;
+    tape.stateReason = "Test";
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
+  {
+    bool forceDisableTape = false;
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,forceDisableTape,s_defaultRepackNoRecall);
+    ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    log::TimingList tl;
+    utils::Timer t;
+
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    ASSERT_EQ(nullptr,repackRequestToExpand);
   }
 }
 

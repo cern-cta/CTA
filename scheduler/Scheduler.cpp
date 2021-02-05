@@ -316,14 +316,19 @@ void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliId
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
-void Scheduler::checkTapeFullBeforeRepack(std::string vid){
-  std::set<std::string> vidToRepack;
-  vidToRepack.insert(vid);
+void Scheduler::checkTapeCanBeRepacked(const std::string & vid, const SchedulerDatabase::QueueRepackRequest & repackRequest){
+  std::set<std::string> vidToRepack({vid});
   try{
     auto vidToTapesMap = m_catalogue.getTapesByVid(vidToRepack); //throws an exception if the vid is not found on the database
     cta::common::dataStructures::Tape tapeToCheck = vidToTapesMap.at(vid);
     if(!tapeToCheck.full){
       throw exception::UserError("You must set the tape as full before repacking it.");
+    }
+    if(tapeToCheck.state == common::dataStructures::Tape::BROKEN){
+      throw exception::UserError(std::string("You cannot repack a tape that is ") + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN) + ".");
+    }
+    if(tapeToCheck.isDisabled() && !repackRequest.m_forceDisabledTape){
+      throw exception::UserError(std::string("You cannot repack a ") + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED)+ " tape. You can force it by using the flag --disabledtape.");
     }
   } catch(const exception::UserError& userEx){
     throw userEx;
@@ -344,7 +349,7 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
   if (vid.empty()) throw exception::UserError("Empty VID name.");
   if (repackBufferURL.empty()) throw exception::UserError("Empty buffer URL.");
   utils::Timer t;
-  checkTapeFullBeforeRepack(vid);
+  checkTapeCanBeRepacked(vid,repackRequestToQueue);
   std::string repackRequestAddress = m_db.queueRepack(repackRequestToQueue, lc);
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);
