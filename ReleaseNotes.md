@@ -7,6 +7,7 @@ CTA v3.1-14.
 
 ### Features
 
+- cta/CTA#964 Adds failure log messages to processCLOSEW in CTA Frontend
 - When the operator submits a tape to repack, a check is done about the tape state before queueing the repack request to ensure it can be repacked
 - Oracle catalogue migration scripts 3.1to3.2.sql: replaced DELETE FROM table_name by TRUNCATE TABLE table_name
 
