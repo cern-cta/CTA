@@ -91,6 +91,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyLogicalLibrary);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentLogicalLibrary);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTape);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapePool);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringComment);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringDiskSystemName);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringFileRegexp);
@@ -580,6 +581,8 @@ public:
    *
    * @param searchCriteria The search criteria.
    * @return The list of tapes.
+   * @throw UserSpecifiedANonExistentTapePool if the user specified a
+   * non-existent tape pool.
    */
   virtual std::list<common::dataStructures::Tape> getTapes(
     const TapeSearchCriteria &searchCriteria = TapeSearchCriteria()) const = 0;

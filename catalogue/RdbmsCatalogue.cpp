@@ -3667,6 +3667,12 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
   if(isSetAndEmpty(searchCriteria.diskFileIds)) throw exception::UserError("Disk file ID list cannot be empty");
 
   try {
+    if(searchCriteria.tapePool && !tapePoolExists(conn, searchCriteria.tapePool.value())) {
+      UserSpecifiedANonExistentTapePool ex;
+      ex.getMessage() << "Cannot list tapes because tape pool " + searchCriteria.tapePool.value() + " does not exist";
+      throw ex;
+    }
+
     std::list<common::dataStructures::Tape> tapes;
     std::string sql =
       "SELECT "

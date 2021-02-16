@@ -1136,6 +1136,28 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMediaType_usedByTapes) {
   ASSERT_THROW(m_catalogue->deleteMediaType(m_tape1.mediaType), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getTapes_non_existent_tape_pool) {
+  using namespace cta;
+
+  log::LogContext dummyLc(m_dummyLog);
+  const bool logicalLibraryIsDisabled = false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, m_tape1);
+   
+  {
+    cta::catalogue::TapeSearchCriteria criteria;
+    criteria.tapePool = "non_existent";
+    ASSERT_THROW(m_catalogue->getTapes(criteria), catalogue::UserSpecifiedANonExistentTapePool);
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createTape_deleteStorageClass) {
   // TO BE DONE
 }
