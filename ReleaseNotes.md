@@ -1,3 +1,11 @@
+# v4.0-2
+
+## Summary
+
+### Features
+
+- cta/CTA#966 Unable to distinguish empty and wrong tape pool
+
 # v4.0-1
 
 ## Summary
