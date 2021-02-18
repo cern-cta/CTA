@@ -218,20 +218,27 @@ common::dataStructures::MountPolicy RepackRequest::getMountPolicy(){
 
 void RepackRequest::deleteAllSubrequests() {
   checkPayloadWritable();
-  std::list<std::unique_ptr<Backend::AsyncDeleter>> deleters;
   if(!m_payload.is_complete()){
     m_payload.mutable_destination_infos()->Clear();
-    try{
-      for(auto itor = m_payload.mutable_subrequests()->begin(); itor != m_payload.mutable_subrequests()->end(); ++itor){
-        //Avoid the race condition that can happen during expansion of the RepackRequest
-        auto & subrequest = *itor;
-        subrequest.set_subrequest_deleted(true);
-        deleters.emplace_back(m_objectStore.asyncDelete(subrequest.address()));
-      }
-      for(auto & deleter: deleters){
-        deleter->wait();
-      }
-    } catch(objectstore::Backend::NoSuchObject & ){ /* If object already deleted, do nothing */ }
+    auto subrequests = m_payload.mutable_subrequests();
+    //we will do the deletion by batch of 500
+    auto itor = subrequests->begin();
+    while(itor != subrequests->end()){
+      try {
+        std::list<std::unique_ptr<Backend::AsyncDeleter>> deleters;
+        int nbSubReqProcessessed = 0;
+        while(itor != subrequests->end() && nbSubReqProcessessed < 500){
+          auto & subrequest = *itor;
+          subrequest.set_subrequest_deleted(true);
+          deleters.emplace_back(m_objectStore.asyncDelete(subrequest.address()));
+          nbSubReqProcessessed++;
+          itor++;
+        }
+        for(auto & deleter: deleters){
+          deleter->wait();
+        }
+      } catch(objectstore::Backend::NoSuchObject & ){ /* If object already deleted, do nothing */ }
+    }
   }
 }
 

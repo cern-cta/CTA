@@ -2575,241 +2575,250 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
     std::string bestVid;
     uint32_t activeCopyNb;
   };
-  std::list<AsyncInsertionInfo> asyncInsertionInfoList;
-  for (auto &rsr: repackSubrequests) {
-    // Requests marked as deleted are guaranteed to have already been created => we will not re-attempt.
-    if (!subReqInfoMap.at(rsr.fSeq).subrequestDeleted) {
-      // We need to try and create the subrequest.
-      // Create the sub request (it's a retrieve request now).
-      auto rr=std::make_shared<objectstore::RetrieveRequest>(subReqInfoMap.at(rsr.fSeq).address, m_oStoreDB.m_objectStore);
-      rr->initialize();
-      // Set the file info
-      common::dataStructures::RetrieveRequest schedReq;
-      schedReq.archiveFileID = rsr.archiveFile.archiveFileID;
-      schedReq.dstURL = rsr.fileBufferURL;
-      schedReq.appendFileSizeToDstURL(rsr.archiveFile.fileSize);
-      schedReq.diskFileInfo = rsr.archiveFile.diskFileInfo;
-      // dsrr.errorReportURL:  We leave this bank as the reporting will be done to the repack request,
-      // stored in the repack info.
-      rr->setSchedulerRequest(schedReq);
-      // Add the disk system information if needed.
-      try { 
-        auto dsName = diskSystemList.getDSName(schedReq.dstURL);
-        rr->setDiskSystemName(dsName); 
-      } catch (std::out_of_range &) {}
-      // Set the repack info.
-      RetrieveRequest::RepackInfo rRRepackInfo;
-      try {
-        for (auto & ar: archiveRoutesMap.at(rsr.archiveFile.storageClass)) {
-          rRRepackInfo.archiveRouteMap[ar.second.copyNb] = ar.second.tapePoolName;
-        }
-        //Check that we do not have the same destination tapepool for two different copyNb
-        for(auto & currentCopyNbTapePool: rRRepackInfo.archiveRouteMap){
-          int nbTapepool = std::count_if(rRRepackInfo.archiveRouteMap.begin(),rRRepackInfo.archiveRouteMap.end(),[&currentCopyNbTapePool](const std::pair<uint64_t,std::string> & copyNbTapepool){
-            return copyNbTapepool.second == currentCopyNbTapePool.second;
-          });
-          if(nbTapepool != 1){
-            throw cta::ExpandRepackRequestException("In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(), found the same destination tapepool for different copyNb.");
-          }
-        }
-      } catch (std::out_of_range &) {
-        notCreatedSubrequests.emplace_back(rsr);
-        failedCreationStats.files++;
-        failedCreationStats.bytes+=rsr.archiveFile.fileSize;
-        log::ScopedParamContainer params(lc);
-        params.add("fileID", rsr.archiveFile.archiveFileID)
-              .add("diskInstance", rsr.archiveFile.diskInstance)
-              .add("storageClass", rsr.archiveFile.storageClass);
-        std::stringstream storageClassList;
-        bool first=true;
-        for (auto & sc: archiveRoutesMap) {
-          std::string storageClass;
-          storageClass = sc.first;
-          storageClassList << (first?"":" ") << " sc=" << storageClass << " rc=" << sc.second.size();
-        }
-        params.add("storageClassList", storageClassList.str());
-        lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubrequests(): not such archive route.");
-        continue;
-      }
-      rRRepackInfo.copyNbsToRearchive = rsr.copyNbsToRearchive;
-      rRRepackInfo.fileBufferURL = rsr.fileBufferURL;
-      rRRepackInfo.fSeq = rsr.fSeq;
-      rRRepackInfo.isRepack = true;
-      rRRepackInfo.forceDisabledTape = forceDisabledTape;
-      rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
-      if(rsr.hasUserProvidedFile){
-        rRRepackInfo.hasUserProvidedFile = true;
-      }
-      rr->setRepackInfo(rRRepackInfo);
-      // Set the queueing parameters
-      common::dataStructures::RetrieveFileQueueCriteria fileQueueCriteria;
-      fileQueueCriteria.archiveFile = rsr.archiveFile;
-      fileQueueCriteria.mountPolicy = mountPolicy;
-      rr->setRetrieveFileQueueCriteria(fileQueueCriteria);
-      // Decide of which vid we are going to retrieve from. Here, if we can retrieve from the repack VID, we
-      // will set the initial recall on it. Retries will we requeue to best VID as usual if needed.
-      std::string bestVid;
-      uint32_t activeCopyNumber = 0;
-      if(noRecall){
-        bestVid = repackInfo.vid;
-      } else {
-        //No --no-recall flag, make sure we have a copy on the vid we intend to repack.
-        for (auto & tc: rsr.archiveFile.tapeFiles) {
-          if (tc.vid == repackInfo.vid) {
-            try {
-              // Try to select the repack VID from a one-vid list.
-              Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,forceDisabledTape);
-              bestVid = repackInfo.vid;
-              activeCopyNumber = tc.copyNb;
-            } catch (Helpers::NoTapeAvailableForRetrieve &) {}
-            break;
-          }
-        }
-      }
-      // The repack vid was not appropriate, let's try all candidates.
-      if (bestVid.empty()) {
-        std::set<std::string> candidateVids;
-        for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
+  //We will insert the jobs by batch of 500
+  auto subReqItor = repackSubrequests.begin();
+  while(subReqItor != repackSubrequests.end()){
+    uint64_t nbSubReqProcessed = 0;
+    std::list<AsyncInsertionInfo> asyncInsertionInfoList;
+    while(subReqItor != repackSubrequests.end() && nbSubReqProcessed < 500){
+      auto & rsr = *subReqItor;
+      // Requests marked as deleted are guaranteed to have already been created => we will not re-attempt.
+      if (!subReqInfoMap.at(rsr.fSeq).subrequestDeleted) {
+        // We need to try and create the subrequest.
+        // Create the sub request (it's a retrieve request now).
+        auto rr=std::make_shared<objectstore::RetrieveRequest>(subReqInfoMap.at(rsr.fSeq).address, m_oStoreDB.m_objectStore);
+        rr->initialize();
+        // Set the file info
+        common::dataStructures::RetrieveRequest schedReq;
+        schedReq.archiveFileID = rsr.archiveFile.archiveFileID;
+        schedReq.dstURL = rsr.fileBufferURL;
+        schedReq.appendFileSizeToDstURL(rsr.archiveFile.fileSize);
+        schedReq.diskFileInfo = rsr.archiveFile.diskFileInfo;
+        // dsrr.errorReportURL:  We leave this bank as the reporting will be done to the repack request,
+        // stored in the repack info.
+        rr->setSchedulerRequest(schedReq);
+        // Add the disk system information if needed.
+        try { 
+          auto dsName = diskSystemList.getDSName(schedReq.dstURL);
+          rr->setDiskSystemName(dsName); 
+        } catch (std::out_of_range &) {}
+        // Set the repack info.
+        RetrieveRequest::RepackInfo rRRepackInfo;
         try {
-          bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,forceDisabledTape);
-        } catch (Helpers::NoTapeAvailableForRetrieve &) {
+          for (auto & ar: archiveRoutesMap.at(rsr.archiveFile.storageClass)) {
+            rRRepackInfo.archiveRouteMap[ar.second.copyNb] = ar.second.tapePoolName;
+          }
+          //Check that we do not have the same destination tapepool for two different copyNb
+          for(auto & currentCopyNbTapePool: rRRepackInfo.archiveRouteMap){
+            int nbTapepool = std::count_if(rRRepackInfo.archiveRouteMap.begin(),rRRepackInfo.archiveRouteMap.end(),[&currentCopyNbTapePool](const std::pair<uint64_t,std::string> & copyNbTapepool){
+              return copyNbTapepool.second == currentCopyNbTapePool.second;
+            });
+            if(nbTapepool != 1){
+              throw cta::ExpandRepackRequestException("In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(), found the same destination tapepool for different copyNb.");
+            }
+          }
+        } catch (std::out_of_range &) {
+          notCreatedSubrequests.emplace_back(rsr);
+          failedCreationStats.files++;
+          failedCreationStats.bytes+=rsr.archiveFile.fileSize;
+          log::ScopedParamContainer params(lc);
+          params.add("fileID", rsr.archiveFile.archiveFileID)
+                .add("diskInstance", rsr.archiveFile.diskInstance)
+                .add("storageClass", rsr.archiveFile.storageClass);
+          std::stringstream storageClassList;
+          bool first=true;
+          for (auto & sc: archiveRoutesMap) {
+            std::string storageClass;
+            storageClass = sc.first;
+            storageClassList << (first?"":" ") << " sc=" << storageClass << " rc=" << sc.second.size();
+          }
+          params.add("storageClassList", storageClassList.str());
+          lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubrequests(): not such archive route.");
+          goto nextSubrequest;
+        }
+        rRRepackInfo.copyNbsToRearchive = rsr.copyNbsToRearchive;
+        rRRepackInfo.fileBufferURL = rsr.fileBufferURL;
+        rRRepackInfo.fSeq = rsr.fSeq;
+        rRRepackInfo.isRepack = true;
+        rRRepackInfo.forceDisabledTape = forceDisabledTape;
+        rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
+        if(rsr.hasUserProvidedFile){
+          rRRepackInfo.hasUserProvidedFile = true;
+        }
+        rr->setRepackInfo(rRRepackInfo);
+        // Set the queueing parameters
+        common::dataStructures::RetrieveFileQueueCriteria fileQueueCriteria;
+        fileQueueCriteria.archiveFile = rsr.archiveFile;
+        fileQueueCriteria.mountPolicy = mountPolicy;
+        rr->setRetrieveFileQueueCriteria(fileQueueCriteria);
+        // Decide of which vid we are going to retrieve from. Here, if we can retrieve from the repack VID, we
+        // will set the initial recall on it. Retries will we requeue to best VID as usual if needed.
+        std::string bestVid;
+        uint32_t activeCopyNumber = 0;
+        if(noRecall){
+          bestVid = repackInfo.vid;
+        } else {
+          //No --no-recall flag, make sure we have a copy on the vid we intend to repack.
+          for (auto & tc: rsr.archiveFile.tapeFiles) {
+            if (tc.vid == repackInfo.vid) {
+              try {
+                // Try to select the repack VID from a one-vid list.
+                Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,forceDisabledTape);
+                bestVid = repackInfo.vid;
+                activeCopyNumber = tc.copyNb;
+              } catch (Helpers::NoTapeAvailableForRetrieve &) {}
+              break;
+            }
+          }
+        }
+        // The repack vid was not appropriate, let's try all candidates.
+        if (bestVid.empty()) {
+          std::set<std::string> candidateVids;
+          for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
+          try {
+            bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,forceDisabledTape);
+          } catch (Helpers::NoTapeAvailableForRetrieve &) {
+            // Count the failure for this subrequest. 
+            notCreatedSubrequests.emplace_back(rsr);
+            failedCreationStats.files++;
+            failedCreationStats.bytes += rsr.archiveFile.fileSize;
+            log::ScopedParamContainer params(lc);
+            params.add("fileId", rsr.archiveFile.archiveFileID)
+                  .add("wasRepackSubmittedWithForceDisabledTape",forceDisabledTape)
+                  .add("repackVid", repackInfo.vid);
+            lc.log(log::ERR,
+                "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed. Maybe the tape to repack is disabled ?");
+            goto nextSubrequest;
+          }
+        }
+        for (auto &tc: rsr.archiveFile.tapeFiles)
+          if (tc.vid == bestVid) {
+            activeCopyNumber = tc.copyNb;
+            goto copyNbFound;
+          }
+        {
           // Count the failure for this subrequest. 
           notCreatedSubrequests.emplace_back(rsr);
           failedCreationStats.files++;
           failedCreationStats.bytes += rsr.archiveFile.fileSize;
           log::ScopedParamContainer params(lc);
           params.add("fileId", rsr.archiveFile.archiveFileID)
-                .add("wasRepackSubmittedWithForceDisabledTape",forceDisabledTape)
-                .add("repackVid", repackInfo.vid);
+                .add("repackVid", repackInfo.vid)
+                .add("chosenVid", bestVid);
           lc.log(log::ERR,
-              "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed. Maybe the tape to repack is disabled ?");
-          continue;
+              "In OStoreDB::RepackRequest::addSubrequests(): could not find the copyNb for the chosen VID. Subrequest failed.");
+          goto nextSubrequest;
+        }
+      copyNbFound:;
+        if(rsr.hasUserProvidedFile) {
+            /**
+             * As the user has provided the file through the Repack buffer folder,
+             * we will not Retrieve the file from the tape. We create the Retrieve
+             * Request but directly with the status RJS_ToReportToRepackForSuccess so that 
+             * this retrieve request is queued in the RetrieveQueueToReportToRepackForSuccess
+             * and hence be transformed into an ArchiveRequest.
+             */
+            rr->setJobStatus(activeCopyNumber,serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
+        }
+        // We have the best VID. The request is ready to be created after comleting its information.
+        rr->setOwner(m_oStoreDB.m_agentReference->getAgentAddress());
+        rr->setActiveCopyNumber(activeCopyNumber);
+        // We can now try to insert the request. It could alredy have been created (in which case it must exist).
+        // We hold the lock to the repack request, no better not waste time, so we async create.
+        try {
+          std::shared_ptr<objectstore::RetrieveRequest::AsyncInserter> rrai(rr->asyncInsert());
+          asyncInsertionInfoList.emplace_back(AsyncInsertionInfo{rsr, rr, rrai, bestVid, activeCopyNumber});
+        } catch (cta::objectstore::ObjectOpsBase::NotNewObject &objExists){
+          //The retrieve subrequest already exists in the objectstore and is not deleted, we log and don't do anything
+          log::ScopedParamContainer params(lc);
+          params.add("copyNb",activeCopyNumber)
+                .add("repackVid",repackInfo.vid)
+                .add("bestVid",bestVid)
+                .add("fileId",rsr.archiveFile.archiveFileID);
+          lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubrequests(): could not asyncInsert the subrequest because it already exists, continuing expansion");
+          goto nextSubrequest;
+        } catch (exception::Exception & ex) {
+          // We can fail to serialize here...
+          // Count the failure for this subrequest. 
+          notCreatedSubrequests.emplace_back(rsr);
+          failedCreationStats.files++;
+          failedCreationStats.bytes += rsr.archiveFile.fileSize;
+          log::ScopedParamContainer params(lc);
+          params.add("fileId", rsr.archiveFile.archiveFileID)
+                .add("repackVid", repackInfo.vid)
+                .add("bestVid", bestVid)
+                .add("ExceptionMessage", ex.getMessageValue());
+          lc.log(log::ERR,
+              "In OStoreDB::RepackRequest::addSubrequests(): could not asyncInsert the subrequest.");
         }
       }
-      for (auto &tc: rsr.archiveFile.tapeFiles)
-        if (tc.vid == bestVid) {
-          activeCopyNumber = tc.copyNb;
-          goto copyNbFound;
-        }
-      {
-        // Count the failure for this subrequest. 
-        notCreatedSubrequests.emplace_back(rsr);
-        failedCreationStats.files++;
-        failedCreationStats.bytes += rsr.archiveFile.fileSize;
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", rsr.archiveFile.archiveFileID)
-              .add("repackVid", repackInfo.vid)
-              .add("chosenVid", bestVid);
-        lc.log(log::ERR,
-            "In OStoreDB::RepackRequest::addSubrequests(): could not find the copyNb for the chosen VID. Subrequest failed.");
-        continue;
-      }
-    copyNbFound:;
-      if(rsr.hasUserProvidedFile) {
-          /**
-           * As the user has provided the file through the Repack buffer folder,
-           * we will not Retrieve the file from the tape. We create the Retrieve
-           * Request but directly with the status RJS_ToReportToRepackForSuccess so that 
-           * this retrieve request is queued in the RetrieveQueueToReportToRepackForSuccess
-           * and hence be transformed into an ArchiveRequest.
-           */
-          rr->setJobStatus(activeCopyNumber,serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
-      }
-      // We have the best VID. The request is ready to be created after comleting its information.
-      rr->setOwner(m_oStoreDB.m_agentReference->getAgentAddress());
-      rr->setActiveCopyNumber(activeCopyNumber);
-      // We can now try to insert the request. It could alredy have been created (in which case it must exist).
-      // We hold the lock to the repack request, no better not waste time, so we async create.
+      nextSubrequest:
+        nbSubReqProcessed++;
+        subReqItor++;
+    }
+    // We can now check the subrequests creations succeeded, and prepare their queueing.
+    struct AsyncInsertedSubrequestInfo {
+      Subrequest & rsr;
+      std::string bestVid;
+      uint32_t activeCopyNb;
+      std::shared_ptr<RetrieveRequest> request;
+    };
+    std::list <AsyncInsertedSubrequestInfo> asyncInsertedSubrequestInfoList;
+    for (auto & aii: asyncInsertionInfoList) {
+      // Check the insertion succeeded.
       try {
-        std::shared_ptr<objectstore::RetrieveRequest::AsyncInserter> rrai(rr->asyncInsert());
-        asyncInsertionInfoList.emplace_back(AsyncInsertionInfo{rsr, rr, rrai, bestVid, activeCopyNumber});
-      } catch (cta::objectstore::ObjectOpsBase::NotNewObject &objExists){
-        //The retrieve subrequest already exists in the objectstore and is not deleted, we log and don't do anything
+        aii.inserter->wait();
         log::ScopedParamContainer params(lc);
-        params.add("copyNb",activeCopyNumber)
-              .add("repackVid",repackInfo.vid)
-              .add("bestVid",bestVid)
-              .add("fileId",rsr.archiveFile.archiveFileID);
-        lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubrequests(): could not asyncInsert the subrequest because it already exists, continuing expansion");
-        continue;
+        params.add("fileID", aii.rsr.archiveFile.archiveFileID);
+        std::stringstream copyNbList;
+        bool first = true;
+        for (auto cn: aii.rsr.copyNbsToRearchive) { copyNbList << (first?"":" ") << cn; first = false; }
+        params.add("copyNbsToRearchive", copyNbList.str())
+              .add("subrequestObject", aii.request->getAddressIfSet())
+              .add("fileBufferURL", aii.rsr.fileBufferURL);
+        lc.log(log::INFO, "In OStoreDB::RepackRequest::addSubrequests(): subrequest created.");
+        asyncInsertedSubrequestInfoList.emplace_back(AsyncInsertedSubrequestInfo{aii.rsr, aii.bestVid, aii.activeCopyNb, aii.request});
       } catch (exception::Exception & ex) {
-        // We can fail to serialize here...
         // Count the failure for this subrequest. 
-        notCreatedSubrequests.emplace_back(rsr);
+        notCreatedSubrequests.emplace_back(aii.rsr);
         failedCreationStats.files++;
-        failedCreationStats.bytes += rsr.archiveFile.fileSize;
+        failedCreationStats.bytes += aii.rsr.archiveFile.fileSize;
         log::ScopedParamContainer params(lc);
-        params.add("fileId", rsr.archiveFile.archiveFileID)
+        params.add("fileId", aii.rsr.archiveFile)
               .add("repackVid", repackInfo.vid)
-              .add("bestVid", bestVid)
+              .add("bestVid", aii.bestVid)
+              .add("bestCopyNb", aii.activeCopyNb)
               .add("ExceptionMessage", ex.getMessageValue());
         lc.log(log::ERR,
             "In OStoreDB::RepackRequest::addSubrequests(): could not asyncInsert the subrequest.");
       }
     }
-  }
-  // We can now check the subrequests creations succeeded, and prepare their queueing.
-  struct AsyncInsertedSubrequestInfo {
-    Subrequest & rsr;
-    std::string bestVid;
-    uint32_t activeCopyNb;
-    std::shared_ptr<RetrieveRequest> request;
-  };
-  std::list <AsyncInsertedSubrequestInfo> asyncInsertedSubrequestInfoList;
-  for (auto & aii: asyncInsertionInfoList) {
-    // Check the insertion succeeded.
-    try {
-      aii.inserter->wait();
+    if(notCreatedSubrequests.size()){
       log::ScopedParamContainer params(lc);
-      params.add("fileID", aii.rsr.archiveFile.archiveFileID);
-      std::stringstream copyNbList;
-      bool first = true;
-      for (auto cn: aii.rsr.copyNbsToRearchive) { copyNbList << (first?"":" ") << cn; first = false; }
-      params.add("copyNbsToRearchive", copyNbList.str())
-            .add("subrequestObject", aii.request->getAddressIfSet())
-            .add("fileBufferURL", aii.rsr.fileBufferURL);
-      lc.log(log::INFO, "In OStoreDB::RepackRequest::addSubrequests(): subrequest created.");
-      asyncInsertedSubrequestInfoList.emplace_back(AsyncInsertedSubrequestInfo{aii.rsr, aii.bestVid, aii.activeCopyNb, aii.request});
-    } catch (exception::Exception & ex) {
-      // Count the failure for this subrequest. 
-      notCreatedSubrequests.emplace_back(aii.rsr);
-      failedCreationStats.files++;
-      failedCreationStats.bytes += aii.rsr.archiveFile.fileSize;
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", aii.rsr.archiveFile)
-            .add("repackVid", repackInfo.vid)
-            .add("bestVid", aii.bestVid)
-            .add("bestCopyNb", aii.activeCopyNb)
-            .add("ExceptionMessage", ex.getMessageValue());
-      lc.log(log::ERR,
-          "In OStoreDB::RepackRequest::addSubrequests(): could not asyncInsert the subrequest.");
+      params.add("files", failedCreationStats.files);
+      params.add("bytes", failedCreationStats.bytes);
+      m_repackRequest.reportRetrieveCreationFailures(notCreatedSubrequests);
+      m_repackRequest.commit();
+      lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubRequests(), reported the failed creation of Retrieve Requests to the Repack request");
+    }
+    // We now have created the subrequests. Time to enqueue.
+    // TODO: the lock/fetch could be parallelized
+    {
+      objectstore::Sorter sorter(*m_oStoreDB.m_agentReference, m_oStoreDB.m_objectStore, m_oStoreDB.m_catalogue);
+      std::list<objectstore::ScopedExclusiveLock> locks;
+      for (auto &is: asyncInsertedSubrequestInfoList) {
+        locks.emplace_back(*is.request);
+        is.request->fetch();
+        sorter.insertRetrieveRequest(is.request, *m_oStoreDB.m_agentReference, is.activeCopyNb, lc);
+      }
+      nbRetrieveSubrequestsCreated = sorter.getAllRetrieve().size();
+      locks.clear();
+      sorter.flushAll(lc);
     }
   }
-  if(notCreatedSubrequests.size()){
-    log::ScopedParamContainer params(lc);
-    params.add("files", failedCreationStats.files);
-    params.add("bytes", failedCreationStats.bytes);
-    m_repackRequest.reportRetrieveCreationFailures(notCreatedSubrequests);
-    m_repackRequest.commit();
-    lc.log(log::ERR, "In OStoreDB::RepackRequest::addSubRequests(), reported the failed creation of Retrieve Requests to the Repack request");
-  }
-  // We now have created the subrequests. Time to enqueue.
-  // TODO: the lock/fetch could be parallelized
-  {
-    objectstore::Sorter sorter(*m_oStoreDB.m_agentReference, m_oStoreDB.m_objectStore, m_oStoreDB.m_catalogue);
-    std::list<objectstore::ScopedExclusiveLock> locks;
-    for (auto &is: asyncInsertedSubrequestInfoList) {
-      locks.emplace_back(*is.request);
-      is.request->fetch();
-      sorter.insertRetrieveRequest(is.request, *m_oStoreDB.m_agentReference, is.activeCopyNb, lc);
-    }
-    nbRetrieveSubrequestsCreated = sorter.getAllRetrieve().size();
-    locks.clear();
-    sorter.flushAll(lc);
-  }
-  //General
   m_repackRequest.setLastExpandedFSeq(fSeq);
   m_repackRequest.commit();
+  //General
   return nbRetrieveSubrequestsCreated;
 }
 
