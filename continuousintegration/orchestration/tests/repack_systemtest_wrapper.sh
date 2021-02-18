@@ -106,10 +106,8 @@ repackDisableTape() {
   then
     echo "Marking the tape ${VID_TO_REPACK} as DISABLED"
     kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --state DISABLED --reason "Repack disabled tape test" --vid ${VID_TO_REPACK}
-    echo "Waiting 20 seconds so that the RetrieveQueueStatisticsCache is flushed"
-    sleep 20
-    echo "Launching the repack request test on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n ctasystest  && echo "The repack request is Complete instead of Failed, it should be failed as the tape is disabled" && exit 1 || echo "REPACK FAILED, the tape is disabled so, Test OK"
+    echo "Launching the repack request test on VID ${VID_TO_REPACK} without the disabled flag"
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n ctasystest && echo "The repack command should have failed as the tape is disabled" && exit 1 || echo "The repack submission has failed, test OK"
   else
     echo "No vid found to repack"
     exit 1

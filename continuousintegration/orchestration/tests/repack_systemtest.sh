@@ -148,7 +148,7 @@ if [ ! -z $NO_RECALL ]; then
   NO_RECALL_FLAG="-nr"
 fi
 
-admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG} ${NO_RECALL_FLAG}
+admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG} ${NO_RECALL_FLAG} || exit 1
 
 if [ ! -z $BACKPRESSURE_TEST ]; then
   echo "Backpressure test: waiting to see a report of sleeping retrieve queue."
