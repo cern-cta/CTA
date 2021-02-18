@@ -549,7 +549,7 @@ repackTapeRepairNoRecall() {
       echo "retrievedFiles ($retrievedFiles) == totalFilesToRetrieve ($totalFilesToRetrieve), OK"
     fi
 
-    if [[ $archivedFiles != $totalFilesToArchive ]]
+    if [[ $archivedFiles != $totalFilesToArchive || $userProvidedFiles != $archivedFiles ]]
     then
       echo "archivedFiles ($archivedFiles) != totalFilesToArchive ($totalFilesToArchive), test FAILED"
       exit 1

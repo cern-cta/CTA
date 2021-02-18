@@ -40,7 +40,7 @@ nbFilesToRetrieve=${#FILES_LOCATION[@]}
 
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0
 
-echo ${FILES_LOCATION[@]} | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOSINSTANCE} prepare 
+echo ${FILES_LOCATION[@]} | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOSINSTANCE} prepare -s
 
 nbFilesRetrieved=0
 SECONDS_PASSED=0
