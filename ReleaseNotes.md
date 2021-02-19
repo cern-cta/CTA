@@ -4,7 +4,13 @@
 
 ### Features
 
+- Upgraded EOS to 4.8.39
+- Upgraded eos-xrootd to 4.12.7
 - cta/CTA#966 Unable to distinguish empty and wrong tape pool
+
+### Bug fixes
+
+- cta/CTA#930 Batched the queueing and the deleting of the repack subrequests
 
 # v4.0-1
 
