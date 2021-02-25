@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
+#include "common/optional.hpp"
 
 #include <memory>
 
@@ -63,6 +64,11 @@ namespace daemon {
      */
     bool driveIsEmpty() throw();
     
+    /**
+     * Returns the eventual probe error message
+     */
+    cta::optional<std::string> getProbeErrorMsg();
+    
   private:
 
     /**
@@ -94,6 +100,11 @@ namespace daemon {
      * @return The tape drive.
      */
     std::unique_ptr<drive::DriveInterface> createDrive();
+    
+    /**
+     * Eventual error message if we could not check whether the drive is empty or not
+     */
+    cta::optional<std::string> m_probeErrorMsg;
     
   }; // class EmptyDriveProbe
 

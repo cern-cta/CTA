@@ -148,6 +148,9 @@ schedule:
       driveState.up = false;
       driveState.forceDown = false;
       std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
+      cta::optional<std::string> probeErrorMsg = emptyDriveProbe.getProbeErrorMsg();
+      if(probeErrorMsg)
+        errorMsg = probeErrorMsg.value();
       int logLevel = cta::log::ERR;
       driveState.setReasonFromLogMsg(logLevel,errorMsg);
       m_scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);

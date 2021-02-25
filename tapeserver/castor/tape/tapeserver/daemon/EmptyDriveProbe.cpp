@@ -51,12 +51,20 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() throw() {
     errorMessage = "Caught an unknown exception";
   }
 
+  m_probeErrorMsg = std::string("EmptyDriveProbe: ") + errorMessage;
   // Reaching this point means the probe failed and an exception was thrown
   std::list<cta::log::Param> params = {
     cta::log::Param("tapeDrive", m_driveConfig.unitName),
     cta::log::Param("message", errorMessage)};
   m_log(cta::log::ERR, "Probe failed", params);
   return false;
+}
+
+//------------------------------------------------------------------------------
+// getProbeErrorMsg()
+//------------------------------------------------------------------------------
+cta::optional<std::string> castor::tape::tapeserver::daemon::EmptyDriveProbe::getProbeErrorMsg(){
+  return m_probeErrorMsg;
 }
 
 //------------------------------------------------------------------------------
