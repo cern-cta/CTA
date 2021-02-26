@@ -150,6 +150,17 @@ std::string ChecksumBlob::ByteArrayToHex(const std::string &bytearray) {
   return value.str();
 }
 
+void ChecksumBlob::addFirstChecksumToLog(cta::log::ScopedParamContainer &spc) const{
+  const auto & csItor = m_cs.begin();
+  if(csItor != m_cs.end()){
+    auto & cs = *csItor;
+    std::string checksumTypeParam = "checksumType";
+    std::string checksumValueParam = "checksumValue";
+    spc.add(checksumTypeParam,ChecksumTypeName.at(cs.first))
+       .add(checksumValueParam,ByteArrayToHex(cs.second));
+  }
+}
+
 std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb) {
   os << "[ ";
   auto num_els = csb.m_cs.size();

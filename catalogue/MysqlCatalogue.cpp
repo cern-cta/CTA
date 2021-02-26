@@ -629,7 +629,6 @@ void MysqlCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &
          .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
          .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
-         .add("checksumBlob", archiveFile->checksumBlob)
          .add("creationTime", std::to_string(archiveFile->creationTime))
          .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
          .add("storageClass", archiveFile->storageClass)
@@ -644,9 +643,9 @@ void MysqlCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &
           << " blockId: " << it->blockId
           << " creationTime: " << it->creationTime
           << " fileSize: " << it->fileSize
-          << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
           << " copyNb: " << it->copyNb;
         spc.add("TAPE FILE", tapeCopyLogStream.str());
+        archiveFile->checksumBlob.addFirstChecksumToLog(spc);
       }
       lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
         "of the archived file");
@@ -694,7 +693,6 @@ void MysqlCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &
        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumBlob", archiveFile->checksumBlob)
        .add("creationTime", std::to_string(archiveFile->creationTime))
        .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
        .add("storageClass", archiveFile->storageClass)
@@ -705,6 +703,7 @@ void MysqlCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &
        .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
        .add("setTapeDirtyTime",setTapeDirtyTime)
        .add("commitTime", commitTime);
+    archiveFile->checksumBlob.addFirstChecksumToLog(spc);
     for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
       std::stringstream tapeCopyLogStream;
       tapeCopyLogStream << "copy number: " << it->copyNb
@@ -713,7 +712,6 @@ void MysqlCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &
         << " blockId: " << it->blockId
         << " creationTime: " << it->creationTime
         << " fileSize: " << it->fileSize
-        << " checksumBlob: " << it->checksumBlob //this shouldn't be here: repeated field
         << " copyNb: " << static_cast<int>(it->copyNb); //this shouldn't be here: repeated field
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }

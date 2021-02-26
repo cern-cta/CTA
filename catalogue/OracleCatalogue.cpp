@@ -956,13 +956,13 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
          .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
          .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
          .add("fileSize", std::to_string(archiveFile->fileSize))
-         .add("checksumBlob", archiveFile->checksumBlob)
          .add("creationTime", std::to_string(archiveFile->creationTime))
          .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
          .add("storageClass", archiveFile->storageClass)
          .add("getConnTime", getConnTime)
          .add("createStmtTime", createStmtTime)
          .add("selectFromArchiveFileTime", selectFromArchiveFileTime);
+      archiveFile->checksumBlob.addFirstChecksumToLog(spc);
       for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
         std::stringstream tapeCopyLogStream;
         tapeCopyLogStream << "copy number: " << static_cast<int>(it->copyNb)
@@ -1020,7 +1020,6 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
        .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumBlob", archiveFile->checksumBlob)
        .add("creationTime", std::to_string(archiveFile->creationTime))
        .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
        .add("storageClass", archiveFile->storageClass)
@@ -1031,6 +1030,7 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
        .add("setTapeDirtyTime",setTapeDirtyTime)
        .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
        .add("commitTime", commitTime);
+    archiveFile->checksumBlob.addFirstChecksumToLog(spc);
     for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
       std::stringstream tapeCopyLogStream;
       tapeCopyLogStream << "copy number: " << it->copyNb

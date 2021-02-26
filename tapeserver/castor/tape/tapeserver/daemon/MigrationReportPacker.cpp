@@ -198,8 +198,11 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
   {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("failureLog", m_failureLog)
+          .add("fileSize",m_skippedArchiveJob->archiveFile.fileSize)
           .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportSkipped::execute(): skipping archive job after exception.");
+    m_skippedArchiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(params);
+    
+    reportPacker.m_lc.log(cta::log::DEBUG,"In MigrationReportPacker::ReportSkipped::execute(): skipping archive job after exception.");
   }
   try {
     m_skippedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);

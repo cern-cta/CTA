@@ -23,6 +23,7 @@
 #include <common/exception/ChecksumBlobSizeMismatch.hpp>
 #include <common/exception/ChecksumTypeMismatch.hpp>
 #include <common/exception/ChecksumValueMismatch.hpp>
+#include "common/log/LogContext.hpp"
 
 namespace cta {
 namespace checksum {
@@ -189,6 +190,13 @@ public:
     }
     return true;
   }
+  
+  /**
+   * Adds the first checksum of the list of checksums
+   * in the log params container given in parameter
+   * @param spc the log param container to put the first checksum in
+   */
+  void addFirstChecksumToLog(cta::log::ScopedParamContainer &spc) const;
 
   /*!
    * Returns false if all the checksums in the blob match

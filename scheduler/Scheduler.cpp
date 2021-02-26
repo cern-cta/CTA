@@ -164,7 +164,6 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, con
      .add("diskFilePath", request.diskFileInfo.path)
      .add("diskFileOwnerUid", request.diskFileInfo.owner_uid)
      .add("diskFileGid", request.diskFileInfo.gid)
-     .add("checksumBlob", request.checksumBlob)
      .add("archiveReportURL", midEllipsis(request.archiveReportURL, 50, 15))
      .add("archiveErrorReportURL", midEllipsis(request.archiveErrorReportURL, 50, 15))
      .add("creationHost", request.creationLog.host)
@@ -175,6 +174,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, con
      .add("srcURL", midEllipsis(request.srcURL, 50, 15))
      .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime);
+  request.checksumBlob.addFirstChecksumToLog(spc);
   lc.log(log::INFO, "Queued archive request");
   return archiveReqAddr;
 }
@@ -227,7 +227,6 @@ std::string Scheduler::queueRetrieve(
      .add("requesterName", request.requester.name)
      .add("requesterGroup", request.requester.group)
      .add("criteriaArchiveFileId", queueCriteria.archiveFile.archiveFileID)
-     .add("criteriaChecksumBlob", queueCriteria.archiveFile.checksumBlob)
      .add("criteriaCreationTime", queueCriteria.archiveFile.creationTime)
      .add("criteriaDiskFileId", queueCriteria.archiveFile.diskFileId)
      .add("criteriaDiskFileOwnerUid", queueCriteria.archiveFile.diskFileInfo.owner_uid)
@@ -235,6 +234,7 @@ std::string Scheduler::queueRetrieve(
      .add("criteriaFileSize", queueCriteria.archiveFile.fileSize)
      .add("reconciliationTime", queueCriteria.archiveFile.reconciliationTime)
      .add("storageClass", queueCriteria.archiveFile.storageClass);
+  queueCriteria.archiveFile.checksumBlob.addFirstChecksumToLog(spc);
   uint32_t copyNumber=0;
   for (auto & tf:queueCriteria.archiveFile.tapeFiles) {
     std::stringstream tc;

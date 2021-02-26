@@ -8618,12 +8618,12 @@ void RdbmsCatalogue::moveArchiveFileToRecycleLog(const common::dataStructures::D
      .add("diskFileInfo.owner_uid", archiveFile.diskFileInfo.owner_uid)
      .add("diskFileInfo.gid", archiveFile.diskFileInfo.gid)
      .add("fileSize", std::to_string(archiveFile.fileSize))
-     .add("checksumBlob", archiveFile.checksumBlob)
      .add("creationTime", std::to_string(archiveFile.creationTime))
      .add("reconciliationTime", std::to_string(archiveFile.reconciliationTime))
      .add("diskFilePath",request.diskFilePath)
      .add("errorMessage",ex.getMessageValue())
      .add("storageClass", archiveFile.storageClass);
+    archiveFile.checksumBlob.addFirstChecksumToLog(spc);
     for(auto it=archiveFile.tapeFiles.begin(); it!=archiveFile.tapeFiles.end(); it++) {
       std::stringstream tapeCopyLogStream;
       tapeCopyLogStream << "copy number: " << static_cast<int>(it->copyNb)
@@ -8656,10 +8656,10 @@ void RdbmsCatalogue::moveArchiveFileToRecycleLog(const common::dataStructures::D
      .add("diskFileInfo.owner_uid", archiveFile.diskFileInfo.owner_uid)
      .add("diskFileInfo.gid", archiveFile.diskFileInfo.gid)
      .add("fileSize", std::to_string(archiveFile.fileSize))
-     .add("checksumBlob", archiveFile.checksumBlob)
      .add("creationTime", std::to_string(archiveFile.creationTime))
      .add("reconciliationTime", std::to_string(archiveFile.reconciliationTime))
      .add("storageClass", archiveFile.storageClass);
+    archiveFile.checksumBlob.addFirstChecksumToLog(spc);
     for(auto it=archiveFile.tapeFiles.begin(); it!=archiveFile.tapeFiles.end(); it++) {
       std::stringstream tapeCopyLogStream;
       tapeCopyLogStream << "copy number: " << static_cast<int>(it->copyNb)

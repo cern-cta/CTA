@@ -165,10 +165,11 @@ void DiskReadTask::execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory
     m_nextTask.pushDataBlock(mb);
     mb=NULL;
     
-    LogContext::ScopedParam sp(lc, Param("blockID",blockId));
-    LogContext::ScopedParam sp0(lc, Param("exceptionMessage", e.getMessageValue()));
-    LogContext::ScopedParam sp1(lc,Param("fileSize",m_archiveJob->archiveFile.fileSize));
-    LogContext::ScopedParam sp2(lc,Param("checksumBlob",m_archiveJob->archiveFile.checksumBlob));
+    cta::log::ScopedParamContainer spc(lc);
+    spc.add("blockID",blockId)
+       .add("exceptionMessage", e.getMessageValue())
+       .add("fileSize",m_archiveJob->archiveFile.fileSize);
+    m_archiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(spc);
     lc.log(cta::log::ERR,"Exception while reading a file");
     
     //deal here the number of mem block
