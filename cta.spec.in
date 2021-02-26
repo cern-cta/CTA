@@ -496,6 +496,8 @@ Currently contains a helper for the client-ar script, which should be installed 
 - Upgraded eos-xrootd to 4.12.7
 - cta/CTA#966 Unable to distinguish empty and wrong tape pool
 - cta/CTA#930 Batched the queueing and the deleting of the repack subrequests
+- cta/CTA#926 Improve MigrationReportPacker::ReportSkipped::execute() exception message
+- cta/CTA#669 cta-taped now display the correct error message when the drive device does not exist
 * Fri Feb 05 2021 julien.leduc (at) cern.ch - 4.0-1
 - cta/CTA#964 Adds failure log messages to processCLOSEW in CTA Frontend
 - When the operator submits a tape to repack, a check is done about the tape state before queueing the repack request to ensure it can be repacked

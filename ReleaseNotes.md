@@ -7,10 +7,12 @@
 - Upgraded EOS to 4.8.39
 - Upgraded eos-xrootd to 4.12.7
 - cta/CTA#966 Unable to distinguish empty and wrong tape pool
+- cta/CTA#926 Improve MigrationReportPacker::ReportSkipped::execute() exception message
 
 ### Bug fixes
 
 - cta/CTA#930 Batched the queueing and the deleting of the repack subrequests
+- cta/CTA#669 cta-taped now display the correct error message when the drive device does not exist
 
 # v4.0-1
 
