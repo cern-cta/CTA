@@ -34,7 +34,9 @@ XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
   w << status.ToStr() << " code:" << status.code 
     << " errNo:" << status.errNo 
     << " status:" << status.status;
-  getMessage().str(w.str());
+  std::string x(w.str());
+  x.resize(x.find_first_of('\0'));
+  getMessage().str(x);
 }
 
 void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string context)
