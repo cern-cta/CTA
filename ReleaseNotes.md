@@ -1,3 +1,13 @@
+# v4.NEXT
+
+## Summary
+
+### Features
+
+### Bug fixes
+
+- cta/CTA#969 `xrdfs query prepare` malformed JSON output 
+
 # v4.0-2
 
 ## Summary

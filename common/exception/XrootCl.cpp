@@ -28,20 +28,18 @@
 namespace cta { namespace exception {
 
 XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
-  std::stringstream w;
-  if (what.size())
-    w << what << " ";
-  w << status.ToStr() << " code:" << status.code 
-    << " errNo:" << status.errNo 
-    << " status:" << status.status;
-  std::string x(w.str());
-  x.resize(x.find_first_of('\0'));
-  getMessage().str(x);
+  if(!what.empty()) {
+    getMessage() << what << " ";
+  }
+  getMessage() << status.ToStr().c_str();
+  getMessage() << " code:"   << status.code 
+               << " errNo:"  << status.errNo 
+               << " status:" << status.status;
 }
 
 void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string context)
 {
-  if (!status.IsOK()) {
+  if(!status.IsOK()) {
     throw XrootCl(status, context);
   }
 }
