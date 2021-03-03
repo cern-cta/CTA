@@ -4,6 +4,9 @@
 
 ### Features
 
+- Upgraded EOS to 4.8.40
+- Upgraded eos-xrootd to 4.12.8
+
 ### Bug fixes
 
 - cta/CTA#969 `xrdfs query prepare` malformed JSON output 
