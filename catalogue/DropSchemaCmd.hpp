@@ -83,51 +83,18 @@ private:
   void dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbms::Conn &conn);
 
   /**
-   * Unconditionally drops the schema of the catalogue database associated with
-   * the specified database connection.
-   *
-   * @param conn The database connection.
-   */
-  void dropSqliteCatalogueSchema(rdbms::Conn &conn);
-
-  /**
-   * Unconditionally drops the schema of the catalogue database associated with
-   * the specified database connection.
-   *
-   * @param conn The database connection.
-   */
-  void dropMysqlCatalogueSchema(rdbms::Conn &conn);
-
-  /**
-   * Unconditionally drops the schema of the catalogue database associated with
-   * the specified database connection.
-   *
-   * @param conn The database connection.
-   */
-  void dropPostgresCatalogueSchema(rdbms::Conn &conn);
-
-  /**
    * Drops the database tables with the specified names.
    *
-   * @param tablesToDrop The names of the database tables to be dropped.
-   */
-  void dropDatabaseTables(rdbms::Conn &conn, const std::list<std::string> &tablesToDrop);
-
-  /**
-   * Unconditionally drops the schema of the catalogue database associated with
-   * the specified database connection.
-   *
    * @param conn The database connection.
    */
-  void dropOracleCatalogueSchema(rdbms::Conn &conn);
+  void dropDatabaseTables(rdbms::Conn &conn);
 
   /**
    * Drops the database sequences with the specified names.
    *
    * @param conn The database connection.
-   * @param seqeuncesToDrop The names of the database sequences to be dropped.
    */
-  void dropDatabaseSequences(rdbms::Conn &conn, const std::list<std::string> &sequencesToDrop);
+  void dropDatabaseSequences(rdbms::Conn &conn);
   
   /**
    * Checks if the IS_PRODUCTION bit is set on the CTA_CATALOGUE table

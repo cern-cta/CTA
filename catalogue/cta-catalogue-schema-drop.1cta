@@ -20,11 +20,11 @@ cta-catalogue-schema-drop \- Drop the schema of the CTA catalogue database
 .BI "cta-catalogue-schema-drop databaseConnectionFile [options]"
 
 .SH DESCRIPTION
-\fBcta-catalogue-schema-drop\fP is a command-line tool that drops the schema of
-the CTA catalogue database.
-.P
-This command-line tool will abort if it sees the value LOCKED in the
-SCHEMA_STATUS column of the CTA_CATALOGUE database table.
+\fBcta-catalogue-schema-drop\fP is a command-line tool that will drop \fBALL\fP
+of the tables and sequences in the specified database.
+
+This command-line tool will abort if the CTA_CATALOGUE database has been marked
+as a production database using the \fBcta-catalogue-set-production\fP command.
 .SH ARGUMENTS
 .TP
 \fBdatabaseConnectionFile

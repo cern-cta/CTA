@@ -87,7 +87,8 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
 //------------------------------------------------------------------------------
 bool DropSchemaCmd::userConfirmsDropOfSchema(const rdbms::Login &dbLogin) {
   m_out << "WARNING" << std::endl;
-  m_out << "You are about to drop the schema of the CTA calalogue database" << std::endl;
+
+  m_out << "You are about to drop ALL tables and sequences from the following database:" << std::endl;
   m_out << "    Database name: " << dbLogin.database << std::endl;
   m_out << "Are you sure you want to continue?" << std::endl;
 
@@ -110,217 +111,67 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
       throw exception::Exception("Dropping the schema of an in_memory database is not supported");
     case rdbms::Login::DBTYPE_SQLITE:
       throw exception::Exception("Dropping the schema of an sqlite database is not supported");
-    case rdbms::Login::DBTYPE_MYSQL:
-      dropMysqlCatalogueSchema(conn);
-      break;
-    case rdbms::Login::DBTYPE_POSTGRESQL:
-      dropPostgresCatalogueSchema(conn);
-      break;
-    case rdbms::Login::DBTYPE_ORACLE:
-      dropOracleCatalogueSchema(conn);
-      break;
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot delete the schema of catalogue database without a database type");
     default:
-      {
-        exception::Exception ex;
-        ex.getMessage() << "Unknown database type: value=" << dbType;
-        throw ex;
-      }
+      dropDatabaseTables(conn);
+      dropDatabaseSequences(conn);
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
   }
 }
-
-//------------------------------------------------------------------------------
-// dropMysqlCatalogueSchema
-//------------------------------------------------------------------------------
-void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
-  try {
-    std::list<std::string> tablesInDb = conn.getTableNames();
-    std::list<std::string> tablesToDrop = {
-      "CTA_CATALOGUE",
-      "ARCHIVE_ROUTE",
-      "TAPE_FILE",
-      "TEMP_TAPE_FILE",
-      "DATABASECHANGELOGLOCK", /* Liquibase specific table */
-      "DATABASECHANGELOG", /* Liquibase specific table */
-      "TAPE_FILE_RECYCLE_BIN",
-      "ARCHIVE_FILE_RECYCLE_BIN",
-      "FILE_RECYCLE_LOG",
-      "FILE_RECYCLE_LOG_ID",
-      "ARCHIVE_FILE",
-      "ARCHIVE_FILE_ID",
-      "TAPE",
-      "MEDIA_TYPE",
-      "MEDIA_TYPE_ID",
-      "REQUESTER_MOUNT_RULE",
-      "REQUESTER_GROUP_MOUNT_RULE",
-      "ADMIN_USER",
-      "STORAGE_CLASS",
-      "STORAGE_CLASS_ID",
-      "TAPE_POOL",
-      "TAPE_POOL_ID",
-      "VIRTUAL_ORGANIZATION",
-      "VIRTUAL_ORGANIZATION_ID",
-      "LOGICAL_LIBRARY",
-      "LOGICAL_LIBRARY_ID",
-      "MOUNT_POLICY",
-      "ACTIVITIES_WEIGHTS",
-      "USAGESTATS",
-      "EXPERIMENTS",
-      "DISK_SYSTEM"
-    };
-    dropDatabaseTables(conn, tablesToDrop);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
 
 //------------------------------------------------------------------------------
 // dropDatabaseTables
 //------------------------------------------------------------------------------
-void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn, const std::list<std::string> &tablesToDrop) {
+void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
   try {
-    std::list<std::string> tablesInDb = conn.getTableNames();
-    for(auto tableToDrop : tablesToDrop) {
-      const bool tableToDropIsInDb = tablesInDb.end() != std::find(tablesInDb.begin(), tablesInDb.end(), tableToDrop);
-      if(tableToDropIsInDb) {
-        conn.executeNonQuery(std::string("DROP TABLE ") + tableToDrop);
-        m_out << "Dropped table " << tableToDrop << std::endl;
+    bool droppedAtLeastOneTable = true;
+    while (droppedAtLeastOneTable) {
+      droppedAtLeastOneTable = false;
+      const auto tables = conn.getTableNames();
+      for(auto table : tables) {
+        try {
+          conn.executeNonQuery(std::string("DROP TABLE ") + table);
+          m_out << "Dropped table " << table << std::endl;
+          droppedAtLeastOneTable = true;
+        } catch(exception::Exception &ex) {
+          // Ignore reason for failure
+        }
       }
     }
+
+    const auto tables = conn.getTableNames();
+    if (!tables.empty()) {
+      throw exception::Exception("Failed to delete all tables.  Maybe there is a circular dependency");
+    }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// dropOracleCatalogueSchema
-//------------------------------------------------------------------------------
-void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
-  try {
-    std::list<std::string> tablesInDb = conn.getTableNames();
-    std::list<std::string> tablesToDrop = {
-      "CTA_CATALOGUE",
-      "ARCHIVE_ROUTE",
-      "TAPE_FILE",
-      "ARCHIVE_FILE",
-      "TAPE_FILE_RECYCLE_BIN",
-      "ARCHIVE_FILE_RECYCLE_BIN",
-      "FILE_RECYCLE_LOG",
-      "TAPE",
-      "MEDIA_TYPE",
-      "TEMP_TAPE_FILE_BATCH",
-      "TEMP_TAPE_FILE_INSERTION_BATCH",
-      "TEMP_TAPE_FILE",
-      "DATABASECHANGELOGLOCK", /* Liquibase specific table */
-      "DATABASECHANGELOG", /* Liquibase specific table */
-      "TEMP_REMOVE_CASTOR_METADATA",
-      "REQUESTER_MOUNT_RULE",
-      "REQUESTER_GROUP_MOUNT_RULE",
-      "ADMIN_USER",
-      "ADMIN_HOST",
-      "STORAGE_CLASS",
-      "TAPE_POOL",
-      "VIRTUAL_ORGANIZATION",
-      "LOGICAL_LIBRARY",
-      "MOUNT_POLICY",
-      "ACTIVITIES_WEIGHTS",
-      "USAGESTATS",
-      "EXPERIMENTS",
-      "DISK_SYSTEM"
-    };
-
-    dropDatabaseTables(conn, tablesToDrop);
-
-    std::list<std::string> sequencesToDrop = {
-      "ARCHIVE_FILE_ID_SEQ",
-      "LOGICAL_LIBRARY_ID_SEQ",
-      "MEDIA_TYPE_ID_SEQ",
-      "STORAGE_CLASS_ID_SEQ",
-      "TAPE_POOL_ID_SEQ",
-      "VIRTUAL_ORGANIZATION_ID_SEQ",
-      "FILE_RECYCLE_LOG_ID_SEQ"
-    };
-    dropDatabaseSequences(conn, sequencesToDrop);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// dropPostgresCatalogueSchema
-//------------------------------------------------------------------------------
-void DropSchemaCmd::dropPostgresCatalogueSchema(rdbms::Conn &conn) {
-  try {
-    std::list<std::string> tablesInDb = conn.getTableNames();
-    std::list<std::string> tablesToDrop = {
-      "CTA_CATALOGUE",
-      "ARCHIVE_ROUTE",
-      "TAPE_FILE",
-      "TEMP_TAPE_FILE",
-      "DATABASECHANGELOGLOCK", /* Liquibase specific table */
-      "DATABASECHANGELOG", /* Liquibase specific table */
-      "ARCHIVE_FILE",
-      "TAPE_FILE_RECYCLE_BIN",
-      "ARCHIVE_FILE_RECYCLE_BIN",
-      "FILE_RECYCLE_LOG",
-      "TAPE",
-      "MEDIA_TYPE",
-      "REQUESTER_MOUNT_RULE",
-      "REQUESTER_GROUP_MOUNT_RULE",
-      "ADMIN_USER",
-      "ADMIN_HOST",
-      "STORAGE_CLASS",
-      "TAPE_POOL",
-      "VIRTUAL_ORGANIZATION",
-      "LOGICAL_LIBRARY",
-      "MOUNT_POLICY",
-      "ACTIVITIES_WEIGHTS",
-      "USAGESTATS",
-      "EXPERIMENTS",
-      "DISK_SYSTEM"
-    };
-
-    dropDatabaseTables(conn, tablesToDrop);
-
-    std::list<std::string> sequencesToDrop = {
-      "ARCHIVE_FILE_ID_SEQ",
-      "LOGICAL_LIBRARY_ID_SEQ",
-      "MEDIA_TYPE_ID_SEQ",
-      "STORAGE_CLASS_ID_SEQ",
-      "TAPE_POOL_ID_SEQ",
-      "VIRTUAL_ORGANIZATION_ID_SEQ",
-      "FILE_RECYCLE_LOG_ID_SEQ"
-    };
-    dropDatabaseSequences(conn, sequencesToDrop);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
   }
 }
 
 //------------------------------------------------------------------------------
 // dropDatabaseSequences
 //------------------------------------------------------------------------------
-void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn, const std::list<std::string> &sequencesToDrop) {
+void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn) {
   try {
-    std::list<std::string> sequencesInDb = conn.getSequenceNames();
-    for(auto sequenceToDrop : sequencesToDrop) {
-      const bool sequenceToDropIsInDb = sequencesInDb.end() != std::find(sequencesInDb.begin(), sequencesInDb.end(),
-        sequenceToDrop);
-      if(sequenceToDropIsInDb) {
-        conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequenceToDrop);
-        m_out << "Dropped sequence " << sequenceToDrop << std::endl;
-      }
+    std::list<std::string> sequences = conn.getSequenceNames();
+    for(auto sequence : sequences) {
+      conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequence);
+      m_out << "Dropped sequence " << sequence << std::endl;
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
   }
 }
 
+//------------------------------------------------------------------------------
+// isProductionSet
+//------------------------------------------------------------------------------
 bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
   const char * const sql = "SELECT CTA_CATALOGUE.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_CATALOGUE";
   try {
@@ -328,12 +179,13 @@ bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
     auto rset = stmt.executeQuery();
     if(rset.next()){
       return rset.columnBool("IS_PRODUCTION");
+    } else {
+      return false;  // The table is empty
     }
-  } catch(const exception::Exception & ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  } catch(exception::Exception & ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
   }
-  //We should never arrive here
-  throw cta::exception::Exception("Cannot check the IS_PRODUCTION bit because the CTA_CATALOGUE table is empty or does not exist.");
 }
 
 //------------------------------------------------------------------------------
