@@ -31,20 +31,21 @@
 #   INFO
 #   DEBUG
 #   USERERR
-#
-# Please note that the USERERR log level is equivalent to NOTICE because it is
-# a convention of CTA to use log level NOTICE to label user errors.
-#
+# Please note that the USERERR log level is equivalent to NOTICE because it is a convention of CTA to use log level NOTICE to label user errors.
 # taped LogMask INFO
 #
-# Use Recommended Access Ordering if available
+# Define how many memory buffers should the CTA tape daemon use (compile time buffer size value is 5 MB) on a particular node (depends on physical memory).
+# taped BufferCount 5000
+#
+# Use Recommended Access Ordering if available.
 # taped UseRAO yes
-# These options allow to trigger a software RAO algorithm on LTO tape drives
+#
+# These options allow to trigger a software RAO algorithm on LTO tape drives.
 # taped RAOLTOAlgorithm sltf
 # taped RAOLTOAlgorithmOptions cost_heuristic_name:cta
 #
-# Disable Repack management
+# Disable Repack management.
 # taped DisableRepackManagement yes
 #
-# Disable Maintenance process
+# Disable Maintenance process.
 # taped DisableMaintenanceProcess yes
