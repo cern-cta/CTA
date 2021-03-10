@@ -2987,9 +2987,7 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
     stmt.executeNonQuery();
 
     if(0 == stmt.getNbAffectedRows()) {
-      exception::UserError ue;
-      ue.getMessage() << "Archive route does not exist";
-      throw ue;
+      throw UserSpecifiedANonExistentArchiveRoute("Archive route does not exist");
     }
   } catch(exception::UserError &ue) {
     std::ostringstream msg;
