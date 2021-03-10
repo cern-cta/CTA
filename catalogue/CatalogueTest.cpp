@@ -3279,6 +3279,46 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentTapePool) {
+  using namespace cta;
+      
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  const std::string anotherTapePoolName = "another_tape_pool";
+  m_catalogue->createTapePool(m_admin, anotherTapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create another tape pool");
+
+  const uint32_t copyNb = 1;
+  const std::string comment = "Create archive route";
+  m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
+
+  {
+    const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+      
+    ASSERT_EQ(1, routes.size());
+      
+    const common::dataStructures::ArchiveRoute route = routes.front();
+    ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
+    ASSERT_EQ(copyNb, route.copyNb);
+    ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
+    ASSERT_EQ(comment, route.comment);
+
+    const common::dataStructures::EntryLog creationLog = route.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  
+    const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  ASSERT_THROW(m_catalogue->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, "non_existent_tape_pool"), catalogue::UserSpecifiedANonExistentTapePool);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentArchiveRoute) {
   using namespace cta;
       
@@ -3291,7 +3331,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentAr
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
-  ASSERT_THROW(m_catalogue->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyArchiveRouteTapePoolName(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName), catalogue::UserSpecifiedANonExistentArchiveRoute);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {

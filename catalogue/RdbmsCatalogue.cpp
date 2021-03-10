@@ -2968,6 +2968,15 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
             "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
+
+    if(!archiveRouteExists(conn, storageClassName, copyNb)) {
+      throw UserSpecifiedANonExistentArchiveRoute("Archive route does not exist");
+    }
+
+    if(!tapePoolExists(conn, tapePoolName)) {
+      throw UserSpecifiedANonExistentTapePool("Tape pool does not exist");
+    }
+
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -2979,11 +2988,14 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
 
     if(0 == stmt.getNbAffectedRows()) {
       exception::UserError ue;
-      ue.getMessage() << "Cannot modify archive route for storage-class " << ":" + storageClassName +
-        " and copy number " << copyNb << " because either it or tape pool " + tapePoolName + " does not exist";
+      ue.getMessage() << "Either the archive route or the tape pool does not exist";
       throw ue;
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError &ue) {
+    std::ostringstream msg;
+    msg << "Cannot modify tape pool of archive route: storageClassName=" << storageClassName << " copyNb=" << copyNb <<
+      " tapePoolName=" << tapePoolName << ": " << ue.getMessage().str();
+    ue.getMessage().str(msg.str());
     throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());

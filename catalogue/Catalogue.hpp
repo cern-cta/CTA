@@ -89,6 +89,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentDiskSystem);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyDiskSystemAfterDelete);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyLogicalLibrary);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyTape);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentArchiveRoute);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentLogicalLibrary);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapePool);
@@ -545,7 +546,18 @@ public:
     const std::string &storageClassName,
     const std::string &tapePoolName) const = 0;
 
+  /**
+   * Modifies the tape pool of the specified archive route.
+   *
+   * @param admin The administrator.
+   * @param storageClassName The name of the storage class.
+   * @param copyNb The copy number.
+   * @param tapePoolName The name of the tape pool.
+   * @throw UserSpecifiedANonExistentTapePool if the user specified a
+   * non-existent tape pool.
+   */
   virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) = 0;
+
   virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) = 0;
 
   virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool isDisabled, const std::string &comment) = 0;
