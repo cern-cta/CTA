@@ -2988,7 +2988,7 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
 
     if(0 == stmt.getNbAffectedRows()) {
       exception::UserError ue;
-      ue.getMessage() << "Either the archive route or the tape pool does not exist";
+      ue.getMessage() << "The archive archive route does not exist";
       throw ue;
     }
   } catch(exception::UserError &ue) {
