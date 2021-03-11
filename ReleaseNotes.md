@@ -15,6 +15,7 @@
 - cta/CTA#927 Bad message for archive route pointing non-existing pool
 - cta/CTA#930 Batched the queueing and the deleting of the repack subrequests
 - cta/CTA#969 `xrdfs query prepare` malformed JSON output 
+- cta/CTA#972 Updates cta-taped and rmcd man pages
 
 # v4.0-1
 
