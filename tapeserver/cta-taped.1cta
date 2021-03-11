@@ -1,5 +1,5 @@
 .\" The CERN Tape Archive (CTA) project
-.\" Copyright (C) 2015  CERN
+.\" Copyright (C) 2021  CERN
 .\"
 .\" This program is free software: you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 .\"
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
-.TH CTA-TAPED "8cta" "$Date: 2014/03/24 14:44:00 $" CTA "CTA"
+.TH CTA-TAPED "8cta" "$Date: 2021/03/11 14:44:00 $" CTA "CTA"
 .SH NAME
 cta-taped \- Tape server daemon
 .SH SYNOPSIS
@@ -42,7 +42,7 @@ A SCSI compatible tape library requires the following daemon:
 
 The installation RPM for the \fBrmcd\fP daemon and its manual page is:
 
-\fBcta-rmc-server-0.0-XX.slc6.x86_64\fP
+\fBcta-rmcd-MAJORVERSION-MINORVERSION.el7.cern.x86_64.rpm\fP
 
 The \fBcta-rmcd\fP daemon can be started, stopped and its status queried using
 the usual service commands:
@@ -52,35 +52,6 @@ the usual service commands:
 \fBservice cta-rmcd status\fP
 .br
 \fBservice cta-rmcd stop\fP
-
-An ACS tape library requires the following daemon:
-
-\fBcta-acsd\fP
-
-The installation RPM for the \fBcta-acsd\fP daemon and its manual page is:
-
-\fBcta-acs-server-0.0.slc6.x86_64\fP
-
-The \fBcta-acsd\fP daemon can be started, stopped and its status queried using
-the usual service commands:
-
-\fBservice cta-acsd start\fP
-.br
-\fBservice cta-acsd status\fP
-.br
-\fBservice cta-acsd stop\fP
-
-Even though there is a separate daemon for each of the supported tape library
-types, there is a single generic set of command-line tools for mounting and
-un-mounting tapes:
-
-\fBcta-tape-mediachanger-mount\fP
-.br
-\fBcta-tape-mediachanger-dismount\fP
-
-The installation RPM for these command-line tools and their manual pages is:
-
-\fBcta-tape-developer-tools-2.1.15-XX.slc6.x86_64\fP
 
 .SH OPTIONS
 .TP
@@ -107,66 +78,66 @@ The host on which the rmcd daemon is running.
 Maximum number of attempts a retriable RMC request should be issued.
 
 .TP
-\fBTapeServer BlkMoveTimeout
+\fBtaped BlkMoveTimeout
 The maximum time in seconds the data-transfer session of tapeserverd can
 cease to move data blocks
 
 .TP
-\fBTapeServer BufSize
+\fBtaped BufSize
 Size of a memory buffer in the data-transfer cache in bytes (default is 5
 Mebibytes).
 
 .TP
-\fBTapeServer BulkRequestMigrationMaxBytes
+\fBtaped BulkRequestMigrationMaxBytes
 When the tapeserverd daemon requests the tapegatewayd daemon for a set of
 files to migrate to tape, this parameter defines the maximum number of bytes
 the set of files should represent.
 
 .TP
-\fBTapeServer BulkRequestMigrationMaxFiles
+\fBtaped BulkRequestMigrationMaxFiles
 When the tapeserverd daemon requests the tapegatewayd daemon for a set of
 files to migrate to tape, this parameter defines the maximum number of files
 the set may contain.
 
 .TP
-\fBTapeServer BulkRequestRecallMaxBytes
+\fBtaped BulkRequestRecallMaxBytes
 When the tapeserverd daemon requests the tapegatewayd daemon for a set of
 files to recall from tape, this parameter defines the maximum number of bytes
 the set of files should represent.
 
 .TP
-\fBTapeServer BulkRequestRecallMaxFiles
+\fBtaped BulkRequestRecallMaxFiles
 When the tapeserverd daemon requests the tapegatewayd daemon for a set of
 files to recall from tape, this parameter defines the maximum number of files
 the set may contain.
 
 .TP
-\fBTapeServer MaxBytesBeforeFlush
+\fBtaped MaxBytesBeforeFlush
 The value of this parameter defines the maximum number of bytes to be written
 to tape before a flush to tape (synchronised tape-mark).  Please note that a
 flush occurs on a file boundary therefore more bytes will normally be written
 to tape before the actual flush occurs.
 
 .TP
-\fBTapeServer MaxFilesBeforeFlush
+\fBtaped MaxFilesBeforeFlush
 The value of this parameter defines the maximum number of files to be written
 to tape before a flush to tape (synchronised or non-immediate tape-mark).
 
 .TP
-\fBTapeServer MountTimeout
+\fBtaped MountTimeout
 The maximum time in seconds that the data-transfer session can take to mount a
 tape.
 
 .TP
-\fBTapeServer NbBufs
+\fBtaped NbBufs
 Number of memory buffers in the data-transfer cache.
 
 .TP
-\fBTapeServer NbDiskThreads
+\fBtaped NbDiskThreads
 The number of disk I/O threads.
 
 .TP
-\fBTapeServer RemoteFileProtocol
+\fBtaped RemoteFileProtocol
 The protocol to be used when transferring files to and from disk servers.
 Possible values are RFIO or XROOT.  The value is not case sensitive.
 

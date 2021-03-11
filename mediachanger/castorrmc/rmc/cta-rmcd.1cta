@@ -13,7 +13,7 @@ A SCSI compatible tape library requires the following daemon:
 
 The installation RPM for the \fBrmcd\fP daemon and its manual page is:
 
-\fBcta-rmc-server-0.0-XX.slc6.x86_64\fP
+\fBcta-rmcd-MAJORVERSION-MINORVERSION.el7.cern.x86_64.rpm\fP
 
 The \fBcta-rmcd\fP daemon can be started, stopped and its status queried using
 the usual service commands:
