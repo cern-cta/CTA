@@ -4,8 +4,8 @@
 
 ### Features
 
-- Upgraded EOS to 4.8.40
-- Upgraded eos-xrootd to 4.12.8
+- Upgraded EOS to 4.8.40 in CI versionlock.list file
+- Upgraded eos-xrootd to 4.12.8 in CI versionlock.list file
 - cta/CTA#966 Unable to distinguish empty and wrong tape pool
 - cta/CTA#926 Improve MigrationReportPacker::ReportSkipped::execute() exception message
 
