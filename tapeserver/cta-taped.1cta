@@ -13,7 +13,7 @@
 .\"
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
-.TH CTA-TAPED "8cta" "$Date: 2021/03/11 14:44:00 $" CTA "CTA"
+.TH CTA-TAPED "1cta" "$Date: 2021/03/11 14:44:00 $" CTA "CTA"
 .SH NAME
 cta-taped \- Tape server daemon
 .SH SYNOPSIS

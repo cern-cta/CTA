@@ -1,15 +1,31 @@
-.\" Copyright (C) 2021 by CERN/IT-ST-TAB
-.\" All rights reserved
+.\" The CERN Tape Archive (CTA) project
+.\" Copyright (C) 2021  CERN
 .\"
-CTA supports two types of tape libraries, SCSI compatible ones and Oracle
-Automatic Cartridge System (ACS) ones.  The cta-taped daemon requires a tape
-library daemon to be installed and run on the same tape server as itself.
-There are two types of CTA tape library daemons, one for SCSI compatible tape
-libraries and one for ACS tape libraries.
+.\" This program is free software: you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation, either version 3 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.TH CTA-RMCD "1cta" "$Date: 2021/03/11 14:44:00 $" CTA "CTA"
+.SH NAME
+cta-rmcd \- Media changer daemon
+.SH SYNOPSIS
+.BI "cta-rmcd [OPTIONS]"
 
+.SH DESCRIPTION
+CTA supports SCSI-compatible tape libraries. The cta-taped daemon requires a tape
+library daemon to be installed and run on the same tape server as itself.
+.P
 A SCSI compatible tape library requires the following daemon:
 
-\fBrmcd\fP
+\fBcta-rmcd\fP
 
 The installation RPM for the \fBrmcd\fP daemon and its manual page is:
 
@@ -17,26 +33,18 @@ The installation RPM for the \fBrmcd\fP daemon and its manual page is:
 
 The \fBcta-rmcd\fP daemon can be started, stopped and its status queried using
 the usual service commands:
-
-.SH NAME
-\fBservice cta-rmcd start the device file of the tape library\fP 
+.LP
+\fBservice cta-rmcd start /device/file/of/the/tape/library\fP 
 .br
 \fBservice cta-rmcd status\fP
 .br
 \fBservice cta-rmcd stop\fP
-.SH SYNOPSIS
-.B cta-rmcd
-.I smc_ldr
-.SH DESCRIPTION
 .LP
 The
 .B cta-rmcd
 command starts the Remote Media Changer daemon.
 This command is usually executed at system startup time
 .RB ( /etc/rc.local ).
-.LP
-.I smc_ldr
-is the picker device as defined in /dev.
 .LP
 If the Remote Media Changer daemon is not active,
 the requests are automatically retried by the client API.
@@ -67,7 +75,7 @@ an entry in
 like:
 .RS
 .HP
-rmc           5014/tcp                        # CASTOR Remote Media Changer
+rmc           5014/tcp                        # CTA Remote Media Changer
 .RE
 .RE
 .LP
