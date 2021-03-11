@@ -1,4 +1,4 @@
-.\" Copyright (C) 2002 by CERN/IT/PDP/DM
+.\" Copyright (C) 2021 by CERN/IT-ST-TAB
 .\" All rights reserved
 .\"
 CTA supports two types of tape libraries, SCSI compatible ones and Oracle
@@ -97,4 +97,4 @@ Here is a small log:
 12/06 11:42:48  7971 rmc_srv_unmount: returns 0
 .fi
 .SH AUTHOR
-\fBCASTOR\fP Team <castor.support@cern.ch>
+CERN CTA Team, https://cta.web.cern.ch
