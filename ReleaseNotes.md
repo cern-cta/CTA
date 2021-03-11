@@ -9,6 +9,7 @@
 
 ### Bug fixes
 
+- cta/CTA#927 Bad message for archive route pointing non-existing pool
 - cta/CTA#969 `xrdfs query prepare` malformed JSON output 
 
 # v4.0-2
