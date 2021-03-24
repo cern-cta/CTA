@@ -63,6 +63,7 @@ echo Installing build dependencies
 sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm
 
 echo Building CTA
+rm -rf ~/CTA-build
 mkdir -p ~/CTA-build
 (cd ~/CTA-build && cmake ../CTA; make -j 4)
 
