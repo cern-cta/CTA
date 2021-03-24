@@ -21,7 +21,7 @@
 #include "objectstore/cta.pb.h"
 
 #include "JobQueueType.hpp"
-#include "RepackQueueType.hpp"
+#include "common/dataStructures/RepackQueueType.hpp"
 #include "Backend.hpp"
 #include "ObjectOps.hpp"
 #include "EntryLogSerDeser.hpp"
@@ -140,12 +140,12 @@ public:
   // Repack queues manipulations ===============================================
   CTA_GENERATE_EXCEPTION_CLASS(RepackQueueNotEmpty);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRepackQueue);
-  std::string getRepackQueueAddress(RepackQueueType queueType);
-  std::string addOrGetRepackQueueAndCommit(AgentReference & agentRef, RepackQueueType queueType);
-  void removeRepackQueueAndCommit(RepackQueueType queueType, log::LogContext & lc);
+  std::string getRepackQueueAddress(common::dataStructures::RepackQueueType queueType);
+  std::string addOrGetRepackQueueAndCommit(AgentReference & agentRef, common::dataStructures::RepackQueueType queueType);
+  void removeRepackQueueAndCommit(common::dataStructures::RepackQueueType queueType, log::LogContext & lc);
 private:
-  void setRepackQueueAddress(RepackQueueType queueType, const std::string &queueAddress);
-  void clearRepackQueueAddress(RepackQueueType queueType);
+  void setRepackQueueAddress(common::dataStructures::RepackQueueType queueType, const std::string &queueAddress);
+  void clearRepackQueueAddress(common::dataStructures::RepackQueueType queueType);
   
 public:
   // Dump the root entry

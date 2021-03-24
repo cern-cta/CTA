@@ -91,7 +91,6 @@ add_library (ctaobjectstore SHARED
   RepackQueue.cpp
   RepackQueuePendingAlgorithms.cpp
   RepackQueueToExpandAlgorithms.cpp
-  RepackQueueType.cpp
   BackendVFS.cpp
   BackendRados.cpp
   BackendPopulator.cpp

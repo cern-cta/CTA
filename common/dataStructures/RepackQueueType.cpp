@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright © 2021 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "RepackQueueType.hpp"
+#include "common/exception/Exception.hpp"
 
-#include <string>
+namespace cta { namespace common { namespace dataStructures {
 
-namespace cta { namespace objectstore {
-enum class RepackQueueType { Pending, ToExpand };
-std::string toString(RepackQueueType queueType);
-}} // namespace cta::objectstore
+std::string toString(RepackQueueType queueType) {
+  switch(queueType) {
+  case RepackQueueType::Pending:
+    return "Pending";
+  case RepackQueueType::ToExpand:
+    return "ToExpand";
+  }
+  throw exception::Exception("In toString(RepackQueueType): unexpected queue type.");
+}
+
+}}} // namespace cta::common::dataStructures

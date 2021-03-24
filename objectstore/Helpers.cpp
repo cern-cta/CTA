@@ -273,7 +273,7 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
 // Helpers::getLockedAndFetchedRepackQueue()
 //------------------------------------------------------------------------------
 void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusiveLock& queueLock, AgentReference& agentReference,
-    RepackQueueType queueType, log::LogContext& lc) {
+    common::dataStructures::RepackQueueType queueType, log::LogContext& lc) {
   // Try and find the repack queue.
   Backend & be = queue.m_objectStore;
   for (auto i: cta::range<size_t>(5)) {

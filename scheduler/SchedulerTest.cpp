@@ -3382,7 +3382,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     cta::objectstore::RootEntry re(backend);
     re.fetchNoLock();
     
-    std::string repackQueueAddress = re.getRepackQueueAddress(RepackQueueType::Pending);
+    std::string repackQueueAddress = re.getRepackQueueAddress(common::dataStructures::RepackQueueType::Pending);
     
     cta::objectstore::RepackQueuePending repackQueuePending(repackQueueAddress,backend);
     repackQueuePending.fetchNoLock();
@@ -3640,7 +3640,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     cta::objectstore::RootEntry re(backend);
     re.fetchNoLock();
     
-    std::string repackQueueAddress = re.getRepackQueueAddress(RepackQueueType::Pending);
+    std::string repackQueueAddress = re.getRepackQueueAddress(common::dataStructures::RepackQueueType::Pending);
     
     cta::objectstore::RepackQueuePending repackQueuePending(repackQueueAddress,backend);
     repackQueuePending.fetchNoLock();
@@ -3888,7 +3888,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     cta::objectstore::RootEntry re(backend);
     re.fetchNoLock();
 
-    std::string repackQueueAddress = re.getRepackQueueAddress(RepackQueueType::Pending);
+    std::string repackQueueAddress = re.getRepackQueueAddress(common::dataStructures::RepackQueueType::Pending);
 
     cta::objectstore::RepackQueuePending repackQueuePending(repackQueueAddress,backend);
     repackQueuePending.fetchNoLock();
@@ -3940,7 +3940,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     cta::objectstore::RootEntry re(backend);
     re.fetchNoLock();
 
-    std::string repackQueueAddress = re.getRepackQueueAddress(RepackQueueType::Pending);
+    std::string repackQueueAddress = re.getRepackQueueAddress(common::dataStructures::RepackQueueType::Pending);
 
     cta::objectstore::RepackQueuePending repackQueuePending(repackQueueAddress,backend);
     repackQueuePending.fetchNoLock();

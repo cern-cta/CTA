@@ -20,7 +20,7 @@
 
 #include <string>
 #include <list>
-#include "objectstore/RepackQueueType.hpp"
+#include "RepackQueueType.hpp"
 #include "EntryLog.hpp"
 #include "common/optional.hpp"
 
@@ -89,7 +89,7 @@ struct RepackInfo {
 //  std::string repackStatus;
 //  std::map<uint64_t,std::string> errors;
 //  EntryLog creationLog;
-cta::objectstore::RepackQueueType getQueueType();
+RepackQueueType getQueueType();
 }; // struct RepackInfo
 
 std::string toString(RepackInfo::Type type);

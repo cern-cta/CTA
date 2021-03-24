@@ -809,14 +809,14 @@ void RootEntry::removeRepackIndexAndCommit(log::LogContext& lc) {
 // ================ Repack index manipulation ==================================
 // =============================================================================
 
-std::string RootEntry::getRepackQueueAddress(RepackQueueType queueType) {
+std::string RootEntry::getRepackQueueAddress(common::dataStructures::RepackQueueType queueType) {
   checkPayloadReadable();
   switch (queueType) {
-  case RepackQueueType::Pending:
+  case common::dataStructures::RepackQueueType::Pending:
     if (!m_payload.has_repackrequestspendingqueuepointer())
       throw NoSuchRepackQueue("In RootEntry::getRepackQueueAddress: pending queue no set.");
     return m_payload.repackrequestspendingqueuepointer().address();
-  case RepackQueueType::ToExpand:
+  case common::dataStructures::RepackQueueType::ToExpand:
     if (!m_payload.has_repackrequeststoexpandqueuepointer())
       throw NoSuchRepackQueue("In RootEntry::getRepackQueueAddress: toExpand queue not set.");
     return m_payload.repackrequeststoexpandqueuepointer().address();
@@ -824,14 +824,14 @@ std::string RootEntry::getRepackQueueAddress(RepackQueueType queueType) {
   throw cta::exception::Exception("In RootEntry::getRepackQueueAddress(): unexptected queue type.");
 }
 
-void RootEntry::clearRepackQueueAddress(RepackQueueType queueType) {
+void RootEntry::clearRepackQueueAddress(common::dataStructures::RepackQueueType queueType) {
   checkPayloadWritable();
   switch (queueType) {
-  case RepackQueueType::Pending:
+  case common::dataStructures::RepackQueueType::Pending:
     if (!m_payload.has_repackrequestspendingqueuepointer())
       throw NoSuchRepackQueue("In RootEntry::clearRepackQueueAddress: pending queue no set.");
     return m_payload.mutable_repackrequestspendingqueuepointer()->Clear();
-  case RepackQueueType::ToExpand:
+  case common::dataStructures::RepackQueueType::ToExpand:
     if (!m_payload.has_repackrequeststoexpandqueuepointer())
       throw NoSuchRepackQueue("In RootEntry::clearRepackQueueAddress: toExpand queue not set.");
     return m_payload.mutable_repackrequeststoexpandqueuepointer()->Clear();
@@ -839,16 +839,16 @@ void RootEntry::clearRepackQueueAddress(RepackQueueType queueType) {
   throw cta::exception::Exception("In RootEntry::clearRepackQueueAddress(): unexptected queue type.");
 }
 
-void RootEntry::removeRepackQueueAndCommit(RepackQueueType queueType, log::LogContext& lc) {
+void RootEntry::removeRepackQueueAndCommit(common::dataStructures::RepackQueueType queueType, log::LogContext& lc) {
   checkPayloadWritable();
   // find the address of the repack queue object
   try {
     bool hasQueue;
     switch (queueType) {
-    case RepackQueueType::Pending:
+    case common::dataStructures::RepackQueueType::Pending:
       hasQueue = m_payload.has_repackrequestspendingqueuepointer();
       break;
-    case RepackQueueType::ToExpand:
+    case common::dataStructures::RepackQueueType::ToExpand:
       hasQueue = m_payload.has_repackrequeststoexpandqueuepointer();
     }
     if (!hasQueue) {
@@ -856,10 +856,10 @@ void RootEntry::removeRepackQueueAndCommit(RepackQueueType queueType, log::LogCo
     }
     std::string queueAddress;
     switch (queueType) {
-    case RepackQueueType::Pending:
+    case common::dataStructures::RepackQueueType::Pending:
       queueAddress = m_payload.repackrequestspendingqueuepointer().address();
       break;
-    case RepackQueueType::ToExpand:
+    case common::dataStructures::RepackQueueType::ToExpand:
       queueAddress = m_payload.repackrequeststoexpandqueuepointer().address();
     }
     // Open the repack queue object
@@ -896,10 +896,10 @@ void RootEntry::removeRepackQueueAndCommit(RepackQueueType queueType, log::LogCo
   deleteFromRootEntry:
     // ... and remove it from our entry
     switch (queueType) {
-    case RepackQueueType::Pending:
+    case common::dataStructures::RepackQueueType::Pending:
       m_payload.clear_repackrequestspendingqueuepointer();
       break;
-    case RepackQueueType::ToExpand:
+    case common::dataStructures::RepackQueueType::ToExpand:
       m_payload.clear_repackrequeststoexpandqueuepointer();
     }
     commit();
@@ -914,7 +914,7 @@ void RootEntry::removeRepackQueueAndCommit(RepackQueueType queueType, log::LogCo
   }
 }
 
-std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, RepackQueueType queueType) {
+std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, common::dataStructures::RepackQueueType queueType) {
   checkPayloadWritable();
   // Check the repack queue does not already exist
   try {
@@ -924,17 +924,17 @@ std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, Re
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string repackQueueNameHeader = "RepackQueue";
   switch(queueType) {
-  case RepackQueueType::Pending: repackQueueNameHeader+="Pending"; break;
-  case RepackQueueType::ToExpand: repackQueueNameHeader+="ToExpand"; break;
+  case common::dataStructures::RepackQueueType::Pending: repackQueueNameHeader+="Pending"; break;
+  case common::dataStructures::RepackQueueType::ToExpand: repackQueueNameHeader+="ToExpand"; break;
   default: break;
   }
   std::string repackQueueAddress = agentRef.nextId(repackQueueNameHeader);
   // Now move create a reference in the root entry
   switch(queueType) {
-  case RepackQueueType::Pending:
+  case common::dataStructures::RepackQueueType::Pending:
     m_payload.mutable_repackrequestspendingqueuepointer()->set_address(repackQueueAddress); 
     break;
-  case RepackQueueType::ToExpand:
+  case common::dataStructures::RepackQueueType::ToExpand:
     m_payload.mutable_repackrequeststoexpandqueuepointer()->set_address(repackQueueAddress);
     break;
   }

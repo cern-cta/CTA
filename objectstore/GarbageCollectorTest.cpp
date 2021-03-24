@@ -741,7 +741,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestPending) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::Pending);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::Pending);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -822,7 +822,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestToExpand) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::ToExpand);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::ToExpand);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -905,7 +905,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::ToExpand);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::ToExpand);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -993,7 +993,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::ToExpand);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::ToExpand);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -1004,7 +1004,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::objectstore::RepackQueueType::Pending);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::Pending);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -1019,7 +1019,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
   //Check the logs contains the failed to requeue message
   std::string logToCheck = strLogger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Running have no corresponding queue.\""));
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Running has no corresponding queue type.\""));
 }
 
 TEST(ObjectStore, GarbageCollectorRepackRequestStarting) {
@@ -1097,7 +1097,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestStarting) {
   //Check the logs contains the failed to requeue message
   std::string logToCheck = strLogger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Starting have no corresponding queue.\""));
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Starting has no corresponding queue type.\""));
 }
 
 TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {

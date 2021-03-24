@@ -55,19 +55,19 @@ std::string toString(RepackInfo::Status status) {
   }
 }
 
-cta::objectstore::RepackQueueType RepackInfo::getQueueType(){
+RepackQueueType RepackInfo::getQueueType(){
   switch(status){
     case RepackInfo::Status::Pending:
-      return cta::objectstore::RepackQueueType::Pending;
+      return RepackQueueType::Pending;
     case RepackInfo::Status::ToExpand:
-      return cta::objectstore::RepackQueueType::ToExpand;
+      return RepackQueueType::ToExpand;
     case RepackInfo::Status::Running:
     case RepackInfo::Status::Starting:
-      if(!isExpandFinished) return cta::objectstore::RepackQueueType::ToExpand;
+      if(!isExpandFinished) return RepackQueueType::ToExpand;
       goto explicit_default;
     default:
     explicit_default:
-      throw cta::exception::Exception("The status "+toString(status)+" have no corresponding queue.");
+      throw cta::exception::Exception("The status "+toString(status)+" has no corresponding queue type.");
   }
 }
 

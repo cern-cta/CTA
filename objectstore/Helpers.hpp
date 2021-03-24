@@ -24,7 +24,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "JobQueueType.hpp"
-#include "RepackQueueType.hpp"
+#include "common/dataStructures/RepackQueueType.hpp"
 #include <string>
 #include <set>
 #include <future>
@@ -73,7 +73,7 @@ public:
    */
   static void getLockedAndFetchedRepackQueue(RepackQueue & queue, 
     ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
-    RepackQueueType queueType, log::LogContext & lc);
+    common::dataStructures::RepackQueueType queueType, log::LogContext & lc);
   
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
   /**

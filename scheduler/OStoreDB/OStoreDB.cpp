@@ -1900,7 +1900,7 @@ auto OStoreDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::Repac
     typedRet(new OStoreDB::RepackRequestPromotionStatistics(m_objectStore, *m_agentReference));
   // Try to get the lock
   try {
-    typedRet->m_pendingRepackRequestQueue.setAddress(re.getRepackQueueAddress(RepackQueueType::Pending));
+    typedRet->m_pendingRepackRequestQueue.setAddress(re.getRepackQueueAddress(common::dataStructures::RepackQueueType::Pending));
     typedRet->m_lockOnPendingRepackRequestsQueue.lock(typedRet->m_pendingRepackRequestQueue);
   } catch (...) {
     throw SchedulerDatabase::RepackRequestStatistics::NoPendingRequestQueue("In OStoreDB::getRepackStatistics(): could not lock the pending requests queue.");
