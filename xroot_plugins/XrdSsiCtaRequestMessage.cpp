@@ -1041,7 +1041,7 @@ void RequestMessage::processFailedRequest_Ls(cta::xrd::Response &response, XrdSs
 {
   using namespace cta::admin;
 
-  stream = new FailedRequestLsStream(*this, m_catalogue, m_scheduler, m_scheddb, m_lc);
+  stream = new FailedRequestLsStream(*this, m_catalogue, m_scheduler, m_service.getSchedDb(), m_lc);
 
   // Display the correct column headers
   response.set_show_header(has_flag(OptionBoolean::SUMMARY) ? HeaderType::FAILEDREQUEST_LS_SUMMARY

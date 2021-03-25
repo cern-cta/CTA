@@ -24,7 +24,6 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
-#include "objectstore/BackendVFS.hpp"
 #include "rdbms/Login.hpp"
 #include "version.h"
 #include "XrdSsiCtaServiceProvider.hpp"
@@ -134,15 +133,16 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    }
    
    this->m_catalogue_conn_string = catalogueLogin.connectionString;
-   
-   // Initialise the Backend
-   auto objectstore_backendpath = config.getOptionValueStr("cta.objectstore.backendpath");
-   if(!objectstore_backendpath.first) {
-      throw exception::UserError("cta.objectstore.backendpath is not set in configuration file " + cfgFn);
+
+   // Initialise the Scheduler DB
+   const std::string DB_CONN_PARAM = "cta.objectstore.backendpath";
+   auto db_conn = config.getOptionValueStr(DB_CONN_PARAM);
+   if(!db_conn.first) {
+     throw exception::UserError(DB_CONN_PARAM + " is not set in configuration file " + cfgFn);
    }
-   m_backend = std::move(cta::objectstore::BackendFactory::createBackend(objectstore_backendpath.second, *m_log));
-   m_backendPopulator = cta::make_unique<cta::objectstore::BackendPopulator>(*m_backend, "Frontend", cta::log::LogContext(*m_log));
-   m_scheddb = cta::make_unique<cta::OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), *m_catalogue, *m_log);
+   m_scheddb_init = cta::make_unique<SchedulerDBInit_t>("Frontend", db_conn.second, *m_log);
+   m_scheddb      = m_scheddb_init->getSchedDB(*m_catalogue, *m_log);
+
    auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
    if (threadPoolSize.first) {
      m_scheddb->setThreadNumber(threadPoolSize.second);
@@ -151,12 +151,6 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
 
    // Initialise the Scheduler
    m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
-   try {
-      // If the backend is a VFS, make sure we don't delete it on exit
-      dynamic_cast<objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
-   } catch (std::bad_cast &) {
-      // If not, never mind
-   }
 
    // Initialise the Frontend
    auto archiveFileMaxSize = config.getOptionValueInt("cta.archivefile.max_size_gb");
@@ -177,11 +171,6 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
       Log::Msg(XrdSsiPb::Log::WARNING, LOG_SUFFIX, "warning: 'cta.ns.config' not specified; namespace queries are disabled");
    }
   
-   // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
-   auto aht = new cta::objectstore::AgentHeartbeatThread(m_backendPopulator->getAgentReference(), *m_backend, *m_log);
-   aht->startThread();
-   m_agentHeartbeat = std::move(UniquePtrAgentHeartbeatThread(aht));
-
    // All done
    log(log::INFO, std::string("cta-frontend started"), params);
 }

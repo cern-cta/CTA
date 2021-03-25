@@ -18,15 +18,10 @@
 
 #include "MaintenanceHandler.hpp"
 #include "common/exception/Errnum.hpp"
-#include "objectstore/AgentHeartbeatThread.hpp"
-#include "objectstore/BackendPopulator.hpp"
-#include "objectstore/BackendFactory.hpp"
-#include "objectstore/BackendVFS.hpp"
-#include "objectstore/GarbageCollector.hpp"
-#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #include "rdbms/Login.hpp"
 #include "common/make_unique.hpp"
 #include "scheduler/DiskReportRunner.hpp"
@@ -268,32 +263,23 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to
-  // fail likewise, so we just wait for shutdown signal (no feedback to main
-  // process).
-  std::unique_ptr<cta::objectstore::Backend> backend(
-    cta::objectstore::BackendFactory::createBackend(m_tapedConfig.backendPath.value(), m_processManager.logContext().logger()).release());
-  // If the backend is a VFS, make sure we don't delete it on exit.
-  // If not, nevermind.
-  try {
-    dynamic_cast<cta::objectstore::BackendVFS &>(*backend).noDeleteOnExit();
-  } catch (std::bad_cast &){}
-  // Create the agent entry in the object store. This could fail (even before ping, so
-  // handle failure like a ping failure).
-  std::unique_ptr<cta::objectstore::BackendPopulator> backendPopulator;
-  std::unique_ptr<cta::OStoreDBWithAgent> osdb;
+  // fail likewise, so we just wait for shutdown signal (no feedback to main process).
+  SchedulerDBInit_t sched_db_init("Maintenance", m_tapedConfig.backendPath.value(), m_processManager.logContext().logger());
+
+  std::unique_ptr<cta::SchedulerDB_t> sched_db;
   std::unique_ptr<cta::catalogue::Catalogue> catalogue;
   std::unique_ptr<cta::Scheduler> scheduler;
   try {
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, "Maintenance", m_processManager.logContext()));
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_processManager.logContext().logger(),
       catalogueLogin, nbConns, nbArchiveFileListingConns);
-    catalogue=catalogueFactory->create();
-    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
-    scheduler=make_unique<cta::Scheduler>(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
-  // Before launching the transfer session, we validate that the scheduler is reachable.
+    catalogue = catalogueFactory->create();
+    sched_db = sched_db_init.getSchedDB(*catalogue, m_processManager.logContext().logger());
+    // TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
+    scheduler = make_unique<cta::Scheduler>(*catalogue, *sched_db, 5, 2*1000*1000);
+    // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping(m_processManager.logContext());
   } catch(cta::exception::Exception &ex) {
     {
@@ -310,13 +296,9 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
         "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message after failure to contact storage. Exiting.");
     throw ex;
   }
-  
-  // The object store is accessible, let's turn the agent heartbeat on.
-  objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend, m_processManager.logContext().logger());
-  agentHeartbeat.startThread();
-  
+
   // Create the garbage collector and the disk reporter
-  objectstore::GarbageCollector gc(*backend, backendPopulator->getAgentReference(), *catalogue);
+  auto gc = sched_db_init.getGarbageCollector(*catalogue);
   DiskReportRunner diskReportRunner(*scheduler);
   RepackRequestManager repackRequestManager(*scheduler);
   
@@ -366,7 +348,6 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
         "In MaintenanceHandler::exceptionThrowingRunChild(): received an unknown exception.");
     throw;
   }
-  agentHeartbeat.stopAndWaitThread();
 }
 
 //------------------------------------------------------------------------------

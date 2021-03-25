@@ -22,13 +22,9 @@
 #include "common/processCap/ProcessCap.hpp"
 #include "DriveHandler.hpp"
 #include "DriveHandlerProxy.hpp"
-#include "objectstore/Backend.hpp"
-#include "objectstore/BackendFactory.hpp"
-#include "objectstore/BackendVFS.hpp"
-#include "objectstore/BackendPopulator.hpp"
-#include "objectstore/AgentHeartbeatThread.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
+#include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
@@ -873,47 +869,29 @@ int DriveHandler::runChild() {
     params.add("backendPath", m_tapedConfig.backendPath.value());
     lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to object store backend.");
   }
-  // Before anything, we need to check we have access to the scheduler's central storages.
-  std::unique_ptr<cta::objectstore::Backend> backend;
-  try {
-    backend.reset(cta::objectstore::BackendFactory::createBackend(m_tapedConfig.backendPath.value(), lc.logger()).release());
-  } catch (cta::exception::Exception &ex) {
-    log::ScopedParamContainer param (lc);
-    param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to connect to objectstore. Reporting fatal error.");
-    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-    sleep(1);
-    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-  }
-  // If the backend is a VFS, make sure we don't delete it on exit.
-  // If not, nevermind.
-  try {
-    dynamic_cast<cta::objectstore::BackendVFS &>(*backend).noDeleteOnExit();
-  } catch (std::bad_cast &){}
-  // Create the agent entry in the object store. This could fail (even before ping, so
-  // handle failure like a ping failure).
-  std::unique_ptr<cta::objectstore::BackendPopulator> backendPopulator;
-  std::unique_ptr<cta::OStoreDBWithAgent> osdb;
+  // Before anything, we need to check we have access to the scheduler's central storage
+  std::unique_ptr<SchedulerDBInit_t> sched_db_init;
   try {
     std::string processName="DriveProcess-";
     processName+=m_configLine.unitName;
     log::ScopedParamContainer params(lc);
     params.add("processName", processName);
     lc.log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry. Enabling leaving non-empty agent behind.");
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName, lc));
-    backendPopulator->leaveNonEmptyAgentsBehind();
-  } catch(cta::exception::Exception &ex) {
-    log::ScopedParamContainer param(lc);
+    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), m_processManager.logContext().logger(), true));
+  } catch (cta::exception::Exception &ex) {
+    log::ScopedParamContainer param (lc);
     param.add("errorMessage", ex.getMessageValue());
-    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate agent entry. Reporting fatal error.");
+    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
+  std::unique_ptr<SchedulerDB_t> sched_db;
   try {
-    if(!m_catalogue)
+    if(!m_catalogue) {
       m_catalogue = createCatalogue("DriveHandler::runChild()");
-    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *m_catalogue, lc.logger()));
+    }
+    sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
@@ -923,7 +901,7 @@ int DriveHandler::runChild() {
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler.");
-  cta::Scheduler scheduler(*m_catalogue, *osdb, m_tapedConfig.mountCriteria.value().maxFiles,
+  cta::Scheduler scheduler(*m_catalogue, *sched_db, m_tapedConfig.mountCriteria.value().maxFiles,
       m_tapedConfig.mountCriteria.value().maxBytes);
   // Before launching the transfer session, we validate that the scheduler is reachable.
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
@@ -942,11 +920,6 @@ int DriveHandler::runChild() {
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
-  
-  lc.log(log::DEBUG, "In DriveHandler::runChild(): will start agent heartbeat.");
-  // The object store is accessible, let's turn the agent heartbeat on.
-  objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend, lc.logger());
-  agentHeartbeat.startThread();
   
   // 1) Special case first, if we crashed in a cleaner session, we put the drive down
   if (m_previousSession == PreviousSession::Crashed && m_previousType == SessionType::Cleanup) {
@@ -1117,7 +1090,7 @@ int DriveHandler::runChild() {
         
         //Checking the drive does not already exist in the objectstore
         try{
-          osdb->checkDriveCanBeCreated(driveInfo);
+          sched_db->checkDriveCanBeCreated(driveInfo);
         } catch (SchedulerDatabase::DriveAlreadyExistsException &ex) {
           log::ScopedParamContainer param(lc);
           param.add("tapeDrive",driveInfo.driveName)
@@ -1164,7 +1137,6 @@ int DriveHandler::runChild() {
       scheduler);
 
     auto ret = dataTransferSession.execute();
-    agentHeartbeat.stopAndWaitThread();
     return ret;
   }
 }
@@ -1199,42 +1171,24 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
         m_catalogue = createCatalogue("DriveHandler::shutdown()");
       
       //Create the scheduler
+      std::unique_ptr<SchedulerDBInit_t> sched_db_init;
       
-      //Create the backend
-      std::unique_ptr<cta::objectstore::Backend> backend;
-      try {
-        backend.reset(cta::objectstore::BackendFactory::createBackend(m_tapedConfig.backendPath.value(), lc.logger()).release());
-      } catch (cta::exception::Exception &ex) {
-        log::ScopedParamContainer param (lc);
-        param.add("errorMessage", ex.getMessageValue());
-        lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to connect to objectstore.");
-        goto exitShutdown;
-      }
-      // If the backend is a VFS, make sure we don't delete it on exit.
-      // If not, nevermind.
-      try {
-        dynamic_cast<cta::objectstore::BackendVFS &>(*backend).noDeleteOnExit();
-      } catch (std::bad_cast &){}
-      // Create the agent entry in the object store. This could fail (even before ping, so
-      // handle failure like a ping failure).
-      std::unique_ptr<cta::objectstore::BackendPopulator> backendPopulator;
-      std::unique_ptr<cta::OStoreDBWithAgent> osdb;
       try {
         std::string processName="DriveHandlerShutdown-";
         processName+=m_configLine.unitName;
         log::ScopedParamContainer params(lc);
         params.add("processName", processName);
         lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create agent entry. Enabling leaving non-empty agent behind.");
-        backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName, lc));
-      } catch(cta::exception::Exception &ex) {
-        log::ScopedParamContainer param(lc);
+        sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), lc.logger(), true));
+      } catch (cta::exception::Exception &ex) {
+        log::ScopedParamContainer param (lc);
         param.add("errorMessage", ex.getMessageValue());
-        lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to instantiate agent entry. Reporting fatal error.");
+        lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
         goto exitShutdown;
       }
-      osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *m_catalogue, lc.logger()));
+      std::unique_ptr<SchedulerDB_t> sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
       lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler.");
-      std::unique_ptr<cta::Scheduler> scheduler(new Scheduler(*m_catalogue, *osdb, 0,0));
+      std::unique_ptr<cta::Scheduler> scheduler(new Scheduler(*m_catalogue, *sched_db, 0,0));
 
       cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
       castor::tape::System::realWrapper sWrapper;

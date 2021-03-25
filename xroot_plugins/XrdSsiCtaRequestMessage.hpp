@@ -34,7 +34,7 @@ class RequestMessage
 {
 public:
   RequestMessage(const XrdSsiEntity &client, const XrdSsiCtaServiceProvider *service) :
-    m_scheddb(service->getSchedDb()),
+    m_service(*service),
     m_catalogue(service->getCatalogue()),
     m_scheduler(service->getScheduler()),
     m_archiveFileMaxSize(service->getArchiveFileMaxSize()),
@@ -289,7 +289,7 @@ private:
 
   Protocol                                              m_protocol;           //!< The protocol the client used to connect
   cta::common::dataStructures::SecurityIdentity         m_cliIdentity;        //!< Client identity: username/host
-  cta::OStoreDBWithAgent                               &m_scheddb;            //!< Reference to CTA ObjectStore
+  const XrdSsiCtaServiceProvider                       &m_service;            //!< Const reference to the XRootD SSI Service
   cta::catalogue::Catalogue                            &m_catalogue;          //!< Reference to CTA Catalogue
   cta::Scheduler                                       &m_scheduler;          //!< Reference to CTA Scheduler
   uint64_t                                              m_archiveFileMaxSize; //!< Maximum allowed file size for archive requests

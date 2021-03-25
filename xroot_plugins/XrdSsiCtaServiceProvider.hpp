@@ -1,7 +1,7 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
  * @brief          XRootD Service Provider class
- * @copyright      Copyright 2017 CERN
+ * @copyright      Copyright © 2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -18,26 +18,19 @@
 
 #pragma once
 
-#include <common/Configuration.hpp>
-#include <common/utils/utils.hpp>
-#include <objectstore/BackendPopulator.hpp>
-#include <objectstore/BackendFactory.hpp>
-#include <scheduler/Scheduler.hpp>
-#include <scheduler/OStoreDB/OStoreDBWithAgent.hpp>
-#include <objectstore/AgentHeartbeatThread.hpp>
-#include <xroot_plugins/Namespace.hpp>
-#include <XrdSsiPbLog.hpp>
-
 #include <XrdSsi/XrdSsiProvider.hh>
 
+#include <common/Configuration.hpp>
+#include <common/utils/utils.hpp>
+#include <xroot_plugins/Namespace.hpp>
+#include <XrdSsiPbLog.hpp>
+#include <scheduler/Scheduler.hpp>
+#include <scheduler/OStoreDB/OStoreDBInit.hpp>
 
 /*!
  * Global pointer to the Service Provider object.
  */
-
 extern XrdSsiProvider *XrdSsiProviderServer;
-
-
 
 /*!
  * Instantiates a Service to process client requests.
@@ -86,9 +79,9 @@ public:
    XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact=0) override;
 
    /*!
-    * Get a reference to the ObjectStore for this Service
+    * Get a reference to the Scheduler DB for this Service
     */
-   cta::OStoreDBWithAgent &getSchedDb() const { return *m_scheddb; }
+   cta::SchedulerDB_t &getSchedDb() const { return *m_scheddb; }
 
    /*!
     * Get a reference to the Catalogue for this Service
@@ -134,38 +127,18 @@ private:
    void ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string &cfgFn,
                               const std::string &parms, int argc, char **argv);
 
-   /*!
-    * Deleter for instances of the AgentHeartbeatThread class.
-    *
-    * As the aht object is initialised by Init() rather than in the constructor, we can't simply call
-    * stopAndWaitThread() in the destructor. Using a deleter guarantees that we call stopAndWaitThread()
-    * after the AgentHeartbeatThread has been started by Init().
-    */
-   struct AgentHeartbeatThreadDeleter {
-      void operator()(cta::objectstore::AgentHeartbeatThread *aht) {
-         aht->stopAndWaitThread();
-      }
-   };
-
-   /*!
-    * Typedef for unique pointer to AgentHeartbeatThread
-    */
-   typedef std::unique_ptr<cta::objectstore::AgentHeartbeatThread, AgentHeartbeatThreadDeleter>
-      UniquePtrAgentHeartbeatThread;
-
    // Member variables
 
-   uint64_t                                            m_archiveFileMaxSize;  //!< Maximum allowed file size for archive requests
-   std::unique_ptr<cta::objectstore::Backend>          m_backend;             //!< VFS backend for the objectstore DB
-   std::unique_ptr<cta::objectstore::BackendPopulator> m_backendPopulator;    //!< Object used to populate the backend
-   std::unique_ptr<cta::OStoreDBWithAgent>             m_scheddb;             //!< DB/Object Store of persistent objects
-   std::unique_ptr<cta::catalogue::Catalogue>          m_catalogue;           //!< CTA catalogue of tapes and tape files
-   std::unique_ptr<cta::Scheduler>                     m_scheduler;           //!< The scheduler
-   std::unique_ptr<cta::log::Logger>                   m_log;                 //!< The logger
-   cta::optional<std::string>                          m_repackBufferURL;     //!< The repack buffer URL
-   cta::NamespaceMap_t                                 m_namespaceMap;        //!< Endpoints for namespace queries
-   UniquePtrAgentHeartbeatThread                       m_agentHeartbeat;      //!< Agent heartbeat thread
-   std::string                                         m_catalogue_conn_string; //!< The catalogue connection string without the password
+   std::unique_ptr<cta::catalogue::Catalogue>          m_catalogue;               //!< Catalogue of tapes and tape files
+   std::unique_ptr<cta::SchedulerDB_t>                 m_scheddb;                 //!< Scheduler DB for persistent objects (queues and requests)
+   std::unique_ptr<cta::SchedulerDBInit_t>             m_scheddb_init;            //!< Wrapper to manage Scheduler DB initialisation
+   std::unique_ptr<cta::Scheduler>                     m_scheduler;               //!< The scheduler
+   std::unique_ptr<cta::log::Logger>                   m_log;                     //!< The logger
+
+   uint64_t                                            m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
+   cta::optional<std::string>                          m_repackBufferURL;         //!< The repack buffer URL
+   cta::NamespaceMap_t                                 m_namespaceMap;            //!< Endpoints for namespace queries
+   std::string                                         m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
 
    static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";    //!< Identifier for log messages
 };
