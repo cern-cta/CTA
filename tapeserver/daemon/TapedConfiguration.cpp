@@ -138,6 +138,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.daemonGroupName.log(log);
   ret.logMask.log(log);
   ret.tpConfigPath.log(log);
+  ret.externalEncryptionKeyScript.log(log);
   
   ret.bufferSizeBytes.log(log);
   ret.bufferCount.log(log);
@@ -150,7 +151,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   
   ret.nbDiskThreads.log(log);
   ret.useRAO.log(log);
-  
+
   ret.wdIdleSessionTimer.log(log);
   ret.wdMountMaxSecs.log(log);
   ret.wdNoBlockMoveMaxSecs.log(log);
