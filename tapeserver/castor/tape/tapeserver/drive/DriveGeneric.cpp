@@ -781,7 +781,7 @@ bool drive::DriveLTO::isEncryptionCapEnabled() {
   sgh.setSenseBuffer(&senseBuff);
   sgh.dxfer_direction = SG_DXFER_FROM_DEV;
 
-  castor::exception::Errnum::throwOnMinusOne(
+  cta::exception::Errnum::throwOnMinusOne(
     m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
     "Failed SG_IO ioctl in DriveLTO::isEncryptionCapEnabled");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::isEncryptionCapEnabled");
