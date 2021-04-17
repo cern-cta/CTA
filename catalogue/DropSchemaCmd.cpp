@@ -145,7 +145,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
 
     const auto tables = conn.getTableNames();
     if (!tables.empty()) {
-      throw exception::Exception("Failed to delete all tables.  Maybe there is a circular dependency");
+      throw exception::Exception("Failed to delete all tables.  Maybe there is a circular dependency.");
     }
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
