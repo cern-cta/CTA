@@ -129,23 +129,6 @@ int RmcProxy::connectToRmc()
 }
 
 //-----------------------------------------------------------------------------
-// writeRmcMountMsg
-//-----------------------------------------------------------------------------
-void RmcProxy::writeRmcMountMsg(const int fd, const RmcMountMsgBody &body) {
-  char buf[RMC_MSGBUFSIZ];
-  const size_t len = marshal(buf, body);
-
-  try {
-    writeBytes(fd, m_netTimeout, len, buf);
-  } catch(cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to write RMC_SCSI_MOUNT message: "
-      << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
 // readRmcMsgHeader
 //-----------------------------------------------------------------------------
 MessageHeader RmcProxy::readRmcMsgHeader(const int fd) {

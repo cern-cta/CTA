@@ -134,15 +134,6 @@ protected:
   int connectToRmc() const ;
 
   /**
-   * Writes an RMC_SCSI_MOUNT message with the specifed body to the specified
-   * connection.
-   *
-   * @param fd The file descriptor of the connection.
-   * @param body The body of the message.
-   */
-  void writeRmcMountMsg(const int fd, const RmcMountMsgBody &body) ;
-
-  /**
    * Reads the header of an RMC_MAGIC message from the specified connection.
    *
    * @param fd The file descriptor of the connection.
