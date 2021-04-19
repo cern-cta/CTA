@@ -248,6 +248,21 @@ repack:
     - kubernetes
     - mhvtl
 
+dbunittests_oracle:
+  except:
+    - tags
+  stage: test
+  script:
+    - export NAMESPACE="dbunittestsoracle-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
+    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s /usr/bin/true -O -D -U -t 600 -C
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+    - pod_logs
+  tags:
+    - kubernetes
+
 nightly1:
   stage: shouldfail
   only:
