@@ -17,7 +17,7 @@
 .SH NAME
 cta-mediachanger-mount \- mount a volume
 .SH SYNOPSIS
-.BI "cta-mediachanger-mount [options] VID DRIVE_SLOT"
+.BI "cta-mediachanger-mount [options] VID smcDRIVE_ORDINAL"
 
 .SH DESCRIPTION
 \fBWarning\fP, \fBcta-mediachanger-mount\fP is a developer tool and is
@@ -25,12 +25,8 @@ therefore subject to change in and even removal from a future release of CASTOR.
 End users should not rely on this tool to operate their CASTOR installation.
 
 \fBcta-mediachanger-mount\fP mounts the volume with the specified
-\fBVID\fP into the drive located in the specified \fBDRIVE_SLOT\fP within the
-tape library.  \fBDRIVE_SLOT\fP must be in one of the following two forms:
-.IP
-.B acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
-.IP
-.B smcDRIVE_ORDINAL
+\fBVID\fP into the drive located in the specified \fBDRIVE_ORDINAL\fP within the
+tape library.
 
 .SH OPTIONS
 .TP

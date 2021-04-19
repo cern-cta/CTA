@@ -17,7 +17,7 @@
 .SH NAME
 cta-mediachanger-dismount \- dismount a volume
 .SH SYNOPSIS
-.BI "cta-mediachanger-dismount [options] VID DRIVE_SLOT"
+.BI "cta-mediachanger-dismount [options] VID smcDRIVE_ORDINAL"
 
 .SH DESCRIPTION
 \fBWarning\fP, \fBcta-mediachanger-dismount\fP is a developer tool and
@@ -26,12 +26,8 @@ CASTOR.
 End users should not rely on this tool to operate their CASTOR installation.
 
 \fBcta-mediachanger-dismount\fP dismounts the volume with the specified
-\fBVID\fP from the drive located in the specified \fBDRIVE_SLOT\fP within the
-tape library.  \fBDRIVE_SLOT\fP must be in one of the following two forms:
-.IP
-.B acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
-.IP
-.B smcDRIVE_ORDINAL
+\fBVID\fP from the drive located in the specified \fBDRIVE_ORDINAL\fP within the
+tape library.
 
 .SH OPTIONS
 .TP
