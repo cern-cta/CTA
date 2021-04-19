@@ -142,15 +142,6 @@ protected:
   MessageHeader readRmcMsgHeader(const int fd) ;
 
   /**
-   * Writes an RMC_SCSI_UNMOUNT message with the specifed body to the specified
-   * connection.
-   *
-   * @param fd The file descriptor of the connection.
-   * @param body The body of the message.
-   */
-  void writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body) ;
-
-  /**
    * Sends the specified request to the rmcd daemon and receives the reply
    * until success or the specified number of retriable attempts has been
    * reached.

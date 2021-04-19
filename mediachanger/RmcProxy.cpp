@@ -160,23 +160,6 @@ MessageHeader RmcProxy::readRmcMsgHeader(const int fd) {
 }
 
 //-----------------------------------------------------------------------------
-// writeRmcUnmountMsg
-//-----------------------------------------------------------------------------
-void RmcProxy::writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body) {
-  char buf[RMC_MSGBUFSIZ];
-  const size_t len = marshal(buf, body);
-
-  try {
-    writeBytes(fd, m_netTimeout, len, buf);
-  } catch(cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to write RMC_SCSI_UNMOUNT message: "
-      << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
 // rmcReplyTypeToStr
 //-----------------------------------------------------------------------------
 std::string RmcProxy::rmcReplyTypeToStr(const int replyType) {
