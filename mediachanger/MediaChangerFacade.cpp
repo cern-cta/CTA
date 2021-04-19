@@ -72,20 +72,6 @@ void MediaChangerFacade::dismountTape(const std::string &vid, const LibrarySlot 
 }
 
 //------------------------------------------------------------------------------
-// forceDismountTape
-//------------------------------------------------------------------------------
-void MediaChangerFacade::forceDismountTape(const std::string &vid, const LibrarySlot &slot) {
-  try {
-    return getProxy(slot.getLibraryType()).forceDismountTape(vid, slot);
-  } catch(cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to force dismount tape: vid=" << vid << " slot=" << slot.str() << ": " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // getProxy
 //------------------------------------------------------------------------------
 MediaChangerProxy &MediaChangerFacade::getProxy(const TapeLibraryType libraryType) {

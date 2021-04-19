@@ -81,7 +81,6 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, copy_constructor) {
   DismountCmdLine cmdLine1(args->argc, args->argv);
   ASSERT_FALSE(cmdLine1.getHelp());
   ASSERT_FALSE(cmdLine1.getDebug());
-  ASSERT_FALSE(cmdLine1.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine1.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("smc1"),
     cmdLine1.getDriveLibrarySlot().str());
@@ -89,7 +88,6 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, copy_constructor) {
   DismountCmdLine cmdLine2(cmdLine1);
   ASSERT_FALSE(cmdLine2.getHelp());
   ASSERT_FALSE(cmdLine2.getDebug());
-  ASSERT_FALSE(cmdLine2.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI,
     cmdLine2.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("smc1"), cmdLine2.getDriveLibrarySlot().str());
@@ -110,7 +108,6 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, assignment) {
   DismountCmdLine cmdLine1(args1->argc, args1->argv);
   ASSERT_FALSE(cmdLine1.getHelp());
   ASSERT_FALSE(cmdLine1.getDebug());
-  ASSERT_FALSE(cmdLine1.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine1.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("smc1"), cmdLine1.getDriveLibrarySlot().str());
 
@@ -126,7 +123,6 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, assignment) {
   DismountCmdLine cmdLine2(args2->argc, args2->argv);
   ASSERT_FALSE(cmdLine2.getHelp());
   ASSERT_FALSE(cmdLine2.getDebug());
-  ASSERT_FALSE(cmdLine2.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine2.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("smc2"), cmdLine2.getDriveLibrarySlot().str());
 
@@ -134,13 +130,11 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, assignment) {
 
   ASSERT_FALSE(cmdLine1.getHelp());
   ASSERT_FALSE(cmdLine1.getDebug());
-  ASSERT_FALSE(cmdLine1.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine1.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("smc2"), cmdLine1.getDriveLibrarySlot().str());
 
   ASSERT_FALSE(cmdLine2.getHelp());
   ASSERT_FALSE(cmdLine2.getDebug());
-  ASSERT_FALSE(cmdLine2.getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, cmdLine2.getDriveLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("smc2"), cmdLine2.getDriveLibrarySlot().str());
 }
@@ -162,7 +156,6 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, scsi) {
 
   ASSERT_FALSE(cmdLine->getHelp());
   ASSERT_FALSE(cmdLine->getDebug());
-  ASSERT_FALSE(cmdLine->getForce());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI,
     cmdLine->getDriveLibrarySlot().getLibraryType());
 }

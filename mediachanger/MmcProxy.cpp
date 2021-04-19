@@ -59,15 +59,5 @@ void MmcProxy::dismountTape( const std::string &vid, const LibrarySlot &libraryS
   m_log(log::WARNING, "Tape should be manual dismounted", params);
 }
 
-//------------------------------------------------------------------------------
-// forceDismountTape
-//------------------------------------------------------------------------------
-void MmcProxy::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
-  std::list<log::Param> params = {
-    log::Param("tapeVid", vid),
-    log::Param("librarySlot", librarySlot.str())};
-  m_log(log::WARNING, "Tape should be manual dismounted", params);
-}
-
 } // namespace medichanger
 } // namespace cta

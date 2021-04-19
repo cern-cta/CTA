@@ -40,9 +40,6 @@ Turns on the printing of debug information.
 .TP
 \fB\-h, \-\-help
 Prints the usage message.
-.TP
-\fB\-f, \-\-force
-Force the dismount (rewind and eject the tape where necessary).
 
 .SH "RETURN CODES"
 .TP

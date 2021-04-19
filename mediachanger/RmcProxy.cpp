@@ -100,14 +100,6 @@ void RmcProxy::dismountTape(const std::string &vid, const LibrarySlot &librarySl
   }
 }
 
-//------------------------------------------------------------------------------
-// forceDismountTape
-//------------------------------------------------------------------------------
-void RmcProxy::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
-  // SCSI libraries do not support forced dismounts
-  dismountTape(vid, librarySlot);
-}
-
 //-----------------------------------------------------------------------------
 // connectToRmc
 //-----------------------------------------------------------------------------

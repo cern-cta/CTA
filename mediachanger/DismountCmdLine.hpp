@@ -102,14 +102,6 @@ public:
   const LibrarySlot &getDriveLibrarySlot() const;
 
   /**
-   * Gets the value of the force option.
-   *
-   * @return True if the dismount should be forced.  Forcing a dismount means
-   * rewinding and ejecting the tape where necessary.
-   */
-  bool getForce() const;
-
-  /**
    * Return sthe program name.
    *
    * @return sthe program name.
@@ -137,12 +129,6 @@ private:
    * The slot in the tape library where the drive is located.
    */
   LibrarySlot *m_driveLibrarySlot;
-
-  /**
-   * True if the dismount should be forced.  Forcing a dismount means
-   * rewinding and ejecting the tape where necessary.
-   */
-  bool m_force;
 
   /**
    * Processes the specified option that was returned by getopt_long().

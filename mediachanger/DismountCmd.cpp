@@ -66,11 +66,6 @@ int cta::mediachanger::DismountCmd::exceptionThrowingMain(const int argc,
   m_dbg << "DRIVE_SLOT = " << m_cmdLine.getDriveLibrarySlot().str() <<
     std::endl;
 
-  if(m_cmdLine.getForce()) {
-    m_mc.forceDismountTape(m_cmdLine.getVid(),
-      m_cmdLine.getDriveLibrarySlot());
-  } else {
-    m_mc.dismountTape(m_cmdLine.getVid(), m_cmdLine.getDriveLibrarySlot());
-  }
+  m_mc.dismountTape(m_cmdLine.getVid(), m_cmdLine.getDriveLibrarySlot());
   return 0;
 }

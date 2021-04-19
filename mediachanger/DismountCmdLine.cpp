@@ -29,8 +29,7 @@
 cta::mediachanger::DismountCmdLine::DismountCmdLine():
   m_debug(false),
   m_help(false),
-  m_driveLibrarySlot(0),
-  m_force(false) {
+  m_driveLibrarySlot(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -40,13 +39,11 @@ cta::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
   char *const *const argv):
   m_debug(false),
   m_help(false),
-  m_driveLibrarySlot(0),
-  m_force(false) {
+  m_driveLibrarySlot(0) {
 
   static struct option longopts[] = {
     {"debug", 0, NULL, 'd'},
     {"help" , 0, NULL, 'h'},
-    {"force", 0, NULL, 'f'},
     {NULL   , 0, NULL, 0}
   };
 
@@ -94,8 +91,7 @@ cta::mediachanger::DismountCmdLine::DismountCmdLine(
   m_help(obj.m_help),
   m_vid(obj.m_vid),
   m_driveLibrarySlot(0 == obj.m_driveLibrarySlot ? 0 :
-    obj.m_driveLibrarySlot->clone()),
-  m_force(obj.m_force) {
+    obj.m_driveLibrarySlot->clone()) {
 }
 
 //-----------------------------------------------------------------------------
@@ -120,17 +116,9 @@ cta::mediachanger::DismountCmdLine &cta::mediachanger::DismountCmdLine::
     m_vid   = rhs.m_vid;
     m_driveLibrarySlot = 0 == rhs.m_driveLibrarySlot ? 0 :
       rhs.m_driveLibrarySlot->clone();
-    m_force = rhs.m_force;
   }
 
   return *this;
-}
-
-//------------------------------------------------------------------------------
-// getForce
-//------------------------------------------------------------------------------
-bool cta::mediachanger::DismountCmdLine::getForce() const {
-  return m_force;
 }
 
 //------------------------------------------------------------------------------
@@ -150,9 +138,6 @@ void cta::mediachanger::DismountCmdLine::processOption(const int opt) {
     break;
   case 'h':
     m_help = true;
-    break;
-  case 'f':
-    m_force = true;
     break;
   case ':':
     return handleMissingParameter(optopt);
@@ -193,9 +178,7 @@ std::string cta::mediachanger::DismountCmdLine::getUsage() {
   "\n"
   "  -h|--help  Print this help message and exit.\n"
   "\n"
-  "  -f|--force Force the dismount (rewind and eject the tape where necessary)."
-    "\n"
-  "Comments to: Castor.Support@cern.ch\n";
+  "Comments to: cta-support@cern.ch\n";
 }
 
 //------------------------------------------------------------------------------
