@@ -52,7 +52,7 @@ cta::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":dhf", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":dh", longopts, NULL)) != -1) {
     processOption(opt);
   }
 
