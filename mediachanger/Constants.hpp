@@ -48,7 +48,6 @@ enum ProtocolVersion {
 #define RMC_EXPORT         6 /* Export tape request */
 #define RMC_IMPORT         7 /* Import tape request */
 #define RMC_GENERICMOUNT   8 /* Generic (SCSI or ACS) mount request */
-#define RMC_GENERICUNMOUNT 9 /* Generic (SCSI or ACS) mount request */
 
                         /* SCSI media changer server reply types */
 
