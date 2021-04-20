@@ -93,11 +93,6 @@ const int RMC_NET_TIMEOUT = 600; // Timeout in seconds
 const int RMC_MAX_RQST_ATTEMPTS = 10;
 
 /**
- * The magic number to identify taped messages.
- */
-const uint32_t TPMAGIC = 0x141001;
-
-/**
  * The magic number to identify rmcd messages.
  */
 const uint32_t RMC_MAGIC = 0x120D0301;
