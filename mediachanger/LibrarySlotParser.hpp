@@ -37,8 +37,7 @@ public:
    * creates the corresponding object.
    *
    * The string representation of a tape library-slot must be in one of the
-   * following three forms:
-   * - acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
+   * following two forms:
    * - manual
    * - smcDRIVE_ORDINAL
    *

@@ -69,7 +69,7 @@ cta::mediachanger::MountCmdLine::MountCmdLine(const int argc,
   // Check that both VID and DRIVE_SLOT has been specified
   if(nbArgs < 2) {
     cta::exception::MissingOperand ex;
-    ex.getMessage() << "Both VID and DRIVE_SLOT must be specified";
+    ex.getMessage() << "Both VID and smcDRIVE_ORDINAL must be specified";
     throw ex;
   }
 
@@ -160,16 +160,12 @@ std::string cta::mediachanger::MountCmdLine::getUsage() {
   return std::string() +
   "Usage:\n"
   "\n"
-  "  " + getProgramName() + " [options] VID DRIVE_SLOT\n"
+  "  " + getProgramName() + " [options] VID smcDRIVE_ORDINAL\n"
   "\n"
   "Where:\n"
   "\n"
-  "  VID        The VID of the volume to be mounted.\n"
-  "  DRIVE_SLOT The slot in the tape library where the drive is located.\n"
-  "             DRIVE_SLOT must be in one of the following two forms:\n"
-  "\n"
-  "             acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER\n"
-  "             smcDRIVE_ORDINAL\n"
+  "  VID              The VID of the volume to be mounted.\n"
+  "  smcDRIVE_ORDINAL The drive ordinal.\n"
   "\n"
   "Options:\n"
   "\n"
