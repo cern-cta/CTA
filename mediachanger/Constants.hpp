@@ -108,12 +108,6 @@ enum MsgType {
 #define ERMMAXERR       ERMBASEOFF+11
 
 /**
- * The default TCP/IP port on which the CASTOR ACS daemon listens for incoming Zmq
- * connections from the tape server.
- */
-const unsigned short ACS_PORT = 54521;
-
-/**
  * The default TCP/IP port on which the CASTOR rmcd daemon listens for incoming
  * TCP/IP connections from the tape server.
  */
