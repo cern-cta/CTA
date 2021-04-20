@@ -28,11 +28,6 @@ const size_t HOSTNAMEBUFLEN    = 256;
 const int    LISTENBACKLOG     = 2;
 const size_t SERVICENAMEBUFLEN = 256;
 
-enum ProtocolVersion {
-  PROTOCOL_VERSION_NONE,
-  PROTOCOL_VERSION_1
-};
-
                         /* Request types */
 
 #define RMC_GETGEOM        1 /* Get robot geometry */
