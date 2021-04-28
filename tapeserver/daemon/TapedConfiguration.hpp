@@ -166,7 +166,7 @@ struct TapedConfiguration {
   // Tape encryption script
   //----------------------------------------------------------------------------
   cta::SourcedParameter<std::string> externalEncryptionKeyScript {
-    "taped", "externalEncryptionKeyScript","/usr/local/bin/cta-get-encryption-key","Compile time default"
+    "taped", "externalEncryptionKeyScript","","Compile time default"
   };
   
 private:
