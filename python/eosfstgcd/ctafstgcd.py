@@ -429,7 +429,7 @@ class Gc:
     except Exception as err:
       self.log.error('process_fs_sub_dir: Failed to list contents of sub directory: sub_dir={}: {}'.format(sub_dir, err))
 
-    fst_files = [f for f in sub_dir_files if re.match('^[0-9A-Fa-f]{8,9}$', f) and self.disk.isfile(os.path.join(sub_dir, f))]
+    fst_files = [f for f in sub_dir_files if re.match('^[0-9A-Fa-f]{8,}$', f) and self.disk.isfile(os.path.join(sub_dir, f))]
     for fst_file in fst_files:
       self.process_file(sub_dir, fst_file, eos_space)
 

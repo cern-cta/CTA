@@ -17,6 +17,7 @@
 - cta/CTA#969 `xrdfs query prepare` malformed JSON output 
 - cta/CTA#972 Updates cta-taped and rmcd man pages
 - cta/CTA#967 CI DB cleanup issues
+- cta/CTA#982 cta-fst-gcd ignored eos files with fid>4294967295
 
 # v4.0-1
 
