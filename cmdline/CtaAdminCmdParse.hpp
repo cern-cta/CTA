@@ -316,7 +316,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--username",              OptionString::USERNAME },
    { "--vendor",                OptionString::VENDOR },
    { "--vid",                   OptionString::VID },
-   { "--vo",                    OptionString::VO },
+   { "--virtualorganisation",   OptionString::VO },
    { "--disksystem",            OptionString::DISK_SYSTEM },
    { "--fileregexp",            OptionString::FILE_REGEXP },
    { "--freespacequeryurl",     OptionString::FREE_SPACE_QUERY_URL },
@@ -426,6 +426,7 @@ const Option opt_capacity             { Option::OPT_UINT, "--capacity",         
 const Option opt_cartridge            { Option::OPT_STR,  "--cartridge",             "-t",   " <cartridge>" };
 const Option opt_comment              { Option::OPT_STR,  "--comment",               "-m",   " <\"comment\">" };
 const Option opt_copynb               { Option::OPT_UINT, "--copynb",                "-c",   " <copy_number>" };
+const Option opt_copynb_alias         { Option::OPT_UINT, "--numberofcopies",        "-c",   " <number_of_copies>", "--copynb" };
 const Option opt_disabled             { Option::OPT_BOOL, "--disabled",              "-d",   " <\"true\" or \"false\">" };
 const Option opt_drivename            { Option::OPT_STR,  "--drive",                 "-d",   " <drive_name>" };
 const Option opt_drivename_cmd        { Option::OPT_CMD,  "--drive",                 "",     "<drive_name>" };
@@ -469,7 +470,7 @@ const Option opt_username             { Option::OPT_STR,  "--username",         
 const Option opt_username_alias       { Option::OPT_STR,  "--name",                  "-n",   " <user_name>", "--username" };
 const Option opt_vendor               { Option::OPT_STR,  "--vendor",                "--ve", " <vendor>" };
 const Option opt_vid                  { Option::OPT_STR,  "--vid",                   "-v",   " <vid>" };
-const Option opt_vo                   { Option::OPT_STR,  "--vo",                    "--vo", " <vo>" };
+const Option opt_vo                   { Option::OPT_STR,  "--virtualorganisation",   "--vo", " <virtual_organisation>" };
 const Option opt_vidfile              { Option::OPT_STR_LIST, "--vidfile",           "-f",   " <filename>" };
 const Option opt_full                 { Option::OPT_BOOL, "--full",                  "-f",   " <\"true\" or \"false\">" };
 const Option opt_disabled_tape        { Option::OPT_FLAG, "--disabledtape",          "-d",   "" };
@@ -561,9 +562,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_SHOWQUEUES,           AdminCmd::SUBCMD_NONE  }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_ADD   },
-      { opt_storageclass_alias, opt_copynb, opt_vo ,opt_comment }},
+      { opt_storageclass_alias, opt_copynb_alias, opt_vo, opt_comment }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_CH    },
-      { opt_storageclass_alias, opt_copynb.optional(), opt_vo.optional(), opt_comment.optional() }},
+      { opt_storageclass_alias, opt_copynb_alias.optional(), opt_vo.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_RM    }, { opt_storageclass_alias }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
