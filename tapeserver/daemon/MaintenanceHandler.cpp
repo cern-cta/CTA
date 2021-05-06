@@ -42,7 +42,7 @@ SubprocessHandler("maintenanceHandler"), m_processManager(pm), m_tapedConfig(tap
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::getInitialStatus
+// MaintenanceHandler::getInitialStatus
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::getInitialStatus() {
   m_processingStatus.forkRequested=true;
@@ -50,7 +50,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::getInitialStatus() {
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::getInitialStatus
+// MaintenanceHandler::getInitialStatus
 //------------------------------------------------------------------------------
 void MaintenanceHandler::postForkCleanup() {
   // We are in the child process of another handler. We can close our socket pair
@@ -62,7 +62,7 @@ void MaintenanceHandler::postForkCleanup() {
 
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::fork
+// MaintenanceHandler::fork
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
   // If anything fails while attempting to fork, we will have to declare ourselves
@@ -103,7 +103,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::kill
+// MaintenanceHandler::kill
 //------------------------------------------------------------------------------
 void MaintenanceHandler::kill() {
   // If we have a subprocess, kill it and wait for completion (if needed). We do not need to keep
@@ -136,7 +136,7 @@ void MaintenanceHandler::kill() {
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::processEvent
+// MaintenanceHandler::processEvent
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processEvent() {
   // We do not expect any feedback for the child process...
@@ -145,7 +145,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processEvent() {
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::processSigChild
+// MaintenanceHandler::processSigChild
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
   // Check out child process's status. If the child process is still around,
@@ -212,7 +212,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::processTimeout
+// MaintenanceHandler::processTimeout
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {
   // The only time we expect a timeout is when shutting down
@@ -236,7 +236,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::runChild
+// MaintenanceHandler::runChild
 //------------------------------------------------------------------------------
 int MaintenanceHandler::runChild() {
   try{
@@ -350,7 +350,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::shutdown
+// MaintenanceHandler::shutdown
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::shutdown() {
   // We will signal the shutdown to the child process by sending a byte over the 
@@ -366,7 +366,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::shutdown() {
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::~GarbageCollectorHandler
+// MaintenanceHandler::~MaintenanceHandler
 //------------------------------------------------------------------------------
 MaintenanceHandler::~MaintenanceHandler() {
   // If we still have a child process (should not), just stop it the hard way.
