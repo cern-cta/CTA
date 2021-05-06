@@ -4,7 +4,9 @@
 
 ### Features
 
-- Upgraded EOS to 4.8.44 in CI versionlock.list file
+- Upgraded EOS to 4.8.45 in CI versionlock.list file
+  - EOS/EOS-4658 EOS workflow engine should not insist on the W_OK mode bit (for prepare ACL)
+  - EOS/EOS-4684 Make the "file archived" GC aware of different EOS spaces
 - Upgraded eos-xrootd to 4.12.8 in CI versionlock.list file
 - cta/CTA#966 Unable to distinguish empty and wrong tape pool
 - cta/CTA#926 Improve MigrationReportPacker::ReportSkipped::execute() exception message
