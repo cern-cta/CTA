@@ -328,7 +328,7 @@ repackMoveAndAddCopies() {
   storageClassName=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json storageclass ls | jq -r ". [0] | .name"`
 
   echo "Changing the storage class $storageClassName nb copies"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin storageclass ch --name $storageClassName --copynb 3
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin storageclass ch --name $storageClassName --numberofcopies 3
   echo "OK"
 
   echo "Putting all drives up"

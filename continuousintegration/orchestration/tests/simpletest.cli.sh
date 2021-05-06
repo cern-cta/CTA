@@ -8,7 +8,7 @@ cta tapepool add --name ctasystest --partialtapesnumber 5 --encrypted false --co
 
 cta tape add --logicallibrary VLSTK --tapepool ctasystest --capacity 1000000000 --comment "ctasystest" --vid ${VID} --full false
 
-cta storageclass add --instance root --name ctaStorageClass --copynb 1 --comment "ctasystest"
+cta storageclass add --instance root --name ctaStorageClass --numberofcopies 1 --comment "ctasystest"
 
 cta archiveroute add --instance root --storageclass ctaStorageClass --copynb 1 --tapepool ctasystest --comment "ctasystest"
 

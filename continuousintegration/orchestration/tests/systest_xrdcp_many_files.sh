@@ -82,8 +82,8 @@ done
 
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta storageclass add   \
   --instance ${EOSINSTANCE}                                            \
-  --name ctaStorageClass                                            \
-  --copynb 1                                                        \
+  --name ctaStorageClass                                               \
+  --numberofcopies 1                                                   \
   --comment "ctasystest"
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta archiveroute add   \
   --instance ${EOSINSTANCE}                                         \

@@ -169,7 +169,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
   done
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add   \
     --name ctaStorageClass                                            \
-    --copynb 1                                                        \
+    --numberofcopies 1                                                        \
     --vo vo                                                           \
     --comment "ctasystest"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add   \
