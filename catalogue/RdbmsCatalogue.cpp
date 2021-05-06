@@ -8401,7 +8401,6 @@ void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &calling
     if(event.diskInstance.empty()) throw exception::Exception("diskInstance is an empty string");
     if(event.diskFileId.empty()) throw exception::Exception("diskFileId is an empty string");
     if(0 == event.diskFileOwnerUid) throw exception::Exception("diskFileOwnerUid is 0");
-    if(0 == event.diskFileGid) throw exception::Exception("diskFileGid is 0");
     if(0 == event.size) throw exception::Exception("size is 0");
     if(event.checksumBlob.length() == 0) throw exception::Exception("checksumBlob is an empty string");
     if(event.storageClassName.empty()) throw exception::Exception("storageClassName is an empty string");
