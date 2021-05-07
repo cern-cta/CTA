@@ -1999,13 +1999,13 @@ bool RdbmsCatalogue::tapePoolExists(rdbms::Conn &conn, const std::string &tapePo
 bool RdbmsCatalogue::tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, const std::string &tapePoolName) const {
   try {
     const char *const sql =
-      "SELECT"                                            "\n"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME"                "\n"
-      "FROM"                                              "\n"
-        "TAPE_POOL"                                       "\n"
-      "INNER JOIN ARCHIVE_ROUTE ON"                       "\n"
-        "TAPE_POOL.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID" "\n"
-      "WHERE"                                             "\n"
+      "SELECT"                                                "\n"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME"                    "\n"
+      "FROM"                                                  "\n"
+        "TAPE_POOL"                                           "\n"
+      "INNER JOIN ARCHIVE_ROUTE ON"                           "\n"
+        "TAPE_POOL.TAPE_POOL_ID = ARCHIVE_ROUTE.TAPE_POOL_ID" "\n"
+      "WHERE"                                                 "\n"
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);

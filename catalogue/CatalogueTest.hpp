@@ -43,7 +43,9 @@ protected:
   const cta::common::dataStructures::SecurityIdentity m_localAdmin;
   const cta::common::dataStructures::SecurityIdentity m_admin;
   const cta::common::dataStructures::VirtualOrganization m_vo;
+  const cta::common::dataStructures::VirtualOrganization m_anotherVo;
   const cta::common::dataStructures::StorageClass m_storageClassSingleCopy;
+  const cta::common::dataStructures::StorageClass m_anotherStorageClass;
   const cta::common::dataStructures::StorageClass m_storageClassDualCopy;
   const cta::catalogue::MediaType m_mediaType;
   const cta::catalogue::CreateTapeAttributes m_tape1;

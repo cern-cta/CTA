@@ -80,6 +80,17 @@ namespace {
     return vo;
   }
 
+  cta::common::dataStructures::VirtualOrganization getAnotherVo() {
+    using namespace cta;
+
+    common::dataStructures::VirtualOrganization vo;
+    vo.name = "anotherVo";
+    vo.comment = "Creation of another virtual organization vo";
+    vo.readMaxDrives = 1;
+    vo.writeMaxDrives = 1;
+    return vo;
+  }
+
   cta::common::dataStructures::StorageClass getStorageClass() {
     using namespace cta;
 
@@ -88,6 +99,17 @@ namespace {
     storageClass.nbCopies = 1;
     storageClass.vo.name = getVo().name;
     storageClass.comment = "Creation of storage class with 1 copy on tape";
+    return storageClass;
+  }
+
+  cta::common::dataStructures::StorageClass getAnotherStorageClass() {
+    using namespace cta;
+
+    common::dataStructures::StorageClass storageClass;
+    storageClass.name = "another_storage_class";
+    storageClass.nbCopies = 1;
+    storageClass.vo.name = getVo().name;
+    storageClass.comment = "Creation of another storage class";
     return storageClass;
   }
 
@@ -165,7 +187,9 @@ cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
         m_localAdmin(getLocalAdmin()),
         m_admin(getAdmin()),
         m_vo(getVo()),
+        m_anotherVo(getAnotherVo()),
         m_storageClassSingleCopy(getStorageClass()),
+        m_anotherStorageClass(getAnotherStorageClass()),
         m_storageClassDualCopy(getStorageClassDualCopy()),
         m_mediaType(getMediaType()),
         m_tape1(getTape1()),
@@ -2076,39 +2100,113 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
 TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   using namespace cta;
 
-  const std::string tapePoolName = "tape_pool";
-  const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string comment = "Create tape pool";
-  m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
+  const uint64_t tapePoolNbPartialTapes = 2;
+  const bool tapePoolIsEncrypted = true;
+  const std::string tapePoolComment = "Create tape pool";
+  {
+    const cta::optional<std::string> supply("value for the supply pool mechanism");
+    m_catalogue->createVirtualOrganization(m_admin, m_vo);
+    m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, tapePoolNbPartialTapes, tapePoolIsEncrypted,
+      supply, tapePoolComment);
+  }
 
-  const auto pools = m_catalogue->getTapePools();
+  {
+    const auto pools = m_catalogue->getTapePools();
 
-  ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(1, pools.size());
 
-  const auto &pool = pools.front();
-  ASSERT_EQ(tapePoolName, pool.name);
-  ASSERT_EQ(m_vo.name, pool.vo.name);
-  ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
-  ASSERT_EQ(isEncrypted, pool.encryption);
-  ASSERT_EQ(0, pool.nbTapes);
-  ASSERT_EQ(0, pool.capacityBytes);
-  ASSERT_EQ(0, pool.dataBytes);
-  ASSERT_EQ(0, pool.nbPhysicalFiles);
-  ASSERT_EQ(comment, pool.comment);
+    const auto &pool = pools.front();
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
+    ASSERT_EQ(m_vo.name, pool.vo.name);
+    ASSERT_EQ(tapePoolNbPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(tapePoolIsEncrypted, pool.encryption);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(tapePoolComment, pool.comment);
 
-  const common::dataStructures::EntryLog creationLog = pool.creationLog;
-  ASSERT_EQ(m_admin.username, creationLog.username);
-  ASSERT_EQ(m_admin.host, creationLog.host);
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
 
-  const common::dataStructures::EntryLog lastModificationLog =
-    pool.lastModificationLog;
-  ASSERT_EQ(creationLog, lastModificationLog);
+    const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
 
-  m_catalogue->deleteTapePool(pool.name);
-  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  // Create a separate archive route with another tape pool that has nothing to
+  // do with the tape pool being tested in order to test
+  // RdbmsCatalogue::tapePoolUsedInAnArchiveRoute()
+  const std::string anotherTapePoolName = "another_tape_pool";
+  const uint64_t anotherNbPartialTapes = 4;
+  const std::string anotherTapePoolComment = "Create another tape pool";
+  const bool anotherTapePoolIsEncrypted = false;
+  {
+    m_catalogue->createStorageClass(m_admin, m_anotherStorageClass);
+    const cta::optional<std::string> supply("value for the supply pool mechanism");
+    m_catalogue->createVirtualOrganization(m_admin, m_anotherVo);
+    m_catalogue->createTapePool(m_admin, anotherTapePoolName, m_anotherVo.name, anotherNbPartialTapes,
+      anotherTapePoolIsEncrypted, supply, anotherTapePoolComment);
+    const uint32_t copyNb = 1;
+    const std::string comment = "Create a separate archive route";
+    m_catalogue->createArchiveRoute(m_admin, m_anotherStorageClass.name, copyNb, anotherTapePoolName, comment);
+  }
+
+  {
+    const auto pools = tapePoolListToMap(m_catalogue->getTapePools());
+
+    ASSERT_EQ(2, pools.size());
+
+    {
+      const auto poolMaplet = pools.find(m_tape1.tapePoolName);
+      ASSERT_NE(pools.end(), poolMaplet);
+
+      const auto &pool = poolMaplet->second;
+      ASSERT_EQ(m_tape1.tapePoolName, pool.name);
+      ASSERT_EQ(m_vo.name, pool.vo.name);
+      ASSERT_EQ(tapePoolNbPartialTapes, pool.nbPartialTapes);
+      ASSERT_EQ(tapePoolIsEncrypted, pool.encryption);
+      ASSERT_EQ(0, pool.nbTapes);
+      ASSERT_EQ(0, pool.capacityBytes);
+      ASSERT_EQ(0, pool.dataBytes);
+      ASSERT_EQ(0, pool.nbPhysicalFiles);
+      ASSERT_EQ(tapePoolComment, pool.comment);
+
+      const common::dataStructures::EntryLog creationLog = pool.creationLog;
+      ASSERT_EQ(m_admin.username, creationLog.username);
+      ASSERT_EQ(m_admin.host, creationLog.host);
+
+      const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+
+    {
+      const auto poolMaplet = pools.find(anotherTapePoolName);
+      ASSERT_NE(pools.end(), poolMaplet);
+
+      const auto &pool = poolMaplet->second;
+      ASSERT_EQ(anotherTapePoolName, pool.name);
+      ASSERT_EQ(m_anotherVo.name, pool.vo.name);
+      ASSERT_EQ(anotherNbPartialTapes, pool.nbPartialTapes);
+      ASSERT_EQ(anotherTapePoolIsEncrypted, pool.encryption);
+      ASSERT_EQ(0, pool.nbTapes);
+      ASSERT_EQ(0, pool.capacityBytes);
+      ASSERT_EQ(0, pool.dataBytes);
+      ASSERT_EQ(0, pool.nbPhysicalFiles);
+      ASSERT_EQ(anotherTapePoolComment, pool.comment);
+
+      const common::dataStructures::EntryLog creationLog = pool.creationLog;
+      ASSERT_EQ(m_admin.username, creationLog.username);
+      ASSERT_EQ(m_admin.host, creationLog.host);
+
+      const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+  }
+
+  m_catalogue->deleteTapePool(m_tape1.tapePoolName);
+
+  ASSERT_EQ(1, m_catalogue->getTapePools().size());
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
