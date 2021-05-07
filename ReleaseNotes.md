@@ -20,6 +20,7 @@
 - cta/CTA#972 Updates cta-taped and rmcd man pages
 - cta/CTA#967 CI DB cleanup issues
 - cta/CTA#982 cta-fst-gcd ignored eos files with fid>4294967295
+- cta/operations#352 Unable to delete empty tape pool
 
 # v4.0-1
 
