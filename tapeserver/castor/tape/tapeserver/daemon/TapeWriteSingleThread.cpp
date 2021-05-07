@@ -515,7 +515,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // then log the end of write thread
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "error")
-          .add("ErrorMesage", errorMessage);
+          .add("ErrorMessage", errorMessage);
     m_stats.totalTime = totalTimer.secs();
     logWithStats(cta::log::INFO, "Tape thread complete",
             params);
