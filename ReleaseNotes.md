@@ -13,6 +13,9 @@
 
 ### Bug fixes
 
+- cta/CTA#582 Changes cta-admin storageclass add --copynb to --numberofcopies
+- cta/CTA#987 Do not import metadata for zero-length files into CTA Catalogue
+- cta/CTA#984 Removes diskFileGid == 0 check
 - cta/CTA#669 cta-taped now display the correct error message when the drive device does not exist
 - cta/CTA#927 Bad message for archive route pointing non-existing pool
 - cta/CTA#930 Batched the queueing and the deleting of the repack subrequests
