@@ -4,6 +4,8 @@
 
 ### Features
 
+- Upgraded ceph to version 14.2.20
+
 ### Bug fixes
 
 # v4.0-2
