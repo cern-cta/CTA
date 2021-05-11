@@ -763,7 +763,7 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
         log::ScopedParamContainer spc(lc);
         spc.add("drive", driveName)
            .add("schedulerDbTime", schedulerDbTime);
-        lc.log(log::INFO, "In Scheduler::getDesiredDriveState(): success.");
+        lc.log(log::DEBUG, "In Scheduler::getDesiredDriveState(): success.");
       }
       return d.desiredDriveState;
     }
@@ -827,7 +827,7 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
     log::ScopedParamContainer spc(lc);
     spc.add("drive", driveInfo.driveName)
        .add("schedulerDbTime", schedulerDbTime);
-    lc.log(log::INFO, "In Scheduler::reportDriveStatus(): success.");
+    lc.log(log::DEBUG, "In Scheduler::reportDriveStatus(): success.");
   }
 }
 
