@@ -127,11 +127,7 @@ public:
           // end of file. append() also protects against reading too big tape blocks.
           while (mb->m_payload.append(*rf)) {
             tapeBlock++;
-            if(isVerifyOnly) {
-              // Normally, the checksum is calculated in DiskWriteTask::execute(). In verification-only mode, there is no
-              // write to disk. As we need to validate the checksum, we calculate it here.
-              checksum_adler32 = mb->m_payload.adler32(checksum_adler32);
-            }
+            checksum_adler32 = mb->m_payload.adler32(checksum_adler32);
           }
         } catch (const cta::exception::EndOfFile&) {
           // append() signaled the end of the file.
@@ -151,17 +147,18 @@ public:
           // Don't write the file to disk
           mb->markAsVerifyOnly();
         }
+        // If we reached the end of the file, validate the checksum (throws an exception on bad checksum)
+        if(!stillReading) {
+          tapeReadChecksum.insert(cta::checksum::ADLER32, checksum_adler32);
+          m_retrieveJob->archiveFile.checksumBlob.validate(tapeReadChecksum);
+        }
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
         mb=NULL;
         watchdog.notify(blockSize);
         localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       } //end of while(stillReading)
-      if(isVerifyOnly) {
-        tapeReadChecksum.insert(cta::checksum::ADLER32, checksum_adler32);
-        m_retrieveJob->archiveFile.checksumBlob.validate(tapeReadChecksum);
-      }
-      //  we have to signal the end of the tape read to the disk write task.
+      // We have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(NULL);
       // Log the successful transfer
       localStats.totalTime = localTime.secs();
@@ -195,19 +192,18 @@ public:
 	    .add("userFilesCount",localStats.userFilesCount)
 	    .add("userBytesCount",localStats.userBytesCount)
 	    .add("verifiedFilesCount",localStats.verifiedFilesCount)
-	    .add("verifiedBytesCount",localStats.verifiedBytesCount);
-      if(isVerifyOnly) {
-        params.add("checksumType", "ADLER32")
-              .add("checksumValue", cta::checksum::ChecksumBlob::ByteArrayToHex(tapeReadChecksum.at(cta::checksum::ADLER32)));
-      }
+	    .add("verifiedBytesCount",localStats.verifiedBytesCount)
+            .add("checksumType", "ADLER32")
+            .add("checksumValue", cta::checksum::ChecksumBlob::ByteArrayToHex(tapeReadChecksum.at(cta::checksum::ADLER32)));
       lc.log(cta::log::INFO, "File successfully read from tape");
       // Add the local counts to the session's
       stats.add(localStats);
     } //end of try
     catch (const cta::exception::Exception & ex) {
-      //we end up there because :
-      //-- openReadFile brought us here (cant position to the file)
+      // We end up here because:
+      //-- openReadFile brought us here (can't position to the file)
       //-- m_payload.append brought us here (error while reading the file)
+      //-- Checksum validation failed (after reading the last block from tape)
       // Record the error in the watchdog
       if (currentErrorToCount.size()) {
         watchdog.addToErrorCount(currentErrorToCount);
