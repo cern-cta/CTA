@@ -194,7 +194,7 @@ std::string Scheduler::queueRetrieve(
   queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, request.activity, lc);
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
 
-  // The following if statement is a temporary fix for the following CTA issue:
+  // The following block of code is a temporary fix for the following CTA issue:
   //
   //   cta/CTA#777 Minimize mounts for dual copy tape pool recalls
   //
@@ -203,29 +203,16 @@ std::string Scheduler::queueRetrieve(
   // containing files with lower tape copy numbers but on the other hand it
   // reduces the number of overall number tape mounts in situations where files
   // with multiple tape copies are being recalled.
-  if (1 < queueCriteria.archiveFile.tapeFiles.size()) {
-    uint8_t lowestCopyNb = std::numeric_limits<uint8_t>::max();
-    std::map<uint8_t, common::dataStructures::TapeFile> copyNbToTapeFile;
-    for (auto tapeFile: queueCriteria.archiveFile.tapeFiles) {
-      if (copyNbToTapeFile.end() == copyNbToTapeFile.find(tapeFile.copyNb)) {
-        if (tapeFile.copyNb < lowestCopyNb) {
-          lowestCopyNb = tapeFile.copyNb;
-        }
-        copyNbToTapeFile[tapeFile.copyNb] = tapeFile;
-      } else {
-        std::ostringstream msg;
-        msg << __FUNCTION__ << ": Found archive file with duplicate tape copy number: vid=" << tapeFile.vid <<
-            " copyNb=" << (uint32_t)tapeFile.copyNb;
-        lc.log(log::WARNING, msg.str());
-      }
-    }
+  {
+    const auto lowestCopyNbTapeFileIter = std::min_element(
+      queueCriteria.archiveFile.tapeFiles.begin(), queueCriteria.archiveFile.tapeFiles.end(),
+      [](const common::dataStructures::TapeFile &a, const common::dataStructures::TapeFile &b) -> bool
+        {return a.copyNb < b.copyNb;});
 
-    if (!copyNbToTapeFile.empty()) {
-      const auto lowestCopyNbTapeFile = copyNbToTapeFile.find(lowestCopyNb);
-      if (copyNbToTapeFile.end() != lowestCopyNbTapeFile) {
-        queueCriteria.archiveFile.tapeFiles.clear();
-        queueCriteria.archiveFile.tapeFiles.push_back(lowestCopyNbTapeFile->second);
-      }
+    if (queueCriteria.archiveFile.tapeFiles.end() != lowestCopyNbTapeFileIter) {
+      const common::dataStructures::TapeFile lowestCopyNbTapeFile = *lowestCopyNbTapeFileIter;
+      queueCriteria.archiveFile.tapeFiles.clear();
+      queueCriteria.archiveFile.tapeFiles.push_back(lowestCopyNbTapeFile);
     }
   }
 
