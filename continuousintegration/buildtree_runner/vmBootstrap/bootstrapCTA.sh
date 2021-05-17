@@ -29,12 +29,16 @@ mkdir -p ~/CTA-build-srpm
 echo Installing repos
 
 if [[ "$PUBLIC" == false ]] ; then
-  sudo yum-config-manager --add-repo=`ls -1 ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo`
+  for i in ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo; do
+    sudo yum-config-manager --add-repo=$i
+  done
 else 
   sudo wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
   sudo wget https://git.ceph.com/release.asc -O /etc/pki/rpm-gpg/RPM-ASC-KEY-ceph
 
-  sudo yum-config-manager --add-repo=`ls -1 ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo`
+  for i in ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo; do
+    sudo yum-config-manager --add-repo=$i
+  done
 fi
 
 sudo yum install -y yum-plugin-priorities
