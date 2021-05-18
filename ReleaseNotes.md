@@ -10,6 +10,7 @@
 - Upgraded eos-xrootd to 4.12.8 in CI versionlock.list file
 - cta/CTA#966 Unable to distinguish empty and wrong tape pool
 - cta/CTA#926 Improve MigrationReportPacker::ReportSkipped::execute() exception message
+- cta/CTA#584 Validate checksum when recalling from tape
 
 ### Bug fixes
 

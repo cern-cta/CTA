@@ -239,7 +239,7 @@ void DiskWriteTask::releaseAllBlock(){
         //errCode=mb->errorCode();
       }
       else{
-        errorMsg="Mismatch between expected and received filed or blockid";
+        errorMsg="Mismatch between expected and received fileid or blockid";
         //errCode=666;
       }
       lc.log(cta::log::ERR,errorMsg);
