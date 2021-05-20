@@ -122,8 +122,8 @@ Log level \fIall\fR is a synonym for "\fIdebug\fR \fIprotobuf\fR \fIprotoraw\fR"
 XRDDEBUG
 If the XRootD environment variable XRDDEBUG=1, the log level is set to \fIall\fR (see above).
 .TP
-XRDSECDEBUG
-If the XRootD environment variable XRDSECDEBUG=1, authentication messages are logged. This is useful for
+XrdSecDEBUG
+If the XRootD environment variable XrdSecDEBUG=1, authentication messages are logged. This is useful for
 debugging problems with Kerberos or SSS authentication.
 .TP
 XRDSSIDEBUG
