@@ -4,6 +4,14 @@
 
 ### Features
 
+### Bug fixes
+
+# v4.0-2
+
+## Summary
+
+### Features
+
 - Upgraded EOS to 4.8.45 in CI versionlock.list file
   - EOS/EOS-4658 EOS workflow engine should not insist on the W_OK mode bit (for prepare ACL)
   - EOS/EOS-4684 Make the "file archived" GC aware of different EOS spaces

@@ -491,6 +491,12 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Tue Jun 01 2021 julien.leduc (at) cern.ch - 4.0-2
+- Upgraded EOS to 4.8.45
+- Upgraded eos-xrootd to 4.12.8
+- cta/CTA#966 Unable to distinguish empty and wrong tape pool
+- cta/CTA#926 Improve MigrationReportPacker::ReportSkipped::execute() exception message
+- cta/CTA#584 Validate checksum when recalling from tape
 * Fri Feb 05 2021 julien.leduc (at) cern.ch - 4.0-1
 - cta/CTA#964 Adds failure log messages to processCLOSEW in CTA Frontend
 - When the operator submits a tape to repack, a check is done about the tape state before queueing the repack request to ensure it can be repacked
